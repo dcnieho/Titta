@@ -1,24 +1,30 @@
-%% EyeImageType
+%% SelectedEye
 %
-% Defines the type of eye image.
+% Defines the selected eye.
 %
 %%
-classdef EyeImageType < int32
+classdef SelectedEye < int32
    enumeration
-      %% Full
-      % Indicates that the eye tracker could not identify the eyes
-      % and the image is the full image.
+      %% LEFT
+      % Left Eye
       %
-      %     type.Full (0)
+      %     selected_eye.LEFT (0)
       %
-      Full (0)
+      LEFT (0)
       %%
-      %% Cropped
-      % Indicates that the image is cropped and shows the eyes.
+      %% RIGHT
+      % Right Eye
       %
-      %     type.Cropped (1)
+      %     selected_eye.RIGHT (1)
       %
-      Cropped (1)
+      RIGHT (1)
+      %%
+      %% BOTH
+      % Both Eyes
+      %
+      %     selected_eye.BOTH (2)
+      %
+      BOTH (2)
       %%
    end
 end

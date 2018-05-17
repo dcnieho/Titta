@@ -9,7 +9,7 @@
 %%
 classdef ExternalSignal
     properties (SetAccess = immutable)
-        %% Value 
+        %% Value
         % Gets the value of the external signal port on the eye tracker.
         %
         % external_signal.Value
@@ -34,27 +34,33 @@ classdef ExternalSignal
         %
         ChangeType
     end
-    
+
     methods
         function external_signal = ExternalSignal(value,...
                 device_time_stamp,...
                 system_time_stamp,...
                 change_type)
-            
             external_signal.Value = value;
-            
+
             external_signal.DeviceTimeStamp = device_time_stamp;
-            
+
             external_signal.SystemTimeStamp = system_time_stamp;
-            
+
             external_signal.ChangeType = ExternalSignalChangeType(change_type);
         end
     end
-    
+
 end
 
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %

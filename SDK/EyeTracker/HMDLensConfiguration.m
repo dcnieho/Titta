@@ -1,38 +1,38 @@
-%% PupilData
+%% HMDLensConfiguration
 %
-% Provides properties for the pupil data.
+% Represents the lens configuration of the HMD device.
 %
-%   pupil_data = PupilData(diameter,validity)
+%   lens_config = HMDLensConfiguration(lens_config)
 %
 %%
-classdef PupilData
+classdef HMDLensConfiguration
     properties (SetAccess = immutable)
-        %% Diameter
-        % Gets the diameter of the pupil in millimeters.
+        %% Left
+        % The point in HMD coordinate system that defines the position of the left lens (in millimeters).
+        % (Array with 3D coordinates).
         %
-        %   pupil_data.Diameter
+        %   lens_configuration.Left
         %
-        Diameter
-        %% Validity
-        % Gets the <../Gaze/Validity.html Validity> of the pupil data
+        Left
+        %% Right
+        % The point in HMD coordinate system that defines the position of the right lens (in millimeters).
+        % (Array with 3D coordinates).
         %
-        %   pupil_data.Validity
+        %   lens_configuration.Right
         %
-        Validity
+        Right
     end
 
     methods
-        function pupil_data = PupilData(diameter,validity)
-
-            pupil_data.Validity = Validity(validity);
-            pupil_data.Diameter = diameter;
+        function lens_configuration = HMDLensConfiguration(left, right)
+            lens_configuration.Left = single(left);
+            lens_configuration.Right = single(right);
         end
     end
-
 end
 
 %% See Also
-% <../Gaze/Validity.html Validity>
+% <../EyeTracker.html EyeTracker>
 
 %% Version
 % !version

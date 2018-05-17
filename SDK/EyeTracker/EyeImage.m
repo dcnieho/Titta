@@ -2,7 +2,7 @@
 %
 % Eye image occurence depends on the eye tracker model.
 % Not all eye trackers support this feature.
-%          
+%
 %%
 classdef EyeImage
     properties (SetAccess = immutable)
@@ -17,7 +17,7 @@ classdef EyeImage
         %
         %   eye_image.DeviceTimeStamp
         %
-        DeviceTimeStamp 
+        DeviceTimeStamp
         %% Type
         % Gets the type of eye image.
         %
@@ -29,15 +29,15 @@ classdef EyeImage
         %
         %   eye_image.CameraId
         %
-        CameraId 
+        CameraId
         %% Image
         % Gets the bitmap data sent by the eye tracker.
         %
         %   eye_image.Image
         %
-        Image     
+        Image
     end
-    
+
     methods
         function eye_image = EyeImage(system_time_stamp,...
                 device_time_stamp,...
@@ -48,23 +48,23 @@ classdef EyeImage
                 width,...
                 height,...
                 image)
-            
+
             eye_image.SystemTimeStamp = system_time_stamp;
             eye_image.DeviceTimeStamp = device_time_stamp;
             eye_image.Type = EyeImageType(type);
             eye_image.CameraId = camera_id;
-            
+
             full_bits_per_pixel = (bits_per_pixel + padding_per_pixel);
-            
+
             image = typecast(image,['uint',num2str(full_bits_per_pixel)]);
-            
+
             image = image(1:width*height);
-            
+
             eye_image.Image = reshape(image,[width,height])';
-            
+
         end
     end
-    
+
 end
 
 %% See Also
@@ -73,5 +73,12 @@ end
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %

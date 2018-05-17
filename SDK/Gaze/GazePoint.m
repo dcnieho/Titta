@@ -9,7 +9,7 @@
 %%
 classdef GazePoint
     properties (SetAccess = immutable)
-        %% OnDisplayArea 
+        %% OnDisplayArea
         % Gets the gaze point position in 2D on the active display area.
         %
         % gaze_point.OnDisplayArea
@@ -28,24 +28,19 @@ classdef GazePoint
         %
         Validity
     end
-    
+
     methods
         function gaze_point = GazePoint(on_display_area,...
                 in_user_coordinate_system,...
                 validity)
-            
+
             gaze_point.Validity = Validity(validity);
-            
-            if gaze_point.Validity == Validity.Valid
-                gaze_point.OnDisplayArea = on_display_area;
-                gaze_point.InUserCoordinateSystem = in_user_coordinate_system;
-            else
-                gaze_point.OnDisplayArea = nan;
-                gaze_point.InUserCoordinateSystem = nan;
-            end
+            gaze_point.OnDisplayArea = on_display_area;
+            gaze_point.InUserCoordinateSystem = in_user_coordinate_system;
+
         end
     end
-    
+
 end
 
 %% See Also
@@ -54,5 +49,12 @@ end
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %

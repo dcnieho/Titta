@@ -1,27 +1,29 @@
-%% EyeImageType
+%% HMDCalibrationStatus
 %
-% Defines the type of eye image.
+% Defines the overall status of a calibration process.
 %
 %%
-classdef EyeImageType < int32
+classdef HMDCalibrationStatus < int32
    enumeration
-      %% Full
-      % Indicates that the eye tracker could not identify the eyes
-      % and the image is the full image.
+      %% Failure
+      % Indicates that the calibration process failed.
       %
-      %     type.Full (0)
+      %     HMDCalibrationStatus.Failure (0)
       %
-      Full (0)
+      Failure (0),
       %%
-      %% Cropped
-      % Indicates that the image is cropped and shows the eyes.
+      %% Success
+      % Indicates that the calibration process succeeded.
       %
-      %     type.Cropped (1)
+      %     HMDCalibrationStatus.Success (1)
       %
-      Cropped (1)
+      Success (1),
       %%
    end
 end
+
+%% See Also
+% <../HMDBasedCalibration/HMDCalibrationResult.html HMDCalibrationResult>
 
 %% Version
 % !version
@@ -35,3 +37,4 @@ end
 % Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
 % permission is obtained from Tobii AB.
 %
+

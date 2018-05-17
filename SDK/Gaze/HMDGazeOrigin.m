@@ -1,31 +1,31 @@
-%% PupilData
+%% HMDGazeOrigin
 %
-% Provides properties for the pupil data.
+% Provides properties for the HMD gaze origin.
 %
-%   pupil_data = PupilData(diameter,validity)
+%   hmd_gaze_origin = HMDGazeDirection(position_in_hmd_coordinates,...
+%                   validity)
 %
 %%
-classdef PupilData
+classdef HMDGazeOrigin
     properties (SetAccess = immutable)
-        %% Diameter
-        % Gets the diameter of the pupil in millimeters.
+        %% PositionInHMDCoordinates
+        % 	Gets the 3D coordinates that describes the gaze origin in (in mm).
         %
-        %   pupil_data.Diameter
+        % hmd_gaze_origin.PositionInHMDCoordinates
         %
-        Diameter
+        PositionInHMDCoordinates
         %% Validity
-        % Gets the <../Gaze/Validity.html Validity> of the pupil data
+        % Gets the <../Gaze/Validity.html Validity> of the HMD gaze origin data
         %
-        %   pupil_data.Validity
+        % hmd_gaze_origin.Validity
         %
         Validity
     end
 
     methods
-        function pupil_data = PupilData(diameter,validity)
-
-            pupil_data.Validity = Validity(validity);
-            pupil_data.Diameter = diameter;
+        function hmd_gaze_origin = HMDGazeOrigin(position_in_hmd_coordinates, validity)
+            hmd_gaze_origin.Validity = Validity(validity);
+            hmd_gaze_origin.PositionInHMDCoordinates = position_in_hmd_coordinates;
         end
     end
 

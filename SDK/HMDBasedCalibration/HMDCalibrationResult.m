@@ -1,18 +1,12 @@
-%% CalibrationResult
+%% HMDCalibrationResult
 %
-% Represents the result of the calculated calibration.
+% Represents the result of the HMD based calibration.
 %
-%   result = CalibrationResult(points,status)
+%   result = HMDCalibrationResult(status)
 %
 %%
-classdef CalibrationResult
+classdef HMDCalibrationResult
     properties (SetAccess = immutable)
-        %% CalibrationPoints
-        % Gets the list of calibration points and theirs collected
-        % calibration samples.
-        %
-        %   result.CalibrationsPoints
-        CalibrationPoints
         %% Status
         % Gets the status of the calculation.
         %
@@ -21,16 +15,15 @@ classdef CalibrationResult
     end
 
     methods
-        function result = CalibrationResult(points,status)
-            result.CalibrationPoints = points;
-            result.Status = CalibrationStatus(status);
+        function result = HMDCalibrationResult(status)
+            result.Status = HMDCalibrationStatus(status);
         end
     end
 
 end
 
 %% See Also
-% <../ScreenBasedCalibration/CalibrationPoint.html CalibrationPoint>, <../ScreenBasedCalibration/CalibrationStatus.html CalibrationStatus>
+% <../HMDBasedCalibration/HMDCalibrationStatus.html HMDCalibrationStatus>
 
 %% Version
 % !version

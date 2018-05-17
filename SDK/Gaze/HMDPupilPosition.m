@@ -1,34 +1,36 @@
-%% PupilData
+%% HMDPupilPosition
 %
-% Provides properties for the pupil data.
+% Provides properties for the HMD pupil position.
 %
-%   pupil_data = PupilData(diameter,validity)
+%   hmd_pupil_position = HMDPupilPosition(position_in_tracking_area,...
+%                   validity)
 %
 %%
-classdef PupilData
+classdef HMDPupilPosition
     properties (SetAccess = immutable)
-        %% Diameter
-        % Gets the diameter of the pupil in millimeters.
+        %% PositionInTrackingArea
+        % Gets the (normalizes) 2D coordinates that describes the pupil's position in the HMD's tracking area.
         %
-        %   pupil_data.Diameter
+        % hmd_pupil_position.PositionInTrackingArea
         %
-        Diameter
+        PositionInTrackingArea
         %% Validity
-        % Gets the <../Gaze/Validity.html Validity> of the pupil data
+        % Gets the <../Gaze/Validity.html Validity> of the pupil position data.
         %
-        %   pupil_data.Validity
+        % hmd_pupil_position.Validity
         %
         Validity
     end
 
     methods
-        function pupil_data = PupilData(diameter,validity)
+        function hmd_pupil_position = HMDPupilPosition(position_in_tracking_area,...
+                 validity)
 
-            pupil_data.Validity = Validity(validity);
-            pupil_data.Diameter = diameter;
+            hmd_pupil_position.Validity = Validity(validity);
+
+            hmd_pupil_position.PositionInTrackingArea = position_in_tracking_area;
         end
     end
-
 end
 
 %% See Also

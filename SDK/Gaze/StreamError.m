@@ -5,7 +5,7 @@
 %   StreamError = Stream_Error(error_struct)
 %
 %%
-classdef StreamError    
+classdef StreamError
     properties (SetAccess = immutable)
         %% Error
         % Gets the <../Gaze/StreamErrorType.html StreamErrorType>.
@@ -32,21 +32,21 @@ classdef StreamError
         %
         SystemTimeStamp
     end
-    
+
     methods
         function stream_error = StreamError(error_struct)
-       
+
             stream_error.Error = StreamErrorType(error_struct.error); %#ok<*MCNPN>
-            
+
             stream_error.Source = StreamErrorSource(error_struct.source);
-                        
+
             stream_error.Message = error_struct.message;
-            
+
             stream_error.SystemTimeStamp = error_struct.system_time_stamp;
-            
+
         end
     end
-    
+
 end
 
 %% See Also
@@ -55,5 +55,12 @@ end
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %

@@ -1,36 +1,41 @@
-%% CalibrationResult
+%% HMDGazeDirection
 %
-% Represents the result of the calculated calibration.
+% Provides properties for the HMD gaze direction.
 %
-%   result = CalibrationResult(points,status)
+%   hmd_gaze_direction = HMDGazeDirection(unit_vector,...
+%                   validity)
 %
 %%
-classdef CalibrationResult
+classdef HMDGazeDirection
     properties (SetAccess = immutable)
-        %% CalibrationPoints
-        % Gets the list of calibration points and theirs collected
-        % calibration samples.
+        %% UnitVector
+        % Gets the 3D unit vector that describes the gaze direction.
         %
-        %   result.CalibrationsPoints
-        CalibrationPoints
-        %% Status
-        % Gets the status of the calculation.
+        % hmd_gaze_direction.UnitVector
         %
-        %   result.Status
-        Status
+        UnitVector
+        %% Validity
+        % Gets the <../Gaze/Validity.html Validity> of the gaze direction data.
+        %
+        % hmd_gaze_direction.Validity
+        %
+        Validity
     end
 
     methods
-        function result = CalibrationResult(points,status)
-            result.CalibrationPoints = points;
-            result.Status = CalibrationStatus(status);
+        function hmd_gaze_direction = HMDGazeDirection(unit_vector,...
+                 validity)
+
+            hmd_gaze_direction.Validity = Validity(validity);
+
+            hmd_gaze_direction.UnitVector = unit_vector;
         end
     end
 
 end
 
 %% See Also
-% <../ScreenBasedCalibration/CalibrationPoint.html CalibrationPoint>, <../ScreenBasedCalibration/CalibrationStatus.html CalibrationStatus>
+% <../Gaze/Validity.html Validity>
 
 %% Version
 % !version

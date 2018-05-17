@@ -12,7 +12,7 @@
 %                gaze_origin_validity)
 %
 %%
-classdef EyeData    
+classdef EyeData
     properties (SetAccess = immutable)
         %% GazePoint
         % Gets the <../Gaze/GazePoint.html GazePoint> data.
@@ -33,7 +33,7 @@ classdef EyeData
         %
         GazeOrigin
     end
-    
+
     methods
         function eye_data = EyeData(gaze_point_on_display_area,...
                 gaze_point_in_user_coordinate_system,...
@@ -43,20 +43,20 @@ classdef EyeData
                 origin_in_user_coordinate_system,...
                 gaze_origin_in_trackbox_coordinate_system,...
                 gaze_origin_validity)
-            
+
             eye_data.GazePoint = GazePoint(gaze_point_on_display_area,...
                 gaze_point_in_user_coordinate_system,...
                 gaze_point_validity);
-            
+
             eye_data.Pupil = PupilData(pupil_diameter,pupil_validity);
-                        
+
             eye_data.GazeOrigin = GazeOrigin(origin_in_user_coordinate_system,...
                 gaze_origin_in_trackbox_coordinate_system,...
                 gaze_origin_validity);
-            
+
         end
     end
-    
+
 end
 
 %% See Also
@@ -65,5 +65,12 @@ end
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %

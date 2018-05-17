@@ -22,7 +22,7 @@
 %                right_gaze_origin_validity)
 %
 %%
-classdef GazeData 
+classdef GazeData
     properties (SetAccess = immutable)
         %% LeftEye
         % Gets the gaze data (<../Gaze/EyeData.html EyeData>) for the left eye.
@@ -49,7 +49,7 @@ classdef GazeData
         %
         SystemTimeStamp
     end
-    
+
     methods
         function gaze_data = GazeData(device_time_stamp,...
             system_time_stamp,...
@@ -69,11 +69,11 @@ classdef GazeData
                 right_gaze_origin_in_user_coordinate_system,...
                 right_gaze_origin_in_trackbox_coordinate_system,...
                 right_gaze_origin_validity)
-            
+
             gaze_data.DeviceTimeStamp = device_time_stamp;
-            
+
             gaze_data.SystemTimeStamp = system_time_stamp;
-            
+
             gaze_data.LeftEye = EyeData(left_gaze_point_on_display_area,...
                 left_gaze_point_in_user_coordinate_system,...
                 left_gaze_point_validity,...
@@ -82,7 +82,7 @@ classdef GazeData
                 left_gaze_origin_in_user_coordinate_system,...
                 left_gaze_origin_in_trackbox_coordinate_system,...
                 left_gaze_origin_validity);
-            
+
             gaze_data.RightEye = EyeData(right_gaze_point_on_display_area,...
                 right_gaze_point_in_user_coordinate_system,...
                 right_gaze_point_validity,...
@@ -91,10 +91,10 @@ classdef GazeData
                 right_gaze_origin_in_user_coordinate_system,...
                 right_gaze_origin_in_trackbox_coordinate_system,...
                 right_gaze_origin_validity);
-            
+
         end
     end
-    
+
 end
 
 %% See Also
@@ -103,5 +103,12 @@ end
 %% Version
 % !version
 %
-% Copyright !year Tobii Pro
+% COPYRIGHT !year - PROPERTY OF TOBII AB
+% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+%
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
+% Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
+% permission is obtained from Tobii AB.
 %
