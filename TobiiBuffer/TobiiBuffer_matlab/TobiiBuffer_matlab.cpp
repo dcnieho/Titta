@@ -404,12 +404,10 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         if (nrhs < 2 || !mxIsChar(prhs[1]))
             mexErrMsgTxt("TobiiBuffer: Second argument must be a string.");
 
-        handle_type newHandle = ++handleVal;
-
         std::pair<instanceMap_type::iterator, bool> insResult;
         if (nrhs > 1) {
             char* address = mxArrayToString(prhs[1]);
-            insResult = instanceTab.insert(indPtrPair_type(newHandle, std::make_shared<class_type>(address)));
+            insResult = instanceTab.insert(indPtrPair_type(++handleVal, std::make_shared<class_type>(address)));
             mxFree(address);
         }
 
