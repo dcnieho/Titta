@@ -16,7 +16,7 @@ namespace TobiiBuff
     constexpr size_t g_eyeImageBufDefaultSize = 1 << 14;
     constexpr bool   g_eyeImageAsGIFDefault = false;
     constexpr size_t g_eyeImageTempBufDefaultSize = 1 << 10;
-	constexpr bool   g_stopBufferEmptiesDefault = false;
+    constexpr bool   g_stopBufferEmptiesDefault = false;
     constexpr size_t g_consumeDefaultAmount = -1;
     constexpr size_t g_peekDefaultAmount = 1;
 
@@ -145,7 +145,7 @@ public:
     // clear all buffer contents
     void clearSampleBuffer();
     // stop optionally deletes the buffer
-    bool stopSampleBuffering(bool emptyBuffer = g_stopBufferEmptiesDefault);
+    bool stopSampleBuffering(bool emptyBuffer = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiResearchGazeData> consumeSamples(size_t firstN = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
@@ -160,7 +160,7 @@ public:
     // clear all buffer contents
     void clearEyeImageBuffer();
     // stop optionally deletes the buffer
-    bool stopEyeImageBuffering(bool emptyBuffer = g_stopBufferEmptiesDefault);
+    bool stopEyeImageBuffering(bool emptyBuffer = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiBuff::eyeImage> consumeEyeImages(size_t firstN = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)

@@ -293,6 +293,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         return;
     }
     case Action::EnableTempEyeImageBuffer:
+    {
         uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
@@ -302,6 +303,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         instance->enableTempEyeImageBuffer(bufSize);
         return;
+    }
     case Action::DisableTempEyeImageBuffer:
         instance->disableTempEyeImageBuffer();
         return;
@@ -384,21 +386,16 @@ namespace
     }
 
     template <typename T>
-    void Vec2StructToArray(const T& samp_, double* storage_, size_t* i_)
+    void VectorStructToArray(const T& samp_, double* storage_, size_t* i_)
     {
         storage_[(*i_)++] = samp_.x;
         storage_[(*i_)++] = samp_.y;
-    }
-    template <typename T>
-    void Vec3StructToArray(const T& samp_, double* storage_, size_t* i_)
-    {
-        storage_[(*i_)++] = samp_.x;
-        storage_[(*i_)++] = samp_.y;
-        storage_[(*i_)++] = samp_.z;
+        if constexpr(std::disjunction<std::is_same<T, TobiiResearchPoint3D>, std::is_same<T, TobiiResearchNormalizedPoint3D>>::value)
+            storage_[(*i_)++] = samp_.z;
     }
 
 
-    mxArray* FieldToMatlab(std::vector<TobiiResearchGazeData> data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
+    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
         const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","validity"};
@@ -415,13 +412,13 @@ namespace
         auto storage = static_cast<double*>(mxGetData(temp2));
         size_t i = 0;
         for (auto &samp : data_)
-            Vec2StructToArray((samp.*field_).gaze_point.position_on_display_area, storage, &i);
+            VectorStructToArray((samp.*field_).gaze_point.position_on_display_area, storage, &i);
         // 1.2 gazePoint.inUserCoords
         mxSetFieldByNumber(temp, 0, 1, temp2 = mxCreateUninitNumericMatrix(3, data_.size(), mxDOUBLE_CLASS, mxREAL));
         storage = static_cast<double*>(mxGetData(temp2));
         i = 0;
         for (auto &samp : data_)
-            Vec3StructToArray((samp.*field_).gaze_point.position_in_user_coordinates, storage, &i);
+            VectorStructToArray((samp.*field_).gaze_point.position_in_user_coordinates, storage, &i);
         // 1.3 gazePoint.validity
         mxSetFieldByNumber(temp, 0, 2, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL));
         auto storageb = static_cast<bool*>(mxGetData(temp2));
@@ -451,13 +448,13 @@ namespace
         storage = static_cast<double*>(mxGetData(temp2));
         i = 0;
         for (auto &samp : data_)
-            Vec3StructToArray((samp.*field_).gaze_origin.position_in_user_coordinates, storage, &i);
+            VectorStructToArray((samp.*field_).gaze_origin.position_in_user_coordinates, storage, &i);
         // 3.2 gazeOrigin.inTrackBoxCoords
         mxSetFieldByNumber(temp, 0, 1, temp2 = mxCreateUninitNumericMatrix(3, data_.size(), mxDOUBLE_CLASS, mxREAL));
         storage = static_cast<double*>(mxGetData(temp2));
         i = 0;
         for (auto &samp : data_)
-            Vec3StructToArray((samp.*field_).gaze_origin.position_in_track_box_coordinates, storage, &i);
+            VectorStructToArray((samp.*field_).gaze_origin.position_in_track_box_coordinates, storage, &i);
         // 3.3 gazeOrigin.validity
         mxSetFieldByNumber(temp, 0, 2, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL));
         storageb = static_cast<bool*>(mxGetData(temp2));
@@ -468,11 +465,11 @@ namespace
         return out;
     }
 
-    template <typename T>
-    mxArray* FieldToMatlab(std::vector<TobiiResearchGazeData> data_, T TobiiResearchGazeData::* field_)
+    template <typename S, typename T, typename U = T>	// default output storage type U to type matching input type T, can override through type tag dispatch
+    mxArray* FieldToMatlab(const std::vector<S>& data_, T S::* field_, U = {})
     {
         mxArray* temp;
-        auto storage = static_cast<T*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(T), mxREAL)));
+        auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(U{}), mxREAL)));
         size_t i = 0;
         for (auto &samp : data_)
             storage[i++] = samp.*field_;
@@ -500,18 +497,7 @@ namespace
         return out;
     }
 
-    template <typename T, typename U = T>	// default output storage type U to type matching input type T, can override through type tag dispatch
-    mxArray* FieldToMatlab(std::vector<TobiiBuff::eyeImage> data_, T TobiiBuff::eyeImage::* field_, U = {})
-    {
-        mxArray* temp;
-        auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(U), mxREAL)));
-        size_t i = 0;
-        for (auto &samp : data_)
-            storage[i++] = samp.*field_;
-        return temp;
-    }
-
-    mxArray* eyeImagesToMatlab(std::vector<TobiiBuff::eyeImage> data_)
+    mxArray* eyeImagesToMatlab(const std::vector<TobiiBuff::eyeImage>& data_)
     {
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
@@ -568,12 +554,12 @@ namespace
         if (allGif)
         {
             const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","isCropped","cameraID","isGif","image"};
-            mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
         else
         {
             const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","bitsPerPixel","paddingPerPixel","width","height","isCropped","cameraID","isGif","image"};
-            mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
 
         mxArray* temp;
