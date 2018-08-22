@@ -8,7 +8,7 @@ namespace {
     typedef std::shared_lock<mutex_type> read_lock;
     typedef std::unique_lock<mutex_type> write_lock;
 
-    mutex_type mSamp, mEyeImage;
+    mutex_type mSamp, mEyeImage, mExtSignal, mTimeSync;
 
     read_lock  lockForReading(mutex_type& m_) {return  read_lock(m_);}
     write_lock lockForWriting(mutex_type& m_) {return write_lock(m_);}
@@ -20,7 +20,7 @@ void TobiiSampleCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
     if (user_data)
     {
         auto l = lockForWriting(mSamp);
-        static_cast<TobiiBuffer*>(user_data)->_samples.push_back(*gaze_data_);
+        static_cast<TobiiBuffer*>(user_data)->getSampleBuffer().push_back(*gaze_data_);
     }
 }
 void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
@@ -39,6 +39,22 @@ void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_d
         static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
     }
 }
+void TobiiExternalDataCallback(TobiiResearchExternalSignalData* ext_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting(mExtSignal);
+        //static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
+    }
+}
+void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting(mTimeSync);
+        //static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
+    }
+}
 
 
 
@@ -54,46 +70,66 @@ TobiiBuffer::~TobiiBuffer()
 }
 
 
-bool TobiiBuffer::startSampleBuffering(size_t initialBufferSize_ /*= 1<<22*/)
+bool TobiiBuffer::startSampleBuffering(size_t initialBufferSize_ /*= g_sampleBufDefaultSize*/)
 {
     _samples.reserve(initialBufferSize_);
     return tobii_research_subscribe_to_gaze_data(_eyetracker,TobiiSampleCallback,this) == TOBII_RESEARCH_STATUS_OK;
 }
+void TobiiBuffer::enableTempSampleBuffer(size_t initialBufferSize_ /*= g_sampleTempBufDefaultSize*/)
+{
+    if (!_samplesUseTempBuf)
+    {
+        _samplesTemp.reserve(initialBufferSize_);
+        _samplesUseTempBuf = true;
+    }
+}
+void TobiiBuffer::disableTempSampleBuffer()
+{
+    if (_samplesUseTempBuf)
+    {
+        _samplesUseTempBuf = false;
+        _samplesTemp.clear();
+    }
+}
 void TobiiBuffer::clearSampleBuffer()
 {
     auto l = lockForWriting(mSamp);
-    _samples.clear();
+    getSampleBuffer().clear();
 }
-bool TobiiBuffer::stopSampleBuffering(bool emptyBuffer /*= false*/)
+bool TobiiBuffer::stopSampleBuffering(bool emptyBuffer /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_gaze_data(_eyetracker,TobiiSampleCallback) == TOBII_RESEARCH_STATUS_OK;
     if (emptyBuffer)
         clearSampleBuffer();
     return success;
 }
-std::vector<TobiiResearchGazeData> TobiiBuffer::consumeSamples(size_t firstN/* = -1*/)
+std::vector<TobiiResearchGazeData> TobiiBuffer::consumeSamples(size_t firstN/* = g_consumeDefaultAmount*/)
 {
     auto l = lockForWriting(mSamp);
-    if (firstN>=_samples.size())
-        return std::vector<TobiiResearchGazeData>(std::move(_samples));
+    auto& sampBuf = getSampleBuffer();
+    if (firstN == -1 || firstN >= sampBuf.size())	// firstN=-1 overflows, so first check strictly not needed. Better keep code legible tho
+        return std::vector<TobiiResearchGazeData>(std::move(sampBuf));
     else
     {
         std::vector<TobiiResearchGazeData> out;
-        out.insert(out.end(), std::make_move_iterator(_samples.begin()), std::make_move_iterator(_samples.begin()+firstN));
-        _samples.erase(_samples.begin(), _samples.begin()+firstN);
+        out.reserve(firstN);
+        out.insert(out.end(), std::make_move_iterator(sampBuf.begin()), std::make_move_iterator(sampBuf.begin()+firstN));
+        sampBuf.erase(sampBuf.begin(), sampBuf.begin()+firstN);
         return out;
     }
 }
-std::vector<TobiiResearchGazeData> TobiiBuffer::peekSamples(size_t lastN/* = 1*/)
+std::vector<TobiiResearchGazeData> TobiiBuffer::peekSamples(size_t lastN/* = g_peekDefaultAmount*/)
 {
     auto l = lockForReading(mSamp);
+    auto& sampBuf = getSampleBuffer();
     // copy last N or whole vector if less than N elements available
-    return std::vector<TobiiResearchGazeData>(_samples.end() - std::min(_samples.size(),lastN),_samples.end());
+    return std::vector<TobiiResearchGazeData>(sampBuf.end() - std::min(sampBuf.size(),lastN), sampBuf.end());
 }
 
 
 
 namespace {
+    // eye image helpers
     bool doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
     {
         if (asGif_)
@@ -110,19 +146,13 @@ namespace {
     }
 }
 
-
-bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= 1<<22*/, bool asGif_ /*= false*/)
+bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= g_eyeImageBufDefaultSize*/, bool asGif_ /*= g_eyeImageAsGIFDefault*/)
 {
     _eyeImages.reserve(initialBufferSize_);
     _eyeImIsGif = asGif_;
     return doSubscribeEyeImage(_eyetracker, this, asGif_);
 }
-void TobiiBuffer::clearEyeImageBuffer()
-{
-    auto l = lockForWriting(mEyeImage);
-    getEyeImageBuffer().clear();
-}
-void TobiiBuffer::enableTempEyeBuffer(size_t initialBufferSize_ /*= 1 << 10*/)
+void TobiiBuffer::enableTempEyeImageBuffer(size_t initialBufferSize_ /*= g_eyeImageTempBufDefaultSize*/)
 {
     if (!_eyeImUseTempBuf)
     {
@@ -141,7 +171,7 @@ void TobiiBuffer::enableTempEyeBuffer(size_t initialBufferSize_ /*= 1 << 10*/)
         }
     }
 }
-void TobiiBuffer::disableTempEyeBuffer()
+void TobiiBuffer::disableTempEyeImageBuffer()
 {
     if (_eyeImUseTempBuf)
     {
@@ -156,33 +186,38 @@ void TobiiBuffer::disableTempEyeBuffer()
         _eyeImagesTemp.clear();
     }
 }
-bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= false*/)
+void TobiiBuffer::clearEyeImageBuffer()
+{
+    auto l = lockForWriting(mEyeImage);
+    getEyeImageBuffer().clear();
+}
+bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
     if (emptyBuffer)
         clearEyeImageBuffer();
     return success;
 }
-std::vector<TobiiEyeImage> TobiiBuffer::consumeEyeImages(size_t firstN/* = -1*/)
+std::vector<TobiiBuff::eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN/* = g_consumeDefaultAmount*/)
 {
     auto l = lockForWriting(mEyeImage);
-    auto& imVec = getEyeImageBuffer();
+    auto& imBuf = getEyeImageBuffer();
 
-    if (firstN==-1 || firstN>=imVec.size())    // firstN=1 overflows, so first check strictly not needed. Better keep code legible tho
-        return std::vector<TobiiEyeImage>(std::move(imVec));
+    if (firstN==-1 || firstN>=imBuf.size())    // firstN=-1 overflows, so first check strictly not needed. Better keep code legible tho
+        return std::vector<TobiiBuff::eyeImage>(std::move(imBuf));
     else
     {
-        std::vector<TobiiEyeImage> out;
+        std::vector<TobiiBuff::eyeImage> out;
         out.reserve(firstN);
-        out.insert(out.end(), std::make_move_iterator(imVec.begin()), std::make_move_iterator(imVec.begin()+firstN));
-        imVec.erase(imVec.begin(), imVec.begin()+firstN);
+        out.insert(out.end(), std::make_move_iterator(imBuf.begin()), std::make_move_iterator(imBuf.begin()+firstN));
+        imBuf.erase(imBuf.begin(), imBuf.begin()+firstN);
         return out;
     }
 }
-std::vector<TobiiEyeImage> TobiiBuffer::peekEyeImages(size_t lastN/* = 1*/)
+std::vector<TobiiBuff::eyeImage> TobiiBuffer::peekEyeImages(size_t lastN/* = g_peekDefaultAmount*/)
 {
     auto l = lockForReading(mEyeImage);
     // copy last N or whole vector if less than N elements available
-    auto& imVec = getEyeImageBuffer();
-    return std::vector<TobiiEyeImage>(imVec.end() - std::min(imVec.size(),lastN),imVec.end());
+    auto& imBuf = getEyeImageBuffer();
+    return std::vector<TobiiBuff::eyeImage>(imBuf.end() - std::min(imBuf.size(),lastN),imBuf.end());
 }

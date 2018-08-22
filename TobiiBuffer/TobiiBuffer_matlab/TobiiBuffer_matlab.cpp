@@ -73,15 +73,17 @@ enum class Action
     Delete,
 
     StartSampleBuffering,
+    EnableTempSampleBuffer,
+    DisableTempSampleBuffer,
     ClearSampleBuffer,
     StopSampleBuffering,
     ConsumeSamples,
     PeekSamples,
 
     StartEyeImageBuffering,
+    EnableTempEyeImageBuffer,
+    DisableTempEyeImageBuffer,
     ClearEyeImageBuffer,
-    EnableTempEyeBuffer,
-    DisableTempEyeBuffer,
     StopEyeImageBuffering,
     ConsumeEyeImages,
     PeekEyeImages
@@ -90,22 +92,24 @@ enum class Action
 // Map string (first input argument to mexFunction) to an Action
 const std::map<std::string, Action> actionTypeMap =
 {
-    { "new",                    Action::New },
-    { "delete",                 Action::Delete },
+    { "new",						Action::New },
+    { "delete",						Action::Delete },
 
-    { "startSampleBuffering",   Action::StartSampleBuffering },
-    { "clearSampleBuffer",      Action::ClearSampleBuffer },
-    { "stopSampleBuffering",    Action::StopSampleBuffering },
-    { "consumeSamples",         Action::ConsumeSamples },
-    { "peekSamples",            Action::PeekSamples },
+    { "startSampleBuffering",		Action::StartSampleBuffering },
+    { "enableTempSampleBuffer",		Action::EnableTempSampleBuffer },
+    { "disableTempSampleBuffer",	Action::DisableTempSampleBuffer },
+    { "clearSampleBuffer",			Action::ClearSampleBuffer },
+    { "stopSampleBuffering",		Action::StopSampleBuffering },
+    { "consumeSamples",				Action::ConsumeSamples },
+    { "peekSamples",				Action::PeekSamples },
 
-    { "startEyeImageBuffering", Action::StartEyeImageBuffering },
-    { "clearEyeImageBuffer",    Action::ClearEyeImageBuffer },
-    { "enableTempEyeBuffer",	Action::EnableTempEyeBuffer },
-    { "disableTempEyeBuffer",	Action::DisableTempEyeBuffer },
-    { "stopEyeImageBuffering",  Action::StopEyeImageBuffering },
-    { "consumeEyeImages",       Action::ConsumeEyeImages },
-    { "peekEyeImages",          Action::PeekEyeImages },
+    { "startEyeImageBuffering",		Action::StartEyeImageBuffering },
+    { "enableTempEyeImageBuffer",	Action::EnableTempEyeImageBuffer },
+    { "disableTempEyeImageBuffer",	Action::DisableTempEyeImageBuffer },
+    { "clearEyeImageBuffer",		Action::ClearEyeImageBuffer },
+    { "stopEyeImageBuffering",		Action::StopEyeImageBuffering },
+    { "consumeEyeImages",			Action::ConsumeEyeImages },
+    { "peekEyeImages",				Action::PeekEyeImages },
 };
 
 typedef unsigned int handle_type;
@@ -270,7 +274,7 @@ namespace {
     }
 
     template <typename T, typename U=T>	// default output storage type U to type matching input type T, can override through type tag dispatch
-    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, T TobiiEyeImage::* field_, U = {})
+    mxArray* FieldToMatlab(std::vector<TobiiBuff::eyeImage> data_, T TobiiBuff::eyeImage::* field_, U = {})
     {
         mxArray* temp;
         auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(U), mxREAL)));
@@ -280,7 +284,7 @@ namespace {
         return temp;
     }
 
-    mxArray* eyeImagesToMatlab(std::vector<TobiiEyeImage> data_)
+    mxArray* eyeImagesToMatlab(std::vector<TobiiBuff::eyeImage> data_)
     {
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
@@ -318,7 +322,7 @@ namespace {
         return out;
     }
 
-    mxArray* EyeImageVectorToMatlab(std::vector<TobiiEyeImage> data_)
+    mxArray* EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -347,14 +351,14 @@ namespace {
 
         mxArray* temp;
         // all simple fields
-        mxSetFieldByNumber(out,0,0, FieldToMatlab(data_, &TobiiEyeImage::device_time_stamp));
-        mxSetFieldByNumber(out,0,1, FieldToMatlab(data_, &TobiiEyeImage::system_time_stamp));
+        mxSetFieldByNumber(out,0,0, FieldToMatlab(data_, &TobiiBuff::eyeImage::device_time_stamp));
+        mxSetFieldByNumber(out,0,1, FieldToMatlab(data_, &TobiiBuff::eyeImage::system_time_stamp));
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiEyeImage::bits_per_pixel));
-            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiEyeImage::padding_per_pixel));
-            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &TobiiEyeImage::width, 0.));		// 0. to force storing as double
-            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiEyeImage::height, 0.));	// 0. to force storing as double
+            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiBuff::eyeImage::bits_per_pixel));
+            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiBuff::eyeImage::padding_per_pixel));
+            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &TobiiBuff::eyeImage::width, 0.));		// 0. to force storing as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiBuff::eyeImage::height, 0.));		// 0. to force storing as double
         }
         int off = 4 * (!allGif);
         mxSetFieldByNumber(out,0,2+off, temp = mxCreateUninitNumericMatrix(data_.size(),1, mxLOGICAL_CLASS, mxREAL));
@@ -362,8 +366,8 @@ namespace {
         size_t i = 0;
         for (auto &frame: data_)
             storage[i++] = frame.type==TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED;
-        mxSetFieldByNumber(out,0,3+off, FieldToMatlab(data_, &TobiiEyeImage::camera_id));
-        mxSetFieldByNumber(out,0,4+off, FieldToMatlab(data_, &TobiiEyeImage::isGif));
+        mxSetFieldByNumber(out,0,3+off, FieldToMatlab(data_, &TobiiBuff::eyeImage::camera_id));
+        mxSetFieldByNumber(out,0,4+off, FieldToMatlab(data_, &TobiiBuff::eyeImage::isGif));
         mxSetFieldByNumber(out,0,5+off, eyeImagesToMatlab(data_));
 
         return out;
@@ -430,145 +434,142 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
     case Action::StartSampleBuffering:
     {
-        bool ret;
+        uint64_t bufSize = TobiiBuff::g_sampleBufDefaultSize;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
                 mexErrMsgTxt("startSampleBuffering: Expected argument to be a uint64 scalar.");
-            ret = instance->startSampleBuffering(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
-        {
-            ret = instance->startSampleBuffering();
-        }
-        plhs[0] = mxCreateLogicalScalar(ret);
+        plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
         return;
     }
+    case Action::EnableTempSampleBuffer:
+    {
+        uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("enableTempSampleBuffer: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        instance->startSampleBuffering(bufSize);
+        return;
+    }
+    case Action::DisableTempSampleBuffer:
+        instance->disableTempSampleBuffer();
+        return;
     case Action::ClearSampleBuffer:
         instance->clearSampleBuffer();
         return;
     case Action::StopSampleBuffering:
     {
-        if (nrhs < 3)
-            mexErrMsgTxt("stopSampleBuffering: Expected deleteBuffer input.");
-        if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-            mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
-        bool deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
+            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        }
 
         instance->stopSampleBuffering(deleteBuffer);
         return;
     }
     case Action::ConsumeSamples:
     {
-        std::vector<TobiiResearchGazeData> ret;
+        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
                 mexErrMsgTxt("consumeSamples: Expected argument to be a uint64 scalar.");
-            ret = instance->consumeSamples(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
-        {
-            ret = instance->consumeSamples();
-        }
-        plhs[0] = SampleVectorToMatlab(ret);
+        plhs[0] = SampleVectorToMatlab(instance->consumeSamples(nSamp));
         return;
     }
     case Action::PeekSamples:
     {
-        std::vector<TobiiResearchGazeData> ret;
+        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
                 mexErrMsgTxt("peekSamples: Expected argument to be a uint64 scalar.");
-            ret = instance->peekSamples(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
-        {
-            ret = instance->peekSamples();
-        }
-        plhs[0] = SampleVectorToMatlab(ret);
+        plhs[0] = SampleVectorToMatlab(instance->peekSamples(nSamp));
         return;
     }
 
     case Action::StartEyeImageBuffering:
     {
-        bool ret;
+        uint64_t bufSize = TobiiBuff::g_eyeImageBufDefaultSize;
+        bool asGif = TobiiBuff::g_eyeImageAsGIFDefault;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startEyeImageBuffering: Expected argument to be a uint64 scalar.");
-            ret = instance->startEyeImageBuffering(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+                mexErrMsgTxt("startEyeImageBuffering: Expected first argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
+        if (nrhs > 3 && !mxIsEmpty(prhs[3]))
         {
-            ret = instance->startEyeImageBuffering();
+            if (!mxIsLogical(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                mexErrMsgTxt("startEyeImageBuffering: Expected second argument to be a logical scalar.");
+            asGif = mxIsLogicalScalarTrue(prhs[2]);
         }
-        plhs[0] = mxCreateLogicalScalar(ret);
+        plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
         return;
     }
+    case Action::EnableTempEyeImageBuffer:
+        uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("enableTempEyeImageBuffer: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        instance->enableTempEyeImageBuffer(bufSize);
+        return;
+    case Action::DisableTempEyeImageBuffer:
+        instance->disableTempEyeImageBuffer();
+        return;
     case Action::ClearEyeImageBuffer:
         instance->clearEyeImageBuffer();
         return;
-    case Action::EnableTempEyeBuffer:
-    {
-        bool ret;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("enableTempEyeBuffer: Expected argument to be a uint64 scalar.");
-            ret = instance->enableTempEyeBuffer(*static_cast<uint64_t*>(mxGetData(prhs[2])));
-        }
-        else
-        {
-            ret = instance->enableTempEyeBuffer();
-        }
-        return;
-    }
-    case Action::DisableTempEyeBuffer:
-        instance->disableTempEyeBuffer();
-        return;
     case Action::StopEyeImageBuffering:
     {
-        if (nrhs < 3)
-            mexErrMsgTxt("stopEyeImageBuffering: Expected deleteBuffer input.");
-        if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-            mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
-        bool deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
+            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        }
 
         instance->stopEyeImageBuffering(deleteBuffer);
         return;
     }
     case Action::ConsumeEyeImages:
     {
-        std::vector<TobiiEyeImage> ret;
+        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
                 mexErrMsgTxt("consumeEyeImages: Expected argument to be a uint64 scalar.");
-            ret = instance->consumeEyeImages(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
-        {
-            ret = instance->consumeEyeImages();
-        }
-        plhs[0] = EyeImageVectorToMatlab(ret);
+        plhs[0] = EyeImageVectorToMatlab(instance->consumeEyeImages(nSamp));
         return;
     }
     case Action::PeekEyeImages:
     {
-        std::vector<TobiiEyeImage> ret;
+        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peekEyeImage: Expected argument to be a uint64 scalar.");
-            ret = instance->peekEyeImages(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+                mexErrMsgTxt("peekEyeImages: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
-        else
-        {
-            ret = instance->peekEyeImages();
-        }
-        plhs[0] = EyeImageVectorToMatlab(ret);
+        plhs[0] = EyeImageVectorToMatlab(instance->peekEyeImages(nSamp));
         return;
     }
 

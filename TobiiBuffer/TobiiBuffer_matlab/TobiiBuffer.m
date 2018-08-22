@@ -39,13 +39,28 @@ classdef TobiiBuffer < cppclass
                 success = this.cppmethod('startSampleBuffering');
             end
         end
+        function enableTempSampleBuffer(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                this.cppmethod('enableTempSampleBuffer',uint64(initialBufferSize));
+            else
+                this.cppmethod('enableTempSampleBuffer');
+            end
+        end
+        function disableTempSampleBuffer(this)
+            this.cppmethod('disableTempSampleBuffer');
+        end
         function clearSampleBuffer(this)
             this.cppmethod('clearSampleBuffer');
         end
         function stopSampleBuffering(this,doDeleteBuffer)
-            % required boolean input indicating whether buffer should be
+            % optional boolean input indicating whether buffer should be
             % deleted
-            this.cppmethod('stopSampleBuffering', doDeleteBuffer);
+            if nargin>1
+                this.cppmethod('stopSampleBuffering',logical(doDeleteBuffer));
+            else
+                this.cppmethod('stopSampleBuffering');
+            end
         end
         function data = consumeSamples(this,firstN)
             % optional input indicating how many samples to read from the
@@ -66,21 +81,39 @@ classdef TobiiBuffer < cppclass
             end
         end
         
-        function success = startEyeImageBuffering(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
+        function success = startEyeImageBuffering(this,initialBufferSize,asGif)
+            % optional buffer size input, and input requesting gif-encoded
+            % instead of raw images
+            if nargin>2
+                success = this.cppmethod('startEyeImageBuffering',uint64(initialBufferSize),logical(asGif));
+            elseif nargin>1
                 success = this.cppmethod('startEyeImageBuffering',uint64(initialBufferSize));
             else
                 success = this.cppmethod('startEyeImageBuffering');
             end
         end
+        function enableTempEyeImageBuffer(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                this.cppmethod('enableTempEyeImageBuffer',uint64(initialBufferSize));
+            else
+                this.cppmethod('enableTempEyeImageBuffer');
+            end
+        end
+        function disableTempEyeImageBuffer(this)
+            this.cppmethod('disableTempSampleBuffer');
+        end
         function clearEyeImageBuffer(this)
             this.cppmethod('clearEyeImageBuffer');
         end
         function stopEyeImageBuffering(this,doDeleteBuffer)
-            % required boolean input indicating whether buffer should be
+            % optional boolean input indicating whether buffer should be
             % deleted
-            this.cppmethod('stopEyeImageBuffering', doDeleteBuffer);
+            if nargin>1
+                this.cppmethod('stopEyeImageBuffering',logical(doDeleteBuffer));
+            else
+                this.cppmethod('stopEyeImageBuffering');
+            end
         end
         function data = consumeEyeImages(this,firstN)
             % optional input indicating how many samples to read from the
