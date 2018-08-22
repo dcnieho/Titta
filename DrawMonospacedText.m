@@ -1,5 +1,5 @@
-function [nx, ny, textbounds, cache] = DrawMonospacedText(win, tstring, sx, sy, baseColor, wrapat, vSpacing, resetStyle, winRect)
-% [nx, ny, textbounds] = DrawMonospacedText(win, tstring [, sx][, sy][, color][, wrapat][, vSpacing][, resetStyle][, winRect])
+function [nx, ny, textbounds, cache] = DrawMonospacedText(win, tstring, sx, sy, baseColor, wrapat, vSpacing, resetStyle, winRect, cacheOnly)
+% [nx, ny, textbounds] = DrawMonospacedText(win, tstring [, sx][, sy][, color][, wrapat][, vSpacing][, resetStyle][, winRect][, cacheOnly])
 %
 % A size/font command before a newline can change the height of that line.
 % After the newline it changes the height of the next (new) line. So if you
@@ -111,6 +111,11 @@ end
 % of the 'win'dow, but usercode can specify arbitrary override as 11'th arg:
 if nargin < 9 || isempty(winRect)
     winRect = Screen('Rect', win);
+end
+
+% default actually draw input to screen. optionally just provide catch
+if nargin < 10 || isempty(cacheOnly)
+    cacheOnly = false;
 end
 
 % Need different encoding for repchar that matches class of input tstring:
@@ -280,7 +285,11 @@ end
 % enabled.
 disableClip = nargout >= 3;
 
-[nx,ny,textbounds] = DoDraw(win,disableClip,sx,sy,subStrings,switches,fmts,fmtCombs,qLineFeed,lHeight,ssBaseLineOff,winRect,previous);
+if ~cacheOnly
+    [nx,ny,textbounds] = DoDraw(win,disableClip,sx,sy,subStrings,switches,fmts,fmtCombs,qLineFeed,lHeight,ssBaseLineOff,winRect,previous);
+else
+    [nx,ny,textbounds] = deal([]);
+end
 if nargout>3
     % make cache
     cache.win = win;

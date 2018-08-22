@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <MATLAB_BASE Condition="'$(Platform)' == 'Win32'">$(MATLAB32_ROOT)</MATLAB_BASE>
+    <MATLAB_BASE Condition="'$(Platform)' == 'x64'">$(MATLAB_ROOT)</MATLAB_BASE>
+    <MATLAB_LIB_PATH Condition="'$(Platform)' == 'Win32'">$(MATLAB32_ROOT)\extern\lib\win32\microsoft</MATLAB_LIB_PATH>
+    <MATLAB_LIB_PATH Condition="'$(Platform)' == 'x64'">$(MATLAB_ROOT)\extern\lib\win64\microsoft</MATLAB_LIB_PATH>
+  </PropertyGroup>
+</Project>
