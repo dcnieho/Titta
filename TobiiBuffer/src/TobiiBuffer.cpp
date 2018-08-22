@@ -100,7 +100,7 @@ void TobiiBuffer::clearSampleBuffer()
 bool TobiiBuffer::stopSampleBuffering(bool emptyBuffer /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_gaze_data(_eyetracker,TobiiSampleCallback) == TOBII_RESEARCH_STATUS_OK;
-	disableTempSampleBuffer();
+    disableTempSampleBuffer();
     if (emptyBuffer)
         clearSampleBuffer();
     return success;
@@ -196,7 +196,7 @@ void TobiiBuffer::clearEyeImageBuffer()
 bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-	disableTempEyeImageBuffer();
+    disableTempEyeImageBuffer();
     if (emptyBuffer)
         clearEyeImageBuffer();
     return success;
