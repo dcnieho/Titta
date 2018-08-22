@@ -8,7 +8,7 @@
 // Design goals:
 //   1. Manage multiple persistent instances of a C++ class
 //   2. Small consecutive integer handles used in MATLAB (not cast pointers)
-//   3. Transparently handle resource management (i.e. MATLAB never 
+//   3. Transparently handle resource management (i.e. MATLAB never
 //      responsible for memory allocated for C++ classes)
 //       a. No memory leaked if MATLAB fails to issue "delete" action
 //       b. Automatic deallocation if MEX-file prematurely unloaded
@@ -17,7 +17,7 @@
 //   6. No wrapper class or functions mimicking mexFunction, just an intuitive
 //      switch-case block in mexFunction.
 //
-// Note that these goals should be acheved without regard to any MATLAB class, 
+// Note that these goals should be acheved without regard to any MATLAB class,
 // but which can also help address memory management issues.  As such, the
 // resulting MEX-file can safely be used directly (but not too elegantly).
 //
@@ -28,13 +28,13 @@
 //      the MEX function in MATLAB.
 //   2. Customize the handling for each action in the switch statement in the
 //      body of mexFunction (e.g. call the relevant C++ class method).
-//  
+//
 // Implementation:
 //
 // For your C++ class, class_type, mexFunction uses static data storage to hold
-// a persistent (between calls to mexFunction) table of integer handles and 
+// a persistent (between calls to mexFunction) table of integer handles and
 // smart pointers to dynamically allocated class instances.  A std::map is used
-// for this purpose, which facilitates locating known handles, for which only 
+// for this purpose, which facilitates locating known handles, for which only
 // valid instances of your class are guaranteed to exist:
 //
 //    typedef unsigned int handle_type;
@@ -80,6 +80,8 @@ enum class Action
 
     StartEyeImageBuffering,
     ClearEyeImageBuffer,
+    EnableTempEyeBuffer,
+    DisableTempEyeBuffer,
     StopEyeImageBuffering,
     ConsumeEyeImages,
     PeekEyeImages
@@ -99,6 +101,8 @@ const std::map<std::string, Action> actionTypeMap =
 
     { "startEyeImageBuffering", Action::StartEyeImageBuffering },
     { "clearEyeImageBuffer",    Action::ClearEyeImageBuffer },
+    { "enableTempEyeBuffer",	Action::EnableTempEyeBuffer },
+    { "disableTempEyeBuffer",	Action::DisableTempEyeBuffer },
     { "stopEyeImageBuffering",  Action::StopEyeImageBuffering },
     { "consumeEyeImages",       Action::ConsumeEyeImages },
     { "peekEyeImages",          Action::PeekEyeImages },
@@ -252,7 +256,7 @@ namespace {
         return out;
     }
 
-    mxArray* FieldToMatlab(std::vector<eyeImage> data_, int64_t eyeImage::* field_)
+    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, int64_t TobiiEyeImage::* field_)
     {
         mxArray* temp;
         auto storage = static_cast<int64_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxINT64_CLASS, mxREAL)));
@@ -262,7 +266,7 @@ namespace {
         return temp;
     }
 
-    mxArray* FieldToMatlab(std::vector<eyeImage> data_, int32_t eyeImage::* field_)
+    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, int32_t TobiiEyeImage::* field_)
     {
         mxArray* temp;
         auto storage = static_cast<double*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxDOUBLE_CLASS, mxREAL)));
@@ -272,7 +276,7 @@ namespace {
         return temp;
     }
 
-    mxArray* eyeImagesToMatlab(std::vector<eyeImage> data_)
+    mxArray* eyeImagesToMatlab(std::vector<TobiiEyeImage> data_)
     {
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
@@ -310,7 +314,7 @@ namespace {
         return out;
     }
 
-    mxArray* EyeImageVectorToMatlab(std::vector<eyeImage> data_)
+    mxArray* EyeImageVectorToMatlab(std::vector<TobiiEyeImage> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -321,18 +325,18 @@ namespace {
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         mxArray* temp;
         // all simple fields
-        mxSetFieldByNumber(out,0,0, FieldToMatlab(data_, &eyeImage::device_time_stamp));
-        mxSetFieldByNumber(out,0,1, FieldToMatlab(data_, &eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out,0,2, FieldToMatlab(data_, &eyeImage::bits_per_pixel));
-        mxSetFieldByNumber(out,0,3, FieldToMatlab(data_, &eyeImage::padding_per_pixel));
-        mxSetFieldByNumber(out,0,4, FieldToMatlab(data_, &eyeImage::width));
-        mxSetFieldByNumber(out,0,5, FieldToMatlab(data_, &eyeImage::height));
+        mxSetFieldByNumber(out,0,0, FieldToMatlab(data_, &TobiiEyeImage::device_time_stamp));
+        mxSetFieldByNumber(out,0,1, FieldToMatlab(data_, &TobiiEyeImage::system_time_stamp));
+        mxSetFieldByNumber(out,0,2, FieldToMatlab(data_, &TobiiEyeImage::bits_per_pixel));
+        mxSetFieldByNumber(out,0,3, FieldToMatlab(data_, &TobiiEyeImage::padding_per_pixel));
+        mxSetFieldByNumber(out,0,4, FieldToMatlab(data_, &TobiiEyeImage::width));
+        mxSetFieldByNumber(out,0,5, FieldToMatlab(data_, &TobiiEyeImage::height));
         mxSetFieldByNumber(out,0,6, temp = mxCreateUninitNumericMatrix(data_.size(),1, mxLOGICAL_CLASS, mxREAL));
         auto storage = static_cast<bool*>(mxGetData(temp));
         size_t i = 0;
         for (auto &frame: data_)
             storage[i++] = frame.type==TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED;
-        mxSetFieldByNumber(out,0,7, FieldToMatlab(data_, &eyeImage::camera_id));
+        mxSetFieldByNumber(out,0,7, FieldToMatlab(data_, &TobiiEyeImage::camera_id));
         mxSetFieldByNumber(out,0,8, eyeImagesToMatlab(data_));
 
         return out;
@@ -361,7 +365,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         instance = instIt->second;
     }
 
-	// execute action
+    // execute action
     switch (action)
     {
     case Action::New:
@@ -383,7 +387,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         else
             mexLock(); // add to the lock count
 
-		// return the handle
+        // return the handle
         plhs[0] = mxCreateDoubleScalar(insResult.first->first);
 
         break;
@@ -399,9 +403,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
     case Action::StartSampleBuffering:
     {
-        // Check parameters
-        if (nrhs < 2)
-            mexErrMsgTxt("startSampleBuffering: Unexpected arguments.");
         bool ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
@@ -417,30 +418,21 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         return;
     }
     case Action::ClearSampleBuffer:
-        // Check parameters
-        if (nrhs < 2)
-            mexErrMsgTxt("clearSampleBuffer: Unexpected arguments.");
-        // Call the method
         instance->clearSampleBuffer();
         return;
     case Action::StopSampleBuffering:
     {
-        // Check parameters
         if (nrhs < 3)
             mexErrMsgTxt("stopSampleBuffering: Expected deleteBuffer input.");
         if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
             mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
         bool deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-        // Call the method
+
         instance->stopSampleBuffering(deleteBuffer);
         return;
     }
     case Action::ConsumeSamples:
     {
-        // Check parameters
-        if (nlhs < 1 || nrhs < 2)
-            mexErrMsgTxt("consumeSamples: Unexpected arguments.");
-        // Call the method
         std::vector<TobiiResearchGazeData> ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
@@ -457,10 +449,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
     }
     case Action::PeekSamples:
     {
-        // Check parameters
-        if (nlhs < 1 || nrhs < 2)
-            mexErrMsgTxt("peekSamples: Unexpected arguments.");
-        // Call the method
         std::vector<TobiiResearchGazeData> ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
@@ -478,9 +466,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
     case Action::StartEyeImageBuffering:
     {
-        // Check parameters
-        if (nrhs < 2)
-            mexErrMsgTxt("startEyeImageBuffering: Unexpected arguments.");
         bool ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
@@ -496,31 +481,40 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         return;
     }
     case Action::ClearEyeImageBuffer:
-        // Check parameters
-        if (nrhs < 2)
-            mexErrMsgTxt("clearEyeImageBuffer: Unexpected arguments.");
-        // Call the method
         instance->clearEyeImageBuffer();
+        return;
+    case Action::EnableTempEyeBuffer:
+    {
+        bool ret;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("enableTempEyeBuffer: Expected argument to be a uint64 scalar.");
+            ret = instance->enableTempEyeBuffer(*static_cast<uint64_t*>(mxGetData(prhs[2])));
+        }
+        else
+        {
+            ret = instance->enableTempEyeBuffer();
+        }
+        return;
+    }
+    case Action::DisableTempEyeBuffer:
+        instance->disableTempEyeBuffer();
         return;
     case Action::StopEyeImageBuffering:
     {
-        // Check parameters
         if (nrhs < 3)
             mexErrMsgTxt("stopEyeImageBuffering: Expected deleteBuffer input.");
         if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
             mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
         bool deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-        // Call the method
+
         instance->stopEyeImageBuffering(deleteBuffer);
         return;
     }
     case Action::ConsumeEyeImages:
     {
-        // Check parameters
-        if (nlhs < 1 || nrhs < 2)
-            mexErrMsgTxt("consumeEyeImages: Unexpected arguments.");
-        // Call the method
-        std::vector<eyeImage> ret;
+        std::vector<TobiiEyeImage> ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
@@ -536,11 +530,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
     }
     case Action::PeekEyeImages:
     {
-        // Check parameters
-        if (nlhs < 1 || nrhs < 2)
-            mexErrMsgTxt("peekEyeImage: Unexpected arguments.");
-        // Call the method
-        std::vector<eyeImage> ret;
+        std::vector<TobiiEyeImage> ret;
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
         {
             if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))

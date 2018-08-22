@@ -8,10 +8,12 @@
 #pragma comment(lib, "tobii_research.lib")
 
 
-class eyeImage
+// My own almost POD class for Tobii eye images, for safe resource management
+// of the data heap array member
+class TobiiEyeImage
 {
 public:
-    eyeImage():
+    TobiiEyeImage():
         device_time_stamp(0),
         system_time_stamp(0),
         bits_per_pixel(0),
@@ -23,7 +25,7 @@ public:
         data_size(0),
         _eyeIm({nullptr,std::free})
     {}
-    eyeImage(TobiiResearchEyeImage* e_):
+    TobiiEyeImage(TobiiResearchEyeImage* e_):
         device_time_stamp(e_->device_time_stamp),
         system_time_stamp(e_->system_time_stamp),
         bits_per_pixel(e_->bits_per_pixel),
@@ -37,8 +39,8 @@ public:
     {
         memcpy(_eyeIm.get(),e_->data,e_->data_size);
     }
-    eyeImage(eyeImage&&) = default;
-    eyeImage(const eyeImage& other_):
+    TobiiEyeImage(TobiiEyeImage&&) = default;
+    TobiiEyeImage(const TobiiEyeImage& other_):
         device_time_stamp(other_.device_time_stamp),
         system_time_stamp(other_.system_time_stamp),
         bits_per_pixel(other_.bits_per_pixel),
@@ -52,17 +54,17 @@ public:
     {
         memcpy(_eyeIm.get(),other_.data(),other_.data_size);
     }
-    eyeImage& operator= (eyeImage other_)
+    TobiiEyeImage& operator= (TobiiEyeImage other_)
     {
         swap(*this, other_);
         return *this;
     }
-    ~eyeImage() = default;
+    ~TobiiEyeImage() = default;
 
     // get eye image data
     void* data() const {return _eyeIm.get();}
 
-    friend void swap(eyeImage& first, eyeImage& second)
+    friend void swap(TobiiEyeImage& first, TobiiEyeImage& second)
     {
         using std::swap;
 
@@ -112,22 +114,26 @@ public:
     std::vector<TobiiResearchGazeData> peekSamples(size_t lastN = 1);
 
     //// eyeImages ////
-    bool startEyeImageBuffering(size_t initialBufferSize_ = 1<<14);
+    bool startEyeImageBuffering(size_t initialBufferSize_ = 1 << 14);
+    // switch to recording to a temp buffer
+    void enableTempEyeBuffer(size_t initialBufferSize_ = 1 << 10);
+    // switch back to main buffer, discarding temp buffer
+    void disableTempEyeBuffer();
     // clear all buffer contents
     void clearEyeImageBuffer();
     // stop optionally deletes the buffer
     bool stopEyeImageBuffering(bool emptyBuffer = false);
     // consume samples (by default all)
-    std::vector<eyeImage> consumeEyeImages(size_t firstN = -1);
+    std::vector<TobiiEyeImage> consumeEyeImages(size_t firstN = -1);
     // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<eyeImage> peekEyeImages(size_t lastN = 1);
+    std::vector<TobiiEyeImage> peekEyeImages(size_t lastN = 1);
 
 private:
     // Tobii callbacks needs to be friends
     friend void TobiiSampleCallback  (TobiiResearchGazeData* gaze_data_, void* user_data);
     friend void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data);
 
-    std::vector<eyeImage>& getEyeImageBuffer() {return _eyeImUseTempBuf ? _eyeImagesTemp : _eyeImages;}
+    std::vector<TobiiEyeImage>& getEyeImageBuffer() {return _eyeImUseTempBuf ? _eyeImagesTemp : _eyeImages;}
 
 private:
 
@@ -135,8 +141,8 @@ private:
 
     std::vector<TobiiResearchGazeData>  _samples;
 
-    std::vector<eyeImage>               _eyeImages;
-    std::vector<eyeImage>               _eyeImagesTemp;
+    std::vector<TobiiEyeImage>          _eyeImages;
+    std::vector<TobiiEyeImage>          _eyeImagesTemp;
     bool                                _eyeImUseTempBuf    = false;
     /*bool eyeImageAsGif = false;
     std::vector<TobiiResearchEyeImageGif> _eyeImagesGif;*/

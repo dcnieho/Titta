@@ -28,7 +28,7 @@ void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
     if (user_data)
     {
         // deep copy image data
-        auto im = eyeImage(eye_image_);
+        auto im = TobiiEyeImage(eye_image_);
 
         // append to vector
         auto l = lockForWriting(mEyeImage);
@@ -99,6 +99,22 @@ void TobiiBuffer::clearEyeImageBuffer()
     auto l = lockForWriting(mEyeImage);
     getEyeImageBuffer().clear();
 }
+void TobiiBuffer::enableTempEyeBuffer(size_t initialBufferSize_ /*= 1 << 10*/)
+{
+    if (!_eyeImUseTempBuf)
+    {
+        _eyeImagesTemp.reserve(initialBufferSize_);
+    }
+    _eyeImUseTempBuf = true;
+}
+void TobiiBuffer::disableTempEyeBuffer()
+{
+    if (_eyeImUseTempBuf)
+    {
+        _eyeImUseTempBuf = false;
+        _eyeImagesTemp.clear();
+    }
+}
 bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= false*/)
 {
     bool success = tobii_research_unsubscribe_from_eye_image(_eyetracker,TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
@@ -106,26 +122,26 @@ bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= false*/)
         clearEyeImageBuffer();
     return success;
 }
-std::vector<eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN/* = -1*/)
+std::vector<TobiiEyeImage> TobiiBuffer::consumeEyeImages(size_t firstN/* = -1*/)
 {
     auto l = lockForWriting(mEyeImage);
     auto& imVec = getEyeImageBuffer();
 
     if (firstN==-1 || firstN>=imVec.size())    // firstN=1 overflows, so first check strictly not needed. Better keep code legible tho
-        return std::vector<eyeImage>(std::move(imVec));
+        return std::vector<TobiiEyeImage>(std::move(imVec));
     else
     {
-        std::vector<eyeImage> out;
+        std::vector<TobiiEyeImage> out;
         out.reserve(firstN);
         out.insert(out.end(), std::make_move_iterator(imVec.begin()), std::make_move_iterator(imVec.begin()+firstN));
         imVec.erase(imVec.begin(), imVec.begin()+firstN);
         return out;
     }
 }
-std::vector<eyeImage> TobiiBuffer::peekEyeImages(size_t lastN/* = 1*/)
+std::vector<TobiiEyeImage> TobiiBuffer::peekEyeImages(size_t lastN/* = 1*/)
 {
     auto l = lockForReading(mEyeImage);
     // copy last N or whole vector if less than N elements available
     auto& imVec = getEyeImageBuffer();
-    return std::vector<eyeImage>(imVec.end() - std::min(imVec.size(),lastN),imVec.end());
+    return std::vector<TobiiEyeImage>(imVec.end() - std::min(imVec.size(),lastN),imVec.end());
 }
