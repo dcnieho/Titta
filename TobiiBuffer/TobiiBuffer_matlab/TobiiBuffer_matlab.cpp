@@ -359,12 +359,28 @@ namespace
     template <typename T>
     constexpr mxClassID typeToMxClass(T)
     {
-        if constexpr (std::is_same<T, int64_t>::value)
-            return mxINT64_CLASS;
-        if constexpr (std::is_same<T, int32_t>::value)
-            return mxINT32_CLASS;
-        if constexpr (std::is_same<T, bool>::value)
+        if constexpr (std::is_same<T, double>::value)
+            return mxDOUBLE_CLASS;
+        else if constexpr (std::is_same<T, float>::value)
+            return mxSINGLE_CLASS;
+        else if constexpr (std::is_same<T, bool>::value)
             return mxLOGICAL_CLASS;
+        else if constexpr (std::is_same<T, uint64_t>::value)
+            return mxUINT64_CLASS;
+        else if constexpr (std::is_same<T, int64_t>::value)
+            return mxINT64_CLASS;
+        else if constexpr (std::is_same<T, uint32_t>::value)
+            return mxUINT32_CLASS;
+        else if constexpr (std::is_same<T, int32_t>::value)
+            return mxINT32_CLASS;
+        else if constexpr (std::is_same<T, uint16_t>::value)
+            return mxUINT16_CLASS;
+        else if constexpr (std::is_same<T, int16_t>::value)
+            return mxINT16_CLASS;
+        else if constexpr (std::is_same<T, uint8_t>::value)
+            return mxUINT8_CLASS;
+        else if constexpr (std::is_same<T, int8_t>::value)
+            return mxINT8_CLASS;
     }
 
     template <typename T>
@@ -506,7 +522,7 @@ namespace
                 same = false;
                 break;
             }
-        // 2. then upload images
+        // 2. then copy over the images to matlab
         mxArray* out;
         if (data_[0].bits_per_pixel + data_[0].padding_per_pixel != 8)
             mexErrMsgTxt("eyeImagesToMatlab: non-8bit images not yet implemented");
