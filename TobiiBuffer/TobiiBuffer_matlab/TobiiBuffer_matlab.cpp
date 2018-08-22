@@ -142,6 +142,17 @@ namespace {
 
 
     template <typename T>
+    constexpr mxClassID typeToMxClass(T)
+    {
+        if constexpr (std::is_same<T, int64_t>::value)
+            return mxINT64_CLASS;
+        if constexpr (std::is_same<T, int32_t>::value)
+            return mxINT32_CLASS;
+        if constexpr (std::is_same<T, bool>::value)
+            return mxLOGICAL_CLASS;
+    }
+
+    template <typename T>
     void Vec2StructToArray(const T& samp_, double* storage_, size_t* i_)
     {
         storage_[(*i_)++] = samp_.x;
@@ -154,6 +165,7 @@ namespace {
         storage_[(*i_)++] = samp_.y;
         storage_[(*i_)++] = samp_.z;
     }
+
 
     mxArray* FieldToMatlab(std::vector<TobiiResearchGazeData> data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
@@ -225,10 +237,11 @@ namespace {
         return out;
     }
 
-    mxArray* FieldToMatlab(std::vector<TobiiResearchGazeData> data_, int64_t TobiiResearchGazeData::* field_)
+    template <typename T>
+    mxArray* FieldToMatlab(std::vector<TobiiResearchGazeData> data_, T TobiiResearchGazeData::* field_)
     {
         mxArray* temp;
-        auto storage = static_cast<int64_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxINT64_CLASS, mxREAL)));
+        auto storage = static_cast<T*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(T), mxREAL)));
         size_t i = 0;
         for (auto &samp: data_)
             storage[i++] = samp.*field_;
@@ -256,20 +269,11 @@ namespace {
         return out;
     }
 
-    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, int64_t TobiiEyeImage::* field_)
+    template <typename T, typename U=T>	// default output storage type U to type matching input type T, can override through type tag dispatch
+    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, T TobiiEyeImage::* field_, U = {})
     {
         mxArray* temp;
-        auto storage = static_cast<int64_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxINT64_CLASS, mxREAL)));
-        size_t i = 0;
-        for (auto &samp: data_)
-            storage[i++] = samp.*field_;
-        return temp;
-    }
-
-    mxArray* FieldToMatlab(std::vector<TobiiEyeImage> data_, int32_t TobiiEyeImage::* field_)
-    {
-        mxArray* temp;
-        auto storage = static_cast<double*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxDOUBLE_CLASS, mxREAL)));
+        auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(U), mxREAL)));
         size_t i = 0;
         for (auto &samp: data_)
             storage[i++] = samp.*field_;
@@ -319,25 +323,48 @@ namespace {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
-        // fieldnames for all structs
-        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","bitsPerPixel","paddingPerPixel","width","height","isCropped","cameraID","image"};
+        // check if all gif, then don't output unneeded fields
+        bool allGif = true;
+        for (auto &frame : data_)
+            if (!frame.isGif)
+            {
+                allGif = false;
+                break;
+            }
 
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        // fieldnames for all structs
+        mxArray* out;
+        if (allGif)
+        {
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","isCropped","cameraID","isGif","image"};
+            mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+        else
+        {
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","bitsPerPixel","paddingPerPixel","width","height","isCropped","cameraID","isGif","image"};
+            mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+
         mxArray* temp;
         // all simple fields
         mxSetFieldByNumber(out,0,0, FieldToMatlab(data_, &TobiiEyeImage::device_time_stamp));
         mxSetFieldByNumber(out,0,1, FieldToMatlab(data_, &TobiiEyeImage::system_time_stamp));
-        mxSetFieldByNumber(out,0,2, FieldToMatlab(data_, &TobiiEyeImage::bits_per_pixel));
-        mxSetFieldByNumber(out,0,3, FieldToMatlab(data_, &TobiiEyeImage::padding_per_pixel));
-        mxSetFieldByNumber(out,0,4, FieldToMatlab(data_, &TobiiEyeImage::width));
-        mxSetFieldByNumber(out,0,5, FieldToMatlab(data_, &TobiiEyeImage::height));
-        mxSetFieldByNumber(out,0,6, temp = mxCreateUninitNumericMatrix(data_.size(),1, mxLOGICAL_CLASS, mxREAL));
+        if (!allGif)
+        {
+            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiEyeImage::bits_per_pixel));
+            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiEyeImage::padding_per_pixel));
+            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &TobiiEyeImage::width, 0.));		// 0. to force storing as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiEyeImage::height, 0.));	// 0. to force storing as double
+        }
+        int off = 4 * (!allGif);
+        mxSetFieldByNumber(out,0,2+off, temp = mxCreateUninitNumericMatrix(data_.size(),1, mxLOGICAL_CLASS, mxREAL));
         auto storage = static_cast<bool*>(mxGetData(temp));
         size_t i = 0;
         for (auto &frame: data_)
             storage[i++] = frame.type==TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED;
-        mxSetFieldByNumber(out,0,7, FieldToMatlab(data_, &TobiiEyeImage::camera_id));
-        mxSetFieldByNumber(out,0,8, eyeImagesToMatlab(data_));
+        mxSetFieldByNumber(out,0,3+off, FieldToMatlab(data_, &TobiiEyeImage::camera_id));
+        mxSetFieldByNumber(out,0,4+off, FieldToMatlab(data_, &TobiiEyeImage::isGif));
+        mxSetFieldByNumber(out,0,5+off, eyeImagesToMatlab(data_));
 
         return out;
     }

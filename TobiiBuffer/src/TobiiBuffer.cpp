@@ -27,12 +27,16 @@ void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        // deep copy image data
-        auto im = TobiiEyeImage(eye_image_);
-
-        // append to vector
         auto l = lockForWriting(mEyeImage);
-        static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().push_back(std::move(im));
+        static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
+    }
+}
+void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting(mEyeImage);
+        static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
     }
 }
 
@@ -89,10 +93,29 @@ std::vector<TobiiResearchGazeData> TobiiBuffer::peekSamples(size_t lastN/* = 1*/
 
 
 
-bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= 1<<22*/)
+namespace {
+    bool doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
+    {
+        if (asGif_)
+            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+        else
+            return tobii_research_subscribe_to_eye_image	   (eyetracker_,    TobiiEyeImageCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+    }
+    bool doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
+    {
+        if (isGif_)
+            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback) == TOBII_RESEARCH_STATUS_OK;
+        else
+            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
+    }
+}
+
+
+bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= 1<<22*/, bool asGif_ /*= false*/)
 {
     _eyeImages.reserve(initialBufferSize_);
-    return tobii_research_subscribe_to_eye_image(_eyetracker,TobiiEyeImageCallback,this) == TOBII_RESEARCH_STATUS_OK;
+    _eyeImIsGif = asGif_;
+    return doSubscribeEyeImage(_eyetracker, this, asGif_);
 }
 void TobiiBuffer::clearEyeImageBuffer()
 {
@@ -104,20 +127,38 @@ void TobiiBuffer::enableTempEyeBuffer(size_t initialBufferSize_ /*= 1 << 10*/)
     if (!_eyeImUseTempBuf)
     {
         _eyeImagesTemp.reserve(initialBufferSize_);
+        _eyeImWasGif = _eyeImIsGif;
+        // temp buffer always normal eye image, stop gif images, start normal
+        if (_eyeImIsGif)
+        {
+            doUnsubscribeEyeImage(_eyetracker, true);
+        }
+        _eyeImUseTempBuf = true;
+        if (_eyeImIsGif)
+        {
+            doSubscribeEyeImage(_eyetracker, this, false);
+            _eyeImIsGif = false;
+        }
     }
-    _eyeImUseTempBuf = true;
 }
 void TobiiBuffer::disableTempEyeBuffer()
 {
     if (_eyeImUseTempBuf)
     {
+        // if normal buffer was used for gifs before starting temp buffer, resubscribe to the gif stream
+        if (_eyeImWasGif)
+        {
+            doUnsubscribeEyeImage(_eyetracker, false);
+            doSubscribeEyeImage(_eyetracker, this, true);
+            _eyeImIsGif = true;
+        }
         _eyeImUseTempBuf = false;
         _eyeImagesTemp.clear();
     }
 }
 bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer /*= false*/)
 {
-    bool success = tobii_research_unsubscribe_from_eye_image(_eyetracker,TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
+    bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
     if (emptyBuffer)
         clearEyeImageBuffer();
     return success;

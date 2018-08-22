@@ -14,6 +14,7 @@ class TobiiEyeImage
 {
 public:
     TobiiEyeImage():
+        isGif(false),
         device_time_stamp(0),
         system_time_stamp(0),
         bits_per_pixel(0),
@@ -26,6 +27,7 @@ public:
         _eyeIm({nullptr,std::free})
     {}
     TobiiEyeImage(TobiiResearchEyeImage* e_):
+        isGif(false),
         device_time_stamp(e_->device_time_stamp),
         system_time_stamp(e_->system_time_stamp),
         bits_per_pixel(e_->bits_per_pixel),
@@ -39,8 +41,24 @@ public:
     {
         memcpy(_eyeIm.get(),e_->data,e_->data_size);
     }
+    TobiiEyeImage(TobiiResearchEyeImageGif* e_) :
+        isGif(true),
+        device_time_stamp(e_->device_time_stamp),
+        system_time_stamp(e_->system_time_stamp),
+        bits_per_pixel(0),
+        padding_per_pixel(0),
+        width(0),
+        height(0),
+        type(e_->type),
+        camera_id(e_->camera_id),
+        data_size(e_->image_size),
+        _eyeIm({malloc(e_->image_size),std::free})
+    {
+        memcpy(_eyeIm.get(), e_->image_data, e_->image_size);
+    }
     TobiiEyeImage(TobiiEyeImage&&) = default;
-    TobiiEyeImage(const TobiiEyeImage& other_):
+    TobiiEyeImage(const TobiiEyeImage& other_) :
+        isGif(other_.isGif),
         device_time_stamp(other_.device_time_stamp),
         system_time_stamp(other_.system_time_stamp),
         bits_per_pixel(other_.bits_per_pixel),
@@ -68,7 +86,8 @@ public:
     {
         using std::swap;
 
-        swap(first.device_time_stamp,second.device_time_stamp);
+        swap(first.isGif, second.isGif);
+        swap(first.device_time_stamp, second.device_time_stamp);
         swap(first.system_time_stamp,second.system_time_stamp);
         swap(first.bits_per_pixel,second.bits_per_pixel);
         swap(first.padding_per_pixel,second.padding_per_pixel);
@@ -82,6 +101,7 @@ public:
 
 
 public:
+    bool						isGif;
     int64_t                     device_time_stamp;
     int64_t                     system_time_stamp;
     int                         bits_per_pixel;
@@ -114,7 +134,7 @@ public:
     std::vector<TobiiResearchGazeData> peekSamples(size_t lastN = 1);
 
     //// eyeImages ////
-    bool startEyeImageBuffering(size_t initialBufferSize_ = 1 << 14);
+    bool startEyeImageBuffering(size_t initialBufferSize_ = 1 << 14, bool asGif_ = false);
     // switch to recording to a temp buffer
     void enableTempEyeBuffer(size_t initialBufferSize_ = 1 << 10);
     // switch back to main buffer, discarding temp buffer
@@ -130,8 +150,9 @@ public:
 
 private:
     // Tobii callbacks needs to be friends
-    friend void TobiiSampleCallback  (TobiiResearchGazeData* gaze_data_, void* user_data);
-    friend void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data);
+    friend void TobiiSampleCallback     (   TobiiResearchGazeData* gaze_data_, void* user_data);
+    friend void TobiiEyeImageCallback   (   TobiiResearchEyeImage* eye_image_, void* user_data);
+    friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data);
 
     std::vector<TobiiEyeImage>& getEyeImageBuffer() {return _eyeImUseTempBuf ? _eyeImagesTemp : _eyeImages;}
 
@@ -143,7 +164,7 @@ private:
 
     std::vector<TobiiEyeImage>          _eyeImages;
     std::vector<TobiiEyeImage>          _eyeImagesTemp;
-    bool                                _eyeImUseTempBuf    = false;
-    /*bool eyeImageAsGif = false;
-    std::vector<TobiiResearchEyeImageGif> _eyeImagesGif;*/
+    bool                                _eyeImUseTempBuf	= false;
+    bool                                _eyeImIsGif			= false;
+    bool                                _eyeImWasGif		= false;
 };
