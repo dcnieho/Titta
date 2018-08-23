@@ -145,11 +145,11 @@ public:
     // clear all buffer contents
     void clearSampleBuffer();
     // stop optionally deletes the buffer
-    bool stopSampleBuffering(bool emptyBuffer = TobiiBuff::g_stopBufferEmptiesDefault);
+    bool stopSampleBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
-    std::vector<TobiiResearchGazeData> consumeSamples(size_t firstN = TobiiBuff::g_consumeDefaultAmount);
+    std::vector<TobiiResearchGazeData> consumeSamples(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiResearchGazeData> peekSamples(size_t lastN = TobiiBuff::g_peekDefaultAmount);
+    std::vector<TobiiResearchGazeData> peekSamples(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// eyeImages ////
     bool startEyeImageBuffering(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
@@ -160,21 +160,32 @@ public:
     // clear all buffer contents
     void clearEyeImageBuffer();
     // stop optionally deletes the buffer
-    bool stopEyeImageBuffering(bool emptyBuffer = TobiiBuff::g_stopBufferEmptiesDefault);
+    bool stopEyeImageBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
-    std::vector<TobiiBuff::eyeImage> consumeEyeImages(size_t firstN = TobiiBuff::g_consumeDefaultAmount);
+    std::vector<TobiiBuff::eyeImage> consumeEyeImages(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiBuff::eyeImage> peekEyeImages(size_t lastN = TobiiBuff::g_peekDefaultAmount);
+    std::vector<TobiiBuff::eyeImage> peekEyeImages(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
 private:
     // Tobii callbacks needs to be friends
-    friend void TobiiSampleCallback     (   TobiiResearchGazeData* gaze_data_, void* user_data);
-    friend void TobiiEyeImageCallback   (   TobiiResearchEyeImage* eye_image_, void* user_data);
-    friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data);
+    friend void TobiiSampleCallback      (TobiiResearchGazeData*                     gaze_data_, void* user_data);
+    friend void TobiiEyeImageCallback    (TobiiResearchEyeImage*                     eye_image_, void* user_data);
+    friend void TobiiEyeImageGifCallback (TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
+    friend void TobiiExternalDataCallback(TobiiResearchExternalSignalData*            ext_data_, void* user_data);
+    friend void TobiiTimeSyncCallback    (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
 
-    std::vector<TobiiResearchGazeData   >& getSampleBuffer()   {return _samplesUseTempBuf ? _samplesTemp   : _samples;}
-    std::vector<TobiiBuff::eyeImage>& getEyeImageBuffer() {return _eyeImUseTempBuf   ? _eyeImagesTemp : _eyeImages;}
+    std::vector<TobiiResearchGazeData>& getSampleBuffer()   {return _samplesUseTempBuf ? _samplesTemp   : _samples;}
+    std::vector<TobiiBuff::eyeImage  >& getEyeImageBuffer() {return _eyeImUseTempBuf   ? _eyeImagesTemp : _eyeImages;}
 
+    //// generic functions for internal use
+    // helpers
+    template <typename T>  std::vector<T>&  getBuffer();
+    template <typename T>  void             stopBufferingGen(bool emptyBuffer_);
+    // generic implementations
+    template <typename T>  void             clearBuffer();
+    template <typename T>  void             disableTempBuffer();
+    template <typename T>  std::vector<T>   peek(size_t lastN_);
+    template <typename T>  std::vector<T>   consume(size_t firstN_);
 private:
 
     TobiiResearchEyeTracker*				_eyetracker         = nullptr;
