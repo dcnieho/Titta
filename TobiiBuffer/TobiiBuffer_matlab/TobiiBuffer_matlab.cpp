@@ -54,6 +54,8 @@
 #include <string>
 #include <sstream>
 #include <atomic>
+#include <tuple>
+#include <type_traits>
 
 #define DLL_EXPORT_SYM __declspec(dllexport)
 #include "mex.h"
@@ -359,39 +361,180 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 namespace
 {
     template <typename T>
-    constexpr mxClassID typeToMxClass(T)
+    constexpr mxClassID typeToMxClass()
     {
-        if constexpr (std::is_same<T, double>::value)
+        if      constexpr (std::is_same_v<T, double>)
             return mxDOUBLE_CLASS;
-        else if constexpr (std::is_same<T, float>::value)
+        else if constexpr (std::is_same_v<T, float>)
             return mxSINGLE_CLASS;
-        else if constexpr (std::is_same<T, bool>::value)
+        else if constexpr (std::is_same_v<T, bool>)
             return mxLOGICAL_CLASS;
-        else if constexpr (std::is_same<T, uint64_t>::value)
+        else if constexpr (std::is_same_v<T, uint64_t>)
             return mxUINT64_CLASS;
-        else if constexpr (std::is_same<T, int64_t>::value)
+        else if constexpr (std::is_same_v<T, int64_t>)
             return mxINT64_CLASS;
-        else if constexpr (std::is_same<T, uint32_t>::value)
+        else if constexpr (std::is_same_v<T, uint32_t>)
             return mxUINT32_CLASS;
-        else if constexpr (std::is_same<T, int32_t>::value)
+        else if constexpr (std::is_same_v<T, int32_t>)
             return mxINT32_CLASS;
-        else if constexpr (std::is_same<T, uint16_t>::value)
+        else if constexpr (std::is_same_v<T, uint16_t>)
             return mxUINT16_CLASS;
-        else if constexpr (std::is_same<T, int16_t>::value)
+        else if constexpr (std::is_same_v<T, int16_t>)
             return mxINT16_CLASS;
-        else if constexpr (std::is_same<T, uint8_t>::value)
+        else if constexpr (std::is_same_v<T, uint8_t>)
             return mxUINT8_CLASS;
-        else if constexpr (std::is_same<T, int8_t>::value)
+        else if constexpr (std::is_same_v<T, int8_t>)
             return mxINT8_CLASS;
     }
 
-    template <typename T>
-    void VectorStructToArray(const T& samp_, double* storage_, size_t* i_)
+    template <typename T, typename S, typename... Fs>
+    auto inline getField(const T& obj, S field1, Fs... fields)
     {
-        storage_[(*i_)++] = samp_.x;
-        storage_[(*i_)++] = samp_.y;
-        if constexpr(std::disjunction<std::is_same<T, TobiiResearchPoint3D>, std::is_same<T, TobiiResearchNormalizedPoint3D>>::value)
-            storage_[(*i_)++] = samp_.z;
+        if constexpr (!sizeof...(fields))
+            return obj.*field1;
+        else
+            return getField(obj.*field1, fields...);
+    }
+
+    template <typename Obj, typename Out, typename... Fs>
+    auto inline getFieldCast(const Obj& obj, Out, Fs... fields)
+    {
+        return static_cast<Out>(getField(obj, fields...));
+    }
+
+    template<class T> struct tag_t { using type = T; };
+    template<class...Ts, size_t N = 1>
+    using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<tag_t<Ts>...> >::type;
+
+    template <typename F, size_t... Is>
+    auto indices_impl(F f, std::index_sequence<Is...>)
+    {
+        return f(std::integral_constant<size_t, Is>()...);
+    }
+    template <size_t N, typename F>
+    auto indices(F f)
+    {
+        return indices_impl(f, std::make_index_sequence<N>());
+    }
+
+    // Given f and some args t0, t1, ..., tn, calls f(tn, t0, t1, ..., tn-1)
+    template <typename F, typename... Ts>
+    auto rotate_right(F f, Ts... ts) {
+        auto tuple = std::make_tuple(ts...);
+        return indices<sizeof...(Ts) - 1>([&](auto... Is) {
+            return f(
+                std::get<sizeof...(Ts) - 1>(tuple),
+                std::get<Is>(tuple)...);
+        });
+	}
+	// Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn, tn-1)
+	template <typename F, typename... Ts>
+	auto swap_last_2(F f, Ts... ts) {
+		auto tuple = std::make_tuple(ts...);
+		return indices<sizeof...(Ts) - 2>([&](auto... Is) {
+			return f(
+				std::get<Is>(tuple)...,
+				std::get<sizeof...(Ts) - 1>(tuple),
+				std::get<sizeof...(Ts) - 2>(tuple)
+				);
+		});
+	}
+
+    template <typename Obj, typename... Fs>
+    auto inline getFieldWrapper(const Obj& obj, Fs... fields)
+    {
+		// if last is pointer-to-member-variable, but previous is not, swap the last two
+		if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
+			return swap_last_2(
+			[&](auto... elems)
+		{
+			return getFieldWrapper(obj, elems...);
+		}, fields...);
+		// if last is pointer-to-member-variable, no conversion requested, call getField
+		else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
+            return getField(obj, fields...);
+		// if last is not pointer-to-member-variable, conversion requested, call getFieldCast
+        else
+            return rotate_right(
+            [&](auto... elems)
+            {
+                return getFieldCast(obj, elems...);
+            }, fields...);
+    }
+
+    template <typename T>
+    constexpr size_t getNumRows()
+    {
+        if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>)
+            return 3;
+        else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint3D>)
+            return 3;
+        else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint2D>)
+            return 2;
+        else
+            return 1;
+    }
+
+    template <class C, typename T>
+    T getPointerType(T C::*v) {}
+
+    // default output storage type U (see using) to type matching field, can override through type tag dispatch (see getFieldWrapper implementation)
+    template <typename S, typename... Fs>
+	mxArray* FieldToMatlab(const std::vector<S>& data_, Fs... fields)
+    {
+        mxArray* temp;
+		// get return type of last pointer-to-member-variable in parameter pack (take care of that last can also be the type tag)
+		using lastT = decltype(getPointerType(std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>{}));
+        // based on type, get number of rows for output
+        constexpr auto numRows = getNumRows<lastT>();
+
+        size_t i = 0;
+        if constexpr (numRows > 1)
+        {
+			// this is one of the point types
+			// determine what return type we get
+			// NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
+            using U = decltype(getFieldWrapper(S{}, fields..., &lastT::x));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
+            for (auto &samp : data_)
+            {
+                storage[i++] = getFieldWrapper(samp, fields..., &lastT::x);
+                storage[i++] = getFieldWrapper(samp, fields..., &lastT::y);
+                if constexpr (numRows == 3)
+                    storage[i++] = getFieldWrapper(samp, fields..., &lastT::z);
+            }
+        }
+        else
+        {
+			using U = decltype(getFieldWrapper(S{}, fields...));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
+            for (auto &samp : data_)
+                storage[i++] = getFieldWrapper(samp, fields...);
+        }
+        return temp;
+    }
+
+	template <typename S, typename R, typename... Fs>
+	auto FieldToMatlabRef(const std::vector<S>& data_, R ref_, Fs... fields)
+	{
+		mxArray* temp;
+		auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxLOGICAL_CLASS, mxREAL)));
+		size_t i = 0;
+		for (auto &samp : data_)
+			storage[i++] = getFieldWrapper(samp, fields...) == ref_;
+		return temp;
+	}
+
+    template <typename S, typename... Fs>
+    auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchValidity ref_, Fs... fields)
+    {
+        return FieldToMatlabRef(data_, ref_, fields...);
+    }
+
+    template <typename S, typename... Fs>
+    auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchEyeImageType ref_, Fs... fields)
+    {
+		return FieldToMatlabRef(data_, ref_, fields...);
     }
 
 
@@ -403,77 +546,33 @@ namespace
         const char* fieldNamesGO[] = {"inUserCoords","inTrackBoxCoords","validity"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNamesEye) / sizeof(*fieldNamesEye), fieldNamesEye);
         mxArray* temp;
-        mxArray* temp2;
 
         // 1. gazePoint
         mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGP) / sizeof(*fieldNamesGP), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, temp2 = mxCreateUninitNumericMatrix(2, data_.size(), mxDOUBLE_CLASS, mxREAL));
-        auto storage = static_cast<double*>(mxGetData(temp2));
-        size_t i = 0;
-        for (auto &samp : data_)
-            VectorStructToArray((samp.*field_).gaze_point.position_on_display_area, storage, &i);
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));
         // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, temp2 = mxCreateUninitNumericMatrix(3, data_.size(), mxDOUBLE_CLASS, mxREAL));
-        storage = static_cast<double*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            VectorStructToArray((samp.*field_).gaze_point.position_in_user_coordinates, storage, &i);
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));
         // 1.3 gazePoint.validity
-        mxSetFieldByNumber(temp, 0, 2, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL));
-        auto storageb = static_cast<bool*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            storageb[i++] = (samp.*field_).gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID;
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxDOUBLE_CLASS, mxREAL));
-        storage = static_cast<double*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            storage[i++] = (samp.*field_).pupil_data.diameter;
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter));
         // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL));
-        storageb = static_cast<bool*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            storageb[i++] = (samp.*field_).pupil_data.validity == TOBII_RESEARCH_VALIDITY_VALID;
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity));
 
         // 3. gazePoint
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, temp2 = mxCreateUninitNumericMatrix(3, data_.size(), mxDOUBLE_CLASS, mxREAL));
-        storage = static_cast<double*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            VectorStructToArray((samp.*field_).gaze_origin.position_in_user_coordinates, storage, &i);
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));
         // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, temp2 = mxCreateUninitNumericMatrix(3, data_.size(), mxDOUBLE_CLASS, mxREAL));
-        storage = static_cast<double*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            VectorStructToArray((samp.*field_).gaze_origin.position_in_track_box_coordinates, storage, &i);
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));
         // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2, temp2 = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL));
-        storageb = static_cast<bool*>(mxGetData(temp2));
-        i = 0;
-        for (auto &samp : data_)
-            storageb[i++] = (samp.*field_).gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID;
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity));
 
         return out;
-    }
-
-    template <typename S, typename T, typename U = T>	// default output storage type U to type matching input type T, can override through type tag dispatch
-    mxArray* FieldToMatlab(const std::vector<S>& data_, T S::* field_, U = {})
-    {
-        mxArray* temp;
-        auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass(U{}), mxREAL)));
-        size_t i = 0;
-        for (auto &samp : data_)
-            storage[i++] = samp.*field_;
-        return temp;
     }
 
     mxArray* SampleVectorToMatlab(std::vector<TobiiResearchGazeData> data_)
@@ -497,17 +596,20 @@ namespace
         return out;
     }
 
+    template <typename S, typename T, typename R>
+    bool allEquals(const std::vector<S>& data_, T S::* field_, const R& ref_)
+    {
+        for (auto &frame : data_)
+            if (frame.*field_ != ref_)
+                return false;
+        return true;
+    }
+
     mxArray* eyeImagesToMatlab(const std::vector<TobiiBuff::eyeImage>& data_)
     {
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
-        bool same = true;
-        for (auto &frame : data_)
-            if (frame.data_size != sz)
-            {
-                same = false;
-                break;
-            }
+        bool same = allEquals(data_, &TobiiBuff::eyeImage::data_size, sz);
         // 2. then copy over the images to matlab
         mxArray* out;
         if (data_[0].bits_per_pixel + data_[0].padding_per_pixel != 8)
@@ -541,13 +643,7 @@ namespace
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
         // check if all gif, then don't output unneeded fields
-        bool allGif = true;
-        for (auto &frame : data_)
-            if (!frame.isGif)
-            {
-                allGif = false;
-                break;
-            }
+        bool allGif = allEquals(data_, &TobiiBuff::eyeImage::isGif, true);
 
         // fieldnames for all structs
         mxArray* out;
@@ -562,7 +658,6 @@ namespace
             out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
 
-        mxArray* temp;
         // all simple fields
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuff::eyeImage::device_time_stamp));
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiBuff::eyeImage::system_time_stamp));
@@ -574,11 +669,7 @@ namespace
             mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiBuff::eyeImage::height, 0.));		// 0. to force storing as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0, 2 + off, temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxLOGICAL_CLASS, mxREAL));
-        auto storage = static_cast<bool*>(mxGetData(temp));
-        size_t i = 0;
-        for (auto &frame : data_)
-            storage[i++] = frame.type == TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED;
+        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED, &TobiiBuff::eyeImage::type));
         mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::camera_id));
         mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 5 + off, eyeImagesToMatlab(data_));
