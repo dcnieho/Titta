@@ -52,7 +52,7 @@ void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_d
         static_cast<TobiiBuffer*>(user_data)->getEyeImageBuffer().emplace_back(eye_image_);
     }
 }
-void TobiiExternalDataCallback(TobiiResearchExternalSignalData* ext_data_, void* user_data)
+void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_data_, void* user_data)
 {
     if (user_data)
     {
@@ -92,10 +92,10 @@ std::vector<T>& TobiiBuffer::getCurrentBuffer()
         return getSampleBuffer();
     if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
         return getEyeImageBuffer();
-    /*if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
-        return mExtSignal;
+    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        return getExtSignalBuffer();
     if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
-        return mTimeSync;*/
+        return getTimeSyncBuffer();
 }
 template <typename T>
 std::vector<T>& TobiiBuffer::getTempBuffer()
@@ -299,4 +299,72 @@ std::vector<TobiiBuff::eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN_/* 
 std::vector<TobiiBuff::eyeImage> TobiiBuffer::peekEyeImages(size_t lastN_/* = g_peekDefaultAmount*/)
 {
     return peek<TobiiBuff::eyeImage>(lastN_);
+}
+
+
+// external signals
+bool TobiiBuffer::startExtSignalBuffering(size_t initialBufferSize_ /*= g_extSignalBufDefaultSize*/)
+{
+    _extSignal.reserve(initialBufferSize_);
+    return tobii_research_subscribe_to_external_signal_data(_eyetracker, TobiiExtSignalCallback, this) == TOBII_RESEARCH_STATUS_OK;
+}
+void TobiiBuffer::enableTempExtSignalBuffer(size_t initialBufferSize_ /*= g_extSignalTempBufDefaultSize*/)
+{
+    enableTempBuffer<TobiiResearchExternalSignalData>(initialBufferSize_);
+}
+void TobiiBuffer::disableTempExtSignalBuffer()
+{
+    disableTempBuffer<TobiiResearchExternalSignalData>();
+}
+void TobiiBuffer::clearExtSignalBuffer()
+{
+    clearBuffer<TobiiResearchExternalSignalData>();
+}
+bool TobiiBuffer::stopExtSignalBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
+{
+    bool success = tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback) == TOBII_RESEARCH_STATUS_OK;
+    stopBufferingGeneric<TobiiResearchExternalSignalData>(emptyBuffer_);
+    return success;
+}
+std::vector<TobiiResearchExternalSignalData> TobiiBuffer::consumeExtSignals(size_t firstN_/* = g_consumeDefaultAmount*/)
+{
+    return consume<TobiiResearchExternalSignalData>(firstN_);
+}
+std::vector<TobiiResearchExternalSignalData> TobiiBuffer::peekExtSignals(size_t lastN_/* = g_peekDefaultAmount*/)
+{
+    return peek<TobiiResearchExternalSignalData>(lastN_);
+}
+
+
+// time sync data
+bool TobiiBuffer::startTimeSyncBuffering(size_t initialBufferSize_ /*= g_timeSyncBufDefaultSize*/)
+{
+    _timeSync.reserve(initialBufferSize_);
+    return tobii_research_subscribe_to_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback, this) == TOBII_RESEARCH_STATUS_OK;
+}
+void TobiiBuffer::enableTempTimeSyncBuffer(size_t initialBufferSize_ /*= g_timeSyncTempBufDefaultSize*/)
+{
+    enableTempBuffer<TobiiResearchTimeSynchronizationData>(initialBufferSize_);
+}
+void TobiiBuffer::disableTempTimeSyncBuffer()
+{
+    disableTempBuffer<TobiiResearchTimeSynchronizationData>();
+}
+void TobiiBuffer::clearTimeSyncBuffer()
+{
+    clearBuffer<TobiiResearchTimeSynchronizationData>();
+}
+bool TobiiBuffer::stopTimeSyncBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
+{
+    bool success = tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback) == TOBII_RESEARCH_STATUS_OK;
+    stopBufferingGeneric<TobiiResearchTimeSynchronizationData>(emptyBuffer_);
+    return success;
+}
+std::vector<TobiiResearchTimeSynchronizationData> TobiiBuffer::consumeTimeSyncs(size_t firstN_/* = g_consumeDefaultAmount*/)
+{
+    return consume<TobiiResearchTimeSynchronizationData>(firstN_);
+}
+std::vector<TobiiResearchTimeSynchronizationData> TobiiBuffer::peekTimeSyncs(size_t lastN_/* = g_peekDefaultAmount*/)
+{
+    return peek<TobiiResearchTimeSynchronizationData>(lastN_);
 }

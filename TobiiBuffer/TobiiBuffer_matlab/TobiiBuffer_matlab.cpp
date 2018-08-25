@@ -93,7 +93,23 @@ namespace {
         ClearEyeImageBuffer,
         StopEyeImageBuffering,
         ConsumeEyeImages,
-        PeekEyeImages
+        PeekEyeImages,
+
+        StartExtSignalBuffering,
+        EnableTempExtSignalBuffer,
+        DisableTempExtSignalBuffer,
+        ClearExtSignalBuffer,
+        StopExtSignalBuffering,
+        ConsumeExtSignals,
+        PeekExtSignals,
+
+        StartTimeSyncBuffering,
+        EnableTempTimeSyncBuffer,
+        DisableTempTimeSyncBuffer,
+        ClearTimeSyncBuffer,
+        StopTimeSyncBuffering,
+        ConsumeTimeSyncs,
+        PeekTimeSyncs
     };
 
     // Map string (first input argument to mexFunction) to an Action
@@ -117,6 +133,22 @@ namespace {
         { "stopEyeImageBuffering",		Action::StopEyeImageBuffering },
         { "consumeEyeImages",			Action::ConsumeEyeImages },
         { "peekEyeImages",				Action::PeekEyeImages },
+
+        { "startExtSignalBuffering",	Action::StartExtSignalBuffering },
+        { "enableTempExtSignalBuffer",	Action::EnableTempExtSignalBuffer },
+        { "disableTempExtSignalBuffer",	Action::DisableTempExtSignalBuffer },
+        { "clearExtSignalBuffer",		Action::ClearExtSignalBuffer },
+        { "stopExtSignalBuffering",		Action::StopExtSignalBuffering },
+        { "consumeExtSignals",			Action::ConsumeExtSignals },
+        { "peekExtSignals",				Action::PeekExtSignals },
+
+        { "startTimeSyncBuffering",		Action::StartTimeSyncBuffering },
+        { "enableTempTimeSyncBuffer",	Action::EnableTempTimeSyncBuffer },
+        { "disableTempTimeSyncBuffer",	Action::DisableTempTimeSyncBuffer },
+        { "clearTimeSyncBuffer",		Action::ClearTimeSyncBuffer },
+        { "stopTimeSyncBuffering",		Action::StopTimeSyncBuffering },
+        { "consumeTimeSyncs",			Action::ConsumeTimeSyncs },
+        { "peekTimeSyncs",				Action::PeekTimeSyncs },
     };
 
 
@@ -147,8 +179,10 @@ namespace {
     }
 
     // forward declare
-    mxArray* EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage  > data_);
-    mxArray*   SampleVectorToMatlab(std::vector<TobiiResearchGazeData> data_);
+    mxArray*    SampleVectorToMatlab(std::vector<TobiiResearchGazeData               > data_);
+    mxArray*  EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage                 > data_);
+    mxArray* ExtSignalVectorToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
+    mxArray*  TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
 }
 
 void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -347,6 +381,142 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
         plhs[0] = EyeImageVectorToMatlab(instance->peekEyeImages(nSamp));
+        return;
+    }
+
+    case Action::StartExtSignalBuffering:
+    {
+        uint64_t bufSize = TobiiBuff::g_extSignalBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("startExtSignalBuffering: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
+        return;
+    }
+    case Action::EnableTempExtSignalBuffer:
+    {
+        uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("enableTempExtSignalBuffer: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        instance->startExtSignalBuffering(bufSize);
+        return;
+    }
+    case Action::DisableTempExtSignalBuffer:
+        instance->disableTempExtSignalBuffer();
+        return;
+    case Action::ClearExtSignalBuffer:
+        instance->clearExtSignalBuffer();
+        return;
+    case Action::StopExtSignalBuffering:
+    {
+        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("stopExtSignalBuffering: Expected argument to be a logical scalar.");
+            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        }
+
+        instance->stopExtSignalBuffering(deleteBuffer);
+        return;
+    }
+    case Action::ConsumeExtSignals:
+    {
+        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("consumeExtSignals: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = ExtSignalVectorToMatlab(instance->consumeExtSignals(nSamp));
+        return;
+    }
+    case Action::PeekExtSignals:
+    {
+        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("peekExtSignals: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = ExtSignalVectorToMatlab(instance->peekExtSignals(nSamp));
+        return;
+    }
+
+    case Action::StartTimeSyncBuffering:
+    {
+        uint64_t bufSize = TobiiBuff::g_timeSyncBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("startTimeSyncBuffering: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
+        return;
+    }
+    case Action::EnableTempTimeSyncBuffer:
+    {
+        uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("enableTempTimeSyncBuffer: Expected argument to be a uint64 scalar.");
+            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        instance->startTimeSyncBuffering(bufSize);
+        return;
+    }
+    case Action::DisableTempTimeSyncBuffer:
+        instance->disableTempTimeSyncBuffer();
+        return;
+    case Action::ClearTimeSyncBuffer:
+        instance->clearTimeSyncBuffer();
+        return;
+    case Action::StopTimeSyncBuffering:
+    {
+        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("stopTimeSyncBuffering: Expected argument to be a logical scalar.");
+            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        }
+
+        instance->stopTimeSyncBuffering(deleteBuffer);
+        return;
+    }
+    case Action::ConsumeTimeSyncs:
+    {
+        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("consumeTimeSyncs: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = TimeSyncVectorToMatlab(instance->consumeTimeSyncs(nSamp));
+        return;
+    }
+    case Action::PeekTimeSyncs:
+    {
+        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("peekTimeSyncs: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+        plhs[0] = TimeSyncVectorToMatlab(instance->peekTimeSyncs(nSamp));
         return;
     }
 
@@ -679,6 +849,44 @@ namespace
         mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::camera_id));
         mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 5 + off, eyeImagesToMatlab(data_));
+
+        return out;
+    }
+
+
+    mxArray* ExtSignalVectorToMatlab(std::vector<TobiiResearchExternalSignalData     > data_)
+    {
+        if (data_.empty())
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+
+        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. all device timestamps
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchExternalSignalData::device_time_stamp));
+        // 2. all system timestamps
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchExternalSignalData::system_time_stamp));
+        // 3. external signal values
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchExternalSignalData::value));
+        // 3. value change type
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchExternalSignalData::change_type, uint8_t{}));	// cast enum values
+
+        return out;
+    }
+    mxArray*  TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
+    {
+        if (data_.empty())
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+
+        const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. all system timestamps
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
+        // 2. all device timestamps
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::device_time_stamp));
+        // 3. external signal values
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
 
         return out;
     }
