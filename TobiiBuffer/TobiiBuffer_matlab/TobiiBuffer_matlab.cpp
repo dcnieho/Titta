@@ -387,8 +387,9 @@ namespace
             return mxINT8_CLASS;
     }
 
+    // get field indicated by list of pointers-to-member-variable in fields
     template <typename T, typename S, typename... Fs>
-    auto inline getField(const T& obj, S field1, Fs... fields)
+    constexpr auto inline getField(const T& obj, S field1, Fs... fields)
     {
         if constexpr (!sizeof...(fields))
             return obj.*field1;
@@ -396,64 +397,71 @@ namespace
             return getField(obj.*field1, fields...);
     }
 
+    // get field indicated by list of pointers-to-member-variable in fields, cast return value to user specified type
     template <typename Obj, typename Out, typename... Fs>
-    auto inline getFieldCast(const Obj& obj, Out, Fs... fields)
+    constexpr auto inline getFieldCast(const Obj& obj, Out, Fs... fields)
     {
         return static_cast<Out>(getField(obj, fields...));
     }
 
+    // get last type (or optionally 2nd last when N=2, 3rd last when N=3, etc) in variadic template
     template<class T> struct tag_t { using type = T; };
     template<class...Ts, size_t N = 1>
     using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<tag_t<Ts>...> >::type;
 
+    // higher order function to forward an index sequence
     template <typename F, size_t... Is>
-    auto indices_impl(F f, std::index_sequence<Is...>)
+    constexpr auto indices_impl(F f, std::index_sequence<Is...>)
     {
         return f(std::integral_constant<size_t, Is>()...);
     }
     template <size_t N, typename F>
-    auto indices(F f)
+    constexpr auto indices(F f)
     {
         return indices_impl(f, std::make_index_sequence<N>());
     }
 
     // Given f and some args t0, t1, ..., tn, calls f(tn, t0, t1, ..., tn-1)
     template <typename F, typename... Ts>
-    auto rotate_right(F f, Ts... ts) {
+    constexpr auto rotate_right(F f, Ts... ts)
+    {
         auto tuple = std::make_tuple(ts...);
-        return indices<sizeof...(Ts) - 1>([&](auto... Is) {
-            return f(
-                std::get<sizeof...(Ts) - 1>(tuple),
-                std::get<Is>(tuple)...);
+        return indices<sizeof...(Ts) - 1>([&](auto... Is) constexpr	// pass elements 1 to N-1 as input to lambda
+        {
+            return f(												// call user's function with:
+                std::get<sizeof...(Ts) - 1>(tuple),					// last element of tuple
+                std::get<Is>(tuple)...);							// all inputs to lambda (elements 1 to N-1)
         });
-	}
-	// Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn, tn-1)
-	template <typename F, typename... Ts>
-	auto swap_last_2(F f, Ts... ts) {
-		auto tuple = std::make_tuple(ts...);
-		return indices<sizeof...(Ts) - 2>([&](auto... Is) {
-			return f(
-				std::get<Is>(tuple)...,
-				std::get<sizeof...(Ts) - 1>(tuple),
-				std::get<sizeof...(Ts) - 2>(tuple)
-				);
-		});
-	}
+    }
+    // Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn, tn-1)
+    template <typename F, typename... Ts>
+    constexpr auto swap_last_2(F f, Ts... ts)
+    {
+        auto tuple = std::make_tuple(ts...);
+        return indices<sizeof...(Ts) - 2>([&](auto... Is) constexpr	// pass elements 1 to N-2 as input to lambda
+        {
+            return f(												// call user's function with:
+                std::get<Is>(tuple)...,								// all inputs to lambda (elements 1 to N-1)
+                std::get<sizeof...(Ts) - 1>(tuple),					// last element
+                std::get<sizeof...(Ts) - 2>(tuple)					// element N-1
+                );
+        });
+    }
 
     template <typename Obj, typename... Fs>
-    auto inline getFieldWrapper(const Obj& obj, Fs... fields)
+    constexpr auto inline getFieldWrapper(const Obj& obj, Fs... fields)
     {
-		// if last is pointer-to-member-variable, but previous is not, swap the last two
-		if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
-			return swap_last_2(
-			[&](auto... elems)
-		{
-			return getFieldWrapper(obj, elems...);
-		}, fields...);
-		// if last is pointer-to-member-variable, no conversion requested, call getField
-		else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
+        // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
+        if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
+            return swap_last_2(
+            [&](auto... elems)
+            {
+                return getFieldWrapper(obj, elems...);
+            }, fields...);
+        // if last is pointer-to-member-variable, no casting of return value requested through type tag, call getField
+        else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
             return getField(obj, fields...);
-		// if last is not pointer-to-member-variable, conversion requested, call getFieldCast
+        // if last is not pointer-to-member-variable, casting of return value requested, call getFieldCast with correct order of arguments
         else
             return rotate_right(
             [&](auto... elems)
@@ -465,9 +473,7 @@ namespace
     template <typename T>
     constexpr size_t getNumRows()
     {
-        if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>)
-            return 3;
-        else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint3D>)
+        if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>) // also matches TobiiResearchNormalizedPoint3D, as that's typedeffed to TobiiResearchPoint3D
             return 3;
         else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint2D>)
             return 2;
@@ -475,38 +481,39 @@ namespace
             return 1;
     }
 
+    // function declaration to extract member variable type from a pointer-to-member-variable through declval (no implementation needed, because this function is never actually called)
     template <class C, typename T>
     T getPointerType(T C::*v) {}
 
-    // default output storage type U (see using) to type matching field, can override through type tag dispatch (see getFieldWrapper implementation)
+    // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
     template <typename S, typename... Fs>
-	mxArray* FieldToMatlab(const std::vector<S>& data_, Fs... fields)
+    mxArray* FieldToMatlab(const std::vector<S>& data_, Fs... fields)
     {
         mxArray* temp;
-		// get return type of last pointer-to-member-variable in parameter pack (take care of that last can also be the type tag)
-		using lastT = decltype(getPointerType(std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>{}));
+        // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessecarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
+        using retT = decltype(getPointerType(std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>{}));
         // based on type, get number of rows for output
-        constexpr auto numRows = getNumRows<lastT>();
+        constexpr auto numRows = getNumRows<retT>();
 
         size_t i = 0;
         if constexpr (numRows > 1)
         {
-			// this is one of the point types
-			// determine what return type we get
-			// NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
-            using U = decltype(getFieldWrapper(S{}, fields..., &lastT::x));
+            // this is one of the 2D/3D point types
+            // determine what return type we get
+            // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
+            using U = decltype(getFieldWrapper(S{}, fields..., &retT::x));
             auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
             for (auto &samp : data_)
             {
-                storage[i++] = getFieldWrapper(samp, fields..., &lastT::x);
-                storage[i++] = getFieldWrapper(samp, fields..., &lastT::y);
+                storage[i++] = getFieldWrapper(samp, fields..., &retT::x);
+                storage[i++] = getFieldWrapper(samp, fields..., &retT::y);
                 if constexpr (numRows == 3)
-                    storage[i++] = getFieldWrapper(samp, fields..., &lastT::z);
+                    storage[i++] = getFieldWrapper(samp, fields..., &retT::z);
             }
         }
         else
         {
-			using U = decltype(getFieldWrapper(S{}, fields...));
+            using U = decltype(getFieldWrapper(S{}, fields...));
             auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
             for (auto &samp : data_)
                 storage[i++] = getFieldWrapper(samp, fields...);
@@ -514,27 +521,27 @@ namespace
         return temp;
     }
 
-	template <typename S, typename R, typename... Fs>
-	auto FieldToMatlabRef(const std::vector<S>& data_, R ref_, Fs... fields)
-	{
-		mxArray* temp;
-		auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxLOGICAL_CLASS, mxREAL)));
-		size_t i = 0;
-		for (auto &samp : data_)
-			storage[i++] = getFieldWrapper(samp, fields...) == ref_;
-		return temp;
-	}
-
+    // function to turn enum fields into a boolean given reference enum value for which true should be returned
+    // (multiple functions because FieldToMatlabRef names as FieldToMatlab would be ambiguous due to unconstrained R)
+    template <typename S, typename R, typename... Fs>
+    auto FieldToMatlabRef(const std::vector<S>& data_, R ref_, Fs... fields)
+    {
+        mxArray* temp;
+        auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxLOGICAL_CLASS, mxREAL)));
+        size_t i = 0;
+        for (auto &samp : data_)
+            storage[i++] = getFieldWrapper(samp, fields...) == ref_;
+        return temp;
+    }
     template <typename S, typename... Fs>
     auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchValidity ref_, Fs... fields)
     {
         return FieldToMatlabRef(data_, ref_, fields...);
     }
-
     template <typename S, typename... Fs>
     auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchEyeImageType ref_, Fs... fields)
     {
-		return FieldToMatlabRef(data_, ref_, fields...);
+        return FieldToMatlabRef(data_, ref_, fields...);
     }
 
 
@@ -580,10 +587,9 @@ namespace
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
-        // fieldnames for all structs
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
-
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
         // 1. all device timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchGazeData::device_time_stamp));
         // 2. all system timestamps
