@@ -116,7 +116,7 @@ classdef TobiiBuffer < cppclass
             end
         end
         function data = consumeEyeImages(this,firstN)
-            % optional input indicating how many samples to read from the
+            % optional input indicating how many eye images to read from the
             % beginning of buffer. Default: all
             if nargin>1
                 data = this.cppmethod('consumeEyeImages',uint64(firstN));
@@ -125,12 +125,112 @@ classdef TobiiBuffer < cppclass
             end
         end
         function data = peekEyeImages(this,lastN)
-            % optional input indicating how many samples to read from the
-            % end of buffer. Default: 1
+            % optional input indicating how many eye images to read from
+            % the end of buffer. Default: 1
             if nargin>1
                 data = this.cppmethod('peekEyeImages',uint64(lastN));
             else
                 data = this.cppmethod('peekEyeImages');
+            end
+        end
+        
+        function success = startExtSignalBuffering(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                success = this.cppmethod('startExtSignalBuffering',uint64(initialBufferSize));
+            else
+                success = this.cppmethod('startExtSignalBuffering');
+            end
+        end
+        function enableTempExtSignalBuffer(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                this.cppmethod('enableTempExtSignalBuffer',uint64(initialBufferSize));
+            else
+                this.cppmethod('enableTempExtSignalBuffer');
+            end
+        end
+        function disableTempExtSignalBuffer(this)
+            this.cppmethod('disableTempExtSignalBuffer');
+        end
+        function clearExtSignalBuffer(this)
+            this.cppmethod('clearExtSignalBuffer');
+        end
+        function stopExtSignalBuffering(this,doDeleteBuffer)
+            % optional boolean input indicating whether buffer should be
+            % deleted
+            if nargin>1
+                this.cppmethod('stopExtSignalBuffering',logical(doDeleteBuffer));
+            else
+                this.cppmethod('stopExtSignalBuffering');
+            end
+        end
+        function data = consumeExtSignals(this,firstN)
+            % optional input indicating how many external signals to read
+            % from the beginning of buffer. Default: all
+            if nargin>1
+                data = this.cppmethod('consumeExtSignals',uint64(firstN));
+            else
+                data = this.cppmethod('consumeExtSignals');
+            end
+        end
+        function data = peekExtSignals(this,lastN)
+            % optional input indicating how many external signals to read
+            % from the end of buffer. Default: 1
+            if nargin>1
+                data = this.cppmethod('peekExtSignals',uint64(lastN));
+            else
+                data = this.cppmethod('peekExtSignals');
+            end
+        end
+        
+        function success = startTimeSyncBuffering(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                success = this.cppmethod('startTimeSyncBuffering',uint64(initialBufferSize));
+            else
+                success = this.cppmethod('startTimeSyncBuffering');
+            end
+        end
+        function enableTempTimeSyncBuffer(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                this.cppmethod('enableTempTimeSyncBuffer',uint64(initialBufferSize));
+            else
+                this.cppmethod('enableTempTimeSyncBuffer');
+            end
+        end
+        function disableTempTimeSyncBuffer(this)
+            this.cppmethod('disableTempTimeSyncBuffer');
+        end
+        function clearTimeSyncBuffer(this)
+            this.cppmethod('clearTimeSyncBuffer');
+        end
+        function stopTimeSyncBuffering(this,doDeleteBuffer)
+            % optional boolean input indicating whether buffer should be
+            % deleted
+            if nargin>1
+                this.cppmethod('stopTimeSyncBuffering',logical(doDeleteBuffer));
+            else
+                this.cppmethod('stopTimeSyncBuffering');
+            end
+        end
+        function data = consumeTimeSyncs(this,firstN)
+            % optional input indicating how many time sync packets to read
+            % from the beginning of buffer. Default: all
+            if nargin>1
+                data = this.cppmethod('consumeTimeSyncs',uint64(firstN));
+            else
+                data = this.cppmethod('consumeTimeSyncs');
+            end
+        end
+        function data = peekTimeSyncs(this,lastN)
+            % optional input indicating how many time sync packets to read
+            % from the end of buffer. Default: 1
+            if nargin>1
+                data = this.cppmethod('peekTimeSyncs',uint64(lastN));
+            else
+                data = this.cppmethod('peekTimeSyncs');
             end
         end
     end
