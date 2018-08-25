@@ -109,18 +109,28 @@ std::vector<T>& TobiiBuffer::getTempBuffer()
     if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
         return _timeSyncTemp;
 }
-
-// generic functions
 template <typename T>
 void TobiiBuffer::enableTempBuffer(size_t initialBufferSize_)
 {
     if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
-        return enableTempBufferGeneric<T>(initialBufferSize_, _samplesUseTempBuf);
+        enableTempBufferGeneric<T>(initialBufferSize_, _samplesUseTempBuf);
     if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
-        return enableTempBufferGeneric<T>(initialBufferSize_, _extSignalUseTempBuf);
+        enableTempBufferGeneric<T>(initialBufferSize_, _extSignalUseTempBuf);
     if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
-        return enableTempBufferGeneric<T>(initialBufferSize_, _timeSyncUseTempBuf);
+        enableTempBufferGeneric<T>(initialBufferSize_, _timeSyncUseTempBuf);
 }
+template <typename T>
+void TobiiBuffer::disableTempBuffer()
+{
+    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+        disableTempBufferGeneric<T>(_samplesUseTempBuf);
+    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        disableTempBufferGeneric<T>(_extSignalUseTempBuf);
+    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+        disableTempBufferGeneric<T>(_timeSyncUseTempBuf);
+}
+
+// generic functions
 template <typename T>
 void TobiiBuffer::enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_)
 {
@@ -129,16 +139,6 @@ void TobiiBuffer::enableTempBufferGeneric(size_t initialBufferSize_, bool& using
         getTempBuffer<T>().reserve(initialBufferSize_);
         usingTempBuf_ = true;
     }
-}
-template <typename T>
-void TobiiBuffer::disableTempBuffer()
-{
-    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
-        return disableTempBufferGeneric<T>(_samplesUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
-        return disableTempBufferGeneric<T>(_extSignalUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
-        return disableTempBufferGeneric<T>(_timeSyncUseTempBuf);
 }
 template <typename T>
 void TobiiBuffer::disableTempBufferGeneric(bool& usingTempBuf_)
@@ -156,7 +156,7 @@ void TobiiBuffer::clearBuffer()
     getCurrentBuffer<T>().clear();
 }
 template <typename T>
-void TobiiBuffer::stopBufferingGeneric(bool emptyBuffer_)
+void TobiiBuffer::stopBufferingGenericPart(bool emptyBuffer_)
 {
     disableTempBuffer<T>();
     if (emptyBuffer_)
@@ -210,7 +210,7 @@ void TobiiBuffer::clearSampleBuffer()
 bool TobiiBuffer::stopSampleBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_gaze_data(_eyetracker,TobiiSampleCallback) == TOBII_RESEARCH_STATUS_OK;
-    stopBufferingGeneric<TobiiResearchGazeData>(emptyBuffer_);
+    stopBufferingGenericPart<TobiiResearchGazeData>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiResearchGazeData> TobiiBuffer::consumeSamples(size_t firstN_/* = g_consumeDefaultAmount*/)
@@ -289,7 +289,7 @@ void TobiiBuffer::clearEyeImageBuffer()
 bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-    stopBufferingGeneric<TobiiBuff::eyeImage>(emptyBuffer_);
+    stopBufferingGenericPart<TobiiBuff::eyeImage>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiBuff::eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN_/* = g_consumeDefaultAmount*/)
@@ -323,7 +323,7 @@ void TobiiBuffer::clearExtSignalBuffer()
 bool TobiiBuffer::stopExtSignalBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback) == TOBII_RESEARCH_STATUS_OK;
-    stopBufferingGeneric<TobiiResearchExternalSignalData>(emptyBuffer_);
+    stopBufferingGenericPart<TobiiResearchExternalSignalData>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiResearchExternalSignalData> TobiiBuffer::consumeExtSignals(size_t firstN_/* = g_consumeDefaultAmount*/)
@@ -357,7 +357,7 @@ void TobiiBuffer::clearTimeSyncBuffer()
 bool TobiiBuffer::stopTimeSyncBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback) == TOBII_RESEARCH_STATUS_OK;
-    stopBufferingGeneric<TobiiResearchTimeSynchronizationData>(emptyBuffer_);
+    stopBufferingGenericPart<TobiiResearchTimeSynchronizationData>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiResearchTimeSynchronizationData> TobiiBuffer::consumeTimeSyncs(size_t firstN_/* = g_consumeDefaultAmount*/)
