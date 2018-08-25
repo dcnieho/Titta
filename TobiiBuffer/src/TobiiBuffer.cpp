@@ -86,7 +86,7 @@ TobiiBuffer::~TobiiBuffer()
 
 // helpers to make the below generic
 template <typename T>
-std::vector<T>& TobiiBuffer::getBuffer()
+std::vector<T>& TobiiBuffer::getCurrentBuffer()
 {
     if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
         return getSampleBuffer();
@@ -97,39 +97,76 @@ std::vector<T>& TobiiBuffer::getBuffer()
     if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
         return mTimeSync;*/
 }
-
 template <typename T>
-void TobiiBuffer::stopBufferingGen(bool emptyBuffer_)
+std::vector<T>& TobiiBuffer::getTempBuffer()
 {
-    disableTempBuffer<T>();
-    if (emptyBuffer_)
-        clearBuffer<T>();
+    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+        return _samplesTemp;
+    if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
+        return _eyeImagesTemp;
+    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        return _extSignalTemp;
+    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+        return _timeSyncTemp;
 }
 
 // generic functions
 template <typename T>
+void TobiiBuffer::enableTempBuffer(size_t initialBufferSize_)
+{
+    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+        return enableTempBufferGeneric<T>(initialBufferSize_, _samplesUseTempBuf);
+    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        return enableTempBufferGeneric<T>(initialBufferSize_, _extSignalUseTempBuf);
+    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+        return enableTempBufferGeneric<T>(initialBufferSize_, _timeSyncUseTempBuf);
+}
+template <typename T>
+void TobiiBuffer::enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_)
+{
+    if (!usingTempBuf_)
+    {
+        getTempBuffer<T>().reserve(initialBufferSize_);
+        usingTempBuf_ = true;
+    }
+}
+template <typename T>
 void TobiiBuffer::disableTempBuffer()
 {
     if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
-        return disableTempSampleBuffer();
-    if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
-        return disableTempEyeImageBuffer();
-    /*if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
-        return mExtSignal;
+        return disableTempBufferGeneric<T>(_samplesUseTempBuf);
+    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        return disableTempBufferGeneric<T>(_extSignalUseTempBuf);
     if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
-        return mTimeSync;*/
+        return disableTempBufferGeneric<T>(_timeSyncUseTempBuf);
+}
+template <typename T>
+void TobiiBuffer::disableTempBufferGeneric(bool& usingTempBuf_)
+{
+    if (usingTempBuf_)
+    {
+        usingTempBuf_ = false;
+        getTempBuffer<T>().clear();
+    }
 }
 template <typename T>
 void TobiiBuffer::clearBuffer()
 {
     auto l = lockForWriting(getMutex<T>());
-    getBuffer<T>().clear();
+    getCurrentBuffer<T>().clear();
+}
+template <typename T>
+void TobiiBuffer::stopBufferingGeneric(bool emptyBuffer_)
+{
+    disableTempBuffer<T>();
+    if (emptyBuffer_)
+        clearBuffer<T>();
 }
 template <typename T>
 std::vector<T> TobiiBuffer::peek(size_t lastN_)
 {
     auto l = lockForReading(getMutex<T>());
-    auto& buf = getBuffer<T>();
+    auto& buf = getCurrentBuffer<T>();
     // copy last N or whole vector if less than N elements available
     return std::vector<T>(buf.end() - std::min(buf.size(), lastN_), buf.end());
 }
@@ -137,7 +174,7 @@ template <typename T>
 std::vector<T> TobiiBuffer::consume(size_t firstN_)
 {
     auto l = lockForWriting(getMutex<T>());
-    auto& buf = getBuffer<T>();
+    auto& buf = getCurrentBuffer<T>();
 
     if (firstN_ == -1 || firstN_ >= buf.size())		// firstN_=-1 overflows, so first check strictly not needed. Better keep code legible tho
         return std::vector<T>(std::move(buf));
@@ -160,19 +197,11 @@ bool TobiiBuffer::startSampleBuffering(size_t initialBufferSize_ /*= g_sampleBuf
 }
 void TobiiBuffer::enableTempSampleBuffer(size_t initialBufferSize_ /*= g_sampleTempBufDefaultSize*/)
 {
-    if (!_samplesUseTempBuf)
-    {
-        _samplesTemp.reserve(initialBufferSize_);
-        _samplesUseTempBuf = true;
-    }
+    enableTempBuffer<TobiiResearchGazeData>(initialBufferSize_);
 }
 void TobiiBuffer::disableTempSampleBuffer()
 {
-    if (_samplesUseTempBuf)
-    {
-        _samplesUseTempBuf = false;
-        _samplesTemp.clear();
-    }
+    disableTempBuffer<TobiiResearchGazeData>();
 }
 void TobiiBuffer::clearSampleBuffer()
 {
@@ -181,7 +210,7 @@ void TobiiBuffer::clearSampleBuffer()
 bool TobiiBuffer::stopSampleBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = tobii_research_unsubscribe_from_gaze_data(_eyetracker,TobiiSampleCallback) == TOBII_RESEARCH_STATUS_OK;
-    stopBufferingGen<TobiiResearchGazeData>(emptyBuffer_);
+    stopBufferingGeneric<TobiiResearchGazeData>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiResearchGazeData> TobiiBuffer::consumeSamples(size_t firstN_/* = g_consumeDefaultAmount*/)
@@ -260,7 +289,7 @@ void TobiiBuffer::clearEyeImageBuffer()
 bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer_ /*= g_stopBufferEmptiesDefault*/)
 {
     bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-    stopBufferingGen<TobiiBuff::eyeImage>(emptyBuffer_);
+    stopBufferingGeneric<TobiiBuff::eyeImage>(emptyBuffer_);
     return success;
 }
 std::vector<TobiiBuff::eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN_/* = g_consumeDefaultAmount*/)

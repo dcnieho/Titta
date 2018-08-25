@@ -179,11 +179,15 @@ private:
 
     //// generic functions for internal use
     // helpers
-    template <typename T>  std::vector<T>&  getBuffer();
-    template <typename T>  void             stopBufferingGen(bool emptyBuffer_);
+    template <typename T>  std::vector<T>&  getCurrentBuffer();
+    template <typename T>  std::vector<T>&  getTempBuffer();
     // generic implementations
-    template <typename T>  void             clearBuffer();
+    template <typename T>  void             enableTempBuffer(size_t initialBufferSize_);
+    template <typename T>  void             enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_);
     template <typename T>  void             disableTempBuffer();
+    template <typename T>  void             disableTempBufferGeneric(bool& usingTempBuf_);
+    template <typename T>  void             clearBuffer();
+    template <typename T>  void             stopBufferingGeneric(bool emptyBuffer_);
     template <typename T>  std::vector<T>   peek(size_t lastN_);
     template <typename T>  std::vector<T>   consume(size_t firstN_);
 private:
