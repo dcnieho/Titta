@@ -212,10 +212,10 @@ private:
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
 
-    std::vector<TobiiResearchGazeData>&                getSampleBuffer()    {return _samplesUseTempBuf        ? _samplesTemp      : _samples;}
-    std::vector<TobiiBuff::eyeImage  >&                getEyeImageBuffer()  {return _eyeImUseTempBuf          ? _eyeImagesTemp    : _eyeImages;}
+    std::vector<TobiiResearchGazeData>&                getSampleBuffer()    {return _samplesUseTempBuf   ? _samplesTemp   : _samples;}
+    std::vector<TobiiBuff::eyeImage>&                  getEyeImageBuffer()  {return _eyeImUseTempBuf     ? _eyeImagesTemp : _eyeImages;}
     std::vector<TobiiResearchExternalSignalData>&      getExtSignalBuffer() {return _extSignalUseTempBuf ? _extSignalTemp : _extSignal;}
-    std::vector<TobiiResearchTimeSynchronizationData>& getTimeSyncBuffer()  {return _timeSyncUseTempBuf       ? _timeSyncTemp     : _timeSync;}
+    std::vector<TobiiResearchTimeSynchronizationData>& getTimeSyncBuffer()  {return _timeSyncUseTempBuf  ? _timeSyncTemp  : _timeSync;}
 
     //// generic functions for internal use
     // helpers
