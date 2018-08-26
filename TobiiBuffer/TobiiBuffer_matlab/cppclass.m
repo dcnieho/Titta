@@ -13,7 +13,7 @@ classdef (Abstract = true) cppclass < handle
     
     methods
         function obj = cppclass(mexBackendFnc,varargin)
-            if (nargin<1),
+            if (nargin<1)
                 error('cppclass:invalidConstruction',...
                     ['Must specify MEX-file backend (provides the actual class ' ...
                     'functionality by wrapping a C++ class)']);

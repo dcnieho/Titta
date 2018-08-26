@@ -26,7 +26,10 @@ classdef TobiiBuffer < cppclass
 %             cellfun(@(x)rmpath(fileparts(x)),dlls);
 %             dllDir = fileparts(dlls{qFind});
 %             addpath(dllDir);
-            this@cppclass(mexFnc,address);
+            if isa(address,'string')
+                address = char(address);    % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            this@cppclass(mexFnc,char(address));
         end
         
         % delete is inherited
