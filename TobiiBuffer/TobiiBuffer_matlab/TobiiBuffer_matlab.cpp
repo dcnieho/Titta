@@ -202,7 +202,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
     // If action is not "new" or "delete", try to locate an existing instance based on input handle
     instPtr_t instance;
-    if (action != Action::New && action != Action::Delete) {
+    if (action != Action::New && action != Action::Delete)
+    {
         auto instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
         instance = instIt->second;
     }
@@ -210,319 +211,316 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
     // execute action
     switch (action)
     {
-    case Action::New:
-    {
-        if (nrhs < 2 || !mxIsChar(prhs[1]))
-            mexErrMsgTxt("TobiiBuffer: Second argument must be a string.");
+        case Action::New:
+        {
+            if (nrhs < 2 || !mxIsChar(prhs[1]))
+                mexErrMsgTxt("TobiiBuffer: Second argument must be a string.");
 
-        std::pair<instanceMap_type::iterator, bool> insResult;
-        if (nrhs > 1) {
             char* address = mxArrayToString(prhs[1]);
-            insResult = instanceTab.insert(indPtrPair_type(++handleVal, std::make_shared<class_type>(address)));
+            auto insResult = instanceTab.insert(indPtrPair_type(++handleVal, std::make_shared<class_type>(address)));
             mxFree(address);
+
+            if (!insResult.second) // sanity check
+                mexPrintf("Oh, bad news. Tried to add an existing handle."); // shouldn't ever happen
+            else
+                mexLock(); // add to the lock count
+
+            // return the handle
+            plhs[0] = mxCreateDoubleScalar(insResult.first->first);
+
+            break;
+        }
+        case Action::Delete:
+        {
+            auto instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
+            instanceTab.erase(instIt);
+            mexUnlock();
+            plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
+            break;
         }
 
-        if (!insResult.second) // sanity check
-            mexPrintf("Oh, bad news. Tried to add an existing handle."); // shouldn't ever happen
-        else
-            mexLock(); // add to the lock count
+        case Action::StartSampleBuffering:
+        {
+            uint64_t bufSize = TobiiBuff::g_sampleBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("startSampleBuffering: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
+            return;
+        }
+        case Action::EnableTempSampleBuffer:
+        {
+            uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("enableTempSampleBuffer: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            instance->startSampleBuffering(bufSize);
+            return;
+        }
+        case Action::DisableTempSampleBuffer:
+            instance->disableTempSampleBuffer();
+            return;
+        case Action::ClearSampleBuffer:
+            instance->clearSampleBuffer();
+            return;
+        case Action::StopSampleBuffering:
+        {
+            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
+                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            }
 
-        // return the handle
-        plhs[0] = mxCreateDoubleScalar(insResult.first->first);
-
-        break;
-    }
-    case Action::Delete:
-    {
-        auto instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
-        instanceTab.erase(instIt);
-        mexUnlock();
-        plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
-        break;
-    }
-
-    case Action::StartSampleBuffering:
-    {
-        uint64_t bufSize = TobiiBuff::g_sampleBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startSampleBuffering: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            instance->stopSampleBuffering(deleteBuffer);
+            return;
         }
-        plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
-        return;
-    }
-    case Action::EnableTempSampleBuffer:
-    {
-        uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::ConsumeSamples:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("enableTempSampleBuffer: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("consumeSamples: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = SampleVectorToMatlab(instance->consumeSamples(nSamp));
+            return;
         }
-        instance->startSampleBuffering(bufSize);
-        return;
-    }
-    case Action::DisableTempSampleBuffer:
-        instance->disableTempSampleBuffer();
-        return;
-    case Action::ClearSampleBuffer:
-        instance->clearSampleBuffer();
-        return;
-    case Action::StopSampleBuffering:
-    {
-        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::PeekSamples:
         {
-            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
-            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-        }
-
-        instance->stopSampleBuffering(deleteBuffer);
-        return;
-    }
-    case Action::ConsumeSamples:
-    {
-        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("consumeSamples: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        plhs[0] = SampleVectorToMatlab(instance->consumeSamples(nSamp));
-        return;
-    }
-    case Action::PeekSamples:
-    {
-        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peekSamples: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        plhs[0] = SampleVectorToMatlab(instance->peekSamples(nSamp));
-        return;
-    }
-
-    case Action::StartEyeImageBuffering:
-    {
-        uint64_t bufSize = TobiiBuff::g_eyeImageBufDefaultSize;
-        bool asGif = TobiiBuff::g_eyeImageAsGIFDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startEyeImageBuffering: Expected first argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-        {
-            if (!mxIsLogical(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                mexErrMsgTxt("startEyeImageBuffering: Expected second argument to be a logical scalar.");
-            asGif = mxIsLogicalScalarTrue(prhs[2]);
-        }
-        plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
-        return;
-    }
-    case Action::EnableTempEyeImageBuffer:
-    {
-        uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("enableTempEyeImageBuffer: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        instance->enableTempEyeImageBuffer(bufSize);
-        return;
-    }
-    case Action::DisableTempEyeImageBuffer:
-        instance->disableTempEyeImageBuffer();
-        return;
-    case Action::ClearEyeImageBuffer:
-        instance->clearEyeImageBuffer();
-        return;
-    case Action::StopEyeImageBuffering:
-    {
-        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
-            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("peekSamples: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = SampleVectorToMatlab(instance->peekSamples(nSamp));
+            return;
         }
 
-        instance->stopEyeImageBuffering(deleteBuffer);
-        return;
-    }
-    case Action::ConsumeEyeImages:
-    {
-        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::StartEyeImageBuffering:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("consumeEyeImages: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t bufSize = TobiiBuff::g_eyeImageBufDefaultSize;
+            bool asGif = TobiiBuff::g_eyeImageAsGIFDefault;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("startEyeImageBuffering: Expected first argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsLogical(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("startEyeImageBuffering: Expected second argument to be a logical scalar.");
+                asGif = mxIsLogicalScalarTrue(prhs[2]);
+            }
+            plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
+            return;
         }
-        plhs[0] = EyeImageVectorToMatlab(instance->consumeEyeImages(nSamp));
-        return;
-    }
-    case Action::PeekEyeImages:
-    {
-        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::EnableTempEyeImageBuffer:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peekEyeImages: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("enableTempEyeImageBuffer: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            instance->enableTempEyeImageBuffer(bufSize);
+            return;
         }
-        plhs[0] = EyeImageVectorToMatlab(instance->peekEyeImages(nSamp));
-        return;
-    }
+        case Action::DisableTempEyeImageBuffer:
+            instance->disableTempEyeImageBuffer();
+            return;
+        case Action::ClearEyeImageBuffer:
+            instance->clearEyeImageBuffer();
+            return;
+        case Action::StopEyeImageBuffering:
+        {
+            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
+                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            }
 
-    case Action::StartExtSignalBuffering:
-    {
-        uint64_t bufSize = TobiiBuff::g_extSignalBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startExtSignalBuffering: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            instance->stopEyeImageBuffering(deleteBuffer);
+            return;
         }
-        plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
-        return;
-    }
-    case Action::EnableTempExtSignalBuffer:
-    {
-        uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::ConsumeEyeImages:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("enableTempExtSignalBuffer: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("consumeEyeImages: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = EyeImageVectorToMatlab(instance->consumeEyeImages(nSamp));
+            return;
         }
-        instance->startExtSignalBuffering(bufSize);
-        return;
-    }
-    case Action::DisableTempExtSignalBuffer:
-        instance->disableTempExtSignalBuffer();
-        return;
-    case Action::ClearExtSignalBuffer:
-        instance->clearExtSignalBuffer();
-        return;
-    case Action::StopExtSignalBuffering:
-    {
-        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::PeekEyeImages:
         {
-            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("stopExtSignalBuffering: Expected argument to be a logical scalar.");
-            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-        }
-
-        instance->stopExtSignalBuffering(deleteBuffer);
-        return;
-    }
-    case Action::ConsumeExtSignals:
-    {
-        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("consumeExtSignals: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        plhs[0] = ExtSignalVectorToMatlab(instance->consumeExtSignals(nSamp));
-        return;
-    }
-    case Action::PeekExtSignals:
-    {
-        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peekExtSignals: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        plhs[0] = ExtSignalVectorToMatlab(instance->peekExtSignals(nSamp));
-        return;
-    }
-
-    case Action::StartTimeSyncBuffering:
-    {
-        uint64_t bufSize = TobiiBuff::g_timeSyncBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startTimeSyncBuffering: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
-        return;
-    }
-    case Action::EnableTempTimeSyncBuffer:
-    {
-        uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("enableTempTimeSyncBuffer: Expected argument to be a uint64 scalar.");
-            bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-        instance->startTimeSyncBuffering(bufSize);
-        return;
-    }
-    case Action::DisableTempTimeSyncBuffer:
-        instance->disableTempTimeSyncBuffer();
-        return;
-    case Action::ClearTimeSyncBuffer:
-        instance->clearTimeSyncBuffer();
-        return;
-    case Action::StopTimeSyncBuffering:
-    {
-        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("stopTimeSyncBuffering: Expected argument to be a logical scalar.");
-            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("peekEyeImages: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = EyeImageVectorToMatlab(instance->peekEyeImages(nSamp));
+            return;
         }
 
-        instance->stopTimeSyncBuffering(deleteBuffer);
-        return;
-    }
-    case Action::ConsumeTimeSyncs:
-    {
-        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::StartExtSignalBuffering:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("consumeTimeSyncs: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t bufSize = TobiiBuff::g_extSignalBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("startExtSignalBuffering: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
+            return;
         }
-        plhs[0] = TimeSyncVectorToMatlab(instance->consumeTimeSyncs(nSamp));
-        return;
-    }
-    case Action::PeekTimeSyncs:
-    {
-        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        case Action::EnableTempExtSignalBuffer:
         {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peekTimeSyncs: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("enableTempExtSignalBuffer: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            instance->startExtSignalBuffering(bufSize);
+            return;
         }
-        plhs[0] = TimeSyncVectorToMatlab(instance->peekTimeSyncs(nSamp));
-        return;
-    }
+        case Action::DisableTempExtSignalBuffer:
+            instance->disableTempExtSignalBuffer();
+            return;
+        case Action::ClearExtSignalBuffer:
+            instance->clearExtSignalBuffer();
+            return;
+        case Action::StopExtSignalBuffering:
+        {
+            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("stopExtSignalBuffering: Expected argument to be a logical scalar.");
+                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            }
 
-    default:
-        mexErrMsgTxt(("Unhandled action: " + actionStr).c_str());
-        break;
+            instance->stopExtSignalBuffering(deleteBuffer);
+            return;
+        }
+        case Action::ConsumeExtSignals:
+        {
+            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("consumeExtSignals: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = ExtSignalVectorToMatlab(instance->consumeExtSignals(nSamp));
+            return;
+        }
+        case Action::PeekExtSignals:
+        {
+            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("peekExtSignals: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = ExtSignalVectorToMatlab(instance->peekExtSignals(nSamp));
+            return;
+        }
+
+        case Action::StartTimeSyncBuffering:
+        {
+            uint64_t bufSize = TobiiBuff::g_timeSyncBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("startTimeSyncBuffering: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
+            return;
+        }
+        case Action::EnableTempTimeSyncBuffer:
+        {
+            uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("enableTempTimeSyncBuffer: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            instance->startTimeSyncBuffering(bufSize);
+            return;
+        }
+        case Action::DisableTempTimeSyncBuffer:
+            instance->disableTempTimeSyncBuffer();
+            return;
+        case Action::ClearTimeSyncBuffer:
+            instance->clearTimeSyncBuffer();
+            return;
+        case Action::StopTimeSyncBuffering:
+        {
+            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("stopTimeSyncBuffering: Expected argument to be a logical scalar.");
+                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+            }
+
+            instance->stopTimeSyncBuffering(deleteBuffer);
+            return;
+        }
+        case Action::ConsumeTimeSyncs:
+        {
+            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("consumeTimeSyncs: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = TimeSyncVectorToMatlab(instance->consumeTimeSyncs(nSamp));
+            return;
+        }
+        case Action::PeekTimeSyncs:
+        {
+            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                    mexErrMsgTxt("peekTimeSyncs: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+            }
+            plhs[0] = TimeSyncVectorToMatlab(instance->peekTimeSyncs(nSamp));
+            return;
+        }
+
+        default:
+            mexErrMsgTxt(("Unhandled action: " + actionStr).c_str());
+            break;
     }
 }
 
