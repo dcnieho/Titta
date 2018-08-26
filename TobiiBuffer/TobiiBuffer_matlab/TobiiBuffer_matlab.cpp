@@ -556,8 +556,8 @@ namespace
     }
 
     // get field indicated by list of pointers-to-member-variable in fields
-    template <typename T, typename S, typename... Fs>
-    constexpr auto inline getField(const T& obj, S field1, Fs... fields)
+    template <typename Obj, typename F, typename T, typename... Fs, typename... Ts>
+    constexpr auto inline getField(const Obj& obj, T F::*field1, Ts Fs::*...fields)
     {
         if constexpr (!sizeof...(fields))
             return obj.*field1;
@@ -566,8 +566,8 @@ namespace
     }
 
     // get field indicated by list of pointers-to-member-variable in fields, cast return value to user specified type
-    template <typename Obj, typename Out, typename... Fs>
-    constexpr auto inline getFieldCast(const Obj& obj, Out, Fs... fields)
+    template <typename Obj, typename Out, typename... Fs, typename... Ts>
+    constexpr auto inline getField(const Obj& obj, Out, Ts Fs::*...fields)
     {
         return static_cast<Out>(getField(obj, fields...));
     }
@@ -601,18 +601,28 @@ namespace
                 std::get<Is>(tuple)...);							// all inputs to lambda (elements 1 to N-1)
         });
     }
-    // Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn, tn-1)
+    // Given f and some args t0, t1, ..., tn, calls f(tn-1, t0, t1, ..., tn)
     template <typename F, typename... Ts>
-    constexpr auto swap_last_2(F f, Ts... ts)
+    constexpr auto rotate_right_except_last(F f, Ts... ts)
     {
         auto tuple = std::make_tuple(ts...);
         return indices<sizeof...(Ts) - 2>([&](auto... Is) constexpr	// pass elements 1 to N-2 as input to lambda
         {
             return f(												// call user's function with:
-                std::get<Is>(tuple)...,								// all inputs to lambda (elements 1 to N-1)
-                std::get<sizeof...(Ts) - 1>(tuple),					// last element
-                std::get<sizeof...(Ts) - 2>(tuple)					// element N-1
+                std::get<sizeof...(Ts) - 2>(tuple),					// element N-1
+                std::get<Is>(tuple)...,								// all inputs to lambda (elements 1 to N-2)
+                std::get<sizeof...(Ts) - 1>(tuple)					// last element
                 );
+        });
+    }
+    // Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn-1)
+    template <typename F, typename... Ts>
+    auto drop_last(F f, Ts... ts)
+    {
+        return indices<sizeof...(Ts) - 1>([&](auto... Is)
+        {
+            auto tuple = std::make_tuple(ts...);
+            return f(std::get<Is>(tuple)...);
         });
     }
 
@@ -621,20 +631,31 @@ namespace
     {
         // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
         if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
-            return swap_last_2(
+            return rotate_right_except_last(
             [&](auto... elems)
             {
-                return getFieldWrapper(obj, elems...);
+                return getField(obj, elems...);
             }, fields...);
         // if last is pointer-to-member-variable, no casting of return value requested through type tag, call getField
         else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
             return getField(obj, fields...);
-        // if last is not pointer-to-member-variable, casting of return value requested, call getFieldCast with correct order of arguments
+        // if last is an enum, compare the value of the field to it
+        // this turns enum fields into a boolean given reference enum value for which true should be returned
+        else if constexpr (std::disjunction_v<std::is_same<last<Obj, Fs...>, TobiiResearchValidity>, std::is_same<last<Obj, Fs...>, TobiiResearchEyeImageType>>)
+        {
+            auto tuple = std::make_tuple(fields...);
+            return drop_last(
+            [&](auto... elems)
+            {
+                return getField(obj, elems...);
+            }, fields...) == std::get<sizeof...(Fs)-1>(tuple);
+        }
+        // if last is not pointer-to-member-variable, casting of return value requested, call getField with correct order of arguments
         else
             return rotate_right(
             [&](auto... elems)
             {
-                return getFieldCast(obj, elems...);
+                return getField(obj, elems...);
             }, fields...);
     }
 
@@ -689,29 +710,6 @@ namespace
         return temp;
     }
 
-    // function to turn enum fields into a boolean given reference enum value for which true should be returned
-    // (multiple functions because FieldToMatlabRef names as FieldToMatlab would be ambiguous due to unconstrained R)
-    template <typename S, typename R, typename... Fs>
-    auto FieldToMatlabRef(const std::vector<S>& data_, R ref_, Fs... fields)
-    {
-        mxArray* temp;
-        auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL)));
-        size_t i = 0;
-        for (auto &samp : data_)
-            storage[i++] = getFieldWrapper(samp, fields...) == ref_;
-        return temp;
-    }
-    template <typename S, typename... Fs>
-    auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchValidity ref_, Fs... fields)
-    {
-        return FieldToMatlabRef(data_, ref_, fields...);
-    }
-    template <typename S, typename... Fs>
-    auto FieldToMatlab(const std::vector<S>& data_, TobiiResearchEyeImageType ref_, Fs... fields)
-    {
-        return FieldToMatlabRef(data_, ref_, fields...);
-    }
-
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
@@ -729,14 +727,14 @@ namespace
         // 1.2 gazePoint.inUserCoords
         mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));
         // 1.3 gazePoint.validity
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity));
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
         // 2.1 pupil.diameter
         mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter));
         // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity));
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 3. gazePoint
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
@@ -745,7 +743,7 @@ namespace
         // 3.2 gazeOrigin.inTrackBoxCoords
         mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));
         // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, TOBII_RESEARCH_VALIDITY_VALID, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity));
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         return out;
     }
@@ -843,7 +841,7 @@ namespace
             mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiBuff::eyeImage::height, 0.));		// 0. to force storing as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED, &TobiiBuff::eyeImage::type));
+        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::type, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED));
         mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::camera_id));
         mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 5 + off, eyeImagesToMatlab(data_));
