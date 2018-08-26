@@ -2,6 +2,10 @@
 #include <vector>
 #include <shared_mutex>
 #include <algorithm>
+#include <string_view>
+#include <sstream>
+
+#include "TobiiBuffer/utils.h"
 
 namespace {
     typedef std::shared_timed_mutex mutex_type;
@@ -24,6 +28,19 @@ namespace {
             return g_mExtSignal;
         if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
             return g_mTimeSync;
+    }
+}
+
+// deal with error messages
+namespace
+{
+    inline void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
+    {
+        std::stringstream os;
+        os << "TobiBuffer Error: \"" << errMsg_ << "\""<< std::endl;
+        os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << std::endl;
+
+        DoExitWithMsg(os.str());
     }
 }
 
@@ -75,7 +92,8 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
 TobiiBuffer::TobiiBuffer(std::string adress_)
 {
     TobiiResearchStatus status = tobii_research_get_eyetracker(adress_.c_str(),&_eyetracker);
-    // TODO: deal with failure to get eye tracker
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye tracker", status);
 }
 TobiiBuffer::~TobiiBuffer()
 {
