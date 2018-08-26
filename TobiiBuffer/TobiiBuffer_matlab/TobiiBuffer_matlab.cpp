@@ -672,7 +672,7 @@ namespace
             // determine what return type we get
             // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
             using U = decltype(getFieldWrapper(S{}, fields..., &retT::x));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
             for (auto &samp : data_)
             {
                 storage[i++] = getFieldWrapper(samp, fields..., &retT::x);
@@ -684,7 +684,7 @@ namespace
         else
         {
             using U = decltype(getFieldWrapper(S{}, fields...));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), numRows, typeToMxClass<U>(), mxREAL)));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
             for (auto &samp : data_)
                 storage[i++] = getFieldWrapper(samp, fields...);
         }
@@ -697,7 +697,7 @@ namespace
     auto FieldToMatlabRef(const std::vector<S>& data_, R ref_, Fs... fields)
     {
         mxArray* temp;
-        auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, mxLOGICAL_CLASS, mxREAL)));
+        auto storage = static_cast<bool*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, data_.size(), mxLOGICAL_CLASS, mxREAL)));
         size_t i = 0;
         for (auto &samp : data_)
             storage[i++] = getFieldWrapper(samp, fields...) == ref_;
@@ -804,7 +804,7 @@ namespace
             for (auto &frame : data_)
             {
                 mxArray* temp;
-                auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(frame.width*frame.height, 1, mxUINT8_CLASS, mxREAL)));
+                auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, frame.width*frame.height, mxUINT8_CLASS, mxREAL)));
                 memcpy(storage, frame.data(), frame.data_size);
                 mxSetCell(out, i++, temp);
             }
