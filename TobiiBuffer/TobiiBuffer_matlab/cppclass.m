@@ -36,8 +36,12 @@ classdef (Abstract = true) cppclass < handle
     
     methods (Access = protected, Sealed = true)
         function varargout = cppmethod(obj, methodName, varargin)
-            if isempty(obj.instanceHandle),
-                error('cppclass:invalidHandle','No class handle'); end
+            if isempty(obj.instanceHandle)
+                error('cppclass:invalidHandle','No class handle');
+            end
+            if isa(methodName,'string')
+                methodName = char(methodName);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
             [varargout{1:nargout}] = obj.mexClassWrapperFnc(methodName, obj.instanceHandle, varargin{:});
         end
     end
@@ -47,15 +51,15 @@ classdef (Abstract = true) cppclass < handle
             % Input function_handle or name, return valid handle or error
             
             % accept string or function_handle
-            if ischar(mexFnc),
+            if ischar(mexFnc)
                 mexFnc = str2func(mexFnc);
             end
             
             % validate MEX-file function handle
             % http://stackoverflow.com/a/19307825/2778484
-            if isa(mexFnc, 'function_handle'),
+            if isa(mexFnc, 'function_handle')
                 funInfo = functions(mexFnc);
-                if exist(funInfo.file,'file') ~= 3, % status 3 is MEX-file
+                if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
                     error('cppclass:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
                 end
             else
