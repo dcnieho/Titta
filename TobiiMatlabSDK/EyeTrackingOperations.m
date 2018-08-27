@@ -95,8 +95,8 @@ classdef EyeTrackingOperations
         %
         function retval = find_all_eyetrackers(Tobii)
             eyetrackers = Tobii.APIcall('FindAllEyeTrackers');
-            retval(size(eyetrackers,1), 1) = EyeTracker;
-            for i=1:size(eyetrackers,1)
+            retval = repmat(EyeTracker, size(eyetrackers,1), 1);
+            for i=size(eyetrackers,1):-1:1
                 eyetrackers(i).mex_file_name = Tobii.MexFileName;
                 retval(i) = EyeTracker(eyetrackers(i));
             end
