@@ -111,4 +111,25 @@ namespace TobiiBuff
     private:
         std::unique_ptr<void, decltype(std::free)*> _eyeIm;
     };
+
+    // My own almost POD class for Tobii log messages, for safe resource management
+    // of the message heap array member
+    class logMessage
+    {
+    public:
+        logMessage() {}
+        logMessage(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, std::string message_) :
+            system_time_stamp(system_time_stamp_),
+            source(source_),
+            level(level_),
+            message(message_)
+        {}
+
+
+    public:
+        int64_t                system_time_stamp = 0;
+        TobiiResearchLogSource source = TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE;
+        TobiiResearchLogLevel  level = TOBII_RESEARCH_LOG_LEVEL_ERROR;
+        std::string            message;
+    };
 }

@@ -39,10 +39,14 @@ classdef (Abstract = true) cppclass < handle
             if isempty(obj.instanceHandle)
                 error('cppclass:invalidHandle','No class handle');
             end
+            [varargout{1:nargout}] = obj.cppmethodGlobal(methodName, obj.instanceHandle, varargin{:});
+        end
+        
+        function varargout = cppmethodGlobal(obj, methodName, varargin)
             if isa(methodName,'string')
                 methodName = char(methodName);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            [varargout{1:nargout}] = obj.mexClassWrapperFnc(methodName, obj.instanceHandle, varargin{:});
+            [varargout{1:nargout}] = obj.mexClassWrapperFnc(methodName, varargin{:});
         end
     end
     

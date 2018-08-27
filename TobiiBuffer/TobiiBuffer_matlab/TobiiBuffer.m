@@ -236,5 +236,21 @@ classdef TobiiBuffer < cppclass
                 data = this.cppmethod('peekTimeSyncs');
             end
         end
+        
+        
+        function success = startLogging(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1
+                success = this.cppmethodGlobal('startLogging',uint64(initialBufferSize));
+            else
+                success = this.cppmethodGlobal('startLogging');
+            end
+        end
+        function data = getLog(this)
+            data = this.cppmethodGlobal('getLog');
+        end
+        function stopLogging(this)
+            this.cppmethodGlobal('stopLogging');
+        end
     end
 end

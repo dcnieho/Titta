@@ -109,7 +109,11 @@ namespace {
         ClearTimeSyncBuffer,
         StopTimeSyncBuffering,
         ConsumeTimeSyncs,
-        PeekTimeSyncs
+        PeekTimeSyncs,
+
+        StartLogging,
+        GetLog,
+        StopLogging
     };
 
     // Map string (first input argument to mexFunction) to an Action
@@ -149,6 +153,10 @@ namespace {
         { "stopTimeSyncBuffering",		Action::StopTimeSyncBuffering },
         { "consumeTimeSyncs",			Action::ConsumeTimeSyncs },
         { "peekTimeSyncs",				Action::PeekTimeSyncs },
+
+        { "startLogging",				Action::StartLogging },
+        { "getLog",						Action::GetLog },
+        { "stopLogging",				Action::StopLogging },
     };
 
 
@@ -183,6 +191,7 @@ namespace {
     mxArray*  EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage                 > data_);
     mxArray* ExtSignalVectorToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
     mxArray*  TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
+    mxArray*       LogVectorToMatlab(std::vector<TobiiBuff::logMessage               > data_);
 }
 
 void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -200,9 +209,9 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         mexErrMsgTxt(("Unrecognized action (not in actionTypeMap): " + actionStr).c_str());
     Action action = actionTypeMap.at(actionStr);
 
-    // If action is not "new" or "delete", try to locate an existing instance based on input handle
+    // If action is not "new", "delete" or others that don't require a handle, try to locate an existing instance based on input handle
     instPtr_t instance;
-    if (action != Action::New && action != Action::Delete)
+    if (action != Action::New && action != Action::Delete && action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
     {
         auto instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
         instance = instIt->second;
@@ -517,6 +526,25 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             plhs[0] = TimeSyncVectorToMatlab(instance->peekTimeSyncs(nSamp));
             return;
         }
+
+        case Action::StartLogging:
+        {
+            uint64_t bufSize = TobiiBuff::g_logBufDefaultSize;
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            {
+                if (!mxIsUint64(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                    mexErrMsgTxt("startTimeSyncBuffering: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[1]));
+            }
+            plhs[0] = mxCreateLogicalScalar(TobiiBuff::startLogging(bufSize));
+            return;
+        }
+        case Action::GetLog:
+            plhs[0] = LogVectorToMatlab(TobiiBuff::getLog());
+            return;
+        case Action::StopLogging:
+            plhs[0] = mxCreateLogicalScalar(TobiiBuff::stopLogging());
+            return;
 
         default:
             mexErrMsgTxt(("Unhandled action: " + actionStr).c_str());
@@ -883,6 +911,29 @@ namespace
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::device_time_stamp));
         // 3. system response timestamps
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
+
+        return out;
+    }
+    mxArray* LogVectorToMatlab(std::vector<TobiiBuff::logMessage> data_)
+    {
+        if (data_.empty())
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+
+        const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        mxArray* temp;
+
+        // 1. system timestamps
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuff::logMessage::system_time_stamp));
+        // 2. log source
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiBuff::logMessage::source, uint8_t{}));
+        // 3. log level
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiBuff::logMessage::level, uint8_t{}));
+        // 4. log messages
+        mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(data_.size(), 1));
+        size_t i = 0;
+        for (auto &msg : data_)
+            mxSetCell(out, i++, mxCreateString(msg.message.c_str()));
 
         return out;
     }

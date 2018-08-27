@@ -28,6 +28,8 @@ namespace TobiiBuff
     constexpr bool   g_stopBufferEmptiesDefault = false;
     constexpr size_t g_consumeDefaultAmount = -1;
     constexpr size_t g_peekDefaultAmount = 1;
+
+    constexpr size_t g_logBufDefaultSize = 1 << 9;
 }
 
 
@@ -146,3 +148,12 @@ private:
     std::vector<TobiiResearchTimeSynchronizationData>	_timeSyncTemp;
     bool												_timeSyncUseTempBuf		= false;
 };
+
+
+//// logging ////
+namespace TobiiBuff
+{
+    bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);
+    std::vector<TobiiBuff::logMessage> getLog();
+    bool stopLogging();	// always clears buffer
+}

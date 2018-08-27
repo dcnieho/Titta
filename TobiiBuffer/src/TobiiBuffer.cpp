@@ -12,7 +12,7 @@ namespace {
     typedef std::shared_lock<mutex_type> read_lock;
     typedef std::unique_lock<mutex_type> write_lock;
 
-    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync;
+    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mLog;
 
     read_lock  lockForReading(mutex_type& m_) {return  read_lock(m_);}
     write_lock lockForWriting(mutex_type& m_) {return write_lock(m_);}
@@ -29,11 +29,11 @@ namespace {
         if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
             return g_mTimeSync;
     }
-}
 
-// deal with error messages
-namespace
-{
+    // global log buffer
+    std::vector<TobiiBuff::logMessage> g_logMessages;
+
+    // deal with error messages
     inline void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
     {
         std::stringstream os;
@@ -84,6 +84,11 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
         auto l = lockForWriting(getMutex<TobiiResearchTimeSynchronizationData>());
         static_cast<TobiiBuffer*>(user_data)->getTimeSyncBuffer().push_back(*time_sync_data_);
     }
+}
+void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
+{
+    auto l = lockForWriting(g_mLog);
+    g_logMessages.emplace_back(system_time_stamp_,source_,level_,message_);
 }
 
 
@@ -402,4 +407,24 @@ std::vector<TobiiResearchTimeSynchronizationData> TobiiBuffer::consumeTimeSyncs(
 std::vector<TobiiResearchTimeSynchronizationData> TobiiBuffer::peekTimeSyncs(size_t lastN_/* = g_peekDefaultAmount*/)
 {
     return peek<TobiiResearchTimeSynchronizationData>(lastN_);
+}
+
+
+// logging
+namespace TobiiBuff
+{
+    bool startLogging(size_t initialBufferSize_ /*= g_logBufDefaultSize*/)
+    {
+        g_logMessages.reserve(initialBufferSize_);
+        return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
+    }
+    std::vector<TobiiBuff::logMessage> getLog()
+    {
+        auto l = lockForWriting(g_mLog);
+        return std::vector<TobiiBuff::logMessage>(std::move(g_logMessages));
+    }
+    bool stopLogging()
+    {
+        return tobii_research_logging_unsubscribe() == TOBII_RESEARCH_STATUS_OK;
+    }
 }
