@@ -1,10 +1,48 @@
-classdef TobiiBuffer < cppclass
+classdef TobiiBuffer < handle
+    properties (GetAccess = private, SetAccess = immutable, Hidden = true, Transient = true)
+        instanceHandle;         % integer handle to a class instance in MEX function
+    end
+    properties (GetAccess = protected, SetAccess = immutable, Hidden = false)
+        mexClassWrapperFnc;     % the MEX function owning the class instances
+    end
+    
+    methods (Static = true)
+        function mexFnc = checkMEXFnc(mexFnc)
+            % Input function_handle or name, return valid handle or error
+            
+            % accept string or function_handle
+            if ischar(mexFnc)
+                mexFnc = str2func(mexFnc);
+            end
+            
+            % validate MEX-file function handle
+            % http://stackoverflow.com/a/19307825/2778484
+            funInfo = functions(mexFnc);
+            if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
+                error('TobiiBuffer:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
+            end
+        end
+    end
+    
+    methods (Access = protected, Sealed = true)
+        function varargout = cppmethod(this, methodName, varargin)
+            if isempty(this.instanceHandle)
+                error('TobiiBuffer:invalidHandle','No class handle. Did you call init yet?');
+            end
+            [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, this.instanceHandle, varargin{:});
+        end
+        
+        function varargout = cppmethodGlobal(this, methodName, varargin)
+            [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, varargin{:});
+        end
+    end
+    
     methods
         % Use the name of your MEX file here
-        function this = TobiiBuffer(address,debugMode)
+        function this = TobiiBuffer(debugMode)
             % debugmode is for developer of SMIbuffer only, no use for end
             % users
-            if nargin<2 || isempty(debugMode)
+            if nargin<1 || isempty(debugMode)
                 debugMode = false;
             else
                 debugMode = ~~debugMode;
@@ -26,13 +64,27 @@ classdef TobiiBuffer < cppclass
 %             cellfun(@(x)rmpath(fileparts(x)),dlls);
 %             dllDir = fileparts(dlls{qFind});
 %             addpath(dllDir);
+
+            this.mexClassWrapperFnc = this.checkMEXFnc(mexFnc);
+            
+            % call no-op to load the mex file
+            this.cppmethodGlobal('touch');
+        end
+        
+        function delete(this)
+            if ~isempty(this.instanceHandle)
+                this.mexClassWrapperFnc('delete', this.instanceHandle);
+                this.mexClassWrapperFnc = [];
+                this.instanceHandle     = [];
+            end
+        end
+        
+        function init(this,address)
             if isa(address,'string')
                 address = char(address);    % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            this@cppclass(mexFnc,char(address));
+            this.instanceHandle = this.cppmethod('new',char(address));
         end
-        
-        % delete is inherited
         
         function success = startSampleBuffering(this,initialBufferSize)
             % optional buffer size input

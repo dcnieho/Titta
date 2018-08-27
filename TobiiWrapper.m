@@ -70,6 +70,10 @@ classdef TobiiWrapper < handle
             % Load in Tobii SDK
             obj.tobii = EyeTrackingOperations();
             
+            % Load in our callback buffer mex
+            obj.buffers = TobiiBuffer();
+            obj.buffers.startLogging();
+            
             % prepare msg buffer
             obj.msgs = simpleVec(cell(1,2),1024);
         end
@@ -149,8 +153,8 @@ classdef TobiiWrapper < handle
             % get our instance
             obj.eyetracker = trackers(qTracker);
             
-            % Load in our callback buffer mex
-            obj.buffers = TobiiBuffer(obj.eyetracker.Address);
+            % provide callback buffer mex with eye tracker
+            obj.buffers.init(obj.eyetracker.Address);
             
             % apply license(s) if needed
             if ~isempty(obj.settings.licenseFile)
@@ -582,24 +586,10 @@ classdef TobiiWrapper < handle
             obj.processError(ret,'SMI: Error saving data');
         end
         
-        function out = deInit(obj,qQuit)
-            obj.iView.disconnect();
-            % also, read log, return contents as output and delete
-            fid = fopen(obj.settings.logFileName, 'r');
-            if fid~=-1
-                out = fread(fid, inf, '*char').';
-                fclose(fid);
-            else
-                out = '';
-            end
-            % somehow, matlab maintains a handle to the log file, even after
-            % fclose all and unloading the SMI library. Somehow a dangling
-            % handle from smi, would be my guess (note that calling iV_Quit did
-            % not fix it).
-            % delete(smiSetup.logFileName);
-            if nargin>1 && qQuit
-                obj.iView.quit();
-            end
+        function out = deInit(obj)
+            % return and stop log
+            out = obj.rawBuffers.getLog();
+            obj.rawBuffers.stopLogging();
             
             % mark as deinited
             obj.isInitialized = false;
