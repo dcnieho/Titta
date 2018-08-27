@@ -5,6 +5,9 @@ classdef TobiiWrapper < handle
         eyetracker;
         buffers;
         
+        % message buffer
+        msgs;
+        
         % state
         isInitialized   = false;
         usingFTGLTextRenderer;
@@ -58,6 +61,7 @@ classdef TobiiWrapper < handle
             if ~obj.usingFTGLTextRenderer
                 assert(isfield(obj.settings.text,'lineCentOff'),'PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
             end
+            
             % init key, mouse state
             [~,~,obj.keyState] = KbCheck();
             obj.shiftKey = KbName('shift');
@@ -65,6 +69,9 @@ classdef TobiiWrapper < handle
             
             % Load in Tobii SDK
             obj.tobii = EyeTrackingOperations();
+            
+            % prepare msg buffer
+            obj.msgs = simpleVec(cell(1,2),1024);
         end
         
         function out = setDummyMode(obj)
@@ -483,7 +490,7 @@ classdef TobiiWrapper < handle
                 time = GetSecs();
             end
             time = int64(round(time*1000*1000));
-            % TODO: implement a message buffer
+            obj.msgs.append({time,str});
             if obj.settings.debugMode
                 fprintf('%d: %s\n',time,str);
             end
