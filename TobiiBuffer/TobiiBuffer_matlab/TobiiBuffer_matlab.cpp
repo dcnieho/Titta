@@ -795,7 +795,7 @@ namespace
         }
         else
         {
-            out = mxCreateCellMatrix(data_.size(), 1);
+            out = mxCreateCellMatrix(1, data_.size());
             size_t i = 0;
             for (auto &frame : data_)
             {
@@ -858,9 +858,9 @@ namespace
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
-        // 1. all device timestamps
+        // 1. device timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchExternalSignalData::device_time_stamp));
-        // 2. all system timestamps
+        // 2. system timestamps
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchExternalSignalData::system_time_stamp));
         // 3. external signal values
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchExternalSignalData::value));
@@ -869,7 +869,7 @@ namespace
 
         return out;
     }
-    mxArray*  TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
+    mxArray* TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -877,11 +877,11 @@ namespace
         const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
-        // 1. all system timestamps
+        // 1. system request timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
-        // 2. all device timestamps
+        // 2. device timestamps
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::device_time_stamp));
-        // 3. external signal values
+        // 3. system response timestamps
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
 
         return out;

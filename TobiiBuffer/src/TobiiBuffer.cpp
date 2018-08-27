@@ -97,8 +97,10 @@ TobiiBuffer::TobiiBuffer(std::string adress_)
 }
 TobiiBuffer::~TobiiBuffer()
 {
-    stopSampleBuffering();
-    stopEyeImageBuffering();
+    stopSampleBuffering(true);
+    stopEyeImageBuffering(true);
+    stopExtSignalBuffering(true);
+    stopTimeSyncBuffering(true);
 }
 
 
@@ -263,8 +265,23 @@ namespace {
 bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= g_eyeImageBufDefaultSize*/, bool asGif_ /*= g_eyeImageAsGIFDefault*/)
 {
     _eyeImages.reserve(initialBufferSize_);
-    _eyeImIsGif = asGif_;
-    return doSubscribeEyeImage(_eyetracker, this, asGif_);
+
+    // if temp buffer selected, always record normal images, not gif
+    if (_eyeImUseTempBuf)
+        asGif_ = false;
+
+    // if already recording and switching from gif to normal or other way, first stop old stream
+    if (_recordingEyeImages)
+        if (asGif_ != _eyeImIsGif)
+            doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+        else
+            // nothing to do
+            return true;
+
+    // subscribe to new stream
+    _recordingEyeImages = doSubscribeEyeImage(_eyetracker, this, asGif_);
+    _eyeImIsGif = _recordingEyeImages ? asGif_ : _eyeImIsGif;	// update type being recorded is subscription to stream was succesful
+    return _recordingEyeImages;
 }
 void TobiiBuffer::enableTempEyeImageBuffer(size_t initialBufferSize_ /*= g_eyeImageTempBufDefaultSize*/)
 {

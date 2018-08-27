@@ -238,6 +238,7 @@ private:
     std::vector<TobiiResearchGazeData>					_samplesTemp;
     bool												_samplesUseTempBuf		= false;
 
+    bool												_recordingEyeImages		= false;
     std::vector<TobiiBuff::eyeImage>					_eyeImages;
     std::vector<TobiiBuff::eyeImage>					_eyeImagesTemp;
     bool												_eyeImUseTempBuf		= false;
