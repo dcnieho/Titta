@@ -30,4 +30,9 @@
       <Filter>m-files</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pack_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

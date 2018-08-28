@@ -54,14 +54,12 @@
 #include <string>
 #include <sstream>
 #include <atomic>
-#include <tuple>
-#include <type_traits>
 
 #define DLL_EXPORT_SYM __declspec(dllexport)
 #include "mex.h"
 
+#include "pack_utils.h"
 
-// The class to wrap
 #include "TobiiBuffer/TobiiBuffer.h"
 #pragma comment(lib, "TobiiBuffer.lib")
 
@@ -605,60 +603,6 @@ namespace
         return static_cast<Out>(getField(obj, fields...));
     }
 
-    // get last type (or optionally 2nd last when N=2, 3rd last when N=3, etc) in variadic template
-    template<class T> struct tag_t { using type = T; };
-    template<class...Ts, size_t N = 1>
-    using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<tag_t<Ts>...> >::type;
-
-    // higher order function to forward an index sequence
-    template <typename F, size_t... Is>
-    constexpr auto indices_impl(F f, std::index_sequence<Is...>)
-    {
-        return f(std::integral_constant<size_t, Is>()...);
-    }
-    template <size_t N, typename F>
-    constexpr auto indices(F f)
-    {
-        return indices_impl(f, std::make_index_sequence<N>());
-    }
-
-    // Given f and some args t0, t1, ..., tn, calls f(tn, t0, t1, ..., tn-1)
-    template <typename F, typename... Ts>
-    constexpr auto rotate_right(F f, Ts... ts)
-    {
-        auto tuple = std::make_tuple(ts...);
-        return indices<sizeof...(Ts) - 1>([&](auto... Is) constexpr	// pass elements 1 to N-1 as input to lambda
-        {
-            return f(												// call user's function with:
-                std::get<sizeof...(Ts) - 1>(tuple),					// last element of tuple
-                std::get<Is>(tuple)...);							// all inputs to lambda (elements 1 to N-1)
-        });
-    }
-    // Given f and some args t0, t1, ..., tn, calls f(tn-1, t0, t1, ..., tn)
-    template <typename F, typename... Ts>
-    constexpr auto rotate_right_except_last(F f, Ts... ts)
-    {
-        auto tuple = std::make_tuple(ts...);
-        return indices<sizeof...(Ts) - 2>([&](auto... Is) constexpr	// pass elements 1 to N-2 as input to lambda
-        {
-            return f(												// call user's function with:
-                std::get<sizeof...(Ts) - 2>(tuple),					// element N-1
-                std::get<Is>(tuple)...,								// all inputs to lambda (elements 1 to N-2)
-                std::get<sizeof...(Ts) - 1>(tuple)					// last element
-                );
-        });
-    }
-    // Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn-1)
-    template <typename F, typename... Ts>
-    auto drop_last(F f, Ts... ts)
-    {
-        return indices<sizeof...(Ts) - 1>([&](auto... Is)
-        {
-            auto tuple = std::make_tuple(ts...);
-            return f(std::get<Is>(tuple)...);
-        });
-    }
-
     template <typename Obj, typename... Fs>
     auto getFieldWrapper(const Obj& obj, Fs... fields)
     {
@@ -703,9 +647,7 @@ namespace
             return 1;
     }
 
-    // function declaration to extract member variable type from a pointer-to-member-variable through declval (no implementation needed, because this function is never actually called)
-    template <class C, typename T>
-    T getPointerType(T C::*v) {}
+    
 
     // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
     template <typename S, typename... Fs>
@@ -713,7 +655,7 @@ namespace
     {
         mxArray* temp;
         // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessecarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
-        using retT = decltype(getPointerType(std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>{}));
+        using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>>;
         // based on type, get number of rows for output
         constexpr auto numRows = getNumRows<retT>();
 
