@@ -589,8 +589,8 @@ namespace
     }
 
     // get field indicated by list of pointers-to-member-variable in fields
-    template <typename Obj, typename F, typename T, typename... Fs, typename... Ts>
-    constexpr auto inline getField(const Obj& obj, T F::*field1, Ts Fs::*...fields)
+    template <typename O, typename T, typename... Os, typename... Ts>
+    auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
     {
         if constexpr (!sizeof...(fields))
             return obj.*field1;
@@ -600,7 +600,7 @@ namespace
 
     // get field indicated by list of pointers-to-member-variable in fields, cast return value to user specified type
     template <typename Obj, typename Out, typename... Fs, typename... Ts>
-    constexpr auto inline getField(const Obj& obj, Out, Ts Fs::*...fields)
+    auto getField(const Obj& obj, Out, Ts Fs::*...fields)
     {
         return static_cast<Out>(getField(obj, fields...));
     }
@@ -660,7 +660,7 @@ namespace
     }
 
     template <typename Obj, typename... Fs>
-    constexpr auto inline getFieldWrapper(const Obj& obj, Fs... fields)
+    auto getFieldWrapper(const Obj& obj, Fs... fields)
     {
         // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
         if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
