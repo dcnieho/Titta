@@ -34,5 +34,11 @@
     <ClInclude Include="pack_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mex_type_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tobii_to_matlab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

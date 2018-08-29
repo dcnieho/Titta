@@ -166,7 +166,9 @@
     <None Include="TobiiBuffer.m" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mex_type_utils.h" />
     <ClInclude Include="pack_utils.h" />
+    <ClInclude Include="tobii_to_matlab.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
