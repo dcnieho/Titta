@@ -651,9 +651,9 @@ namespace
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
-        const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","validity"};
-        const char* fieldNamesPup[] = {"diameter","validity"};
-        const char* fieldNamesGO[] = {"inUserCoords","inTrackBoxCoords","validity"};
+        const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid"};
+        const char* fieldNamesPup[] = {"diameter","valid"};
+        const char* fieldNamesGO[] = {"inUserCoords","inTrackBoxCoords","valid"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNamesEye) / sizeof(*fieldNamesEye), fieldNamesEye);
         mxArray* temp;
 
