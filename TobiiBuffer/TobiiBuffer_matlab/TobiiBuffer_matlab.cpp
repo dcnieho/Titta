@@ -56,9 +56,11 @@
 #include <atomic>
 
 #define DLL_EXPORT_SYM __declspec(dllexport)
-#include "mex.h"
+#include <mex.h>
+#include "mex_type_utils.h"
 
 #include "pack_utils.h"
+#include "tobii_to_matlab.h"
 
 #include "TobiiBuffer/TobiiBuffer.h"
 #pragma comment(lib, "TobiiBuffer.lib")
@@ -559,33 +561,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 // helpers
 namespace
 {
-    template <typename T>
-    constexpr mxClassID typeToMxClass()
-    {
-        if      constexpr (std::is_same_v<T, double>)
-            return mxDOUBLE_CLASS;
-        else if constexpr (std::is_same_v<T, float>)
-            return mxSINGLE_CLASS;
-        else if constexpr (std::is_same_v<T, bool>)
-            return mxLOGICAL_CLASS;
-        else if constexpr (std::is_same_v<T, uint64_t>)
-            return mxUINT64_CLASS;
-        else if constexpr (std::is_same_v<T, int64_t>)
-            return mxINT64_CLASS;
-        else if constexpr (std::is_same_v<T, uint32_t>)
-            return mxUINT32_CLASS;
-        else if constexpr (std::is_same_v<T, int32_t>)
-            return mxINT32_CLASS;
-        else if constexpr (std::is_same_v<T, uint16_t>)
-            return mxUINT16_CLASS;
-        else if constexpr (std::is_same_v<T, int16_t>)
-            return mxINT16_CLASS;
-        else if constexpr (std::is_same_v<T, uint8_t>)
-            return mxUINT8_CLASS;
-        else if constexpr (std::is_same_v<T, int8_t>)
-            return mxINT8_CLASS;
-    }
-
     // get field indicated by list of pointers-to-member-variable in fields
     template <typename O, typename T, typename... Os, typename... Ts>
     auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
@@ -635,19 +610,6 @@ namespace
                 return getField(obj, elems...);
             }, fields...);
     }
-
-    template <typename T>
-    constexpr size_t getNumRows()
-    {
-        if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>) // also matches TobiiResearchNormalizedPoint3D, as that's typedeffed to TobiiResearchPoint3D
-            return 3;
-        else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint2D>)
-            return 2;
-        else
-            return 1;
-    }
-
-    
 
     // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
     template <typename S, typename... Fs>
