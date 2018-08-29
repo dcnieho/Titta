@@ -1,5 +1,5 @@
 classdef TobiiBuffer < handle
-    properties (GetAccess = private, SetAccess = immutable, Hidden = true, Transient = true)
+    properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
     properties (GetAccess = protected, SetAccess = immutable, Hidden = false)
@@ -73,8 +73,7 @@ classdef TobiiBuffer < handle
         
         function delete(this)
             if ~isempty(this.instanceHandle)
-                this.mexClassWrapperFnc('delete', this.instanceHandle);
-                this.mexClassWrapperFnc = [];
+                this.cppmethod('delete');
                 this.instanceHandle     = [];
             end
         end
@@ -83,7 +82,7 @@ classdef TobiiBuffer < handle
             if isa(address,'string')
                 address = char(address);    % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            this.instanceHandle = this.cppmethod('new',char(address));
+            this.instanceHandle = this.cppmethodGlobal('new',char(address));
         end
         
         function success = startSampleBuffering(this,initialBufferSize)
