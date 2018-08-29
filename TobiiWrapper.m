@@ -215,7 +215,7 @@ classdef TobiiWrapper < handle
                 % no-op, ok if fails, simply means we're not already in
                 % calibration mode
             end
-            obj.stopRecording();
+            obj.StopTempRecordAll();
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -320,63 +320,43 @@ classdef TobiiWrapper < handle
             end
         end
         
-        function startRecording(obj)
-            % 1. gaze data
-            obj.startRecordingSpecificStream('gaze');
-            
-            % 2. info about synchronization between ET and system
-            if obj.settings.doRecord.syncData
-                obj.startRecordingSpecificStream('sync');
-            end
-            % 3. external signal
-            if obj.settings.doRecord.externalSignal
-                obj.startRecordingSpecificStream('externalSignal');
-            end
-            
-            % 4. eye images
-            if obj.settings.doRecord.eyeImages
-                obj.startRecordingSpecificStream('eyeImages');
-            end
-            
-            WaitSecs(.05); % give it some time to get started. not needed according to doc, but never hurts
-        end
-        
-        function startRecordingSpecificStream(obj,stream)
+        function startRecording(obj,stream)
             % For these, the first call subscribes to the stream and returns
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
+            result = true;
             switch lower(stream)
                 case 'gaze'
+                    field       = 'gaze';
                     if ~obj.recState.gaze
                         result      = obj.buffers.startSampleBuffering();
                         streamLbl   = 'gaze data';
-                        field       = 'gaze';
                     end
-                case 'sync'
-                    if ~obj.recState.sync
-                        result      = obj.eyetracker.get_time_sync_data('flat');
-                        streamLbl   = 'sync data';
-                        field       = 'sync';
+                case 'eyeimage'
+                    if hasCap(obj,Capabilities.HasEyeImages)
+                        field   	= 'eyeIm';
+                        if ~obj.recState.eyeIm
+                            result      = obj.buffers.startEyeImageBuffering();
+                            streamLbl   = 'eye images';
+                        end
+                    else
+                        error('recording of eye images is not supported by this eye-tracker')
                     end
                 case 'externalsignal'
                     if hasCap(obj,Capabilities.HasExternalSignal)
+                        field       = 'extSig';
                         if ~obj.recState.extSig
-                            result      = obj.eyetracker.get_external_signal_data('flat');
+                            result      = obj.buffers.startExtSignalBuffering();
                             streamLbl   = 'external signals';
-                            field       = 'extSig';
                         end
                     else
                         error('recording of external signals is not supported by this eye-tracker')
                     end
-                case 'eyeimages'
-                    if hasCap(obj,Capabilities.HasEyeImages)
-                        if ~obj.recState.eyeIm
-                            result      = obj.buffers.startEyeImageBuffering();
-                            streamLbl   = 'eye images';
-                            field   	= 'eyeIm';
-                        end
-                    else
-                        error('recording of eye images is not supported by this eye-tracker')
+                case 'timesync'
+                    field       = 'sync';
+                    if ~obj.recState.sync
+                        result      = obj.buffers.startTimeSyncBuffering();
+                        streamLbl   = 'sync data';
                     end
                 otherwise
                     error('signal ''%s'' not known',stream);
@@ -394,95 +374,50 @@ classdef TobiiWrapper < handle
             obj.recState.(field) = true;
         end
         
-        function startBuffer(obj,size)
-            if nargin<2
-                size = [];
+        function data = consumeData(obj,stream,varargin)
+            % optional input argument firstN: how many samples to consume
+            data = obj.consumePeekData(stream,'consume',varargin{:});
+        end
+        
+        function data = peekData(obj,stream,varargin)
+            % optional input argument lastN: how many samples to peek from
+            % end
+            data = obj.consumePeekData(stream,'peek',varargin{:});
+        end
+        
+        function stopRecording(obj,stream,qClearBuffer)
+            if nargin<3 || isempty(qClearBuffer)
+                qClearBuffer = false;
             end
-            ret = obj.buffers.startSampleBuffering(size);
-            obj.processError(ret,'SMI: Error starting sample buffer');
-        end
-        
-        function data = consumeData(obj,N)
-            data = obj.buffers.consume(N);
-        end
-        
-        function data = peekData(obj,N)
-            % returns empty when sample not gotten successfully
-            data = obj.buffers.peekSamples(N);
-        end
-        
-        function stopRecording(obj)
-            % 1. gaze data
-            obj.stopRecordingSpecificStream('gaze');
-            % 2. info about synchronization between ET and system
-            obj.stopRecordingSpecificStream('sync');
-            % 3. external signal
-            obj.stopRecordingSpecificStream('externalSignal');
-            % 4. eye images
-            obj.stopRecordingSpecificStream('eyeImages');
-        end
-        
-        function stopRecordingSpecificStream(obj,stream)
             field = '';
             switch lower(stream)
                 case 'gaze'
                     if obj.recState.gaze
-                        obj.buffers.stopSampleBuffering(false);
+                        obj.buffers.stopSampleBuffering(qClearBuffer);
                         field = 'gaze';
                     end
-                case 'sync'
-                    if obj.recState.sync
-                        obj.eyetracker.stop_time_sync_data();
-                        field = 'sync';
+                case 'eyeimage'
+                    if obj.recState.eyeIm
+                        obj.buffers.stopEyeImageBuffering(qClearBuffer);
+                        field = 'eyeIm';
                     end
                 case 'externalsignal'
                     if obj.recState.extSig
-                        obj.eyetracker.stop_external_signal_data();
+                        obj.buffers.stopExtSignalBuffering(qClearBuffer);
                         field = 'extSig';
                     end
-                case 'eyeimages'
-                    if obj.recState.eyeIm
-                        obj.buffers.stopEyeImageBuffering(false);
-                        field = 'eyeIm';
+                case 'timesync'
+                    if obj.recState.sync
+                        obj.buffers.stopTimeSyncBuffering(qClearBuffer);
+                        field = 'sync';
                     end
                 otherwise
-                    error('signal ''%s'' not known',stream);
+                    error('stream ''%s'' not known',stream);
             end
             
             % mark that we stopped recording
             if ~isempty(field)
                 obj.recState.(field) = false;
-            end
-        end
-        
-        function [etData,syncData,extData,eyeImage] = getData(obj)
-            etData  = obj.getSpecificData('gaze');
-            syncData= obj.getSpecificData('sync');
-            extData = obj.getSpecificData('externalSignal');
-            eyeImage= obj.getSpecificData('eyeImages');
-        end
-        
-        function [data] = getSpecificData(obj,stream)
-            data = [];
-            switch lower(stream)
-                case 'gaze'
-                    if obj.recState.gaze
-                        data = obj.eyetracker.get_gaze_data('flat');
-                    end
-                case 'sync'
-                    if obj.recState.sync
-                        data = obj.eyetracker.get_time_sync_data('flat');
-                    end
-                case 'externalsignal'
-                    if obj.recState.extSig
-                        data = obj.eyetracker.get_external_signal_data('flat');
-                    end
-                case 'eyeimages'
-                    if obj.recState.eyeIm
-                        data = obj.buffers.consumeEyeImages();
-                    end
-                otherwise
-                    error('signal ''%s'' not known',stream);
             end
         end
         
@@ -498,48 +433,6 @@ classdef TobiiWrapper < handle
             if obj.settings.debugMode
                 fprintf('%d: %s\n',time,str);
             end
-        end
-        
-        function recordEyeImages(obj,filename, format, duration)
-            % NB: does NOT work on NG eye-trackers (RED250mobile, RED-n)
-            % if using two computer setup, save location is on remote
-            % computer, if not a full path is given, it is relative to
-            % iView install directory on that computer. If single computer
-            % setup, relative paths are relative to the current working
-            % directory when this function is called
-            % duration is in ms. If provided, images for the recording
-            % duration are buffered and written to disk afterwards, so no
-            % images will be lost. If empty, images are recorded directly
-            % to disk (and lost if disk can't keep up).
-            
-            % get filename and path
-            [path,file,~] = fileparts(filename);
-            if isempty(regexp(path,'^\w:', 'once')) && ~obj.isTwoComputerSetup()
-                % single computer setup and no drive letter in provided
-                % path. Interpret path as relative to cd
-                path = fullfile(cd,path);
-            end
-            
-            % check format
-            if ischar(format)
-                format = find(strcmpi(format,{'jpg','bmp','xvid','huffyuv','alpary','xmp4'}));
-                assert(~isempty(format),'if format provided as string, should be one of ''jpg'',''bmp'',''xvid'',''huffyuv'',''alpary'',''xmp4''');
-                format = format-1;
-            end
-            assert(isnumeric(format) && format>=0 && format<=5,'format should be between 0 and 5 (inclusive)')
-            
-            % send command
-            if isempty(duration)
-                obj.rawET.sendCommand(sprintf('ET_EVB %d "%s" "%s"\n',format,file,path));
-            else
-                obj.rawET.sendCommand(sprintf('ET_EVB %d "%s" "%s" %d\n',format,file,path,duration));
-            end
-        end
-        
-        function stopRecordEyeImages(obj)
-            % if no duration specified when calling recordEyeImages, call
-            % this function to stop eye image recording
-            obj.rawET.sendCommand('ET_EVE\n');
         end
         
         function saveData(obj,filename, user, description, doAppendVersion)
@@ -640,11 +533,10 @@ classdef TobiiWrapper < handle
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
             settings.val.qRandPoints        = true;
-            settings.doRecord.syncData      = true;
-            settings.doRecord.externalSignal= false;
-            settings.doRecord.eyeImages     = false;
             settings.setup.viewingDist      = 65;
+            settings.setup.eyeColors        = {'e1812c',[225 129 44];'3274a1',[50 116 161]}; % L; R TODO; implement everywhere
             settings.text.font              = 'Consolas';
+            settings.text.color             = 0;                                % only for messages on the screen, doesn't affect buttons
             settings.text.style             = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.text.wrapAt            = 62;
             settings.text.vSpacing          = 1;
@@ -677,7 +569,9 @@ classdef TobiiWrapper < handle
                 'cal','fixBackColor'
                 'cal','fixFrontColor'
                 'cal','drawFunction'
+                'setup','eyeColors'
                 'text','font'
+                'text','color'
                 'text','size'
                 'text','style'
                 'text','wrapAt'
@@ -708,14 +602,13 @@ classdef TobiiWrapper < handle
             
             % init
             status = 5+5*(startScreen==2);  % 5 if simple screen requested, 10 if advanced screen
-            obj.startRecordingSpecificStream('gaze');
-            obj.sendMessage('SETUP START'); % so user can know to ignore this data (we can't afford emptying the buffer at end, user may have data in it from before)
+            obj.buffers.enableTempSampleBuffer();
+            obj.startRecording('gaze');
+            obj.sendMessage('SETUP START');
             % see if we already have valid calibrations
             qHaveValidCalibrations = false;
-            if ~isempty(out)
-                if isfield(out,'attempt')
-                    qHaveValidCalibrations = ~isempty(obj.getValidCalibrations(out.attempt));
-                end
+            if ~isempty(out) && isfield(out,'attempt')
+                qHaveValidCalibrations = ~isempty(getValidCalibrations(out.attempt));
             end
             
             while true
@@ -730,7 +623,8 @@ classdef TobiiWrapper < handle
                     break;
                 end
             end
-            obj.stopRecordingSpecificStream('gaze');
+            obj.stopRecording('gaze');
+            obj.buffers.disableTempSampleBuffer();
             obj.sendMessage('SETUP END')
         end
         
@@ -763,22 +657,22 @@ classdef TobiiWrapper < handle
             buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
             b = 1;
             advancedButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-            advancedButTextCache    = obj.getButtonTextCache(wpnt,'advanced (<i>a<i>)'        ,advancedButRect);
+            advancedButTextCache    = obj.getTextCache(wpnt,'advanced (<i>a<i>)'        ,advancedButRect);
             b=b+1;
             
             calibButRect            = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-            calibButTextCache       = obj.getButtonTextCache(wpnt,'calibrate (<i>spacebar<i>)',   calibButRect);
+            calibButTextCache       = obj.getTextCache(wpnt,'calibrate (<i>spacebar<i>)',   calibButRect);
             b=b+1;
             if qHaveValidCalibrations
                 validateButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-                validateButTextCache    = obj.getButtonTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
+                validateButTextCache    = obj.getTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
             else
                 validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
             Screen('FillRect', wpnt, obj.settings.cal.bgColor); % clear what we've just drawn
             
             % setup fixation points in the corners of the screen
-            fixPos = [.1 .1; .1 .9; .9 .9; .9 .1] .* repmat(obj.scrInfo.resolution(1:2),4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
             
             % setup cursors
             cursors.rect    = {advancedButRect.' calibButRect.' validateButRect.'};
@@ -830,7 +724,7 @@ classdef TobiiWrapper < handle
                 end
                 
                 % draw distance info
-                DrawFormattedText(wpnt,sprintf(obj.settings.string.simplePositionInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),255,[],[],[],1.5);
+                DrawFormattedText(wpnt,sprintf(obj.settings.string.simplePositionInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.text.color,[],[],[],1.5);
                 % draw ovals
                 obj.drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
                 if ~isempty(headPos)
@@ -898,7 +792,8 @@ classdef TobiiWrapper < handle
         
         
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            obj.startRecordingSpecificStream('eyeImages');
+            obj.buffers.enableTempEyeImageBuffer();
+            obj.startRecording('eyeImage');
             
             % setup text
             Screen('TextFont',  wpnt, obj.settings.text.font);
@@ -915,7 +810,7 @@ classdef TobiiWrapper < handle
             texs    = [0 0];
             eyeIm   = [];
             while isempty(eyeIm)
-                eyeIm = obj.getSpecificData('eyeImages');
+                eyeIm = obj.consumeData('eyeImage');
                 WaitSecs('YieldSecs',0.2);
             end
             [texs,szs]  = obj.UploadImages(texs,[],wpnt,eyeIm);
@@ -940,12 +835,12 @@ classdef TobiiWrapper < handle
             totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
             buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
             basicButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz{1}(2)],obj.scrInfo.center(1),yposBase-buttonSz{1}(2));
-            basicButTextCache   = obj.getButtonTextCache(wpnt,'basic (<i>b<i>)'          , basicButRect);
+            basicButTextCache   = obj.getTextCache(wpnt,'basic (<i>b<i>)'          , basicButRect);
             calibButRect        = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz{2}(2)],obj.scrInfo.center(1),yposBase-buttonSz{2}(2));
-            calibButTextCache   = obj.getButtonTextCache(wpnt,'calibrate (<i>spacebar<i>)',calibButRect);
+            calibButTextCache   = obj.getTextCache(wpnt,'calibrate (<i>spacebar<i>)',calibButRect);
             if qHaveValidCalibrations
                 validateButRect         = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz{3}(2)],obj.scrInfo.center(1),yposBase-buttonSz{3}(2));
-                validateButTextCache    = obj.getButtonTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
+                validateButTextCache    = obj.getTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
             else
                 validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
@@ -953,7 +848,7 @@ classdef TobiiWrapper < handle
             Screen('FillRect', wpnt, obj.settings.cal.bgColor); % clear what we've just drawn
             
             % setup fixation points in the corners of the screen
-            fixPos = [.1 .1; .1 .9; .9 .9; .9 .1] .* repmat(obj.scrInfo.resolution(1:2),4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
             
             gain = 1.5;     % 1.5 is a gain to make differences larger
             sz   = 15;      % base size at reference distance
@@ -1053,7 +948,7 @@ classdef TobiiWrapper < handle
                     arrowColor(:,idx) = obj.getArrowColor(zMid,zThresh,col1,col2,col3);
                 end
                 % get eye image
-                eyeIm       = obj.getSpecificData('eyeImages');
+                eyeIm       = obj.consumeData('eyeImage');
                 [texs,szs]  = obj.UploadImages(texs,szs,wpnt,eyeIm);
                 
                 % update eye image locations (and possibly track box) if
@@ -1177,7 +1072,8 @@ classdef TobiiWrapper < handle
                 end
             end
             % clean up
-            obj.stopRecordingSpecificStream('eyeImages');
+            obj.stopRecording('eyeImage');
+            obj.buffers.disableTempEyeImageBuffer();
             if texs
                 Screen('Close',texs);
             end
@@ -1235,19 +1131,40 @@ classdef TobiiWrapper < handle
             Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
         end
         
-        function cache = getButtonTextCache(obj,wpnt,lbl,rect)
+        function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,xAlign,qApplyVSpacing)
             if obj.usingFTGLTextRenderer
-                [sx,sy] = RectCenterd(rect);
-                [~,~,~,cache] = DrawFormattedText2(lbl,'win',wpnt,'sx',sx,'xalign','center','sy',sy,'yalign','center','baseColor',0,'cacheOnly',true);
+                if ~isempty(rect)
+                    [sx,sy] = RectCenterd(rect);
+                else
+                    [sx,sy] = deal(0);
+                end
+                args = {};
+                if nargin>4
+                    args = [args {'xlayout',xAlign}];
+                end
+                if nargin>5 && qApplyVSpacing
+                    args = [args {'vSpacing',obj.settings.text.vSpacing}];
+                end
+                [~,~,txtbounds,cache] = DrawFormattedText2(text,'win',wpnt,'sx',sx,'xalign','center','sy',sy,'yalign','center','baseColor',0,'cacheOnly',true,args{:});
             else
-                [~,~,~,cache] = DrawMonospacedText(wpnt,lbl,'center','center',0,[],[],[],OffsetRect(rect,0,obj.settings.text.lineCentOff),true);
+                if ~isempty(rect)
+                    rect = OffsetRect(rect,0,obj.settings.text.lineCentOff);
+                end
+                [~,~,txtbounds,cache] = DrawMonospacedText(wpnt,text,'center','center',0,[],[],[],rect,true);
             end
         end
         
-        function drawCachedText(obj,cache)
+        function drawCachedText(obj,cache,rect)
             if obj.usingFTGLTextRenderer
-                DrawFormattedText2(cache);
+                args = {};
+                if nargin>2
+                    args = {'sx','center','sy','center','xalign','center','yalign','center','winRect',rect};
+                end
+                DrawFormattedText2(cache,args{:});
             else
+                if nargin>2
+                    warning('TODO: implement')
+                end
                 DrawMonospacedText(cache);
             end
         end
@@ -1300,22 +1217,29 @@ classdef TobiiWrapper < handle
             
             % do calibration
             calibClass.enter_calibration_mode();
-            obj.startRecording();
+            obj.StartTempRecordAll();
             obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
             % show display
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
             obj.sendMessage(sprintf('CALIBRATION END %d',kCal));
+            out.cal.data = obj.ConsumeAllData();
             % compute calibration
-            result = calibClass.compute_and_apply();
+            out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply());
             calibClass.leave_calibration_mode();
             
             % if valid calibration retrieve data, so user can select different ones
-            if result.Status==CalibrationStatus.Success
-                out.cal.calData = obj.eyetracker.retrieve_calibration_data();
+            if strcmp(out.cal.result.status,'Success')
+                out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
+            else
+                % calibration failed, back to setup screen
+                status = -2;
+                DrawFormattedText(wpnt,'Calibration failed','center','center',obj.settings.text.color);
+                Screen('Flip',wpnt);
+                WaitSecs(1);
             end
             
             if status~=1
-                obj.stopRecording();
+                obj.StopTempRecordAll();
                 if status~=-1
                     % -1 means restart calibration from start. if we do not
                     % clean up here, we e.g. get a nice animation of the
@@ -1333,10 +1257,12 @@ classdef TobiiWrapper < handle
             
             % do validation
             obj.sendMessage(sprintf('VALIDATION START %d',kCal));
+            obj.ClearAllBuffers();
             % show display
             [status,out.val] = obj.DoCalPointDisplay(wpnt,[],tick,out.cal.flips(end));
             obj.sendMessage(sprintf('VALIDATION END %d',kCal));
-            obj.stopRecording();
+            out.val.allData = obj.ConsumeAllData();
+            obj.StopTempRecordAll();
             % compute accuracy etc
             if status==1
                 out.val = ProcessValData(obj,out.val);
@@ -1353,10 +1279,55 @@ classdef TobiiWrapper < handle
             Screen('Flip',wpnt);
         end
         
+        function StartTempRecordAll(obj)
+            obj.buffers.enableTempSampleBuffer();
+            obj.startRecording('gaze');
+            obj.buffers.enableTempEyeImageBuffer();
+            obj.startRecording('eyeImage');
+            obj.buffers.enableTempExtSignalBuffer();
+            obj.startRecording('externalSignal');
+            obj.buffers.enableTempTimeSyncBuffer();
+            obj.startRecording('timeSync');
+        end
+        
+        function data = ConsumeAllData(obj)
+            data.gaze           = obj.consumeData('gaze');
+            data.eyeImages      = obj.consumeData('eyeImage');
+            data.externalSignals= obj.consumeData('externalSignal');
+            data.timeSync       = obj.consumeData('timeSync');
+        end
+        
+        function data = consumePeekData(obj,stream,action,varargin)
+            fields = {'gaze','eyeImage','externalSignal','timesync'};
+            q = strcmpi(stream,fields);
+            assert(any(q),'Tobii peekData: stream ''%s'' not known',stream);
+            
+            get = {'Samples','EyeImages','ExtSignals','TimeSyncs'};
+            data = obj.buffers.([action get{q}])(varargin{:});
+        end
+        
+        function ClearAllBuffers(obj)
+            obj.buffers.clearSampleBuffer();
+            obj.buffers.clearEyeImageBuffer();
+            obj.buffers.clearExtSignalBuffer();
+            obj.buffers.clearTimeSyncBuffer();
+        end
+        
+        function StopTempRecordAll(obj)
+            obj.stopRecording('gaze');
+            obj.buffers.disableTempSampleBuffer();
+            obj.stopRecording('eyeImage');
+            obj.buffers.disableTempEyeImageBuffer();
+            obj.stopRecording('externalSignal');
+            obj.buffers.disableTempExtSignalBuffer();
+            obj.stopRecording('timeSync');
+            obj.buffers.disableTempTimeSyncBuffer();
+        end
+        
         function [status,out,tick] = DoCalPointDisplay(obj,wpnt,calibClass,tick,lastFlip)
             % status output:
-            %  1: finished succesfully (you should query SMI software whether they think
-            %     calibration was succesful though)
+            %  1: finished succesfully (you should query Tobii SDK whether
+            %     they agree that calibration was succesful though)
             %  2: skip calibration and continue with task (shift+s)
             % -1: restart calibration (r)
             % -2: abort calibration and go back to setup (escape key)
@@ -1449,7 +1420,8 @@ classdef TobiiWrapper < handle
                         status = -1;
                         break;
                     elseif any(strcmpi(keys,'escape'))
-                        obj.iView.abortCalibration();
+                        % NB: no need to cancel calibration here,
+                        % calibration mode is left by caller
                         if any(strcmpi(keys,'shift'))
                             status = -4;
                         else
@@ -1473,8 +1445,8 @@ classdef TobiiWrapper < handle
                             collect_result = calibClass.collect_data(points(currentPoint,1:2));
                         end
                         out.status(currentPoint,1) = collect_result.value;
-                        % if still fails, retry one more times at end of
-                        % point sequence (if this is not alrea a retried
+                        % if still fails, retry one more time at end of
+                        % point sequence (if this is not already a retried
                         % point)
                         if collect_result.value==CalibrationStatus.Failure && points(currentPoint,6)
                             points = [points; points(currentPoint,:)];
@@ -1518,11 +1490,11 @@ classdef TobiiWrapper < handle
             % compute validation accuracy per point, noise levels, %
             % missing
             for p=length(val.gazeData):-1:1
-                val.result(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,2:3));
-                val.result(p).right = obj.getDataQuality(val.gazeData(p).right,val.pointPos(p,2:3));
+                val.quality(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,2:3));
+                val.quality(p).right = obj.getDataQuality(val.gazeData(p).right,val.pointPos(p,2:3));
             end
-            lefts  = [val.result.left];
-            rights = [val.result.right];
+            lefts  = [val.quality.left];
+            rights = [val.quality.right];
             for f={'acc','RMS2D','STD2D','trackRatio'}
                 % NB: abs when averaging over eyes, we need average size of
                 % error for accuracy and for other fields its all positive
@@ -1541,7 +1513,7 @@ classdef TobiiWrapper < handle
             
             vecToPoint  = bsxfun(@minus,pointOnScreenUCS,gazeData.gazeOrigin.inUserCoords);
             gazeVec     = gazeData.gazePoint.inUserCoords-gazeData.gazeOrigin.inUserCoords;
-            angs2D      = obj.AngleBetweenVectors(vecToPoint,gazeVec);
+            angs2D      = AngleBetweenVectors(vecToPoint,gazeVec);
             out.offs    = bsxfun(@times,angs2D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
             out.acc     = nanmean(out.offs,2);
             
@@ -1554,7 +1526,7 @@ classdef TobiiWrapper < handle
             out.STD2D   = hypot(out.STD(1),out.STD(2));
             
             % 4. track ratio
-            out.trackRatio  = sum(gazeData.gazePoint.validity==1)/length(gazeData.gazePoint.validity);
+            out.trackRatio  = sum(gazeData.gazePoint.valid)/length(gazeData.gazePoint.valid);
         end
         
         function out = ADCSToUCS(obj,data)
@@ -1572,62 +1544,69 @@ classdef TobiiWrapper < handle
             out = bsxfun(@times,data,res(:));
         end
         
-        function angle = AngleBetweenVectors(~,a,b)
-            angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
-        end
-        
-        function [status,selection] = showCalValResult(obj,wpnt,cal,kCal)
+        function [status,selection] = showCalValResult(obj,wpnt,cal,selection)
             % status output:
             %  1: calibration/validation accepted, continue (a)
             %  2: just continue with task (shift+s)
             % -1: restart calibration (escape key)
             % -2: go back to setup (s)
-            % -4: Exit completely (control+escape)
+            % -4: exit completely (control+escape)
             %
             % additional buttons
             % c: chose other calibration (if have more than one valid)
             % g: show gaze (and fixation points)
+            % t: toggle between seeing validation results and calibration
+            %    result
             
             % find how many valid calibrations we have:
-            selection = kCal;
-            iValid = obj.getValidCalibrations(cal);
+            iValid = getValidCalibrations(cal);
             if ~ismember(selection,iValid)
                 % this happens if setup cancelled to go directly to this validation
                 % viewer
                 selection = iValid(end);
             end
             qHaveMultipleValidCals = ~isscalar(iValid);
-            % detect if average eyes
-            qAveragedEyes = cal{selection}.validateAccuracy.deviationLX==cal{selection}.validateAccuracy.deviationRX && cal{selection}.validateAccuracy.deviationLY==cal{selection}.validateAccuracy.deviationRY;
             
-            % setup buttons
+            % set up box representing screen
+            scale       = .8;
+            boxRect     = CenterRectOnPoint([0 0 obj.scrInfo.resolution*scale],obj.scrInfo.center(1),obj.scrInfo.center(2));
+            [brw,brh]   = RectSize(boxRect);
+            vSpace      = (obj.scrInfo.resolution(2)-brh)/2;
+            
+            % set up buttons
             % 1. below screen
-            yposBase    = round(obj.scrInfo.resolution(2)*.95);
-            buttonSz    = {[300 45] [300 45] [350 45]};
-            buttonSz    = buttonSz(1:2+qHaveMultipleValidCals);  % third button only when more than one calibration available
+            yPosMid     = boxRect(4)+vSpace/2;
+            buttonSz    = [300 45; 300 45; 350 45];
+            buttonSz    = buttonSz(1:2+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
             buttonOff   = 80;
-            buttonWidths= cellfun(@(x) x(1),buttonSz);
-            totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
-            buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
-            recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz{1}(2)],obj.scrInfo.center(1),yposBase-buttonSz{2}(2));
-            recalButTextCache   = obj.getButtonTextCache(wpnt,'recalibrate (<i>esc<i>)'  ,    recalButRect);
-            continueButRect     = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz{2}(2)],obj.scrInfo.center(1),yposBase-buttonSz{1}(2));
-            continueButTextCache= obj.getButtonTextCache(wpnt,'continue (<i>spacebar<i>)', continueButRect);
+            totWidth    = sum(buttonSz(:,1))+(size(buttonSz,1)-1)*buttonOff;
+            buttonRectsX= cumsum([0 buttonSz(:,1).']+[0 ones(1,size(buttonSz,1))]*buttonOff)-totWidth/2;
+            recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz(1,2)],obj.scrInfo.center(1),yPosMid-buttonSz(1,2)/2);
+            recalButTextCache   = obj.getTextCache(wpnt,'recalibrate (<i>esc<i>)'  ,    recalButRect);
+            continueButRect     = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosMid-buttonSz(2,2)/2);
+            continueButTextCache= obj.getTextCache(wpnt,'continue (<i>spacebar<i>)', continueButRect);
             if qHaveMultipleValidCals
-                selectButRect       = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz{3}(2)],obj.scrInfo.center(1),yposBase-buttonSz{3}(2));
-                selectButTextCache  = obj.getButtonTextCache(wpnt,'select other cal (<i>c<i>)', selectButRect);
+                selectButRect       = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosMid-buttonSz(3,2)/2);
+                selectButTextCache  = obj.getTextCache(wpnt,'select other cal (<i>c<i>)', selectButRect);
             else
                 selectButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
             % 2. atop screen
-            topMargin           = 50;
-            buttonSz            = {[200 45] [250 45]};
-            buttonOff           = 550;
+            yPosMid             = vSpace/2;
+            buttonSz            = [200 45; 250 45];
+            buttonOff           = 750;
             showGazeButClrs     = {[37  97 163],[11 122 244]};
-            setupButRect        = OffsetRect([0 0 buttonSz{1}],obj.scrInfo.center(1)-buttonOff/2-buttonSz{1}(1),topMargin+buttonSz{1}(2));
-            setupButTextCache   = obj.getButtonTextCache(wpnt,'setup (<i>s<i>)'    ,   setupButRect);
-            showGazeButRect     = OffsetRect([0 0 buttonSz{2}],obj.scrInfo.center(1)+buttonOff/2               ,topMargin+buttonSz{1}(2));
-            showGazeButTextCache= obj.getButtonTextCache(wpnt,'show gaze (<i>g<i>)',showGazeButRect);
+            setupButRect        = OffsetRect([0 0 buttonSz(1,:)],obj.scrInfo.center(1)-buttonOff/2-buttonSz(1,1),yPosMid-buttonSz(1,2)/2);
+            setupButTextCache   = obj.getTextCache(wpnt,'setup (<i>s<i>)'    ,   setupButRect);
+            showGazeButRect     = OffsetRect([0 0 buttonSz(2,:)],obj.scrInfo.center(1)+buttonOff/2              ,yPosMid-buttonSz(2,2)/2);
+            showGazeButTextCache= obj.getTextCache(wpnt,'show gaze (<i>g<i>)',showGazeButRect);
+            % 3. left side
+            yPosTop             = boxRect(2);
+            buttonSz            = [boxRect(1) 45];
+            toggleCVButClr      = [37  97 163];
+            toggleCVButRect     = OffsetRect([0 0 buttonSz],0,yPosTop);
+            toggleCVButTextCache= {obj.getTextCache(wpnt,'show cal (<i>t<i>)',toggleCVButRect), obj.getTextCache(wpnt,'show val (<i>t<i>)',toggleCVButRect)};
+            
             
             % setup menu, if any
             if qHaveMultipleValidCals
@@ -1643,57 +1622,152 @@ classdef TobiiWrapper < handle
                 menuRects = repmat([-.5*width+obj.scrInfo.center(1) -height/2+obj.scrInfo.center(2) .5*width+obj.scrInfo.center(1) height/2+obj.scrInfo.center(2)],length(iValid),1);
                 menuRects = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]);
                 % text in each rect
-                for c=1:length(iValid)
-                    str = sprintf('(%d): <color=ff0000>Left<color>: (%.2f°,%.2f°), <color=00ff00>Right<color>: (%.2f°,%.2f°)',c,cal{iValid(c)}.validateAccuracy.deviationLX,cal{iValid(c)}.validateAccuracy.deviationLY,cal{iValid(c)}.validateAccuracy.deviationRX,cal{iValid(c)}.validateAccuracy.deviationRY);
-                    menuTextCache(c) = obj.getButtonTextCache(wpnt,str,menuRects(c,:)); %#ok<AGROW>
+                for c=length(iValid):-1:1
+                    % acc field is [lx rx; ly ry]
+                    str = sprintf('(%d): <color=%s>Left<color>: (%.2f°,%.2f°), <color=%s>Right<color>: (%.2f°,%.2f°)',c,obj.settings.setup.eyeColors{1,1},cal{iValid(c)}.val.acc(:,1),obj.settings.setup.eyeColors{2,1},cal{iValid(c)}.val.acc(:,2));
+                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:));
                 end
             end
             
             % setup fixation points in the corners of the screen
-            fixPos = [.1 .1; .1 .9; .9 .9; .9 .1] .* repmat(obj.scrInfo.resolution(1:2),4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
             
             qDoneCalibSelection = false;
-            qSelectMenuOpen     = false;
+            qToggleSelectMenu   = true;
+            qSelectMenuOpen     = true;     % gets set to false on first draw as toggle above is true (hack to make sure we're set up on first entrance of draw loop)
+            qToggleGaze         = false;
             qShowGaze           = false;
-            tex                 = 0;
-            pSampleS            = SMIStructEnum.Sample;
+            qUpdateCalDisplay   = true;
+            qShowCal            = false;
+            fixPointRectSz      = 100;
+            openInfoForPoint    = nan;
+            pointToShowInfoFor  = nan;
+            qSelectedCalChanged = true;     % for setup. Ensures correct cal is loaded (should be impossible to get wrong as we just left the calibration routine) and sets up text with info about calibration quality as indicated by validation
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
-            obj.getNewMouseKeyPress();
+            [mx,my] = obj.getNewMouseKeyPress();
             while ~qDoneCalibSelection
-                % draw validation screen image
-                if tex~=0
-                    Screen('Close',tex);
+                % toggle gaze on or off if requested
+                if qToggleGaze
+                    if qShowGaze
+                        % switch off
+                        obj.stopRecording('gaze');
+                        obj.buffers.disableTempSampleBuffer();
+                    else
+                        % switch on
+                        obj.buffers.enableTempSampleBuffer();
+                        obj.startRecording('gaze');
+                    end
+                    qShowGaze   = ~qShowGaze;
+                    qToggleGaze = false;
                 end
-                tex   = Screen('MakeTexture',wpnt,cal{selection}.validateImage,[],8);   % 8 to prevent mipmap generation, we don't need it
                 
                 % setup cursors
-                if qSelectMenuOpen
-                    cursors.rect    = {menuRects.',continueButRect.',recalButRect.'};
-                    cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
-                else
-                    cursors.rect    = {continueButRect.',recalButRect.',selectButRect.',setupButRect.',showGazeButRect.'};
-                    cursors.cursor  = [2 2 2 2 2];  % 2: Hand
+                if qToggleSelectMenu
+                    qSelectMenuOpen     = ~qSelectMenuOpen;
+                    qToggleSelectMenu   = false;
+                    if qSelectMenuOpen
+                        cursors.rect    = {menuRects.',continueButRect.',recalButRect.'};
+                        cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
+                    else
+                        cursors.rect    = {continueButRect.',recalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
+                        cursors.cursor  = [2 2 2 2 2 2];  % 2: Hand
+                    end
+                    cursors.other   = 0;    % 0: Arrow
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
                 end
-                cursors.other   = 0;    % 0: Arrow
-                cursors.qReset  = false;
-                % NB: don't reset cursor to invisible here as it will then flicker every
-                % time you click something. default behaviour is good here
-                cursor = cursorUpdater(cursors);
+                
+                % setup fixation point positions for cal or val
+                if qUpdateCalDisplay 
+                    if qSelectedCalChanged
+                        % load requested cal
+                        obj.loadOtherCal(cal{selection});
+                        % update info text
+                        % acc field is [lx rx; ly ry]
+                        valText = sprintf('<font=Consolas><size=20><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
+                        valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),'left',true);
+                    end
+                    if qShowCal
+                        datField = 'cal';
+                    else
+                        datField = 'val';
+                    end
+                    calValPos   = zeros(size(cal{selection}.(datField).pointPos,1),2);
+                    for p=1:size(cal{selection}.(datField).pointPos,1)
+                        calValPos(p,:)  = cal{selection}.(datField).pointPos(p,2:3)./obj.scrInfo.resolution.*[brw brh]+boxRect(1:2);
+                    end
+                    % get rects around validation points
+                    if qShowCal
+                        calValRects         = [];
+                        pointToShowInfoFor  = nan;
+                    else
+                        calValRects = zeros(size(cal{selection}.(datField).pointPos,1),4);
+                        for p=1:size(cal{selection}.(datField).pointPos,1)
+                            calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
+                        end
+                    end
+                    qUpdateCalDisplay   = false;
+                end
+                
+                % setup overlay with data quality info for specific point
+                if ~isnan(openInfoForPoint)
+                    pointToShowInfoFor = openInfoForPoint;
+                    openInfoForPoint   = nan;
+                    % 1. prepare text
+                    lE = cal{selection}.val.quality(pointToShowInfoFor).left;
+                    rE = cal{selection}.val.quality(pointToShowInfoFor).right;
+                    str = sprintf('Accuracy:      <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:      <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:     <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:       <color=%1$s>%7$3d%%<color>           <color=%2$s>%12$3d%%<color>',obj.settings.setup.eyeColors{:,1},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'left');
+                    % get box around text
+                    margin = 10;
+                    infoBoxRect = GrowRect(txtbounds,margin,margin);
+                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));
+                end
                 
                 while true % draw loop
-                    Screen('DrawTexture', wpnt, tex);   % its a fullscreen image, so just draw
+                    % draw validation screen image
+                    % draw box
+                    Screen('FillRect',wpnt,80,boxRect);
+                    % draw calibration points
+                    obj.drawFixPoints(wpnt,calValPos);
+                    % draw captured data in characteristic tobii plot
+                    for p=1:size(cal{selection}.(datField).pointPos,1)
+                        if qShowCal
+                            myCal = cal{selection}.cal.result;
+                            bpos = calValPos(p,:).';
+                            % left eye
+                            qVal = strcmp(myCal.gazeData(p).left.validity,'ValidAndUsed');
+                            lEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p). left.pos(:,qVal),[brw brh].'),boxRect(1:2).');
+                            % right eye
+                            qVal = strcmp(myCal.gazeData(p).right.validity,'ValidAndUsed');
+                            rEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p).right.pos(:,qVal),[brw brh].'),boxRect(1:2).');
+                        else
+                            myVal = cal{selection}.val;
+                            bpos = calValPos(p,:).';
+                            % left eye
+                            qVal = myVal.gazeData(p). left.gazePoint.valid;
+                            lEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
+                            % right eye
+                            qVal = myVal.gazeData(p).right.gazePoint.valid;
+                            rEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
+                        end
+                        for l=1:size(lEpos,2)
+                            Screen('DrawLines',wpnt,[bpos lEpos(:,l)],1,obj.settings.setup.eyeColors{1,2},[],2);
+                        end
+                        for l=1:size(rEpos,2)
+                            Screen('DrawLines',wpnt,[bpos rEpos(:,l)],1,obj.settings.setup.eyeColors{2,2},[],2);
+                        end
+                    end
+                    
                     % setup text
                     Screen('TextFont',  wpnt, obj.settings.text.font);
                     Screen('TextSize',  wpnt, obj.settings.text.size);
                     Screen('TextStyle', wpnt, obj.settings.text.style);
-                    % draw text with validation accuracy info
-                    valText = sprintf('<font=Consolas><size=20>accuracy   X       Y\n   <color=ff0000>Left<color>: % 2.2f°  % 2.2f°\n  <color=00ff00>Right<color>: % 2.2f°  % 2.2f°',cal{selection}.validateAccuracy.deviationLX,cal{selection}.validateAccuracy.deviationLY,cal{selection}.validateAccuracy.deviationRX,cal{selection}.validateAccuracy.deviationRY);
-                    if obj.usingFTGLTextRenderer
-                        DrawFormattedText2(valText,'win',wpnt,'sx','center','xalign','center','sy',100,'baseColor',255,'vSpacing',obj.settings.text.vSpacing);
-                    else
-                        DrawMonospacedText(wpnt,valText,'center',100,255,[],obj.settings.text.vSpacing);
-                    end
+                    % draw text with validation accuracy etc info
+                    obj.drawCachedText(valInfoTopTextCache);
                     % draw buttons
                     Screen('FillRect',wpnt,[150 0 0],recalButRect);
                     obj.drawCachedText(recalButTextCache);
@@ -1707,6 +1781,8 @@ classdef TobiiWrapper < handle
                     obj.drawCachedText(setupButTextCache);
                     Screen('FillRect',wpnt,showGazeButClrs{qShowGaze+1},showGazeButRect);
                     obj.drawCachedText(showGazeButTextCache);
+                    Screen('FillRect',wpnt,toggleCVButClr,toggleCVButRect);
+                    obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
@@ -1718,20 +1794,28 @@ classdef TobiiWrapper < handle
                             obj.drawCachedText(menuTextCache(c));
                         end
                     end
+                    % if hovering over validation point, show info
+                    if ~isnan(pointToShowInfoFor)
+                        rect = OffsetRect(infoBoxRect,mx,my);
+                        Screen('FillRect',wpnt,110,rect);
+                        obj.drawCachedText(pointTextCache,rect);
+                    end
                     % if showing gaze, draw
                     if qShowGaze
-                        [ret,pSample] = obj.iView.getSample(pSampleS);
-                        if ret==1
-                            % draw
-                            if ~(pSample.leftEye .gazeX==0 && pSample.leftEye .gazeY==0)
-                                Screen('gluDisk', wpnt,[255 0 0], pSample. leftEye.gazeX, pSample. leftEye.gazeY, 10);
-                            end
-                            if ~(pSample.rightEye.gazeX==0 && pSample.rightEye.gazeY==0)
-                                Screen('gluDisk', wpnt,[0 255 0], pSample.rightEye.gazeX, pSample.rightEye.gazeY, 10);
-                            end
-                        end
                         % draw fixation points
                         obj.drawFixPoints(wpnt,fixPos);
+                        % draw gaze data
+                        eyeData = obj.buffers.consumeSamples();
+                        if ~isempty(eyeData)
+                            lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
+                            rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
+                            if eyeData. left.gazePoint.valid(end)
+                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{1,2}, lE(1), lE(2), 10);
+                            end
+                            if eyeData.right.gazePoint.valid(end)
+                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{2,2}, rE(1), rE(2), 10);
+                            end
+                        end
                     end
                     % drawing done, show
                     Screen('Flip',wpnt);
@@ -1746,16 +1830,16 @@ classdef TobiiWrapper < handle
                         if qSelectMenuOpen
                             iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                             if ~isempty(iIn) && iIn<=length(iValid)
-                                selection = iValid(iIn);
-                                obj.loadOtherCal(selection);
-                                qSelectMenuOpen = false;
+                                selection           = iValid(iIn);
+                                qSelectedCalChanged = true;
+                                qToggleSelectMenu   = true;
                                 break;
                             else
-                                qSelectMenuOpen = false;
+                                qToggleSelectMenu = true;
                                 break;
                             end
                         end
-                        if ~qSelectMenuOpen     % if pressed outside the menu, check if pressed any of these menu buttons
+                        if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
                             qIn = inRect([mx my],[continueButRect.' recalButRect.' selectButRect.' setupButRect.' showGazeButRect.']);
                             if any(qIn)
                                 if qIn(1)
@@ -1765,12 +1849,15 @@ classdef TobiiWrapper < handle
                                     status = -1;
                                     qDoneCalibSelection = true;
                                 elseif qIn(3)
-                                    qSelectMenuOpen     = true;
+                                    qToggleSelectMenu   = true;
                                 elseif qIn(4)
                                     status = -2;
                                     qDoneCalibSelection = true;
                                 elseif qIn(5)
-                                    qShowGaze           = ~qShowGaze;
+                                    qToggleGaze         = true;
+                                elseif qIn(5)
+                                    qUpdateCalDisplay   = true;
+                                    qShowCal            = ~qShowCal;
                                 end
                                 break;
                             end
@@ -1779,13 +1866,13 @@ classdef TobiiWrapper < handle
                         keys = KbName(keyCode);
                         if qSelectMenuOpen
                             if any(strcmpi(keys,'escape'))
-                                qSelectMenuOpen = false;
+                                qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                idx = str2double(keys(1));
-                                selection = iValid(idx);
-                                obj.loadOtherCal(selection);
-                                qSelectMenuOpen = false;
+                                idx                 = str2double(keys(1));
+                                selection           = iValid(idx);
+                                qSelectedCalChanged = true;
+                                qToggleSelectMenu   = true;
                                 break;
                             end
                         else
@@ -1802,10 +1889,14 @@ classdef TobiiWrapper < handle
                                 qDoneCalibSelection = true;
                                 break;
                             elseif any(strcmpi(keys,'c')) && qHaveMultipleValidCals
-                                qSelectMenuOpen     = ~qSelectMenuOpen;
+                                qToggleSelectMenu   = true;
                                 break;
                             elseif any(strcmpi(keys,'g'))
-                                qShowGaze           = ~qShowGaze;
+                                qToggleGaze         = true;
+                                break;
+                            elseif any(strcmpi(keys,'t'))
+                                qUpdateCalDisplay   = true;
+                                qShowCal            = ~qShowCal;
                                 break;
                             end
                         end
@@ -1823,32 +1914,33 @@ classdef TobiiWrapper < handle
                             break;
                         end
                     end
+                    % check if hovering over point for which we have info
+                    if ~isempty(calValRects)
+                        iIn = find(inRect([mx my],calValRects.'));
+                        if ~isempty(iIn)
+                            % see if new point
+                            if pointToShowInfoFor~=iIn
+                                openInfoForPoint = iIn;
+                            end
+                            break;
+                        else
+                            % stop showing info
+                            pointToShowInfoFor = nan;
+                            break;
+                        end
+                    end
                 end
             end
             % done, clean up
             cursor.reset();
-            Screen('Close',tex);
             if status~=1
                 selection = NaN;
             end
             HideCursor;
         end
         
-        function loadOtherCal(obj,which)
-            obj.iView.loadCalibration(num2str(which));
-            % check correct one is loaded -- well, apparently below function returns
-            % last calibration's accuracy, not loaded calibration. So we can't check
-            % this way..... I have verified that loading works on the RED-m.
-            % [~,validateAccuracy] = obj.iView.getAccuracy([], 0);
-            % assert(isequal(validateAccuracy,out.attempt{selection}.validateAccuracy),'failed to load selected calibration');
-        end
-        
-        function iValid = getValidCalibrations(~,cal)
-            iValid = find(cellfun(@(x) isfield(x,'calStatusSMI') && strcmp(x.calStatusSMI,'calibrationValid'),cal));
-        end
-        
-        function out = isTwoComputerSetup(obj)
-            out = length(obj.settings.connectInfo)==4 && ~strcmp(obj.settings.connectInfo{1},obj.settings.connectInfo{3});
+        function loadOtherCal(obj,cal)
+            obj.eyetracker.apply_calibration_data(cal.cal.computedCal);
         end
         
         function [mx,my,mouse,key,haveShift] = getNewMouseKeyPress(obj)
@@ -1872,4 +1964,56 @@ classdef TobiiWrapper < handle
             obj.mouseState  = buttons;
         end
     end
+end
+
+
+
+%%% helpers
+function angle = AngleBetweenVectors(a,b)
+angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
+end
+
+function iValid = getValidCalibrations(cal)
+iValid = find(cellfun(@(x) x.calStatus==1 && strcmp(x.cal.result.status,'Success'),cal));
+end
+
+function result = fixupTobiiCalResult(calResult)
+% status
+result.status = TobiiEnumToString(calResult.Status);
+
+% data points used for calibration
+for p=length(calResult.CalibrationPoints):-1:1
+    dat = calResult.CalibrationPoints(p);
+    % calibration point position
+    result.gazeData(p).calPos   = dat.PositionOnDisplayArea.';
+    % gaze data for the point
+    result.gazeData(p). left.validity = TobiiEnumToString(cat(2,dat. LeftEye.Validity));
+    result.gazeData(p). left.pos      = cat(1,dat. LeftEye.PositionOnDisplayArea).';
+    result.gazeData(p).right.validity = TobiiEnumToString(cat(2,dat.RightEye.Validity));
+    result.gazeData(p).right.pos      = cat(1,dat.RightEye.PositionOnDisplayArea).';
+end
+end
+
+function enumLbl = TobiiEnumToString(enum)
+% turn off warning for converting object to struct
+warnState = warning('query','MATLAB:structOnObject');
+warning('off',warnState.identifier);
+
+names = fieldnames(enum);
+values= struct2cell(struct(enum(1)));
+qRem = cellfun(@(x) strcmp(x,'value'),names);
+names(qRem,:) = [];
+values(qRem,:) = []; values = cat(1,values{:});
+% store what the result status was
+if isobject(enum(1).value)
+    enumLbl = arrayfun(@(x) names{values==x.value.value},enum,'uni',false);
+else
+    enumLbl = arrayfun(@(x) names{values==x.value}      ,enum,'uni',false);
+end
+if isscalar(enumLbl)
+    enumLbl = enumLbl{1};
+end
+
+% reset warning
+warning(warnState.state,warnState.identifier);
 end
