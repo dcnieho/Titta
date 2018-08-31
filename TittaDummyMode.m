@@ -1,32 +1,32 @@
-classdef TobiiWrapperDummyMode < TobiiWrapper
+classdef TittaDummyMode < Titta
     properties
         doMouseSimulation = false;
     end
     
     methods
-        function obj = TobiiWrapperDummyMode(TobiiWrapperInstance)
+        function obj = TittaDummyMode(TittaInstance)
             qPassedSuperClass = false;
-            if ischar(TobiiWrapperInstance)
+            if ischar(TittaInstance)
                 % direct construction, thats fine
-                name = TobiiWrapperInstance;
-            elseif isa(TobiiWrapperInstance,'TobiiWrapper')
+                name = TittaInstance;
+            elseif isa(TittaInstance,'Titta')
                 qPassedSuperClass = true;
-                name = TobiiWrapperInstance.settings.tracker;
+                name = TittaInstance.settings.tracker;
             end
             
             % construct default base class, below we overwrite some
             % settings, if a super class was passed in
-            obj = obj@TobiiWrapper(name);
+            obj = obj@Titta(name);
             
             if qPassedSuperClass
                 % passed the superclass. "cast" into subclass by copying
                 % over all properties. This is what TMW recommends when you
                 % want to downcast...
-                C = metaclass(TobiiWrapperInstance);
+                C = metaclass(TittaInstance);
                 P = C.Properties;
                 for k = 1:length(P)
                     if ~P{k}.Dependent && ~strcmp(P{k}.SetAccess,'private')
-                        obj.(P{k}.Name) = TobiiWrapperInstance.(P{k}.Name);
+                        obj.(P{k}.Name) = TittaInstance.(P{k}.Name);
                     end
                 end
             end

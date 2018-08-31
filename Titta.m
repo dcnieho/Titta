@@ -1,4 +1,4 @@
-classdef TobiiWrapper < handle
+classdef Titta < handle
     properties (Access = protected, Hidden = true)
         % dll and mex files
         tobii;
@@ -38,7 +38,7 @@ classdef TobiiWrapper < handle
     end
     
     methods
-        function obj = TobiiWrapper(settingsOrETName,scrInfo)
+        function obj = Titta(settingsOrETName,scrInfo)
             % deal with inputs
             if ischar(settingsOrETName)
                 % only eye-tracker name provided, load defaults for this
@@ -52,35 +52,14 @@ classdef TobiiWrapper < handle
                 obj.scrInfo.resolution  = Screen('Rect',0); obj.scrInfo.resolution(1:2) = [];
                 obj.scrInfo.center      = obj.scrInfo.resolution/2;
             else
-                assert(isfield(scrInfo,'resolution') && isfield(scrInfo,'center'),'scrInfo should have a ''resolution'' and a ''center'' field')
+                assert(isfield(scrInfo,'resolution') && isfield(scrInfo,'center'),'Titta: scrInfo should have a ''resolution'' and a ''center'' field')
                 obj.scrInfo             = scrInfo;
             end
-            
-            % see what text renderer to use
-            obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file');    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
-            if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.text,'lineCentOff'),'PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
-            end
-            
-            % init key, mouse state
-            [~,~,obj.keyState] = KbCheck();
-            obj.shiftKey = KbName('shift');
-            [~,~,obj.mouseState] = GetMouse();
-            
-            % Load in Tobii SDK
-            obj.tobii = EyeTrackingOperations();
-            
-            % Load in our callback buffer mex
-            obj.buffers = TobiiBuffer();
-            obj.buffers.startLogging();
-            
-            % prepare msg buffer
-            obj.msgs = simpleVec(cell(1,2),1024);
         end
         
         function out = setDummyMode(obj)
-            assert(nargout==1,'you must use the output argument of setDummyMode, like: TobiiHandle = TobiiHandle.setDummyMode(), or TobiiHandle = setDummyMode(TobiiHandle)')
-            out = TobiiWrapperDummyMode(obj);
+            assert(nargout==1,'Titta: you must use the output argument of setDummyMode, like: TobiiHandle = TobiiHandle.setDummyMode(), or TobiiHandle = setDummyMode(TobiiHandle)')
+            out = TittaDummyMode(obj);
         end
         
         function out = get.rawSDK(obj)
@@ -132,21 +111,42 @@ classdef TobiiWrapper < handle
         end
         
         function out = init(obj)
+            % see what text renderer to use
+            obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file');    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
+            if ~obj.usingFTGLTextRenderer
+                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
+            end
+            
+            % init key, mouse state
+            [~,~,obj.keyState] = KbCheck();
+            obj.shiftKey = KbName('shift');
+            [~,~,obj.mouseState] = GetMouse();
+            
+            % Load in Tobii SDK
+            obj.tobii = EyeTrackingOperations();
+            
+            % Load in our callback buffer mex
+            obj.buffers = TobiiBuffer();
+            obj.buffers.startLogging();
+            
+            % prepare msg buffer
+            obj.msgs = simpleVec(cell(1,2),1024);
+            
             % Connect to eyetracker
-            % see which eye trackers available
+            % see which eye trackers are available
             trackers = obj.tobii.find_all_eyetrackers();
             % find macthing eye-tracker, first by model
             qModel = strcmp({trackers.Model},obj.settings.tracker);
-            assert(any(qModel),'No trackers of model ''%s'' connected',obj.settings.tracker)
+            assert(any(qModel),'Titta: No trackers of model ''%s'' connected',obj.settings.tracker)
             % if obligatory serial also given, check on that
-            assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
+            assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
             if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
                 serial = obj.settings.serialNumber;
                 if serial(1)=='*'
                     serial(1) = [];
                 end
                 qTracker = qModel & strcmp({trackers.SerialNumber},serial);
-                assert(any(qTracker),'No trackers of model ''%s'' with serial ''%s'' connected',obj.settings.tracker,serial)
+                assert(any(qTracker),'Titta: No trackers of model ''%s'' with serial ''%s'' connected',obj.settings.tracker,serial)
             else
                 qTracker = qModel;
             end
@@ -174,7 +174,7 @@ classdef TobiiWrapper < handle
                 % apply to selected eye tracker.
                 % Should return empty if all the licenses were correctly applied.
                 failed_licenses = obj.eyetracker.apply_licenses(licenses);
-                assert(isempty(failed_licenses),'TobiiWrapper: provided license(s) couldn''t be applied')
+                assert(isempty(failed_licenses),'Titta: provided license(s) couldn''t be applied')
             end
             
             % set tracker to operate at requested tracking frequency
@@ -248,9 +248,9 @@ classdef TobiiWrapper < handle
                             qGoToValidationViewer = true;
                         case -4
                             % full stop
-                            error('run ended from Tobii calibration routine')
+                            error('Titta: run ended from calibration routine')
                         otherwise
-                            error('status %d not implemented',status);
+                            error('Titta: status %d not implemented',status);
                     end
                 end
                 
@@ -276,9 +276,9 @@ classdef TobiiWrapper < handle
                             continue;
                         case -4
                             % full stop
-                            error('run ended from Tobii calibration routine')
+                            error('Titta: run ended from calibration routine')
                         otherwise
-                            error('status %d not implemented',out.attempt{kCal}.calStatus);
+                            error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
                     end
                 end
                 
@@ -302,9 +302,9 @@ classdef TobiiWrapper < handle
                         continue;
                     case -4
                         % full stop
-                        error('run ended from Tobii calibration routine')
+                        error('Titta: run ended from Tobii routine')
                     otherwise
-                        error('status %d not implemented',out.attempt{kCal}.valResultAccept);
+                        error('Titta: status %d not implemented',out.attempt{kCal}.valResultAccept);
                 end
             end
             
@@ -340,7 +340,7 @@ classdef TobiiWrapper < handle
                             streamLbl   = 'eye images';
                         end
                     else
-                        error('recording of eye images is not supported by this eye-tracker')
+                        error('Titta: recording of eye images is not supported by this eye-tracker')
                     end
                 case 'externalsignal'
                     if hasCap(obj,Capabilities.HasExternalSignal)
@@ -350,7 +350,7 @@ classdef TobiiWrapper < handle
                             streamLbl   = 'external signals';
                         end
                     else
-                        error('recording of external signals is not supported by this eye-tracker')
+                        error('Titta: recording of external signals is not supported by this eye-tracker')
                     end
                 case 'timesync'
                     field       = 'sync';
@@ -359,16 +359,16 @@ classdef TobiiWrapper < handle
                         streamLbl   = 'sync data';
                     end
                 otherwise
-                    error('signal ''%s'' not known',stream);
+                    error('Titta: signal ''%s'' not known',stream);
             end
             
             % check for errors
             if islogical(result)
                 if ~result
-                    error('Tobii: Error starting recording %s',streamLbl);
+                    error('Titta: Error starting recording %s',streamLbl);
                 end
             else
-                obj.processError(result,sprintf('Tobii: Error starting recording %s',streamLbl));
+                obj.processError(result,sprintf('Titta: Error starting recording %s',streamLbl));
             end
             % mark that we are recording
             obj.recState.(field) = true;
@@ -376,13 +376,13 @@ classdef TobiiWrapper < handle
         
         function data = consumeData(obj,stream,varargin)
             % optional input argument firstN: how many samples to consume
-            data = obj.consumePeekData(stream,'consume',varargin{:});
+            data = obj.consumeOrPeekData(stream,'consume',varargin{:});
         end
         
         function data = peekData(obj,stream,varargin)
             % optional input argument lastN: how many samples to peek from
             % end
-            data = obj.consumePeekData(stream,'peek',varargin{:});
+            data = obj.consumeOrPeekData(stream,'peek',varargin{:});
         end
         
         function stopRecording(obj,stream,qClearBuffer)
@@ -412,7 +412,7 @@ classdef TobiiWrapper < handle
                         field = 'sync';
                     end
                 otherwise
-                    error('stream ''%s'' not known',stream);
+                    error('Titta: stream ''%s'' not known',stream);
             end
             
             % mark that we stopped recording
@@ -438,7 +438,7 @@ classdef TobiiWrapper < handle
         function saveData(obj,filename, user, description, doAppendVersion)
             % 1. get filename and path
             [path,file,ext] = fileparts(filename);
-            assert(~isempty(path),'saveData: filename should contain a path')
+            assert(~isempty(path),'Titta: saveData: filename should contain a path')
             % eat .idf off filename, preserve any other extension user may
             % have provided
             if ~isempty(ext) && ~strcmpi(ext,'.idf')
@@ -476,7 +476,7 @@ classdef TobiiWrapper < handle
             % construct full filename
             filename = fullfile(path,file);
             ret = obj.iView.saveData(filename, description, user, 0);
-            obj.processError(ret,'SMI: Error saving data');
+            obj.processError(ret,'Titta: Error saving data');
         end
         
         function out = deInit(obj)
@@ -1297,10 +1297,10 @@ classdef TobiiWrapper < handle
             data.timeSync       = obj.consumeData('timeSync');
         end
         
-        function data = consumePeekData(obj,stream,action,varargin)
+        function data = consumeOrPeekData(obj,stream,action,varargin)
             fields = {'gaze','eyeImage','externalSignal','timesync'};
             q = strcmpi(stream,fields);
-            assert(any(q),'Tobii peekData: stream ''%s'' not known',stream);
+            assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
             
             get = {'Samples','EyeImages','ExtSignals','TimeSyncs'};
             data = obj.buffers.([action get{q}])(varargin{:});
