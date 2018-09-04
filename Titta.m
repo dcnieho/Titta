@@ -1789,11 +1789,11 @@ classdef Titta < handle
                             qVal = myVal.gazeData(p).right.gazePoint.valid;
                             rEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
                         end
-                        for l=1:size(lEpos,2)
-                            Screen('DrawLines',wpnt,[bpos lEpos(:,l)],1,obj.settings.setup.eyeColors{1,2},[],2);
+                        if ~isempty(lEpos)
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.setup.eyeColors{1,2},[],2);
                         end
-                        for l=1:size(rEpos,2)
-                            Screen('DrawLines',wpnt,[bpos rEpos(:,l)],1,obj.settings.setup.eyeColors{2,2},[],2);
+                        if ~isempty(rEpos)
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.setup.eyeColors{2,2},[],2);
                         end
                     end
                     
