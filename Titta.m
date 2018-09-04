@@ -1226,19 +1226,27 @@ classdef Titta < handle
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
             obj.sendMessage(sprintf('CALIBRATION END %d',kCal));
             out.cal.data = obj.ConsumeAllData();
-            % compute calibration
-            out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply());
+            if status==1
+                % compute calibration
+                out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply());
+            end
             calibClass.leave_calibration_mode();
             
             % if valid calibration retrieve data, so user can select different ones
-            if strcmp(out.cal.result.status,'Success')
-                out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
-            else
-                % calibration failed, back to setup screen
-                status = -2;
-                DrawFormattedText(wpnt,'Calibration failed','center','center',obj.settings.text.color);
-                Screen('Flip',wpnt);
-                WaitSecs(1);
+            if status==1
+                if strcmp(out.cal.result.status,'Success')
+                    out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
+                else
+                    % calibration failed, back to setup screen
+                    status = -2;
+                    DrawFormattedText(wpnt,'Calibration failed\nPress any key to continue','center','center',obj.settings.text.color);
+                    Screen('Flip',wpnt);
+                    obj.getNewMouseKeyPress();
+                    keyCode = false;
+                    while ~any(keyCode)
+                        [~,~,~,keyCode] = obj.getNewMouseKeyPress();
+                    end
+                end
             end
             
             if status~=1
