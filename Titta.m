@@ -359,7 +359,7 @@ classdef Titta < handle
                         streamLbl   = 'sync data';
                     end
                 otherwise
-                    error('Titta: signal ''%s'' not known',stream);
+                    error('Titta: signal "%s" not known\nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"',stream);
             end
             
             % check for errors
@@ -412,7 +412,7 @@ classdef Titta < handle
                         field = 'sync';
                     end
                 otherwise
-                    error('Titta: stream ''%s'' not known',stream);
+                    error('Titta: stream "%s" not known\nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"',stream);
             end
             
             % mark that we stopped recording
