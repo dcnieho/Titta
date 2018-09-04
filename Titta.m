@@ -1649,11 +1649,11 @@ classdef Titta < handle
             qToggleGaze         = false;
             qShowGaze           = false;
             qUpdateCalDisplay   = true;
+            qSelectedCalChanged = false;
             qShowCal            = false;
             fixPointRectSz      = 100;
             openInfoForPoint    = nan;
             pointToShowInfoFor  = nan;
-            qSelectedCalChanged = true;     % for setup. Ensures correct cal is loaded (should be impossible to get wrong as we just left the calibration routine) and sets up text with info about calibration quality as indicated by validation
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress();
@@ -1692,35 +1692,53 @@ classdef Titta < handle
                 end
                 
                 % setup fixation point positions for cal or val
-                if qUpdateCalDisplay 
+                if qUpdateCalDisplay || qSelectedCalChanged
                     if qSelectedCalChanged
                         % load requested cal
+                        DrawFormattedText(wpnt,'Loading calibration...','center','center',0);
+                        Screen('Flip',wpnt);
                         obj.loadOtherCal(cal{selection});
-                        % update info text
-                        % acc field is [lx rx; ly ry]
-                        valText = sprintf('<font=Consolas><size=20><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
-                        valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),true,'xlayout','left');
+                        qSelectedCalChanged = false;
                     end
+                    % update info text
+                    % acc field is [lx rx; ly ry]
+                    % text only changes when calibration selection changes,
+                    % but putting these lines in the above if makes logic
+                    % more complicated. Now we regenerate the same text
+                    % when switching between viewing calibration and
+                    % validation output, thats an unimportant price to pay
+                    % for simpler logic
+                    valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),true,'xlayout','left');
+                    % TODO if there is a menu, indicate which cal is currently selected
+                    
+                    % get info about where points were on screen
                     if qShowCal
-                        datField = 'cal';
+                        nPoints  = length(cal{selection}.cal.result.gazeData);
                     else
-                        datField = 'val';
+                        nPoints  = size(cal{selection}.val.pointPos,1);
                     end
-                    calValPos   = zeros(size(cal{selection}.(datField).pointPos,1),2);
-                    for p=1:size(cal{selection}.(datField).pointPos,1)
-                        calValPos(p,:)  = cal{selection}.(datField).pointPos(p,2:3)./obj.scrInfo.resolution.*[brw brh]+boxRect(1:2);
+                    calValPos   = zeros(nPoints,2);
+                    if qShowCal
+                        for p=1:nPoints
+                            calValPos(p,:)  = cal{selection}.cal.result.gazeData(p).calPos.'.*[brw brh]+boxRect(1:2);
+                        end
+                    else
+                        for p=1:nPoints
+                            calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3)./obj.scrInfo.resolution.*[brw brh]+boxRect(1:2);
+                        end
                     end
                     % get rects around validation points
                     if qShowCal
                         calValRects         = [];
-                        pointToShowInfoFor  = nan;
                     else
-                        calValRects = zeros(size(cal{selection}.(datField).pointPos,1),4);
-                        for p=1:size(cal{selection}.(datField).pointPos,1)
+                        calValRects = zeros(size(cal{selection}.val.pointPos,1),4);
+                        for p=1:size(cal{selection}.val.pointPos,1)
                             calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
                         end
                     end
                     qUpdateCalDisplay   = false;
+                    pointToShowInfoFor  = nan;      % close info display, if any
                 end
                 
                 % setup overlay with data quality info for specific point
@@ -1745,7 +1763,7 @@ classdef Titta < handle
                     % draw calibration points
                     obj.drawFixPoints(wpnt,calValPos);
                     % draw captured data in characteristic tobii plot
-                    for p=1:size(cal{selection}.(datField).pointPos,1)
+                    for p=1:nPoints
                         if qShowCal
                             myCal = cal{selection}.cal.result;
                             bpos = calValPos(p,:).';
@@ -1932,9 +1950,9 @@ classdef Titta < handle
                             % see if new point
                             if pointToShowInfoFor~=iIn
                                 openInfoForPoint = iIn;
+                                break;
                             end
-                            break;
-                        else
+                        elseif ~isnan(pointToShowInfoFor)
                             % stop showing info
                             pointToShowInfoFor = nan;
                             break;
