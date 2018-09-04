@@ -1754,7 +1754,7 @@ classdef Titta < handle
                     % 1. prepare text
                     lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                     rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                    str = sprintf('Accuracy:      <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:      <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:     <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:       <color=%1$s>%7$3d%%<color>           <color=%2$s>%12$3d%%<color>',obj.settings.setup.eyeColors{:,1},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                    str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.setup.eyeColors{:,1},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],[],'xlayout','left');
                     % get box around text
                     margin = 10;
