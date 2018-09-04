@@ -7,35 +7,53 @@ classdef simpleVec < handle
         data;
         N;
     end
+    properties (SetAccess = private)
+        axis;
+    end
     methods
-        function obj = simpleVec(dataType,reserveSize)
-            % optionally call with example data and how much of that type
-            % and size to reserve
+        function obj = simpleVec(dataExample,reserveSize,axis)
+            % optionally call with example data (to get type and shape) and
+            % how much of that type and size to reserve
+            % further optionally provide axis long which to append data.
+            % default is 1 (vertical/1st dimension of a matlab array)
+            if nargin<3||isempty(axis)
+                obj.axis = 1;
+            else
+                obj.axis = axis;
+            end
+            if nargin<2||isempty(reserveSize)
+                reserveSize = 1;
+            end
+            % reserve data if we have an example from which we can
+            % determine shape
             if nargin
-                obj.realloc(reserveSize,dataType);
+                obj.realloc(reserveSize,dataExample);
             end
         end
         
         function append(obj,val)
-            nIn = size(val,1);
-            if obj.nElem+nIn>length(obj.dataStore)
-                % allocate more space
-                if isempty(obj.dataStore)
-                    % no elements yet, start with enough space for input, or at least 16
-                    obj.realloc(max(2^nextpow2(nIn),16),val)
-                else
-                    % this at minumum double size or data store, or more if needed to fit all input
-                    newNElem = 2^nextpow2(length(obj.dataStore)+nIn);
-                    obj.realloc(newNElem,obj.dataStore(end,:));
-                end
+            % can append one or more values along obj.axis direction at
+            % once
+            
+            % get number of elements to append
+            nIn = size(val,obj.axis);
+            
+            % allocate more space if needed
+            if obj.nElem+nIn>size(obj.dataStore,obj.axis)
+                obj.realloc(nIn,val);
             end
-            % put value
-            obj.dataStore(obj.nElem+1:obj.nElem+nIn,:)  = val;
-            obj.nElem                                   = obj.nElem+nIn;
+            
+            % append input
+            idxs                    = repmat({':'},1,ndims(obj.dataStore));
+            idxs{obj.axis}          = obj.nElem+[1:nIn]; %#ok<NBRAK>
+            obj.dataStore(idxs{:})  = val;
+            obj.nElem               = obj.nElem+nIn;
         end
         
         function out = get.data(obj)
-            out = obj.dataStore(1:obj.nElem,:);
+            idxs            = repmat({':'},1,ndims(obj.dataStore));
+            idxs{obj.axis}  = 1:obj.nElem;
+            out             = obj.dataStore(idxs{:});
         end
         
         function out = get.N(obj)
@@ -45,21 +63,39 @@ classdef simpleVec < handle
     end
     
     methods (Access = protected, Hidden = true)
-        function realloc(obj,nElem,exampleElem)
-            % alloc new space
-            nCol = size(exampleElem,2);
-            if isa(exampleElem,'cell')
-                temp = cell(nElem,nCol);
-            elseif isa(exampleElem,'struct')
-                temp = repmat(exampleElem,nElem,nCol);
+        function realloc(obj,nIn,exampleElem)
+            % first see how many to alloc
+            if isempty(obj.dataStore)
+                % no elements yet, start with at least double the space of
+                % input as we assume more will be appended
+                [sz{1:ndims(exampleElem)}]  = size(exampleElem);
+                sz{obj.axis}                = 2^(nextpow2(nIn)+1);
+                exampleElem                 = exampleElem(1);
             else
-                temp = zeros(nElem,nCol,'like',exampleElem);
+                % this at minimum doubles the size of the data store, or
+                % more if needed to fit all input
+                [sz{1:ndims(obj.dataStore)}]= size(obj.dataStore);
+                sz{obj.axis}                = 2^nextpow2(obj.nElem+nIn);
+                exampleElem                 = obj.dataStore(1);     % ignore example elem. we want to ensure we keep the same datatype as datastore currently has, and avoid other trouble I haven't thought of
             end
-            % copy over old values
+            
+            % alloc new space
+            if isnumeric(exampleElem) || islogical(exampleElem)
+                temp = zeros(sz{:},'like',exampleElem);
+            elseif isa(exampleElem,'cell')
+                temp = cell(sz{:});
+            else    % e.g. struct or object
+                temp = repmat(exampleElem,sz{:});
+            end
+            
+            % copy over old values, if any
             if obj.nElem
-                temp(1:obj.nElem,:) = obj.dataStore(1:obj.nElem,:);
+                idx             = repmat({':'},size(sz));
+                idx{obj.axis}   = [1:obj.nElem]; %#ok<NBRAK>
+                temp(idx{:})    = obj.dataStore(idx{:});
             end
-            % remove old
+            
+            % assign new memory/remove old
             obj.dataStore = temp;
         end
     end
