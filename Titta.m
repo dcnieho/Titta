@@ -1717,8 +1717,10 @@ classdef Titta < handle
                     
                     % get info about where points were on screen
                     if qShowCal
+                        lbl      = 'calibration';
                         nPoints  = length(cal{selection}.cal.result.gazeData);
                     else
+                        lbl      = 'validation';
                         nPoints  = size(cal{selection}.val.pointPos,1);
                     end
                     calValPos   = zeros(nPoints,2);
@@ -1742,6 +1744,7 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
+                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],[],'sx',boxRect(1),'sy',boxRect(2)-5,'xalign','left','yalign','bottom');
                 end
                 
                 % setup overlay with data quality info for specific point
@@ -1800,6 +1803,9 @@ classdef Titta < handle
                     Screen('TextStyle', wpnt, obj.settings.text.style);
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
+                    % draw text indicating whether calibration or
+                    % validation is currently shown
+                    obj.drawCachedText(calValLblCache);
                     % draw buttons
                     Screen('FillRect',wpnt,[150 0 0],recalButRect);
                     obj.drawCachedText(recalButTextCache);
