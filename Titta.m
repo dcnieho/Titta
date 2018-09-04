@@ -1869,7 +1869,7 @@ classdef Titta < handle
                             end
                         end
                         if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qIn = inRect([mx my],[continueButRect.' recalButRect.' selectButRect.' setupButRect.' showGazeButRect.']);
+                            qIn = inRect([mx my],[continueButRect.' recalButRect.' selectButRect.' setupButRect.' showGazeButRect.' toggleCVButRect.']);
                             if any(qIn)
                                 if qIn(1)
                                     status = 1;
@@ -1884,7 +1884,7 @@ classdef Titta < handle
                                     qDoneCalibSelection = true;
                                 elseif qIn(5)
                                     qToggleGaze         = true;
-                                elseif qIn(5)
+                                elseif qIn(6)
                                     qUpdateCalDisplay   = true;
                                     qShowCal            = ~qShowCal;
                                 end
