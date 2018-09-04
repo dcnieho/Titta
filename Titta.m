@@ -1859,12 +1859,13 @@ classdef Titta < handle
                         if qSelectMenuOpen
                             iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                             if ~isempty(iIn) && iIn<=length(iValid)
-                                selection           = iValid(iIn);
-                                qSelectedCalChanged = true;
+                                idx                 = iValid(iIn);
+                                qSelectedCalChanged = selection~=idx;
+                                selection           = idx;
                                 qToggleSelectMenu   = true;
                                 break;
                             else
-                                qToggleSelectMenu = true;
+                                qToggleSelectMenu   = true;
                                 break;
                             end
                         end
@@ -1898,9 +1899,9 @@ classdef Titta < handle
                                 qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                idx                 = str2double(keys(1));
-                                selection           = iValid(idx);
-                                qSelectedCalChanged = true;
+                                idx                 = iValid(str2double(keys(1)));
+                                qSelectedCalChanged = selection~=idx;
+                                selection           = idx;
                                 qToggleSelectMenu   = true;
                                 break;
                             end
