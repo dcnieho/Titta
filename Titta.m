@@ -1680,6 +1680,10 @@ classdef Titta < handle
                     if qSelectMenuOpen
                         cursors.rect    = {menuRects.',continueButRect.',recalButRect.'};
                         cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
+                        % setup indicator which calibration is active
+                        rect = menuRects(selection==iValid,:);
+                        rect(3) = rect(1)+RectWidth(rect)*.07;
+                        menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
                     else
                         cursors.rect    = {continueButRect.',recalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
                         cursors.cursor  = [2 2 2 2 2 2];  % 2: Hand
@@ -1710,7 +1714,6 @@ classdef Titta < handle
                     % for simpler logic
                     valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
                     valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),true,'xlayout','left');
-                    % TODO if there is a menu, indicate which cal is currently selected
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1753,7 +1756,7 @@ classdef Titta < handle
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
-                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));
+                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
                 end
                 
                 while true % draw loop
@@ -1822,6 +1825,7 @@ classdef Titta < handle
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
                         end
+                        obj.drawCachedText(menuActiveCache);
                     end
                     % if hovering over validation point, show info
                     if ~isnan(pointToShowInfoFor)
