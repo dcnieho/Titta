@@ -1947,6 +1947,11 @@ classdef Titta < handle
             if status~=1
                 selection = NaN;
             end
+            if qShowGaze
+                % if showing gaze, switch off gaze data stream
+                obj.stopRecording('gaze');
+                obj.buffers.disableTempSampleBuffer();
+            end
             HideCursor;
         end
         
