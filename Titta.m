@@ -1131,21 +1131,24 @@ classdef Titta < handle
             Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
         end
         
-        function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,xAlign,qApplyVSpacing)
+        function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,qApplyVSpacing,varargin)
             if obj.usingFTGLTextRenderer
+                inputs.sx = 0;
+                inputs.xalign = 'center';
+                inputs.sy = 0;
+                inputs.yalign = 'center';
+                inputs.baseColor = 0;
                 if ~isempty(rect)
-                    [sx,sy] = RectCenterd(rect);
-                else
-                    [sx,sy] = deal(0);
+                    [inputs.sx,inputs.sy] = RectCenterd(rect);
                 end
-                args = {};
-                if nargin>4
-                    args = [args {'xlayout',xAlign}];
+                for p=1:2:length(varargin)
+                    inputs.(varargin{p}) = varargin{p+1};
                 end
-                if nargin>5 && qApplyVSpacing
-                    args = [args {'vSpacing',obj.settings.text.vSpacing}];
+                if nargin>4 && ~isempty(qApplyVSpacing) && qApplyVSpacing
+                    inputs.vSpacing = obj.settings.text.vSpacing;
                 end
-                [~,~,txtbounds,cache] = DrawFormattedText2(text,'win',wpnt,'sx',sx,'xalign','center','sy',sy,'yalign','center','baseColor',0,'cacheOnly',true,args{:});
+                args = [fieldnames(inputs) struct2cell(inputs)].';
+                [~,~,txtbounds,cache] = DrawFormattedText2(text,'win',wpnt,'cacheOnly',true,args{:});
             else
                 if ~isempty(rect)
                     rect = OffsetRect(rect,0,obj.settings.text.lineCentOff);
@@ -1688,7 +1691,7 @@ classdef Titta < handle
                         % update info text
                         % acc field is [lx rx; ly ry]
                         valText = sprintf('<font=Consolas><size=20><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:    (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
-                        valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),'left',true);
+                        valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),true,'xlayout','left');
                     end
                     if qShowCal
                         datField = 'cal';
@@ -1720,7 +1723,7 @@ classdef Titta < handle
                     lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                     rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                     str = sprintf('Accuracy:      <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:      <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:     <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:       <color=%1$s>%7$3d%%<color>           <color=%2$s>%12$3d%%<color>',obj.settings.setup.eyeColors{:,1},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'left');
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],[],'xlayout','left');
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
