@@ -1300,10 +1300,14 @@ classdef Titta < handle
         function StartTempRecordAll(obj)
             obj.buffers.enableTempSampleBuffer();
             obj.startRecording('gaze');
-            obj.buffers.enableTempEyeImageBuffer();
-            obj.startRecording('eyeImage');
-            obj.buffers.enableTempExtSignalBuffer();
-            obj.startRecording('externalSignal');
+            if hasCap(obj,Capabilities.HasEyeImages)
+                obj.buffers.enableTempEyeImageBuffer();
+                obj.startRecording('eyeImage');
+            end
+            if hasCap(obj,Capabilities.HasExternalSignal)
+                obj.buffers.enableTempExtSignalBuffer();
+                obj.startRecording('externalSignal');
+            end
             obj.buffers.enableTempTimeSyncBuffer();
             obj.startRecording('timeSync');
         end
