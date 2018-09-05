@@ -2032,7 +2032,7 @@ angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
 function iValid = getValidCalibrations(cal)
-iValid = find(cellfun(@(x) x.calStatus==1 && strcmp(x.cal.result.status,'Success'),cal));
+iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && strcmp(x.cal.result.status,'Success'),cal));
 end
 
 function result = fixupTobiiCalResult(calResult)
