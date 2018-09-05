@@ -842,7 +842,7 @@ namespace
         mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(data_.size(), 1));
         size_t i = 0;
         for (auto &msg : data_)
-            mxSetCell(out, i++, mxCreateString(msg.message.c_str()));
+            mxSetCell(temp, i++, mxCreateString(msg.message.c_str()));
 
         return out;
     }
