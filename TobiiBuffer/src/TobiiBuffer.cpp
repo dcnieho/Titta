@@ -334,6 +334,7 @@ bool TobiiBuffer::stopEyeImageBuffering(bool emptyBuffer_ /*= g_stopBufferEmptie
 {
     bool success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
     stopBufferingGenericPart<TobiiBuff::eyeImage>(emptyBuffer_);
+    _recordingEyeImages = false;
     return success;
 }
 std::vector<TobiiBuff::eyeImage> TobiiBuffer::consumeEyeImages(size_t firstN_/* = g_consumeDefaultAmount*/)
