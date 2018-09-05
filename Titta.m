@@ -792,8 +792,11 @@ classdef Titta < handle
         
         
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            obj.buffers.enableTempEyeImageBuffer();
-            obj.startRecording('eyeImage');
+            qHasEyeIm = hasCap(obj,Capabilities.HasExternalSignal);
+            if qHasEyeIm
+                obj.buffers.enableTempEyeImageBuffer();
+                obj.startRecording('eyeImage');
+            end
             
             % setup text
             Screen('TextFont',  wpnt, obj.settings.text.font);
@@ -806,16 +809,27 @@ classdef Titta < handle
             boxSize = round(500.*boxSize(1:2)./boxSize(1));
             [boxCenter(1),boxCenter(2)] = RectCenter([0 0 boxSize]);
             % setup eye image
-            margin  = 80;
-            texs    = [0 0];
-            eyeIm   = [];
-            while isempty(eyeIm)
-                eyeIm = obj.consumeData('eyeImage');
-                WaitSecs('YieldSecs',0.2);
+            if qHasEyeIm
+                margin  = 80;
+                texs    = [0 0];
+                eyeIm   = [];
+                count   = 0;
+                while isempty(eyeIm) && count<20
+                    eyeIm = obj.consumeData('eyeImage');
+                    WaitSecs('YieldSecs',0.15);
+                    count = count+1;
+                end
+                if ~isempty(eyeIm)
+                    [texs,szs]  = obj.UploadImages(texs,[],wpnt,eyeIm);
+                else
+                    szs         = [496 175; 496 175].';     % init at size of Spectrum@600Hz, decent enough guess for now
+                end
+                eyeImRect   = [zeros(2) szs.'];
+                maxEyeImRect= max(eyeImRect,[],1);
+            else
+                margin       = 0;
+                maxEyeImRect = [0 0 0 0];
             end
-            [texs,szs]  = obj.UploadImages(texs,[],wpnt,eyeIm);
-            eyeImRect   = [zeros(2) szs.'];
-            maxEyeImRect= max(eyeImRect,[],1);
             
             % setup buttons
             buttonSz    = {[200 45] [320 45] [400 45]};
@@ -828,8 +842,10 @@ classdef Titta < handle
             offsetV         = (obj.scrInfo.resolution(2)-boxSize(2)-margin-RectHeight(maxEyeImRect))/2;
             offsetH         = (obj.scrInfo.resolution(1)-boxSize(1))/2;
             boxRect         = OffsetRect([0 0 boxSize],offsetH,offsetV);
-            eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
-            eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
+            if qHasEyeIm
+                eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
+                eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
+            end
             % place buttons for back to simple interface, or calibrate
             buttonWidths= cellfun(@(x) x(1),buttonSz);
             totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
@@ -947,29 +963,32 @@ classdef Titta < handle
                     qDrawArrow(idx) = true;
                     arrowColor(:,idx) = obj.getArrowColor(zMid,zThresh,col1,col2,col3);
                 end
-                % get eye image
-                eyeIm       = obj.consumeData('eyeImage');
-                [texs,szs]  = obj.UploadImages(texs,szs,wpnt,eyeIm);
                 
-                % update eye image locations (and possibly track box) if
-                % size of returned eye image changed
-                if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=eyeImRect(1,3:4))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=eyeImRect(2,3:4)))
-                    if ~any(isnan(szs(:,1)))
-                        eyeImRect(1,3:4) = szs(:,1).';
+                if qHasEyeIm
+                    % get eye image
+                    eyeIm       = obj.consumeData('eyeImage');
+                    [texs,szs]  = obj.UploadImages(texs,szs,wpnt,eyeIm);
+                    
+                    % update eye image locations (and possibly track box) if
+                    % size of returned eye image changed
+                    if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=eyeImRect(1,3:4))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=eyeImRect(2,3:4)))
+                        if ~any(isnan(szs(:,1)))
+                            eyeImRect(1,3:4) = szs(:,1).';
+                        end
+                        if ~any(isnan(szs(:,2)))
+                            eyeImRect(2,3:4) = szs(:,2).';
+                        end
+                        if max(eyeImRect(:,4))>maxEyeImRect(4)
+                            % just got a larger eye image, make room to
+                            % accomodate it
+                            maxEyeImRect    = max(eyeImRect,[],1);
+                            offsetV         = (obj.scrInfo.resolution(2)-boxSize(2)-margin-RectHeight(maxEyeImRect))/2;
+                            offsetH         = (obj.scrInfo.resolution(1)-boxSize(1))/2;
+                            boxRect         = OffsetRect([0 0 boxSize],offsetH,offsetV);
+                        end
+                        eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
+                        eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
                     end
-                    if ~any(isnan(szs(:,2)))
-                        eyeImRect(2,3:4) = szs(:,2).';
-                    end
-                    if max(eyeImRect(:,4))>maxEyeImRect(4)
-                        % just got a larger eye image, make room to
-                        % accomodate it
-                        maxEyeImRect    = max(eyeImRect,[],1);
-                        offsetV         = (obj.scrInfo.resolution(2)-boxSize(2)-margin-RectHeight(maxEyeImRect))/2;
-                        offsetH         = (obj.scrInfo.resolution(1)-boxSize(1))/2;
-                        boxRect         = OffsetRect([0 0 boxSize],offsetH,offsetV);
-                    end
-                    eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
-                    eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
                 end
                 
                 % do drawing
@@ -1008,11 +1027,17 @@ classdef Titta < handle
                     Screen('FillPoly', wpnt, arrowColor(:,p), bsxfun(@plus,arrowsLRUDNF{p},arrowPos{p}+boxRect(1:2)) ,0);
                 end
                 % draw eye images, if any
-                if texs(1)
-                    Screen('DrawTexture', wpnt, texs(1),[],eyeImageRect{1});
-                end
-                if texs(2)
-                    Screen('DrawTexture', wpnt, texs(2),[],eyeImageRect{2});
+                if qHasEyeIm
+                    if texs(1)
+                        Screen('DrawTexture', wpnt, texs(1),[],eyeImageRect{1});
+                    else
+                        Screen('FillRect', wpnt, 0, eyeImageRect{1});
+                    end
+                    if texs(2)
+                        Screen('DrawTexture', wpnt, texs(2),[],eyeImageRect{2});
+                    else
+                        Screen('FillRect', wpnt, 0, eyeImageRect{2});
+                    end
                 end
                 % draw buttons
                 Screen('FillRect',wpnt,[37  97 163],basicButRect);
@@ -1074,8 +1099,8 @@ classdef Titta < handle
             % clean up
             obj.stopRecording('eyeImage');
             obj.buffers.disableTempEyeImageBuffer();
-            if texs
-                Screen('Close',texs);
+            if qHasEyeIm && any(texs)
+                Screen('Close',texs(texs>0));
             end
             HideCursor;
         end
