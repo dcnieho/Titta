@@ -917,14 +917,24 @@ classdef Titta < handle
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             arrowColor  = zeros(3,6);
-            relPos      = zeros(3);
+            relPos      = zeros(3,1);
             while true
                 eyeData = obj.buffers.peekSamples(1);
                 if isempty(eyeData)
                     [lEye,rEye] = deal(nan(3,1));
                 else
-                    lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
-                    rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
+                    lValid  = eyeData. left.gazeOrigin.valid;
+                    lEye    = eyeData. left.gazeOrigin.inTrackBoxCoords;
+                    rValid  = eyeData.right.gazeOrigin.valid;
+                    rEye    = eyeData.right.gazeOrigin.inTrackBoxCoords;
+                end
+                
+                % if one eye missing, estimate where it would be if user
+                % kept head yaw constant
+                if ~lValid && rValid
+                    lEye = rEye-relPos;
+                elseif ~rValid
+                    rEye = lEye+relPos;
                 end
                 
                 % get average eye distance. use distance from one eye if only one eye
@@ -933,13 +943,6 @@ classdef Titta < handle
                 distR   = rEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
                 dists   = [distL distR];
                 avgDist = mean(dists(~isnan(dists)));
-                % if missing, estimate where eye would be in depth if user
-                % kept head yaw constant
-                if isnan(distL)
-                    distL = distR-relPos(3);
-                elseif isnan(distR)
-                    distR = distL+relPos(3);
-                end
                 
                 % see which arrows to draw
                 qDrawArrow = false(1,6);
@@ -1001,25 +1004,24 @@ classdef Titta < handle
                 end
                 % draw eyes in box
                 Screen('TextSize',  wpnt, obj.settings.text.size);
-                if ~isnan(distL) || ~isnan(distR)
+                if lValid || rValid
                     posL     = [1-lEye(1) lEye(2)];  %1-X as 0 is right and 1 is left edge. needs to be reflected for screen drawing
                     posR     = [1-rEye(1) rEye(2)];
                     % determine size of eye. based on distance from viewing
                     % distance, calculate size change
-                    fac  = obj.settings.setup.viewingDist/avgDist;
                     facL = obj.settings.setup.viewingDist/distL;
                     facR = obj.settings.setup.viewingDist/distR;
                     % left eye
                     style = Screen('TextStyle', wpnt, 1);
-                    obj.drawEye(wpnt,~isnan(distL),posL,posR, relPos*fac,[255 120 120],[220 186 186],round(sz*facL*gain),'L',boxRect);
+                    drawEye(wpnt,lValid,posL,obj.settings.setup.eyeColors{1},round(sz*facL*gain),'L',boxRect);
                     % right eye
-                    obj.drawEye(wpnt,~isnan(distR),posR,posL,-relPos*fac,[120 255 120],[186 220 186],round(sz*facR*gain),'R',boxRect);
+                    drawEye(wpnt,rValid,posR,obj.settings.setup.eyeColors{2},round(sz*facR*gain),'R',boxRect);
                     Screen('TextStyle', wpnt, style);
                     % update relative eye positions - used for drawing estimated
                     % position of missing eye. X and Y are relative position in
                     % headbox, Z is difference in measured eye depths
-                    if ~isnan(distL) && ~isnan(distR)
-                        relPos = [(posR-posL)/fac distR-distL];   % keep a distance normalized to viewing distance, so we can scale eye distance with subject's distance from tracker correctly
+                    if lValid && rValid
+                        relPos = rEye-lEye;
                     end
                 end
                 % draw arrows
@@ -1202,26 +1204,6 @@ classdef Titta < handle
                 arrowColor = col3;
             else
                 arrowColor = col1+(abs(posRating)-thresh(1))./diff(thresh)*(col2-col1);
-            end
-        end
-        
-        function drawEye(~,wpnt,validity,pos,posOther,relPos,clr1,clr2,sz,lbl,boxRect)
-            if validity
-                clr = clr1;
-            else
-                clr = clr2;
-                if any(relPos)
-                    pos = posOther-relPos(1:2);
-                else
-                    return
-                end
-            end
-            pos = pos.*[diff(boxRect([1 3])) diff(boxRect([2 4]))]+boxRect(1:2);
-            Screen('gluDisk',wpnt,clr,pos(1),pos(2),sz)
-            if validity
-                bbox = Screen('TextBounds',wpnt,lbl);
-                pos  = round(pos-bbox(3:4)/2);
-                Screen('DrawText',wpnt,lbl,pos(1),pos(2),0);
             end
         end
         
@@ -2086,4 +2068,81 @@ end
 
 % reset warning
 warning(warnState.state,warnState.identifier);
+end
+
+function hsv = rgb2hsv(rgb)
+% takes 0-255 rgb values, outputs 0-1 hsv values
+% code from Octave
+rgb = rgb/255;
+s = min(rgb,[],2);
+v = max(rgb,[],2);
+
+% set hue to zero for undefined values (gray has no hue)
+h = zeros(size(v));
+notgray = (s ~= v);
+
+% blue hue
+idx = (v == rgb(:,3) & notgray);
+if (any (idx))
+    h(idx) = 2/3 + 1/6 * (rgb(idx,1) - rgb(idx,2)) ./ (v(idx) - s(idx));
+end
+
+% green hue
+idx = (v == rgb(:,2) & notgray);
+if (any (idx))
+    h(idx) = 1/3 + 1/6 * (rgb(idx,3) - rgb(idx,1)) ./ (v(idx) - s(idx));
+end
+
+% red hue
+idx = (v == rgb(:,1) & notgray);
+if (any (idx))
+    h(idx) =       1/6 * (rgb(idx,2) - rgb(idx,3)) ./ (v(idx) - s(idx));
+end
+
+% correct for negative red
+idx = (h < 0);
+h(idx) = 1+h(idx);
+
+% set the saturation
+s(~notgray) = 0;
+s(notgray) = 1 - s(notgray) ./ v(notgray);
+
+hsv = [h s v];
+end
+
+
+function rgb = hsv2rgb(hsv)
+% takes 0-1 hsv values, outputs 0-255 rgb values
+% code from Octave
+% Prefill rgb map with v*(1-s)
+rgb = repmat (hsv(:,3) .* (1 - hsv(:,2)), 1, 3);
+
+% red = hue-2/3 : green = hue : blue = hue-1/3
+% Apply modulo 1 for red and blue to keep within range [0, 1]
+hue = [mod(hsv(:,1) - 2/3, 1), hsv(:,1) , mod(hsv(:,1) - 1/3, 1)];
+
+% factor s*v -> f
+f = repmat(hsv(:,2) .* hsv(:,3), 1, 3);
+
+% add s*v*hue-function to rgb map
+rgb = rgb + ...
+    f .* (6 * (hue < 1/6) .* hue ...
+    + (hue >= 1/6 & hue < 1/2) ...
+    + (hue >= 1/2 & hue < 2/3) .* (4 - 6 * hue));
+
+rgb = round(rgb*255);
+end
+        
+function drawEye(wpnt,valid,pos,clr,sz,lbl,boxRect)
+if ~valid
+    hsv = rgb2hsv(clr(1:3));
+    clr = [hsv2rgb([hsv(:,1) hsv(:,2)/2 hsv(:,3)]) clr(4)];
+end
+pos = pos.*[diff(boxRect([1 3])) diff(boxRect([2 4]))]+boxRect(1:2);
+Screen('gluDisk',wpnt,clr,pos(1),pos(2),sz)
+if valid
+    bbox = Screen('TextBounds',wpnt,lbl);
+    pos  = round(pos-bbox(3:4)/2);
+    Screen('DrawText',wpnt,lbl,pos(1),pos(2),255);
+end
 end
