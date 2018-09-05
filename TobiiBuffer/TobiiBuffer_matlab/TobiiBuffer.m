@@ -67,7 +67,8 @@ classdef TobiiBuffer < handle
 
             this.mexClassWrapperFnc = this.checkMEXFnc(mexFnc);
             
-            % call no-op to load the mex file
+            % call no-op to load the mex file, so we fail early when load
+            % fails
             this.cppmethodGlobal('touch');
         end
         
