@@ -108,6 +108,8 @@ classdef Titta < handle
             obj.settings.cal.bgColor        = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor   = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
+            obj.settings.setup.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x).',1,[]),obj.settings.setup.eyeColors,'uni',false);
+            obj.settings.setup.eyeColors    = cellfun(@color2RGBA                    ,obj.settings.setup.eyeColors,'uni',false);
         end
         
         function out = init(obj)
@@ -534,7 +536,7 @@ classdef Titta < handle
             settings.val.collectDuration    = 0.5;
             settings.val.qRandPoints        = true;
             settings.setup.viewingDist      = 65;
-            settings.setup.eyeColors        = {'e1812c',[225 129 44];'3274a1',[50 116 161]}; % L; R TODO; implement everywhere
+            settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
             settings.text.font              = 'Consolas';
             settings.text.color             = 0;                                % only for messages on the screen, doesn't affect buttons
             settings.text.style             = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -1646,7 +1648,7 @@ classdef Titta < handle
                 % text in each rect
                 for c=length(iValid):-1:1
                     % acc field is [lx rx; ly ry]
-                    str = sprintf('(%d): <color=%s>Left<color>: (%.2f°,%.2f°), <color=%s>Right<color>: (%.2f°,%.2f°)',c,obj.settings.setup.eyeColors{1,1},cal{iValid(c)}.val.acc(:,1),obj.settings.setup.eyeColors{2,1},cal{iValid(c)}.val.acc(:,2));
+                    str = sprintf('(%d): <color=%s>Left<color>: (%.2f°,%.2f°), <color=%s>Right<color>: (%.2f°,%.2f°)',c,obj.settings.setup.eyeColorsHex{1},cal{iValid(c)}.val.acc(:,1),obj.settings.setup.eyeColorsHex{2},cal{iValid(c)}.val.acc(:,2));
                     menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:));
                 end
             end
@@ -1723,7 +1725,7 @@ classdef Titta < handle
                     % when switching between viewing calibration and
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
-                    valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
+                    valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColorsHex{1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColorsHex{2},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
                     valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),true,'xlayout','left');
                     
                     % get info about where points were on screen
@@ -1765,7 +1767,7 @@ classdef Titta < handle
                     % 1. prepare text
                     lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                     rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                    str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.setup.eyeColors{:,1},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                    str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],[],'xlayout','left');
                     % get box around text
                     margin = 10;
@@ -1801,10 +1803,10 @@ classdef Titta < handle
                             rEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
                         end
                         if ~isempty(lEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.setup.eyeColors{1,2},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.setup.eyeColors{1},[],2);
                         end
                         if ~isempty(rEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.setup.eyeColors{2,2},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.setup.eyeColors{2},[],2);
                         end
                     end
                     
@@ -1860,10 +1862,10 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             if eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{1,2}, lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{1}, lE(1), lE(2), 10);
                             end
                             if eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{2,2}, rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{2}, rE(1), rE(2), 10);
                             end
                         end
                     end
