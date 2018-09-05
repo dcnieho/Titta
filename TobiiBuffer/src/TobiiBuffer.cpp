@@ -31,7 +31,7 @@ namespace {
     }
 
     // global log buffer
-    std::vector<TobiiBuff::logMessage> g_logMessages;
+    std::unique_ptr<std::vector<TobiiBuff::logMessage>> g_logMessages;
 
     // deal with error messages
     inline void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
@@ -87,8 +87,11 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
-    auto l = lockForWriting(g_mLog);
-    g_logMessages.emplace_back(system_time_stamp_,source_,level_,message_);
+    if (g_logMessages)
+    {
+        auto l = lockForWriting(g_mLog);
+        g_logMessages.get()->emplace_back(system_time_stamp_,source_,level_,message_);
+    }
 }
 
 
@@ -106,6 +109,7 @@ TobiiBuffer::~TobiiBuffer()
     stopEyeImageBuffering(true);
     stopExtSignalBuffering(true);
     stopTimeSyncBuffering(true);
+    TobiiBuff::stopLogging();
 }
 
 
@@ -285,7 +289,7 @@ bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= g_eyeImag
 
     // subscribe to new stream
     _recordingEyeImages = doSubscribeEyeImage(_eyetracker, this, asGif_);
-    _eyeImIsGif = _recordingEyeImages ? asGif_ : _eyeImIsGif;	// update type being recorded is subscription to stream was succesful
+    _eyeImIsGif = _recordingEyeImages ? asGif_ : _eyeImIsGif;	// update type being recorded if subscription to stream was succesful
     return _recordingEyeImages;
 }
 void TobiiBuffer::enableTempEyeImageBuffer(size_t initialBufferSize_ /*= g_eyeImageTempBufDefaultSize*/)
@@ -415,13 +419,15 @@ namespace TobiiBuff
 {
     bool startLogging(size_t initialBufferSize_ /*= g_logBufDefaultSize*/)
     {
-        g_logMessages.reserve(initialBufferSize_);
+        if (!g_logMessages)
+            g_logMessages = std::make_unique<std::vector<TobiiBuff::logMessage>>();
+        g_logMessages.get()->reserve(initialBufferSize_);
         return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
     }
     std::vector<TobiiBuff::logMessage> getLog()
     {
         auto l = lockForWriting(g_mLog);
-        return std::vector<TobiiBuff::logMessage>(std::move(g_logMessages));
+        return std::vector<TobiiBuff::logMessage>(std::move(*g_logMessages.get()));
     }
     bool stopLogging()
     {
