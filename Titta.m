@@ -1592,12 +1592,12 @@ classdef Titta < handle
             % set up box representing screen
             scale       = .8;
             boxRect     = CenterRectOnPoint([0 0 obj.scrInfo.resolution*scale],obj.scrInfo.center(1),obj.scrInfo.center(2));
+            boxRect     = OffsetRect(boxRect,0,20);
             [brw,brh]   = RectSize(boxRect);
-            vSpace      = (obj.scrInfo.resolution(2)-brh)/2;
             
             % set up buttons
             % 1. below screen
-            yPosMid     = boxRect(4)+vSpace/2;
+            yPosMid     = boxRect(4)+(obj.scrInfo.resolution(2)-boxRect(4))/2;
             buttonSz    = [300 45; 300 45; 350 45];
             buttonSz    = buttonSz(1:2+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
             buttonOff   = 80;
@@ -1614,7 +1614,7 @@ classdef Titta < handle
                 selectButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
             % 2. atop screen
-            yPosMid             = vSpace/2;
+            yPosMid             = boxRect(2)/2;
             buttonSz            = [200 45; 250 45];
             buttonOff           = 750;
             showGazeButClrs     = {[37  97 163],[11 122 244]};
@@ -1724,7 +1724,7 @@ classdef Titta < handle
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
                     valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%\n <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColors{1,1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100,obj.settings.setup.eyeColors{2,1},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,vSpace/2),true,'xlayout','left');
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),true,'xlayout','left');
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1755,7 +1755,7 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
-                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],[],'sx',boxRect(1),'sy',boxRect(2)-5,'xalign','left','yalign','bottom');
+                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
                 end
                 
                 % setup overlay with data quality info for specific point
