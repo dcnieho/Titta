@@ -320,7 +320,7 @@ classdef Titta < handle
             end
         end
         
-        function startRecording(obj,stream)
+        function result = startRecording(obj,stream)
             % For these, the first call subscribes to the stream and returns
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
