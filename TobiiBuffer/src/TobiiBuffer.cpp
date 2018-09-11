@@ -37,8 +37,8 @@ namespace {
     inline void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
     {
         std::stringstream os;
-        os << "TobiBuffer Error: \"" << errMsg_ << "\""<< std::endl;
-        os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << std::endl;
+        os << "TobiiBuffer Error: " << errMsg_ << std::endl;
+        os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << " (" << TobiiResearchStatusToExplanation(errCode_) << ")" << std::endl;
 
         DoExitWithMsg(os.str());
     }
@@ -101,7 +101,11 @@ TobiiBuffer::TobiiBuffer(std::string address_)
 {
     TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&_eyetracker);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye tracker", status);
+    {
+        std::stringstream os;
+        os << "Cannot get eye tracker \"" << address_ << "\"";
+        ErrorExit(os.str(), status);
+    }
 }
 TobiiBuffer::~TobiiBuffer()
 {
