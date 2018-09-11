@@ -30,13 +30,14 @@ namespace TobiiBuff
     constexpr size_t g_peekDefaultAmount = 1;
 
     constexpr size_t g_logBufDefaultSize = 1 << 9;
+    constexpr bool   g_logBufClearDefault = true;
 }
 
 
 class TobiiBuffer
 {
 public:
-    TobiiBuffer(std::string adress_);
+    TobiiBuffer(std::string address_);
     ~TobiiBuffer();
 
     //// Samples ////
@@ -154,6 +155,6 @@ private:
 namespace TobiiBuff
 {
     bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);
-    std::vector<TobiiBuff::logMessage> getLog();
+    std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ = g_logBufClearDefault);
     bool stopLogging();	// always clears buffer
 }

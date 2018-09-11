@@ -545,8 +545,17 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             return;
         }
         case Action::GetLog:
-            plhs[0] = LogVectorToMatlab(TobiiBuff::getLog());
+        {
+            bool clearBuffer = TobiiBuff::g_logBufClearDefault;
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            {
+                if (!(mxIsDouble(prhs[1]) && !mxIsComplex(prhs[1]) && mxIsScalar(prhs[1])) && !mxIsLogicalScalar(prhs[1]))
+                    mexErrMsgTxt("getLog: Expected argument to be a logical scalar.");
+                clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
+            }
+            plhs[0] = LogVectorToMatlab(TobiiBuff::getLog(clearBuffer));
             return;
+        }
         case Action::StopLogging:
             plhs[0] = mxCreateLogicalScalar(TobiiBuff::stopLogging());
             return;

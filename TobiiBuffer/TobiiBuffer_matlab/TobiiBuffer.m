@@ -298,8 +298,13 @@ classdef TobiiBuffer < handle
                 success = this.cppmethodGlobal('startLogging');
             end
         end
-        function data = getLog(this)
-            data = this.cppmethodGlobal('getLog');
+        function data = getLog(this,clearLogBuffer)
+            % optional clear buffer input
+            if nargin>1
+                data = this.cppmethodGlobal('getLog',clearLogBuffer);
+            else
+                data = this.cppmethodGlobal('getLog');
+            end
         end
         function stopLogging(this)
             this.cppmethodGlobal('stopLogging');

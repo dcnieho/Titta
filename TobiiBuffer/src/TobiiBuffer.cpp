@@ -97,9 +97,9 @@ void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_
 
 
 
-TobiiBuffer::TobiiBuffer(std::string adress_)
+TobiiBuffer::TobiiBuffer(std::string address_)
 {
-    TobiiResearchStatus status = tobii_research_get_eyetracker(adress_.c_str(),&_eyetracker);
+    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&_eyetracker);
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot get eye tracker", status);
 }
@@ -425,10 +425,14 @@ namespace TobiiBuff
         g_logMessages.get()->reserve(initialBufferSize_);
         return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
     }
-    std::vector<TobiiBuff::logMessage> getLog()
+    std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ /*= g_logBufClearDefault*/)
     {
         auto l = lockForWriting(g_mLog);
-        return std::vector<TobiiBuff::logMessage>(std::move(*g_logMessages.get()));
+        if (clearLog_)
+            return std::vector<TobiiBuff::logMessage>(std::move(*g_logMessages.get()));
+        else
+            // provide a copy
+            return std::vector<TobiiBuff::logMessage>(*g_logMessages.get());
     }
     bool stopLogging()
     {
