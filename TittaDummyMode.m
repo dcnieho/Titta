@@ -1,6 +1,6 @@
 classdef TittaDummyMode < Titta
     properties
-        doMouseSimulation = false;
+        isRecordingGaze = false;
     end
     
     methods
@@ -38,7 +38,8 @@ classdef TittaDummyMode < Titta
                 superMethods = thisInfo.SuperclassList.MethodList;
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static])) = [];
                 thisMethods = thisInfo.MethodList;
-                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | strcmp({thisMethods.Name},'SMITEDummyMode')) = [];
+                % sendMessage and getMessages still work in dummy mode
+                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | ismember({thisMethods.Name},{'TittaDummyMode','sendMessage','getMessages'})) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
@@ -55,9 +56,7 @@ classdef TittaDummyMode < Titta
                     fprintf('  %s\n',thisMethods(qNotOverridden).Name);
                 end
                 
-                % 3. right number of input arguments? (NB: this code only
-                % makes sense if there are no overloads with a different
-                % number of inputs)
+                % 3. right number of input arguments?
                 qMatchingInput = false(size(qNotOverridden));
                 for p=1:length(thisMethods)
                     superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
@@ -70,6 +69,21 @@ classdef TittaDummyMode < Titta
                 if any(~qMatchingInput)
                     fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,thisInfo.SuperclassList.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingInput).Name);
+                end
+                
+                % 4. right number of output arguments?
+                qMatchingOutput = false(size(qNotOverridden));
+                for p=1:length(thisMethods)
+                    superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
+                    if isscalar(superMethod)
+                        qMatchingOutput(p) = length(superMethod.OutputNames) == length(thisMethods(p).OutputNames);
+                    else
+                        qMatchingOutput(p) = true;
+                    end
+                end
+                if any(~qMatchingOutput)
+                    fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,thisInfo.SuperclassList.Name);
+                    fprintf('  %s\n',thisMethods(~qMatchingOutput).Name);
                 end
             end
         end
@@ -85,67 +99,57 @@ classdef TittaDummyMode < Titta
             obj.isInitialized = true;
         end
         
-        function out = calibrate(~,~,~)
+        function out = calibrate(~,~)
             out = [];
         end
         
-        function startRecording(~,~)
-        end
-        
-        function startBuffer(~,~)
-        end
-        
-        function data = getBufferData(obj)
-            % at least returns one sample all the time...
-            data = obj.getLatestSample;
-        end
-        
-        function sample = getLatestSample(obj)
-            if obj.doMouseSimulation
-                [mx, my] = GetMouse();
-                % put into fake SampleStruct
-                edat = struct('gazeX',mx,'gazeY',my,'diam',0,'eyePositionX',0,'eyePositionY',0,'eyePositionZ',0);
-                sample = struct('timestamp',round(GetSecs*1000*1000),'leftEye',edat,'rightEye',edat,'planeNumber',0);
-            else
-                sample = [];
+        function result = startRecording(obj,stream)
+            result = true;
+            if strcmpi(stream,'gaze')
+                obj.isRecordingGaze = true;
             end
         end
         
-        function stopBuffer(~,~)
+        function data = consumeData(~,stream,~)
+            data = [];
+            if strcmpi(stream,'gaze')
+                data = getMouseSample();
+            end
         end
         
-        function stopRecording(~)
+        function data = peekData(~,stream,~)
+            data = [];
+            if strcmpi(stream,'gaze')
+                data = getMouseSample();
+            end
         end
         
-        function out = isConnected(~)
-            out = true;
+        function stopRecording(obj,stream,~)
+            if strcmpi(stream,'gaze')
+                obj.isRecordingGaze = false;
+            end
         end
         
-        function sendMessage(~,~)
+        function saveData(~,~,~)
         end
         
-        function setBegazeTrialImage(~,~)
-        end
-        
-        function setBegazeKeyPress(~,~)
-        end
-        
-        function setBegazeMouseClick(~,~,~,~)
-        end
-        
-        function recordEyeImages(~,~,~,~)
-        end
-        
-        function stopRecordEyeImages(~)
-        end
-        
-        function saveData(~,~,~,~,~)
-        end
-        
-        function out = deInit(obj,~)
+        function out = deInit(obj)
             out = [];
             % mark as deinited
             obj.isInitialized = false;
         end
     end
+end
+
+
+function sample = getMouseSample()
+[mx, my] = GetMouse();
+rect = Screen('Rect',0);
+% put into fake SampleStruct
+ts = round(GetSecs*1000*1000);
+gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true);
+pu = struct('diameter',0,'valid',false);
+gO = struct('inUserCoords',zeros(3,1),'inTrackBoxCoords',zeros(3,1),'valid',false);
+edat = struct('gazePoint',gP,'pupil',pu,'gazeOrigin',gO);
+sample = struct('deviceTimeStamp',ts,'systemTimeStamp',ts,'left',edat,'right',edat);
 end
