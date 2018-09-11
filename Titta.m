@@ -474,20 +474,24 @@ classdef Titta < handle
             msgs = obj.msgs.data;
         end
         
-        function saveData(obj,filename, user, description, doAppendVersion)
+        function saveData(obj, filename, doAppendVersion)
+            % convenience function that gets data from all streams and
+            % saves to mat file along with messages, calibration
+            % information and system info
+            
             % 1. get filename and path
             [path,file,ext] = fileparts(filename);
             assert(~isempty(path),'Titta: saveData: filename should contain a path')
-            % eat .idf off filename, preserve any other extension user may
+            % eat .mat off filename, preserve any other extension user may
             % have provided
-            if ~isempty(ext) && ~strcmpi(ext,'.idf')
+            if ~isempty(ext) && ~strcmpi(ext,'.mat')
                 file = [file ext];
             end
             % add versioning info to file name, if wanted and if already
             % exists
-            if nargin>=5 && doAppendVersion
+            if nargin>=3 && doAppendVersion
                 % see what files we have in data folder with the same name
-                f = FileFromFolder(path,'ssilent','idf');
+                f = FileFromFolder(path,'ssilent','mat');
                 f = regexp({f.fname},['^' regexptranslate('escape',file) '(_\d+)?$'],'tokens');
                 % see if any. if so, see what number to append
                 f = [f{:}];
@@ -503,19 +507,29 @@ classdef Titta < handle
                 end
             end
             % now make sure file ends with .idf
-            file = [file '.idf'];
-            % set defaults
-            if nargin<3 || isempty(user)
-                user = file;
-            end
-            if nargin<4 || isempty(description)
-                description = '';
-            end
-            
+            file = [file '.mat'];
             % construct full filename
             filename = fullfile(path,file);
-            ret = obj.iView.saveData(filename, description, user, 0);
-            obj.processError(ret,'Titta: Error saving data');
+            
+            % 2. collect all data to save
+            obj.StopRecordAll();
+            dat.cal         = obj.calibrateHistory;
+            dat.msgs        = obj.getMessages();
+            dat.systemInfo  = obj.systemInfo;
+            dat.geom        = obj.geom;
+            dat.settings    = obj.settings;
+            if isa(dat.settings.cal.drawFunction,'function_handle')
+                dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
+            end
+            dat.TobiiLog    = obj.buffers.getLog(false);
+            dat.data        = obj.ConsumeAllData(); %#ok<STRNU>
+            
+            % save
+            try
+                save(filename,'-struct','dat');
+            catch ME
+                error('Titta: Error saving data:\n%s',ME.getReport('extended'))
+            end
         end
         
         function out = deInit(obj)
