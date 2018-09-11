@@ -6,7 +6,7 @@ classdef Titta < handle
         buffers;
         
         % message buffer
-        msgs;
+        msgs = simpleVec(cell(1,2),1024);
         
         % state
         isInitialized   = false;
@@ -130,9 +130,6 @@ classdef Titta < handle
             % Load in our callback buffer mex
             obj.buffers = TobiiBuffer();
             obj.buffers.startLogging();
-            
-            % prepare msg buffer
-            obj.msgs = simpleVec(cell(1,2),1024);
             
             % Connect to eyetracker
             % see which eye trackers are available
