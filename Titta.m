@@ -268,11 +268,11 @@ classdef Titta < handle
                 if startScreen>0
                     %%% 2a: show head positioning screen
                     if kCal==1
-                        status = obj.showHeadPositioning(wpnt, [],startScreen);
+                        out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt, [],startScreen);
                     else
-                        status = obj.showHeadPositioning(wpnt,out,startScreen);
+                        out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out,startScreen);
                     end
-                    switch status
+                    switch out.attempt{kCal}.setupStatus
                         case 1
                             % all good, continue
                         case 2
@@ -285,7 +285,7 @@ classdef Titta < handle
                             % full stop
                             error('Titta: run ended from calibration routine')
                         otherwise
-                            error('Titta: status %d not implemented',status);
+                            error('Titta: status %d not implemented',out.attempt{kCal}.setupStatus);
                     end
                 end
                 
@@ -319,8 +319,8 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt{kCal}.valResultAccept,out.attempt{kCal}.calSelection] = obj.showCalValResult(wpnt,out.attempt,kCal);
-                switch out.attempt{kCal}.valResultAccept
+                [out.attempt{kCal}.valReviewStatus,out.attempt{kCal}.calSelection] = obj.showCalValResult(wpnt,out.attempt,kCal);
+                switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
                         break;
@@ -339,7 +339,7 @@ classdef Titta < handle
                         % full stop
                         error('Titta: run ended from Tobii routine')
                     otherwise
-                        error('Titta: status %d not implemented',out.attempt{kCal}.valResultAccept);
+                        error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
                 end
             end
             
