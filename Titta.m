@@ -470,6 +470,10 @@ classdef Titta < handle
             end
         end
         
+        function msgs = getMessages(obj)
+            msgs = obj.msgs.data;
+        end
+        
         function saveData(obj,filename, user, description, doAppendVersion)
             % 1. get filename and path
             [path,file,ext] = fileparts(filename);
