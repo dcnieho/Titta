@@ -177,21 +177,56 @@ classdef Titta < handle
             end
             
             % set tracker to operate at requested tracking frequency
-            obj.eyetracker.set_gaze_output_frequency(obj.settings.freq);
+            try
+                obj.eyetracker.set_gaze_output_frequency(obj.settings.freq);
+            catch ME
+                % provide nice error message
+                allFs = obj.eyetracker.get_all_gaze_output_frequencies();
+                allFs = ['[' sprintf('%d, ',allFs) ']']; allFs(end-2:end-1) = [];
+                error('Titta: Error setting tracker sampling frequency to %d. Possible tracking frequencies for this %s are %s.\nRaw error info:\n%s',obj.settings.freq,obj.settings.tracker,allFs,ME.getReport('extended'))
+            end
             
-%             % get info about the system
-%             [~,obj.systemInfo]          = obj.iView.getSystemInfo();
-%             if obj.caps.serialNumber
-%                 [~,obj.systemInfo.Serial]   = obj.iView.getSerialNumber();
-%             end
-%             out.systemInfo              = obj.systemInfo;
-            out = [];
+            % set eye tracking mode
+            if ~isempty(obj.settings.trackingMode)
+                try
+                    obj.eyetracker.set_eye_tracking_mode(obj.settings.trackingMode);
+                catch ME
+                    % add info about possible tracking modes.
+                    allModes = obj.eyetracker.get_all_eye_tracking_modes();
+                    allModes = ['[' sprintf('''%s'', ',allModes{:}) ']']; allModes(end-2:end-1) = [];
+                    error('Titta: Error setting tracker mode to ''%s''. Possible tracking modes for this %s are %s. If a mode you expect is missing, check whether the eye tracker firmware is up to date.\nRaw error info:\n%s',obj.settings.trackingMode,obj.settings.tracker,allModes,ME.getReport('extended'))
+                end
+            end
+            
+            % check requested binocular/monocular tracking is supported
+            assert(ismember(obj.settings.trackEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.trackEye)
+            if ismember(obj.settings.trackEye,{'left','right'})
+                assert(obj.hasCap(Capabilities.HasEyeImages),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.trackEye,obj.settings.tracker);
+            end
+            switch obj.settings.trackEye
+                case 'left'
+                    obj.hasRightEye = false;
+                case 'right'
+                    obj.hasLeftEye  = false;
+            end
+            
+            % get info about the system
+            fields = {'Name','SerialNumber','Model','FirmwareVersion','Address'};
+            for f=1:length(fields)
+                obj.systemInfo.(fields{f}) = obj.eyetracker.(fields{f});
+            end
+            obj.systemInfo.freq         = obj.eyetracker.get_gaze_output_frequency();
+            assert(obj.systemInfo.freq==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.freq);
+            obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
+            out.systemInfo              = obj.systemInfo;
             
             % get information about display geometry
-            obj.geom = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
-            
-            % setup track mode
-            % TODO: human or primate, if supported
+            warnState = warning('query','MATLAB:structOnObject');
+            warning('off',warnState.identifier);    % turn off warning for converting object to struct
+            obj.geom.displayArea    = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
+            obj.geom.trackBox       = structfun(@double,struct(obj.eyetracker.get_track_box())   ,'uni',false);
+            warning(warnState.state,warnState.identifier);  % reset warning
+            out.geom                = obj.geom;
             
             % init recording state
             obj.recState.gaze   = false;
@@ -498,29 +533,17 @@ classdef Titta < handle
             settings.tracker    = tracker;
             
             % default tracking settings per eye-tracker
-            % settings (only provided if supported):
-            % - trackEye:               'EYE_LEFT', 'EYE_RIGHT', or
-            %                           'EYE_BOTH'
-            % - trackMode:              'MONOCULAR', 'BINOCULAR',
-            %                           'SMARTBINOCULAR', or
-            %                           'SMARTTRACKING'
-            % - doAverageEyes           true/false. TODO: check if only for
-            %                           RED-m and newer?
-            % - freq:                   eye-tracker dependant. Only for NG
-            %                           trackers can it actually be set 
-            % - cal.nPoint:             0, 1, 2, 5, 9 or 13 calibration
-            %                           points are possible
             switch tracker
                 case 'Tobii Pro Spectrum'
-                    settings.freq                   = 1200;
-                    settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
-                    settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
+                    settings.freq                   = 600;
+                    settings.trackingMode           = 'human';
             end
             
             % the rest here are good defaults for all
             settings.serialNumber           = '';
             settings.licenseFile            = '';
             settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
+            settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
             settings.cal.qRandPoints        = true;
@@ -530,6 +553,7 @@ classdef Titta < handle
             settings.cal.fixBackColor       = 0;
             settings.cal.fixFrontColor      = 255;
             settings.cal.drawFunction       = [];
+            settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
             settings.val.qRandPoints        = true;
@@ -561,14 +585,21 @@ classdef Titta < handle
     methods (Access = private, Hidden)
         function allowed = getAllowedOptions(obj)
             allowed = {...
+                'cal','pointPos'
                 'cal','autoPace'
-                'cal','nPoint'
+                'cal','paceDuration'
+                'cal','qRandPoints'
                 'cal','bgColor'
                 'cal','fixBackSize'
                 'cal','fixFrontSize'
                 'cal','fixBackColor'
                 'cal','fixFrontColor'
                 'cal','drawFunction'
+                'val','pointPos'
+                'val','paceDuration'
+                'val','collectDuration'
+                'val','qRandPoints'
+                'setup','viewingDist'
                 'setup','eyeColors'
                 'text','font'
                 'text','color'
@@ -584,7 +615,6 @@ classdef Titta < handle
                     allowed(p,:) = [];
                 end
             end
-                        
         end
         
         function out = hasCap(obj,cap)
@@ -684,8 +714,7 @@ classdef Titta < handle
             cursor          = cursorUpdater(cursors);
             
             % get tracking status and visualize
-            trackBox        = obj.eyetracker.get_track_box();
-            trackBoxDepths  = double([trackBox.FrontLowerLeft(3) trackBox.BackLowerLeft(3)]./10);
+            trackBoxDepths  = double([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)]./10);
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -803,9 +832,8 @@ classdef Titta < handle
             Screen('TextSize',  wpnt, obj.settings.text.size);
             Screen('TextStyle', wpnt, obj.settings.text.style);
             % setup box
-            trackBox= obj.eyetracker.get_track_box();
-            trackBoxDepths  = double([trackBox.FrontLowerLeft(3) trackBox.BackLowerLeft(3)]./10);
-            boxSize = double((trackBox.FrontUpperRight-trackBox.FrontLowerLeft)./10);
+            trackBoxDepths  = double([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)]./10);
+            boxSize = double((obj.geom.trackBox.FrontUpperRight-obj.geom.trackBox.FrontLowerLeft)./10);
             boxSize = round(500.*boxSize(1:2)./boxSize(1));
             [boxCenter(1),boxCenter(2)] = RectCenter([0 0 boxSize]);
             % setup eye image
@@ -1535,7 +1563,7 @@ classdef Titta < handle
             pointOnScreenDA  = (valPointPos./obj.scrInfo.resolution).';
             pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
             offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA);
-            offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.width,obj.geom.height].');
+            offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.displayArea.width,obj.geom.displayArea.height].');
             offOnScreenDir   = atan2(offOnScreenCm(2,:),offOnScreenCm(1,:));
             
             vecToPoint  = bsxfun(@minus,pointOnScreenUCS,gazeData.gazeOrigin.inUserCoords);
@@ -1558,9 +1586,9 @@ classdef Titta < handle
         
         function out = ADCSToUCS(obj,data)
             % data is a 2xN matrix of normalized coordinates
-            xVec = obj.geom.top_right-obj.geom.top_left;
-            yVec = obj.geom.bottom_right-obj.geom.top_right;
-            out  = bsxfun(@plus,obj.geom.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
+            xVec = obj.geom.displayArea.top_right-obj.geom.displayArea.top_left;
+            yVec = obj.geom.displayArea.bottom_right-obj.geom.displayArea.top_right;
+            out  = bsxfun(@plus,obj.geom.displayArea.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
         end
         
         function out = DataTobiiToScreen(obj,data,res)
