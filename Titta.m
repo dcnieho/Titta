@@ -830,7 +830,6 @@ classdef Titta < handle
                         break;
                     elseif any(strcmpi(keys,'s')) && haveShift
                         % skip calibration
-                        obj.iView.abortCalibration();
                         status = 2;
                         break;
                     end
@@ -1141,7 +1140,6 @@ classdef Titta < handle
                         break;
                     elseif any(strcmpi(keys,'s')) && haveShift
                         % skip calibration
-                        obj.iView.abortCalibration();
                         status = 2;
                         break;
                     end
@@ -1447,7 +1445,6 @@ classdef Titta < handle
                         break;
                     elseif any(strcmpi(keys,'s')) && haveShift
                         % skip calibration
-                        obj.iView.abortCalibration();
                         status = 2;
                         break;
                     end
@@ -1954,7 +1951,6 @@ classdef Titta < handle
                             break;
                         elseif any(strcmpi(keys,'s')) && haveShift
                             % skip calibration
-                            obj.iView.abortCalibration();
                             status = 2;
                             qDoneCalibSelection = true;
                             break;
