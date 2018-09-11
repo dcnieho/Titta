@@ -360,6 +360,7 @@ classdef Titta < handle
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
             result = true;
+            assert(nargin>1,'Titta: startRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             switch lower(stream)
                 case 'gaze'
                     field       = 'gaze';
@@ -411,16 +412,18 @@ classdef Titta < handle
         
         function data = consumeData(obj,stream,varargin)
             % optional input argument firstN: how many samples to consume
+            % from start. Default: all
             data = obj.consumeOrPeekData(stream,'consume',varargin{:});
         end
         
         function data = peekData(obj,stream,varargin)
             % optional input argument lastN: how many samples to peek from
-            % end
+            % end. Default: 1. To get all, ask for -1 samples
             data = obj.consumeOrPeekData(stream,'peek',varargin{:});
         end
         
         function stopRecording(obj,stream,qClearBuffer)
+            assert(nargin>1,'Titta: stopRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             if nargin<3 || isempty(qClearBuffer)
                 qClearBuffer = false;
             end
@@ -457,9 +460,9 @@ classdef Titta < handle
         end
         
         function sendMessage(obj,str,time)
-            % Tobii system timestamp is same clock as PTB's clock. So we're
-            % good. If an event has a known time (e.g. a screen flip),
-            % provide it as an input argument to this function.
+            % Tobii system timestamp is from same clock as PTB's clock. So
+            % we're good. If an event has a known time (e.g. a screen
+            % flip), provide it as an input argument to this function.
             if nargin<3
                 time = GetSecs();
             end
