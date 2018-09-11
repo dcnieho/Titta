@@ -369,7 +369,7 @@ classdef Titta < handle
                         streamLbl   = 'gaze data';
                     end
                 case 'eyeimage'
-                    if hasCap(obj,Capabilities.HasEyeImages)
+                    if obj.hasCap(Capabilities.HasEyeImages)
                         field   	= 'eyeIm';
                         if ~obj.recState.eyeIm
                             result      = obj.buffers.startEyeImageBuffering();
@@ -379,7 +379,7 @@ classdef Titta < handle
                         error('Titta: recording of eye images is not supported by this eye-tracker')
                     end
                 case 'externalsignal'
-                    if hasCap(obj,Capabilities.HasExternalSignal)
+                    if obj.hasCap(Capabilities.HasExternalSignal)
                         field       = 'extSig';
                         if ~obj.recState.extSig
                             result      = obj.buffers.startExtSignalBuffering();
@@ -842,7 +842,7 @@ classdef Titta < handle
         
         
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            qHasEyeIm = hasCap(obj,Capabilities.HasExternalSignal);
+            qHasEyeIm = obj.hasCap(Capabilities.HasExternalSignal);
             if qHasEyeIm
                 obj.buffers.enableTempEyeImageBuffer();
                 obj.startRecording('eyeImage');
@@ -1275,7 +1275,7 @@ classdef Titta < handle
             obj.DisableAllTempBuffers();
             % compute accuracy etc
             if status==1
-                out.val = ProcessValData(obj,out.val);
+                out.val = obj.ProcessValData(out.val);
             end
             
             if status~=-1   % see comment above about why not when -1
@@ -1292,11 +1292,11 @@ classdef Titta < handle
         function StartTempRecordAll(obj)
             obj.buffers.enableTempSampleBuffer();
             obj.startRecording('gaze');
-            if hasCap(obj,Capabilities.HasEyeImages)
+            if obj.hasCap(Capabilities.HasEyeImages)
                 obj.buffers.enableTempEyeImageBuffer();
                 obj.startRecording('eyeImage');
             end
-            if hasCap(obj,Capabilities.HasExternalSignal)
+            if obj.hasCap(Capabilities.HasExternalSignal)
                 obj.buffers.enableTempExtSignalBuffer();
                 obj.startRecording('externalSignal');
             end
@@ -1466,7 +1466,7 @@ classdef Titta < handle
                         % point sequence (if this is not already a retried
                         % point)
                         if collect_result.value==CalibrationStatus.Failure && points(currentPoint,6)
-                            points = [points; points(currentPoint,:)];
+                            points = [points; points(currentPoint,:)]; %#ok<AGROW>
                             points(end,6) = 0;  % indicate this is a point that is being retried so we don't try forever
                         end
                         
