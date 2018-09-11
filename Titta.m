@@ -214,7 +214,8 @@ classdef Titta < handle
                 % no-op, ok if fails, simply means we're not already in
                 % calibration mode
             end
-            obj.StopTempRecordAll();
+            obj.StopRecordAll();
+            obj.DisableAllTempBuffers();
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -1256,7 +1257,8 @@ classdef Titta < handle
             end
             
             if status~=1
-                obj.StopTempRecordAll();
+                obj.StopRecordAll();
+                obj.DisableAllTempBuffers();
                 if status~=-1
                     % -1 means restart calibration from start. if we do not
                     % clean up here, we e.g. get a nice animation of the
@@ -1279,7 +1281,8 @@ classdef Titta < handle
             [status,out.val] = obj.DoCalPointDisplay(wpnt,[],tick,out.cal.flips(end));
             obj.sendMessage(sprintf('VALIDATION END %d',kCal));
             out.val.allData = obj.ConsumeAllData();
-            obj.StopTempRecordAll();
+            obj.StopRecordAll();
+            obj.DisableAllTempBuffers();
             % compute accuracy etc
             if status==1
                 out.val = ProcessValData(obj,out.val);
@@ -1334,14 +1337,17 @@ classdef Titta < handle
             obj.buffers.clearTimeSyncBuffer();
         end
         
-        function StopTempRecordAll(obj)
+        function StopRecordAll(obj)
             obj.stopRecording('gaze');
-            obj.buffers.disableTempSampleBuffer();
             obj.stopRecording('eyeImage');
-            obj.buffers.disableTempEyeImageBuffer();
             obj.stopRecording('externalSignal');
-            obj.buffers.disableTempExtSignalBuffer();
             obj.stopRecording('timeSync');
+        end
+        
+        function DisableAllTempBuffers(obj)
+            obj.buffers.disableTempSampleBuffer();
+            obj.buffers.disableTempEyeImageBuffer();
+            obj.buffers.disableTempExtSignalBuffer();
             obj.buffers.disableTempTimeSyncBuffer();
         end
         
