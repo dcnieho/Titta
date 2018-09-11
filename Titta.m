@@ -755,9 +755,9 @@ classdef Titta < handle
                 % draw distance info
                 DrawFormattedText(wpnt,sprintf(obj.settings.string.simplePositionInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.text.color,[],[],[],1.5);
                 % draw ovals
-                obj.drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
+                drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
                 if ~isempty(headPos)
-                    obj.drawCircle(wpnt,headClr,headPos,headSz,5);
+                    drawCircle(wpnt,headClr,headPos,headSz,5);
                 end
                 % draw buttons
                 Screen('FillRect',wpnt,[ 37  97 163],advancedButRect);
@@ -848,7 +848,7 @@ classdef Titta < handle
                     count = count+1;
                 end
                 if ~isempty(eyeIm)
-                    [texs,szs]  = obj.UploadImages(texs,[],wpnt,eyeIm);
+                    [texs,szs]  = UploadImages(texs,[],wpnt,eyeIm);
                 else
                     szs         = [496 175; 496 175].';     % init at size of Spectrum@600Hz, decent enough guess for now
                 end
@@ -981,24 +981,24 @@ classdef Titta < handle
                     [~,i] = max(abs(xMid));
                     idx = 1 + (xMid(i)<0);  % if too far on the left, arrow should point to the right, etc below
                     qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = obj.getArrowColor(xMid(i),xThresh,col1,col2,col3);
+                    arrowColor(:,idx) = getArrowColor(xMid(i),xThresh,col1,col2,col3);
                 end
                 if any(abs(yMid)>yThresh(1))
                     [~,i] = max(abs(yMid));
                     idx = 3 + (yMid(i)<0);
                     qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = obj.getArrowColor(yMid(i),yThresh,col1,col2,col3);
+                    arrowColor(:,idx) = getArrowColor(yMid(i),yThresh,col1,col2,col3);
                 end
                 if abs(zMid)>zThresh(1)
                     idx = 5 + (zMid>0);
                     qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = obj.getArrowColor(zMid,zThresh,col1,col2,col3);
+                    arrowColor(:,idx) = getArrowColor(zMid,zThresh,col1,col2,col3);
                 end
                 
                 if qHasEyeIm
                     % get eye image
                     eyeIm       = obj.consumeData('eyeImage');
-                    [texs,szs]  = obj.UploadImages(texs,szs,wpnt,eyeIm);
+                    [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
                     
                     % update eye image locations (and possibly track box) if
                     % size of returned eye image changed
@@ -1135,57 +1135,6 @@ classdef Titta < handle
             HideCursor;
         end
         
-        function [texs,szs] = UploadImages(obj,texs,szs,wpnt,image)
-            if isempty(image)
-                return;
-            end
-            qHave = [false false];
-            if isempty(szs)
-                szs   = nan(2,2);
-            end
-            for p=length(image.cameraID):-1:1
-                % get which camera, 0 is right, 1 is left
-                which = image.cameraID(p);
-                if which==0
-                    which = 2;
-                end
-                % if we haven't uploaded an image for this camera yet, do
-                % so now
-                if ~qHave(which)
-                    [w,h] = deal(image.width(p),image.height(p));
-                    if iscell(image.image)
-                        im = image.image{p};
-                    else
-                        im = image.image(:,p);
-                    end
-                    im = reshape(im,w,h).';
-                    texs(which) = obj.UploadImage(texs(which),wpnt,im);
-                    qHave(which) = true;
-                    szs(:,which) = [w h].';
-                end
-                if all(qHave)
-                    break;
-                end
-            end
-        end
-        function tex = UploadImage(~,tex,wpnt,image)
-            if tex
-                Screen('Close',tex);
-            end
-            % 8 to prevent mipmap generation, we don't need it
-            % fliplr to make eye image look like coming from a mirror
-            % instead of simply being from camera's perspective
-            tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
-        end
-        
-        function drawCircle(~,wpnt,refClr,center,refSz,lineWidth)
-            nStep = 200;
-            alpha = linspace(0,2*pi,nStep);
-            alpha = [alpha(1:end-1); alpha(2:end)]; alpha = alpha(:).';
-            xy = refSz.*[cos(alpha); sin(alpha)];
-            Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
-        end
-        
         function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,qApplyVSpacing,varargin)
             if obj.usingFTGLTextRenderer
                 inputs.sx = 0;
@@ -1224,14 +1173,6 @@ classdef Titta < handle
                     warning('TODO: implement')
                 end
                 DrawMonospacedText(cache);
-            end
-        end
-        
-        function arrowColor = getArrowColor(~,posRating,thresh,col1,col2,col3)
-            if abs(posRating)>thresh(2)
-                arrowColor = col3;
-            else
-                arrowColor = col1+(abs(posRating)-thresh(1))./diff(thresh)*(col2-col1);
             end
         end
         
@@ -2181,5 +2122,65 @@ if valid
     bbox = Screen('TextBounds',wpnt,lbl);
     pos  = round(pos-bbox(3:4)/2);
     Screen('DrawText',wpnt,lbl,pos(1),pos(2),255);
+end
+end
+
+function [texs,szs] = UploadImages(texs,szs,wpnt,image)
+if isempty(image)
+    return;
+end
+qHave = [false false];
+if isempty(szs)
+    szs   = nan(2,2);
+end
+for p=length(image.cameraID):-1:1
+    % get which camera, 0 is right, 1 is left
+    which = image.cameraID(p);
+    if which==0
+        which = 2;
+    end
+    % if we haven't uploaded an image for this camera yet, do
+    % so now
+    if ~qHave(which)
+        [w,h] = deal(image.width(p),image.height(p));
+        if iscell(image.image)
+            im = image.image{p};
+        else
+            im = image.image(:,p);
+        end
+        im = reshape(im,w,h).';
+        texs(which) = UploadImage(texs(which),wpnt,im);
+        qHave(which) = true;
+        szs(:,which) = [w h].';
+    end
+    if all(qHave)
+        break;
+    end
+end
+end
+
+function tex = UploadImage(tex,wpnt,image)
+if tex
+    Screen('Close',tex);
+end
+% 8 to prevent mipmap generation, we don't need it
+% fliplr to make eye image look like coming from a mirror
+% instead of simply being from camera's perspective
+tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
+end
+
+function drawCircle(wpnt,refClr,center,refSz,lineWidth)
+nStep = 200;
+alpha = linspace(0,2*pi,nStep);
+alpha = [alpha(1:end-1); alpha(2:end)]; alpha = alpha(:).';
+xy = refSz.*[cos(alpha); sin(alpha)];
+Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
+end
+
+function arrowColor = getArrowColor(posRating,thresh,col1,col2,col3)
+if abs(posRating)>thresh(2)
+    arrowColor = col3;
+else
+    arrowColor = col1+(abs(posRating)-thresh(1))./diff(thresh)*(col2-col1);
 end
 end
