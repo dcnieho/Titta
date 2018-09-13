@@ -465,7 +465,10 @@ classdef Titta < handle
         function sendMessage(obj,str,time)
             % Tobii system timestamp is from same clock as PTB's clock. So
             % we're good. If an event has a known time (e.g. a screen
-            % flip), provide it as an input argument to this function.
+            % flip), provide it as an input argument to this function. This
+            % known time input should be in seconds (as provided by PTB's
+            % functions), and will be converted to microsec to match
+            % Tobii's timestamps
             if nargin<3
                 time = GetSecs();
             end
