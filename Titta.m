@@ -567,7 +567,7 @@ classdef Titta < handle
             end
             
             % the rest here are good defaults for all
-            settings.trackEye               = 'left';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
+            settings.trackEye               = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber           = '';
             settings.licenseFile            = '';
             settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
