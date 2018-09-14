@@ -14,8 +14,8 @@ classdef Titta < handle
         keyState;
         shiftKey;
         mouseState;
-        hasLeftEye  = true;
-        hasRightEye = true;
+        calibrateLeftEye  = true;
+        calibrateRightEye = true;
         
         % settings and external info
         settings;
@@ -112,6 +112,18 @@ classdef Titta < handle
             obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
             obj.settings.setup.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x).',1,[]),obj.settings.setup.eyeColors,'uni',false);
             obj.settings.setup.eyeColors    = cellfun(@color2RGBA                    ,obj.settings.setup.eyeColors,'uni',false);
+            
+            % check requested eye calibration mode
+            assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
+            if ismember(obj.settings.calibrateEye,{'left','right'}) && obj.isInitialized
+                assert(obj.hasCap(Capabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+            end
+            switch obj.settings.calibrateEye
+                case 'left'
+                    obj.calibrateRightEye = false;
+                case 'right'
+                    obj.calibrateLeftEye  = false;
+            end
         end
         
         function out = init(obj)
@@ -201,15 +213,8 @@ classdef Titta < handle
             end
             
             % check requested binocular/monocular tracking is supported
-            assert(ismember(obj.settings.trackEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.trackEye)
-            if ismember(obj.settings.trackEye,{'left','right'})
-                assert(obj.hasCap(Capabilities.HasEyeImages),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.trackEye,obj.settings.tracker);
-            end
-            switch obj.settings.trackEye
-                case 'left'
-                    obj.hasRightEye = false;
-                case 'right'
-                    obj.hasLeftEye  = false;
+            if ismember(obj.settings.calibrateEye,{'left','right'})
+                assert(obj.hasCap(Capabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             
             % get info about the system
@@ -244,7 +249,7 @@ classdef Titta < handle
             % this function does all setup, draws the interface, etc
             
             %%% 1. some preliminary setup, to make sure we are in known state
-            if strcmp(obj.settings.trackEye,'both')
+            if strcmp(obj.settings.calibrateEye,'both')
                 calibClass = ScreenBasedCalibration(obj.eyetracker);
             else
                 calibClass = ScreenBasedMonocularCalibration(obj.eyetracker);
@@ -271,7 +276,7 @@ classdef Titta < handle
             while true
                 qGoToValidationViewer = false;
                 kCal = kCal+1;
-                out.attempt{kCal}.eye  = obj.settings.trackEye;
+                out.attempt{kCal}.eye  = obj.settings.calibrateEye;
                 if startScreen>0
                     %%% 2a: show head positioning screen
                     out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out,startScreen);
@@ -567,7 +572,7 @@ classdef Titta < handle
             end
             
             % the rest here are good defaults for all
-            settings.trackEye               = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
+            settings.calibrateEye           = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber           = '';
             settings.licenseFile            = '';
             settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
@@ -747,10 +752,10 @@ classdef Titta < handle
                 % get latest data from eye-tracker
                 eyeData = obj.buffers.peekSamples(1);
                 [lEye,rEye] = deal(nan(3,1));
-                if ~isempty(eyeData) && obj.hasLeftEye
+                if ~isempty(eyeData) && obj.calibrateLeftEye
                     lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
                 end
-                if ~isempty(eyeData) && obj.hasRightEye
+                if ~isempty(eyeData) && obj.calibrateRightEye
                     rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
                 end
                 
@@ -975,11 +980,11 @@ classdef Titta < handle
                 eyeData = obj.buffers.peekSamples(1);
                 [lEye,rEye]     = deal(nan(3,1));
                 [lValid,rValid] = deal(false);
-                if ~isempty(eyeData) && obj.hasLeftEye
+                if ~isempty(eyeData) && obj.calibrateLeftEye
                     lValid  = eyeData. left.gazeOrigin.valid;
                     lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
                 end
-                if ~isempty(eyeData) && obj.hasRightEye
+                if ~isempty(eyeData) && obj.calibrateRightEye
                     rValid  = eyeData.right.gazeOrigin.valid;
                     rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
                 end
@@ -1234,7 +1239,7 @@ classdef Titta < handle
             out.cal.data = obj.ConsumeAllData();
             if status==1
                 % compute calibration
-                out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.hasLeftEye,obj.hasRightEye);
+                out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
             end
             calibClass.leave_calibration_mode();
             
@@ -1366,7 +1371,7 @@ classdef Titta < handle
                 points          = obj.settings.cal.pointPos;
                 paceInterval    = ceil(obj.settings.cal.paceDuration   *Screen('NominalFrameRate',wpnt));
                 out.status      = [];
-                switch obj.settings.trackEye
+                switch obj.settings.calibrateEye
                     case 'both'
                         extraInp = {};
                     case 'left'
@@ -1523,17 +1528,17 @@ classdef Titta < handle
             % compute validation accuracy per point, noise levels, %
             % missing
             for p=length(val.gazeData):-1:1
-                if obj.hasLeftEye
+                if obj.calibrateLeftEye
                     val.quality(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,2:3));
                 end
-                if obj.hasRightEye
+                if obj.calibrateRightEye
                     val.quality(p).right = obj.getDataQuality(val.gazeData(p).right,val.pointPos(p,2:3));
                 end
             end
-            if obj.hasLeftEye
+            if obj.calibrateLeftEye
                 lefts  = [val.quality.left];
             end
-            if obj.hasRightEye
+            if obj.calibrateRightEye
                 rights = [val.quality.right];
             end
             [l,r] = deal([]);
@@ -1541,10 +1546,10 @@ classdef Titta < handle
                 % NB: abs when averaging over eyes, we need average size of
                 % error for accuracy and for other fields its all positive
                 % anyway
-                if obj.hasLeftEye
+                if obj.calibrateLeftEye
                     l = nanmean(abs([lefts.(f{1})]),2);
                 end
-                if obj.hasRightEye
+                if obj.calibrateRightEye
                     r = nanmean(abs([rights.(f{1})]),2);
                 end
                 val.(f{1}) = [l r];
@@ -1673,13 +1678,13 @@ classdef Titta < handle
                 for c=length(iValid):-1:1
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
-                    if obj.hasLeftEye
+                    if obj.calibrateLeftEye
                         strl = sprintf('<color=%s>Left<color>: (%.2f°,%.2f°)',obj.settings.setup.eyeColorsHex{1},cal{iValid(c)}.val.acc(:,1));
                     end
-                    if obj.hasRightEye
+                    if obj.calibrateRightEye
                         strr = sprintf('<color=%s>Right<color>: (%.2f°,%.2f°)',obj.settings.setup.eyeColorsHex{2},cal{iValid(c)}.val.acc(:,2));
                     end
-                    if obj.hasLeftEye && obj.hasRightEye
+                    if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
@@ -1760,13 +1765,13 @@ classdef Titta < handle
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
                     [strl,strr,strsep] = deal('');
-                    if obj.hasLeftEye
+                    if obj.calibrateLeftEye
                         strl = sprintf('  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColorsHex{1},cal{selection}.val.acc(:,1),cal{selection}.val.STD2D(1),cal{selection}.val.RMS2D(1),cal{selection}.val.trackRatio(1)*100);
                     end
-                    if obj.hasRightEye
+                    if obj.calibrateRightEye
                         strr = sprintf(' <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColorsHex{2},cal{selection}.val.acc(:,2),cal{selection}.val.STD2D(2),cal{selection}.val.RMS2D(2),cal{selection}.val.trackRatio(2)*100);
                     end
-                    if obj.hasLeftEye && obj.hasRightEye
+                    if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
                     valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n%s%s%s',strl,strsep,strr);
@@ -1809,14 +1814,14 @@ classdef Titta < handle
                     pointToShowInfoFor = openInfoForPoint;
                     openInfoForPoint   = nan;
                     % 1. prepare text
-                    if obj.hasLeftEye && obj.hasRightEye
+                    if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                         str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
-                    elseif obj.hasLeftEye
+                    elseif obj.calibrateLeftEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100);
-                    elseif obj.hasRightEye
+                    elseif obj.calibrateRightEye
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                         str = sprintf('Accuracy:     <color=%2$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%2$s>%5$.2f°<color>\nPrecision RMS:    <color=%2$s>%6$.2f°<color>\nTrack ratio:      <color=%2$s>%7$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     end
@@ -1839,12 +1844,12 @@ classdef Titta < handle
                             myCal = cal{selection}.cal.result;
                             bpos = calValPos(p,:).';
                             % left eye
-                            if obj.hasLeftEye
+                            if obj.calibrateLeftEye
                                 qVal = strcmp(myCal.gazeData(p).left.validity,'ValidAndUsed');
                                 lEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p). left.pos(:,qVal),[brw brh].'),boxRect(1:2).');
                             end
                             % right eye
-                            if obj.hasRightEye
+                            if obj.calibrateRightEye
                                 qVal = strcmp(myCal.gazeData(p).right.validity,'ValidAndUsed');
                                 rEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p).right.pos(:,qVal),[brw brh].'),boxRect(1:2).');
                             end
@@ -1852,20 +1857,20 @@ classdef Titta < handle
                             myVal = cal{selection}.val;
                             bpos = calValPos(p,:).';
                             % left eye
-                            if obj.hasLeftEye
+                            if obj.calibrateLeftEye
                                 qVal = myVal.gazeData(p). left.gazePoint.valid;
                                 lEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
                             end
                             % right eye
-                            if obj.hasRightEye
+                            if obj.calibrateRightEye
                                 qVal = myVal.gazeData(p).right.gazePoint.valid;
                                 rEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
                             end
                         end
-                        if obj.hasLeftEye  && ~isempty(lEpos)
+                        if obj.calibrateLeftEye  && ~isempty(lEpos)
                             Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.setup.eyeColors{1},[],2);
                         end
-                        if obj.hasRightEye && ~isempty(rEpos)
+                        if obj.calibrateRightEye && ~isempty(rEpos)
                             Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.setup.eyeColors{2},[],2);
                         end
                     end
@@ -1921,10 +1926,10 @@ classdef Titta < handle
                         if ~isempty(eyeData)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
-                            if obj.hasLeftEye  && eyeData. left.gazePoint.valid(end)
+                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{1}, lE(1), lE(2), 10);
                             end
-                            if obj.hasRightEye && eyeData.right.gazePoint.valid(end)
+                            if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{2}, rE(1), rE(2), 10);
                             end
                         end
