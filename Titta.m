@@ -212,7 +212,8 @@ classdef Titta < handle
                 end
             end
             
-            % check requested binocular/monocular tracking is supported
+            % if monocular tracking is requested, check that it is
+            % supported
             if ismember(obj.settings.calibrateEye,{'left','right'})
                 assert(obj.hasCap(Capabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
