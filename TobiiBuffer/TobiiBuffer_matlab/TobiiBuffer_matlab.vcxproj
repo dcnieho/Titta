@@ -158,7 +158,6 @@
     <ClCompile Include="TobiiBuffer_matlab.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cppclass.m" />
     <None Include="TobiiBuffer.m" />
   </ItemGroup>
   <ItemGroup>

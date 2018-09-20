@@ -23,9 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cppclass.m">
-      <Filter>m-files</Filter>
-    </None>
     <None Include="TobiiBuffer.m">
       <Filter>m-files</Filter>
     </None>
