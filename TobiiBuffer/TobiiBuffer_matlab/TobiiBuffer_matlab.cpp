@@ -834,11 +834,6 @@ namespace
         return out;
     }
 
-    mxArray* LogMsgSourceToMatlab()
-    {
-
-    }
-
     mxArray* LogVectorToMatlab(std::vector<TobiiBuff::logMessage> data_)
     {
         if (data_.empty())
