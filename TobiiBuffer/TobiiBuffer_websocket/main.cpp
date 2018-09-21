@@ -1,9 +1,12 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <uWS/uWS.h>
+#define _CRT_SECURE_NO_WARNINGS // for uWS.h
 #include <iostream>
 #include <map>
 #include <string>
 #include <sstream>
+
+#include <uWS/uWS.h>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 #include "TobiiBuffer/TobiiBuffer.h"
 #pragma comment(lib, "TobiiBuffer.lib")
@@ -16,22 +19,35 @@ namespace {
     // List actions
     enum class Action
     {
-        StartSampleBuffering,
+        Connect,
+        SetSampleFreq,
+        StartSampleStream,
         ClearSampleBuffer,
         PeekSamples,
-        StopSampleBuffering,
-        SaveSamples
+        SaveData,
+        SendMessage,
+        StopSampleStream
     };
 
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
-        { "startSampleBuffering",		Action::StartSampleBuffering },
-        { "clearSampleBuffer",			Action::ClearSampleBuffer },
-        { "peekSamples",				Action::PeekSamples },
-        { "stopSampleBuffering",		Action::StopSampleBuffering },
-        { "saveSamples",				Action::SaveSamples },
+        { "connect"          , Action::Connect},
+        { "setSampleFreq"    , Action::SetSampleFreq},
+        { "startSampleStream", Action::StartSampleStream},
+        { "clearSampleBuffer", Action::ClearSampleBuffer},
+        { "peekSamples"      , Action::PeekSamples},
+        { "saveData"         , Action::SaveData},
+        { "sendMessage"      , Action::SendMessage},
+        { "stopSampleStream" , Action::StopSampleStream},
     };
+
+    template <bool isServer>
+    void sendJson(uWS::WebSocket<isServer> *ws, json jsonMsg)
+    {
+        auto msg = jsonMsg.dump();
+        ws->send(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
+    }
 }
 
 int main() {
@@ -51,77 +67,129 @@ int main() {
 
     h.onMessage([&h, &numRequests, &g_TobiiBufferInstance](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
-        std::cout << "Received message on server: " << std::string(message, length) << std::endl;
+        auto jsonMsg = json::parse(std::string(message, length));
+        std::cout << "Received message on server: " << jsonMsg.dump(4) << std::endl;
+
+        if (jsonMsg.count("action")==0)
+        {
+            sendJson(ws, {{"error", "jsonMissingAction"}});
+            return;
+        }
 
         // get corresponding action
-        auto actionStr = std::string(message, length);
-        if (actionTypeMap.count(actionStr) == 0)
-            std::cout << "Unrecognized action (not in actionTypeMap): " << actionStr << std::endl;
+        auto actionStr = jsonMsg.at("action").get<std::string>();
+        if (actionTypeMap.count(actionStr)==0)
+        {
+            sendJson(ws, {{"error", "Unrecognized action"}, {"action", actionStr}});
+            return;
+        }
         Action action = actionTypeMap.at(actionStr);
 
         switch (action)
         {
-            case Action::StartSampleBuffering:
-            {
+            case Action::Connect:
                 if (!g_TobiiBufferInstance.get())
                 {
-                    TobiiResearchEyeTrackers* eyetrackers = NULL;
+                    TobiiResearchEyeTrackers* eyetrackers = nullptr;
                     TobiiResearchStatus result;
-                    size_t i = 0;
                     result = tobii_research_find_all_eyetrackers(&eyetrackers);
-                    
+
+                    // notify if no tracker found
                     if (result != TOBII_RESEARCH_STATUS_OK)
                     {
-                        DoExitWithMsg("No eye trackers connected");
+                        sendJson(ws, {{"error", "noET"}});
+                        return;
                     }
 
                     // connect to eye tracker.
                     char* address;
                     tobii_research_get_address(eyetrackers->eyetrackers[0], &address);
                     g_TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
+
+                    // reply informing what eye-tracker we just connected to
+                    sendJson(ws, {{"action", "connect"}, {"tracker", address}});
+
+                    // clean up
                     tobii_research_free_string(address);
                 }
+                break;
+            case Action::SetSampleFreq:
+            {
+            }
+            case Action::StartSampleStream:
+            {
+                bool status = false;
+                if (g_TobiiBufferInstance.get())
+                    status = g_TobiiBufferInstance.get()->startSampleBuffering();
 
-                g_TobiiBufferInstance.get()->startSampleBuffering();
+                sendJson(ws, {{"action", "startSampleStream"}, {"status", status}});
                 break;
             }
             case Action::ClearSampleBuffer:
-                g_TobiiBufferInstance.get()->clearSampleBuffer();
+                if (g_TobiiBufferInstance.get())
+                    g_TobiiBufferInstance.get()->clearSampleBuffer();
                 break;
             case Action::PeekSamples:
             {
                 // get sample
-                auto samples = g_TobiiBufferInstance.get()->peekSamples(1);
-                std::string message;
-                if (!samples.empty())
+                if (g_TobiiBufferInstance.get())
                 {
-                    auto x = (samples[0].left_eye.gaze_point.position_on_display_area.x+samples[0].right_eye.gaze_point.position_on_display_area.x)/2.;
-                    auto y = (samples[0].left_eye.gaze_point.position_on_display_area.y+samples[0].right_eye.gaze_point.position_on_display_area.y)/2.;
-                    // format as json, example: {"ts": 1000, "x": 3.4, "y": 3.4}
-                    std::stringstream ss;
-                    ss << "{\"ts\":" << samples[0].system_time_stamp << ",\"x\":" << x << ",\"y\":" << y << "}";
-                    message = ss.str();
+                    size_t nSamples = TobiiBuff::g_peekDefaultAmount;
+                    if (jsonMsg.count("nSamples"))
+                    {
+                        nSamples = jsonMsg.at("action").get<size_t>();
+                    }
+
+                    auto samples = g_TobiiBufferInstance.get()->peekSamples(nSamples);
+                    json jsonMsg;
+                    if (!samples.empty())   // TODO: multiple samples in array
+                    {
+                        auto x = (samples[0].left_eye.gaze_point.position_on_display_area.x + samples[0].right_eye.gaze_point.position_on_display_area.x) / 2.;
+                        auto y = (samples[0].left_eye.gaze_point.position_on_display_area.y + samples[0].right_eye.gaze_point.position_on_display_area.y) / 2.;
+                        jsonMsg =
+                        {
+                            {"ts", samples[0].system_time_stamp},
+                            {"x" , x},
+                            {"y" , y}
+                        };
+                    }
+                    else
+                    {
+                        jsonMsg =
+                        {
+                            {"ts", 0},
+                            {"x" , nullptr},
+                            {"y" , nullptr}
+                        };
+                    }
+                    // send
+                    sendJson(ws, jsonMsg);
+                    numRequests++;
                 }
-                else
-                {
-                    message = "{\"ts\":0,\"x\":null,\"y\":null}";
-                }
-                // send
-                ws->send(message.c_str(), message.length(), uWS::OpCode::TEXT);
-                numRequests++;
                 break;
             }
-            case Action::StopSampleBuffering:
-                g_TobiiBufferInstance.get()->stopSampleBuffering();
-                break;
-            case Action::SaveSamples:
+            case Action::SaveData:
             {
                 auto samples = g_TobiiBufferInstance.get()->consumeSamples();
                 // TODO: store all to file somehow
                 break;
             }
+            case Action::SendMessage:
+            {
+                // TODO: timeStamp and store message somehow
+                break;
+            }
+            case Action::StopSampleStream:
+            {
+                bool status = false;
+                if (g_TobiiBufferInstance.get())
+                    status = g_TobiiBufferInstance.get()->stopSampleBuffering();
+
+                sendJson(ws, {{"action", "stopSampleStream"}, {"status", status}});
+                break;
+            }
             default:
-                std::cout << "Unhandled action: " << actionStr << std::endl;
+                sendJson(ws, {{"error", "Unhandled action"}, {"action", actionStr}});
                 break;
         }
 
@@ -145,18 +213,17 @@ int main() {
     {
         std::cout << "Client has been notified that its connected" << std::endl;
         // start eye tracker
-        std::string message = "startSampleBuffering";
-        ws->send(message.c_str(), message.length(), uWS::OpCode::TEXT);
+        sendJson(ws, {{"action", "connect"}});
+        sendJson(ws, {{"action", "setSampleFreq"}, {"freq", 120}});
+        sendJson(ws, {{"action", "startSampleStream"}});
         // request sample
-        message = "peekSamples";
-        ws->send(message.c_str(), message.length(), uWS::OpCode::TEXT);
+        sendJson(ws, {{"action", "peekSamples"}});
     });
     h.onMessage([](uWS::WebSocket<uWS::CLIENT> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         std::cout << "Received message on client: " << std::string(message, length) << std::endl;
-        Sleep(5);
-        std::string newMessage = "peekSamples";
-        ws->send(newMessage.c_str(), newMessage.length(), uWS::OpCode::TEXT);
+        Sleep(10);
+        sendJson(ws, {{"action", "peekSamples"}});
     });
 
     h.onDisconnection([&h](uWS::WebSocket<uWS::CLIENT> *ws, int code, char *message, size_t length) 
