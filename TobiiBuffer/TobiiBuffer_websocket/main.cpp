@@ -150,10 +150,10 @@ int main() {
     });
 #endif
 
-    h.listen(3000);
+    h.listen(3003);
 
 #ifdef LOCAL_TEST
-    h.connect("ws://localhost:3000", nullptr);
+    h.connect("ws://localhost:3003", nullptr);
 #endif
 
     h.run();
