@@ -63,6 +63,7 @@
 #include "tobii_to_matlab.h"
 
 #include "TobiiBuffer/TobiiBuffer.h"
+#include "TobiiBuffer/utils.h"
 #pragma comment(lib, "TobiiBuffer.lib")
 
 
@@ -832,6 +833,12 @@ namespace
 
         return out;
     }
+
+    mxArray* LogMsgSourceToMatlab()
+    {
+
+    }
+
     mxArray* LogVectorToMatlab(std::vector<TobiiBuff::logMessage> data_)
     {
         if (data_.empty())
@@ -840,16 +847,23 @@ namespace
         const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         mxArray* temp;
+        size_t i = 0;
 
         // 1. system timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuff::logMessage::system_time_stamp));
         // 2. log source
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiBuff::logMessage::source, uint8_t{}));
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(data_.size(), 1));
+        i = 0;
+        for (auto &msg : data_)
+            mxSetCell(temp, i++, mxCreateString(TobiiResearchLogSourceToString(msg.source).c_str()));
         // 3. log level
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiBuff::logMessage::level, uint8_t{}));
+        mxSetFieldByNumber(out, 0, 2, temp = mxCreateCellMatrix(data_.size(), 1));
+        i = 0;
+        for (auto &msg : data_)
+            mxSetCell(temp, i++, mxCreateString(TobiiResearchLogLevelToString(msg.level).c_str()));
         // 4. log messages
         mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(data_.size(), 1));
-        size_t i = 0;
+        i = 0;
         for (auto &msg : data_)
             mxSetCell(temp, i++, mxCreateString(msg.message.c_str()));
 
