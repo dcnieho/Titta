@@ -28,6 +28,8 @@ namespace {
             return g_mExtSignal;
         if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
             return g_mTimeSync;
+        if constexpr (std::is_same<T, TobiiBuff::logMessage>::value)
+            return g_mTimeSync;
     }
 
     // global log buffer
@@ -225,6 +227,7 @@ std::vector<T> TobiiBuffer::consume(size_t firstN_)
 // gaze data
 bool TobiiBuffer::startSampleBuffering(size_t initialBufferSize_ /*= g_sampleBufDefaultSize*/)
 {
+    auto l = lockForWriting(getMutex<TobiiResearchGazeData>());
     _samples.reserve(initialBufferSize_);
     return tobii_research_subscribe_to_gaze_data(_eyetracker,TobiiSampleCallback,this) == TOBII_RESEARCH_STATUS_OK;
 }
@@ -277,6 +280,7 @@ namespace {
 
 bool TobiiBuffer::startEyeImageBuffering(size_t initialBufferSize_ /*= g_eyeImageBufDefaultSize*/, bool asGif_ /*= g_eyeImageAsGIFDefault*/)
 {
+    auto l = lockForWriting(getMutex<TobiiBuff::eyeImage>());
     _eyeImages.reserve(initialBufferSize_);
 
     // if temp buffer selected, always record normal images, not gif
@@ -354,6 +358,7 @@ std::vector<TobiiBuff::eyeImage> TobiiBuffer::peekEyeImages(size_t lastN_/* = g_
 // external signals
 bool TobiiBuffer::startExtSignalBuffering(size_t initialBufferSize_ /*= g_extSignalBufDefaultSize*/)
 {
+    auto l = lockForWriting(getMutex<TobiiResearchExternalSignalData>());
     _extSignal.reserve(initialBufferSize_);
     return tobii_research_subscribe_to_external_signal_data(_eyetracker, TobiiExtSignalCallback, this) == TOBII_RESEARCH_STATUS_OK;
 }
@@ -388,6 +393,7 @@ std::vector<TobiiResearchExternalSignalData> TobiiBuffer::peekExtSignals(size_t 
 // time sync data
 bool TobiiBuffer::startTimeSyncBuffering(size_t initialBufferSize_ /*= g_timeSyncBufDefaultSize*/)
 {
+    auto l = lockForWriting(getMutex<TobiiResearchTimeSynchronizationData>());
     _timeSync.reserve(initialBufferSize_);
     return tobii_research_subscribe_to_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback, this) == TOBII_RESEARCH_STATUS_OK;
 }
@@ -426,12 +432,14 @@ namespace TobiiBuff
     {
         if (!g_logMessages)
             g_logMessages = std::make_unique<std::vector<TobiiBuff::logMessage>>();
+        
+        auto l = lockForWriting(getMutex<TobiiBuff::logMessage>());
         g_logMessages.get()->reserve(initialBufferSize_);
         return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
     }
     std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ /*= g_logBufClearDefault*/)
     {
-        auto l = lockForWriting(g_mLog);
+        auto l = lockForWriting(getMutex<TobiiBuff::logMessage>());
         if (clearLog_)
             return std::vector<TobiiBuff::logMessage>(std::move(*g_logMessages.get()));
         else
