@@ -8,6 +8,8 @@
 #include "TobiiBuffer/TobiiBuffer.h"
 #pragma comment(lib, "TobiiBuffer.lib")
 
+void DoExitWithMsg(std::string errMsg_);
+
 //#define LOCAL_TEST
 
 namespace {
@@ -63,8 +65,21 @@ int main() {
             {
                 if (!g_TobiiBufferInstance.get())
                 {
-                    // connect to eye tracker. TODO: don't hardcode which eye-tracker
-                    g_TobiiBufferInstance = std::make_unique<TobiiBuffer>("tet-tcp://169.254.5.224");
+                    TobiiResearchEyeTrackers* eyetrackers = NULL;
+                    TobiiResearchStatus result;
+                    size_t i = 0;
+                    result = tobii_research_find_all_eyetrackers(&eyetrackers);
+                    
+                    if (result != TOBII_RESEARCH_STATUS_OK)
+                    {
+                        DoExitWithMsg("No eye trackers connected");
+                    }
+
+                    // connect to eye tracker.
+                    char* address;
+                    tobii_research_get_address(eyetrackers->eyetrackers[0], &address);
+                    g_TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
+                    tobii_research_free_string(address);
                 }
 
                 g_TobiiBufferInstance.get()->startSampleBuffering();
