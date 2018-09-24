@@ -115,6 +115,7 @@ int main() {
                 break;
             case Action::SetSampleFreq:
             {
+                break;
             }
             case Action::StartSampleStream:
             {
