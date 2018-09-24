@@ -72,7 +72,7 @@ int main() {
 
         if (jsonMsg.count("action")==0)
         {
-            sendJson(ws, {{"error", "jsonMissingAction"}});
+            sendJson(ws, {{"error", "jsonMissingParam"},{"param","action"}});
             return;
         }
 
