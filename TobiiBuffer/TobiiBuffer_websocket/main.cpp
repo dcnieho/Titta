@@ -53,6 +53,7 @@ namespace {
 int main() {
     // global Tobii Buffer instance
     std::unique_ptr<TobiiBuffer> g_TobiiBufferInstance;
+    TobiiResearchEyeTracker* eyeTracker = nullptr;
 
     uWS::Hub h;
 
@@ -65,7 +66,7 @@ int main() {
         std::cout << "Client has connected" << std::endl;
     });
 
-    h.onMessage([&h, &numRequests, &g_TobiiBufferInstance](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &numRequests, &g_TobiiBufferInstance, &eyeTracker](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonMsg = json::parse(std::string(message, length));
         std::cout << "Received message on server: " << jsonMsg.dump(4) << std::endl;
@@ -91,8 +92,7 @@ int main() {
                 if (!g_TobiiBufferInstance.get())
                 {
                     TobiiResearchEyeTrackers* eyetrackers = nullptr;
-                    TobiiResearchStatus result;
-                    result = tobii_research_find_all_eyetrackers(&eyetrackers);
+                    TobiiResearchStatus result = tobii_research_find_all_eyetrackers(&eyetrackers);
 
                     // notify if no tracker found
                     if (result != TOBII_RESEARCH_STATUS_OK)
@@ -102,8 +102,9 @@ int main() {
                     }
 
                     // connect to eye tracker.
+                    eyeTracker = eyetrackers->eyetrackers[0];
                     char* address;
-                    tobii_research_get_address(eyetrackers->eyetrackers[0], &address);
+                    tobii_research_get_address(eyeTracker, &address);
                     g_TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
 
                     // reply informing what eye-tracker we just connected to
@@ -115,6 +116,19 @@ int main() {
                 break;
             case Action::SetSampleFreq:
             {
+                if (jsonMsg.count("freq") == 0)
+                {
+                    sendJson(ws, {{"error", "jsonMissingParam"},{"param","freq"}});
+                    return;
+                }
+                auto freq = jsonMsg.at("freq").get<float>();
+
+                TobiiResearchStatus result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
+                if (result != TOBII_RESEARCH_STATUS_OK)
+                {
+                    sendTobiiErrorAsJson(ws, result, "Problem setting sampling frequency");
+                    return;
+                }
                 break;
             }
             case Action::StartSampleStream:
