@@ -22,6 +22,7 @@ namespace {
     {
         Connect,
         SetSampleFreq,
+        SetSampleDelivery,
         StartSampleStream,
         ClearSampleBuffer,
         PeekSamples,
@@ -35,6 +36,7 @@ namespace {
     {
         { "connect"          , Action::Connect},
         { "setSampleFreq"    , Action::SetSampleFreq},
+        { "setSampleDelivery", Action::SetSampleDelivery},
         { "startSampleStream", Action::StartSampleStream},
         { "clearSampleBuffer", Action::ClearSampleBuffer},
         { "peekSamples"      , Action::PeekSamples},
@@ -68,12 +70,18 @@ namespace {
             {"y" , y}
         };
     }
+
+    void invoke_function(TobiiResearchGazeData* gaze_data_, void* ptr)
+    {
+        (*static_cast<std::function<void(TobiiResearchGazeData*)>*>(ptr))(gaze_data_);
+    }
 }
 
 int main() {
     // global Tobii Buffer instance
-    std::unique_ptr<TobiiBuffer> g_TobiiBufferInstance;
+    std::unique_ptr<TobiiBuffer> TobiiBufferInstance;
     TobiiResearchEyeTracker* eyeTracker = nullptr;
+    bool pushSamples = false;
 
     uWS::Hub h;
 
@@ -81,12 +89,19 @@ int main() {
     int numRequests = 0;
 
     /// SERVER
+    auto tobiiBroadcastCallback = [&h](TobiiResearchGazeData* gaze_data_)
+    {
+        auto jsonMsg = formatSampleAsJSON(*gaze_data_);
+        auto msg = jsonMsg.dump();
+        h.getDefaultGroup<uWS::SERVER>().broadcast(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
+    };
+
     h.onConnection([](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req)
     {
         std::cout << "Client has connected" << std::endl;
     });
 
-    h.onMessage([&h, &numRequests, &g_TobiiBufferInstance, &eyeTracker](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &numRequests, &TobiiBufferInstance, &eyeTracker, &pushSamples, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonMsg = json::parse(std::string(message, length));
         std::cout << "Received message on server: " << jsonMsg.dump(4) << std::endl;
@@ -109,7 +124,7 @@ int main() {
         switch (action)
         {
             case Action::Connect:
-                if (!g_TobiiBufferInstance.get())
+                if (!eyeTracker)
                 {
                     TobiiResearchEyeTrackers* eyetrackers = nullptr;
                     TobiiResearchStatus result = tobii_research_find_all_eyetrackers(&eyetrackers);
@@ -121,17 +136,22 @@ int main() {
                         return;
                     }
 
-                    // connect to eye tracker.
+                    // get info about the connected eye tracker.
                     eyeTracker = eyetrackers->eyetrackers[0];
                     char* address;
+                    char* serial_number;
+                    char* device_name;
                     tobii_research_get_address(eyeTracker, &address);
-                    g_TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
+                    tobii_research_get_serial_number(eyeTracker, &serial_number);
+                    tobii_research_get_device_name(eyeTracker, &device_name);
 
                     // reply informing what eye-tracker we just connected to
-                    sendJson(ws, {{"action", "connect"}, {"tracker", address}});
+                    sendJson(ws, {{"action", "connect"}, {"deviceName", device_name}, {"serialNumber", serial_number}, {"address", address}});
 
                     // clean up
                     tobii_research_free_string(address);
+                    tobii_research_free_string(serial_number);
+                    tobii_research_free_string(device_name);
                 }
                 break;
             case Action::SetSampleFreq:
@@ -151,18 +171,47 @@ int main() {
                 }
                 break;
             }
+            case Action::SetSampleDelivery:
+            {
+                if (jsonMsg.count("push") == 0)
+                {
+                    sendJson(ws, {{"error", "jsonMissingParam"},{"param","push"}});
+                    return;
+                }
+                pushSamples = jsonMsg.at("push").get<bool>();
+                break;
+            }
             case Action::StartSampleStream:
             {
                 bool status = false;
-                if (g_TobiiBufferInstance.get())
-                    status = g_TobiiBufferInstance.get()->startSampleBuffering();
+                if (pushSamples)
+                {
+                    TobiiResearchStatus result = tobii_research_subscribe_to_gaze_data(eyeTracker, &invoke_function, new std::function<void(TobiiResearchGazeData*)>(tobiiBroadcastCallback));
+                    if (result != TOBII_RESEARCH_STATUS_OK)
+                    {
+                        sendTobiiErrorAsJson(ws, result, "Problem subscribing to gaze data");
+                        return;
+                    }
+                }
+                else
+                {
+                    if (!TobiiBufferInstance.get())
+                    {
+                        char* address;
+                        tobii_research_get_address(eyeTracker, &address);
+                        TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
+                        tobii_research_free_string(address);
+                    }
+                    if (TobiiBufferInstance.get())
+                        status = TobiiBufferInstance.get()->startSampleBuffering();
+                }
 
                 sendJson(ws, {{"action", "startSampleStream"}, {"status", status}});
                 break;
             }
             case Action::ClearSampleBuffer:
-                if (g_TobiiBufferInstance.get())
-                    g_TobiiBufferInstance.get()->clearSampleBuffer();
+                if (TobiiBufferInstance.get())
+                    TobiiBufferInstance.get()->clearSampleBuffer();
                 break;
             case Action::PeekSamples:
             {
@@ -209,8 +258,8 @@ int main() {
             case Action::StopSampleStream:
             {
                 bool status = false;
-                if (g_TobiiBufferInstance.get())
-                    status = g_TobiiBufferInstance.get()->stopSampleBuffering();
+                if (TobiiBufferInstance.get())
+                    status = TobiiBufferInstance.get()->stopSampleBuffering();
 
                 sendJson(ws, {{"action", "stopSampleStream"}, {"status", status}});
                 break;
