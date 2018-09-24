@@ -489,6 +489,20 @@ classdef Titta < handle
             msgs = obj.msgs.data;
         end
         
+        function dat = collectSessionData(obj)
+            obj.StopRecordAll();
+            dat.cal         = obj.calibrateHistory;
+            dat.msgs        = obj.getMessages();
+            dat.systemInfo  = obj.systemInfo;
+            dat.geom        = obj.geom;
+            dat.settings    = obj.settings;
+            if isa(dat.settings.cal.drawFunction,'function_handle')
+                dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
+            end
+            dat.TobiiLog    = obj.buffers.getLog(false);
+            dat.data        = obj.ConsumeAllData();
+        end
+        
         function saveData(obj, filename, doAppendVersion)
             % convenience function that gets data from all streams and
             % saves to mat file along with messages, calibration
@@ -527,17 +541,7 @@ classdef Titta < handle
             filename = fullfile(path,file);
             
             % 2. collect all data to save
-            obj.StopRecordAll();
-            dat.cal         = obj.calibrateHistory;
-            dat.msgs        = obj.getMessages();
-            dat.systemInfo  = obj.systemInfo;
-            dat.geom        = obj.geom;
-            dat.settings    = obj.settings;
-            if isa(dat.settings.cal.drawFunction,'function_handle')
-                dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
-            end
-            dat.TobiiLog    = obj.buffers.getLog(false);
-            dat.data        = obj.ConsumeAllData(); %#ok<STRNU>
+            dat = obj.collectSessionData(); %#ok<NASGU>
             
             % save
             try

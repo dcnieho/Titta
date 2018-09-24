@@ -130,6 +130,10 @@ classdef TittaDummyMode < Titta
             end
         end
         
+        function dat = collectSessionData(~)
+            dat = [];
+        end
+        
         function saveData(~,~,~)
         end
         
