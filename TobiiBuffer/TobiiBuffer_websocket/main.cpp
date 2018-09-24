@@ -9,6 +9,7 @@
 using json = nlohmann::json;
 
 #include "TobiiBuffer/TobiiBuffer.h"
+#include "TobiiBuffer/utils.h"
 #pragma comment(lib, "TobiiBuffer.lib")
 
 void DoExitWithMsg(std::string errMsg_);
@@ -43,10 +44,16 @@ namespace {
     };
 
     template <bool isServer>
-    void sendJson(uWS::WebSocket<isServer> *ws, json jsonMsg)
+    void sendJson(uWS::WebSocket<isServer> *ws_, json jsonMsg_)
     {
-        auto msg = jsonMsg.dump();
-        ws->send(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
+        auto msg = jsonMsg_.dump();
+        ws_->send(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
+    }
+
+    template <bool isServer>
+    void sendTobiiErrorAsJson(uWS::WebSocket<isServer> *ws_, TobiiResearchStatus result_, std::string errMsg_)
+    {
+        sendJson(ws_, {{"error", errMsg_},{"TobiiErrorCode",result_},{"TobiiErrorString",TobiiResearchStatusToString(result_)},{"TobiiErrorExplanation",TobiiResearchStatusToExplanation(result_)}});
     }
 }
 
@@ -97,7 +104,7 @@ int main() {
                     // notify if no tracker found
                     if (result != TOBII_RESEARCH_STATUS_OK)
                     {
-                        sendJson(ws, {{"error", "noET"}});
+                        sendTobiiErrorAsJson(ws, result, "Problem finding eye tracker");
                         return;
                     }
 
