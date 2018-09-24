@@ -55,6 +55,19 @@ namespace {
     {
         sendJson(ws_, {{"error", errMsg_},{"TobiiErrorCode",result_},{"TobiiErrorString",TobiiResearchStatusToString(result_)},{"TobiiErrorExplanation",TobiiResearchStatusToExplanation(result_)}});
     }
+
+    json formatSampleAsJSON(TobiiResearchGazeData sample_)
+    {
+        auto x = (sample_.left_eye.gaze_point.position_on_display_area.x + sample_.right_eye.gaze_point.position_on_display_area.x) / 2.;
+        auto y = (sample_.left_eye.gaze_point.position_on_display_area.y + sample_.right_eye.gaze_point.position_on_display_area.y) / 2.;
+        
+        return
+        {
+            {"ts", sample_.system_time_stamp},
+            {"x" , x},
+            {"y" , y}
+        };
+    }
 }
 
 int main() {
@@ -154,40 +167,29 @@ int main() {
             case Action::PeekSamples:
             {
                 // get sample
-                if (g_TobiiBufferInstance.get())
+                auto jsonMsg = json::array();   // empty array if no samples
+                if (TobiiBufferInstance.get())
                 {
                     size_t nSamples = TobiiBuff::g_peekDefaultAmount;
                     if (jsonMsg.count("nSamples"))
                     {
-                        nSamples = jsonMsg.at("action").get<size_t>();
+                        nSamples = jsonMsg.at("nSamples").get<decltype(nSamples)>();
                     }
 
-                    auto samples = g_TobiiBufferInstance.get()->peekSamples(nSamples);
-                    json jsonMsg;
+                    auto samples = TobiiBufferInstance.get()->peekSamples(nSamples);
+                    
                     if (!samples.empty())   // TODO: multiple samples in array
                     {
-                        auto x = (samples[0].left_eye.gaze_point.position_on_display_area.x + samples[0].right_eye.gaze_point.position_on_display_area.x) / 2.;
-                        auto y = (samples[0].left_eye.gaze_point.position_on_display_area.y + samples[0].right_eye.gaze_point.position_on_display_area.y) / 2.;
-                        jsonMsg =
+                        for (auto sample: samples)
                         {
-                            {"ts", samples[0].system_time_stamp},
-                            {"x" , x},
-                            {"y" , y}
-                        };
+                            jsonMsg.push_back(formatSampleAsJSON(sample));
+                        }
                     }
-                    else
-                    {
-                        jsonMsg =
-                        {
-                            {"ts", 0},
-                            {"x" , nullptr},
-                            {"y" , nullptr}
-                        };
-                    }
-                    // send
-                    sendJson(ws, jsonMsg);
-                    numRequests++;
                 }
+
+                // send
+                sendJson(ws, jsonMsg);
+                numRequests++;
                 break;
             }
             case Action::SaveData:
