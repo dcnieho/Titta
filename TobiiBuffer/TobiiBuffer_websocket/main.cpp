@@ -194,8 +194,11 @@ int main() {
             }
             case Action::SaveData:
             {
-                auto samples = g_TobiiBufferInstance.get()->consumeSamples();
-                // TODO: store all to file somehow
+                if (TobiiBufferInstance.get())
+                {
+                    auto samples = TobiiBufferInstance.get()->consumeSamples();
+                    // TODO: store all to file somehow
+                }
                 break;
             }
             case Action::SendMessage:
