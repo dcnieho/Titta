@@ -1421,7 +1421,7 @@ classdef Titta < handle
             currentPoint    = 0;
             needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && qCal && cp==1);
             advancePoint    = true;
-            
+            pointOff        = 0;
             while true
                 tick        = tick+1;
                 nextFlipT   = out.flips(end)+1/1000;
@@ -1429,6 +1429,7 @@ classdef Titta < handle
                     currentPoint = currentPoint+1;
                     % check any points left to do
                     if currentPoint>size(points,1)
+                        pointOff = 1;
                         break;
                     end
                     out.pointPos(end+1,1:3) = [points(currentPoint,[5 3 4])];
@@ -1518,10 +1519,8 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            if ~qFirst
-                out.flips(end+1) = Screen('Flip',wpnt);    % clear
-                obj.sendMessage(sprintf('POINT OFF %d',currentPoint),out.flips(end));
-            end
+            out.flips(end+1) = Screen('Flip',wpnt);    % clear
+            obj.sendMessage(sprintf('POINT OFF %d',currentPoint-pointOff),out.flips(end));
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~)
