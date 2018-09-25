@@ -168,6 +168,8 @@ int main()
                     sendTobiiErrorAsJson(ws, result, "Problem setting sampling frequency");
                     return;
                 }
+
+                sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq}, {"status", true}});
                 break;
             }
             case Action::StartSampleStream:
