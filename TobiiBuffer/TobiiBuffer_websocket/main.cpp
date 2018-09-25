@@ -79,15 +79,13 @@ namespace {
     }
 }
 
-int main() {
+int main()
+{
     // global Tobii Buffer instance
     std::unique_ptr<TobiiBuffer> TobiiBufferInstance;
     TobiiResearchEyeTracker* eyeTracker = nullptr;
 
     uWS::Hub h;
-
-
-    int numRequests = 0;
 
     /// SERVER
     auto tobiiBroadcastCallback = [&h](TobiiResearchGazeData* gaze_data_)
@@ -102,7 +100,7 @@ int main() {
         std::cout << "Client has connected" << std::endl;
     });
 
-    h.onMessage([&h, &numRequests, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonMsg = json::parse(std::string(message, length));
         std::cout << "Received message on server: " << jsonMsg.dump(4) << std::endl;
@@ -248,7 +246,6 @@ int main() {
 
                 // send
                 sendJson(ws, jsonMsg);
-                numRequests++;
                 break;
             }
             case Action::StopSampleBuffer:
@@ -277,12 +274,6 @@ int main() {
             default:
                 sendJson(ws, {{"error", "Unhandled action"}, {"action", actionStr}});
                 break;
-        }
-
-        if (numRequests>=100)
-        {
-            const char *closeMessage = "We're done, stop it now";
-            ws->close(1000, closeMessage, strlen(closeMessage));
         }
     });
 
