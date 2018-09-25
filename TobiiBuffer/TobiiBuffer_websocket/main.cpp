@@ -142,10 +142,10 @@ int main()
                     char* device_name;
                     tobii_research_get_address(eyeTracker, &address);
                     tobii_research_get_serial_number(eyeTracker, &serial_number);
-                    tobii_research_get_device_name(eyeTracker, &device_name);
+                    tobii_research_get_model(eyeTracker, &device_name);
 
                     // reply informing what eye-tracker we just connected to
-                    sendJson(ws, {{"action", "connect"}, {"deviceName", device_name}, {"serialNumber", serial_number}, {"address", address}});
+                    sendJson(ws, {{"action", "connect"}, {"deviceModel", device_name}, {"serialNumber", serial_number}, {"address", address}});
 
                     // clean up
                     tobii_research_free_string(address);
