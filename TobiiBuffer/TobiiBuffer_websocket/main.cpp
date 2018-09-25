@@ -98,6 +98,7 @@ int main()
     h.onConnection([](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req)
     {
         std::cout << "Client has connected" << std::endl;
+        ws->setNoDelay(true);       // Switch off Nagle (hopefully)
     });
 
     h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
