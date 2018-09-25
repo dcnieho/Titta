@@ -103,17 +103,17 @@ int main()
 
     h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
-        auto jsonMsg = json::parse(std::string(message, length));
-        std::cout << "Received message on server: " << jsonMsg.dump(4) << std::endl;
+        auto jsonInput = json::parse(std::string(message, length));
+        std::cout << "Received message on server: " << jsonInput.dump(4) << std::endl;
 
-        if (jsonMsg.count("action")==0)
+        if (jsonInput.count("action")==0)
         {
             sendJson(ws, {{"error", "jsonMissingParam"},{"param","action"}});
             return;
         }
 
         // get corresponding action
-        auto actionStr = jsonMsg.at("action").get<std::string>();
+        auto actionStr = jsonInput.at("action").get<std::string>();
         if (actionTypeMap.count(actionStr)==0)
         {
             sendJson(ws, {{"error", "Unrecognized action"}, {"action", actionStr}});
@@ -156,12 +156,12 @@ int main()
                 break;
             case Action::SetSampleFreq:
             {
-                if (jsonMsg.count("freq") == 0)
+                if (jsonInput.count("freq") == 0)
                 {
                     sendJson(ws, {{"error", "jsonMissingParam"},{"param","freq"}});
                     return;
                 }
-                auto freq = jsonMsg.at("freq").get<float>();
+                auto freq = jsonInput.at("freq").get<float>();
 
                 TobiiResearchStatus result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
                 if (result != TOBII_RESEARCH_STATUS_OK)
@@ -228,13 +228,13 @@ int main()
             case Action::PeekSamples:
             {
                 // get sample
-                auto jsonMsg = json::array();   // empty array if no samples
+                auto jsonOutput = json::array();   // empty array if no samples
                 if (TobiiBufferInstance.get())
                 {
-                    size_t nSamples = TobiiBuff::g_peekDefaultAmount;
-                    if (jsonMsg.count("nSamples"))
+                    auto nSamples = TobiiBuff::g_peekDefaultAmount;
+                    if (jsonInput.count("nSamples"))
                     {
-                        nSamples = jsonMsg.at("nSamples").get<decltype(nSamples)>();
+                        nSamples = jsonInput.at("nSamples").get<decltype(nSamples)>();
                     }
 
                     auto samples = TobiiBufferInstance.get()->peekSamples(nSamples);
@@ -242,13 +242,13 @@ int main()
                     {
                         for (auto sample: samples)
                         {
-                            jsonMsg.push_back(formatSampleAsJSON(sample));
+                            jsonOutput.push_back(formatSampleAsJSON(sample));
                         }
                     }
                 }
 
                 // send
-                sendJson(ws, jsonMsg);
+                sendJson(ws, jsonOutput);
                 break;
             }
             case Action::StopSampleBuffer:
