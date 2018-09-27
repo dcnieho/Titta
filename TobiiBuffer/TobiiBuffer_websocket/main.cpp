@@ -266,17 +266,13 @@ int main()
                 {
                     auto nSamples = TobiiBuff::g_peekDefaultAmount;
                     if (jsonInput.count("nSamples"))
-                    {
                         nSamples = jsonInput.at("nSamples").get<decltype(nSamples)>();
-                    }
 
                     auto samples = TobiiBufferInstance.get()->peekSamples(nSamples);
                     if (!samples.empty())
                     {
                         for (auto sample: samples)
-                        {
                             jsonOutput.push_back(formatSampleAsJSON(sample));
-                        }
                     }
                 }
 
