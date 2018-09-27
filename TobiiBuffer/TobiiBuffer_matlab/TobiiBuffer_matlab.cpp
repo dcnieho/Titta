@@ -64,7 +64,11 @@
 
 #include "TobiiBuffer/TobiiBuffer.h"
 #include "TobiiBuffer/utils.h"
-#pragma comment(lib, "TobiiBuffer.lib")
+#ifndef _DEBUG
+#   pragma comment(lib, "TobiiBuffer.lib")
+#else
+#   pragma comment(lib, "TobiiBuffer_d.lib")
+#endif
 
 
 namespace {

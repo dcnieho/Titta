@@ -2,9 +2,8 @@
 *.ncb
 *.user
 *.opendb
-Debug/
-Release/
-/x64/
+build/
+output/
 *.sdf
 *.opensdf
 ipch
