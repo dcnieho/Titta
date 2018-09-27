@@ -143,19 +143,19 @@ int main()
                     // get info about the connected eye tracker.
                     eyeTracker = eyetrackers->eyetrackers[0];
                     char* address;
-                    char* serial_number;
-                    char* device_name;
+                    char* serialNumber;
+                    char* deviceName;
                     tobii_research_get_address(eyeTracker, &address);
-                    tobii_research_get_serial_number(eyeTracker, &serial_number);
-                    tobii_research_get_model(eyeTracker, &device_name);
+                    tobii_research_get_serial_number(eyeTracker, &serialNumber);
+                    tobii_research_get_model(eyeTracker, &deviceName);
 
                     // reply informing what eye-tracker we just connected to
-                    sendJson(ws, {{"action", "connect"}, {"deviceModel", device_name}, {"serialNumber", serial_number}, {"address", address}});
+                    sendJson(ws, {{"action", "connect"}, {"deviceModel", deviceName}, {"serialNumber", serialNumber}, {"address", address}});
 
                     // clean up
                     tobii_research_free_string(address);
-                    tobii_research_free_string(serial_number);
-                    tobii_research_free_string(device_name);
+                    tobii_research_free_string(serialNumber);
+                    tobii_research_free_string(deviceName);
                 }
                 break;
             case Action::SetSampleFreq:
