@@ -1197,7 +1197,7 @@ classdef Titta < handle
                 if ~isempty(rect)
                     rect = OffsetRect(rect,0,obj.settings.text.lineCentOff);
                 end
-                [~,~,txtbounds,cache] = DrawMonospacedText(wpnt,text,'center','center',0,[],[],[],rect,true);
+                [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,'center','center',0,[],[],[],rect,true);
             end
         end
         
@@ -1212,7 +1212,7 @@ classdef Titta < handle
                 if nargin>2
                     warning('TODO: implement')
                 end
-                DrawMonospacedText(cache);
+                DrawFormattedText2GDI(cache);
             end
         end
         

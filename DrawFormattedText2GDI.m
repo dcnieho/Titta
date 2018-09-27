@@ -1,5 +1,5 @@
-function [nx, ny, textbounds, cache] = DrawMonospacedText(win, tstring, sx, sy, baseColor, wrapat, vSpacing, resetStyle, winRect, cacheOnly)
-% [nx, ny, textbounds] = DrawMonospacedText(win, tstring [, sx][, sy][, color][, wrapat][, vSpacing][, resetStyle][, winRect][, cacheOnly])
+function [nx, ny, textbounds, cache] = DrawFormattedText2GDI(win, tstring, sx, sy, baseColor, wrapat, vSpacing, resetStyle, winRect, cacheOnly)
+% [nx, ny, textbounds] = DrawFormattedText2GDI(win, tstring [, sx][, sy][, color][, wrapat][, vSpacing][, resetStyle][, winRect][, cacheOnly])
 %
 % A size/font command before a newline can change the height of that line.
 % After the newline it changes the height of the next (new) line. So if you
@@ -22,7 +22,7 @@ function [nx, ny, textbounds, cache] = DrawMonospacedText(win, tstring, sx, sy, 
 
 %% process input, not in order of input due to interdependencies
 if nargin < 1 || isempty(win)
-    error('DrawMonospacedText: Windowhandle missing!');
+    error('DrawFormattedText2GDI: Windowhandle missing!');
 elseif isstruct(win)
     % using cache for drawing
     cache = win;
@@ -556,8 +556,8 @@ if ~isempty(tagis)
                 case 'color'
                     color = tagt{p}{2};
                     % check color is valid
-                    assert(any(length(color)==[1 2 6 8]),'DrawMonospacedText: color tag argument must be a hex value of length 1, 2, 6, or 8')
-                    assert(all(isstrprop(color,'xdigit')),'DrawMonospacedText: color tag argument must be specified in hex values')
+                    assert(any(length(color)==[1 2 6 8]),'DrawFormattedText2GDI: color tag argument must be a hex value of length 1, 2, 6, or 8')
+                    assert(all(isstrprop(color,'xdigit')),'DrawFormattedText2GDI: color tag argument must be specified in hex values')
                     % find new color or add to table
                     iColor = find(strcmpi(tables.color,color),1);
                     if isempty(iColor)
@@ -582,7 +582,7 @@ if ~isempty(tagis)
                     codes.font(tagi(p,2):end) = iFont;
                 case 'size'
                     fsize = str2double(tagt{p}{2});
-                    assert(~isnan(fsize),'DrawMonospacedText: size tag argument must be a number')
+                    assert(~isnan(fsize),'DrawFormattedText2GDI: size tag argument must be a number')
                     % add to stack front
                     sizeStack(end+1) = fsize; %#ok<AGROW>
                     % mark all next text as having this color
