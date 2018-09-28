@@ -38,6 +38,7 @@ class TobiiBuffer
 {
 public:
     TobiiBuffer(std::string address_);
+    TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
 
     //// Samples ////

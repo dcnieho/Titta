@@ -109,6 +109,10 @@ TobiiBuffer::TobiiBuffer(std::string address_)
         ErrorExit(os.str(), status);
     }
 }
+TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
+{
+    _eyetracker = et_;
+}
 TobiiBuffer::~TobiiBuffer()
 {
     stopSampleBuffering(true);
