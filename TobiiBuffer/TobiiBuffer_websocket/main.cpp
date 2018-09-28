@@ -309,13 +309,15 @@ int main()
         }
     });
 
-    h.onDisconnection([&h,&nClients](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
+    h.onDisconnection([&h,&nClients,&eyeTracker,&TobiiBufferInstance](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
     {
         std::cout << "Client disconnected, code " << code << std::endl;
         if (--nClients == 0)
         {
-            std::cout << "No clients left, quitting..." << std::endl;
-            h.getDefaultGroup<uWS::SERVER>().close();   // trigger shutdown of server
+            std::cout << "No clients left, stopping buffering and streaming, if active..." << std::endl;
+            TobiiResearchStatus result = tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
+            if (TobiiBufferInstance.get())
+                TobiiBufferInstance.get()->stopSampleBuffering();
         }
     });
 
