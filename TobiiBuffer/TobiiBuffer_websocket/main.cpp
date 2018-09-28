@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <atomic>
 #include <cmath>
 
 #include <uWS/uWS.h>
@@ -114,6 +115,7 @@ int main()
     TobiiResearchEyeTracker* eyeTracker = nullptr;
 
     uWS::Hub h;
+    std::atomic<int> nClients = 0;
 
     /// SERVER
     auto tobiiBroadcastCallback = [&h](TobiiResearchGazeData* gaze_data_)
@@ -123,10 +125,11 @@ int main()
         h.getDefaultGroup<uWS::SERVER>().broadcast(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
     };
 
-    h.onConnection([](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req)
+    h.onConnection([&nClients](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req)
     {
         std::cout << "Client has connected" << std::endl;
         ws->setNoDelay(true);       // Switch off Nagle (hopefully)
+        nClients++;
     });
 
     h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
@@ -308,10 +311,14 @@ int main()
         }
     });
 
-    h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
+    h.onDisconnection([&h,&nClients](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
     {
         std::cout << "Client disconnected, code " << code << std::endl;
-        h.getDefaultGroup<uWS::SERVER>().close();   // trigger shutdown of server
+        if (--nClients == 0)
+        {
+            std::cout << "No clients left, quitting..." << std::endl;
+            h.getDefaultGroup<uWS::SERVER>().close();   // trigger shutdown of server
+        }
     });
 
 
