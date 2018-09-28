@@ -147,6 +147,12 @@ namespace
                 return TobiiResearchLogSourceInfo{"TOBII_RESEARCH_LOG_SOURCE_SDK", static_cast<int>(TOBII_RESEARCH_LOG_SOURCE_SDK), "The log message is from the SDK"};
             case TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE:
                 return TobiiResearchLogSourceInfo{"TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE", static_cast<int>(TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE), "The log message is from the firmware upgrade module"};
+            default:
+            {
+                std::stringstream os;
+                os << "lookupTobiiResearchLogSource: code " << trl_ << " unknown";
+                DoExitWithMsg(os.str());
+            }
         }
     }
 
@@ -172,6 +178,12 @@ namespace
                 return TobiiResearchLogLevelInfo{"TOBII_RESEARCH_LOG_LEVEL_DEBUG", static_cast<int>(TOBII_RESEARCH_LOG_LEVEL_DEBUG), "Debug message"};
             case TOBII_RESEARCH_LOG_LEVEL_TRACE:
                 return TobiiResearchLogLevelInfo{"TOBII_RESEARCH_LOG_LEVEL_TRACE", static_cast<int>(TOBII_RESEARCH_LOG_LEVEL_TRACE), "Trace message"};
+            default:
+            {
+                std::stringstream os;
+                os << "lookupTobiiResearchLogLevel: code " << trl_ << " unknown";
+                DoExitWithMsg(os.str());
+            }
         }
     }
 }
