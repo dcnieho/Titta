@@ -125,6 +125,7 @@ namespace
                 std::stringstream os;
                 os << "lookupTobiiResearchStatus: code " << trs_ << " unknown";
                 DoExitWithMsg(os.str());
+                return TobiiResearchStatusInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
     }
@@ -152,6 +153,7 @@ namespace
                 std::stringstream os;
                 os << "lookupTobiiResearchLogSource: code " << trl_ << " unknown";
                 DoExitWithMsg(os.str());
+                return TobiiResearchLogSourceInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
     }
@@ -183,6 +185,7 @@ namespace
                 std::stringstream os;
                 os << "lookupTobiiResearchLogLevel: code " << trl_ << " unknown";
                 DoExitWithMsg(os.str());
+                return TobiiResearchLogLevelInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
     }
