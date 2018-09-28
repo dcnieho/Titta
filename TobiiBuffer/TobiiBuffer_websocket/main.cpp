@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 #include <uWS/uWS.h>
 #include <nlohmann/json.hpp>
@@ -66,8 +67,31 @@ namespace {
 
     json formatSampleAsJSON(TobiiResearchGazeData sample_)
     {
-        auto x = (sample_.left_eye.gaze_point.position_on_display_area.x + sample_.right_eye.gaze_point.position_on_display_area.x) / 2.;
-        auto y = (sample_.left_eye.gaze_point.position_on_display_area.y + sample_.right_eye.gaze_point.position_on_display_area.y) / 2.;
+        auto lx = sample_.left_eye .gaze_point.position_on_display_area.x;
+        auto ly = sample_.left_eye .gaze_point.position_on_display_area.y;
+        auto rx = sample_.right_eye.gaze_point.position_on_display_area.x;
+        auto ry = sample_.right_eye.gaze_point.position_on_display_area.y;
+        decltype(lx) x = 0;
+        decltype(ly) y = 0;
+
+        if (std::isnan(lx))
+        {
+            // just return the other eye. if also missing, so be it
+            x = rx;
+            y = ry;
+        }
+        else if (std::isnan(rx))
+        {
+            // just return the other eye. if also missing, so be it
+            x = lx;
+            y = ly;
+        }
+        else
+        {
+            // both eyes available, average
+            x = (lx+rx)/2;
+            y = (ly+ry)/2;
+        }
         
         return
         {
