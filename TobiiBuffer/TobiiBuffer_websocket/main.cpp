@@ -232,18 +232,13 @@ int main()
             case Action::StartSampleBuffer:
             {
                 if (!TobiiBufferInstance.get())
-                {
-                    char* address;
-                    TobiiResearchStatus result = tobii_research_get_address(eyeTracker, &address);
-                    if (result != TOBII_RESEARCH_STATUS_OK)
+                    if (eyeTracker)
+                        TobiiBufferInstance = std::make_unique<TobiiBuffer>(eyeTracker);
+                    else
                     {
-                        sendTobiiErrorAsJson(ws, result, "Problem getting eye tracker");
+                        sendJson(ws, {{"error", "startSampleBuffer"},{"reason","you need to do the connect action first"}});
                         return;
                     }
-
-                    TobiiBufferInstance = std::make_unique<TobiiBuffer>(address);
-                    tobii_research_free_string(address);
-                }
 
                 bool status = false;
                 if (TobiiBufferInstance.get())
