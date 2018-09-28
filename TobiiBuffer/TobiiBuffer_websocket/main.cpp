@@ -134,8 +134,15 @@ int main()
 
     h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
-        auto jsonInput = json::parse(std::string(message, length));
+        auto jsonInput = json::parse(std::string(message, length),nullptr,false);
+        if (jsonInput.is_discarded() || jsonInput.is_null())
+        {
+            sendJson(ws, {{"error", "invalidJson"}});
+            return;
+        }
+#ifdef _DEBUG
         std::cout << "Received message on server: " << jsonInput.dump(4) << std::endl;
+#endif
 
         if (jsonInput.count("action")==0)
         {
