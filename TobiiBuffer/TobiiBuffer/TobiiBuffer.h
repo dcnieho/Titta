@@ -5,6 +5,11 @@
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
 #pragma comment(lib, "tobii_research.lib")
+#ifndef _DEBUG
+#   pragma comment(lib, "TobiiBuffer.lib")
+#else
+#   pragma comment(lib, "TobiiBuffer_d.lib")
+#endif
 
 #include "types.h"
 
