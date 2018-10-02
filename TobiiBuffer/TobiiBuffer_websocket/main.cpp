@@ -158,6 +158,7 @@ int main()
         switch (action)
         {
             case Action::Connect:
+            {
                 if (!eyeTracker)
                 {
                     TobiiResearchEyeTrackers* eyetrackers = nullptr;
@@ -170,24 +171,27 @@ int main()
                         return;
                     }
 
-                    // get info about the connected eye tracker.
+                    // select eye tracker.
                     eyeTracker = eyetrackers->eyetrackers[0];
-                    char* address;
-                    char* serialNumber;
-                    char* deviceName;
-                    tobii_research_get_address(eyeTracker, &address);
-                    tobii_research_get_serial_number(eyeTracker, &serialNumber);
-                    tobii_research_get_model(eyeTracker, &deviceName);
-
-                    // reply informing what eye-tracker we just connected to
-                    sendJson(ws, {{"action", "connect"}, {"deviceModel", deviceName}, {"serialNumber", serialNumber}, {"address", address}});
-
-                    // clean up
-                    tobii_research_free_string(address);
-                    tobii_research_free_string(serialNumber);
-                    tobii_research_free_string(deviceName);
                 }
-                break;
+
+                // get info about the connected eye tracker
+                char* address;
+                char* serialNumber;
+                char* deviceName;
+                tobii_research_get_address(eyeTracker, &address);
+                tobii_research_get_serial_number(eyeTracker, &serialNumber);
+                tobii_research_get_model(eyeTracker, &deviceName);
+
+                // reply informing what eye-tracker we just connected to
+                sendJson(ws, {{"action", "connect"}, {"deviceModel", deviceName}, {"serialNumber", serialNumber}, {"address", address}});
+
+                // clean up
+                tobii_research_free_string(address);
+                tobii_research_free_string(serialNumber);
+                tobii_research_free_string(deviceName);
+            }
+            break;
             case Action::SetSampleFreq:
             {
                 if (jsonInput.count("freq") == 0)
@@ -239,7 +243,7 @@ int main()
                         TobiiBufferInstance = std::make_unique<TobiiBuffer>(eyeTracker);
                     else
                     {
-                        sendJson(ws, {{"error", "startSampleBuffer"},{"reason","you need to do the connect action first"}});
+                        sendJson(ws, {{"error", "startSampleBuffer"},{"reason","you need to do the \"connect\" action first"}});
                         return;
                     }
 
@@ -253,6 +257,7 @@ int main()
             case Action::ClearSampleBuffer:
                 if (TobiiBufferInstance.get())
                     TobiiBufferInstance.get()->clearSampleBuffer();
+                sendJson(ws, {{"action", "clearSampleBuffer"}, {"status", true}});  // nothing to clear or cleared, both success status
                 break;
             case Action::PeekSamples:
             {
