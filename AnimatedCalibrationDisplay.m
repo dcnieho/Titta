@@ -55,7 +55,7 @@ classdef AnimatedCalibrationDisplay < handle
             
             % check point changed
             curT = GetSecs;     % instead of using time directly, you could use the last input to this function to animate based on call sequence number to this function
-            if obj.currentPoint(1)~=currentPoint
+            if any(obj.currentPoint(2:3)~=pos)
                 if obj.doMove && ~isnan(obj.currentPoint(1))
                     obj.calState = obj.calStateEnum.moving;
                     obj.moveStartT = curT;
