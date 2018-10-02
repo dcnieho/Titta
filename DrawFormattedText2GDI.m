@@ -1,4 +1,4 @@
-function [nx, ny, textbounds, cache] = DrawFormattedText2GDI(win, tstring, sx, sy, baseColor, wrapat, vSpacing, resetStyle, winRect, cacheOnly)
+function [nx, ny, textbounds, cache] = DrawFormattedText2GDI(win, tstring, sx, xalign, sy, yalign, xlayout, baseColor, wrapat, vSpacing, resetStyle, winRect, cacheOnly)
 % [nx, ny, textbounds] = DrawFormattedText2GDI(win, tstring [, sx][, sy][, color][, wrapat][, vSpacing][, resetStyle][, winRect][, cacheOnly])
 %
 % A size/font command before a newline can change the height of that line.
@@ -29,14 +29,12 @@ elseif isstruct(win)
     ResetTextSetup(cache.win,cache.previous);
     [nx,ny,textbounds] = DoDraw(cache.win,...
         cache.disableClip,...
-        cache.sx,...
-        cache.sy,...
+        cache.px,...
+        cache.py,...
         cache.subStrings,...
         cache.switches,...
         cache.fmts,...
         cache.fmtCombs,...
-        cache.qLineFeed,...
-        cache.lHeight,...
         cache.ssBaseLineOff,...
         cache.winRect,...
         cache.previous);
@@ -51,36 +49,104 @@ end
 stringclass = class(tstring);
 
 % Default x start position is left border of window:
-if nargin < 3 || isempty(sx)
-    sx=0;
-    xcenter = false;
+xpos = 0;   % default: use provided sx (w.r.t. winRect)
+% Default x start position is left of window:
+if nargin<3 || isempty(sx)
+    sx = 0;
 else
-    % Horizontally centered output required? Deal with 'center' as input to sx
-    xcenter = strcmpi(sx, 'center');
+    % have text specifying a position at the edge of windowrect?
     if ischar(sx)
-        % Set to something neutral and ignore any other crap user may have
-        % provided.
+        if strcmpi(sx, 'left')
+            xpos = 1;
+        elseif strcmpi(sx, 'center')
+            xpos = 2;
+        elseif strcmpi(sx, 'right')
+            xpos = 3;
+        else
+            % Ignore any other crap user may have provided, align to left.
+            xpos = 1;
+        end
+    elseif ~isnumeric(sx)
+        % Ignore any other crap user may have provided.
         sx = 0;
     end
 end
 
+ypos = 0;   % default: use provided sy (w.r.t. winRect)
 % Default y start position is top of window:
-if nargin < 4 || isempty(sy)
-    sy=0;
-    ycenter = false;
+if nargin<5 || isempty(sy)
+    sy = 0;
 else
-    % Vertically centered output required? Deal with 'center' as input to sy
-    ycenter = strcmpi(sy, 'center');
+    % have text specifying a position at the edge of windowrect?
     if ischar(sy)
-        % Set to something neutral and ignore any other crap user may have
-        % provided. This is different from DrawFormattedText, which only
-        % ignores crap for sx.
+        if strcmpi(sy, 'top')
+            ypos = 1;
+        elseif strcmpi(sy, 'center')
+            ypos = 2;
+        elseif strcmpi(sy, 'bottom')
+            ypos = 3;
+        else
+            % Ignore any other crap user may have provided, align to left.
+            ypos = 1;
+        end
+    elseif ~isnumeric(sy)
+        % Ignore any other crap user may have provided.
         sy = 0;
     end
 end
 
+%%% now we have a position, figure out how to position box with respect to
+%%% that position
+% Default x layout is align box to left of specified position
+if nargin<4 || isempty(xalign) || ~ischar(xalign)
+    xalign = 1;
+else
+    if strcmpi(xalign, 'left')
+        xalign = 1;
+    elseif strcmpi(xalign, 'center')
+        xalign = 2;
+    elseif strcmpi(xalign, 'right')
+        xalign = 3;
+    else
+        % ignore anything else user may have provided
+        xalign = 1;
+    end
+end
+
+% Default y layout is align box below of specified position
+if nargin<6 || isempty(yalign) || ~ischar(yalign)
+    yalign = 1;
+else
+    if strcmpi(yalign, 'top')
+        yalign = 1;
+    elseif strcmpi(yalign, 'center')
+        yalign = 2;
+    elseif strcmpi(yalign, 'bottom')
+        yalign = 3;
+    else
+        % ignore anything else user may have provided
+        yalign = 1;
+    end
+end
+
+if nargin<7 || isempty(yalign) || ~ischar(xlayout)
+    xlayout = 1;
+else
+    switch xlayout
+        case 'left'
+            xlayout = 1;
+        case 'center'
+            xlayout = 2;
+        case 'right'
+            xlayout = 3;
+        otherwise
+            % ignore anything else user may have provided
+            xlayout = 1;
+    end
+end
+
 % Keep current text color if none provided:
-if nargin < 5 || isempty(baseColor)
+if nargin < 8 || isempty(baseColor)
     baseColor = Screen('TextColor', win);
     if baseColor(4)==realmax
         % workaround for bug in Screen('TextColor'): if last color set was
@@ -91,31 +157,55 @@ if nargin < 5 || isempty(baseColor)
 end
 
 % No text wrapping by default:
-if nargin < 6 || isempty(wrapat)
+if nargin < 9 || isempty(wrapat)
     wrapat = 0;
 end
 
 % No vertical mirroring by default:
-if nargin < 7 || isempty(vSpacing)
+if nargin < 10 || isempty(vSpacing)
     vSpacing = 1;
 end
 
 % reset text style to normal before interpreting formatting commands? If
 % not, active text style at function entry is taken into account when
 % processing style toggle tags
-if nargin < 8 || isempty(resetStyle)
+if nargin < 11 || isempty(resetStyle)
     resetStyle = 1;
 end
 
 % Default rectangle for centering/formatting text is the client rectangle
 % of the 'win'dow, but usercode can specify arbitrary override as 11'th arg:
-if nargin < 9 || isempty(winRect)
+if nargin < 12 || isempty(winRect)
     winRect = Screen('Rect', win);
 end
 
 % default actually draw input to screen. optionally just provide catch
-if nargin < 10 || isempty(cacheOnly)
+if nargin < 13 || isempty(cacheOnly)
     cacheOnly = false;
+end
+
+% now process xpos and ypos
+switch xpos
+    case 0
+        % provided sx is in winRect
+        sx = sx+winRect(1);
+    case 1
+        sx = winRect(1);
+    case 2
+        sx = (winRect(1)+winRect(3))/2;
+    case 3
+        sx = winRect(3);
+end
+switch ypos
+    case 0
+        % provided sy is in winRect
+        sy = sy+winRect(2);
+    case 1
+        sy = winRect(2);
+    case 2
+        sy = (winRect(2)+winRect(4))/2;
+    case 3
+        sy = winRect(4);
 end
 
 % Need different encoding for repchar that matches class of input tstring:
@@ -214,13 +304,14 @@ subStrings(qLineFeed) = cellfun(@(x) x(2:end),subStrings(qLineFeed),'uni',false)
 % get number of lines.
 numlines   = length(strfind(char(tstring), char(10))) + 1;
 % vectors for width and height of each line, as well as starting x
-lHeight = zeros(1,numlines);
-if xcenter
-    sx      = zeros(1,numlines);
-end
-sy = repmat(sy,1,length(subStrings));
+lWidth          = zeros(1,numlines);
+lHeight         = zeros(1,numlines);
+lBaseLineOff    = zeros(2,numlines);
+sWidth          = zeros(1,length(subStrings));
+px              = zeros(1,length(subStrings));
+py              = zeros(1,length(subStrings));
 % get which substring belong to each line
-substrIdxs = [0 cumsum(qLineFeed(1:end-1))];
+substrIdxs      = [0 cumsum(qLineFeed(1:end-1))];
 if ~qLineFeed(1)
     substrIdxs = substrIdxs+1;
 end
@@ -233,7 +324,6 @@ for p=1:numlines
     
     % to get line width and height, get textbounds of each string and add
     % them together
-    lWidth = 0;
     for q=find(qSubStr)
         % do format change if needed
         if any(switches(:,q))
@@ -244,16 +334,14 @@ for p=1:numlines
             [nbox,bbox] = Screen('TextBounds', win,           'X',0,0,1);
         else
             [nbox,bbox] = Screen('TextBounds', win, subStrings{q},0,0,1);
-            lWidth = lWidth + nbox(3);
+            sWidth(q) = nbox(3);
         end
         ssHeights(q) = nbox(4);
         ssBaseLineOff(:,q) = abs(bbox([2 4])+1);  % off by 1 in the C code (line 1157 in Psychtoolbox-3 / PsychSourceGL / Source / Common / Screen / SCREENDrawText.c)?
     end
     
-    % get required offset to center line in window
-    if xcenter
-        sx(p) = round((winRect(1)+winRect(3)-lWidth)/2);
-    end
+    % get width of each line
+    lWidth(p)  = sum(sWidth(qSubStr));
     
     % get text height. Vertical spacing of this function is not like
     % DrawFormattedText, where text height is simply textsize. This ignores
@@ -261,24 +349,75 @@ for p=1:numlines
     % bounding box instead of textsize as the base height.
     lHeight(p) = max(ssHeights(qSubStr));
     
-    if p>1
-        % apply vspacing
-        lHeight(p) = round(lHeight(p) * vSpacing);
-        % add height of previous line to sy if not first line, thats the
-        % carriage return
-        idx = find(qSubStr,1,'first');
-        sy(idx:end) = sy(idx)+lHeight(p-1);
-    end
-    % we're drawing with yPositionIsBaseline==true, correct for that
-    sy(qSubStr) = sy(qSubStr)+max(ssBaseLineOff(1,qSubStr));
+    % get largest offset of ink from baseline for each line
+    lBaseLineOff(:,p)   = [min(ssBaseLineOff(1,qSubStr)) max(ssBaseLineOff(2,qSubStr))];
 end
 % don't forget to set style back to what it should be
 ResetTextSetup(win,previous);
-% last, vertical centering
-if ycenter
-    % center box in window and get required offset
-    sy = sy+round((winRect(2)+winRect(4)-sum(lHeight))/2);
+
+% now place lines. first place bounding box
+mWidth      = max(lWidth);
+totHeight   = lBaseLineOff(1,1) + sum(round((.22*lHeight(1:end-1)+.78*lHeight(2:end))*vSpacing)) + lBaseLineOff(2,end);
+bbox        = [0 0 mWidth totHeight];
+bWidth = bbox(3)-bbox(1);
+bHeight= bbox(4)-bbox(2);
+
+switch xalign
+    case 1
+        xoff = 0;
+    case 2
+        xoff = -bWidth/2;
+    case 3
+        xoff = -bWidth;
 end
+switch yalign
+    case 1
+        yoff = 0;
+    case 2
+        yoff = -bHeight/2;
+    case 3
+        yoff = -bHeight;
+end
+
+bbox = OffsetRect(bbox,sx+xoff,sy+yoff);
+
+% now, figure out where to place individual lines and substrings into this
+% bbox
+for p=1:numlines
+    % get which substrings belong to this line
+    qSubStr = substrIdxs==p;
+    idxs = find(qSubStr);
+    
+    % get center of line w.r.t. bbox left edge
+    switch xlayout
+        case 1
+            % align to left at sx
+            lc  = lWidth(p)/2;
+        case {2,4}
+            % center or justify line in bbox
+            lc  = (bbox(3)-bbox(1))/2;
+        case 3
+            % align to right of window
+            lc  = bbox(3)-bbox(1) - lWidth(p)/2;
+    end
+    off =  cumsum([0 sWidth(idxs(1:end-1))]) - lWidth(p)/2;
+    px(qSubStr) = lc+off;
+    
+    if p>1
+        % add baseline skip for current line if not first line, thats the
+        % carriage return. See note above about how Word does text layout.
+        idx = find(qSubStr,1,'first');
+        py(idx:end) = py(idx) + round((.22*lHeight(p-1)+.78*lHeight(p))*vSpacing);
+    else
+        % we're drawing with yPositionIsBaseline==true, correct for that
+        py(:) = min(ssBaseLineOff(1,qSubStr));
+    end
+end
+% now we have positions in the bbox, add bbox position to place them in the
+% right place on the screen
+px = px+bbox(1);
+py = py+bbox(2);
+
 %% done processing inputs, do text drawing
 % Disable culling/clipping if bounding box is requested as 3rd return
 % argument, or if forcefully disabled. Unless clipping is forcefully
@@ -286,29 +425,28 @@ end
 disableClip = nargout >= 3;
 
 if ~cacheOnly
-    [nx,ny,textbounds] = DoDraw(win,disableClip,sx,sy,subStrings,switches,fmts,fmtCombs,qLineFeed,lHeight,ssBaseLineOff,winRect,previous);
+    [nx,ny,textbounds] = DoDraw(win,disableClip,px,py,subStrings,switches,fmts,fmtCombs,ssBaseLineOff,winRect,previous);
 else
-    [nx,ny,textbounds] = deal([]);
+    [nx,ny] = deal([]);
+    textbounds = bbox;
 end
 if nargout>3
     % make cache
     cache.win = win;
     cache.disableClip = disableClip;
-    cache.sx = sx;
-    cache.sy = sy;
+    cache.px = px;
+    cache.py = py;
     cache.subStrings = subStrings;
     cache.switches = switches;
     cache.fmts = fmts;
     cache.fmtCombs = fmtCombs;
-    cache.qLineFeed = qLineFeed;
-    cache.lHeight = lHeight;
     cache.ssBaseLineOff = ssBaseLineOff;
     cache.winRect = winRect;
     cache.previous = previous;
 end
 
 
-function [nx,ny,textbounds] = DoDraw(win,disableClip,sx,sy,subStrings,switches,fmts,fmtCombs,qLineFeed,lHeight,ssBaseLineOff,winRect,previous)
+function [nx,ny,textbounds] = DoDraw(win,disableClip,px,py,subStrings,switches,fmts,fmtCombs,ssBaseLineOff,winRect,previous)
 
 
 % Is the OpenGL userspace context for this 'windowPtr' active, as required?
@@ -321,10 +459,7 @@ if IsOpenGLRendering
     Screen('EndOpenGL', win);
 end
 
-% Init cursor position:
-lIdx = 1;   % which line we're currently drawing
-xp = sx(lIdx);
-
+% Init bbox:
 minx = inf;
 miny = inf;
 maxx = 0;
@@ -333,7 +468,8 @@ maxy = 0;
 % Draw the substrings
 for p=1:length(subStrings)
     curstring = subStrings{p};
-    yp = sy(p);
+    yp = py(p);
+    xp = px(p);
     
     % do format change if needed
     if any(switches(:,p))
@@ -341,16 +477,10 @@ for p=1:length(subStrings)
         DoFormatChange(win,switches(:,p),fmt);
     end
     
-    % Update text drawing cursor to perform carriage return if needed
-    if qLineFeed(p)
-        lIdx = lIdx+1;
-        xp = sx(min(lIdx,end));
-    end
-    
     % Perform crude clipping against upper and lower window borders for this text snippet.
     % If it is clearly outside the window and would get clipped away by the renderer anyway,
     % we can safe ourselves the trouble of processing it:
-    if ~isempty(curstring) && (disableClip || ((yp + lHeight(lIdx) >= winRect(2)) && (yp - lHeight(lIdx) <= winRect(4))))
+    if ~isempty(curstring) && (disableClip || ((yp + ssBaseLineOff(2,p) >= winRect(2)) && (yp + ssBaseLineOff(1,p) <= winRect(4))))
         % Inside crude clipping area. Need to draw.
         clipOrEmpty = false;
     else
@@ -392,10 +522,6 @@ for p=1:length(subStrings)
     maxx = max([maxx , xp, nx]);
     miny = min([miny , yp, ny-ssBaseLineOff(1,p)]);
     maxy = max([maxy , yp, ny+ssBaseLineOff(2,p)]);
-    
-    % Keep drawing cursor where it is supposed to be:
-    xp = nx;
-    yp = ny;
 end
 
 % Create final bounding box:
