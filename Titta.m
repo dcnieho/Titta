@@ -603,7 +603,7 @@ classdef Titta < handle
             settings.text.wrapAt            = 62;
             settings.text.vSpacing          = 1;
             if ~exist('libptbdrawtext_ftgl64.dll','file') % if old text renderer, we have different defaults and an extra settings
-                settings.text.size          = 20;
+                settings.text.size          = 18;
                 settings.text.lineCentOff   = 3;                                % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
             else
                 settings.text.size          = 24;
@@ -1064,7 +1064,11 @@ classdef Titta < handle
                 Screen('FillRect',wpnt,80,boxRect);
                 % draw distance
                 if ~isnan(avgDist)
-                    Screen('TextSize', wpnt, 12);
+                    if obj.usingFTGLTextRenderer
+                        Screen('TextSize', wpnt, 12);
+                    else
+                        Screen('TextSize', wpnt, 10);
+                    end
                     Screen('DrawText',wpnt,sprintf('%.0f cm',avgDist) ,boxRect(3)-40,boxRect(4)-16,255);
                 end
                 % draw eyes in box
@@ -1175,29 +1179,36 @@ classdef Titta < handle
             HideCursor;
         end
         
-        function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,qApplyVSpacing,varargin)
+        function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,varargin)
+            inputs.sx           = 0;
+            inputs.xalign       = 'center';
+            inputs.sy           = 0;
+            inputs.yalign       = 'center';
+            inputs.xlayout      = 'left';
+            inputs.baseColor    = 0;
+            if ~isempty(rect)
+                [inputs.sx,inputs.sy] = RectCenterd(rect);
+            end
+            
             if obj.usingFTGLTextRenderer
-                inputs.sx = 0;
-                inputs.xalign = 'center';
-                inputs.sy = 0;
-                inputs.yalign = 'center';
-                inputs.baseColor = 0;
-                if ~isempty(rect)
-                    [inputs.sx,inputs.sy] = RectCenterd(rect);
-                end
                 for p=1:2:length(varargin)
                     inputs.(varargin{p}) = varargin{p+1};
-                end
-                if nargin>4 && ~isempty(qApplyVSpacing) && qApplyVSpacing
-                    inputs.vSpacing = obj.settings.text.vSpacing;
                 end
                 args = [fieldnames(inputs) struct2cell(inputs)].';
                 [~,~,txtbounds,cache] = DrawFormattedText2(text,'win',wpnt,'cacheOnly',true,args{:});
             else
-                if ~isempty(rect)
-                    rect = OffsetRect(rect,0,obj.settings.text.lineCentOff);
+                inputs.vSpacing = [];
+                fs=fieldnames(inputs);
+                for p=1:length(fs)
+                    qHasOpt = strcmp(varargin,fs{p});
+                    if any(qHasOpt)
+                        inputs.(fs{p}) = varargin{find(qHasOpt)+1};
+                    end
                 end
-                [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,'center','center',0,[],[],[],rect,true);
+                if ~isempty(rect)
+                    inputs.sy = inputs.sy + obj.settings.text.lineCentOff;
+                end
+                [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,0,[],inputs.vSpacing,[],[],true);
             end
         end
         
@@ -1210,7 +1221,9 @@ classdef Titta < handle
                 DrawFormattedText2(cache,args{:});
             else
                 if nargin>2
-                    warning('TODO: implement')
+                    [cx,cy] = RectCenterd(rect);
+                    cache.px = cache.px+cx;
+                    cache.py = cache.py+cy;
                 end
                 DrawFormattedText2GDI(cache);
             end
@@ -1778,8 +1791,8 @@ classdef Titta < handle
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
-                    valText = sprintf('<font=Consolas><size=22><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n%s%s%s',strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),true,'xlayout','left');
+                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),'vSpacing',obj.settings.text.vSpacing,'xlayout','left');
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1810,7 +1823,7 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
-                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
+                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
                 end
                 
                 % setup overlay with data quality info for specific point
@@ -1829,7 +1842,7 @@ classdef Titta < handle
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                         str = sprintf('Accuracy:     <color=%2$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%2$s>%5$.2f°<color>\nPrecision RMS:    <color=%2$s>%6$.2f°<color>\nTrack ratio:      <color=%2$s>%7$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],[],'xlayout','left');
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left');
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
