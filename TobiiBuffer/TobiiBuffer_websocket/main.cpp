@@ -5,6 +5,7 @@
 #include <sstream>
 #include <atomic>
 #include <cmath>
+#include <optional>
 
 #include <uWS/uWS.h>
 #include <nlohmann/json.hpp>
@@ -23,9 +24,12 @@ namespace {
     enum class Action
     {
         Connect,
-        SetSampleFreq,
+
+        SetSampleStreamFreq,
         StartSampleStream,
         StopSampleStream,
+
+        SetBaseSampleFreq,
         StartSampleBuffer,
         ClearSampleBuffer,
         PeekSamples,
@@ -37,15 +41,19 @@ namespace {
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
-        { "connect"          , Action::Connect},
-        { "setSampleFreq"    , Action::SetSampleFreq},
-        { "startSampleStream", Action::StartSampleStream},
-        { "stopSampleStream" , Action::StopSampleStream},
-        { "startSampleBuffer", Action::StartSampleBuffer},
-        { "clearSampleBuffer", Action::ClearSampleBuffer},
-        { "peekSamples"      , Action::PeekSamples},
-        { "stopSampleBuffer" , Action::StopSampleBuffer},
-        { "saveData"         , Action::SaveData},
+        { "connect"             , Action::Connect},
+
+        { "setSampleStreamFreq" , Action::SetSampleStreamFreq},
+        { "startSampleStream"   , Action::StartSampleStream},
+        { "stopSampleStream"    , Action::StopSampleStream},
+
+        { "SetBaseSampleFreq"   , Action::SetBaseSampleFreq},
+        { "startSampleBuffer"   , Action::StartSampleBuffer},
+        { "clearSampleBuffer"   , Action::ClearSampleBuffer},
+        { "peekSamples"         , Action::PeekSamples},
+        { "stopSampleBuffer"    , Action::StopSampleBuffer},
+        { "saveData"            , Action::SaveData},
+
         { "sendMessage"      , Action::SendMessage},
     };
 
@@ -114,6 +122,7 @@ int main()
     std::atomic<int> nClients = 0;
     int downSampFac;
     std::atomic<int> sampleTick = 0;
+    std::optional<float> baseSampleFreq;
 
     /// SERVER
     auto tobiiBroadcastCallback = [&h, &sampleTick, &downSampFac](TobiiResearchGazeData* gaze_data_)
@@ -135,7 +144,7 @@ int main()
         nClients++;
     });
 
-    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac, &baseSampleFreq](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonInput = json::parse(std::string(message, length),nullptr,false);
         if (jsonInput.is_discarded() || jsonInput.is_null())
@@ -199,7 +208,7 @@ int main()
                 tobii_research_free_string(deviceName);
             }
             break;
-            case Action::SetSampleFreq:
+            case Action::SetSampleStreamFreq:
             {
                 if (jsonInput.count("freq") == 0)
                 {
@@ -209,51 +218,63 @@ int main()
                 auto freq = jsonInput.at("freq").get<float>();
 
                 // see what frequencies the connect device supports
-                TobiiResearchGazeOutputFrequencies* frequencies = NULL;
-                TobiiResearchStatus result = tobii_research_get_all_gaze_output_frequencies(eyeTracker, &frequencies);
-                if (result != TOBII_RESEARCH_STATUS_OK)
+                std::vector<float> frequencies;
+                if (baseSampleFreq.has_value())
+                    frequencies.push_back(baseSampleFreq.value());
+                else
                 {
-                    sendTobiiErrorAsJson(ws, result, "Problem getting sampling frequencies");
-                    return;
+                    TobiiResearchGazeOutputFrequencies* tobiiFreqs = nullptr;
+                    TobiiResearchStatus result = tobii_research_get_all_gaze_output_frequencies(eyeTracker, &tobiiFreqs);
+                    if (result != TOBII_RESEARCH_STATUS_OK)
+                    {
+                        sendTobiiErrorAsJson(ws, result, "Problem getting sampling frequencies");
+                        return;
+                    }
+                    frequencies.insert(frequencies.end(),&tobiiFreqs->frequencies[0], &tobiiFreqs->frequencies[tobiiFreqs->frequency_count]);   // yes, pointer to one past last element
+                    tobii_research_free_gaze_output_frequencies(tobiiFreqs);
                 }
 
                 // see if the requested frequency is a divisor of any of the supported frequencies, choose the best one (lowest possible frequency)
-                int best = -1;
+                auto best = frequencies.cend();
                 downSampFac = 9999;
-                for(size_t i=0; i < frequencies->frequency_count; i++)
+                for (auto x = frequencies.cbegin(); x!=frequencies.cend(); ++x)
                 {
                     // is this frequency is a multiple of the requested frequency and thus in our set of potential sampling frequencies?
-                    if (static_cast<int>(frequencies->frequencies[i]+.5f)%static_cast<int>(freq+.5f) == 0)
+                    if (static_cast<int>(*x+.5f)%static_cast<int>(freq+.5f) == 0)
                     {
                         // check if this is a lower frequency than previously selecting (i.e., is the downsampling factor lower?)
-                        auto tempDownSampFac = static_cast<int>(frequencies->frequencies[i]/freq+.5f);
+                        auto tempDownSampFac = static_cast<int>(*x/freq+.5f);
                         if (tempDownSampFac<downSampFac)
                         {
                             // yes, we got a new best option
-                            best = i;
+                            best = x;
                             downSampFac = tempDownSampFac;
                         }
                     }
                 }
                 // no matching frequency found: error
-                if (best==-1)
+                if (best==frequencies.cend())
                 {
-                    sendJson(ws, {{"error", "invalidParam"},{"param","freq"},{"reason","requested frequency is not a divisor of any supported sampling frequency"}});
+                    if (baseSampleFreq.has_value())
+                    {
+                        sendJson(ws, {{"error", "invalidParam"},{"param","freq"},{"reason","requested frequency is not a divisor of the set base frequency "},{"baseFreq",baseSampleFreq.value()}});
+                    }
+                    else
+                        sendJson(ws, {{"error", "invalidParam"},{"param","freq"},{"reason","requested frequency is not a divisor of any supported sampling frequency"}});
                     return;
                 }
                 // select best frequency as base frequency. Downsampling factor is already set above
-                freq = frequencies->frequencies[best];
-                tobii_research_free_gaze_output_frequencies(frequencies);
+                freq = *best;
 
                 // now set the tracker to the base frequency
-                result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
+                TobiiResearchStatus result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
                 if (result != TOBII_RESEARCH_STATUS_OK)
                 {
                     sendTobiiErrorAsJson(ws, result, "Problem setting sampling frequency");
                     return;
                 }
 
-                sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq}, {"status", true}});
+                sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq/downSampFac}, {"baseFreq", freq}, {"status", true}});
                 break;
             }
             case Action::StartSampleStream:
@@ -281,6 +302,27 @@ int main()
                 break;
             }
 
+            case Action::SetBaseSampleFreq:
+            {
+                if (jsonInput.count("freq") == 0)
+                {
+                    sendJson(ws, {{"error", "jsonMissingParam"},{"param","freq"}});
+                    return;
+                }
+                auto freq = jsonInput.at("freq").get<float>();
+
+                // now set the tracker to the base frequency
+                TobiiResearchStatus result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
+                if (result != TOBII_RESEARCH_STATUS_OK)
+                {
+                    sendTobiiErrorAsJson(ws, result, "Problem setting sampling frequency");
+                    return;
+                }
+                baseSampleFreq = freq;
+
+                sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq}, {"status", true}});
+                break;
+            }
             case Action::StartSampleBuffer:
             {
                 if (!TobiiBufferInstance.get())
