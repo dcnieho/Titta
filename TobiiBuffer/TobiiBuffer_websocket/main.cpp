@@ -112,10 +112,17 @@ int main()
 
     uWS::Hub h;
     std::atomic<int> nClients = 0;
+    int downSampFac;
+    std::atomic<int> sampleTick = 0;
 
     /// SERVER
-    auto tobiiBroadcastCallback = [&h](TobiiResearchGazeData* gaze_data_)
+    auto tobiiBroadcastCallback = [&h, &sampleTick, &downSampFac](TobiiResearchGazeData* gaze_data_)
     {
+        sampleTick++;
+        if ((sampleTick = sampleTick%downSampFac)!=0)
+            // we're downsampling by only sending every downSampFac'th sample (e.g. every second). This is one we're not sending
+            return;
+
         auto jsonMsg = formatSampleAsJSON(*gaze_data_);
         auto msg = jsonMsg.dump();
         h.getDefaultGroup<uWS::SERVER>().broadcast(msg.c_str(), msg.length(), uWS::OpCode::TEXT);
@@ -128,7 +135,7 @@ int main()
         nClients++;
     });
 
-    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonInput = json::parse(std::string(message, length),nullptr,false);
         if (jsonInput.is_discarded() || jsonInput.is_null())
@@ -201,7 +208,45 @@ int main()
                 }
                 auto freq = jsonInput.at("freq").get<float>();
 
-                TobiiResearchStatus result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
+                // see what frequencies the connect device supports
+                TobiiResearchGazeOutputFrequencies* frequencies = NULL;
+                TobiiResearchStatus result = tobii_research_get_all_gaze_output_frequencies(eyeTracker, &frequencies);
+                if (result != TOBII_RESEARCH_STATUS_OK)
+                {
+                    sendTobiiErrorAsJson(ws, result, "Problem getting sampling frequencies");
+                    return;
+                }
+
+                // see if the requested frequency is a divisor of any of the supported frequencies, choose the best one (lowest possible frequency)
+                int best = -1;
+                downSampFac = 9999;
+                for(size_t i=0; i < frequencies->frequency_count; i++)
+                {
+                    // is this frequency is a multiple of the requested frequency and thus in our set of potential sampling frequencies?
+                    if (static_cast<int>(frequencies->frequencies[i]+.5f)%static_cast<int>(freq+.5f) == 0)
+                    {
+                        // check if this is a lower frequency than previously selecting (i.e., is the downsampling factor lower?)
+                        auto tempDownSampFac = static_cast<int>(frequencies->frequencies[i]/freq+.5f);
+                        if (tempDownSampFac<downSampFac)
+                        {
+                            // yes, we got a new best option
+                            best = i;
+                            downSampFac = tempDownSampFac;
+                        }
+                    }
+                }
+                // no matching frequency found: error
+                if (best==-1)
+                {
+                    sendJson(ws, {{"error", "invalidParam"},{"param","freq"},{"reason","requested frequency is not a divisor of any supported sampling frequency"}});
+                    return;
+                }
+                // select best frequency as base frequency. Downsampling factor is already set above
+                freq = frequencies->frequencies[best];
+                tobii_research_free_gaze_output_frequencies(frequencies);
+
+                // now set the tracker to the base frequency
+                result = tobii_research_set_gaze_output_frequency(eyeTracker, freq);
                 if (result != TOBII_RESEARCH_STATUS_OK)
                 {
                     sendTobiiErrorAsJson(ws, result, "Problem setting sampling frequency");
