@@ -35,7 +35,8 @@ namespace {
         PeekSamples,
         StopSampleBuffer,
         SaveData,
-        SendMessage
+
+        StoreMessage
     };
 
     // Map string (first input argument to mexFunction) to an Action
@@ -54,7 +55,7 @@ namespace {
         { "stopSampleBuffer"    , Action::StopSampleBuffer},
         { "saveData"            , Action::SaveData},
 
-        { "sendMessage"      , Action::SendMessage},
+        { "storeMessage"        , Action::StoreMessage},
     };
 
     template <bool isServer>
@@ -386,7 +387,7 @@ int main()
                 }
                 break;
             }
-            case Action::SendMessage:
+            case Action::StoreMessage:
             {
                 // TODO: timeStamp and store message somehow
                 break;
