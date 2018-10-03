@@ -124,6 +124,7 @@ int main()
     int downSampFac;
     std::atomic<int> sampleTick = 0;
     std::optional<float> baseSampleFreq;
+    bool needSetSampleStreamFreq = true;
 
     /// SERVER
     auto tobiiBroadcastCallback = [&h, &sampleTick, &downSampFac](TobiiResearchGazeData* gaze_data_)
@@ -145,7 +146,7 @@ int main()
         nClients++;
     });
 
-    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac, &baseSampleFreq](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac, &baseSampleFreq, &needSetSampleStreamFreq](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonInput = json::parse(std::string(message, length),nullptr,false);
         if (jsonInput.is_discarded() || jsonInput.is_null())
@@ -275,11 +276,17 @@ int main()
                     return;
                 }
 
+                needSetSampleStreamFreq = false;
                 sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq/downSampFac}, {"baseFreq", freq}, {"status", true}});
                 break;
             }
             case Action::StartSampleStream:
             {
+                if (needSetSampleStreamFreq)
+                {
+                    sendJson(ws, {{"error", "startSampleStream"},{"reason","You have to set the stream sample rate first using action setSampleStreamFreq. NB: you also have to do this after calling setBaseSampleFreq."}});
+                    return;
+                }
                 TobiiResearchStatus result = tobii_research_subscribe_to_gaze_data(eyeTracker, &invoke_function, new std::function<void(TobiiResearchGazeData*)>(tobiiBroadcastCallback));
                 if (result != TOBII_RESEARCH_STATUS_OK)
                 {
@@ -320,6 +327,11 @@ int main()
                     return;
                 }
                 baseSampleFreq = freq;
+
+                // user needs to reset sampleStream frequency after calling this, as downsample factor may have changed or requested may even have become unavailable
+                needSetSampleStreamFreq = true;
+                // also ensure no stream is currently active
+                tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
 
                 sendJson(ws, {{"action", "setSampleFreq"}, {"freq", freq}, {"status", true}});
                 break;
@@ -404,7 +416,7 @@ int main()
         if (--nClients == 0)
         {
             std::cout << "No clients left, stopping buffering and streaming, if active..." << std::endl;
-            TobiiResearchStatus result = tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
+            tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
             if (TobiiBufferInstance.get())
                 TobiiBufferInstance.get()->stopSampleBuffering();
         }
