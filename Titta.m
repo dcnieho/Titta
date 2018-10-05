@@ -1451,7 +1451,7 @@ classdef Titta < handle
                         pointOff = 1;
                         break;
                     end
-                    out.pointPos(end+1,1:3) = [points(currentPoint,[5 3 4])];
+                    out.pointPos(end+1,1:3) = points(currentPoint,[5 3 4]);
                     % check if manual acceptance needed for this point
                     waitForKeyAccept = needManualAccept(currentPoint);
                     haveAccepted     = ~waitForKeyAccept;   % if not needed, we already have it
@@ -1613,14 +1613,6 @@ classdef Titta < handle
             out  = bsxfun(@plus,obj.geom.displayArea.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
         end
         
-        function out = DataTobiiToScreen(obj,data,res)
-            % data is a 2xN matrix of normalized coordinates
-            if nargin<3
-                res = obj.scrInfo.resolution;
-            end
-            out = bsxfun(@times,data,res(:));
-        end
-        
         function [status,selection] = showCalValResult(obj,wpnt,cal,selection)
             % status output:
             %  1: calibration/validation accepted, continue (a)
@@ -1697,7 +1689,7 @@ classdef Titta < handle
                 menuBackRect= [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
                 % menuRects
                 menuRects = repmat([-.5*width+obj.scrInfo.center(1) -height/2+obj.scrInfo.center(2) .5*width+obj.scrInfo.center(1) height/2+obj.scrInfo.center(2)],length(iValid),1);
-                menuRects = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]);
+                menuRects = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
                 for c=length(iValid):-1:1
                     % acc field is [lx rx; ly ry]
