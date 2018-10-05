@@ -2144,7 +2144,7 @@ warning('off',warnState.identifier);
 names = fieldnames(enum);
 values= struct2cell(struct(enum(1)));
 qRem = cellfun(@(x) strcmp(x,'value'),names);
-names(qRem,:) = [];
+names (qRem,:) = [];
 values(qRem,:) = []; values = cat(1,values{:});
 % store what the result status was
 if isobject(enum(1).value)
@@ -2261,7 +2261,7 @@ for p=length(image.cameraID):-1:1
             im = image.image(:,p);
         end
         im = reshape(im,w,h).';
-        texs(which) = UploadImage(texs(which),wpnt,im);
+        texs (which) = UploadImage(texs(which),wpnt,im);
         qHave(which) = true;
         szs(:,which) = [w h].';
     end
