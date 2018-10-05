@@ -104,6 +104,8 @@ classdef Titta < handle
                 % settings struct, we're good. If they did, they're an
                 % idiot. If they added any, they'll be ignored, so no
                 % problem.
+                % TODO: adding or removing can be a problem. SMITE has code
+                % to do this better. Steal
                 obj.settings = settings;
             end
             % setup colors
@@ -1559,6 +1561,7 @@ classdef Titta < handle
                 rights = [val.quality.right];
             end
             [l,r] = deal([]);
+            % TODO: replace this and other nanmean/nanstd. requires toolbox
             for f={'acc','RMS2D','STD2D','trackRatio'}
                 % NB: abs when averaging over eyes, we need average size of
                 % error for accuracy and for other fields its all positive
