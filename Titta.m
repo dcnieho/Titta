@@ -40,7 +40,7 @@ classdef Titta < handle
     end
     
     methods
-        function obj = Titta(settingsOrETName,scrInfo)
+        function obj = Titta(settingsOrETName)
             % deal with inputs
             if ischar(settingsOrETName)
                 % only eye-tracker name provided, load defaults for this
@@ -48,14 +48,6 @@ classdef Titta < handle
                 obj.options = obj.getDefaults(settingsOrETName);
             else
                 obj.options = settingsOrETName;
-            end
-            
-            if nargin<2 || isempty(scrInfo)
-                obj.scrInfo.resolution  = Screen('Rect',0); obj.scrInfo.resolution(1:2) = [];
-                obj.scrInfo.center      = obj.scrInfo.resolution/2;
-            else
-                assert(isfield(scrInfo,'resolution') && isfield(scrInfo,'center'),'Titta: scrInfo should have a ''resolution'' and a ''center'' field')
-                obj.scrInfo             = scrInfo;
             end
         end
         
@@ -129,17 +121,6 @@ classdef Titta < handle
         end
         
         function out = init(obj)
-            % see what text renderer to use
-            obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file');    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
-            if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
-            end
-            
-            % init key, mouse state
-            [~,~,obj.keyState] = KbCheck();
-            obj.shiftKey = KbName('shift');
-            [~,~,obj.mouseState] = GetMouse();
-            
             % Load in Tobii SDK
             obj.tobii = EyeTrackingOperations();
             
@@ -250,6 +231,22 @@ classdef Titta < handle
         
         function out = calibrate(obj,wpnt)
             % this function does all setup, draws the interface, etc
+            
+            % get info about screen
+            obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
+            obj.scrInfo.center      = obj.scrInfo.resolution/2;
+            
+            % see what text renderer to use
+            obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file');    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
+            if ~obj.usingFTGLTextRenderer
+                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
+            end
+            
+            % init key, mouse state
+            [~,~,obj.keyState] = KbCheck();
+            obj.shiftKey = KbName('shift');
+            [~,~,obj.mouseState] = GetMouse();
+            
             
             %%% 1. some preliminary setup, to make sure we are in known state
             if strcmp(obj.settings.calibrateEye,'both')
