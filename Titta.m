@@ -92,12 +92,19 @@ classdef Titta < handle
                     end
                 end
             else
-                % just copy it over. If user didn't remove fields from
-                % settings struct, we're good. If they did, they're an
-                % idiot. If they added any, they'll be ignored, so no
-                % problem.
-                % TODO: adding or removing can be a problem. SMITE has code
-                % to do this better. Steal
+                defaults    = obj.getDefaults(settings.tracker);
+                expected    = getStructFields(defaults);
+                input       = getStructFields(settings);
+                qMissing    = ~ismember(expected,input);
+                qAdded      = ~ismember(input,expected);
+                if any(qMissing)
+                    params = sprintf('\n  settings.%s',expected{qMissing});
+                    error('Titta: For the %s tracker, the following settings are expected, but were not provided by you:%s\nAdd these to your settings input.',settings.tracker,params);
+                end
+                if any(qAdded)
+                    params = sprintf('\n  settings.%s',input{qAdded});
+                    error('Titta: For the %s tracker, the following settings are not expected, but were provided by you:%s\nRemove these from your settings input.',settings.tracker,params);
+                end
                 obj.settings = settings;
             end
             % setup colors
@@ -2295,5 +2302,25 @@ if abs(posRating)>thresh(2)
     arrowColor = col3;
 else
     arrowColor = col1+(abs(posRating)-thresh(1))./diff(thresh)*(col2-col1);
+end
+end
+
+function fieldString = getStructFields(defaults)
+values                  = struct2cell(defaults);
+qSubStruct              = cellfun(@isstruct,values);
+fieldInfo               = fieldnames(defaults);
+fieldInfoSub            = fieldInfo(qSubStruct);
+fieldInfo(qSubStruct)   = [];
+fieldInfo               = [fieldInfo repmat({''},size(fieldInfo))];
+for p=1:length(fieldInfoSub)
+    fields      = fieldnames(defaults.(fieldInfoSub{p}));
+    fieldInfo   = [fieldInfo; [repmat(fieldInfoSub(p),size(fields)) fields]]; %#ok<AGROW>
+end
+% turn into string
+fieldString = fieldInfo(:,1);
+for i=1:size(fieldInfo,1)
+    if ~isempty(fieldInfo{i,2})
+        fieldString{i} = [fieldString{i} '.' fieldInfo{i,2}];
+    end
 end
 end
