@@ -43,7 +43,7 @@ paddleCornerSlope   = 10;               % deg, away from horizontal
 paddleMargin        = height/100;       % space below paddle
 
 % ball
-ballVel             = [0 -1000];
+ballVel             = [0 -height/2];
 ballRadius          = height/60;
 ballFillClr         = [255 255 255];
 ballAccel           = 0.015;
