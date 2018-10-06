@@ -526,8 +526,9 @@ classdef Titta < handle
             % exists
             if nargin>=3 && doAppendVersion
                 % see what files we have in data folder with the same name
-                f = FileFromFolder(path,'ssilent','mat');
-                f = regexp({f.fname},['^' regexptranslate('escape',file) '(_\d+)?$'],'tokens');
+                f = dir(path);
+                f = f(~[f.isdir]);
+                f = regexp({f.name},['^' regexptranslate('escape',file) '(_\d+)?\.mat$'],'tokens');
                 % see if any. if so, see what number to append
                 f = [f{:}];
                 if ~isempty(f)
@@ -541,7 +542,7 @@ classdef Titta < handle
                     end
                 end
             end
-            % now make sure file ends with .idf
+            % now make sure file ends with .mat
             file = [file '.mat'];
             % construct full filename
             filename = fullfile(path,file);
