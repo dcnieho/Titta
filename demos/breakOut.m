@@ -3,7 +3,7 @@ clear variables
 
 addpath(genpath(fullfile(cd,'..')));
 
-qDEBUG = 2;
+qDEBUG = 0;
 
 % look
 bgclr               = 255/2;
