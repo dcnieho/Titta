@@ -80,13 +80,13 @@ namespace {
         decltype(lx) x = 0;
         decltype(ly) y = 0;
 
-        if (std::isnan(lx))
+        if (sample_.left_eye.gaze_point.validity==TOBII_RESEARCH_VALIDITY_INVALID)
         {
             // just return the other eye. if also missing, so be it
             x = rx;
             y = ry;
         }
-        else if (std::isnan(rx))
+        else if (sample_.right_eye.gaze_point.validity==TOBII_RESEARCH_VALIDITY_INVALID)
         {
             // just return the other eye. if also missing, so be it
             x = lx;
@@ -95,6 +95,7 @@ namespace {
         else
         {
             // both eyes available, average
+            // could also be no eyes available, in which case this is moot and remains nan, which is fine
             x = (lx+rx)/2;
             y = (ly+ry)/2;
         }
