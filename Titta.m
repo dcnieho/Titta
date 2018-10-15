@@ -35,9 +35,6 @@ classdef Titta < handle
         rawET;          % get naked Tobii SDK handle to eyetracker
         rawBuffers;     % get naked Tobiibuffer instance
     end
-    properties (Dependent)
-        options;    % subset of settings that can actually be changed. contents differ based on state of class (once inited, much less can be set)
-    end
     
     methods
         function obj = Titta(settingsOrETName)
@@ -45,9 +42,9 @@ classdef Titta < handle
             if ischar(settingsOrETName)
                 % only eye-tracker name provided, load defaults for this
                 % tracker
-                obj.options = obj.getDefaults(settingsOrETName);
+                obj.setOptions(obj.getDefaults(settingsOrETName));
             else
-                obj.options = settingsOrETName;
+                obj.setOptions(settingsOrETName);
             end
         end
         
@@ -68,7 +65,7 @@ classdef Titta < handle
             out = obj.buffers;
         end
         
-        function out = get.options(obj)
+        function out = getOptions(obj)
             if ~obj.isInitialized
                 % return all settings
                 out = obj.settings;
@@ -81,7 +78,7 @@ classdef Titta < handle
             end
         end
         
-        function set.options(obj,settings)
+        function setOptions(obj,settings)
             if obj.isInitialized
                 % only a subset of settings is allowed. Hardcode here, and
                 % copy over if exist. Ignore all others silently
