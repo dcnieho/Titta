@@ -22,15 +22,15 @@ namespace {
     template <typename T>
     mutex_type& getMutex()
     {
-        if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+        if constexpr (std::is_same_v<T, TobiiResearchGazeData>)
             return g_mSamp;
-        if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
+        if constexpr (std::is_same_v<T, TobiiBuff::eyeImage>)
             return g_mEyeImage;
-        if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+        if constexpr (std::is_same_v<T, TobiiResearchExternalSignalData>)
             return g_mExtSignal;
-        if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+        if constexpr (std::is_same_v<T, TobiiResearchTimeSynchronizationData>)
             return g_mTimeSync;
-        if constexpr (std::is_same<T, TobiiBuff::logMessage>::value)
+        if constexpr (std::is_same_v<T, TobiiBuff::logMessage>)
             return g_mLog;
     }
 
@@ -129,45 +129,45 @@ TobiiBuffer::~TobiiBuffer()
 template <typename T>
 std::vector<T>& TobiiBuffer::getCurrentBuffer()
 {
-    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchGazeData>)
         return getSampleBuffer();
-    if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
+    if constexpr (std::is_same_v<T, TobiiBuff::eyeImage>)
         return getEyeImageBuffer();
-    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchExternalSignalData>)
         return getExtSignalBuffer();
-    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchTimeSynchronizationData>)
         return getTimeSyncBuffer();
 }
 template <typename T>
 std::vector<T>& TobiiBuffer::getTempBuffer()
 {
-    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchGazeData>)
         return _samplesTemp;
-    if constexpr (std::is_same<T, TobiiBuff::eyeImage>::value)
+    if constexpr (std::is_same_v<T, TobiiBuff::eyeImage>)
         return _eyeImagesTemp;
-    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchExternalSignalData>)
         return _extSignalTemp;
-    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchTimeSynchronizationData>)
         return _timeSyncTemp;
 }
 template <typename T>
 void TobiiBuffer::enableTempBuffer(size_t initialBufferSize_)
 {
-    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchGazeData>)
         enableTempBufferGeneric<T>(initialBufferSize_, _samplesUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchExternalSignalData>)
         enableTempBufferGeneric<T>(initialBufferSize_, _extSignalUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchTimeSynchronizationData>)
         enableTempBufferGeneric<T>(initialBufferSize_, _timeSyncUseTempBuf);
 }
 template <typename T>
 void TobiiBuffer::disableTempBuffer()
 {
-    if constexpr (std::is_same<T, TobiiResearchGazeData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchGazeData>)
         disableTempBufferGeneric<T>(_samplesUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchExternalSignalData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchExternalSignalData>)
         disableTempBufferGeneric<T>(_extSignalUseTempBuf);
-    if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
+    if constexpr (std::is_same_v<T, TobiiResearchTimeSynchronizationData>)
         disableTempBufferGeneric<T>(_timeSyncUseTempBuf);
 }
 
