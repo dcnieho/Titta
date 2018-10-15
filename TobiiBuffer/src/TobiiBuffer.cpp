@@ -29,7 +29,7 @@ namespace {
         if constexpr (std::is_same<T, TobiiResearchTimeSynchronizationData>::value)
             return g_mTimeSync;
         if constexpr (std::is_same<T, TobiiBuff::logMessage>::value)
-            return g_mTimeSync;
+            return g_mLog;
     }
 
     // global log buffer
