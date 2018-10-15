@@ -372,6 +372,7 @@ classdef Titta < handle
             % For these, the first call subscribes to the stream and returns
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
+            % TODO: support option size of buffer input
             result = true;
             assert(nargin>1,'Titta: startRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             switch lower(stream)
