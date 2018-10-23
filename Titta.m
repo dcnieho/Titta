@@ -473,7 +473,7 @@ classdef Titta < handle
             end
         end
         
-        function sendMessage(obj,str,time)
+        function time = sendMessage(obj,str,time)
             % Tobii system timestamp is from same clock as PTB's clock. So
             % we're good. If an event has a known time (e.g. a screen
             % flip), provide it as an input argument to this function. This
