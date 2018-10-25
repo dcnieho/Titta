@@ -6,7 +6,7 @@ classdef Titta < handle
         buffers;
         
         % message buffer
-        msgs = simpleVec(cell(1,2),1024);
+        msgs = simpleVec(cell(1,2),1024);   % initialize with space for 1024 messages
         
         % state
         isInitialized   = false;
