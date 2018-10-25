@@ -38,8 +38,8 @@ classdef TittaDummyMode < Titta
                 superMethods = thisInfo.SuperclassList.MethodList;
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static])) = [];
                 thisMethods = thisInfo.MethodList;
-                % getOptions, setOptions, sendMessage and getMessages still work in dummy mode
-                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | ismember({thisMethods.Name},{'TittaDummyMode','getOptions','setOptions','sendMessage','getMessages'})) = [];
+                % delete, getOptions, setOptions, sendMessage and getMessages still work in dummy mode
+                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | ismember({thisMethods.Name},{'TittaDummyMode','delete','getOptions','setOptions','sendMessage','getMessages'})) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?

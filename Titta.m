@@ -48,6 +48,10 @@ classdef Titta < handle
             end
         end
         
+        function delete(obj)
+            obj.deInit();
+        end
+        
         function out = setDummyMode(obj)
             assert(nargout==1,'Titta: you must use the output argument of setDummyMode, like: TobiiHandle = TobiiHandle.setDummyMode(), or TobiiHandle = setDummyMode(TobiiHandle)')
             out = TittaDummyMode(obj);
@@ -558,9 +562,11 @@ classdef Titta < handle
         end
         
         function out = deInit(obj)
-            % return and stop log
-            out = obj.rawBuffers.getLog();
-            obj.rawBuffers.stopLogging();
+            if ~isempty(obj.rawBuffers)
+                % return and stop log
+                out = obj.rawBuffers.getLog();
+                obj.rawBuffers.stopLogging();
+            end
             
             % mark as deinited
             obj.isInitialized = false;
