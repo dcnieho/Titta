@@ -137,11 +137,25 @@ classdef Titta < handle
             obj.buffers.startLogging();
             
             % Connect to eyetracker
-            % see which eye trackers are available
-            trackers = obj.tobii.find_all_eyetrackers();
-            % find macthing eye-tracker, first by model
-            qModel = strcmp({trackers.Model},obj.settings.tracker);
-            assert(any(qModel),'Titta: No trackers of model ''%s'' connected',obj.settings.tracker)
+            iTry = 1;
+            while true
+                % see which eye trackers are available
+                trackers = obj.tobii.find_all_eyetrackers();
+                % find macthing eye-tracker, first by model
+                qModel = strcmp({trackers.Model},obj.settings.tracker);
+                if ~any(qModel)
+                    if iTry<obj.settings.nTryConnect
+                        func = @warning;
+                    else
+                        func = @error;
+                    end
+                    func('Titta: No trackers of model ''%s'' connected',obj.settings.tracker);
+                    WaitSecs(obj.settings.connectRetryWait);
+                    iTry = iTry+1;
+                else
+                    break;
+                end
+            end
             % if obligatory serial also given, check on that
             assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
             if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
@@ -592,6 +606,8 @@ classdef Titta < handle
             settings.calibrateEye           = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber           = '';
             settings.licenseFile            = '';
+            settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
+            settings.connectRetryWait       = 4;                                % seconds
             settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
