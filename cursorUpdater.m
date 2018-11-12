@@ -6,11 +6,21 @@ if nargin<1 || isempty(cursors)
     return;
 end
 
-% process cursors
-cursorRects = [cursors.rect{:}];
+usingPoly = isfield(cursors,'poly');
+
+% process rects/polys
+if usingPoly
+    cursorPolys = cursors.poly;
+    nAOI        = length(cursorPolys);
+    nElemPerAOI = ones(1,nAOI);
+else
+    cursorRects = [cursors.rect{:}];
+    nAOI        = length(cursors.rect);
+    nElemPerAOI = cellfun(@(x) size(x,2),cursors.rect);
+end
 % cursor looks are numbered IDs as eaten by ShowMouse. -1 means hide cursor
 cursorLooks = [cursors.cursor cursors.other];
-cursorIdxs  = SmartVec(1:length(cursors.rect),cellfun(@(x) size(x,2),cursors.rect),0);
+cursorIdxs  = SmartVec(1:nAOI,nElemPerAOI,0);
 currCursor  = nan;
 % optional (default on) reset of cursor when calling reset(). Have it as an
 % option as some function out of the reach of the user always call reset
@@ -30,12 +40,24 @@ fhndl.update = @update;
 fhndl.reset  = @reset;
 
     function update(x,y)
-        if isempty(cursorRects)
+        if usingPoly
             idx = [];
+            % get in which poly, if any. If polys overlap, first in the
+            % list is used
+            for p=1:nAOI
+                if inPoly([x y],cursorPolys{p})
+                	idx = p;
+                    break;
+                end
+            end
         else
-            % get in which rect, if any. If rects overlap, first in the list is
-            % used
-            idx = find(inRect([x y],cursorRects),1);
+            if isempty(cursorRects)
+                idx = [];
+            else
+                % get in which rect, if any. If rects overlap, first in the list is
+                % used
+                idx = find(inRect([x y],cursorRects),1);
+            end
         end
         
         % get corresponding cursor
