@@ -721,7 +721,7 @@ classdef Titta < handle
             end
             obj.stopRecording('gaze');
             obj.buffers.disableTempSampleBuffer();
-            obj.sendMessage('SETUP END')
+            obj.sendMessage('SETUP END');
         end
         
         function status = showHeadPositioningSimple(obj,wpnt,qHaveValidCalibrations)
