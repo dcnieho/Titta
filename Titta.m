@@ -610,7 +610,8 @@ classdef Titta < handle
             settings.licenseFile            = '';
             settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
             settings.connectRetryWait       = 4;                                % seconds
-            settings.setup.startScreen      = 1;
+            settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
+            settings.setup.simpleShowEyes   = true;
             settings.setup.viewingDist      = 65;
             settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
@@ -657,6 +658,7 @@ classdef Titta < handle
                 'setup','startScreen'
                 'setup','viewingDist'
                 'setup','eyeColors'
+                'setup','simpleShowEyes'
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
@@ -743,6 +745,9 @@ classdef Titta < handle
             headFillClr = [headClr .3*255];
             % setup head position visualization
             distGain    = 1.5;
+            eyeClr      = [255 255 255];
+            eyeSzFac    = .25;
+            eyeMarginFac= .25;
 
             % setup buttons
             buttonSz    = {[220 45] [320 45] [400 45]};
@@ -815,6 +820,8 @@ classdef Titta < handle
                     % determine size of oval, based on distance from reference distance
                     fac     = avgDist/obj.settings.setup.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
+                    eyeSz   = eyeSzFac*headSz;
+                    eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
                     % move
                     headPos = pos.*obj.scrInfo.resolution;
                 else
@@ -827,6 +834,24 @@ classdef Titta < handle
                 drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
                 if ~isempty(headPos)
                     drawCircle(wpnt,headClr,headPos,headSz,5,headFillClr);
+                    if obj.settings.setup.simpleShowEyes
+                        % left eye
+                        pos = headPos; pos(1) = pos(1)-eyeMargin;
+                        if ~isnan(distL)
+                            drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
+                        else
+                            rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
+                            Screen('FillRect', wpnt, eyeClr, rect);
+                        end
+                        % right eye
+                        pos(1) = pos(1)+eyeMargin*2;
+                        if ~isnan(distR)
+                            drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
+                        else
+                            rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
+                            Screen('FillRect', wpnt, eyeClr, rect);
+                        end
+                    end
                 end
                 % draw buttons
                 Screen('FillRect',wpnt,[ 37  97 163],advancedButRect);
@@ -2308,15 +2333,17 @@ end
 tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
 end
 
-function drawCircle(wpnt,refClr,center,refSz,lineWidth,headFillClr)
+function drawCircle(wpnt,clr,center,sz,lineWidth,fillClr)
 nStep = 200;
 alpha = linspace(0,2*pi,nStep);
 alpha = [alpha(1:end-1); alpha(2:end)]; alpha = alpha(:).';
-xy = refSz.*[cos(alpha); sin(alpha)];
+xy    = sz.*[cos(alpha); sin(alpha)];
 if nargin>=6
-    Screen('FillPoly', wpnt, headFillClr, xy.'+repmat(center(:).',size(alpha,2),1), 1);
+    Screen('FillPoly', wpnt, fillClr, xy.'+repmat(center(:).',size(alpha,2),1), 1);
 end
-Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
+if lineWidth && ~isempty(clr)
+    Screen('DrawLines', wpnt, xy, lineWidth ,clr ,center,2);
+end
 end
 
 function arrowColor = getArrowColor(posRating,thresh,col1,col2,col3)
