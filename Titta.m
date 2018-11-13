@@ -735,12 +735,13 @@ classdef Titta < handle
             Screen('TextStyle', wpnt, obj.settings.text.style);
             
             % setup ovals
-            ovalVSz = .15;
-            refSz   = ovalVSz*obj.scrInfo.resolution(2);
-            refClr  = [0 0 255];
-            headClr = [255 255 0];
+            ovalVSz     = .15;
+            refSz       = ovalVSz*obj.scrInfo.resolution(2);
+            refClr      = [0 0 255];
+            headClr     = [255 255 0];
+            headFillClr = [headClr .3*255];
             % setup head position visualization
-            distGain= 1.5;
+            distGain    = 1.5;
 
             % setup buttons
             buttonSz    = {[220 45] [320 45] [400 45]};
@@ -824,7 +825,7 @@ classdef Titta < handle
                 % draw ovals
                 drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
                 if ~isempty(headPos)
-                    drawCircle(wpnt,headClr,headPos,headSz,5);
+                    drawCircle(wpnt,headClr,headPos,headSz,5,headFillClr);
                 end
                 % draw buttons
                 Screen('FillRect',wpnt,[ 37  97 163],advancedButRect);
@@ -2306,11 +2307,14 @@ end
 tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
 end
 
-function drawCircle(wpnt,refClr,center,refSz,lineWidth)
+function drawCircle(wpnt,refClr,center,refSz,lineWidth,headFillClr)
 nStep = 200;
 alpha = linspace(0,2*pi,nStep);
 alpha = [alpha(1:end-1); alpha(2:end)]; alpha = alpha(:).';
 xy = refSz.*[cos(alpha); sin(alpha)];
+if nargin>=6
+    Screen('FillPoly', wpnt, headFillClr, xy.'+repmat(center(:).',size(alpha,2),1), 1);
+end
 Screen('DrawLines', wpnt, xy, lineWidth ,refClr ,center,2);
 end
 
