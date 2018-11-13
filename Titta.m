@@ -610,7 +610,9 @@ classdef Titta < handle
             settings.licenseFile            = '';
             settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
             settings.connectRetryWait       = 4;                                % seconds
-            settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
+            settings.setup.startScreen      = 1;
+            settings.setup.viewingDist      = 65;
+            settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
@@ -626,8 +628,6 @@ classdef Titta < handle
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
             settings.val.qRandPoints        = true;
-            settings.setup.viewingDist      = 65;
-            settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
             settings.text.font              = 'Consolas';
             settings.text.color             = 0;                                % only for messages on the screen, doesn't affect buttons
             settings.text.style             = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -654,6 +654,9 @@ classdef Titta < handle
     methods (Access = private, Hidden)
         function allowed = getAllowedOptions(obj)
             allowed = {...
+                'setup','startScreen'
+                'setup','viewingDist'
+                'setup','eyeColors'
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
@@ -668,8 +671,6 @@ classdef Titta < handle
                 'val','paceDuration'
                 'val','collectDuration'
                 'val','qRandPoints'
-                'setup','viewingDist'
-                'setup','eyeColors'
                 'text','font'
                 'text','color'
                 'text','size'
