@@ -258,6 +258,7 @@ classdef Titta < handle
             % get info about screen
             obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
             obj.scrInfo.center      = obj.scrInfo.resolution/2;
+            [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
@@ -376,6 +377,7 @@ classdef Titta < handle
             
             % clean up
             Screen('Flip',wpnt);
+            Screen('BlendFunction', wpnt, osf,odf,ocm);
             
             % store calibration info in calibration history, for later
             % retrieval if wanted
