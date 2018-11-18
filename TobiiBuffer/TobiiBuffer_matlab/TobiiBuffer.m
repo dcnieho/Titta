@@ -106,17 +106,17 @@ classdef TobiiBuffer < handle
             end
             this.cppmethod('clear',stream);
         end
-        function data = clearTimeRange(this,stream,startT,endT)
+        function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole range
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>3 && ~isempty(endT)
-                data = this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
+                this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
-                data = this.cppmethod('clearTimeRange',stream,int64(startT));
+                this.cppmethod('clearTimeRange',stream,int64(startT));
             else
-                data = this.cppmethod('clearTimeRange',stream);
+                this.cppmethod('clearTimeRange',stream);
             end
         end
         function success = stop(this,stream,doDeleteBuffer)
