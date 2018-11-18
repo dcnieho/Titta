@@ -132,4 +132,14 @@ namespace TobiiBuff
         TobiiResearchLogLevel  level = TOBII_RESEARCH_LOG_LEVEL_ERROR;
         std::string            message;
     };
+
+    // data stream type (NB: not log, that has a much simpler interface)
+    enum class DataStream
+    {
+        Unknown,
+        Sample,
+        EyeImage,
+        ExtSignal,
+        TimeSync
+    };
 }

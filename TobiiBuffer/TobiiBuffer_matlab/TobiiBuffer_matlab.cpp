@@ -161,16 +161,6 @@ namespace {
         { "stopLogging",				Action::StopLogging },
     };
 
-    // data stream type (NB: not log, that has a much simpler interface)
-    enum class TrackerDataStream
-    {
-        Unknown,
-        Sample,
-        EyeImage,
-        ExtSignal,
-        TimeSync
-    };
-
 
     // table mapping handles to instances
     static instanceMap_type instanceTab;
@@ -204,13 +194,13 @@ namespace {
     mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_);
     mxArray* ToMxArray(std::vector<TobiiBuff::logMessage               > data_);
 
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     void     StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
 }
 
@@ -272,7 +262,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
 
         case Action::StartSampleBuffering:
-            plhs[0] = StartBuffer<TrackerDataStream::Sample>(TobiiBuff::g_sampleBufDefaultSize, instance, nrhs, prhs);
+            plhs[0] = StartBuffer<TobiiBuff::DataStream::Sample>(TobiiBuff::g_sampleBufDefaultSize, instance, nrhs, prhs);
             return;
         case Action::EnableTempSampleBuffer:
         {
@@ -293,13 +283,13 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearSampleBuffer();
             return;
         case Action::StopSampleBuffering:
-            StopBuffer<TrackerDataStream::Sample>(instance, nrhs, prhs);
+            StopBuffer<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
             return;
         case Action::ConsumeSamples:
-            plhs[0] = Consume<TrackerDataStream::Sample>(instance, nrhs, prhs);
+            plhs[0] = Consume<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
             return;
         case Action::PeekSamples:
-            plhs[0] = Peek<TrackerDataStream::Sample>(instance, nrhs, prhs);
+            plhs[0] = Peek<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
             return;
 
         case Action::StartEyeImageBuffering:
@@ -340,17 +330,17 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearEyeImageBuffer();
             return;
         case Action::StopEyeImageBuffering:
-            StopBuffer<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
+            StopBuffer<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
             return;
         case Action::ConsumeEyeImages:
-            plhs[0] = Consume<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
+            plhs[0] = Consume<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
             return;
         case Action::PeekEyeImages:
-            plhs[0] = Peek<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
+            plhs[0] = Peek<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
             return;
 
         case Action::StartExtSignalBuffering:
-            plhs[0] = StartBuffer<TrackerDataStream::ExtSignal>(TobiiBuff::g_extSignalBufDefaultSize, instance, nrhs, prhs);
+            plhs[0] = StartBuffer<TobiiBuff::DataStream::ExtSignal>(TobiiBuff::g_extSignalBufDefaultSize, instance, nrhs, prhs);
             return;
         case Action::EnableTempExtSignalBuffer:
         {
@@ -371,17 +361,17 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearExtSignalBuffer();
             return;
         case Action::StopExtSignalBuffering:
-            StopBuffer<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
+            StopBuffer<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
             return;
         case Action::ConsumeExtSignals:
-            plhs[0] = Consume<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
+            plhs[0] = Consume<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
             return;
         case Action::PeekExtSignals:
-            plhs[0] = Peek<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
+            plhs[0] = Peek<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
             return;
 
         case Action::StartTimeSyncBuffering:
-            plhs[0] = StartBuffer<TrackerDataStream::TimeSync>(TobiiBuff::g_timeSyncBufDefaultSize, instance, nrhs, prhs);
+            plhs[0] = StartBuffer<TobiiBuff::DataStream::TimeSync>(TobiiBuff::g_timeSyncBufDefaultSize, instance, nrhs, prhs);
             return;
         case Action::EnableTempTimeSyncBuffer:
         {
@@ -402,13 +392,13 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearTimeSyncBuffer();
             return;
         case Action::StopTimeSyncBuffering:
-            StopBuffer<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
+            StopBuffer<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
             return;
         case Action::ConsumeTimeSyncs:
-            plhs[0] = Consume<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
+            plhs[0] = Consume<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
             return;
         case Action::PeekTimeSyncs:
-            plhs[0] = Peek<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
+            plhs[0] = Peek<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
             return;
         
         case Action::StartLogging:
@@ -449,7 +439,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 // helpers
 namespace
 {
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[])
     {
         if (nrhs > 2 && !mxIsEmpty(prhs[2]))
@@ -459,21 +449,21 @@ namespace
             bufSize_ = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
 
-        if constexpr (DS == TrackerDataStream::Sample)
+        if constexpr (DS == TobiiBuff::DataStream::Sample)
         {
             return mxCreateLogicalScalar(instance_->startSampleBuffering(bufSize_));
         }
-        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
         {
             return mxCreateLogicalScalar(instance_->startExtSignalBuffering(bufSize_));
         }
-        else if constexpr (DS == TrackerDataStream::TimeSync)
+        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
         {
             return mxCreateLogicalScalar(instance_->startTimeSyncBuffering(bufSize_));
         }
     }
 
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     void StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[])
     {
         bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
@@ -484,25 +474,25 @@ namespace
             deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
         }
 
-        if constexpr (DS == TrackerDataStream::Sample)
+        if constexpr (DS == TobiiBuff::DataStream::Sample)
         {
             instance_->stopSampleBuffering(deleteBuffer);
         }
-        else if constexpr (DS == TrackerDataStream::EyeImage)
+        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
         {
             instance_->stopEyeImageBuffering(deleteBuffer);
         }
-        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
         {
             instance_->stopExtSignalBuffering(deleteBuffer);
         }
-        else if constexpr (DS == TrackerDataStream::TimeSync)
+        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
         {
             instance_->stopTimeSyncBuffering(deleteBuffer);
         }
     }
 
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[])
     {
         uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
@@ -513,25 +503,25 @@ namespace
             nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
 
-        if constexpr (DS == TrackerDataStream::Sample)
+        if constexpr (DS == TobiiBuff::DataStream::Sample)
         {
             return ToMxArray(instance_->consumeSamples(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::EyeImage)
+        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
         {
             return ToMxArray(instance_->consumeEyeImages(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
         {
             return ToMxArray(instance_->consumeExtSignals(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::TimeSync)
+        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
         {
             return ToMxArray(instance_->consumeTimeSyncs(nSamp));
         }
     }
 
-    template <TrackerDataStream DS>
+    template <TobiiBuff::DataStream DS>
     mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[])
     {
         uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
@@ -542,19 +532,19 @@ namespace
             nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
         }
 
-        if constexpr (DS == TrackerDataStream::Sample)
+        if constexpr (DS == TobiiBuff::DataStream::Sample)
         {
             return ToMxArray(instance_->peekSamples(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::EyeImage)
+        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
         {
             return ToMxArray(instance_->peekEyeImages(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
         {
             return ToMxArray(instance_->peekExtSignals(nSamp));
         }
-        else if constexpr (DS == TrackerDataStream::TimeSync)
+        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
         {
             return ToMxArray(instance_->peekTimeSyncs(nSamp));
         }
@@ -800,7 +790,7 @@ namespace
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchExternalSignalData::system_time_stamp));
         // 3. external signal values
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchExternalSignalData::value));
-        // 3. value change type
+        // 4. value change type
         mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchExternalSignalData::change_type, uint8_t{}));	// cast enum values
 
         return out;
