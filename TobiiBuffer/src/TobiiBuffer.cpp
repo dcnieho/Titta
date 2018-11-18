@@ -163,16 +163,18 @@ std::vector<T>& TobiiBuffer::getBuffer()
         return _timeSync;
 }
 template <typename T>
-std::tuple<bool, typename std::vector<T>::const_iterator, typename std::vector<T>::const_iterator>
+std::tuple<bool, typename std::vector<T>::iterator, typename std::vector<T>::iterator>
 TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
 {
     // !NB: appropriate locking is responsibility of caller!
     // find elements within given range of time stamps, both sides inclusive.
     // Since returns are iterators, what is returned is first matching element until one past last matching element
     // 1. get buffer to traverse, if empty, return
-    auto& buf = getBuffer<T>();
+    auto& buf    = getBuffer<T>();
+    auto startIt = buf.begin();
+    auto   endIt = buf.end();
     if (buf.empty())
-        return {true,buf.cbegin(),buf.cend()};
+        return {true,startIt,endIt};
 
     // 2. see with member variable to access
     int64_t T::* field;
@@ -181,11 +183,9 @@ TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
     else
         field = &T::system_time_stamp;
 
-    // 3. setup output
+    // 3. check if requested times are before or after vector start and end
     bool inclFirst = timeStart_ <= buf.front().*field;
     bool inclLast  = timeEnd_   >= buf.back().*field;
-    auto startIt = buf.cbegin();
-    auto   endIt = buf.cend();
     // 4. if start time later than beginning of samples, or end time earlier, find correct iterators
     if (!inclFirst)
         startIt = std::lower_bound(startIt, endIt, timeStart_, [&field](const T& a_, const int64_t& b_) {return a_.*field < b_;});
