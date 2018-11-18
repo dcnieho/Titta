@@ -46,16 +46,18 @@ public:
     TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
 
+    //// Functions taking buffer type as input ////
+    // clear all buffer contents
+    void clearBuffer(std::string dataStream_);
+    // stop optionally deletes the buffer
+    bool stopBuffering(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
+
     //// Samples ////
     bool startSampleBuffering(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
     // switch to recording to a temp buffer
     void enableTempSampleBuffer(size_t initialBufferSize_ = TobiiBuff::g_sampleTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempSampleBuffer();
-    // clear all buffer contents
-    void clearSampleBuffer();
-    // stop optionally deletes the buffer
-    bool stopSampleBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiResearchGazeData> consumeSamples(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
@@ -67,10 +69,6 @@ public:
     void enableTempEyeImageBuffer(size_t initialBufferSize_ = TobiiBuff::g_eyeImageTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempEyeImageBuffer();
-    // clear all buffer contents
-    void clearEyeImageBuffer();
-    // stop optionally deletes the buffer
-    bool stopEyeImageBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiBuff::eyeImage> consumeEyeImages(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
@@ -82,10 +80,6 @@ public:
     void enableTempExtSignalBuffer(size_t initialBufferSize_ = TobiiBuff::g_extSignalTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempExtSignalBuffer();
-    // clear all buffer contents
-    void clearExtSignalBuffer();
-    // stop optionally deletes the buffer
-    bool stopExtSignalBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiResearchExternalSignalData> consumeExtSignals(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
@@ -97,10 +91,6 @@ public:
     void enableTempTimeSyncBuffer(size_t initialBufferSize_ = TobiiBuff::g_timeSyncTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempTimeSyncBuffer();
-    // clear all buffer contents
-    void clearTimeSyncBuffer();
-    // stop optionally deletes the buffer
-    bool stopTimeSyncBuffering(bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
     // consume samples (by default all)
     std::vector<TobiiResearchTimeSynchronizationData> consumeTimeSyncs(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
     // peek samples (by default only last one, can specify how many from end to peek)
@@ -128,8 +118,8 @@ private:
     // generic implementations
     template <typename T>  void             enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_);
     template <typename T>  void             disableTempBufferGeneric(bool& usingTempBuf_);
-    template <typename T>  void             clearBuffer();
-    template <typename T>  void             stopBufferingGenericPart(bool emptyBuffer_);
+    template <typename T>  void             clearBufferImpl();
+    template <typename T>  bool             stopBufferingImpl(bool emptyBuffer_);
     template <typename T>  std::vector<T>   peek(size_t lastN_);
     template <typename T>  std::vector<T>   consume(size_t firstN_);
 private:
@@ -157,9 +147,11 @@ private:
 };
 
 
-//// logging ////
 namespace TobiiBuff
 {
+    TobiiBuff::DataStream stringToDataStream(std::string dataStream_);
+
+    //// logging ////
     bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);
     std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ = g_logBufClearDefault);
     bool stopLogging();	// always clears buffer

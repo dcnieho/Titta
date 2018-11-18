@@ -80,37 +80,23 @@ namespace {
         New,
         Delete,
 
-        StartSampleBuffering,
+        StartBuffering,
+        ClearBuffer,
+        StopBuffering,
+        Consume,
+        Peek,
+
         EnableTempSampleBuffer,
         DisableTempSampleBuffer,
-        ClearSampleBuffer,
-        StopSampleBuffering,
-        ConsumeSamples,
-        PeekSamples,
 
-        StartEyeImageBuffering,
         EnableTempEyeImageBuffer,
         DisableTempEyeImageBuffer,
-        ClearEyeImageBuffer,
-        StopEyeImageBuffering,
-        ConsumeEyeImages,
-        PeekEyeImages,
 
-        StartExtSignalBuffering,
         EnableTempExtSignalBuffer,
         DisableTempExtSignalBuffer,
-        ClearExtSignalBuffer,
-        StopExtSignalBuffering,
-        ConsumeExtSignals,
-        PeekExtSignals,
 
-        StartTimeSyncBuffering,
         EnableTempTimeSyncBuffer,
         DisableTempTimeSyncBuffer,
-        ClearTimeSyncBuffer,
-        StopTimeSyncBuffering,
-        ConsumeTimeSyncs,
-        PeekTimeSyncs,
 
         StartLogging,
         GetLog,
@@ -124,37 +110,23 @@ namespace {
         { "new",						Action::New },
         { "delete",						Action::Delete },
 
-        { "startSampleBuffering",		Action::StartSampleBuffering },
+        { "startBuffering",		        Action::StartBuffering },
+        { "clearBuffer",				Action::ClearBuffer},
+        { "stopBuffering",		        Action::StopBuffering },
+        { "consume",				    Action::Consume },
+        { "peek",				        Action::Peek },
+
         { "enableTempSampleBuffer",		Action::EnableTempSampleBuffer },
         { "disableTempSampleBuffer",	Action::DisableTempSampleBuffer },
-        { "clearSampleBuffer",			Action::ClearSampleBuffer },
-        { "stopSampleBuffering",		Action::StopSampleBuffering },
-        { "consumeSamples",				Action::ConsumeSamples },
-        { "peekSamples",				Action::PeekSamples },
 
-        { "startEyeImageBuffering",		Action::StartEyeImageBuffering },
         { "enableTempEyeImageBuffer",	Action::EnableTempEyeImageBuffer },
         { "disableTempEyeImageBuffer",	Action::DisableTempEyeImageBuffer },
-        { "clearEyeImageBuffer",		Action::ClearEyeImageBuffer },
-        { "stopEyeImageBuffering",		Action::StopEyeImageBuffering },
-        { "consumeEyeImages",			Action::ConsumeEyeImages },
-        { "peekEyeImages",				Action::PeekEyeImages },
 
-        { "startExtSignalBuffering",	Action::StartExtSignalBuffering },
         { "enableTempExtSignalBuffer",	Action::EnableTempExtSignalBuffer },
         { "disableTempExtSignalBuffer",	Action::DisableTempExtSignalBuffer },
-        { "clearExtSignalBuffer",		Action::ClearExtSignalBuffer },
-        { "stopExtSignalBuffering",		Action::StopExtSignalBuffering },
-        { "consumeExtSignals",			Action::ConsumeExtSignals },
-        { "peekExtSignals",				Action::PeekExtSignals },
 
-        { "startTimeSyncBuffering",		Action::StartTimeSyncBuffering },
         { "enableTempTimeSyncBuffer",	Action::EnableTempTimeSyncBuffer },
         { "disableTempTimeSyncBuffer",	Action::DisableTempTimeSyncBuffer },
-        { "clearTimeSyncBuffer",		Action::ClearTimeSyncBuffer },
-        { "stopTimeSyncBuffering",		Action::StopTimeSyncBuffering },
-        { "consumeTimeSyncs",			Action::ConsumeTimeSyncs },
-        { "peekTimeSyncs",				Action::PeekTimeSyncs },
 
         { "startLogging",				Action::StartLogging },
         { "getLog",						Action::GetLog },
@@ -261,9 +233,168 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             break;
         }
 
-        case Action::StartSampleBuffering:
-            plhs[0] = StartBuffer<TobiiBuff::DataStream::Sample>(TobiiBuff::g_sampleBufDefaultSize, instance, nrhs, prhs);
-            return;
+
+        case Action::StartBuffering:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            TobiiBuff::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+
+            // get default argument
+            uint64_t bufSize;
+            switch (dataStream)
+            {
+                case TobiiBuff::DataStream::Sample:
+                    bufSize = TobiiBuff::g_sampleBufDefaultSize;
+                    break;
+                case TobiiBuff::DataStream::EyeImage:
+                    bufSize = TobiiBuff::g_eyeImageBufDefaultSize;
+                    break;
+                case TobiiBuff::DataStream::ExtSignal:
+                    bufSize = TobiiBuff::g_extSignalBufDefaultSize;
+                    break;
+                case TobiiBuff::DataStream::TimeSync:
+                    bufSize = TobiiBuff::g_timeSyncBufDefaultSize;
+                    break;
+            }
+
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("startBuffering: Expected argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+            }
+
+            switch (dataStream)
+            {
+                case TobiiBuff::DataStream::Sample:
+                    plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
+                    return;
+                case TobiiBuff::DataStream::EyeImage:
+                {
+                    bool asGif = TobiiBuff::g_eyeImageAsGIFDefault;
+                    if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+                    {
+                        if (!mxIsLogical(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                            mexErrMsgTxt("startBuffering: Expected second argument to be a logical scalar.");
+                        asGif = mxIsLogicalScalarTrue(prhs[4]);
+                    }
+                    plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
+                }
+                case TobiiBuff::DataStream::ExtSignal:
+                    plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
+                    return;
+                case TobiiBuff::DataStream::TimeSync:
+                    plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
+                    return;
+            }
+            break;
+        }
+        case Action::ClearBuffer:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string, clear buffer
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            instance->clearBuffer(bufferCstr);
+            mxFree(bufferCstr);
+            break;
+        }
+        case Action::StopBuffering:
+        {
+            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
+                    mexErrMsgTxt("stopBuffering: Expected argument to be a logical scalar.");
+                deleteBuffer = mxIsLogicalScalarTrue(prhs[3]);
+            }
+            
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string, stop buffering
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            plhs[0] = mxCreateLogicalScalar(instance->stopBuffering(bufferCstr,deleteBuffer));
+            mxFree(bufferCstr);
+            break;
+        }
+        case Action::Consume:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            TobiiBuff::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+
+            // get default argument and parse optional input
+            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("consume: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+            }
+
+            switch (dataStream)
+            {
+                case TobiiBuff::DataStream::Sample:
+                    plhs[0] = ToMxArray(instance->consumeSamples(nSamp));
+                    return;
+                case TobiiBuff::DataStream::EyeImage:
+                    plhs[0] = ToMxArray(instance->consumeEyeImages(nSamp));
+                    return;
+                case TobiiBuff::DataStream::ExtSignal:
+                    plhs[0] = ToMxArray(instance->consumeExtSignals(nSamp));
+                    return;
+                case TobiiBuff::DataStream::TimeSync:
+                    plhs[0] = ToMxArray(instance->consumeTimeSyncs(nSamp));
+                    return;
+            }
+        }
+        case Action::Peek:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            TobiiBuff::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+
+            // get default argument and parse optional input
+            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("peek: Expected argument to be a uint64 scalar.");
+                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+            }
+
+            switch (dataStream)
+            {
+                case TobiiBuff::DataStream::Sample:
+                    plhs[0] = ToMxArray(instance->peekSamples(nSamp));
+                    return;
+                case TobiiBuff::DataStream::EyeImage:
+                    plhs[0] = ToMxArray(instance->peekEyeImages(nSamp));
+                    return;
+                case TobiiBuff::DataStream::ExtSignal:
+                    plhs[0] = ToMxArray(instance->peekExtSignals(nSamp));
+                    return;
+                case TobiiBuff::DataStream::TimeSync:
+                    plhs[0] = ToMxArray(instance->peekTimeSyncs(nSamp));
+                    return;
+            }
+        }
+
         case Action::EnableTempSampleBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
@@ -279,38 +410,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::DisableTempSampleBuffer:
             instance->disableTempSampleBuffer();
             return;
-        case Action::ClearSampleBuffer:
-            instance->clearSampleBuffer();
-            return;
-        case Action::StopSampleBuffering:
-            StopBuffer<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
-            return;
-        case Action::ConsumeSamples:
-            plhs[0] = Consume<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
-            return;
-        case Action::PeekSamples:
-            plhs[0] = Peek<TobiiBuff::DataStream::Sample>(instance, nrhs, prhs);
-            return;
 
-        case Action::StartEyeImageBuffering:
-        {
-            uint64_t bufSize = TobiiBuff::g_eyeImageBufDefaultSize;
-            bool asGif = TobiiBuff::g_eyeImageAsGIFDefault;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("startEyeImageBuffering: Expected first argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsLogical(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    mexErrMsgTxt("startEyeImageBuffering: Expected second argument to be a logical scalar.");
-                asGif = mxIsLogicalScalarTrue(prhs[2]);
-            }
-            plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
-            return;
-        }
         case Action::EnableTempEyeImageBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
@@ -326,22 +426,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::DisableTempEyeImageBuffer:
             instance->disableTempEyeImageBuffer();
             return;
-        case Action::ClearEyeImageBuffer:
-            instance->clearEyeImageBuffer();
-            return;
-        case Action::StopEyeImageBuffering:
-            StopBuffer<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
-            return;
-        case Action::ConsumeEyeImages:
-            plhs[0] = Consume<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
-            return;
-        case Action::PeekEyeImages:
-            plhs[0] = Peek<TobiiBuff::DataStream::EyeImage>(instance, nrhs, prhs);
-            return;
 
-        case Action::StartExtSignalBuffering:
-            plhs[0] = StartBuffer<TobiiBuff::DataStream::ExtSignal>(TobiiBuff::g_extSignalBufDefaultSize, instance, nrhs, prhs);
-            return;
         case Action::EnableTempExtSignalBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
@@ -357,22 +442,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::DisableTempExtSignalBuffer:
             instance->disableTempExtSignalBuffer();
             return;
-        case Action::ClearExtSignalBuffer:
-            instance->clearExtSignalBuffer();
-            return;
-        case Action::StopExtSignalBuffering:
-            StopBuffer<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
-            return;
-        case Action::ConsumeExtSignals:
-            plhs[0] = Consume<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
-            return;
-        case Action::PeekExtSignals:
-            plhs[0] = Peek<TobiiBuff::DataStream::ExtSignal>(instance, nrhs, prhs);
-            return;
 
-        case Action::StartTimeSyncBuffering:
-            plhs[0] = StartBuffer<TobiiBuff::DataStream::TimeSync>(TobiiBuff::g_timeSyncBufDefaultSize, instance, nrhs, prhs);
-            return;
         case Action::EnableTempTimeSyncBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
@@ -387,18 +457,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         case Action::DisableTempTimeSyncBuffer:
             instance->disableTempTimeSyncBuffer();
-            return;
-        case Action::ClearTimeSyncBuffer:
-            instance->clearTimeSyncBuffer();
-            return;
-        case Action::StopTimeSyncBuffering:
-            StopBuffer<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
-            return;
-        case Action::ConsumeTimeSyncs:
-            plhs[0] = Consume<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
-            return;
-        case Action::PeekTimeSyncs:
-            plhs[0] = Peek<TobiiBuff::DataStream::TimeSync>(instance, nrhs, prhs);
             return;
         
         case Action::StartLogging:
@@ -439,117 +497,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 // helpers
 namespace
 {
-    template <TobiiBuff::DataStream DS>
-    mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[])
-    {
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("startBuffering: Expected argument to be a uint64 scalar.");
-            bufSize_ = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-
-        if constexpr (DS == TobiiBuff::DataStream::Sample)
-        {
-            return mxCreateLogicalScalar(instance_->startSampleBuffering(bufSize_));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
-        {
-            return mxCreateLogicalScalar(instance_->startExtSignalBuffering(bufSize_));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
-        {
-            return mxCreateLogicalScalar(instance_->startTimeSyncBuffering(bufSize_));
-        }
-    }
-
-    template <TobiiBuff::DataStream DS>
-    void StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[])
-    {
-        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("stopBuffering: Expected argument to be a logical scalar.");
-            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-        }
-
-        if constexpr (DS == TobiiBuff::DataStream::Sample)
-        {
-            instance_->stopSampleBuffering(deleteBuffer);
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
-        {
-            instance_->stopEyeImageBuffering(deleteBuffer);
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
-        {
-            instance_->stopExtSignalBuffering(deleteBuffer);
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
-        {
-            instance_->stopTimeSyncBuffering(deleteBuffer);
-        }
-    }
-
-    template <TobiiBuff::DataStream DS>
-    mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[])
-    {
-        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("consume: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-
-        if constexpr (DS == TobiiBuff::DataStream::Sample)
-        {
-            return ToMxArray(instance_->consumeSamples(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
-        {
-            return ToMxArray(instance_->consumeEyeImages(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
-        {
-            return ToMxArray(instance_->consumeExtSignals(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
-        {
-            return ToMxArray(instance_->consumeTimeSyncs(nSamp));
-        }
-    }
-
-    template <TobiiBuff::DataStream DS>
-    mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[])
-    {
-        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-        {
-            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("peek: Expected argument to be a uint64 scalar.");
-            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-        }
-
-        if constexpr (DS == TobiiBuff::DataStream::Sample)
-        {
-            return ToMxArray(instance_->peekSamples(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::EyeImage)
-        {
-            return ToMxArray(instance_->peekEyeImages(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::ExtSignal)
-        {
-            return ToMxArray(instance_->peekExtSignals(nSamp));
-        }
-        else if constexpr (DS == TobiiBuff::DataStream::TimeSync)
-        {
-            return ToMxArray(instance_->peekTimeSyncs(nSamp));
-        }
-    }
-
     // get field indicated by list of pointers-to-member-variable in fields
     template <typename O, typename T, typename... Os, typename... Ts>
     auto getField(const O& obj, T O::*field1, Ts Os::*...fields)

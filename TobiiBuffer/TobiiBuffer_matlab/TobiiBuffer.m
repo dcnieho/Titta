@@ -86,14 +86,63 @@ classdef TobiiBuffer < handle
             this.instanceHandle = this.cppmethodGlobal('new',char(address));
         end
         
-        function success = startSampleBuffering(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                success = this.cppmethod('startSampleBuffering',uint64(initialBufferSize));
+        function success = startBuffering(this,stream,initialBufferSize,asGif)
+            % optional buffer size input, and input requesting gif-encoded
+            % instead of raw images
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>3
+                success = this.cppmethod('startBuffering',stream,uint64(initialBufferSize),logical(asGif));
+            elseif nargin>2
+                success = this.cppmethod('startBuffering',stream,uint64(initialBufferSize));
             else
-                success = this.cppmethod('startSampleBuffering');
+                success = this.cppmethod('startBuffering',stream);
             end
         end
+        function clearBuffer(this,stream)
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            this.cppmethod('clearBuffer',stream);
+        end
+        function success = stopBuffering(this,stream,doDeleteBuffer)
+            % optional boolean input indicating whether buffer should be
+            % deleted
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>2
+                success = this.cppmethod('stopBuffering',stream,logical(doDeleteBuffer));
+            else
+                success = this.cppmethod('stopBuffering',stream);
+            end
+        end
+        function data = consume(this,stream,firstN)
+            % optional input indicating how many samples to read from the
+            % beginning of buffer. Default: all
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>2
+                data = this.cppmethod('consume',stream,uint64(firstN));
+            else
+                data = this.cppmethod('consume',stream);
+            end
+        end
+        function data = peek(this,stream,lastN)
+            % optional input indicating how many items to read from the
+            % end of buffer. Default: 1
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>2
+                data = this.cppmethod('peek',stream,uint64(lastN));
+            else
+                data = this.cppmethod('peek',stream);
+            end
+        end
+        
         function enableTempSampleBuffer(this,initialBufferSize)
             % optional buffer size input
             if nargin>1
@@ -105,48 +154,8 @@ classdef TobiiBuffer < handle
         function disableTempSampleBuffer(this)
             this.cppmethod('disableTempSampleBuffer');
         end
-        function clearSampleBuffer(this)
-            this.cppmethod('clearSampleBuffer');
-        end
-        function stopSampleBuffering(this,doDeleteBuffer)
-            % optional boolean input indicating whether buffer should be
-            % deleted
-            if nargin>1
-                this.cppmethod('stopSampleBuffering',logical(doDeleteBuffer));
-            else
-                this.cppmethod('stopSampleBuffering');
-            end
-        end
-        function data = consumeSamples(this,firstN)
-            % optional input indicating how many samples to read from the
-            % beginning of buffer. Default: all
-            if nargin>1
-                data = this.cppmethod('consumeSamples',uint64(firstN));
-            else
-                data = this.cppmethod('consumeSamples');
-            end
-        end
-        function data = peekSamples(this,lastN)
-            % optional input indicating how many samples to read from the
-            % end of buffer. Default: 1
-            if nargin>1
-                data = this.cppmethod('peekSamples',uint64(lastN));
-            else
-                data = this.cppmethod('peekSamples');
-            end
-        end
         
-        function success = startEyeImageBuffering(this,initialBufferSize,asGif)
-            % optional buffer size input, and input requesting gif-encoded
-            % instead of raw images
-            if nargin>2
-                success = this.cppmethod('startEyeImageBuffering',uint64(initialBufferSize),logical(asGif));
-            elseif nargin>1
-                success = this.cppmethod('startEyeImageBuffering',uint64(initialBufferSize));
-            else
-                success = this.cppmethod('startEyeImageBuffering');
-            end
-        end
+        
         function enableTempEyeImageBuffer(this,initialBufferSize)
             % optional buffer size input
             if nargin>1
@@ -158,45 +167,7 @@ classdef TobiiBuffer < handle
         function disableTempEyeImageBuffer(this)
             this.cppmethod('disableTempSampleBuffer');
         end
-        function clearEyeImageBuffer(this)
-            this.cppmethod('clearEyeImageBuffer');
-        end
-        function stopEyeImageBuffering(this,doDeleteBuffer)
-            % optional boolean input indicating whether buffer should be
-            % deleted
-            if nargin>1
-                this.cppmethod('stopEyeImageBuffering',logical(doDeleteBuffer));
-            else
-                this.cppmethod('stopEyeImageBuffering');
-            end
-        end
-        function data = consumeEyeImages(this,firstN)
-            % optional input indicating how many eye images to read from the
-            % beginning of buffer. Default: all
-            if nargin>1
-                data = this.cppmethod('consumeEyeImages',uint64(firstN));
-            else
-                data = this.cppmethod('consumeEyeImages');
-            end
-        end
-        function data = peekEyeImages(this,lastN)
-            % optional input indicating how many eye images to read from
-            % the end of buffer. Default: 1
-            if nargin>1
-                data = this.cppmethod('peekEyeImages',uint64(lastN));
-            else
-                data = this.cppmethod('peekEyeImages');
-            end
-        end
         
-        function success = startExtSignalBuffering(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                success = this.cppmethod('startExtSignalBuffering',uint64(initialBufferSize));
-            else
-                success = this.cppmethod('startExtSignalBuffering');
-            end
-        end
         function enableTempExtSignalBuffer(this,initialBufferSize)
             % optional buffer size input
             if nargin>1
@@ -208,45 +179,7 @@ classdef TobiiBuffer < handle
         function disableTempExtSignalBuffer(this)
             this.cppmethod('disableTempExtSignalBuffer');
         end
-        function clearExtSignalBuffer(this)
-            this.cppmethod('clearExtSignalBuffer');
-        end
-        function stopExtSignalBuffering(this,doDeleteBuffer)
-            % optional boolean input indicating whether buffer should be
-            % deleted
-            if nargin>1
-                this.cppmethod('stopExtSignalBuffering',logical(doDeleteBuffer));
-            else
-                this.cppmethod('stopExtSignalBuffering');
-            end
-        end
-        function data = consumeExtSignals(this,firstN)
-            % optional input indicating how many external signals to read
-            % from the beginning of buffer. Default: all
-            if nargin>1
-                data = this.cppmethod('consumeExtSignals',uint64(firstN));
-            else
-                data = this.cppmethod('consumeExtSignals');
-            end
-        end
-        function data = peekExtSignals(this,lastN)
-            % optional input indicating how many external signals to read
-            % from the end of buffer. Default: 1
-            if nargin>1
-                data = this.cppmethod('peekExtSignals',uint64(lastN));
-            else
-                data = this.cppmethod('peekExtSignals');
-            end
-        end
         
-        function success = startTimeSyncBuffering(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                success = this.cppmethod('startTimeSyncBuffering',uint64(initialBufferSize));
-            else
-                success = this.cppmethod('startTimeSyncBuffering');
-            end
-        end
         function enableTempTimeSyncBuffer(this,initialBufferSize)
             % optional buffer size input
             if nargin>1
@@ -257,36 +190,6 @@ classdef TobiiBuffer < handle
         end
         function disableTempTimeSyncBuffer(this)
             this.cppmethod('disableTempTimeSyncBuffer');
-        end
-        function clearTimeSyncBuffer(this)
-            this.cppmethod('clearTimeSyncBuffer');
-        end
-        function stopTimeSyncBuffering(this,doDeleteBuffer)
-            % optional boolean input indicating whether buffer should be
-            % deleted
-            if nargin>1
-                this.cppmethod('stopTimeSyncBuffering',logical(doDeleteBuffer));
-            else
-                this.cppmethod('stopTimeSyncBuffering');
-            end
-        end
-        function data = consumeTimeSyncs(this,firstN)
-            % optional input indicating how many time sync packets to read
-            % from the beginning of buffer. Default: all
-            if nargin>1
-                data = this.cppmethod('consumeTimeSyncs',uint64(firstN));
-            else
-                data = this.cppmethod('consumeTimeSyncs');
-            end
-        end
-        function data = peekTimeSyncs(this,lastN)
-            % optional input indicating how many time sync packets to read
-            % from the end of buffer. Default: 1
-            if nargin>1
-                data = this.cppmethod('peekTimeSyncs',uint64(lastN));
-            else
-                data = this.cppmethod('peekTimeSyncs');
-            end
         end
         
         

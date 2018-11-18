@@ -357,7 +357,7 @@ int main()
             }
             case Action::ClearSampleBuffer:
                 if (TobiiBufferInstance.get())
-                    TobiiBufferInstance.get()->clearSampleBuffer();
+                    TobiiBufferInstance.get()->clearBuffer("sample");
                 sendJson(ws, {{"action", "clearSampleBuffer"}, {"status", true}});  // nothing to clear or cleared, both success status
                 break;
             case Action::PeekSamples:
@@ -386,7 +386,7 @@ int main()
             {
                 bool status = false;
                 if (TobiiBufferInstance.get())
-                    status = TobiiBufferInstance.get()->stopSampleBuffering();
+                    status = TobiiBufferInstance.get()->stopBuffering("sample");
 
                 sendJson(ws, {{"action", "stopSampleBuffer"}, {"status", status}});
                 break;
@@ -419,7 +419,7 @@ int main()
             std::cout << "No clients left, stopping buffering and streaming, if active..." << std::endl;
             tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
             if (TobiiBufferInstance.get())
-                TobiiBufferInstance.get()->stopSampleBuffering();
+                TobiiBufferInstance.get()->stopBuffering("sample");
         }
     });
 
