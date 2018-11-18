@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <limits>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
@@ -17,30 +18,55 @@
 namespace TobiiBuff
 {
     // default argument values
-    constexpr size_t g_sampleBufDefaultSize = 1 << 22;
-    constexpr size_t g_sampleTempBufDefaultSize = 1 << 16;
+    constexpr size_t  g_sampleBufDefaultSize = 1 << 22;
+    constexpr size_t  g_sampleTempBufDefaultSize = 1 << 16;
 
-    constexpr size_t g_eyeImageBufDefaultSize = 1 << 14;
-    constexpr bool   g_eyeImageAsGIFDefault = false;
-    constexpr size_t g_eyeImageTempBufDefaultSize = 1 << 10;
+    constexpr size_t  g_eyeImageBufDefaultSize = 1 << 14;
+    constexpr bool    g_eyeImageAsGIFDefault = false;
+    constexpr size_t  g_eyeImageTempBufDefaultSize = 1 << 10;
 
-    constexpr size_t g_extSignalBufDefaultSize = 1 << 14;
-    constexpr size_t g_extSignalTempBufDefaultSize = 1 << 10;
+    constexpr size_t  g_extSignalBufDefaultSize = 1 << 14;
+    constexpr size_t  g_extSignalTempBufDefaultSize = 1 << 10;
 
-    constexpr size_t g_timeSyncBufDefaultSize = 1 << 14;
-    constexpr size_t g_timeSyncTempBufDefaultSize = 1 << 10;
+    constexpr size_t  g_timeSyncBufDefaultSize = 1 << 14;
+    constexpr size_t  g_timeSyncTempBufDefaultSize = 1 << 10;
 
-    constexpr bool   g_stopBufferEmptiesDefault = false;
-    constexpr size_t g_consumeDefaultAmount = -1;
-    constexpr size_t g_peekDefaultAmount = 1;
+    constexpr int64_t g_clearTimeRangeStart = 0;
+    constexpr int64_t g_clearTimeRangeEnd = std::numeric_limits<int64_t>::max();
 
-    constexpr size_t g_logBufDefaultSize = 1 << 9;
-    constexpr bool   g_logBufClearDefault = true;
+    constexpr bool    g_stopBufferEmptiesDefault = false;
+    constexpr size_t  g_consumeDefaultAmount = -1;
+    constexpr int64_t g_consumeTimeRangeStart = 0; 
+    constexpr int64_t g_consumeTimeRangeEnd = std::numeric_limits<int64_t>::max();
+    constexpr size_t  g_peekDefaultAmount = 1;
+    constexpr int64_t g_peekTimeRangeStart = 0;
+    constexpr int64_t g_peekTimeRangeEnd = std::numeric_limits<int64_t>::max();
+
+    constexpr size_t  g_logBufDefaultSize = 1 << 9;
+    constexpr bool    g_logBufClearDefault = true;
 }
 
 
 class TobiiBuffer
 {
+public:
+    // short names for very long Tobii data types
+    using sample     = TobiiResearchGazeData;
+    using eyeImage   = TobiiBuff::eyeImage;
+    using extSignal  = TobiiResearchExternalSignalData;
+    using timeSync   = TobiiResearchTimeSynchronizationData;
+    using logMessage = TobiiBuff::logMessage;
+
+    // data stream type (NB: not log, that has a much simpler interface)
+    enum class DataStream
+    {
+        Unknown,
+        Sample,
+        EyeImage,
+        ExtSignal,
+        TimeSync
+    };
+
 public:
     TobiiBuffer(std::string address_);
     TobiiBuffer(TobiiResearchEyeTracker* et_);
@@ -49,9 +75,17 @@ public:
     //// Functions taking buffer type as input ////
     // clear all buffer contents
     void clear(std::string dataStream_); // TODO, option after and before times so you can clear specific segment
+    void clearTimeRange(std::string dataStream_, int64_t timeStart_ = TobiiBuff::g_clearTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_clearTimeRangeEnd);
     // stop optionally deletes the buffer
     bool stop(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
-    // TODO: consume, peek -> consumeN, peekN. also have consume and peek selecting by time
+    // can't have functions that only differ by return type, so must template these instead of take
+    // 'stream' string input
+    // consume samples (by default all)
+    template <typename T>  std::vector<T>   consumeN(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
+    template <typename T>  std::vector<T>   consumeTimeRange(int64_t timeStart_ = TobiiBuff::g_consumeTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_consumeTimeRangeEnd);
+    // peek samples (by default only last one, can specify how many from end to peek)
+    template <typename T>  std::vector<T>   peekN(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
+    template <typename T>  std::vector<T>   peekTimeRange(int64_t timeStart_ = TobiiBuff::g_peekTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_peekTimeRangeEnd);
 
     //// Samples ////
     bool startSample(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
@@ -59,10 +93,6 @@ public:
     void enableTempSampleBuffer(size_t initialBufferSize_ = TobiiBuff::g_sampleTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempSampleBuffer();
-    // consume samples (by default all)
-    std::vector<TobiiResearchGazeData> consumeSamples(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiResearchGazeData> peekSamples(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// eyeImages ////
     bool startEyeImage(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
@@ -70,10 +100,6 @@ public:
     void enableTempEyeImageBuffer(size_t initialBufferSize_ = TobiiBuff::g_eyeImageTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempEyeImageBuffer();
-    // consume samples (by default all)
-    std::vector<TobiiBuff::eyeImage> consumeEyeImages(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiBuff::eyeImage> peekEyeImages(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// external signals ////
     bool startExtSignal(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
@@ -81,10 +107,6 @@ public:
     void enableTempExtSignalBuffer(size_t initialBufferSize_ = TobiiBuff::g_extSignalTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempExtSignalBuffer();
-    // consume samples (by default all)
-    std::vector<TobiiResearchExternalSignalData> consumeExtSignals(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiResearchExternalSignalData> peekExtSignals(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// time synchronization information ////
     bool startTimeSync(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
@@ -92,10 +114,6 @@ public:
     void enableTempTimeSyncBuffer(size_t initialBufferSize_ = TobiiBuff::g_timeSyncTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
     void disableTempTimeSyncBuffer();
-    // consume samples (by default all)
-    std::vector<TobiiResearchTimeSynchronizationData> consumeTimeSyncs(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    // peek samples (by default only last one, can specify how many from end to peek)
-    std::vector<TobiiResearchTimeSynchronizationData> peekTimeSyncs(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
 private:
     // Tobii callbacks needs to be friends
@@ -105,10 +123,10 @@ private:
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
 
-    std::vector<TobiiResearchGazeData>&                getSampleBuffer()    {return _samplesUseTempBuf   ? _samplesTemp   : _samples;}
-    std::vector<TobiiBuff::eyeImage>&                  getEyeImageBuffer()  {return _eyeImUseTempBuf     ? _eyeImagesTemp : _eyeImages;}
-    std::vector<TobiiResearchExternalSignalData>&      getExtSignalBuffer() {return _extSignalUseTempBuf ? _extSignalTemp : _extSignal;}
-    std::vector<TobiiResearchTimeSynchronizationData>& getTimeSyncBuffer()  {return _timeSyncUseTempBuf  ? _timeSyncTemp  : _timeSync;}
+    std::vector<sample>&    getSampleBuffer()    {return _samplesUseTempBuf   ? _samplesTemp   : _samples;}
+    std::vector<eyeImage>&  getEyeImageBuffer()  {return _eyeImUseTempBuf     ? _eyeImagesTemp : _eyeImages;}
+    std::vector<extSignal>& getExtSignalBuffer() {return _extSignalUseTempBuf ? _extSignalTemp : _extSignal;}
+    std::vector<timeSync>&  getTimeSyncBuffer()  {return _timeSyncUseTempBuf  ? _timeSyncTemp  : _timeSync;}
 
     //// generic functions for internal use
     // helpers
@@ -121,36 +139,34 @@ private:
     template <typename T>  void             disableTempBufferGeneric(bool& usingTempBuf_);
     template <typename T>  void             clearImpl();
     template <typename T>  bool             stopImpl(bool emptyBuffer_);
-    template <typename T>  std::vector<T>   peek(size_t lastN_);
-    template <typename T>  std::vector<T>   consume(size_t firstN_);
 private:
 
-    TobiiResearchEyeTracker*							_eyetracker				= nullptr;
+    TobiiResearchEyeTracker*	_eyetracker				= nullptr;
 
-    std::vector<TobiiResearchGazeData>					_samples;
-    std::vector<TobiiResearchGazeData>					_samplesTemp;
-    bool												_samplesUseTempBuf		= false;
+    std::vector<sample>		    _samples;
+    std::vector<sample>		    _samplesTemp;
+    bool					    _samplesUseTempBuf		= false;
 
-    bool												_recordingEyeImages		= false;
-    std::vector<TobiiBuff::eyeImage>					_eyeImages;
-    std::vector<TobiiBuff::eyeImage>					_eyeImagesTemp;
-    bool												_eyeImUseTempBuf		= false;
-    bool												_eyeImIsGif				= false;
-    bool												_eyeImWasGif			= false;
+    bool					    _recordingEyeImages		= false;
+    std::vector<eyeImage>	    _eyeImages;
+    std::vector<eyeImage>	    _eyeImagesTemp;
+    bool					    _eyeImUseTempBuf		= false;
+    bool					    _eyeImIsGif				= false;
+    bool					    _eyeImWasGif			= false;
 
-    std::vector<TobiiResearchExternalSignalData>		_extSignal;
-    std::vector<TobiiResearchExternalSignalData>		_extSignalTemp;
-    bool												_extSignalUseTempBuf	= false;
+    std::vector<extSignal>	    _extSignal;
+    std::vector<extSignal>	    _extSignalTemp;
+    bool					    _extSignalUseTempBuf	= false;
 
-    std::vector<TobiiResearchTimeSynchronizationData>	_timeSync;
-    std::vector<TobiiResearchTimeSynchronizationData>	_timeSyncTemp;
-    bool												_timeSyncUseTempBuf		= false;
+    std::vector<timeSync>       _timeSync;
+    std::vector<timeSync>       _timeSyncTemp;
+    bool			            _timeSyncUseTempBuf		= false;
 };
 
 
 namespace TobiiBuff
 {
-    TobiiBuff::DataStream stringToDataStream(std::string dataStream_);
+    TobiiBuffer::DataStream stringToDataStream(std::string dataStream_);
 
     //// logging ////
     bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);

@@ -370,7 +370,7 @@ int main()
                     if (jsonInput.count("nSamples"))
                         nSamples = jsonInput.at("nSamples").get<decltype(nSamples)>();
 
-                    auto samples = TobiiBufferInstance.get()->peekSamples(nSamples);
+                    auto samples = TobiiBufferInstance.get()->peekN<TobiiBuffer::sample>(nSamples);
                     if (!samples.empty())
                     {
                         for (auto sample: samples)
@@ -395,7 +395,7 @@ int main()
             {
                 if (TobiiBufferInstance.get())
                 {
-                    auto samples = TobiiBufferInstance.get()->consumeSamples();
+                    auto samples = TobiiBufferInstance.get()->consumeN<TobiiBuffer::sample>();
                     // TODO: store all to file somehow
                 }
                 break;
