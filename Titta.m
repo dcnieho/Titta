@@ -212,7 +212,7 @@ classdef Titta < handle
             end
             
             % set eye tracking mode TODO: test what happens with this on
-            % firmware that doesn't have modes (pre 1.7.6. i think)
+            % firmware that doesn't have modes (use 1.5.9)
             if ~isempty(obj.settings.trackingMode)
                 try
                     obj.eyetracker.set_eye_tracking_mode(obj.settings.trackingMode);
@@ -235,7 +235,7 @@ classdef Titta < handle
             for f=1:length(fields)
                 obj.systemInfo.(fields{f}) = obj.eyetracker.(fields{f});
             end
-            obj.systemInfo.freq         = obj.eyetracker.get_gaze_output_frequency();
+            obj.systemInfo.samplerate   = obj.eyetracker.get_gaze_output_frequency();
             assert(obj.systemInfo.freq==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.freq);
             obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
             out.systemInfo              = obj.systemInfo;
