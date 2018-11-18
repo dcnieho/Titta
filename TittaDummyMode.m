@@ -110,18 +110,38 @@ classdef TittaDummyMode < Titta
             end
         end
         
-        function data = consumeData(~,stream,~)
+        function data = consumeN(~,stream,~)
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample();
             end
         end
         
-        function data = peekData(~,stream,~)
+        function data = consumeTimeRange(~,stream,~,~)
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample();
             end
+        end
+        
+        function data = peekN(~,stream,~)
+            data = [];
+            if strcmpi(stream,'gaze')
+                data = getMouseSample();
+            end
+        end
+        
+        function data = peekTimeRange(~,stream,~,~)
+            data = [];
+            if strcmpi(stream,'gaze')
+                data = getMouseSample();
+            end
+        end
+        
+        function clearBuffer(~,stream)
+        end
+        
+        function clearBufferTimeRange(~,~,~)
         end
         
         function stopRecording(obj,stream,~)
