@@ -112,9 +112,9 @@ classdef TobiiBuffer < handle
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>3
-                data = this.cppmethod('clearTimeRange',stream,uint64(startT),uint64(endT));
+                data = this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2
-                data = this.cppmethod('clearTimeRange',stream,uint64(startT));
+                data = this.cppmethod('clearTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('clearTimeRange',stream);
             end
@@ -149,9 +149,9 @@ classdef TobiiBuffer < handle
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>3
-                data = this.cppmethod('consumeTimeRange',stream,uint64(startT),uint64(endT));
+                data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2
-                data = this.cppmethod('consumeTimeRange',stream,uint64(startT));
+                data = this.cppmethod('consumeTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('consumeTimeRange',stream);
             end
@@ -174,9 +174,9 @@ classdef TobiiBuffer < handle
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>3
-                data = this.cppmethod('peekTimeRange',stream,uint64(startT),uint64(endT));
+                data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2
-                data = this.cppmethod('peekTimeRange',stream,uint64(startT));
+                data = this.cppmethod('peekTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('peekTimeRange',stream);
             end

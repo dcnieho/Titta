@@ -278,8 +278,38 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             mxFree(bufferCstr);
             break;
         }
+        case Action::ClearTimeRange:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get default argument and parse optional input
+            uint64_t timeStart = TobiiBuff::g_consumeTimeRangeStart;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+            }
+            uint64_t timeEnd = TobiiBuff::g_consumeTimeRangeEnd;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+            }
+
+            // get data stream identifier string, clear buffer
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            instance->clearTimeRange(bufferCstr,timeStart,timeEnd);
+            mxFree(bufferCstr);
+            break;
+        }
         case Action::Stop:
         {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
             bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
@@ -287,9 +317,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     mexErrMsgTxt("stopBuffering: Expected argument to be a logical scalar.");
                 deleteBuffer = mxIsLogicalScalarTrue(prhs[3]);
             }
-            
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
 
             // get data stream identifier string, stop buffering
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -332,6 +359,48 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     return;
             }
         }
+        case Action::ConsumeTimeRange:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+
+            // get default argument and parse optional input
+            uint64_t timeStart = TobiiBuff::g_consumeTimeRangeStart;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+            }
+            uint64_t timeEnd = TobiiBuff::g_consumeTimeRangeEnd;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+            }
+
+            switch (dataStream)
+            {
+                case TobiiBuffer::DataStream::Sample:
+                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::sample>(timeStart,timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::EyeImage:
+                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::ExtSignal:
+                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::TimeSync:
+                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
+                    return;
+            }
+        }
         case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
@@ -364,6 +433,49 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
                     plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::timeSync>(nSamp));
+                    return;
+            }
+        }
+
+        case Action::PeekTimeRange:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+
+            // get data stream identifier string
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+
+            // get default argument and parse optional input
+            uint64_t timeStart = TobiiBuff::g_consumeTimeRangeStart;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+            }
+            uint64_t timeEnd = TobiiBuff::g_consumeTimeRangeEnd;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                    mexErrMsgTxt("consumeTimeRange: Expected argument to be a int64 scalar.");
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+            }
+
+            switch (dataStream)
+            {
+                case TobiiBuffer::DataStream::Sample:
+                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::sample>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::EyeImage:
+                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::ExtSignal:
+                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::TimeSync:
+                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
                     return;
             }
         }
