@@ -249,10 +249,10 @@ classdef Titta < handle
             out.geom                = obj.geom;
             
             % init recording state
-            obj.recState.gaze   = false;
-            obj.recState.sync   = false;
-            obj.recState.extSig = false;
-            obj.recState.eyeIm  = false;
+            obj.recState.gaze           = false;
+            obj.recState.timeSync       = false;
+            obj.recState.externalSignal = false;
+            obj.recState.eyeImage       = false;
             
             % mark as inited
             obj.isInitialized = true;
@@ -291,7 +291,6 @@ classdef Titta < handle
                 % calibration mode
             end
             obj.StopRecordAll();
-            obj.DisableAllTempBuffers();
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -410,8 +409,8 @@ classdef Titta < handle
                     end
                 case 'eyeimage'
                     if obj.hasCap(Capabilities.HasEyeImages)
-                        field   	= 'eyeIm';
-                        if ~obj.recState.eyeIm
+                        field   	= 'eyeImage';
+                        if ~obj.recState.eyeImage
                             result      = obj.buffers.start('eyeImage');
                             streamLbl   = 'eye images';
                         end
@@ -420,8 +419,8 @@ classdef Titta < handle
                     end
                 case 'externalsignal'
                     if obj.hasCap(Capabilities.HasExternalSignal)
-                        field       = 'extSig';
-                        if ~obj.recState.extSig
+                        field       = 'externalSignal';
+                        if ~obj.recState.externalSignal
                             result      = obj.buffers.start('extSignal');
                             streamLbl   = 'external signals';
                         end
@@ -429,8 +428,8 @@ classdef Titta < handle
                         error('Titta: recording of external signals is not supported by this eye-tracker')
                     end
                 case 'timesync'
-                    field       = 'sync';
-                    if ~obj.recState.sync
+                    field       = 'timeSync';
+                    if ~obj.recState.timeSync
                         result      = obj.buffers.start('timeSync');
                         streamLbl   = 'sync data';
                     end
@@ -453,32 +452,32 @@ classdef Titta < handle
         function data = consumeN(obj,stream,varargin)
             % optional input argument firstN: how many samples to consume
             % from start. Default: all
-            data = obj.consumeOrPeek(stream,'consumeN',varargin{:});
+            data = obj.consumePeekOrClear(stream,'consumeN',varargin{:});
         end
         
         function data = consumeTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            data = obj.consumeOrPeek(stream,'consumeTimeRange',varargin{:});
+            data = obj.consumePeekOrClear(stream,'consumeTimeRange',varargin{:});
         end
         
         function data = peekN(obj,stream,varargin)
             % optional input argument lastN: how many samples to peek from
             % end. Default: 1. To get all, ask for -1 samples
-            data = obj.consumeOrPeek(stream,'peekN',varargin{:});
+            data = obj.consumePeekOrClear(stream,'peekN',varargin{:});
         end
         
         function data = peekTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            data = obj.consumeOrPeek(stream,'peekTimeRange',varargin{:});
+            data = obj.consumePeekOrClear(stream,'peekTimeRange',varargin{:});
         end
         
         function clearBuffer(obj,stream)
-            data = obj.buffers.clear(stream);
+            obj.consumePeekOrClear(stream,'clear');
         end
         
-        function clearBufferTimeRange(obj,varargin)
+        function clearBufferTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            data = obj.buffers.clearTimeRange(stream,varargin{:});
+            obj.consumePeekOrClear(stream,'clearTimeRange',varargin{:});
         end
         
         function stopRecording(obj,stream,qClearBuffer)
@@ -494,17 +493,17 @@ classdef Titta < handle
                         field = 'gaze';
                     end
                 case 'eyeimage'
-                    if obj.recState.eyeIm
+                    if obj.recState.eyeImage
                         obj.buffers.stop('eyeImage',qClearBuffer);
                         field = 'eyeIm';
                     end
                 case 'externalsignal'
-                    if obj.recState.extSig
+                    if obj.recState.externalSignal
                         obj.buffers.stop('extSignal',qClearBuffer);
                         field = 'extSig';
                     end
                 case 'timesync'
-                    if obj.recState.sync
+                    if obj.recState.timeSync
                         obj.buffers.stop('timeSync',qClearBuffer);
                         field = 'sync';
                     end
@@ -526,9 +525,10 @@ classdef Titta < handle
             % functions), and will be converted to microsec to match
             % Tobii's timestamps
             if nargin<3
-                time = GetSecs();
+                time = obj.getSystemTime();
+            else
+                time = int64(round(time*1000*1000));
             end
-            time = int64(round(time*1000*1000));
             obj.msgs.append({time,str});
             if obj.settings.debugMode
                 fprintf('%d: %s\n',time,str);
@@ -669,6 +669,10 @@ classdef Titta < handle
             settings.debugMode          = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
+        function time = getSystemTime()
+            time = int64(round(GetSecs()*1000*1000));
+        end
+        
         function processError(returnValue,errorString)
             % for Tobii, deal with return values of type StreamError
             if isa(returnValue,'StreamError')
@@ -729,9 +733,8 @@ classdef Titta < handle
             
             % init
             status = 5+5*(startScreen==2);  % 5 if simple screen requested, 10 if advanced screen
-            obj.buffers.enableTempSampleBuffer();
+            startT = obj.sendMessage('SETUP START');
             obj.startRecording('gaze');
-            obj.sendMessage('SETUP START');
             % see if we already have valid calibrations
             qHaveValidCalibrations = ~isempty(getValidCalibrations(out.attempt));
             
@@ -748,8 +751,8 @@ classdef Titta < handle
                 end
             end
             obj.stopRecording('gaze');
-            obj.buffers.disableTempSampleBuffer();
-            obj.sendMessage('SETUP END');
+            endT = obj.sendMessage('SETUP END');
+            obj.clearBufferTimeRange('gaze',startT,endT);
         end
         
         function status = showHeadPositioningSimple(obj,wpnt,qHaveValidCalibrations)
@@ -941,7 +944,7 @@ classdef Titta < handle
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
             qHasEyeIm = obj.hasCap(Capabilities.HasExternalSignal);
             if qHasEyeIm
-                obj.buffers.enableTempEyeImageBuffer();
+                eyeStartTime = obj.getSystemTime();
                 obj.startRecording('eyeImage');
             end
             
@@ -961,7 +964,7 @@ classdef Titta < handle
                 eyeIm   = [];
                 count   = 0;
                 while isempty(eyeIm) && count<20
-                    eyeIm = obj.consumeN('eyeImage');
+                    eyeIm = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward
                     WaitSecs('YieldSecs',0.15);
                     count = count+1;
                 end
@@ -1117,7 +1120,7 @@ classdef Titta < handle
                 
                 if qHasEyeIm
                     % get eye image
-                    eyeIm       = obj.consumeN('eyeImage');
+                    eyeIm       = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward
                     [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
                     
                     % update eye image locations (and possibly track box) if
@@ -1255,7 +1258,7 @@ classdef Titta < handle
             end
             % clean up
             obj.stopRecording('eyeImage');
-            obj.buffers.disableTempEyeImageBuffer();
+            obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % from start time onward
             if qHasEyeIm && any(texs)
                 Screen('Close',texs(texs>0));
             end
@@ -1332,12 +1335,15 @@ classdef Titta < handle
             
             % do calibration
             calibClass.enter_calibration_mode();
-            obj.StartTempRecordAll();
-            obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
+            calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
+            obj.startRecording('gaze');
+            obj.startRecording('eyeImage');
+            obj.startRecording('externalSignal');
+            obj.startRecording('timeSync');
             % show display
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
             obj.sendMessage(sprintf('CALIBRATION END %d',kCal));
-            out.cal.data = obj.ConsumeAllData();
+            out.cal.data = obj.ConsumeAllData(calStartT);
             if status==1
                 % compute calibration
                 out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
@@ -1363,7 +1369,7 @@ classdef Titta < handle
             
             if status~=1
                 obj.StopRecordAll();
-                obj.DisableAllTempBuffers();
+                obj.ClearAllBuffers(calStartT);    % clean up data
                 if status~=-1
                     % -1 means restart calibration from start. if we do not
                     % clean up here, we e.g. get a nice animation of the
@@ -1380,14 +1386,14 @@ classdef Titta < handle
             end
             
             % do validation
-            obj.sendMessage(sprintf('VALIDATION START %d',kCal));
-            obj.ClearAllBuffers();
+            valStartT = obj.sendMessage(sprintf('VALIDATION START %d',kCal));
+            obj.ClearAllBuffers(calStartT);    % clean up data
             % show display
             [status,out.val] = obj.DoCalPointDisplay(wpnt,[],tick,out.cal.flips(end));
             obj.sendMessage(sprintf('VALIDATION END %d',kCal));
-            out.val.allData = obj.ConsumeAllData();
+            out.val.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
-            obj.DisableAllTempBuffers();
+            obj.ClearAllBuffers(valStartT);    % clean up data
             % compute accuracy etc
             if status==1
                 out.val = obj.ProcessValData(out.val);
@@ -1404,30 +1410,15 @@ classdef Titta < handle
             Screen('Flip',wpnt);
         end
         
-        function StartTempRecordAll(obj)
-            obj.buffers.enableTempSampleBuffer();
-            obj.startRecording('gaze');
-            if obj.hasCap(Capabilities.HasEyeImages)
-                obj.buffers.enableTempEyeImageBuffer();
-                obj.startRecording('eyeImage');
-            end
-            if obj.hasCap(Capabilities.HasExternalSignal)
-                obj.buffers.enableTempExtSignalBuffer();
-                obj.startRecording('externalSignal');
-            end
-            obj.buffers.enableTempTimeSyncBuffer();
-            obj.startRecording('timeSync');
+        function data = ConsumeAllData(obj,varargin)
+            data.gaze           = obj.consumeTimeRange('gaze',varargin{:});
+            data.eyeImages      = obj.consumeTimeRange('eyeImage',varargin{:});
+            data.externalSignals= obj.consumeTimeRange('externalSignal',varargin{:});
+            data.timeSync       = obj.consumeTimeRange('timeSync',varargin{:});
         end
         
-        function data = ConsumeAllData(obj)
-            data.gaze           = obj.consumeN('gaze');
-            data.eyeImages      = obj.consumeN('eyeImage');
-            data.externalSignals= obj.consumeN('externalSignal');
-            data.timeSync       = obj.consumeN('timeSync');
-        end
-        
-        function data = consumeOrPeek(obj,stream,action,varargin)
-            fields = {'gaze','eyeImage','externalSignal','timesync'};
+        function data = consumePeekOrClear(obj,stream,action,varargin)
+            fields = {'gaze','eyeImage','externalSignal','timeSync'};
             q = strcmpi(stream,fields);
             assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
             
@@ -1435,11 +1426,11 @@ classdef Titta < handle
             data = obj.buffers.(action)(get{q},varargin{:});
         end
         
-        function ClearAllBuffers(obj)
-            obj.buffers.clear('sample');
-            obj.buffers.clear('eyeImage');
-            obj.buffers.clear('extSignal');
-            obj.buffers.clear('timeSync');
+        function ClearAllBuffers(obj,varargin)
+            obj.buffers.clear('sample',varargin{:});
+            obj.buffers.clear('eyeImage',varargin{:});
+            obj.buffers.clear('extSignal',varargin{:});
+            obj.buffers.clear('timeSync',varargin{:});
         end
         
         function StopRecordAll(obj)
@@ -1447,13 +1438,6 @@ classdef Titta < handle
             obj.stopRecording('eyeImage');
             obj.stopRecording('externalSignal');
             obj.stopRecording('timeSync');
-        end
-        
-        function DisableAllTempBuffers(obj)
-            obj.buffers.disableTempSampleBuffer();
-            obj.buffers.disableTempEyeImageBuffer();
-            obj.buffers.disableTempExtSignalBuffer();
-            obj.buffers.disableTempTimeSyncBuffer();
         end
         
         function [status,out,tick] = DoCalPointDisplay(obj,wpnt,calibClass,tick,lastFlip)
@@ -1808,10 +1792,10 @@ classdef Titta < handle
                     if qShowGaze
                         % switch off
                         obj.stopRecording('gaze');
-                        obj.buffers.disableTempSampleBuffer();
+                        obj.clearBufferTimeRange('gaze',gazeStartT);
                     else
                         % switch on
-                        obj.buffers.enableTempSampleBuffer();
+                        gazeStartT = obj.getSystemTime();
                         obj.startRecording('gaze');
                     end
                     qShowGaze   = ~qShowGaze;
@@ -2149,7 +2133,7 @@ classdef Titta < handle
             if qShowGaze
                 % if showing gaze, switch off gaze data stream
                 obj.stopRecording('gaze');
-                obj.buffers.disableTempSampleBuffer();
+                obj.clearBufferTimeRange('gaze',gazeStartT);
             end
             HideCursor;
         end
