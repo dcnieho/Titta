@@ -205,6 +205,10 @@ namespace {
     mxArray* ToMxArray(std::vector<TobiiBuff::logMessage               > data_);
 
     template <TrackerDataStream DS>
+    mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[]);
+    template <TrackerDataStream DS>
+    void     StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
+    template <TrackerDataStream DS>
     mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
     template <TrackerDataStream DS>
     mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
@@ -268,17 +272,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
 
         case Action::StartSampleBuffering:
-        {
-            uint64_t bufSize = TobiiBuff::g_sampleBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("startSampleBuffering: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
+            plhs[0] = StartBuffer<TrackerDataStream::Sample>(TobiiBuff::g_sampleBufDefaultSize, instance, nrhs, prhs);
             return;
-        }
         case Action::EnableTempSampleBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
@@ -298,28 +293,14 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearSampleBuffer();
             return;
         case Action::StopSampleBuffering:
-        {
-            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                    mexErrMsgTxt("stopSampleBuffering: Expected argument to be a logical scalar.");
-                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-            }
-
-            instance->stopSampleBuffering(deleteBuffer);
+            StopBuffer<TrackerDataStream::Sample>(instance, nrhs, prhs);
             return;
-        }
         case Action::ConsumeSamples:
-        {
             plhs[0] = Consume<TrackerDataStream::Sample>(instance, nrhs, prhs);
             return;
-        }
         case Action::PeekSamples:
-        {
             plhs[0] = Peek<TrackerDataStream::Sample>(instance, nrhs, prhs);
             return;
-        }
 
         case Action::StartEyeImageBuffering:
         {
@@ -359,41 +340,18 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearEyeImageBuffer();
             return;
         case Action::StopEyeImageBuffering:
-        {
-            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                    mexErrMsgTxt("stopEyeImageBuffering: Expected argument to be a logical scalar.");
-                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-            }
-
-            instance->stopEyeImageBuffering(deleteBuffer);
+            StopBuffer<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
             return;
-        }
         case Action::ConsumeEyeImages:
-        {
             plhs[0] = Consume<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
             return;
-        }
         case Action::PeekEyeImages:
-        {
             plhs[0] = Peek<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
             return;
-        }
 
         case Action::StartExtSignalBuffering:
-        {
-            uint64_t bufSize = TobiiBuff::g_extSignalBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("startExtSignalBuffering: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
+            plhs[0] = StartBuffer<TrackerDataStream::ExtSignal>(TobiiBuff::g_extSignalBufDefaultSize, instance, nrhs, prhs);
             return;
-        }
         case Action::EnableTempExtSignalBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
@@ -413,41 +371,18 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearExtSignalBuffer();
             return;
         case Action::StopExtSignalBuffering:
-        {
-            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                    mexErrMsgTxt("stopExtSignalBuffering: Expected argument to be a logical scalar.");
-                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-            }
-
-            instance->stopExtSignalBuffering(deleteBuffer);
+            StopBuffer<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
             return;
-        }
         case Action::ConsumeExtSignals:
-        {
             plhs[0] = Consume<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
             return;
-        }
         case Action::PeekExtSignals:
-        {
             plhs[0] = Peek<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
             return;
-        }
 
         case Action::StartTimeSyncBuffering:
-        {
-            uint64_t bufSize = TobiiBuff::g_timeSyncBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("startTimeSyncBuffering: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
+            plhs[0] = StartBuffer<TrackerDataStream::TimeSync>(TobiiBuff::g_timeSyncBufDefaultSize, instance, nrhs, prhs);
             return;
-        }
         case Action::EnableTempTimeSyncBuffer:
         {
             uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
@@ -467,29 +402,15 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             instance->clearTimeSyncBuffer();
             return;
         case Action::StopTimeSyncBuffering:
-        {
-            bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                    mexErrMsgTxt("stopTimeSyncBuffering: Expected argument to be a logical scalar.");
-                deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
-            }
-
-            instance->stopTimeSyncBuffering(deleteBuffer);
+            StopBuffer<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
             return;
-        }
         case Action::ConsumeTimeSyncs:
-        {
             plhs[0] = Consume<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
             return;
-        }
         case Action::PeekTimeSyncs:
-        {
             plhs[0] = Peek<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
             return;
-        }
-
+        
         case Action::StartLogging:
         {
             uint64_t bufSize = TobiiBuff::g_logBufDefaultSize;
@@ -528,6 +449,59 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 // helpers
 namespace
 {
+    template <TrackerDataStream DS>
+    mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[])
+    {
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("startBuffering: Expected argument to be a uint64 scalar.");
+            bufSize_ = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+
+        if constexpr (DS == TrackerDataStream::Sample)
+        {
+            return mxCreateLogicalScalar(instance_->startSampleBuffering(bufSize_));
+        }
+        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        {
+            return mxCreateLogicalScalar(instance_->startExtSignalBuffering(bufSize_));
+        }
+        else if constexpr (DS == TrackerDataStream::TimeSync)
+        {
+            return mxCreateLogicalScalar(instance_->startTimeSyncBuffering(bufSize_));
+        }
+    }
+
+    template <TrackerDataStream DS>
+    void StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[])
+    {
+        bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("stopBuffering: Expected argument to be a logical scalar.");
+            deleteBuffer = mxIsLogicalScalarTrue(prhs[2]);
+        }
+
+        if constexpr (DS == TrackerDataStream::Sample)
+        {
+            instance_->stopSampleBuffering(deleteBuffer);
+        }
+        else if constexpr (DS == TrackerDataStream::EyeImage)
+        {
+            instance_->stopEyeImageBuffering(deleteBuffer);
+        }
+        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        {
+            instance_->stopExtSignalBuffering(deleteBuffer);
+        }
+        else if constexpr (DS == TrackerDataStream::TimeSync)
+        {
+            instance_->stopTimeSyncBuffering(deleteBuffer);
+        }
+    }
+
     template <TrackerDataStream DS>
     mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[])
     {
