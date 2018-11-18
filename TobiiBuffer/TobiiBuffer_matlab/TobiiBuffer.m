@@ -92,9 +92,9 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>3
+            if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
-            elseif nargin>2
+            elseif nargin>2 && ~isempty(initialBufferSize)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize));
             else
                 success = this.cppmethod('start',stream);
@@ -111,9 +111,9 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>3
+            if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
-            elseif nargin>2
+            elseif nargin>2 && ~isempty(startT)
                 data = this.cppmethod('clearTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('clearTimeRange',stream);
@@ -125,7 +125,7 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>2
+            if nargin>2 && ~isempty(doDeleteBuffer)
                 success = this.cppmethod('stop',stream,logical(doDeleteBuffer));
             else
                 success = this.cppmethod('stop',stream);
@@ -137,7 +137,7 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>2
+            if nargin>2 && ~isempty(firstN)
                 data = this.cppmethod('consumeN',stream,uint64(firstN));
             else
                 data = this.cppmethod('consumeN',stream);
@@ -148,9 +148,9 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>3
+            if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
-            elseif nargin>2
+            elseif nargin>2 && ~isempty(startT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('consumeTimeRange',stream);
@@ -162,7 +162,7 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>2
+            if nargin>2 && ~isempty(lastN)
                 data = this.cppmethod('peekN',stream,uint64(lastN));
             else
                 data = this.cppmethod('peekN',stream);
@@ -173,9 +173,9 @@ classdef TobiiBuffer < handle
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            if nargin>3
+            if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));
-            elseif nargin>2
+            elseif nargin>2 && ~isempty(startT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('peekTimeRange',stream);
@@ -185,7 +185,7 @@ classdef TobiiBuffer < handle
         
         function success = startLogging(this,initialBufferSize)
             % optional buffer size input
-            if nargin>1
+            if nargin>1 && ~isempty(initialBufferSize)
                 success = this.cppmethodGlobal('startLogging',uint64(initialBufferSize));
             else
                 success = this.cppmethodGlobal('startLogging');
@@ -193,7 +193,7 @@ classdef TobiiBuffer < handle
         end
         function data = getLog(this,clearLogBuffer)
             % optional clear buffer input
-            if nargin>1
+            if nargin>1 && ~isempty(clearLogBuffer)
                 data = this.cppmethodGlobal('getLog',clearLogBuffer);
             else
                 data = this.cppmethodGlobal('getLog');
