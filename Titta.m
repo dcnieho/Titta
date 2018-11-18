@@ -1417,13 +1417,19 @@ classdef Titta < handle
             data.timeSync       = obj.consumeTimeRange('timeSync',varargin{:});
         end
         
-        function data = consumePeekOrClear(obj,stream,action,varargin)
+        function varargout = consumePeekOrClear(obj,stream,action,varargin)
             fields = {'gaze','eyeImage','externalSignal','timeSync'};
             q = strcmpi(stream,fields);
             assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
             
             get = {'sample','eyeImage','extSignal','timeSync'};
-            data = obj.buffers.(action)(get{q},varargin{:});
+            switch action
+                case {'clear','clearTimeRange'}
+                    nOut = 0;
+                otherwise
+                    nOut = 1;
+            end
+            [varargout{1:nOut}] = obj.buffers.(action)(get{q},varargin{:});
         end
         
         function ClearAllBuffers(obj,varargin)
