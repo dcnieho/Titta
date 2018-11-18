@@ -144,12 +144,18 @@ classdef Titta < handle
                 % find macthing eye-tracker, first by model
                 qModel = strcmp({trackers.Model},obj.settings.tracker);
                 if ~any(qModel)
+                    extra = '';
                     if iTry<obj.settings.nTryConnect
                         func = @warning;
                     else
                         func = @error;
+                        if ~isempty(trackers)
+                            extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.Model));
+                        else
+                            extra = sprintf('\nNo trackers connected.');
+                        end
                     end
-                    func('Titta: No trackers of model ''%s'' connected',obj.settings.tracker);
+                    func('Titta: No trackers of model ''%s'' connected%s',obj.settings.tracker,extra);
                     WaitSecs(obj.settings.connectRetryWait);
                     iTry = iTry+1;
                 else
