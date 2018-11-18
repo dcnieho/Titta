@@ -119,7 +119,7 @@ classdef TobiiBuffer < handle
                 data = this.cppmethod('clearTimeRange',stream);
             end
         end
-        function success = stopBuffering(this,stream,doDeleteBuffer)
+        function success = stop(this,stream,doDeleteBuffer)
             % optional boolean input indicating whether buffer should be
             % deleted
             if isa(stream,'string')
@@ -180,55 +180,6 @@ classdef TobiiBuffer < handle
             else
                 data = this.cppmethod('peekTimeRange',stream);
             end
-        end
-        
-        function enableTempSampleBuffer(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                this.cppmethod('enableTempSampleBuffer',uint64(initialBufferSize));
-            else
-                this.cppmethod('enableTempSampleBuffer');
-            end
-        end
-        function disableTempSampleBuffer(this)
-            this.cppmethod('disableTempSampleBuffer');
-        end
-        
-        
-        function enableTempEyeImageBuffer(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                this.cppmethod('enableTempEyeImageBuffer',uint64(initialBufferSize));
-            else
-                this.cppmethod('enableTempEyeImageBuffer');
-            end
-        end
-        function disableTempEyeImageBuffer(this)
-            this.cppmethod('disableTempSampleBuffer');
-        end
-        
-        function enableTempExtSignalBuffer(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                this.cppmethod('enableTempExtSignalBuffer',uint64(initialBufferSize));
-            else
-                this.cppmethod('enableTempExtSignalBuffer');
-            end
-        end
-        function disableTempExtSignalBuffer(this)
-            this.cppmethod('disableTempExtSignalBuffer');
-        end
-        
-        function enableTempTimeSyncBuffer(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1
-                this.cppmethod('enableTempTimeSyncBuffer',uint64(initialBufferSize));
-            else
-                this.cppmethod('enableTempTimeSyncBuffer');
-            end
-        end
-        function disableTempTimeSyncBuffer(this)
-            this.cppmethod('disableTempTimeSyncBuffer');
         end
         
         

@@ -89,18 +89,6 @@ namespace {
         PeekN,
         PeekTimeRange,
 
-        EnableTempSampleBuffer,
-        DisableTempSampleBuffer,
-
-        EnableTempEyeImageBuffer,
-        DisableTempEyeImageBuffer,
-
-        EnableTempExtSignalBuffer,
-        DisableTempExtSignalBuffer,
-
-        EnableTempTimeSyncBuffer,
-        DisableTempTimeSyncBuffer,
-
         StartLogging,
         GetLog,
         StopLogging
@@ -121,18 +109,6 @@ namespace {
         { "consumeTimeRange",   Action::ConsumeTimeRange },
         { "peekN",				Action::PeekN },
         { "peekTimeRange",		Action::PeekTimeRange },
-
-        { "enableTempSampleBuffer",		Action::EnableTempSampleBuffer },
-        { "disableTempSampleBuffer",	Action::DisableTempSampleBuffer },
-
-        { "enableTempEyeImageBuffer",	Action::EnableTempEyeImageBuffer },
-        { "disableTempEyeImageBuffer",	Action::DisableTempEyeImageBuffer },
-
-        { "enableTempExtSignalBuffer",	Action::EnableTempExtSignalBuffer },
-        { "disableTempExtSignalBuffer",	Action::DisableTempExtSignalBuffer },
-
-        { "enableTempTimeSyncBuffer",	Action::EnableTempTimeSyncBuffer },
-        { "disableTempTimeSyncBuffer",	Action::DisableTempTimeSyncBuffer },
 
         { "startLogging",		Action::StartLogging },
         { "getLog",				Action::GetLog },
@@ -391,70 +367,6 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     return;
             }
         }
-
-        case Action::EnableTempSampleBuffer:
-        {
-            uint64_t bufSize = TobiiBuff::g_sampleTempBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("enableTempSampleBuffer: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            instance->startSample(bufSize);
-            return;
-        }
-        case Action::DisableTempSampleBuffer:
-            instance->disableTempSampleBuffer();
-            return;
-
-        case Action::EnableTempEyeImageBuffer:
-        {
-            uint64_t bufSize = TobiiBuff::g_eyeImageTempBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("enableTempEyeImageBuffer: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            instance->enableTempEyeImageBuffer(bufSize);
-            return;
-        }
-        case Action::DisableTempEyeImageBuffer:
-            instance->disableTempEyeImageBuffer();
-            return;
-
-        case Action::EnableTempExtSignalBuffer:
-        {
-            uint64_t bufSize = TobiiBuff::g_extSignalTempBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("enableTempExtSignalBuffer: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            instance->startExtSignal(bufSize);
-            return;
-        }
-        case Action::DisableTempExtSignalBuffer:
-            instance->disableTempExtSignalBuffer();
-            return;
-
-        case Action::EnableTempTimeSyncBuffer:
-        {
-            uint64_t bufSize = TobiiBuff::g_timeSyncTempBufDefaultSize;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("enableTempTimeSyncBuffer: Expected argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            instance->startTimeSync(bufSize);
-            return;
-        }
-        case Action::DisableTempTimeSyncBuffer:
-            instance->disableTempTimeSyncBuffer();
-            return;
         
         case Action::StartLogging:
         {
@@ -549,7 +461,7 @@ namespace
     mxArray* FieldToMatlab(const std::vector<S>& data_, Fs... fields)
     {
         mxArray* temp;
-        // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessecarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
+        // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
         using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>>;
         // based on type, get number of rows for output
         constexpr auto numRows = getNumRows<retT>();

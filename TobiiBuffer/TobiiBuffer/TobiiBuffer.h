@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <tuple>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
@@ -74,7 +75,7 @@ public:
 
     //// Functions taking buffer type as input ////
     // clear all buffer contents
-    void clear(std::string dataStream_); // TODO, option after and before times so you can clear specific segment
+    void clear(std::string dataStream_);
     void clearTimeRange(std::string dataStream_, int64_t timeStart_ = TobiiBuff::g_clearTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_clearTimeRangeEnd);
     // stop optionally deletes the buffer
     bool stop(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
@@ -89,31 +90,15 @@ public:
 
     //// Samples ////
     bool startSample(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
-    // switch to recording to a temp buffer
-    void enableTempSampleBuffer(size_t initialBufferSize_ = TobiiBuff::g_sampleTempBufDefaultSize);
-    // switch back to main buffer, discarding temp buffer
-    void disableTempSampleBuffer();
 
     //// eyeImages ////
     bool startEyeImage(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
-    // switch to recording to a temp buffer
-    void enableTempEyeImageBuffer(size_t initialBufferSize_ = TobiiBuff::g_eyeImageTempBufDefaultSize);
-    // switch back to main buffer, discarding temp buffer
-    void disableTempEyeImageBuffer();
 
     //// external signals ////
     bool startExtSignal(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
-    // switch to recording to a temp buffer
-    void enableTempExtSignalBuffer(size_t initialBufferSize_ = TobiiBuff::g_extSignalTempBufDefaultSize);
-    // switch back to main buffer, discarding temp buffer
-    void disableTempExtSignalBuffer();
 
     //// time synchronization information ////
     bool startTimeSync(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
-    // switch to recording to a temp buffer
-    void enableTempTimeSyncBuffer(size_t initialBufferSize_ = TobiiBuff::g_timeSyncTempBufDefaultSize);
-    // switch back to main buffer, discarding temp buffer
-    void disableTempTimeSyncBuffer();
 
 private:
     // Tobii callbacks needs to be friends
@@ -123,44 +108,28 @@ private:
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
 
-    std::vector<sample>&    getSampleBuffer()    {return _samplesUseTempBuf   ? _samplesTemp   : _samples;}
-    std::vector<eyeImage>&  getEyeImageBuffer()  {return _eyeImUseTempBuf     ? _eyeImagesTemp : _eyeImages;}
-    std::vector<extSignal>& getExtSignalBuffer() {return _extSignalUseTempBuf ? _extSignalTemp : _extSignal;}
-    std::vector<timeSync>&  getTimeSyncBuffer()  {return _timeSyncUseTempBuf  ? _timeSyncTemp  : _timeSync;}
-
     //// generic functions for internal use
     // helpers
-    template <typename T>  std::vector<T>&  getCurrentBuffer();
-    template <typename T>  std::vector<T>&  getTempBuffer();
-    template <typename T>  void             enableTempBuffer(size_t initialBufferSize_);
-    template <typename T>  void             disableTempBuffer();
+    template <typename T>  std::vector<T>&  getBuffer();
+    template <typename T>
+                           std::tuple<bool, typename std::vector<T>::const_iterator, typename std::vector<T>::const_iterator>
+                                            getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_);
     // generic implementations
-    template <typename T>  void             enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_);
-    template <typename T>  void             disableTempBufferGeneric(bool& usingTempBuf_);
-    template <typename T>  void             clearImpl();
+    template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
     template <typename T>  bool             stopImpl(bool emptyBuffer_);
 private:
 
     TobiiResearchEyeTracker*	_eyetracker				= nullptr;
 
     std::vector<sample>		    _samples;
-    std::vector<sample>		    _samplesTemp;
-    bool					    _samplesUseTempBuf		= false;
 
     bool					    _recordingEyeImages		= false;
     std::vector<eyeImage>	    _eyeImages;
-    std::vector<eyeImage>	    _eyeImagesTemp;
-    bool					    _eyeImUseTempBuf		= false;
     bool					    _eyeImIsGif				= false;
-    bool					    _eyeImWasGif			= false;
 
     std::vector<extSignal>	    _extSignal;
-    std::vector<extSignal>	    _extSignalTemp;
-    bool					    _extSignalUseTempBuf	= false;
 
     std::vector<timeSync>       _timeSync;
-    std::vector<timeSync>       _timeSyncTemp;
-    bool			            _timeSyncUseTempBuf		= false;
 };
 
 
