@@ -138,7 +138,7 @@ classdef TittaDummyMode < Titta
             end
         end
         
-        function clearBuffer(~,stream)
+        function clearBuffer(~,~)
         end
         
         function clearBufferTimeRange(~,~,~)
