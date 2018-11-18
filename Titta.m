@@ -405,14 +405,14 @@ classdef Titta < handle
                 case 'gaze'
                     field       = 'gaze';
                     if ~obj.recState.gaze
-                        result      = obj.buffers.startBuffering('sample');
+                        result      = obj.buffers.start('sample');
                         streamLbl   = 'gaze data';
                     end
                 case 'eyeimage'
                     if obj.hasCap(Capabilities.HasEyeImages)
                         field   	= 'eyeIm';
                         if ~obj.recState.eyeIm
-                            result      = obj.buffers.startBuffering('eyeImage');
+                            result      = obj.buffers.start('eyeImage');
                             streamLbl   = 'eye images';
                         end
                     else
@@ -422,7 +422,7 @@ classdef Titta < handle
                     if obj.hasCap(Capabilities.HasExternalSignal)
                         field       = 'extSig';
                         if ~obj.recState.extSig
-                            result      = obj.buffers.startBuffering('extSignal');
+                            result      = obj.buffers.start('extSignal');
                             streamLbl   = 'external signals';
                         end
                     else
@@ -431,7 +431,7 @@ classdef Titta < handle
                 case 'timesync'
                     field       = 'sync';
                     if ~obj.recState.sync
-                        result      = obj.buffers.startBuffering('timeSync');
+                        result      = obj.buffers.start('timeSync');
                         streamLbl   = 'sync data';
                     end
                 otherwise
@@ -450,16 +450,35 @@ classdef Titta < handle
             obj.recState.(field) = true;
         end
         
-        function data = consumeData(obj,stream,varargin)
+        function data = consumeN(obj,stream,varargin)
             % optional input argument firstN: how many samples to consume
             % from start. Default: all
-            data = obj.consumeOrPeekData(stream,'consume',varargin{:});
+            data = obj.consumeOrPeek(stream,'consumeN',varargin{:});
         end
         
-        function data = peekData(obj,stream,varargin)
+        function data = consumeTimeRange(obj,stream,varargin)
+            % optional inputs startT and endT. Default: whole range
+            data = obj.consumeOrPeek(stream,'consumeTimeRange',varargin{:});
+        end
+        
+        function data = peekN(obj,stream,varargin)
             % optional input argument lastN: how many samples to peek from
             % end. Default: 1. To get all, ask for -1 samples
-            data = obj.consumeOrPeekData(stream,'peek',varargin{:});
+            data = obj.consumeOrPeek(stream,'peekN',varargin{:});
+        end
+        
+        function data = peekTimeRange(obj,stream,varargin)
+            % optional inputs startT and endT. Default: whole range
+            data = obj.consumeOrPeek(stream,'peekTimeRange',varargin{:});
+        end
+        
+        function clearBuffer(obj,stream)
+            data = obj.buffers.clear(stream);
+        end
+        
+        function clearBufferTimeRange(obj,varargin)
+            % optional inputs startT and endT. Default: whole range
+            data = obj.buffers.clearTimeRange(stream,varargin{:});
         end
         
         function stopRecording(obj,stream,qClearBuffer)
@@ -471,22 +490,22 @@ classdef Titta < handle
             switch lower(stream)
                 case 'gaze'
                     if obj.recState.gaze
-                        obj.buffers.stopBuffering('sample',qClearBuffer);
+                        obj.buffers.stop('sample',qClearBuffer);
                         field = 'gaze';
                     end
                 case 'eyeimage'
                     if obj.recState.eyeIm
-                        obj.buffers.stopBuffering('eyeImage',qClearBuffer);
+                        obj.buffers.stop('eyeImage',qClearBuffer);
                         field = 'eyeIm';
                     end
                 case 'externalsignal'
                     if obj.recState.extSig
-                        obj.buffers.stopBuffering('extSignal',qClearBuffer);
+                        obj.buffers.stop('extSignal',qClearBuffer);
                         field = 'extSig';
                     end
                 case 'timesync'
                     if obj.recState.sync
-                        obj.buffers.stopBuffering('timeSync',qClearBuffer);
+                        obj.buffers.stop('timeSync',qClearBuffer);
                         field = 'sync';
                     end
                 otherwise
@@ -799,7 +818,7 @@ classdef Titta < handle
             obj.getNewMouseKeyPress();
             while true
                 % get latest data from eye-tracker
-                eyeData = obj.buffers.peek('sample',1);
+                eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye] = deal(nan(3,1));
                 if ~isempty(eyeData) && obj.calibrateLeftEye
                     lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
@@ -942,7 +961,7 @@ classdef Titta < handle
                 eyeIm   = [];
                 count   = 0;
                 while isempty(eyeIm) && count<20
-                    eyeIm = obj.consumeData('eyeImage');
+                    eyeIm = obj.consumeN('eyeImage');
                     WaitSecs('YieldSecs',0.15);
                     count = count+1;
                 end
@@ -1046,7 +1065,7 @@ classdef Titta < handle
             arrowColor  = zeros(3,6);
             relPos      =   nan(3,1);
             while true
-                eyeData = obj.buffers.peek('sample',1);
+                eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye]     = deal(nan(3,1));
                 [lValid,rValid] = deal(false);
                 if ~isempty(eyeData) && obj.calibrateLeftEye
@@ -1098,7 +1117,7 @@ classdef Titta < handle
                 
                 if qHasEyeIm
                     % get eye image
-                    eyeIm       = obj.consumeData('eyeImage');
+                    eyeIm       = obj.consumeN('eyeImage');
                     [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
                     
                     % update eye image locations (and possibly track box) if
@@ -1401,13 +1420,13 @@ classdef Titta < handle
         end
         
         function data = ConsumeAllData(obj)
-            data.gaze           = obj.consumeData('gaze');
-            data.eyeImages      = obj.consumeData('eyeImage');
-            data.externalSignals= obj.consumeData('externalSignal');
-            data.timeSync       = obj.consumeData('timeSync');
+            data.gaze           = obj.consumeN('gaze');
+            data.eyeImages      = obj.consumeN('eyeImage');
+            data.externalSignals= obj.consumeN('externalSignal');
+            data.timeSync       = obj.consumeN('timeSync');
         end
         
-        function data = consumeOrPeekData(obj,stream,action,varargin)
+        function data = consumeOrPeek(obj,stream,action,varargin)
             fields = {'gaze','eyeImage','externalSignal','timesync'};
             q = strcmpi(stream,fields);
             assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
@@ -1417,10 +1436,10 @@ classdef Titta < handle
         end
         
         function ClearAllBuffers(obj)
-            obj.buffers.clearBuffer('sample');
-            obj.buffers.clearBuffer('eyeImage');
-            obj.buffers.clearBuffer('extSignal');
-            obj.buffers.clearBuffer('timeSync');
+            obj.buffers.clear('sample');
+            obj.buffers.clear('eyeImage');
+            obj.buffers.clear('extSignal');
+            obj.buffers.clear('timeSync');
         end
         
         function StopRecordAll(obj)
@@ -1996,7 +2015,7 @@ classdef Titta < handle
                         % draw fixation points
                         obj.drawFixPoints(wpnt,fixPos);
                         % draw gaze data
-                        eyeData = obj.buffers.consume('sample');
+                        eyeData = obj.buffers.consumeN('sample');
                         if ~isempty(eyeData)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';

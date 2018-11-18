@@ -86,25 +86,38 @@ classdef TobiiBuffer < handle
             this.instanceHandle = this.cppmethodGlobal('new',char(address));
         end
         
-        function success = startBuffering(this,stream,initialBufferSize,asGif)
+        function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and input requesting gif-encoded
             % instead of raw images
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>3
-                success = this.cppmethod('startBuffering',stream,uint64(initialBufferSize),logical(asGif));
+                success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
             elseif nargin>2
-                success = this.cppmethod('startBuffering',stream,uint64(initialBufferSize));
+                success = this.cppmethod('start',stream,uint64(initialBufferSize));
             else
-                success = this.cppmethod('startBuffering',stream);
+                success = this.cppmethod('start',stream);
             end
         end
-        function clearBuffer(this,stream)
+        function clear(this,stream)
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
-            this.cppmethod('clearBuffer',stream);
+            this.cppmethod('clear',stream);
+        end
+        function data = clearTimeRange(this,stream,startT,endT)
+            % optional start and end time inputs. Default: whole range
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>3
+                data = this.cppmethod('clearTimeRange',stream,uint64(startT),uint64(endT));
+            elseif nargin>2
+                data = this.cppmethod('clearTimeRange',stream,uint64(startT));
+            else
+                data = this.cppmethod('clearTimeRange',stream);
+            end
         end
         function success = stopBuffering(this,stream,doDeleteBuffer)
             % optional boolean input indicating whether buffer should be
@@ -113,33 +126,59 @@ classdef TobiiBuffer < handle
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>2
-                success = this.cppmethod('stopBuffering',stream,logical(doDeleteBuffer));
+                success = this.cppmethod('stop',stream,logical(doDeleteBuffer));
             else
-                success = this.cppmethod('stopBuffering',stream);
+                success = this.cppmethod('stop',stream);
             end
         end
-        function data = consume(this,stream,firstN)
+        function data = consumeN(this,stream,firstN)
             % optional input indicating how many samples to read from the
             % beginning of buffer. Default: all
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>2
-                data = this.cppmethod('consume',stream,uint64(firstN));
+                data = this.cppmethod('consumeN',stream,uint64(firstN));
             else
-                data = this.cppmethod('consume',stream);
+                data = this.cppmethod('consumeN',stream);
             end
         end
-        function data = peek(this,stream,lastN)
+        function data = consumeTimeRange(this,stream,startT,endT)
+            % optional start and end time inputs. Default: whole range
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>3
+                data = this.cppmethod('consumeTimeRange',stream,uint64(startT),uint64(endT));
+            elseif nargin>2
+                data = this.cppmethod('consumeTimeRange',stream,uint64(startT));
+            else
+                data = this.cppmethod('consumeTimeRange',stream);
+            end
+        end
+        function data = peekN(this,stream,lastN)
             % optional input indicating how many items to read from the
             % end of buffer. Default: 1
             if isa(stream,'string')
                 stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
             end
             if nargin>2
-                data = this.cppmethod('peek',stream,uint64(lastN));
+                data = this.cppmethod('peekN',stream,uint64(lastN));
             else
-                data = this.cppmethod('peek',stream);
+                data = this.cppmethod('peekN',stream);
+            end
+        end
+        function data = peekTimeRange(this,stream,startT,endT)
+            % optional start and end time inputs. Default: whole range
+            if isa(stream,'string')
+                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+            end
+            if nargin>3
+                data = this.cppmethod('peekTimeRange',stream,uint64(startT),uint64(endT));
+            elseif nargin>2
+                data = this.cppmethod('peekTimeRange',stream,uint64(startT));
+            else
+                data = this.cppmethod('peekTimeRange',stream);
             end
         end
         

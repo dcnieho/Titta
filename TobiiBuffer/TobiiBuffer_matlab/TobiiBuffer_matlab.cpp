@@ -80,11 +80,14 @@ namespace {
         New,
         Delete,
 
-        StartBuffering,
-        ClearBuffer,
-        StopBuffering,
-        Consume,
-        Peek,
+        Start,
+        Clear,
+        ClearTimeRange,
+        Stop,
+        ConsumeN,
+        ConsumeTimeRange,
+        PeekN,
+        PeekTimeRange,
 
         EnableTempSampleBuffer,
         DisableTempSampleBuffer,
@@ -106,15 +109,18 @@ namespace {
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
-        { "touch",						Action::Touch },
-        { "new",						Action::New },
-        { "delete",						Action::Delete },
+        { "touch",				Action::Touch },
+        { "new",				Action::New },
+        { "delete",				Action::Delete },
 
-        { "startBuffering",		        Action::StartBuffering },
-        { "clearBuffer",				Action::ClearBuffer},
-        { "stopBuffering",		        Action::StopBuffering },
-        { "consume",				    Action::Consume },
-        { "peek",				        Action::Peek },
+        { "start",		        Action::Start },
+        { "clear",				Action::Clear},
+        { "clearTimeRange",		Action::ClearTimeRange},
+        { "stop",		        Action::Stop },
+        { "consumeN",			Action::ConsumeN },
+        { "consumeTimeRange",   Action::ConsumeTimeRange },
+        { "peekN",				Action::PeekN },
+        { "peekTimeRange",		Action::PeekTimeRange },
 
         { "enableTempSampleBuffer",		Action::EnableTempSampleBuffer },
         { "disableTempSampleBuffer",	Action::DisableTempSampleBuffer },
@@ -128,9 +134,9 @@ namespace {
         { "enableTempTimeSyncBuffer",	Action::EnableTempTimeSyncBuffer },
         { "disableTempTimeSyncBuffer",	Action::DisableTempTimeSyncBuffer },
 
-        { "startLogging",				Action::StartLogging },
-        { "getLog",						Action::GetLog },
-        { "stopLogging",				Action::StopLogging },
+        { "startLogging",		Action::StartLogging },
+        { "getLog",				Action::GetLog },
+        { "stopLogging",		Action::StopLogging },
     };
 
 
@@ -165,15 +171,6 @@ namespace {
     mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_);
     mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_);
     mxArray* ToMxArray(std::vector<TobiiBuff::logMessage               > data_);
-
-    template <TobiiBuff::DataStream DS>
-    mxArray* StartBuffer(uint64_t bufSize_, instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TobiiBuff::DataStream DS>
-    void     StopBuffer(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TobiiBuff::DataStream DS>
-    mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
-    template <TobiiBuff::DataStream DS>
-    mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
 }
 
 void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -234,7 +231,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
 
 
-        case Action::StartBuffering:
+        case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
                 mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
@@ -272,7 +269,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             switch (dataStream)
             {
                 case TobiiBuff::DataStream::Sample:
-                    plhs[0] = mxCreateLogicalScalar(instance->startSampleBuffering(bufSize));
+                    plhs[0] = mxCreateLogicalScalar(instance->startSample(bufSize));
                     return;
                 case TobiiBuff::DataStream::EyeImage:
                 {
@@ -283,29 +280,29 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                             mexErrMsgTxt("startBuffering: Expected second argument to be a logical scalar.");
                         asGif = mxIsLogicalScalarTrue(prhs[4]);
                     }
-                    plhs[0] = mxCreateLogicalScalar(instance->startEyeImageBuffering(bufSize, asGif));
+                    plhs[0] = mxCreateLogicalScalar(instance->startEyeImage(bufSize, asGif));
                 }
                 case TobiiBuff::DataStream::ExtSignal:
-                    plhs[0] = mxCreateLogicalScalar(instance->startExtSignalBuffering(bufSize));
+                    plhs[0] = mxCreateLogicalScalar(instance->startExtSignal(bufSize));
                     return;
                 case TobiiBuff::DataStream::TimeSync:
-                    plhs[0] = mxCreateLogicalScalar(instance->startTimeSyncBuffering(bufSize));
+                    plhs[0] = mxCreateLogicalScalar(instance->startTimeSync(bufSize));
                     return;
             }
             break;
         }
-        case Action::ClearBuffer:
+        case Action::Clear:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
                 mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
 
             // get data stream identifier string, clear buffer
             char *bufferCstr = mxArrayToString(prhs[2]);
-            instance->clearBuffer(bufferCstr);
+            instance->clear(bufferCstr);
             mxFree(bufferCstr);
             break;
         }
-        case Action::StopBuffering:
+        case Action::Stop:
         {
             bool deleteBuffer = TobiiBuff::g_stopBufferEmptiesDefault;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
@@ -320,11 +317,11 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string, stop buffering
             char *bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->stopBuffering(bufferCstr,deleteBuffer));
+            plhs[0] = mxCreateLogicalScalar(instance->stop(bufferCstr,deleteBuffer));
             mxFree(bufferCstr);
             break;
         }
-        case Action::Consume:
+        case Action::ConsumeN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
                 mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
@@ -359,7 +356,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     return;
             }
         }
-        case Action::Peek:
+        case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
                 mexErrMsgTxt("Third input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
@@ -404,7 +401,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     mexErrMsgTxt("enableTempSampleBuffer: Expected argument to be a uint64 scalar.");
                 bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
             }
-            instance->startSampleBuffering(bufSize);
+            instance->startSample(bufSize);
             return;
         }
         case Action::DisableTempSampleBuffer:
@@ -436,7 +433,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     mexErrMsgTxt("enableTempExtSignalBuffer: Expected argument to be a uint64 scalar.");
                 bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
             }
-            instance->startExtSignalBuffering(bufSize);
+            instance->startExtSignal(bufSize);
             return;
         }
         case Action::DisableTempExtSignalBuffer:
@@ -452,7 +449,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     mexErrMsgTxt("enableTempTimeSyncBuffer: Expected argument to be a uint64 scalar.");
                 bufSize = *static_cast<uint64_t*>(mxGetData(prhs[2]));
             }
-            instance->startTimeSyncBuffering(bufSize);
+            instance->startTimeSync(bufSize);
             return;
         }
         case Action::DisableTempTimeSyncBuffer:

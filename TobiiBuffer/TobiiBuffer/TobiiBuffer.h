@@ -48,12 +48,13 @@ public:
 
     //// Functions taking buffer type as input ////
     // clear all buffer contents
-    void clearBuffer(std::string dataStream_);
+    void clear(std::string dataStream_); // TODO, option after and before times so you can clear specific segment
     // stop optionally deletes the buffer
-    bool stopBuffering(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
+    bool stop(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
+    // TODO: consume, peek -> consumeN, peekN. also have consume and peek selecting by time
 
     //// Samples ////
-    bool startSampleBuffering(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
+    bool startSample(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
     // switch to recording to a temp buffer
     void enableTempSampleBuffer(size_t initialBufferSize_ = TobiiBuff::g_sampleTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
@@ -64,7 +65,7 @@ public:
     std::vector<TobiiResearchGazeData> peekSamples(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// eyeImages ////
-    bool startEyeImageBuffering(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
+    bool startEyeImage(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
     // switch to recording to a temp buffer
     void enableTempEyeImageBuffer(size_t initialBufferSize_ = TobiiBuff::g_eyeImageTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
@@ -75,7 +76,7 @@ public:
     std::vector<TobiiBuff::eyeImage> peekEyeImages(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// external signals ////
-    bool startExtSignalBuffering(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
+    bool startExtSignal(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
     // switch to recording to a temp buffer
     void enableTempExtSignalBuffer(size_t initialBufferSize_ = TobiiBuff::g_extSignalTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
@@ -86,7 +87,7 @@ public:
     std::vector<TobiiResearchExternalSignalData> peekExtSignals(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
 
     //// time synchronization information ////
-    bool startTimeSyncBuffering(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
+    bool startTimeSync(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
     // switch to recording to a temp buffer
     void enableTempTimeSyncBuffer(size_t initialBufferSize_ = TobiiBuff::g_timeSyncTempBufDefaultSize);
     // switch back to main buffer, discarding temp buffer
@@ -118,8 +119,8 @@ private:
     // generic implementations
     template <typename T>  void             enableTempBufferGeneric(size_t initialBufferSize_, bool& usingTempBuf_);
     template <typename T>  void             disableTempBufferGeneric(bool& usingTempBuf_);
-    template <typename T>  void             clearBufferImpl();
-    template <typename T>  bool             stopBufferingImpl(bool emptyBuffer_);
+    template <typename T>  void             clearImpl();
+    template <typename T>  bool             stopImpl(bool emptyBuffer_);
     template <typename T>  std::vector<T>   peek(size_t lastN_);
     template <typename T>  std::vector<T>   consume(size_t firstN_);
 private:
