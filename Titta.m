@@ -236,7 +236,7 @@ classdef Titta < handle
                 obj.systemInfo.(fields{f}) = obj.eyetracker.(fields{f});
             end
             obj.systemInfo.samplerate   = obj.eyetracker.get_gaze_output_frequency();
-            assert(obj.systemInfo.freq==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.freq);
+            assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
             obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
             out.systemInfo              = obj.systemInfo;
             
