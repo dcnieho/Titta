@@ -161,6 +161,15 @@ namespace {
         { "stopLogging",				Action::StopLogging },
     };
 
+    // data stream type (NB: not log, that has a much simpler interface)
+    enum class TrackerDataStream
+    {
+        Unknown,
+        Sample,
+        EyeImage,
+        ExtSignal,
+        TimeSync
+    };
 
 
     // table mapping handles to instances
@@ -189,11 +198,16 @@ namespace {
     }
 
     // forward declare
-    mxArray*    SampleVectorToMatlab(std::vector<TobiiResearchGazeData               > data_);
-    mxArray*  EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage                 > data_);
-    mxArray* ExtSignalVectorToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
-    mxArray*  TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
-    mxArray*       LogVectorToMatlab(std::vector<TobiiBuff::logMessage               > data_);
+    mxArray* ToMxArray(std::vector<TobiiResearchGazeData               > data_);
+    mxArray* ToMxArray(std::vector<TobiiBuff::eyeImage                 > data_);
+    mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_);
+    mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_);
+    mxArray* ToMxArray(std::vector<TobiiBuff::logMessage               > data_);
+
+    template <TrackerDataStream DS>
+    mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
+    template <TrackerDataStream DS>
+    mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[]);
 }
 
 void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -298,26 +312,12 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         case Action::ConsumeSamples:
         {
-            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("consumeSamples: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = SampleVectorToMatlab(instance->consumeSamples(nSamp));
+            plhs[0] = Consume<TrackerDataStream::Sample>(instance, nrhs, prhs);
             return;
         }
         case Action::PeekSamples:
         {
-            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("peekSamples: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = SampleVectorToMatlab(instance->peekSamples(nSamp));
+            plhs[0] = Peek<TrackerDataStream::Sample>(instance, nrhs, prhs);
             return;
         }
 
@@ -373,26 +373,12 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         case Action::ConsumeEyeImages:
         {
-            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("consumeEyeImages: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = EyeImageVectorToMatlab(instance->consumeEyeImages(nSamp));
+            plhs[0] = Consume<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
             return;
         }
         case Action::PeekEyeImages:
         {
-            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("peekEyeImages: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = EyeImageVectorToMatlab(instance->peekEyeImages(nSamp));
+            plhs[0] = Peek<TrackerDataStream::EyeImage>(instance, nrhs, prhs);
             return;
         }
 
@@ -441,26 +427,12 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         case Action::ConsumeExtSignals:
         {
-            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("consumeExtSignals: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = ExtSignalVectorToMatlab(instance->consumeExtSignals(nSamp));
+            plhs[0] = Consume<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
             return;
         }
         case Action::PeekExtSignals:
         {
-            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("peekExtSignals: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = ExtSignalVectorToMatlab(instance->peekExtSignals(nSamp));
+            plhs[0] = Peek<TrackerDataStream::ExtSignal>(instance, nrhs, prhs);
             return;
         }
 
@@ -509,26 +481,12 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         }
         case Action::ConsumeTimeSyncs:
         {
-            uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("consumeTimeSyncs: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = TimeSyncVectorToMatlab(instance->consumeTimeSyncs(nSamp));
+            plhs[0] = Consume<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
             return;
         }
         case Action::PeekTimeSyncs:
         {
-            uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
-            {
-                if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                    mexErrMsgTxt("peekTimeSyncs: Expected argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
-            }
-            plhs[0] = TimeSyncVectorToMatlab(instance->peekTimeSyncs(nSamp));
+            plhs[0] = Peek<TrackerDataStream::TimeSync>(instance, nrhs, prhs);
             return;
         }
 
@@ -553,7 +511,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     mexErrMsgTxt("getLog: Expected argument to be a logical scalar.");
                 clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
             }
-            plhs[0] = LogVectorToMatlab(TobiiBuff::getLog(clearBuffer));
+            plhs[0] = ToMxArray(TobiiBuff::getLog(clearBuffer));
             return;
         }
         case Action::StopLogging:
@@ -570,6 +528,64 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 // helpers
 namespace
 {
+    template <TrackerDataStream DS>
+    mxArray* Consume(instPtr_t instance_, int nrhs, const mxArray *prhs[])
+    {
+        uint64_t nSamp = TobiiBuff::g_consumeDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("consume: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+
+        if constexpr (DS == TrackerDataStream::Sample)
+        {
+            return ToMxArray(instance_->consumeSamples(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::EyeImage)
+        {
+            return ToMxArray(instance_->consumeEyeImages(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        {
+            return ToMxArray(instance_->consumeExtSignals(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::TimeSync)
+        {
+            return ToMxArray(instance_->consumeTimeSyncs(nSamp));
+        }
+    }
+
+    template <TrackerDataStream DS>
+    mxArray* Peek(instPtr_t instance_, int nrhs, const mxArray *prhs[])
+    {
+        uint64_t nSamp = TobiiBuff::g_peekDefaultAmount;
+        if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+        {
+            if (!mxIsUint64(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("peek: Expected argument to be a uint64 scalar.");
+            nSamp = *static_cast<uint64_t*>(mxGetData(prhs[2]));
+        }
+
+        if constexpr (DS == TrackerDataStream::Sample)
+        {
+            return ToMxArray(instance_->peekSamples(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::EyeImage)
+        {
+            return ToMxArray(instance_->peekEyeImages(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::ExtSignal)
+        {
+            return ToMxArray(instance_->peekExtSignals(nSamp));
+        }
+        else if constexpr (DS == TrackerDataStream::TimeSync)
+        {
+            return ToMxArray(instance_->peekTimeSyncs(nSamp));
+        }
+    }
+
     // get field indicated by list of pointers-to-member-variable in fields
     template <typename O, typename T, typename... Os, typename... Ts>
     auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
@@ -694,7 +710,7 @@ namespace
         return out;
     }
 
-    mxArray* SampleVectorToMatlab(std::vector<TobiiResearchGazeData> data_)
+    mxArray* ToMxArray(std::vector<TobiiResearchGazeData> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -755,7 +771,7 @@ namespace
         return out;
     }
 
-    mxArray* EyeImageVectorToMatlab(std::vector<TobiiBuff::eyeImage> data_)
+    mxArray* ToMxArray(std::vector<TobiiBuff::eyeImage> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -796,7 +812,7 @@ namespace
     }
 
 
-    mxArray* ExtSignalVectorToMatlab(std::vector<TobiiResearchExternalSignalData     > data_)
+    mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -815,7 +831,7 @@ namespace
 
         return out;
     }
-    mxArray* TimeSyncVectorToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
+    mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
@@ -833,7 +849,7 @@ namespace
         return out;
     }
 
-    mxArray* LogVectorToMatlab(std::vector<TobiiBuff::logMessage> data_)
+    mxArray* ToMxArray(std::vector<TobiiBuff::logMessage> data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
