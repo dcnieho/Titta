@@ -176,7 +176,7 @@ TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
     if (buf.empty())
         return {true,startIt,endIt};
 
-    // 2. see with member variable to access
+    // 2. see which member variable to access
     int64_t T::* field;
     if constexpr (std::is_same_v<T, TobiiBuffer::timeSync>)
         field = &T::system_request_time_stamp;
@@ -186,11 +186,13 @@ TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
     // 3. check if requested times are before or after vector start and end
     bool inclFirst = timeStart_ <= buf.front().*field;
     bool inclLast  = timeEnd_   >= buf.back().*field;
+
     // 4. if start time later than beginning of samples, or end time earlier, find correct iterators
     if (!inclFirst)
         startIt = std::lower_bound(startIt, endIt, timeStart_, [&field](const T& a_, const int64_t& b_) {return a_.*field < b_;});
     if (!inclLast)
         endIt   = std::upper_bound(startIt, endIt, timeEnd_  , [&field](const int64_t& a_, const T& b_) {return a_ < b_.*field;});
+
     // 5. done, return
     return {inclFirst&&inclLast,startIt,endIt};
 }
@@ -198,8 +200,8 @@ TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
 template <typename T>
 void TobiiBuffer::clearImpl(int64_t timeStart_, int64_t timeEnd_)
 {
-    auto l   = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-    auto buf = getBuffer<T>();
+    auto l    = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+    auto& buf = getBuffer<T>();
     if (buf.empty())
         return;
 
@@ -241,7 +243,7 @@ bool TobiiBuffer::stopImpl(bool emptyBuffer_)
 template <typename T>
 std::vector<T> TobiiBuffer::consumeN(size_t firstN_ /*= TobiiBuff::g_consumeDefaultAmount*/)
 {
-    auto l = lockForWriting<T>();
+    auto l    = lockForWriting<T>();
     auto& buf = getBuffer<T>();
 
     if (firstN_ == -1 || firstN_ >= buf.size())		// firstN_=-1 overflows, so first check strictly not needed. Better keep code legible tho
@@ -258,13 +260,13 @@ std::vector<T> TobiiBuffer::consumeN(size_t firstN_ /*= TobiiBuff::g_consumeDefa
 template <typename T>
 std::vector<T> TobiiBuffer::consumeTimeRange(int64_t timeStart_ /*= TobiiBuff::g_consumeTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_consumeTimeRangeEnd*/)
 {
-    auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-    auto buf = getBuffer<T>();
+    auto l    = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+    auto& buf = getBuffer<T>();
     if (buf.empty())
         return std::vector<T>{};
 
     // find applicable range
-    auto[whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
+    auto [whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
     // move out the indicated elements
     if (whole)
         return std::vector<T>(std::move(buf));
@@ -280,7 +282,7 @@ std::vector<T> TobiiBuffer::consumeTimeRange(int64_t timeStart_ /*= TobiiBuff::g
 template <typename T>
 std::vector<T> TobiiBuffer::peekN(size_t lastN_ /*= TobiiBuff::g_peekDefaultAmount*/)
 {
-    auto l = lockForReading<T>();
+    auto l    = lockForReading<T>();
     auto& buf = getBuffer<T>();
     // copy last N or whole vector if less than N elements available
     return std::vector<T>(buf.end() - std::min(buf.size(), lastN_), buf.end());
@@ -288,13 +290,13 @@ std::vector<T> TobiiBuffer::peekN(size_t lastN_ /*= TobiiBuff::g_peekDefaultAmou
 template <typename T>
 std::vector<T> TobiiBuffer::peekTimeRange(int64_t timeStart_ /*= TobiiBuff::g_peekTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_peekTimeRangeEnd*/)
 {
-    auto l = lockForReading<T>();
-    auto buf = getBuffer<T>();
+    auto l    = lockForReading<T>();
+    auto& buf = getBuffer<T>();
     if (buf.empty())
         return std::vector<T>{};
 
     // find applicable range
-    auto[whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
+    auto [whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
     // copy the indicated elements
     return std::vector<T>(start, end);
 }
