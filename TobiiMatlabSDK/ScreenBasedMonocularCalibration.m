@@ -113,7 +113,11 @@ classdef ScreenBasedMonocularCalibration
                 target_points = [];
             end
 
-            points(size(target_points,1)) = CalibrationPoint;
+            if size(target_points, 1) > 0
+                points(size(target_points,1)) = CalibrationPoint;
+            else
+                points = [];
+            end
 
             for i=1:size(target_points,1)
                 points(i) = CalibrationPoint(target_points(i,:),left(ic==i,:),right(ic==i,:),validity(ic==i,:));
