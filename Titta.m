@@ -155,6 +155,7 @@ classdef Titta < handle
                 % see which eye trackers are available
                 trackers = obj.tobii.find_all_eyetrackers();
                 % find macthing eye-tracker, first by model
+                % TODO: next line crashes when no ETs
                 qModel = strcmp({trackers.Model},obj.settings.tracker);
                 if ~any(qModel)
                     extra = '';
@@ -252,6 +253,7 @@ classdef Titta < handle
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
             obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
             out.systemInfo              = obj.systemInfo;
+            out.systemInfo.SDKversion   = obj.tobii.get_sdk_version();
             
             % get information about display geometry
             warnState = warning('query','MATLAB:structOnObject');
