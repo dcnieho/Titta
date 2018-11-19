@@ -7,10 +7,6 @@ addpath(genpath(fullfile(cd,'..')));
 try
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
-    settings.cal.autoPace = 0;
-    settings.setup.startScreen = 1;
-%     settings.cal.pointPos           = [[0.25 0.75]; [0.75 0.25]];
-%     settings.val.pointPos           = [[0.25 0.25]; [0.75 0.75]];
     % custom calibration drawer
     calViz = AnimatedCalibrationDisplay();
     settings.cal.drawFunction = @calViz.doDraw;
