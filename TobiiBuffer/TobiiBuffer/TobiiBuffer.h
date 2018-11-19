@@ -82,22 +82,16 @@ public:
     // can't have functions that only differ by return type, so must template these instead of take
     // 'stream' string input
     // consume samples (by default all)
-    template <typename T>  std::vector<T>   consumeN(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    template <typename T>  std::vector<T>   consumeTimeRange(int64_t timeStart_ = TobiiBuff::g_consumeTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_consumeTimeRangeEnd);
+    template <typename T> std::vector<T> consumeN(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
+    template <typename T> std::vector<T> consumeTimeRange(int64_t timeStart_ = TobiiBuff::g_consumeTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_consumeTimeRangeEnd);
     // peek samples (by default only last one, can specify how many from end to peek)
-    template <typename T>  std::vector<T>   peekN(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
-    template <typename T>  std::vector<T>   peekTimeRange(int64_t timeStart_ = TobiiBuff::g_peekTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_peekTimeRangeEnd);
+    template <typename T> std::vector<T> peekN(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
+    template <typename T> std::vector<T> peekTimeRange(int64_t timeStart_ = TobiiBuff::g_peekTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_peekTimeRangeEnd);
 
-    //// Samples ////
+    //// stream starters ////
     bool startSample(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
-
-    //// eyeImages ////
     bool startEyeImage(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
-
-    //// external signals ////
     bool startExtSignal(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
-
-    //// time synchronization information ////
     bool startTimeSync(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
 
 private:
