@@ -77,7 +77,11 @@ classdef Titta < handle
                 % only the subset that can be changed "live"
                 opts = obj.getAllowedOptions();
                 for p=1:size(opts,1)
-                    out.(opts{p,1}).(opts{p,2}) = obj.settings.(opts{p,1}).(opts{p,2});
+                    if isempty(opts{p,2})
+                        out.(opts{p,1})             = obj.settings.(opts{p,1});
+                    else
+                        out.(opts{p,1}).(opts{p,2}) = obj.settings.(opts{p,1}).(opts{p,2});
+                    end
                 end
             end
         end
@@ -88,8 +92,12 @@ classdef Titta < handle
                 % copy over if exist. Ignore all others silently
                 allowed = obj.getAllowedOptions();
                 for p=1:size(allowed,1)
-                    if isfield(settings,allowed{p,1}) && isfield(settings.(allowed{p,1}),allowed{p,2})
-                        obj.settings.(allowed{p,1}).(allowed{p,2}) = settings.(allowed{p,1}).(allowed{p,2});
+                    if isfield(settings,allowed{p,1}) && (isempty(allowed{p,2}) || isfield(settings.(allowed{p,1}),allowed{p,2}))
+                        if isempty(allowed{p,2})
+                            obj.settings.(allowed{p,1})                 = settings.(allowed{p,1});
+                        else
+                            obj.settings.(allowed{p,1}).(allowed{p,2})  = settings.(allowed{p,1}).(allowed{p,2});
+                        end
                     end
                 end
             else
@@ -684,6 +692,7 @@ classdef Titta < handle
     methods (Access = private, Hidden)
         function allowed = getAllowedOptions(obj)
             allowed = {...
+                'calibrateEye',''
                 'setup','startScreen'
                 'setup','viewingDist'
                 'setup','eyeColors'
@@ -712,7 +721,7 @@ classdef Titta < handle
                 'string','simplePositionInstruction'
                 };
             for p=size(allowed,1):-1:1
-                if ~isfield(obj.settings,allowed{p,1}) || ~isfield(obj.settings.(allowed{p,1}),allowed{p,2})
+                if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
                     allowed(p,:) = [];
                 end
             end
