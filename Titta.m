@@ -1428,10 +1428,10 @@ classdef Titta < handle
         end
         
         function ClearAllBuffers(obj,varargin)
-            obj.buffers.clear('sample',varargin{:});
-            obj.buffers.clear('eyeImage',varargin{:});
-            obj.buffers.clear('extSignal',varargin{:});
-            obj.buffers.clear('timeSync',varargin{:});
+            obj.buffers.clearTimeRange('sample',varargin{:});
+            obj.buffers.clearTimeRange('eyeImage',varargin{:});
+            obj.buffers.clearTimeRange('extSignal',varargin{:});
+            obj.buffers.clearTimeRange('timeSync',varargin{:});
         end
         
         function StopRecordAll(obj)
