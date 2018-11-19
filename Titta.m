@@ -126,7 +126,7 @@ classdef Titta < handle
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
             if ismember(obj.settings.calibrateEye,{'left','right'}) && obj.isInitialized
-                assert(obj.hasCap(Capabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             switch obj.settings.calibrateEye
                 case 'left'
@@ -235,7 +235,7 @@ classdef Titta < handle
             % if monocular tracking is requested, check that it is
             % supported
             if ismember(obj.settings.calibrateEye,{'left','right'})
-                assert(obj.hasCap(Capabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             
             % get info about the system
@@ -416,7 +416,7 @@ classdef Titta < handle
                         streamLbl   = 'gaze data';
                     end
                 case 'eyeimage'
-                    if obj.hasCap(Capabilities.HasEyeImages)
+                    if obj.hasCap(EyeTrackerCapabilities.HasEyeImages)
                         field   	= 'eyeImage';
                         if ~obj.recState.eyeImage
                             result      = obj.buffers.start('eyeImage');
@@ -426,7 +426,7 @@ classdef Titta < handle
                         error('Titta: recording of eye images is not supported by this eye-tracker')
                     end
                 case 'externalsignal'
-                    if obj.hasCap(Capabilities.HasExternalSignal)
+                    if obj.hasCap(EyeTrackerCapabilities.HasExternalSignal)
                         field       = 'externalSignal';
                         if ~obj.recState.externalSignal
                             result      = obj.buffers.start('extSignal');
@@ -951,7 +951,7 @@ classdef Titta < handle
         
         
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            qHasEyeIm = obj.hasCap(Capabilities.HasExternalSignal);
+            qHasEyeIm = obj.hasCap(EyeTrackerCapabilities.HasExternalSignal);
             if qHasEyeIm
                 eyeStartTime = obj.getSystemTime();
                 obj.startRecording('eyeImage');
