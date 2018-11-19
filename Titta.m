@@ -129,10 +129,15 @@ classdef Titta < handle
                 assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             switch obj.settings.calibrateEye
+                case 'both'
+                    obj.calibrateLeftEye  = true;
+                    obj.calibrateRightEye = true;
                 case 'left'
+                    obj.calibrateLeftEye  = true;
                     obj.calibrateRightEye = false;
                 case 'right'
                     obj.calibrateLeftEye  = false;
+                    obj.calibrateRightEye = true;
             end
         end
         
