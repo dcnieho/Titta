@@ -489,30 +489,30 @@ classdef Titta < handle
             switch lower(stream)
                 case 'gaze'
                     if obj.recState.gaze
-                        obj.buffers.stop('sample',qClearBuffer);
-                        field = 'gaze';
+                        success = obj.buffers.stop('sample',qClearBuffer);
+                        field   = 'gaze';
                     end
                 case 'eyeimage'
                     if obj.recState.eyeImage
-                        obj.buffers.stop('eyeImage',qClearBuffer);
-                        field = 'eyeIm';
+                        success = obj.buffers.stop('eyeImage',qClearBuffer);
+                        field   = 'eyeImage';
                     end
                 case 'externalsignal'
                     if obj.recState.externalSignal
-                        obj.buffers.stop('extSignal',qClearBuffer);
-                        field = 'extSig';
+                        success = obj.buffers.stop('extSignal',qClearBuffer);
+                        field   = 'externalSignal';
                     end
                 case 'timesync'
                     if obj.recState.timeSync
-                        obj.buffers.stop('timeSync',qClearBuffer);
-                        field = 'sync';
+                        success = obj.buffers.stop('timeSync',qClearBuffer);
+                        field   = 'timeSync';
                     end
                 otherwise
                     error('Titta: stream "%s" not known\nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"',stream);
             end
             
             % mark that we stopped recording
-            if ~isempty(field)
+            if ~isempty(field) && success
                 obj.recState.(field) = false;
             end
         end
