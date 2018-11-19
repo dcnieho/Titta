@@ -8,7 +8,8 @@
 
 #include "TobiiBuffer/utils.h"
 
-namespace {
+namespace
+{
     using mutex_type = std::shared_timed_mutex ;
     using read_lock  = std::shared_lock<mutex_type>;
     using write_lock = std::unique_lock<mutex_type>;
@@ -122,6 +123,25 @@ void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_
     }
 }
 
+namespace
+{
+    // eye image helpers
+    bool doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
+    {
+        if (asGif_)
+            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+        else
+            return tobii_research_subscribe_to_eye_image       (eyetracker_,    TobiiEyeImageCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+    }
+    bool doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
+    {
+        if (isGif_)
+            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback) == TOBII_RESEARCH_STATUS_OK;
+        else
+            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
+    }
+}
+
 
 
 
@@ -224,7 +244,8 @@ bool TobiiBuffer::stopImpl(bool emptyBuffer_)
     if constexpr (std::is_same_v<T, TobiiBuffer::eyeImage>)
     {
         success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-        _recordingEyeImages = false;
+        if (success)
+            _recordingEyeImages = false;
     }
     if constexpr (std::is_same_v<T, TobiiBuffer::extSignal>)
     {
@@ -341,7 +362,7 @@ bool TobiiBuffer::stop(std::string dataStream_, bool emptyBuffer_ /*= TobiiBuff:
             out = stopImpl<TobiiBuffer::sample>(emptyBuffer_);
             break;
         case TobiiBuffer::DataStream::EyeImage:
-            out = stopImpl<TobiiBuff::eyeImage>(emptyBuffer_);
+            out = stopImpl<TobiiBuffer::eyeImage>(emptyBuffer_);
             break;
         case TobiiBuffer::DataStream::ExtSignal:
             out = stopImpl<TobiiBuffer::extSignal>(emptyBuffer_);
@@ -368,23 +389,6 @@ template std::vector<TobiiBuffer::sample> TobiiBuffer::peekTimeRange(int64_t tim
 
 
 
-namespace {
-    // eye image helpers
-    bool doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
-    {
-        if (asGif_)
-            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
-        else
-            return tobii_research_subscribe_to_eye_image	   (eyetracker_,    TobiiEyeImageCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
-    }
-    bool doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
-    {
-        if (isGif_)
-            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback) == TOBII_RESEARCH_STATUS_OK;
-        else
-            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
-    }
-}
 
 bool TobiiBuffer::startEyeImage(size_t initialBufferSize_ /*= g_eyeImageBufDefaultSize*/, bool asGif_ /*= g_eyeImageAsGIFDefault*/)
 {
@@ -401,7 +405,9 @@ bool TobiiBuffer::startEyeImage(size_t initialBufferSize_ /*= g_eyeImageBufDefau
 
     // subscribe to new stream
     _recordingEyeImages = doSubscribeEyeImage(_eyetracker, this, asGif_);
-    _eyeImIsGif = _recordingEyeImages ? asGif_ : _eyeImIsGif;	// update type being recorded if subscription to stream was successful
+    if (_recordingEyeImages)
+        // update type being recorded if subscription to stream was successful
+        _eyeImIsGif = asGif_;
     return _recordingEyeImages;
 }
 // instantiate templated functions
