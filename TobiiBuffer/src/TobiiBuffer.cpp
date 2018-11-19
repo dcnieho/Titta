@@ -184,7 +184,7 @@ std::vector<T>& TobiiBuffer::getBuffer()
 }
 template <typename T>
 std::tuple<bool, typename std::vector<T>::iterator, typename std::vector<T>::iterator>
-TobiiBuffer::getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_)
+TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 {
     // !NB: appropriate locking is responsibility of caller!
     // find elements within given range of time stamps, both sides inclusive.
@@ -226,7 +226,7 @@ void TobiiBuffer::clearImpl(int64_t timeStart_, int64_t timeEnd_)
         return;
 
     // find applicable range
-    auto [whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
+    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
     // clear the flagged bit
     if (whole)
         buf.clear();
@@ -287,7 +287,7 @@ std::vector<T> TobiiBuffer::consumeTimeRange(int64_t timeStart_ /*= TobiiBuff::g
         return std::vector<T>{};
 
     // find applicable range
-    auto [whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
+    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
     // move out the indicated elements
     if (whole)
         return std::vector<T>(std::move(buf));
@@ -317,7 +317,7 @@ std::vector<T> TobiiBuffer::peekTimeRange(int64_t timeStart_ /*= TobiiBuff::g_pe
         return std::vector<T>{};
 
     // find applicable range
-    auto [whole, start, end] = getBufferTimeRange<T>(timeStart_, timeEnd_);
+    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
     // copy the indicated elements
     return std::vector<T>(start, end);
 }

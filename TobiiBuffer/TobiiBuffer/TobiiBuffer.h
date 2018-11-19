@@ -113,7 +113,7 @@ private:
     template <typename T>  std::vector<T>&  getBuffer();
     template <typename T>
                            std::tuple<bool, typename std::vector<T>::iterator, typename std::vector<T>::iterator>
-                                            getBufferTimeRange(int64_t timeStart_, int64_t timeEnd_);
+                                            getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_);
     // generic implementations
     template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
     template <typename T>  bool             stopImpl(bool emptyBuffer_);
