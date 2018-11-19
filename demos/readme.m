@@ -17,6 +17,12 @@ try
 %     ETFhndl         = ETFhndl.setDummyMode();
     ETFhndl.init();
     
+    % TODO fix this (when calling stop, sensors don't switch off)
+    if 0
+        ETFhndl.rawBuffers.start('eyeImage')
+        WaitSecs(1);
+        ETFhndl.rawBuffers.stop('eyeImage')
+    end
     
     if qDEBUG>1
         % make screen partially transparent on OSX and windows vista or
