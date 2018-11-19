@@ -8,7 +8,7 @@ namespace
     {
         const char* _cName;     /* Name of Constant */
         int			_uVal;      /* Constant's value as int */
-        const char* _cErrorTxt; /* Explanative text for error */
+        const char* _cErrorTxt; /* Explanatory text for error */
     };
 
     TobiiResearchStatusInfo lookupTobiiResearchStatus(TobiiResearchStatus trs_)
@@ -134,7 +134,7 @@ namespace
     {
         const char* _cName;     /* Name of Constant */
         int			_uVal;      /* Constant's value as int */
-        const char* _cErrorTxt; /* Explanative text for error */
+        const char* _cErrorTxt; /* Explanatory text for error */
     };
 
     TobiiResearchLogSourceInfo lookupTobiiResearchLogSource(TobiiResearchLogSource trl_)
@@ -162,7 +162,7 @@ namespace
     {
         const char* _cName;     /* Name of Constant */
         int			_uVal;      /* Constant's value as int */
-        const char* _cErrorTxt; /* Explanative text for error */
+        const char* _cErrorTxt; /* Explanatory text for error */
     };
 
     TobiiResearchLogLevelInfo lookupTobiiResearchLogLevel(TobiiResearchLogLevel trl_)
