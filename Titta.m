@@ -831,7 +831,9 @@ classdef Titta < handle
             cursor          = cursorUpdater(cursors);
             
             % get tracking status and visualize
-            trackBoxDepths  = double([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)]./10);
+            tb                  = obj.geom.trackBox;
+            trackBoxDepths      = [tb.FrontLowerLeft(3) tb.BackLowerLeft(3)]./10;
+            trackBoxhalfWidth   = @(x) (tb.FrontLowerRight(1)+diff([tb.FrontLowerRight(1) tb.BackLowerRight(1)])*(x*10-tb.FrontLowerRight(3))/diff(trackBoxDepths*10))/10;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -852,7 +854,18 @@ classdef Titta < handle
                 distR   = rEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
                 dists   = [distL distR];
                 avgDist = mean(dists(~isnan(dists)));
+                tbWidth = trackBoxhalfWidth(avgDist)*2;
                 Xs      = [lEye(1) rEye(1)];    % normalized is good here
+                if any(Xs)
+                    % if we have only one eye, make fake second eye
+                    % position so drawn head position doesn't jump so much.
+                    % assume average IPD (62 mm)
+                    if isnan(Xs(1))
+                        Xs(1) = Xs(2)+6.2/tbWidth;  % NB: sign opposite than expected, because we're in view from camera's perspective, so leftward head is rightward here
+                    elseif isnan(Xs(2))
+                        Xs(2) = Xs(1)-6.2/tbWidth;  % NB: see note for Xs(1)
+                    end
+                end
                 avgX    = mean(Xs(~isnan(Xs)));
                 Ys      = [lEye(2) rEye(2)];
                 avgY    = mean(Ys(~isnan(Ys)));
