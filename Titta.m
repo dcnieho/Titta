@@ -452,32 +452,32 @@ classdef Titta < handle
         function data = consumeN(obj,stream,varargin)
             % optional input argument firstN: how many samples to consume
             % from start. Default: all
-            data = obj.consumePeekOrClear(stream,'consumeN',varargin{:});
+            data = obj.consumeOrPeek(stream,'consumeN',varargin{:});
         end
         
         function data = consumeTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            data = obj.consumePeekOrClear(stream,'consumeTimeRange',varargin{:});
+            data = obj.consumeOrPeek(stream,'consumeTimeRange',varargin{:});
         end
         
         function data = peekN(obj,stream,varargin)
             % optional input argument lastN: how many samples to peek from
             % end. Default: 1. To get all, ask for -1 samples
-            data = obj.consumePeekOrClear(stream,'peekN',varargin{:});
+            data = obj.consumeOrPeek(stream,'peekN',varargin{:});
         end
         
         function data = peekTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            data = obj.consumePeekOrClear(stream,'peekTimeRange',varargin{:});
+            data = obj.consumeOrPeek(stream,'peekTimeRange',varargin{:});
         end
         
         function clearBuffer(obj,stream)
-            obj.consumePeekOrClear(stream,'clear');
+            obj.clearImpl(stream,'clear');
         end
         
         function clearBufferTimeRange(obj,stream,varargin)
             % optional inputs startT and endT. Default: whole range
-            obj.consumePeekOrClear(stream,'clearTimeRange',varargin{:});
+            obj.clearImpl(stream,'clearTimeRange',varargin{:});
         end
         
         function stopRecording(obj,stream,qClearBuffer)
@@ -1417,19 +1417,14 @@ classdef Titta < handle
             data.timeSync       = obj.consumeTimeRange('timeSync',varargin{:});
         end
         
-        function varargout = consumePeekOrClear(obj,stream,action,varargin)
-            fields = {'gaze','eyeImage','externalSignal','timeSync'};
-            q = strcmpi(stream,fields);
-            assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
-            
-            get = {'sample','eyeImage','extSignal','timeSync'};
-            switch action
-                case {'clear','clearTimeRange'}
-                    nOut = 0;
-                otherwise
-                    nOut = 1;
-            end
-            [varargout{1:nOut}] = obj.buffers.(action)(get{q},varargin{:});
+        function data = consumeOrPeek(obj,stream,action,varargin)
+            stream = getInternalStreamName(stream,action);
+            data = obj.buffers.(action)(stream,varargin{:});
+        end
+        
+        function clearImpl(obj,stream,action,varargin)
+            stream = getInternalStreamName(stream,action);
+            obj.buffers.(action)(stream,varargin{:});
         end
         
         function ClearAllBuffers(obj,varargin)
@@ -2387,4 +2382,13 @@ for i=1:size(fieldInfo,1)
         fieldString{i} = [fieldString{i} '.' fieldInfo{i,2}];
     end
 end
+end
+
+function stream = getInternalStreamName(stream,action)
+fields = {'gaze','eyeImage','externalSignal','timeSync'};
+q = strcmpi(stream,fields);
+assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
+
+get     = {'sample','eyeImage','extSignal','timeSync'};
+stream  = get{q};
 end
