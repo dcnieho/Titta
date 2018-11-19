@@ -649,7 +649,7 @@ classdef Titta < handle
             settings.cal.fixBackColor       = 0;
             settings.cal.fixFrontColor      = 255;
             settings.cal.drawFunction       = [];
-            settings.cal.doRecordEyeImages  = true;                             % TODO: implement
+            settings.cal.doRecordEyeImages  = true;
             settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
@@ -1337,7 +1337,9 @@ classdef Titta < handle
             calibClass.enter_calibration_mode();
             calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
             obj.startRecording('gaze');
-            obj.startRecording('eyeImage');
+            if obj.settings.cal.doRecordEyeImages
+                obj.startRecording('eyeImage');
+            end
             obj.startRecording('externalSignal');
             obj.startRecording('timeSync');
             % show display
