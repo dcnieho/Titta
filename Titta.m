@@ -255,7 +255,7 @@ classdef Titta < handle
             out.systemInfo              = obj.systemInfo;
             out.systemInfo.SDKversion   = obj.tobii.get_sdk_version();
             
-            % get information about display geometry
+            % get information about display geometry and trackbox
             warnState = warning('query','MATLAB:structOnObject');
             warning('off',warnState.identifier);    % turn off warning for converting object to struct
             obj.geom.displayArea    = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
