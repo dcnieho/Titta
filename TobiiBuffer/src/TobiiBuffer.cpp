@@ -304,25 +304,7 @@ std::vector<T> TobiiBuffer::peekTimeRange(int64_t timeStart_ /*= TobiiBuff::g_pe
 // functions taking buffer type as input
 void TobiiBuffer::clear(std::string dataStream_)
 {
-    // get corresponding data stream
-    TobiiBuffer::DataStream stream = TobiiBuff::stringToDataStream(dataStream_);
-    
-    // now clear that buffer
-    switch (stream)
-    {
-        case TobiiBuffer::DataStream::Sample:
-            clearImpl<TobiiBuffer::sample>(TobiiBuff::g_clearTimeRangeStart, TobiiBuff::g_clearTimeRangeEnd);
-            break;
-        case TobiiBuffer::DataStream::EyeImage:
-            clearImpl<TobiiBuffer::eyeImage>(TobiiBuff::g_clearTimeRangeStart, TobiiBuff::g_clearTimeRangeEnd);
-            break;
-        case TobiiBuffer::DataStream::ExtSignal:
-            clearImpl<TobiiBuffer::extSignal>(TobiiBuff::g_clearTimeRangeStart, TobiiBuff::g_clearTimeRangeEnd);
-            break;
-        case TobiiBuffer::DataStream::TimeSync:
-            clearImpl<TobiiBuffer::timeSync>(TobiiBuff::g_clearTimeRangeStart, TobiiBuff::g_clearTimeRangeEnd);
-            break;
-    }
+    clearTimeRange(dataStream_,TobiiBuff::g_clearTimeRangeStart, TobiiBuff::g_clearTimeRangeEnd);
 }
 void TobiiBuffer::clearTimeRange(std::string dataStream_, int64_t timeStart_ /*= TobiiBuff::g_clearTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_clearTimeRangeEnd*/)
 {
