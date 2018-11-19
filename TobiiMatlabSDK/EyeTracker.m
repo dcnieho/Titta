@@ -12,7 +12,7 @@ classdef EyeTracker
     %% Protected Properties
     properties (SetAccess = protected)
         %% Name
-        % Gets the name of the eye tracker.
+        % Gets the name of the eye tracker.output_folder
         %
         %   eyetracker.Name
         %
@@ -115,12 +115,12 @@ classdef EyeTracker
                 tracker.CoreEyeTracker = new_tracker.core_eyetracker;
 
                 warning('off', 'all');
-                cap = fieldnames(Capabilities);
+                cap = fieldnames(EyeTrackerCapabilities);
                 tracker.DeviceCapabilities = [];
                 for i=1:length(cap)
 
-                    if ~strcmp(cap{i}, 'value') && bitand(new_tracker.device_capabilities, Capabilities.(cap{i})) ~= 0
-                        tracker.DeviceCapabilities = [tracker.DeviceCapabilities, Capabilities.(cap{i})];
+                    if ~strcmp(cap{i}, 'value') && bitand(new_tracker.device_capabilities, EyeTrackerCapabilities.(cap{i})) ~= 0
+                        tracker.DeviceCapabilities = [tracker.DeviceCapabilities, EyeTrackerCapabilities.(cap{i})];
                     end
                 end
                 warning('on', 'all');
@@ -291,6 +291,8 @@ classdef EyeTracker
                         time_sync_data.device_time_stamp(i),...
                         time_sync_data.system_response_time_stamp(i));
                 end
+            else
+                output = [];
             end
 
         end
@@ -340,7 +342,7 @@ classdef EyeTracker
 
             if isfield(gaze_data, 'error')
                output = StreamError(gaze_data);
-               tracker.stop_gaze_data();
+%                tracker.stop_gaze_data();
                return
             end
 
@@ -385,6 +387,57 @@ classdef EyeTracker
         %
         function stop_gaze_data(tracker)
             tracker.APIcall('StopGazeData',tracker.CoreEyeTracker);
+        end
+
+
+        %% Get User Position Guide
+        % Provides data for user position guide.
+        % Only supports streaming from one eyetracker at a time.
+        %
+        % If there is the need to use a different eyetracker,
+        % use the method stop_user_position_guide first and start a new data
+        % stream for the new eyetracker.
+        %
+        % It is possible to check the validity of the data received using
+        % the validity field. Complementary, if some specific data field
+        % is invalid then it will contain nan (Not a number) as its value.
+        %
+        % If data is available an instance of UserPositionGuide will be returned,
+        % otherwise the output will be empty.
+        %
+        % If an error occurs durring this stream the data returned will be
+        % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % Returns: array with instances of class <Gaze/UserPositionGuide.html UserPositionGuide>.
+        %
+        % <include>SampleCode/GetUserPositionGuide_publish.m</include>
+        %
+        function output = get_user_position_guide(tracker)
+            user_position_guide = tracker.APIcall('GetUserPositionGuide',tracker.CoreEyeTracker);
+
+            if isfield(user_position_guide, 'error')
+               output = StreamError(user_position_guide);
+               tracker.stop_user_position_guide();
+               return
+            end
+
+            if isempty(user_position_guide.left_user_position)
+                output = [];
+            else
+                output = UserPositionGuide(user_position_guide.left_user_position,...
+                    user_position_guide.left_user_position_validity,...
+                    user_position_guide.right_user_position,...
+                    user_position_guide.right_user_position_validity);
+            end
+        end
+
+        %% Stop User Position
+        % Stops the current user position guide stream.
+        %
+        % <include>SampleCode/GetUserPositionGuide_publish.m</include>
+        %
+        function stop_user_position_guide(tracker)
+            tracker.APIcall('StopUserPositionGuide',tracker.CoreEyeTracker);
         end
 
         %% Get HMD Gaze Data
@@ -497,7 +550,7 @@ classdef EyeTracker
 
             external_signal_data = tracker.APIcall('GetExternalSignalData',tracker.CoreEyeTracker);
 
-            if ~any(tracker.DeviceCapabilities==Capabilities.HasExternalSignal)
+            if ~any(tracker.DeviceCapabilities==EyeTrackerCapabilities.HasExternalSignal)
                 while ~isfield(external_signal_data, 'error')
                     pause(0.1);
                     external_signal_data = tracker.APIcall('GetExternalSignalData',tracker.CoreEyeTracker);
@@ -505,9 +558,8 @@ classdef EyeTracker
             end
 
             if isfield(external_signal_data, 'error')
-               output = StreamError(external_signal_data);
-               tracker.stop_external_signal_data();
-               return
+                output = StreamError(external_signal_data);
+                return
             end
 
             if strcmp(mode,'flat')
@@ -525,6 +577,8 @@ classdef EyeTracker
                         external_signal_data.system_time_stamp(i),...
                         external_signal_data.change_type(i));
                 end
+            else
+                output = [];
             end
         end
 
@@ -569,7 +623,7 @@ classdef EyeTracker
 
             eye_image = tracker.APIcall('GetEyeImage',tracker.CoreEyeTracker);
 
-            if ~any(tracker.DeviceCapabilities==Capabilities.HasEyeImages)
+            if ~any(tracker.DeviceCapabilities==EyeTrackerCapabilities.HasEyeImages)
                 while ~isfield(eye_image, 'error')
                     pause(0.1);
                     eye_image = tracker.APIcall('GetEyeImage',tracker.CoreEyeTracker);
@@ -602,6 +656,8 @@ classdef EyeTracker
                         eye_image.height(i),...
                         eye_image.image(:,i));
                 end
+            else
+                output = [];
             end
         end
 

@@ -1,37 +1,39 @@
-%% HMDCalibrationStatus
+%% User Positiom
 %
-% Defines the overall status of a calibration process.
+% Provides properties for the user position.
+%
+%   user_position = UserPosition(position, validity)
 %
 %%
-classdef HMDCalibrationStatus < EnumClass
-    properties (Constant = true)
-        %% Failure
-        % Indicates that the calibration process failed.
+classdef UserPosition
+    properties (SetAccess = protected)
+        %% UserPosition
+        % Gets the user position.
         %
-        %     HMDCalibrationStatus.Failure (0)
+        % user_position.Position
         %
-        Failure = 0;
-        %%
-        %% Success
-        % Indicates that the calibration process succeeded.
+        Position
+        %% Validity
+        % Gets the <../Gaze/Validity.html Validity> of the user_position.
         %
-        %     HMDCalibrationStatus.Success (1)
+        % user_position.Validity
         %
-        Success = 1;
-        %%
+        Validity
     end
 
     methods
-        function out = HMDCalibrationStatus(in)
+        function user_position = UserPosition(position, validity)
             if nargin > 0
-                out.value =  in;
+                user_position.Validity = Validity(validity);
+                user_position.Position = position;
             end
         end
     end
+
 end
 
 %% See Also
-% <../HMDBasedCalibration/HMDCalibrationResult.html HMDCalibrationResult>
+% <../Gaze/Validity.html Validity>
 
 %% Version
 % !version
@@ -45,4 +47,3 @@ end
 % Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
 % permission is obtained from Tobii AB.
 %
-

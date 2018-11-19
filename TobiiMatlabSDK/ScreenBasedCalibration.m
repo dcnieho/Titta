@@ -25,7 +25,7 @@ classdef ScreenBasedCalibration
                 error(msgID,msg);
             end
 
-            if  ismember(Capabilities.CanDoHMDBasedCalibration,new_tracker.DeviceCapabilities)
+            if  ismember(EyeTrackerCapabilities.CanDoHMDBasedCalibration,new_tracker.DeviceCapabilities)
                 msgID = 'Calibration:WrongInput';
                 msg = 'Eye tracker is not capable of perform a screen based calibration.';
                 error(msgID,msg);

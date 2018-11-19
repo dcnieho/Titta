@@ -60,6 +60,13 @@ classdef StreamErrorSource < EnumClass
         %
         SubscriptionHMDGazeData = 7;
         %%
+        %% SubscriptionUserPositionGuide
+        % The error occured while subscribing to user position guide.
+        %
+        %     type.SubscriptionUserPositionGuide (8)
+        %
+        SubscriptionUserPositionGuide = 8;
+        %%
     end
 
     methods

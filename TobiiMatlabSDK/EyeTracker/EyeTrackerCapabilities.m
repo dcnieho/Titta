@@ -1,14 +1,14 @@
-%% Capabilites
+%% EyeTrackerCapabilities
 %
 % Defines the capabilities.
 %
 %%
-classdef Capabilities < EnumClass
+classdef EyeTrackerCapabilities < EnumClass
     properties (Constant = true)
         %% CanSetDisplayArea
         % Indicates that the device's display area can be set.
         %
-        %     Capabilities.CanSetDisplayArea (1)
+        %     EyeTrackerCapabilities.CanSetDisplayArea (1)
         %
         CanSetDisplayArea = 1;
         %%
@@ -16,7 +16,7 @@ classdef Capabilities < EnumClass
         %% HasExternalSignal
         % Indicates that the device can deliver an external signal stream.
         %
-        %     Capabilities.HasExternalSignal (2)
+        %     EyeTrackerCapabilities.HasExternalSignal (2)
         %
         HasExternalSignal = 2;
         %%
@@ -24,7 +24,7 @@ classdef Capabilities < EnumClass
         %% HasEyeImages
         % Indicates that the device can deliver an eye image stream.
         %
-        %     Capabilities.HasEyeImages (4)
+        %     EyeTrackerCapabilities.HasEyeImages (4)
         %
         HasEyeImages = 4;
         %%
@@ -32,7 +32,7 @@ classdef Capabilities < EnumClass
         %% HasGazeData
         % Indicates that the device can deliver a gaze data stream. Standard for all screen based eye trackers.
         %
-        %     Capabilities.HasGazeData (8)
+        %     EyeTrackerCapabilities.HasGazeData (8)
         %
         HasGazeData = 8;
         %%
@@ -40,7 +40,7 @@ classdef Capabilities < EnumClass
         %% HasHMDGazeData
         % Indicates that the device can deliver a HMD gaze data stream.
         %
-        %     Capabilities.HasHMDGazeData (16)
+        %     EyeTrackerCapabilities.HasHMDGazeData (16)
         %
         HasHMDGazeData = 16;
         %%
@@ -48,7 +48,7 @@ classdef Capabilities < EnumClass
         %% CanDoScreenBasedCalibration
         % Indicates that screen based calibration can be performed on the device.
         %
-        %     Capabilities.CanDoScreenBasedCalibration (32)
+        %     EyeTrackerCapabilities.CanDoScreenBasedCalibration (32)
         %
         CanDoScreenBasedCalibration = 32;
         %%
@@ -56,7 +56,7 @@ classdef Capabilities < EnumClass
         %% CanDoHMDBasedCalibration
         % Indicates that HMD based calibration can be performed on the device.
         %
-        %     Capabilities.CanDoHMDBasedCalibration (64)
+        %     EyeTrackerCapabilities.CanDoHMDBasedCalibration (64)
         %
         CanDoHMDBasedCalibration = 64;
         %%
@@ -64,7 +64,7 @@ classdef Capabilities < EnumClass
         %% HasHMDLensConfig
         % Indicates that it's possible to get and set the HMD lens configuration on the device.
         %
-        %     Capabilities.HasHMDLensConfig (128)
+        %     EyeTrackerCapabilities.HasHMDLensConfig (128)
         %
         HasHMDLensConfig = 128;
         %%
@@ -72,14 +72,14 @@ classdef Capabilities < EnumClass
         %% CanDoMonocularCalibration
         % Indicates that monocular calibration can be performed on the device.
         %
-        %     Capabilities.CanDoMonocularCalibration (256)
+        %     EyeTrackerCapabilities.CanDoMonocularCalibration (256)
         %
         CanDoMonocularCalibration = 256;
         %
     end
 
     methods
-        function out = Capabilities(in)
+        function out = EyeTrackerCapabilities(in)
             if nargin > 0
                 out.value =  in;
             end

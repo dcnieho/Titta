@@ -25,7 +25,7 @@ classdef ScreenBasedMonocularCalibration
                 error(msgID, msg);
             end
 
-            if  ~ismember(Capabilities.CanDoScreenBasedCalibration,new_tracker.DeviceCapabilities) || ~ismember(Capabilities.CanDoMonocularCalibration,new_tracker.DeviceCapabilities)
+            if  ~ismember(EyeTrackerCapabilities.CanDoScreenBasedCalibration,new_tracker.DeviceCapabilities) || ~ismember(EyeTrackerCapabilities.CanDoMonocularCalibration,new_tracker.DeviceCapabilities)
                 msgID = 'Calibration:WrongInput';
                 msg = 'Eye tracker is not capable of perform a screen based monocular calibration.';
                 error(msgID,msg);
@@ -73,7 +73,7 @@ classdef ScreenBasedMonocularCalibration
         %
         % Returns: an instance of the class <ScreenBasedCalibration/CalibrationStatus.html CalibrationStatus>
         %
-        %   calib.collect_data(coordinates)
+        %   calib.collect_data(coordinates,eye_to_calibrate)
         %
         function status = collect_data(calib,coordinates,eye_to_calibrate)
             result = calib.APIcall('ScreenBasedMonocularCalibrationCollectData',calib.EyeTracker.CoreEyeTracker,coordinates,int32(eye_to_calibrate));
@@ -86,7 +86,7 @@ classdef ScreenBasedMonocularCalibration
         % Parameters: coordinates (x,y) of the calibration point.
         % Parameters: eye_to_calibrate, an instance of the enum <EyeTracker/SelectedEye.html SelectedEye> selected eye to calibrate
         %
-        %   calib.discard_data(coordinates)
+        %   calib.discard_data(coordinates,eye_to_calibrate)
         %
         %
         function discard_data(calib,coordinates,eye_to_calibrate)
