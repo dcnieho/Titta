@@ -879,7 +879,12 @@ classdef Titta < handle
                     if obj.settings.setup.simpleShowEyes
                         % left eye
                         pos = headPos; pos(1) = pos(1)-eyeMargin;
-                        if ~isnan(distL)
+                        if ~obj.calibrateLeftEye
+                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/4 -eyeSz/4 eyeSz/4 eyeSz/4];
+                            R    = [cosd(45) -sind(45); sind(45) cosd(45)];
+                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
+                        elseif ~isnan(distL)
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
@@ -887,7 +892,12 @@ classdef Titta < handle
                         end
                         % right eye
                         pos(1) = pos(1)+eyeMargin*2;
-                        if ~isnan(distR)
+                        if ~obj.calibrateRightEye
+                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/4 -eyeSz/4 eyeSz/4 eyeSz/4];
+                            R    = [cosd(45) -sind(45); sind(45) cosd(45)];
+                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
+                        elseif ~isnan(distR)
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
