@@ -11,10 +11,9 @@ end
 
 
 function impl(header,nameRoot,cppClassName)
-file = '..\TobiiCSDK\64\include\tobii_research.h';
-path = fileparts(mfilename('fullpath'));
+file = 'C:\dat\software\dependencies\vcpkg.git\installed\x64-windows\include\tobii_research.h';
 
-fid = fopen(fullfile(path,file),'rt');
+fid = fopen(file,'rt');
 txt = fread(fid,'*char').';
 fclose(fid);
 
