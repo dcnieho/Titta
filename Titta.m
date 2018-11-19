@@ -1585,7 +1585,7 @@ classdef Titta < handle
                             tick0v = tick;
                         end
                         if tick>tick0v+collectInterval
-                            dat = obj.buffers.peek('sample',nDataPoint);
+                            dat = obj.peekN('gaze',nDataPoint);
                             if isempty(out.gazeData)
                                 out.gazeData = dat;
                             else
