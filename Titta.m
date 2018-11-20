@@ -193,7 +193,7 @@ classdef Titta < handle
                         if iTry==obj.settings.nTryConnect
                             extra = sprintf('\nI did find trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.SerialNumber));
                         end
-                        func('Titta: No trackers of model ''%s'' with serial ''%s'' connected%s',obj.settings.tracker,serial,extra);
+                        func('Titta: No trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
                         WaitSecs(obj.settings.connectRetryWait);
                         iTry = iTry+1;
                         continue;
@@ -281,13 +281,13 @@ classdef Titta < handle
             warning(warnState.state,warnState.identifier);  % reset warning
             % extract some info for conversion between UCS and trackbox
             % coordinates
-            out.geom.UCS2TB.trackBoxDepths      = [obj.geom.trackBox.FrontUpperRight(3) obj.geom.trackBox.BackUpperRight(3)]./10;
-            out.geom.UCS2TB.trackBoxMinX        = obj.geom.trackBox.FrontUpperRight(1)/10;
-            out.geom.UCS2TB.trackBoxXSlope      = diff([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/diff(trackBoxDepths*10); % slope: grows wider by x cm if depth increases by y cm
-            out.geom.UCS2TB.trackBoxHalfWidth   = @(x) trackBoxMinX+trackBoxXSlope*(x-trackBoxDepths(1));
-            out.geom.UCS2TB.trackBoxMinY        = obj.geom.trackBox.FrontUpperRight(2)/10;
-            out.geom.UCS2TB.trackBoxYSlope      = diff([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/diff(trackBoxDepths*10); % slope: grows taller by x cm if depth increases by y cm
-            out.geom.UCS2TB.trackBoxHalfHeight  = @(x) trackBoxMinY+trackBoxYSlope*(x-trackBoxDepths(1));
+            obj.geom.UCS2TB.trackBoxDepths      = [obj.geom.trackBox.FrontUpperRight(3) obj.geom.trackBox.BackUpperRight(3)]./10;
+            obj.geom.UCS2TB.trackBoxMinX        = obj.geom.trackBox.FrontUpperRight(1)/10;
+            obj.geom.UCS2TB.trackBoxXSlope      = diff([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/diff(obj.geom.UCS2TB.trackBoxDepths*10); % slope: grows wider by x cm if depth increases by y cm
+            obj.geom.UCS2TB.trackBoxHalfWidth   = @(x) obj.geom.UCS2TB.trackBoxMinX+obj.geom.UCS2TB.trackBoxXSlope*(x-obj.geom.UCS2TB.trackBoxDepths(1));
+            obj.geom.UCS2TB.trackBoxMinY        = obj.geom.trackBox.FrontUpperRight(2)/10;
+            obj.geom.UCS2TB.trackBoxYSlope      = diff([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/diff(obj.geom.UCS2TB.trackBoxDepths*10); % slope: grows taller by x cm if depth increases by y cm
+            obj.geom.UCS2TB.trackBoxHalfHeight  = @(x) obj.geom.UCS2TB.trackBoxMinY+obj.geom.UCS2TB.trackBoxYSlope*(x-obj.geom.UCS2TB.trackBoxDepths(1));
             out.geom                = obj.geom;
             
             % init recording state
