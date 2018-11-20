@@ -13,9 +13,9 @@ try
     settings.debugMode = true;
     
     % init
-    ETFhndl         = Titta(settings);
+    EThndl          = Titta(settings);
 %     ETFhndl         = ETFhndl.setDummyMode();
-    ETFhndl.init();
+    EThndl.init();
     
     % TODO fix this (when calling stop, sensors don't switch off)
     if 0
@@ -51,25 +51,25 @@ try
     
     % do calibration
     if 0    % to do sequential monocular calibrations for the two eyes
-        settings = ETFhndl.getOptions();
-        settings.calibrateEye = 'left';
-        ETFhndl.setOptions(settings);
-        tobii.calVal{1}   = ETFhndl.calibrate(wpnt);
-        settings.calibrateEye = 'right';
-        ETFhndl.setOptions(settings);
+        settings                = EThndl.getOptions();
+        settings.calibrateEye   = 'left';
+        EThndl.setOptions(settings);
+        tobii.calVal{1}         = EThndl.calibrate(wpnt);
+        settings.calibrateEye   = 'right';
+        EThndl.setOptions(settings);
     end
-    tobii.calVal{1}   = ETFhndl.calibrate(wpnt);
+    tobii.calVal{1}   = EThndl.calibrate(wpnt);
     
     % later:
-    ETFhndl.startRecording('gaze');
+    EThndl.startRecording('gaze');
      
     % send message into ET data file
-    ETFhndl.sendMessage('test');
+    EThndl.sendMessage('test');
     % record 2 seconds of data
     WaitSecs(2);
     
-    ETFhndl.startRecording('eyeImage');
-    ETFhndl.sendMessage('eyes!');
+    EThndl.startRecording('eyeImage');
+    EThndl.sendMessage('eyes!');
     WaitSecs(.8);
     
     % TODO test peek multiple times, should be able to return same sample.
@@ -78,12 +78,12 @@ try
     
     
     % stopping and saving
-    ETFhndl.stopRecording('eyeImage');
-    ETFhndl.stopRecording('gaze');
-    ETFhndl.saveData(fullfile(cd,'t'), true);
+    EThndl.stopRecording('eyeImage');
+    EThndl.stopRecording('gaze');
+    EThndl.saveData(fullfile(cd,'t'), true);
     
     % shut down
-    ETFhndl.deInit();
+    EThndl.deInit();
 catch me
     sca
     rethrow(me)
