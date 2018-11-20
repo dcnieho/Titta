@@ -85,12 +85,13 @@ ball.drag   = -ballAccel;
 
 
 %% run
+% TODO this must be wrong
 addpath(genpath(fullfile(cd,'theToolbox')));
 
 try 
     % init
-    EThndl         = Titta(settings);
-    % EThndl         = EThndl.setDummyMode();
+    EThndl          = Titta(settings);
+    % EThndl          = EThndl.setDummyMode();
     EThndl.init();
     
     
