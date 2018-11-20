@@ -54,11 +54,13 @@ try
         settings                = EThndl.getOptions();
         settings.calibrateEye   = 'left';
         EThndl.setOptions(settings);
-        tobii.calVal{1}         = EThndl.calibrate(wpnt);
+        tobii.calVal{1}         = EThndl.calibrate(wpnt,1);
         settings.calibrateEye   = 'right';
         EThndl.setOptions(settings);
+        tobii.calVal{2}         = EThndl.calibrate(wpnt,2);
+    else
+        tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
-    tobii.calVal{1}   = EThndl.calibrate(wpnt);
     
     % later:
     EThndl.startRecording('gaze');
