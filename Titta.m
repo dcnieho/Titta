@@ -155,9 +155,7 @@ classdef Titta < handle
                 % see which eye trackers are available
                 trackers = obj.tobii.find_all_eyetrackers();
                 % find macthing eye-tracker, first by model
-                % TODO: next line crashes when no ETs
-                qModel = strcmp({trackers.Model},obj.settings.tracker);
-                if ~any(qModel)
+                if isempty(trackers) || ~any(strcmp({trackers.Model},obj.settings.tracker))
                     extra = '';
                     if iTry<obj.settings.nTryConnect
                         func = @warning;
@@ -176,6 +174,7 @@ classdef Titta < handle
                     break;
                 end
             end
+            qModel = strcmp({trackers.Model},obj.settings.tracker);
             % if obligatory serial also given, check on that
             assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
             if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
