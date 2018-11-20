@@ -183,7 +183,7 @@ std::vector<T>& TobiiBuffer::getBuffer()
         return _timeSync;
 }
 template <typename T>
-std::tuple<bool, typename std::vector<T>::iterator, typename std::vector<T>::iterator>
+std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator, bool>
 TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 {
     // !NB: appropriate locking is responsibility of caller!
@@ -191,10 +191,10 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
     // Since returns are iterators, what is returned is first matching element until one past last matching element
     // 1. get buffer to traverse, if empty, return
     auto& buf    = getBuffer<T>();
-    auto startIt = buf.begin();
-    auto   endIt = buf.end();
-    if (buf.empty())
-        return {true,startIt,endIt};
+    auto startIt = std::begin(buf);
+    auto   endIt = std::end(buf);
+    if (std::empty(buf))
+        return {startIt,endIt, true};
 
     // 2. see which member variable to access
     int64_t T::* field;
@@ -214,7 +214,7 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
         endIt   = std::upper_bound(startIt, endIt, timeEnd_  , [&field](const int64_t& a_, const T& b_) {return a_ < b_.*field;});
 
     // 5. done, return
-    return {inclFirst&&inclLast,startIt,endIt};
+    return {startIt,endIt, inclFirst&&inclLast};
 }
 // generic functions
 template <typename T>
@@ -222,11 +222,11 @@ void TobiiBuffer::clearImpl(int64_t timeStart_, int64_t timeEnd_)
 {
     auto l    = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer<T>();
-    if (buf.empty())
+    if (std::empty(buf))
         return;
 
     // find applicable range
-    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
+    auto [start, end, whole] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
     // clear the flagged bit
     if (whole)
         buf.clear();
@@ -261,65 +261,74 @@ bool TobiiBuffer::stopImpl(bool emptyBuffer_)
 
     return success;
 }
-template <typename T>
-std::vector<T> TobiiBuffer::consumeN(size_t firstN_ /*= TobiiBuff::g_consumeDefaultAmount*/)
-{
-    auto l    = lockForWriting<T>();
-    auto& buf = getBuffer<T>();
 
-    if (firstN_ == -1 || firstN_ >= buf.size())		// firstN_=-1 overflows, so first check strictly not needed. Better keep code legible tho
-        return std::vector<T>(std::move(buf));
+template <typename T>
+std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
+{
+    if (std::empty(buf_))
+        return std::vector<T>{};
+
+    // move out the indicated elements
+    bool whole = startIt_ == std::begin(buf_) && endIt_ == std::end(buf_);
+    if (whole)
+        return std::vector<T>(std::move(buf_));
     else
     {
         std::vector<T> out;
-        out.reserve(firstN_);
-        out.insert(out.end(), std::make_move_iterator(buf.begin()), std::make_move_iterator(buf.begin() + firstN_));
-        buf.erase(buf.begin(), buf.begin() + firstN_);
+        out.reserve(std::distance(startIt_, endIt_));
+        out.insert(std::end(out), std::make_move_iterator(startIt_), std::make_move_iterator(endIt_));
+        buf_.erase(startIt_, endIt_);
         return out;
     }
+}
+template <typename T>
+std::vector<T> TobiiBuffer::consumeN(size_t firstN_ /*= TobiiBuff::g_consumeDefaultAmount*/)
+{
+    auto l       = lockForWriting<T>();
+
+    auto& buf    = getBuffer<T>();
+    auto startIt = std::begin(buf);
+    auto   endIt = std::next(startIt, std::min(firstN_, std::size(buf)));
+
+    return consumeFromVec(buf, startIt, endIt);
 }
 template <typename T>
 std::vector<T> TobiiBuffer::consumeTimeRange(int64_t timeStart_ /*= TobiiBuff::g_consumeTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_consumeTimeRangeEnd*/)
 {
     auto l    = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer<T>();
-    if (buf.empty())
+
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
+    return consumeFromVec(buf, startIt, endIt);
+}
+template <typename T>
+std::vector<T> peekFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
+{
+    if (std::empty(buf_))
         return std::vector<T>{};
 
-    // find applicable range
-    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
-    // move out the indicated elements
-    if (whole)
-        return std::vector<T>(std::move(buf));
-    else
-    {
-        std::vector<T> out;
-        out.reserve(std::distance(start,end));
-        out.insert(out.end(), std::make_move_iterator(start), std::make_move_iterator(end));
-        buf.erase(start, end);
-        return out;
-    }
+    // copy the indicated elements
+    return std::vector<T>(startIt_, endIt_);
 }
 template <typename T>
 std::vector<T> TobiiBuffer::peekN(size_t lastN_ /*= TobiiBuff::g_peekDefaultAmount*/)
 {
-    auto l    = lockForReading<T>();
+    auto l = lockForReading<T>();
+
     auto& buf = getBuffer<T>();
-    // copy last N or whole vector if less than N elements available
-    return std::vector<T>(buf.end() - std::min(buf.size(), lastN_), buf.end());
+    auto startIt = std::end(buf);
+    auto   endIt = std::prev(startIt, std::min(lastN_, std::size(buf)));
+
+    return peekFromVec(buf, startIt,endIt);
 }
 template <typename T>
 std::vector<T> TobiiBuffer::peekTimeRange(int64_t timeStart_ /*= TobiiBuff::g_peekTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_peekTimeRangeEnd*/)
 {
     auto l    = lockForReading<T>();
     auto& buf = getBuffer<T>();
-    if (buf.empty())
-        return std::vector<T>{};
 
-    // find applicable range
-    auto [whole, start, end] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
-    // copy the indicated elements
-    return std::vector<T>(start, end);
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
+    return peekFromVec(buf, startIt, endIt);
 }
 
 // functions taking buffer type as input
