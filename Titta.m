@@ -1446,6 +1446,7 @@ classdef Titta < handle
                     if isa(obj.settings.cal.drawFunction,'function_handle')
                         obj.settings.cal.drawFunction(nan);
                     end
+                    Screen('Flip',wpnt);
                 end
                 return;
             end
@@ -1539,7 +1540,7 @@ classdef Titta < handle
                 out.gazeData    = [];
             end
             nPoint = size(points,1);
-            points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)];
+            points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
             if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
                 points = points(randperm(nPoint),:);
             end
@@ -1665,7 +1666,6 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            out.flips(end+1) = Screen('Flip',wpnt);    % clear
             obj.sendMessage(sprintf('POINT OFF %d',currentPoint-pointOff),out.flips(end));
         end
         
