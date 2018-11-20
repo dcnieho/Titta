@@ -300,8 +300,18 @@ classdef Titta < handle
             obj.isInitialized = true;
         end
         
-        function out = calibrate(obj,wpnt)
+        function out = calibrate(obj,wpnt,flag)
             % this function does all setup, draws the interface, etc
+            % flag is for if you want to calibrate the two eyes separately,
+            % monocularly. When doing first eye, set flag to 1, when second
+            % eye set flag to 2. Internally for Titta flag 1 has the
+            % meaning "first calibration" and flag 2 "final calibration".
+            % This is checked against with bitand, so when user didn't
+            % specify we assume a single calibration will be done (which is
+            % thus both first and final) and thus set flag to 3.
+            if nargin<3 || isempty(flag)
+                flag = 3;
+            end
             
             % get info about screen
             obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
@@ -327,12 +337,17 @@ classdef Titta < handle
                 calibClass = ScreenBasedMonocularCalibration(obj.eyetracker);
             end
             try
-                calibClass.leave_calibration_mode();    % make sure we're not already in calibration mode (start afresh)
+                if bitand(flag,1)
+                    calibClass.leave_calibration_mode();    % make sure we're not already in calibration mode (start afresh)
+                end
             catch ME %#ok<NASGU>
                 % no-op, ok if fails, simply means we're not already in
                 % calibration mode
             end
             obj.StopRecordAll();
+            if bitand(flag,1)
+                calibClass.enter_calibration_mode();
+            end
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -425,6 +440,9 @@ classdef Titta < handle
             % clean up
             Screen('Flip',wpnt);
             Screen('BlendFunction', wpnt, osf,odf,ocm);
+            if bitand(flag,2)
+                calibClass.leave_calibration_mode();
+            end
             
             % store calibration info in calibration history, for later
             % retrieval if wanted
@@ -1397,7 +1415,6 @@ classdef Titta < handle
             Screen('FillRect', wpnt, obj.settings.cal.bgColor); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % do calibration
-            calibClass.enter_calibration_mode();
             calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
             obj.startRecording('gaze');
             if obj.settings.cal.doRecordEyeImages
@@ -1413,7 +1430,6 @@ classdef Titta < handle
                 % compute calibration
                 out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
             end
-            calibClass.leave_calibration_mode();
             
             % if valid calibration retrieve data, so user can select different ones
             if status==1
