@@ -316,8 +316,8 @@ std::vector<T> TobiiBuffer::peekN(size_t lastN_ /*= TobiiBuff::g_peekDefaultAmou
     auto l = lockForReading<T>();
 
     auto& buf = getBuffer<T>();
-    auto startIt = std::end(buf);
-    auto   endIt = std::prev(startIt, std::min(lastN_, std::size(buf)));
+    auto   endIt = std::end(buf);
+    auto startIt = std::prev(endIt, std::min(lastN_, std::size(buf)));
 
     return peekFromVec(buf, startIt,endIt);
 }
