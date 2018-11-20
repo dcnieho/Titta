@@ -279,6 +279,15 @@ classdef Titta < handle
             obj.geom.displayArea    = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
             obj.geom.trackBox       = structfun(@double,struct(obj.eyetracker.get_track_box())   ,'uni',false);
             warning(warnState.state,warnState.identifier);  % reset warning
+            % extract some info for conversion between UCS and trackbox
+            % coordinates
+            out.geom.UCS2TB.trackBoxDepths      = [obj.geom.trackBox.FrontUpperRight(3) obj.geom.trackBox.BackUpperRight(3)]./10;
+            out.geom.UCS2TB.trackBoxMinX        = obj.geom.trackBox.FrontUpperRight(1)/10;
+            out.geom.UCS2TB.trackBoxXSlope      = diff([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/diff(trackBoxDepths*10); % slope: grows wider by x cm if depth increases by y cm
+            out.geom.UCS2TB.trackBoxHalfWidth   = @(x) trackBoxMinX+trackBoxXSlope*(x-trackBoxDepths(1));
+            out.geom.UCS2TB.trackBoxMinY        = obj.geom.trackBox.FrontUpperRight(2)/10;
+            out.geom.UCS2TB.trackBoxYSlope      = diff([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/diff(trackBoxDepths*10); % slope: grows taller by x cm if depth increases by y cm
+            out.geom.UCS2TB.trackBoxHalfHeight  = @(x) trackBoxMinY+trackBoxYSlope*(x-trackBoxDepths(1));
             out.geom                = obj.geom;
             
             % init recording state
@@ -835,12 +844,10 @@ classdef Titta < handle
             if ~obj.settings.debugMode      % for cleanup
                 cursors.reset = -1;         % hide cursor (else will reset to cursor.other by default, so we're good with that default
             end
-            cursor          = cursorUpdater(cursors);
+            cursor  = cursorUpdater(cursors);
             
             % get tracking status and visualize
-            tb                  = obj.geom.trackBox;
-            trackBoxDepths      = [tb.FrontLowerLeft(3) tb.BackLowerLeft(3)]./10;
-            trackBoxhalfWidth   = @(x) (tb.FrontLowerRight(1)+diff([tb.FrontLowerRight(1) tb.BackLowerRight(1)])*(x*10-tb.FrontLowerRight(3))/diff(trackBoxDepths*10))/10;
+            eyeDist = nan;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -849,37 +856,46 @@ classdef Titta < handle
                 eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye] = deal(nan(3,1));
                 if ~isempty(eyeData) && obj.calibrateLeftEye
-                    lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
+                    lEye = eyeData. left.gazeOrigin.inUserCoords;
                 end
+                qHaveLeft   = obj.calibrateLeftEye  && eyeData. left.gazeOrigin.valid;
                 if ~isempty(eyeData) && obj.calibrateRightEye
-                    rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
+                    rEye = eyeData.right.gazeOrigin.inUserCoords;
                 end
+                qHaveRight  = obj.calibrateRightEye && eyeData.right.gazeOrigin.valid;
+                qHave       = [qHaveLeft qHaveRight];
+                
                 
                 % get average eye distance. use distance from one eye if only one eye
                 % available
-                distL   = lEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
-                distR   = rEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
-                dists   = [distL distR];
-                avgDist = mean(dists(~isnan(dists)));
-                tbWidth = trackBoxhalfWidth(avgDist)*2;
-                Xs      = [lEye(1) rEye(1)];    % normalized is good here
-                if any(Xs)
+                dists   = [lEye(3) rEye(3)]./10;
+                avgDist = mean(dists(qHave));
+                Xs      = [lEye(1) rEye(1)]./10;
+                if isnan(eyeDist) && any(qHave)
+                    % get distance between eyes
+                    eyeDist = hypot(diff(Xs),diff(dists));
+                end
+                if any(qHave) && ~isnan(eyeDist)
                     % if we have only one eye, make fake second eye
                     % position so drawn head position doesn't jump so much.
-                    % assume average IPD (62 mm)
-                    if isnan(Xs(1))
-                        Xs(1) = Xs(2)+6.2/tbWidth;  % NB: sign opposite than expected, because we're in view from camera's perspective, so leftward head is rightward here
-                    elseif isnan(Xs(2))
-                        Xs(2) = Xs(1)-6.2/tbWidth;  % NB: see note for Xs(1)
+                    if ~qHaveLeft
+                        Xs(1) = Xs(2)+eyeDist;  % NB: sign opposite than expected, because we're in view from camera's perspective, so leftward head is rightward here
+                    elseif ~qHaveRight
+                        Xs(2) = Xs(1)-eyeDist;  % NB: see note for Xs(1)
                     end
                 end
-                avgX    = mean(Xs(~isnan(Xs)));
-                Ys      = [lEye(2) rEye(2)];
-                avgY    = mean(Ys(~isnan(Ys)));
+                avgX    = mean(Xs(qHave));
+                Ys      = [lEye(2) rEye(2)]./10;
+                avgY    = mean(Ys(qHave));
+                % convert from UCS to trackBox coordinates
+                tbWidth = out.geom.UCS2TB.trackBoxHalfWidth (avgDist);
+                avgX    = avgX/tbWidth /2+.5;
+                tbHeight= out.geom.UCS2TB.trackBoxHalfHeight(avgDist);
+                avgY    = avgY/tbHeight/2+.5;
                 
                 % scale up size of oval. define size/rect at standard distance, have a
                 % gain for how much to scale as distance changes
-                if ~isnan(distL) || ~isnan(distR)
+                if ~isnan(avgDist)
                     pos     = [1-avgX avgY];  %1-X as 0 is right and 1 is left edge. needs to be reflected for screen drawing
                     % determine size of oval, based on distance from reference distance
                     fac     = avgDist/obj.settings.setup.viewingDist;
@@ -906,7 +922,7 @@ classdef Titta < handle
                             R    = [cosd(45) -sind(45); sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
-                        elseif ~isnan(distL)
+                        elseif qHaveLeft
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
@@ -919,7 +935,7 @@ classdef Titta < handle
                             R    = [cosd(45) -sind(45); sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
-                        elseif ~isnan(distR)
+                        elseif qHaveRight
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
