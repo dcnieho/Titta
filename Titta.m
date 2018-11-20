@@ -439,7 +439,7 @@ classdef Titta < handle
             % For these, the first call subscribes to the stream and returns
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
-            % TODO: support option size of buffer input
+            % TODO: support optional size of buffer input
             result = true;
             assert(nargin>1,'Titta: startRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             switch lower(stream)
@@ -677,6 +677,7 @@ classdef Titta < handle
             settings.setup.simpleShowEyes   = true;
             settings.setup.viewingDist      = 65;
             settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
+            % TODO: do we support zero points? and also for val?
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
@@ -960,7 +961,7 @@ classdef Titta < handle
                 
                 
                 % get user response
-                [mx,my,buttons,keyCode,haveShift] = obj.getNewMouseKeyPress();
+                [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
                 % update cursor look if needed
                 cursor.update(mx,my);
                 if any(buttons)
@@ -988,10 +989,10 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'p')) && qHaveValidCalibrations
                         status = -3;
                         break;
-                    elseif any(strcmpi(keys,'escape')) && haveShift
+                    elseif any(strcmpi(keys,'escape')) && shiftIsDown
                         status = -4;
                         break;
-                    elseif any(strcmpi(keys,'s')) && haveShift
+                    elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         status = 2;
                         break;
@@ -1278,7 +1279,7 @@ classdef Titta < handle
                 Screen('Flip',wpnt);
                 
                 % get user response
-                [mx,my,buttons,keyCode,haveShift] = obj.getNewMouseKeyPress();
+                [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
                 % update cursor look if needed
                 cursor.update(mx,my);
                 if any(buttons)
@@ -1308,10 +1309,10 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'p')) && qHaveValidCalibrations
                         status = -3;
                         break;
-                    elseif any(strcmpi(keys,'escape')) && haveShift
+                    elseif any(strcmpi(keys,'escape')) && shiftIsDown
                         status = -4;
                         break;
-                    elseif any(strcmpi(keys,'s')) && haveShift
+                    elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         status = 2;
                         break;
@@ -1598,7 +1599,7 @@ classdef Titta < handle
                 end
                 
                 % get user response
-                [~,~,~,keyCode,haveShift] = obj.getNewMouseKeyPress();
+                [~,~,~,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
                 if any(keyCode)
                     keys = KbName(keyCode);
                     if any(strcmpi(keys,'space')) && waitForKeyAccept && qAllowAcceptKey
@@ -1611,14 +1612,14 @@ classdef Titta < handle
                         break;
                     elseif any(strcmpi(keys,'escape'))
                         % NB: no need to cancel calibration here,
-                        % calibration mode is left by caller
-                        if any(strcmpi(keys,'shift'))
+                        % leaving calibration mode is done by caller
+                        if shiftIsDown
                             status = -4;
                         else
                             status = -2;
                         end
                         break;
-                    elseif any(strcmpi(keys,'s')) && haveShift
+                    elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         status = 2;
                         break;
@@ -2081,7 +2082,7 @@ classdef Titta < handle
                     Screen('Flip',wpnt);
                     
                     % get user response
-                    [mx,my,buttons,keyCode,haveShift] = obj.getNewMouseKeyPress();
+                    [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
                     % update cursor look if needed
                     cursor.update(mx,my);
                     if any(buttons)
@@ -2141,11 +2142,11 @@ classdef Titta < handle
                                 status = 1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'escape')) && ~haveShift
+                            elseif any(strcmpi(keys,'escape')) && ~shiftIsDown
                                 status = -1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'s')) && ~haveShift
+                            elseif any(strcmpi(keys,'s')) && ~shiftIsDown
                                 status = -2;
                                 qDoneCalibSelection = true;
                                 break;
@@ -2163,11 +2164,11 @@ classdef Titta < handle
                         end
                         
                         % these two key combinations should always be available
-                        if any(strcmpi(keys,'escape')) && haveShift
+                        if any(strcmpi(keys,'escape')) && shiftIsDown
                             status = -4;
                             qDoneCalibSelection = true;
                             break;
-                        elseif any(strcmpi(keys,'s')) && haveShift
+                        elseif any(strcmpi(keys,'s')) && shiftIsDown
                             % skip calibration
                             status = 2;
                             qDoneCalibSelection = true;
@@ -2208,7 +2209,7 @@ classdef Titta < handle
             obj.eyetracker.apply_calibration_data(cal.cal.computedCal);
         end
         
-        function [mx,my,mouse,key,haveShift] = getNewMouseKeyPress(obj)
+        function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj)
             % function that only returns key depress state changes in the
             % down direction, not keys that are held down or anything else
             % NB: before using this, make sure internal state is up to
@@ -2222,7 +2223,7 @@ classdef Titta < handle
             mouse   = buttons & ~obj.mouseState;
             
             % get if shift key is currently down
-            haveShift = ~~keyCode(obj.shiftKey);
+            shiftIsDown = ~~keyCode(obj.shiftKey);
             
             % store to state
             obj.keyState    = keyCode;
