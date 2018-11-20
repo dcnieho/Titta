@@ -152,15 +152,17 @@ classdef Titta < handle
             % Connect to eyetracker
             iTry = 1;
             while true
+                if iTry<obj.settings.nTryConnect
+                    func = @warning;
+                else
+                    func = @error;
+                end
                 % see which eye trackers are available
                 trackers = obj.tobii.find_all_eyetrackers();
                 % find macthing eye-tracker, first by model
                 if isempty(trackers) || ~any(strcmp({trackers.Model},obj.settings.tracker))
                     extra = '';
-                    if iTry<obj.settings.nTryConnect
-                        func = @warning;
-                    else
-                        func = @error;
+                    if iTry==obj.settings.nTryConnect
                         if ~isempty(trackers)
                             extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.Model));
                         else
@@ -170,22 +172,39 @@ classdef Titta < handle
                     func('Titta: No trackers of model ''%s'' connected%s',obj.settings.tracker,extra);
                     WaitSecs(obj.settings.connectRetryWait);
                     iTry = iTry+1;
+                    continue;
+                end
+                qModel = strcmp({trackers.Model},obj.settings.tracker);
+                % if obligatory serial also given, check on that
+                % a serial number preceeded by '*' denotes the serial number is
+                % optional. That means that if only a single other tracker of
+                % the same type is found, that one will be used.
+                assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
+                if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
+                    % more than one tracker found or non-optional serial
+                    serial = obj.settings.serialNumber;
+                    if serial(1)=='*'
+                        serial(1) = [];
+                    end
+                    qTracker = qModel & strcmp({trackers.SerialNumber},serial);
+                    
+                    if ~any(qTracker)
+                        extra = '';
+                        if iTry==obj.settings.nTryConnect
+                            extra = sprintf('\nI did find trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.SerialNumber));
+                        end
+                        func('Titta: No trackers of model ''%s'' with serial ''%s'' connected%s',obj.settings.tracker,serial,extra);
+                        WaitSecs(obj.settings.connectRetryWait);
+                        iTry = iTry+1;
+                        continue;
+                    else
+                        break;
+                    end
                 else
+                    % the single tracker we found is fine, use it
+                    qTracker = qModel;
                     break;
                 end
-            end
-            qModel = strcmp({trackers.Model},obj.settings.tracker);
-            % if obligatory serial also given, check on that
-            assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
-            if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
-                serial = obj.settings.serialNumber;
-                if serial(1)=='*'
-                    serial(1) = [];
-                end
-                qTracker = qModel & strcmp({trackers.SerialNumber},serial);
-                assert(any(qTracker),'Titta: No trackers of model ''%s'' with serial ''%s'' connected',obj.settings.tracker,serial)
-            else
-                qTracker = qModel;
             end
             % get our instance
             obj.eyetracker = trackers(qTracker);
