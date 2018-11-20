@@ -19,18 +19,14 @@
 namespace TobiiBuff
 {
     // default argument values
-    constexpr size_t  g_sampleBufDefaultSize = 1 << 22;
-    constexpr size_t  g_sampleTempBufDefaultSize = 1 << 16;
+    constexpr size_t  g_sampleBufDefaultSize = 1 << 20;     // about half an hour at 600Hz
 
-    constexpr size_t  g_eyeImageBufDefaultSize = 1 << 14;
+    constexpr size_t  g_eyeImageBufDefaultSize = 1 << 12;   // about seven minutes at 2*5Hz
     constexpr bool    g_eyeImageAsGIFDefault = false;
-    constexpr size_t  g_eyeImageTempBufDefaultSize = 1 << 10;
 
-    constexpr size_t  g_extSignalBufDefaultSize = 1 << 14;
-    constexpr size_t  g_extSignalTempBufDefaultSize = 1 << 10;
+    constexpr size_t  g_extSignalBufDefaultSize = 1 << 10;
 
-    constexpr size_t  g_timeSyncBufDefaultSize = 1 << 14;
-    constexpr size_t  g_timeSyncTempBufDefaultSize = 1 << 10;
+    constexpr size_t  g_timeSyncBufDefaultSize = 1 << 10;
 
     constexpr int64_t g_clearTimeRangeStart = 0;
     constexpr int64_t g_clearTimeRangeEnd = std::numeric_limits<int64_t>::max();
