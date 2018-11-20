@@ -471,12 +471,8 @@ classdef Titta < handle
             end
             
             % check for errors
-            if islogical(result)
-                if ~result
-                    error('Titta: Error starting recording %s',streamLbl);
-                end
-            else
-                obj.processError(result,sprintf('Titta: Error starting recording %s',streamLbl));
+            if ~result
+                error('Titta: Error starting recording %s',streamLbl);
             end
             % mark that we are recording
             obj.recState.(field) = true;
@@ -704,13 +700,6 @@ classdef Titta < handle
         
         function time = getSystemTime()
             time = int64(round(GetSecs()*1000*1000));
-        end
-        
-        function processError(returnValue,errorString)
-            % for Tobii, deal with return values of type StreamError
-            if isa(returnValue,'StreamError')
-                error('%s (error %s, source %s, timestamp %d, message: %s)\n',errorString,char(returnValue.Error),char(returnValue.Source),returnValue.SystemTimeStamp,returnValue.Message);
-            end
         end
     end
     
