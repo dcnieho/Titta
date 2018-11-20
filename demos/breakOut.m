@@ -145,7 +145,7 @@ try
         
         % update paddle
         % 1. get eye data, determine how far to move
-        samp    = EThndl.consumeData('gaze');
+        samp    = EThndl.consumeN('gaze');
         i = 0;
         if ~isempty(samp)
             i = length(samp.left.gazePoint.valid);
