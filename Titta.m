@@ -859,11 +859,11 @@ classdef Titta < handle
                 if ~isempty(eyeData) && obj.calibrateLeftEye
                     lEye = eyeData. left.gazeOrigin.inUserCoords;
                 end
-                qHaveLeft   = obj.calibrateLeftEye  && eyeData. left.gazeOrigin.valid;
+                qHaveLeft   = obj.calibrateLeftEye  && ~isempty(eyeData) && eyeData. left.gazeOrigin.valid;
                 if ~isempty(eyeData) && obj.calibrateRightEye
                     rEye = eyeData.right.gazeOrigin.inUserCoords;
                 end
-                qHaveRight  = obj.calibrateRightEye && eyeData.right.gazeOrigin.valid;
+                qHaveRight  = obj.calibrateRightEye && ~isempty(eyeData) && eyeData.right.gazeOrigin.valid;
                 qHave       = [qHaveLeft qHaveRight];
                 
                 
@@ -880,24 +880,24 @@ classdef Titta < handle
                     % if we have only one eye, make fake second eye
                     % position so drawn head position doesn't jump so much.
                     if ~qHaveLeft
-                        Xs(1) = Xs(2)+eyeDist;  % NB: sign opposite than expected, because we're in view from camera's perspective, so leftward head is rightward here
+                        Xs(1) = Xs(2)-eyeDist;
                     elseif ~qHaveRight
-                        Xs(2) = Xs(1)-eyeDist;  % NB: see note for Xs(1)
+                        Xs(2) = Xs(1)+eyeDist;
                     end
                 end
-                avgX    = mean(Xs(qHave));
+                avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs above
                 Ys      = [lEye(2) rEye(2)]./10;
                 avgY    = mean(Ys(qHave));
                 % convert from UCS to trackBox coordinates
-                tbWidth = out.geom.UCS2TB.trackBoxHalfWidth (avgDist);
+                tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (avgDist);
                 avgX    = avgX/tbWidth /2+.5;
-                tbHeight= out.geom.UCS2TB.trackBoxHalfHeight(avgDist);
+                tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(avgDist);
                 avgY    = avgY/tbHeight/2+.5;
                 
                 % scale up size of oval. define size/rect at standard distance, have a
                 % gain for how much to scale as distance changes
                 if ~isnan(avgDist)
-                    pos     = [1-avgX avgY];  %1-X as 0 is right and 1 is left edge. needs to be reflected for screen drawing
+                    pos     = [avgX 1-avgY];  %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                     % determine size of oval, based on distance from reference distance
                     fac     = avgDist/obj.settings.setup.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
