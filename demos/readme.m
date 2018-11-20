@@ -50,6 +50,14 @@ try
     KbName('UnifyKeyNames')
     
     % do calibration
+    if 0    % to do sequential monocular calibrations for the two eyes
+        settings = ETFhndl.getOptions();
+        settings.calibrateEye = 'left';
+        ETFhndl.setOptions(settings);
+        tobii.calVal{1}   = ETFhndl.calibrate(wpnt);
+        settings.calibrateEye = 'right';
+        ETFhndl.setOptions(settings);
+    end
     tobii.calVal{1}   = ETFhndl.calibrate(wpnt);
     
     % later:
