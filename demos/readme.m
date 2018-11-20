@@ -72,6 +72,9 @@ try
     ETFhndl.sendMessage('eyes!');
     WaitSecs(.8);
     
+    % TODO test peek multiple times, should be able to return same sample.
+    % peekTimeRange seems not to work...
+    
     
     
     % stopping and saving
