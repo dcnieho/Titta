@@ -63,6 +63,7 @@ public:
         ExtSignal,
         TimeSync
     };
+    static TobiiBuffer::DataStream stringToDataStream(std::string dataStream_);
 
 public:
     TobiiBuffer(std::string address_);
@@ -125,8 +126,6 @@ private:
 
 namespace TobiiBuff
 {
-    TobiiBuffer::DataStream stringToDataStream(std::string dataStream_);
-
     //// logging ////
     bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);
     std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ = g_logBufClearDefault);

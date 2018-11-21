@@ -59,18 +59,15 @@ namespace
     };
 }
 
-namespace TobiiBuff
+TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string dataStream_)
 {
-    TobiiBuffer::DataStream stringToDataStream(std::string dataStream_)
+    if (dataStreamMap.count(dataStream_) == 0)
     {
-        if (dataStreamMap.count(dataStream_) == 0)
-        {
-            std::stringstream os;
-            os << "Unrecognized data stream (not in dataStreamMap): \"" << dataStream_ << "\"";
-            DoExitWithMsg(os.str());
-        }
-        return dataStreamMap.at(dataStream_);
+        std::stringstream os;
+        os << "Unrecognized data stream (not in dataStreamMap): \"" << dataStream_ << "\"";
+        DoExitWithMsg(os.str());
     }
+    return dataStreamMap.at(dataStream_);
 }
 
 
@@ -339,7 +336,7 @@ void TobiiBuffer::clear(std::string dataStream_)
 void TobiiBuffer::clearTimeRange(std::string dataStream_, int64_t timeStart_ /*= TobiiBuff::g_clearTimeRangeStart*/, int64_t timeEnd_ /*= TobiiBuff::g_clearTimeRangeEnd*/)
 {
     // get corresponding data stream
-    TobiiBuffer::DataStream stream = TobiiBuff::stringToDataStream(dataStream_);
+    TobiiBuffer::DataStream stream = stringToDataStream(dataStream_);
 
     // now clear that buffer
     switch (stream)
@@ -361,7 +358,7 @@ void TobiiBuffer::clearTimeRange(std::string dataStream_, int64_t timeStart_ /*=
 bool TobiiBuffer::stop(std::string dataStream_, bool emptyBuffer_ /*= TobiiBuff::g_stopBufferEmptiesDefault*/)
 {
     // get corresponding data stream
-    TobiiBuffer::DataStream stream = TobiiBuff::stringToDataStream(dataStream_);
+    TobiiBuffer::DataStream stream = stringToDataStream(dataStream_);
 
     // now clear that buffer
     bool out = false;

@@ -214,7 +214,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
-            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            TobiiBuffer::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get default argument
@@ -331,7 +331,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
-            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            TobiiBuffer::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get default argument and parse optional input
@@ -366,7 +366,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
-            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            TobiiBuffer::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get default argument and parse optional input
@@ -408,7 +408,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
-            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            TobiiBuffer::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get default argument and parse optional input
@@ -444,7 +444,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
-            TobiiBuffer::DataStream dataStream = TobiiBuff::stringToDataStream(bufferCstr);
+            TobiiBuffer::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get default argument and parse optional input
