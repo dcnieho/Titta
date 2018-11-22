@@ -644,9 +644,6 @@ namespace
 
     mxArray* ToMxArray(std::vector<TobiiResearchGazeData> data_)
     {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
@@ -673,6 +670,9 @@ namespace
 
     mxArray* eyeImagesToMatlab(const std::vector<TobiiBuff::eyeImage>& data_)
     {
+        if (data_.empty())
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
         bool same = allEquals(data_, &TobiiBuff::eyeImage::data_size, sz);
@@ -705,9 +705,6 @@ namespace
 
     mxArray* ToMxArray(std::vector<TobiiBuff::eyeImage> data_)
     {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
         // check if all gif, then don't output unneeded fields
         bool allGif = allEquals(data_, &TobiiBuff::eyeImage::isGif, true);
 
@@ -746,9 +743,6 @@ namespace
 
     mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_)
     {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
@@ -765,9 +759,6 @@ namespace
     }
     mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_)
     {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
         const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
@@ -783,9 +774,6 @@ namespace
 
     mxArray* ToMxArray(std::vector<TobiiBuff::logMessage> data_)
     {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
         const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         mxArray* temp;
