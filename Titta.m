@@ -874,14 +874,14 @@ classdef Titta < handle
                 % get latest data from eye-tracker
                 eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye] = deal(nan(3,1));
-                if ~isempty(eyeData) && obj.calibrateLeftEye
+                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateLeftEye
                     lEye = eyeData. left.gazeOrigin.inUserCoords;
                 end
-                qHaveLeft   = obj.calibrateLeftEye  && ~isempty(eyeData) && eyeData. left.gazeOrigin.valid;
-                if ~isempty(eyeData) && obj.calibrateRightEye
+                qHaveLeft   = obj.calibrateLeftEye  && ~isempty(eyeData.systemTimeStamp) && eyeData. left.gazeOrigin.valid;
+                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateRightEye
                     rEye = eyeData.right.gazeOrigin.inUserCoords;
                 end
-                qHaveRight  = obj.calibrateRightEye && ~isempty(eyeData) && eyeData.right.gazeOrigin.valid;
+                qHaveRight  = obj.calibrateRightEye && ~isempty(eyeData.systemTimeStamp) && eyeData.right.gazeOrigin.valid;
                 qHave       = [qHaveLeft qHaveRight];
                 
                 
@@ -1152,11 +1152,11 @@ classdef Titta < handle
                 eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye]     = deal(nan(3,1));
                 [lValid,rValid] = deal(false);
-                if ~isempty(eyeData) && obj.calibrateLeftEye
+                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateLeftEye
                     lValid  = eyeData. left.gazeOrigin.valid;
                     lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
                 end
-                if ~isempty(eyeData) && obj.calibrateRightEye
+                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateRightEye
                     rValid  = eyeData.right.gazeOrigin.valid;
                     rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
                 end
@@ -2083,7 +2083,7 @@ classdef Titta < handle
                         obj.drawFixPoints(wpnt,fixPos);
                         % draw gaze data
                         eyeData = obj.buffers.consumeN('sample');
-                        if ~isempty(eyeData)
+                        if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
