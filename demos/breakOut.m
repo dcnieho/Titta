@@ -111,6 +111,7 @@ try
     % renderer is the default on all operating systems, so this is more of
     % a "better safe than sorry" setting.
     Screen('Preference', 'TextRenderer', 1);
+    KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration, start recording
     calValInfo = EThndl.calibrate(wpnt);

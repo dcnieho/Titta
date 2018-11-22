@@ -47,7 +47,7 @@ try
     % renderer is the default on all operating systems, so this is more of
     % a "better safe than sorry" setting.
     Screen('Preference', 'TextRenderer', 1);
-    KbName('UnifyKeyNames')
+    KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration
     if 0    % to do sequential monocular calibrations for the two eyes
