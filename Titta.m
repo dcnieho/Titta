@@ -706,7 +706,7 @@ classdef Titta < handle
             settings.cal.fixBackColor       = 0;
             settings.cal.fixFrontColor      = 255;
             settings.cal.drawFunction       = [];
-            settings.cal.doRecordEyeImages  = true;
+            settings.cal.doRecordEyeImages  = false;
             settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
@@ -723,7 +723,7 @@ classdef Titta < handle
                 settings.text.size          = 24;
             end
             settings.string.simplePositionInstruction = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
-            settings.debugMode          = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
+            settings.debugMode              = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
         function time = getSystemTime()
