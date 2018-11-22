@@ -148,17 +148,15 @@ try
         % update paddle
         % 1. get eye data, determine how far to move
         samp    = EThndl.consumeN('gaze');
-        i = 0;
-        if ~isempty(samp)
-            i = length(samp.left.gazePoint.valid);
-            while i>=1
-                if samp.left.gazePoint.valid(i) || samp.right.gazePoint.valid(i)
-                    break;
-                end
-                i = i-1;
-            end
+        % see if have a sample with both eyes
+        qSelect = samp.left.gazePoint.valid & samp.left.gazePoint.valid;
+        if ~any(qSelect)
+            % if not, see if have sample for one of the eyes
+            qSelect = samp.left.gazePoint.valid || samp.right.gazePoint.valid;
         end
-        if i>0
+        i = find(qSelect,1,'last');
+        % if have some form of eye position, update paddle position
+        if ~isempty(i)
             gazeX   = [samp.left.gazePoint.onDisplayArea(1,i) samp.right.gazePoint.onDisplayArea(1,i)];
             gazeX   = mean(gazeX(~isnan(gazeX)))*width;
             trans   = gazeX-paddlePos;
