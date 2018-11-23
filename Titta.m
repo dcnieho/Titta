@@ -243,8 +243,8 @@ classdef Titta < handle
                 error('Titta: Error setting tracker sampling frequency to %d. Possible tracking frequencies for this %s are %s.\nRaw error info:\n%s',obj.settings.freq,obj.settings.tracker,allFs,ME.getReport('extended'))
             end
             
-            % set eye tracking mode TODO: test what happens with this on
-            % firmware that doesn't have modes (use 1.5.9)
+            % set eye tracking mode. NB: When using firmware older than
+            % 1.7.6, the only support eye tracking mode is 'Default'
             if ~isempty(obj.settings.trackingMode)
                 try
                     obj.eyetracker.set_eye_tracking_mode(obj.settings.trackingMode);
