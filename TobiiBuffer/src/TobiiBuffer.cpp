@@ -10,7 +10,7 @@
 
 namespace
 {
-    using mutex_type = std::shared_timed_mutex ;
+    using mutex_type = std::shared_timed_mutex;
     using read_lock  = std::shared_lock<mutex_type>;
     using write_lock = std::unique_lock<mutex_type>;
 
@@ -299,7 +299,7 @@ std::vector<T> TobiiBuffer::consumeTimeRange(int64_t timeStart_ /*= TobiiBuff::g
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename T>
-std::vector<T> peekFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
+std::vector<T> peekFromVec(const std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
 {
     if (std::empty(buf_))
         return std::vector<T>{};
