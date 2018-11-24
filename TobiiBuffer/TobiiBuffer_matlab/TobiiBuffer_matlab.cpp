@@ -459,7 +459,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                 bufSize = *static_cast<uint64_t*>(mxGetData(prhs[1]));
             }
 
-            plhs[0] = mxCreateLogicalScalar(TobiiBuff::startLogging(bufSize));
+            plhs[0] = mxCreateLogicalScalar(TobiiBuffer::startLogging(bufSize));
             return;
         }
         case Action::GetLog:
@@ -473,11 +473,11 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                 clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
             }
 
-            plhs[0] = ToMxArray(TobiiBuff::getLog(clearBuffer));
+            plhs[0] = ToMxArray(TobiiBuffer::getLog(clearBuffer));
             return;
         }
         case Action::StopLogging:
-            plhs[0] = mxCreateLogicalScalar(TobiiBuff::stopLogging());
+            plhs[0] = mxCreateLogicalScalar(TobiiBuffer::stopLogging());
             return;
 
         default:

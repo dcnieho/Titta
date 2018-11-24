@@ -71,6 +71,11 @@ public:
     bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
     bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
 
+    // logging
+    static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
+    static std::vector<TobiiBuff::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
+    static bool stopLogging();	// always clears buffer
+
 private:
     // Tobii callbacks needs to be friends
     friend void TobiiSampleCallback     (TobiiResearchGazeData*                     gaze_data_, void* user_data);
@@ -78,7 +83,7 @@ private:
     friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
-
+    friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
     //// generic functions for internal use
     // helpers
     template <typename T>  std::vector<T>&  getBuffer();
@@ -100,13 +105,7 @@ private:
     std::vector<extSignal>	    _extSignal;
 
     std::vector<timeSync>       _timeSync;
+
+    static std::unique_ptr<
+        std::vector<logMessage>>_logMessages;
 };
-
-
-namespace TobiiBuff
-{
-    //// logging ////
-    bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
-    std::vector<TobiiBuff::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
-    bool stopLogging();	// always clears buffer
-}

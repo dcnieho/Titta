@@ -36,9 +36,6 @@ namespace
             return g_mLog;
     }
 
-    // global log buffer
-    std::unique_ptr<std::vector<TobiiBuffer::logMessage>> g_logMessages;
-
     // deal with error messages
     inline void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
     {
@@ -97,6 +94,36 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
     return dataStreamMap.at(stream_);
 }
 
+// logging static functions and member
+std::unique_ptr<std::vector<TobiiBuffer::logMessage>> TobiiBuffer::_logMessages;
+bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
+{
+    // deal with default arguments
+    if (!initialBufferSize_)
+        initialBufferSize_ = defaults::logBufSize;
+
+    auto l = lockForWriting<TobiiBuff::logMessage>();
+    _logMessages->reserve(*initialBufferSize_);
+    return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
+}
+std::vector<TobiiBuff::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
+{
+    // deal with default arguments
+    if (!clearLog_)
+        clearLog_ = defaults::logBufClear;
+
+    auto l = lockForWriting<TobiiBuff::logMessage>();
+    if (*clearLog_)
+        return std::vector<TobiiBuff::logMessage>(std::move(*_logMessages));
+    else
+        // provide a copy
+        return std::vector<TobiiBuff::logMessage>(*_logMessages);
+}
+bool TobiiBuffer::stopLogging()
+{
+    return tobii_research_logging_unsubscribe() == TOBII_RESEARCH_STATUS_OK;
+}
+
 
 void TobiiSampleCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
@@ -140,11 +167,8 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
-    if (g_logMessages)
-    {
-        auto l = lockForWriting<TobiiBuffer::logMessage>();
-        g_logMessages.get()->emplace_back(system_time_stamp_,source_,level_,message_);
-    }
+    auto l = lockForWriting<TobiiBuffer::logMessage>();
+    TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
 }
 
 namespace
@@ -189,7 +213,7 @@ TobiiBuffer::~TobiiBuffer()
     stop(DataStream::EyeImage,  true);
     stop(DataStream::ExtSignal, true);
     stop(DataStream::TimeSync,  true);
-    TobiiBuff::stopLogging();
+    stopLogging();
 }
 
 
@@ -520,39 +544,3 @@ template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeN(std::optional<
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-
-
-// logging
-namespace TobiiBuff
-{
-    bool startLogging(std::optional<size_t> initialBufferSize_)
-    {
-        // deal with default arguments
-        if (!initialBufferSize_)
-            initialBufferSize_ = defaults::logBufSize;
-
-        if (!g_logMessages)
-            g_logMessages = std::make_unique<std::vector<TobiiBuff::logMessage>>();
-        
-        auto l = lockForWriting<TobiiBuff::logMessage>();
-        g_logMessages.get()->reserve(*initialBufferSize_);
-        return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
-    }
-    std::vector<TobiiBuff::logMessage> getLog(std::optional<bool> clearLog_)
-    {
-        // deal with default arguments
-        if (!clearLog_)
-            clearLog_ = defaults::logBufClear;
-
-        auto l = lockForWriting<TobiiBuff::logMessage>();
-        if (*clearLog_)
-            return std::vector<TobiiBuff::logMessage>(std::move(*g_logMessages.get()));
-        else
-            // provide a copy
-            return std::vector<TobiiBuff::logMessage>(*g_logMessages.get());
-    }
-    bool stopLogging()
-    {
-        return tobii_research_logging_unsubscribe() == TOBII_RESEARCH_STATUS_OK;
-    }
-}
