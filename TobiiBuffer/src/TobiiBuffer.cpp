@@ -265,11 +265,11 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
     return {startIt,endIt, inclFirst&&inclLast};
 }
 
-bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBufferSize_ /*= std::nullopt*/, std::optional<bool> asGif_ /*= std::nullopt*/)
+bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
     return start(stringToDataStream(stream_), initialBufferSize_, asGif_);
 }
-bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBufferSize_ /*= std::nullopt*/, std::optional<bool> asGif_ /*= std::nullopt*/)
+bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
     bool success = false;
     switch (stream_)
@@ -391,7 +391,7 @@ std::vector<T> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, 
 }
 
 template <typename T>
-std::vector<T> peekFromVec(const std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
+std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vector<T>::const_iterator startIt_, typename const std::vector<T>::const_iterator endIt_)
 {
     if (std::empty(buf_))
         return std::vector<T>{};
