@@ -22,10 +22,10 @@ class TobiiBuffer
 public:
     // short names for very long Tobii data types
     using sample     = TobiiResearchGazeData;
-    using eyeImage   = TobiiBuff::eyeImage;
+    using eyeImage   = TobiiTypes::eyeImage;
     using extSignal  = TobiiResearchExternalSignalData;
     using timeSync   = TobiiResearchTimeSynchronizationData;
-    using logMessage = TobiiBuff::logMessage;
+    using logMessage = TobiiTypes::logMessage;
 
     // data stream type (NB: not log, as that isn't a class member)
     enum class DataStream
@@ -73,7 +73,7 @@ public:
 
     // logging
     static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
-    static std::vector<TobiiBuff::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
+    static std::vector<TobiiBuffer::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
     static bool stopLogging();	// always clears buffer
 
 private:

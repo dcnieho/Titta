@@ -143,10 +143,10 @@ namespace {
 
     // forward declare
     mxArray* ToMxArray(std::vector<TobiiResearchGazeData               > data_);
-    mxArray* ToMxArray(std::vector<TobiiBuff::eyeImage                 > data_);
+    mxArray* ToMxArray(std::vector<TobiiBuffer::eyeImage               > data_);
     mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_);
     mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_);
-    mxArray* ToMxArray(std::vector<TobiiBuff::logMessage               > data_);
+    mxArray* ToMxArray(std::vector<TobiiBuffer::logMessage             > data_);
 }
 
 void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -640,14 +640,14 @@ namespace
         return true;
     }
 
-    mxArray* eyeImagesToMatlab(const std::vector<TobiiBuff::eyeImage>& data_)
+    mxArray* eyeImagesToMatlab(const std::vector<TobiiBuffer::eyeImage>& data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].data_size;
-        bool same = allEquals(data_, &TobiiBuff::eyeImage::data_size, sz);
+        bool same = allEquals(data_, &TobiiBuffer::eyeImage::data_size, sz);
         // 2. then copy over the images to matlab
         mxArray* out;
         if (data_[0].bits_per_pixel + data_[0].padding_per_pixel != 8)
@@ -675,10 +675,10 @@ namespace
         return out;
     }
 
-    mxArray* ToMxArray(std::vector<TobiiBuff::eyeImage> data_)
+    mxArray* ToMxArray(std::vector<TobiiBuffer::eyeImage> data_)
     {
         // check if all gif, then don't output unneeded fields
-        bool allGif = allEquals(data_, &TobiiBuff::eyeImage::isGif, true);
+        bool allGif = allEquals(data_, &TobiiBuffer::eyeImage::isGif, true);
 
         // fieldnames for all structs
         mxArray* out;
@@ -694,19 +694,19 @@ namespace
         }
 
         // all simple fields
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuff::eyeImage::device_time_stamp));
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiBuff::eyeImage::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuffer::eyeImage::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiBuffer::eyeImage::system_time_stamp));
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiBuff::eyeImage::bits_per_pixel));
-            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiBuff::eyeImage::padding_per_pixel));
-            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &TobiiBuff::eyeImage::width, 0.));		// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiBuff::eyeImage::height, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiBuffer::eyeImage::bits_per_pixel));
+            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiBuffer::eyeImage::padding_per_pixel));
+            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &TobiiBuffer::eyeImage::width, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &TobiiBuffer::eyeImage::height, 0.));		// 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::type, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED));
-        mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::camera_id));
-        mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &TobiiBuff::eyeImage::isGif));
+        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, &TobiiBuffer::eyeImage::type, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED));
+        mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &TobiiBuffer::eyeImage::camera_id));
+        mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &TobiiBuffer::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 5 + off, eyeImagesToMatlab(data_));
 
         return out;
@@ -744,7 +744,7 @@ namespace
         return out;
     }
 
-    mxArray* ToMxArray(std::vector<TobiiBuff::logMessage> data_)
+    mxArray* ToMxArray(std::vector<TobiiBuffer::logMessage> data_)
     {
         const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -752,7 +752,7 @@ namespace
         size_t i = 0;
 
         // 1. system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuff::logMessage::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuffer::logMessage::system_time_stamp));
         // 2. log source
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(data_.size(), 1));
         i = 0;

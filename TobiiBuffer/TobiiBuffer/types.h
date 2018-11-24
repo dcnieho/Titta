@@ -3,7 +3,7 @@
 #include <memory>
 #include <tobii_research_streams.h>
 
-namespace TobiiBuff
+namespace TobiiTypes
 {
     // My own almost POD class for Tobii eye images, for safe resource management
     // of the data heap array member

@@ -102,22 +102,22 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
     if (!initialBufferSize_)
         initialBufferSize_ = defaults::logBufSize;
 
-    auto l = lockForWriting<TobiiBuff::logMessage>();
+    auto l = lockForWriting<logMessage>();
     _logMessages->reserve(*initialBufferSize_);
     return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
 }
-std::vector<TobiiBuff::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
+std::vector<TobiiBuffer::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
 {
     // deal with default arguments
     if (!clearLog_)
         clearLog_ = defaults::logBufClear;
 
-    auto l = lockForWriting<TobiiBuff::logMessage>();
+    auto l = lockForWriting<logMessage>();
     if (*clearLog_)
-        return std::vector<TobiiBuff::logMessage>(std::move(*_logMessages));
+        return std::vector<logMessage>(std::move(*_logMessages));
     else
         // provide a copy
-        return std::vector<TobiiBuff::logMessage>(*_logMessages);
+        return std::vector<logMessage>(*_logMessages);
 }
 bool TobiiBuffer::stopLogging()
 {
