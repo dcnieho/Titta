@@ -13,6 +13,7 @@ using json = nlohmann::json;
 
 #include "TobiiBuffer/TobiiBuffer.h"
 #include "TobiiBuffer/utils.h"
+#include "function_traits.h"
 
 
 void DoExitWithMsg(std::string errMsg_);
@@ -350,7 +351,7 @@ int main()
 
                 bool status = false;
                 if (TobiiBufferInstance.get())
-                    status = TobiiBufferInstance.get()->startSample();
+                    status = TobiiBufferInstance.get()->start("sample");
 
                 sendJson(ws, {{"action", "startSampleBuffer"}, {"status", status}});
                 break;
@@ -366,9 +367,10 @@ int main()
                 auto jsonOutput = json::array();   // empty array if no samples
                 if (TobiiBufferInstance.get())
                 {
-                    auto nSamples = TobiiBuff::g_peekDefaultAmount;
+                    using argType = function_traits<decltype(&TobiiBuffer::peekN<TobiiBuffer::sample>)>::argument<1>::type::value_type;
+                    std::optional<argType> nSamples;
                     if (jsonInput.count("nSamples"))
-                        nSamples = jsonInput.at("nSamples").get<decltype(nSamples)>();
+                        nSamples = jsonInput.at("nSamples").get<argType>();
 
                     auto samples = TobiiBufferInstance.get()->peekN<TobiiBuffer::sample>(nSamples);
                     if (!samples.empty())

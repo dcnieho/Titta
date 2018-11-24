@@ -96,7 +96,6 @@ namespace TobiiBuff
             swap(first._eyeIm, second._eyeIm);
         }
 
-
     public:
         bool						isGif;
         int64_t                     device_time_stamp;
@@ -124,7 +123,6 @@ namespace TobiiBuff
             level(level_),
             message(message_)
         {}
-
 
     public:
         int64_t                system_time_stamp = 0;

@@ -3,6 +3,7 @@
 #include <string>
 #include <limits>
 #include <tuple>
+#include <optional>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
@@ -16,34 +17,6 @@
 #include "types.h"
 
 
-namespace TobiiBuff
-{
-    // default argument values
-    constexpr size_t  g_sampleBufDefaultSize = 1 << 20;     // about half an hour at 600Hz
-
-    constexpr size_t  g_eyeImageBufDefaultSize = 1 << 12;   // about seven minutes at 2*5Hz
-    constexpr bool    g_eyeImageAsGIFDefault = false;
-
-    constexpr size_t  g_extSignalBufDefaultSize = 1 << 10;
-
-    constexpr size_t  g_timeSyncBufDefaultSize = 1 << 10;
-
-    constexpr int64_t g_clearTimeRangeStart = 0;
-    constexpr int64_t g_clearTimeRangeEnd = std::numeric_limits<int64_t>::max();
-
-    constexpr bool    g_stopBufferEmptiesDefault = false;
-    constexpr size_t  g_consumeDefaultAmount = -1;
-    constexpr int64_t g_consumeTimeRangeStart = 0; 
-    constexpr int64_t g_consumeTimeRangeEnd = std::numeric_limits<int64_t>::max();
-    constexpr size_t  g_peekDefaultAmount = 1;
-    constexpr int64_t g_peekTimeRangeStart = 0;
-    constexpr int64_t g_peekTimeRangeEnd = std::numeric_limits<int64_t>::max();
-
-    constexpr size_t  g_logBufDefaultSize = 1 << 9;
-    constexpr bool    g_logBufClearDefault = true;
-}
-
-
 class TobiiBuffer
 {
 public:
@@ -54,7 +27,7 @@ public:
     using timeSync   = TobiiResearchTimeSynchronizationData;
     using logMessage = TobiiBuff::logMessage;
 
-    // data stream type (NB: not log, that has a much simpler interface)
+    // data stream type (NB: not log, as that isn't a class member)
     enum class DataStream
     {
         Unknown,
@@ -63,33 +36,40 @@ public:
         ExtSignal,
         TimeSync
     };
-    static TobiiBuffer::DataStream stringToDataStream(std::string dataStream_);
+    // "sample", "eyeImage", "extSignal", or "timeSync"
+    static TobiiBuffer::DataStream stringToDataStream(std::string stream_);
 
 public:
     TobiiBuffer(std::string address_);
     TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
 
-    //// Functions taking buffer type as input ////
-    // clear all buffer contents
-    void clear(std::string dataStream_);
-    void clearTimeRange(std::string dataStream_, int64_t timeStart_ = TobiiBuff::g_clearTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_clearTimeRangeEnd);
-    // stop optionally deletes the buffer
-    bool stop(std::string dataStream_, bool emptyBuffer_ = TobiiBuff::g_stopBufferEmptiesDefault);
-    // can't have functions that only differ by return type, so must template these instead of take
-    // 'stream' string input
-    // consume samples (by default all)
-    template <typename T> std::vector<T> consumeN(size_t firstN_ = TobiiBuff::g_consumeDefaultAmount);
-    template <typename T> std::vector<T> consumeTimeRange(int64_t timeStart_ = TobiiBuff::g_consumeTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_consumeTimeRangeEnd);
-    // peek samples (by default only last one, can specify how many from end to peek)
-    template <typename T> std::vector<T> peekN(size_t lastN_ = TobiiBuff::g_peekDefaultAmount);
-    template <typename T> std::vector<T> peekTimeRange(int64_t timeStart_ = TobiiBuff::g_peekTimeRangeStart, int64_t timeEnd_ = TobiiBuff::g_peekTimeRangeEnd);
 
-    //// stream starters ////
-    bool startSample(size_t initialBufferSize_ = TobiiBuff::g_sampleBufDefaultSize);
-    bool startEyeImage(size_t initialBufferSize_ = TobiiBuff::g_eyeImageBufDefaultSize, bool asGif_ = TobiiBuff::g_eyeImageAsGIFDefault);
-    bool startExtSignal(size_t initialBufferSize_ = TobiiBuff::g_extSignalBufDefaultSize);
-    bool startTimeSync(size_t initialBufferSize_ = TobiiBuff::g_timeSyncBufDefaultSize);
+    // start stream
+    bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
+    bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
+
+    // consume samples (by default all)
+    template <typename T>
+    std::vector<T> consumeN(std::optional<size_t> firstN_ = std::nullopt);
+    template <typename T>
+    std::vector<T> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+
+    // peek samples (by default only last one, can specify how many from end to peek)
+    template <typename T>
+    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
+    template <typename T>
+    std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+
+    // clear all buffer contents
+    void clear(std::string stream_);
+    void clear(DataStream  stream_);
+    void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    void clearTimeRange(DataStream  stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    
+    // stop optionally deletes the buffer
+    bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
+    bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
 
 private:
     // Tobii callbacks needs to be friends
@@ -107,9 +87,8 @@ private:
                                             getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_);
     // generic implementations
     template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
-    template <typename T>  bool             stopImpl(bool emptyBuffer_);
-private:
 
+private:
     TobiiResearchEyeTracker*	_eyetracker				= nullptr;
 
     std::vector<sample>		    _samples;
@@ -127,7 +106,7 @@ private:
 namespace TobiiBuff
 {
     //// logging ////
-    bool startLogging(size_t initialBufferSize_ = TobiiBuff::g_logBufDefaultSize);
-    std::vector<TobiiBuff::logMessage> getLog(bool clearLog_ = g_logBufClearDefault);
+    bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
+    std::vector<TobiiBuff::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
     bool stopLogging();	// always clears buffer
 }
