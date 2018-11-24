@@ -55,7 +55,7 @@ public:
     template <typename T>
     std::vector<T> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
-    // peek samples (by default only last one, can specify how many from end to peek)
+    // peek samples (by default only last one, can specify how many to peek from end of buffer)
     template <typename T>
     std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
     template <typename T>
