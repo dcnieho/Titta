@@ -160,9 +160,10 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
     mxFree(actionCstr);
 
     // get corresponding action
-    if (actionTypeMap.count(actionStr) == 0)
+    auto it = actionTypeMap.find(actionStr);
+    if (it == actionTypeMap.end())
         mexErrMsgTxt(("Unrecognized action (not in actionTypeMap): " + actionStr).c_str());
-    Action action = actionTypeMap.at(actionStr);
+    Action action = it->second;
 
     // If action is not "new" or others that don't require a handle, try to locate an existing instance based on input handle
     instanceMap_type::const_iterator instIt;
