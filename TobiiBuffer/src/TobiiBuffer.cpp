@@ -85,13 +85,14 @@ namespace
 
 TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
 {
-    if (dataStreamMap.count(stream_) == 0)
-    {
-        std::stringstream os;
-        os << "Unrecognized data stream (not in dataStreamMap): \"" << stream_ << "\"";
-        DoExitWithMsg(os.str());
-    }
-    return dataStreamMap.at(stream_);
+    auto it = dataStreamMap.find(stream_);
+	if (it == dataStreamMap.end())
+	{
+		std::stringstream os;
+		os << "Unrecognized data stream (not in dataStreamMap): \"" << stream_ << "\"";
+		DoExitWithMsg(os.str());
+	}
+	return it->second;
 }
 
 // logging static functions and member
