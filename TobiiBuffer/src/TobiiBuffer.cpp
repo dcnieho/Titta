@@ -99,6 +99,9 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
 std::unique_ptr<std::vector<TobiiBuffer::logMessage>> TobiiBuffer::_logMessages;
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 {
+	if (!_logMessages)
+		_logMessages = std::make_unique<std::vector<logMessage>>();
+
     // deal with default arguments
     if (!initialBufferSize_)
         initialBufferSize_ = defaults::logBufSize;
@@ -109,6 +112,9 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 }
 std::vector<TobiiBuffer::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
 {
+	if (!_logMessages)
+		return {};
+
     // deal with default arguments
     if (!clearLog_)
         clearLog_ = defaults::logBufClear;
@@ -168,8 +174,11 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
-    auto l = lockForWriting<TobiiBuffer::logMessage>();
-    TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
+	if (TobiiBuffer::_logMessages)
+	{
+		auto l = lockForWriting<TobiiBuffer::logMessage>();
+		TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
+	}
 }
 
 namespace
