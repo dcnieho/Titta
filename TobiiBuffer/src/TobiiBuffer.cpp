@@ -86,21 +86,21 @@ namespace
 TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
 {
     auto it = dataStreamMap.find(stream_);
-	if (it == dataStreamMap.end())
-	{
-		std::stringstream os;
-		os << "Unrecognized data stream (not in dataStreamMap): \"" << stream_ << "\"";
-		DoExitWithMsg(os.str());
-	}
-	return it->second;
+    if (it == dataStreamMap.end())
+    {
+        std::stringstream os;
+        os << "Unrecognized data stream (not in dataStreamMap): \"" << stream_ << "\"";
+        DoExitWithMsg(os.str());
+    }
+    return it->second;
 }
 
 // logging static functions and member
 std::unique_ptr<std::vector<TobiiBuffer::logMessage>> TobiiBuffer::_logMessages;
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 {
-	if (!_logMessages)
-		_logMessages = std::make_unique<std::vector<logMessage>>();
+    if (!_logMessages)
+        _logMessages = std::make_unique<std::vector<logMessage>>();
 
     // deal with default arguments
     if (!initialBufferSize_)
@@ -112,8 +112,8 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 }
 std::vector<TobiiBuffer::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
 {
-	if (!_logMessages)
-		return {};
+    if (!_logMessages)
+        return {};
 
     // deal with default arguments
     if (!clearLog_)
@@ -174,11 +174,11 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
-	if (TobiiBuffer::_logMessages)
-	{
-		auto l = lockForWriting<TobiiBuffer::logMessage>();
-		TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
-	}
+    if (TobiiBuffer::_logMessages)
+    {
+        auto l = lockForWriting<TobiiBuffer::logMessage>();
+        TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
+    }
 }
 
 namespace
