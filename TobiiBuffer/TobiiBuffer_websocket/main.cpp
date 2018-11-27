@@ -1,11 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS // for uWS.h
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <string>
 #include <sstream>
 #include <atomic>
 #include <cmath>
 #include <optional>
+#include <filesystem>
 
 #include <uWS/uWS.h>
 #include <nlohmann/json.hpp>
@@ -193,6 +195,27 @@ int main()
 
                     // select eye tracker.
                     eyeTracker = eyetrackers->eyetrackers[0];
+                }
+
+                // if license file is found in the directory, try applying it
+                auto cp = std::filesystem::current_path();
+                if (std::filesystem::exists("./TobiiLicense"))    // file with this name expected in cwd
+                {
+                    std::ifstream input("./TobiiLicense", std::ios::binary);
+                    std::vector<char> buffer(std::istreambuf_iterator<char>(input), {});
+
+#                   define NUM_OF_LICENSES 1
+                    char* license_key_ring[NUM_OF_LICENSES];
+                    license_key_ring[0] = &buffer[0];
+                    size_t sizes[NUM_OF_LICENSES];
+                    sizes[0] = buffer.size();
+                    TobiiResearchLicenseValidationResult validation_results[NUM_OF_LICENSES];
+                    TobiiResearchStatus result = tobii_research_apply_licenses(eyeTracker, (const void**)license_key_ring, sizes, validation_results, NUM_OF_LICENSES);
+                    if (result != TOBII_RESEARCH_STATUS_OK || validation_results[0] != TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK)
+                    {
+                        sendTobiiErrorAsJson(ws, result, "License file \"TobiiLicense\" found in pwd, but could not be applied.");
+                        return;
+                    }
                 }
 
                 // get info about the connected eye tracker
