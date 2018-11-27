@@ -710,6 +710,7 @@ classdef Titta < handle
             settings.cal.fixFrontColor      = 255;
             settings.cal.drawFunction       = [];
             settings.cal.doRecordEyeImages  = false;
+            settings.cal.doRecordExtSignal  = false;
             settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
@@ -1420,10 +1421,12 @@ classdef Titta < handle
             % do calibration
             calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
             obj.startRecording('gaze');
-            if obj.settings.cal.doRecordEyeImages
+            if obj.settings.cal.doRecordEyeImages && obj.hasCap(EyeTrackerCapabilities.HasEyeImages)
                 obj.startRecording('eyeImage');
             end
-            obj.startRecording('externalSignal');
+            if obj.settings.cal.doRecordExtSignal && obj.hasCap(EyeTrackerCapabilities.HasExternalSignal)
+                obj.startRecording('externalSignal');
+            end
             obj.startRecording('timeSync');
             % show display
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
