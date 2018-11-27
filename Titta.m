@@ -1345,10 +1345,12 @@ classdef Titta < handle
                 end
             end
             % clean up
-            obj.stopRecording('eyeImage');
-            obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % from start time onward
-            if qHasEyeIm && any(texs)
-                Screen('Close',texs(texs>0));
+            if qHasEyeIm
+                obj.stopRecording('eyeImage');
+                obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % from start time onward
+                if any(texs)
+                    Screen('Close',texs(texs>0));
+                end
             end
             HideCursor;
         end
