@@ -1617,7 +1617,7 @@ classdef Titta < handle
                 
                 out.flips(end+1)    = Screen('Flip',wpnt,nextFlipT);
                 if qNewPoint
-                    obj.sendMessage(sprintf('POINT ON %d (%d %d)',currentPoint,points(currentPoint,3:4)),out.flips(end));
+                    obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
                     qNewPoint = false;
                 end
                 
