@@ -1,18 +1,21 @@
 function TobiiResearchEnumLister
 
-impl('Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo');
+file = 'C:\utils\vcpkg.git\installed\x64-windows\include\tobii_research.h';
+impl(file,'Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo');
 fprintf('#####\n');
-impl(sprintf('\nSource of log message.'),'TOBII_RESEARCH_LOG_SOURCE_','TobiiResearchLogSourceInfo');
+impl(file,sprintf('\nSource of log message.'),'TOBII_RESEARCH_LOG_SOURCE_','TobiiResearchLogSourceInfo');
 fprintf('#####\n');
-impl(sprintf('\nLog level.'),'TOBII_RESEARCH_LOG_LEVEL_','TobiiResearchLogLevelInfo');
+impl(file,sprintf('\nLog level.'),'TOBII_RESEARCH_LOG_LEVEL_','TobiiResearchLogLevelInfo');
+fprintf('#####\n');
+
+file = 'C:\utils\vcpkg.git\installed\x64-windows\include\tobii_research_eyetracker.h';
+impl(file,'Specifies license validation result.','TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_','TobiiResearchLicenseValidationResultInfo');
 
 end
 
 
 
-function impl(header,nameRoot,cppClassName)
-file = 'C:\dat\software\dependencies\vcpkg.git\installed\x64-windows\include\tobii_research.h';
-
+function impl(file,header,nameRoot,cppClassName)
 fid = fopen(file,'rt');
 txt = fread(fid,'*char').';
 fclose(fid);
