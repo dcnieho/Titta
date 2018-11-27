@@ -74,6 +74,12 @@ namespace {
         sendJson(ws_, {{"error", errMsg_},{"TobiiErrorCode",result_},{"TobiiErrorString",TobiiResearchStatusToString(result_)},{"TobiiErrorExplanation",TobiiResearchStatusToExplanation(result_)}});
     }
 
+    template <bool isServer>
+    void sendTobiiErrorAsJson(uWS::WebSocket<isServer> *ws_, TobiiResearchLicenseValidationResult result_, std::string errMsg_)
+    {
+        sendJson(ws_, { {"error", errMsg_},{"TobiiErrorCode",result_},{"TobiiErrorString",TobiiResearchLicenseValidationResultToString(result_)},{"TobiiErrorExplanation",TobiiResearchLicenseValidationResultToExplanation(result_)} });
+    }
+
     json formatSampleAsJSON(TobiiResearchGazeData sample_)
     {
         auto lx = sample_.left_eye .gaze_point.position_on_display_area.x;
@@ -213,7 +219,10 @@ int main()
                     TobiiResearchStatus result = tobii_research_apply_licenses(eyeTracker, (const void**)license_key_ring, sizes, validation_results, NUM_OF_LICENSES);
                     if (result != TOBII_RESEARCH_STATUS_OK || validation_results[0] != TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK)
                     {
-                        sendTobiiErrorAsJson(ws, result, "License file \"TobiiLicense\" found in pwd, but could not be applied.");
+                        if (result != TOBII_RESEARCH_STATUS_OK)
+                            sendTobiiErrorAsJson(ws, result, "License file \"TobiiLicense\" found in pwd, but could not be applied.");
+                        else
+                            sendTobiiErrorAsJson(ws, validation_results[0], "License file \"TobiiLicense\" found in pwd, but could not be applied.");
                         return;
                     }
                 }
