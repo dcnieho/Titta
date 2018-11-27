@@ -410,6 +410,8 @@ classdef Titta < handle
                             error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
                     end
                 end
+                % TODO: somewhere here store info about calibration quality
+                % (only mean accuracy I guess)
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
@@ -417,6 +419,7 @@ classdef Titta < handle
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
+                        % TODO: note which calibration was chosen
                         break;
                     case 2
                         % skip setup
