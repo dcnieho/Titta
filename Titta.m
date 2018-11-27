@@ -683,6 +683,9 @@ classdef Titta < handle
                 case 'Tobii Pro Spectrum'
                     settings.freq                   = 600;
                     settings.trackingMode           = 'human';
+                case 'IS4_Large_Peripheral'
+                    settings.freq                   = 90;
+                    settings.trackingMode           = 'Default';
             end
             
             % the rest here are good defaults for all
