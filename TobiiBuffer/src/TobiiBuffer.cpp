@@ -58,27 +58,27 @@ namespace
     // default argument values
     namespace defaults
     {
-        constexpr size_t  sampleBufSize = 1 << 20;     // about half an hour at 600Hz
+        constexpr size_t  sampleBufSize = 2<<19;        // about half an hour at 600Hz
 
-        constexpr size_t  eyeImageBufSize = 1 << 12;   // about seven minutes at 2*5Hz
+        constexpr size_t  eyeImageBufSize = 2<<11;      // about seven minutes at 2*5Hz
         constexpr bool    eyeImageAsGIF = false;
 
-        constexpr size_t  extSignalBufSize = 1 << 10;
+        constexpr size_t  extSignalBufSize = 2<<9;
 
-        constexpr size_t  timeSyncBufSize = 1 << 10;
+        constexpr size_t  timeSyncBufSize = 2<<9;
 
         constexpr int64_t clearTimeRangeStart = 0;
         constexpr int64_t clearTimeRangeEnd = std::numeric_limits<int64_t>::max();
 
         constexpr bool    stopBufferEmpties = false;
-        constexpr size_t  consumeAmount = -1;
+        constexpr size_t  consumeAmount = -1;           // this overflows on purpose, consume all samples is default
         constexpr int64_t consumeTimeRangeStart = 0;
         constexpr int64_t consumeTimeRangeEnd = std::numeric_limits<int64_t>::max();
         constexpr size_t  peekAmount = 1;
         constexpr int64_t peekTimeRangeStart = 0;
         constexpr int64_t peekTimeRangeEnd = std::numeric_limits<int64_t>::max();
 
-        constexpr size_t  logBufSize = 1 << 9;
+        constexpr size_t  logBufSize = 2<<8;
         constexpr bool    logBufClear = true;
     }
 }
@@ -374,7 +374,7 @@ std::vector<T> TobiiBuffer::consumeN(std::optional<size_t> firstN_)
 {
     // deal with default arguments
     if (!firstN_)
-        firstN_ = defaults::peekAmount;
+        firstN_ = defaults::consumeAmount;
 
     auto l = lockForWriting<T>();
 
