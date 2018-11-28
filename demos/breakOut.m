@@ -152,7 +152,7 @@ try
         qSelect = samp.left.gazePoint.valid & samp.left.gazePoint.valid;
         if ~any(qSelect)
             % if not, see if have sample for one of the eyes
-            qSelect = samp.left.gazePoint.valid || samp.right.gazePoint.valid;
+            qSelect = samp.left.gazePoint.valid | samp.right.gazePoint.valid;
         end
         i = find(qSelect,1,'last');
         % if have some form of eye position, update paddle position
