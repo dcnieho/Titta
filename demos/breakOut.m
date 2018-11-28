@@ -37,13 +37,13 @@ blockMargin         = height/10;        % space above top row of blocks
 pointsPerBlock      = 5;
 
 % paddle setup
-paddleWidth         = width/12;
-paddleBaseHeight    = height/30;
+paddleWidth         = width/10;
+paddleBaseHeight    = height/40;
 paddleCornerSlope   = 10;               % deg, away from horizontal
 paddleMargin        = height/100;       % space below paddle
 
 % ball
-ballVel             = [0 -height/2];
+ballVel             = [0 -height/2];    % starting speed in pix/s
 ballRadius          = height/60;
 ballFillClr         = [255 255 255];
 ballAccel           = 0.015;
@@ -66,7 +66,7 @@ for r=nRow:-1:1
 end
 % paddle
 stepSz  = 5;
-nStep   = paddleWidth/2/stepSz;
+nStep   = floor(paddleWidth/2/stepSz);
 angles  = linspace(paddleCornerSlope,0,nStep+1); angles(end) = [];
 segments= [stepSz*ones(1,nStep); stepSz*tand(angles)];
 segments= [[0;0] cumsum(segments,2)];
