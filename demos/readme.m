@@ -17,6 +17,10 @@ try
 %     EThndl         = ETFhndl.setDummyMode();
     EThndl.init();
     
+    % TODO: also implement lab interface. Keep it separate from Titta as
+    % they do not _need to_ interact
+    %TobiiProLabInstance = [];
+    
     if qDEBUG>1
         % make screen partially transparent on OSX and windows vista or
         % higher, so we can debug.
@@ -54,9 +58,12 @@ try
     else
         tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
+    % TODO for TobiiProLabInstance, something like
+    % TobiiProLabInstance.sendTittaCalibration(tobii.calVal{1})
     
     % later:
     EThndl.startRecording('gaze');
+    % TobiiProLabInstance.startRecording('gaze');
      
     % send message into ET data file
     EThndl.sendMessage('test');
