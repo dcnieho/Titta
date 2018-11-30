@@ -1,6 +1,9 @@
 sca
 qDEBUG = 0;
-s.bclr              = 255/2;
+bgclr       = 255/2;
+fixClr      = 0;
+fixTime     = .5;
+imageTime   = 2;
 
 addpath(genpath(fullfile(cd,'..')));
 
@@ -11,6 +14,7 @@ try
     calViz = AnimatedCalibrationDisplay();
     settings.cal.drawFunction = @calViz.doDraw;
     settings.debugMode = true;
+    settings.cal.bgColor    = bgclr;
     
     % init
     EThndl          = Titta(settings);
@@ -34,7 +38,8 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    wpnt = PsychImaging('OpenWindow', 0, s.bclr);
+    [wpnt,winRect] = PsychImaging('OpenWindow', 0, bgclr);
+    hz=Screen('NominalFrameRate', wpnt);
     Priority(1);
     Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Screen('Preference', 'TextAlphaBlending', 1);
@@ -67,17 +72,59 @@ try
      
     % send message into ET data file
     EThndl.sendMessage('test');
-    % record 2 seconds of data
-    WaitSecs(2);
     
+    % First draw a fixation point
+    Screen('gluDisk',wpnt,0,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
+    startT = Screen('Flip',wpnt);
+    % log when fixation dot appeared in eye-tracker time. NB:
+    % system_timestamp of the Tobii data uses the same clock as
+    % PsychToolbox, so startT as returned by Screen('Flip') can be used
+    % directly to segment eye tracking data
+    EThndl.sendMessage('FIX ON',startT);
+    
+    % read in konijntjes image (may want to preload this before the trial
+    % to ensure good timing)
+    stimFName = 'konijntjes1024x768.jpg';
+    im = imread(fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName));
+    tex = Screen('MakeTexture',wpnt,im);
+    
+    % show on screen and log when it was shown in eye-tracker time.
+    % NB: by setting a deadline for the flip, we ensure that the previous
+    % screen (fixation point) stays visible for the indicated amount of
+    % time. See PsychToolbox demos for further elaboration on this way of
+    % timing your script.
+    Screen('DrawTexture',wpnt,tex);
+    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
+    EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
+    
+    % record x seconds of data, then clear screen. Indicate stimulus
+    % removed, clean up
+    endT = Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
+    Screen('Close',tex);
+    
+    % slightly less precise ISI is fine..., about 1s give or take a frame
+    WaitSecs(1);
+    
+    % repeat the above but show a different image. lets also record some
+    % eye images
     EThndl.startRecording('eyeImage');
-    EThndl.sendMessage('eyes!');
-    WaitSecs(.8);
+    % 1. fixation point
+    Screen('gluDisk',wpnt,0,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
+    startT = Screen('Flip',wpnt);
+    EThndl.sendMessage('FIX ON',startT);
+    % 2. image
+    stimFName = 'konijntjes1024x768blur.jpg';
+    im = imread(fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName));
+    tex = Screen('MakeTexture',wpnt,im);
+    Screen('DrawTexture',wpnt,tex);
+    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
+    EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
     
-    % TODO test peek multiple times, should be able to return same sample.
-    % peekTimeRange seems not to work...
-    
-    
+    % 4. end recording after x seconds of data again, clear screen.
+    Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
+    Screen('Close',tex);
     
     % stopping and saving
     EThndl.stopRecording('eyeImage');
