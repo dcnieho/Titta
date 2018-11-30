@@ -1719,16 +1719,15 @@ classdef Titta < handle
                 rights = [val.quality.right];
             end
             [l,r] = deal([]);
-            % TODO: replace this and other nanmean/nanstd. requires toolbox
             for f={'acc','RMS2D','STD2D','trackRatio'}
                 % NB: abs when averaging over eyes, we need average size of
                 % error for accuracy and for other fields its all positive
                 % anyway
                 if obj.calibrateLeftEye
-                    l = nanmean(abs([lefts.(f{1})]),2);
+                    l = mean(abs([lefts.(f{1})]),2,'omitnan');
                 end
                 if obj.calibrateRightEye
-                    r = nanmean(abs([rights.(f{1})]),2);
+                    r = mean(abs([rights.(f{1})]),2,'omitnan');
                 end
                 val.(f{1}) = [l r];
             end
@@ -1746,14 +1745,14 @@ classdef Titta < handle
             gazeVec     = gazeData.gazePoint.inUserCoords-gazeData.gazeOrigin.inUserCoords;
             angs2D      = AngleBetweenVectors(vecToPoint,gazeVec);
             out.offs    = bsxfun(@times,angs2D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
-            out.acc     = nanmean(out.offs,2);
+            out.acc     = mean(out.offs,2,'omitnan');
             
             % 2. RMS
-            out.RMS     = sqrt(nanmean(diff(out.offs,[],2).^2,2));
+            out.RMS     = sqrt(mean(diff(out.offs,[],2).^2,2,'omitnan'));
             out.RMS2D   = hypot(out.RMS(1),out.RMS(2));
             
             % 3. STD
-            out.STD     = nanstd(out.offs,[],2);
+            out.STD     = std(out.offs,[],2,'omitnan');
             out.STD2D   = hypot(out.STD(1),out.STD(2));
             
             % 4. track ratio
