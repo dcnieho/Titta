@@ -1,5 +1,5 @@
 classdef TittaDummyMode < Titta
-    properties
+    properties (Access = protected, Hidden = true)
         isRecordingGaze = false;
     end
     
