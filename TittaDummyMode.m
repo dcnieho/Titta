@@ -61,7 +61,7 @@ classdef TittaDummyMode < Titta
                 for p=1:length(thisMethods)
                     superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
                     if isscalar(superMethod)
-                        qMatchingInput(p) = length(superMethod.InputNames) == length(thisMethods(p).InputNames);
+                        qMatchingInput(p) = (length(superMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(superMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(superMethod.InputNames{end},'varargin'));
                     else
                         qMatchingInput(p) = true;
                     end
