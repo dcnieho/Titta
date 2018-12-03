@@ -693,6 +693,9 @@ classdef Titta < handle
                 case 'IS4_Large_Peripheral'
                     settings.freq                   = 90;
                     settings.trackingMode           = 'Default';
+                case 'X2-60_Compact'
+                    settings.freq                   = 60;
+                    settings.trackingMode           = 'Default';
             end
             
             % the rest here are good defaults for all
