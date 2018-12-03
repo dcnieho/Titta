@@ -446,6 +446,10 @@ classdef Titta < handle
             if bitand(flag,2)
                 calibClass.leave_calibration_mode();
             end
+            % log to messages which calibration was selected
+            if isfield(out,'attempt') && isfield(out.attempt{kCal},'calSelection')
+                obj.sendMessage(sprintf('Selected calibration %d',out.attempt{kCal}.calSelection));
+            end
             
             % store calibration info in calibration history, for later
             % retrieval if wanted
