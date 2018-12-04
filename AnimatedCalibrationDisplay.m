@@ -127,6 +127,7 @@ classdef AnimatedCalibrationDisplay < handle
             qAllowAcceptKey = obj.calState~=obj.calStateEnum.moving;
             
             % draw
+            Screen('FillRect',wpnt,obj.bgColor);
             obj.drawAFixPoint(wpnt,curPos,sz);
         end
     end
