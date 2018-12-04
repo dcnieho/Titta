@@ -120,8 +120,8 @@ classdef Titta < handle
             obj.settings.cal.bgColor        = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor   = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.setup.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x).',1,[]),obj.settings.setup.eyeColors,'uni',false);
-            obj.settings.setup.eyeColors    = cellfun(@color2RGBA                    ,obj.settings.setup.eyeColors,'uni',false);
+            obj.settings.setup.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x,2).',1,[]),obj.settings.setup.eyeColors,'uni',false);
+            obj.settings.setup.eyeColors    = cellfun(@color2RGBA                      ,obj.settings.setup.eyeColors,'uni',false);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
