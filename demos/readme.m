@@ -109,7 +109,9 @@ try
     
     % repeat the above but show a different image. lets also record some
     % eye images
-    EThndl.startRecording('eyeImage');
+    %if EThndl.rawBuffers.hasStream('eyeImage')
+    %    EThndl.startRecording('eyeImage');
+    %end
     % 1. fixation point
     Screen('gluDisk',wpnt,0,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
     startT = Screen('Flip',wpnt);
@@ -128,7 +130,9 @@ try
     Screen('Close',tex);
     
     % stopping and saving
-    EThndl.stopRecording('eyeImage');
+    %if EThndl.rawBuffers.hasStream('eyeImage')
+    %    EThndl.stopRecording('eyeImage');
+    %end
     EThndl.stopRecording('gaze');
     EThndl.saveData(fullfile(cd,'t'), true);
     
