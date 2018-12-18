@@ -2163,7 +2163,7 @@ classdef Titta < handle
                     elseif any(keyCode)
                         keys = KbName(keyCode);
                         if qSelectMenuOpen
-                            if any(strcmpi(keys,'escape'))
+                            if any(strcmpi(keys,'escape')) || any(strcmpi(keys,'c'))
                                 qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
