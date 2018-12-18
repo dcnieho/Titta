@@ -1040,7 +1040,7 @@ classdef Titta < handle
         
         
         function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            qHasEyeIm = obj.hasCap(EyeTrackerCapabilities.HasExternalSignal);
+            qHasEyeIm = obj.hasCap(EyeTrackerCapabilities.HasEyeImages);
             if qHasEyeIm
                 eyeStartTime = obj.getSystemTime();
                 obj.startRecording('eyeImage');
