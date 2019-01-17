@@ -1061,7 +1061,7 @@ classdef Titta < handle
                 texs    = [0 0];
                 eyeIm   = [];
                 count   = 0;
-                while isempty(eyeIm) && count<20
+                while (isempty(eyeIm) || isempty(eyeIm.deviceTimeStamp)) && count<20
                     eyeIm = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward
                     WaitSecs('YieldSecs',0.15);
                     count = count+1;
