@@ -412,6 +412,8 @@ classdef Titta < handle
                 end
                 % TODO: somewhere here store info about calibration quality
                 % (only mean accuracy I guess)
+            
+                % TODO: have button to only revalidate, not recalibrate
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
