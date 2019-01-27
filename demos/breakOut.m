@@ -88,6 +88,9 @@ ball.drag   = -ballAccel;
 % TODO this must be wrong
 addpath(genpath(fullfile(cd,'theToolbox')));
 
+% TODO: known issue: ball can get stuck in paddle. check order of update
+% operations each frame
+
 try 
     % init
     EThndl          = Titta(settings);
