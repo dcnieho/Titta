@@ -856,6 +856,8 @@ classdef Titta < handle
             eyeClr      = [255 255 255];
             eyeSzFac    = .25;
             eyeMarginFac= .25;
+            pupilRefSz  = .40;
+            pupilRefDiam= 5;    % mm
 
             % setup buttons
             buttonSz    = {[220 45] [320 45] [400 45]};
@@ -905,10 +907,12 @@ classdef Titta < handle
                 [lEye,rEye] = deal(nan(3,1));
                 if ~isempty(eyeData.systemTimeStamp) && obj.calibrateLeftEye
                     lEye = eyeData. left.gazeOrigin.inUserCoords;
+                    lPup = eyeData. left.pupil.diameter;
                 end
                 qHaveLeft   = obj.calibrateLeftEye  && ~isempty(eyeData.systemTimeStamp) && eyeData. left.gazeOrigin.valid;
                 if ~isempty(eyeData.systemTimeStamp) && obj.calibrateRightEye
                     rEye = eyeData.right.gazeOrigin.inUserCoords;
+                    rPup = eyeData.right.pupil.diameter;
                 end
                 qHaveRight  = obj.calibrateRightEye && ~isempty(eyeData.systemTimeStamp) && eyeData.right.gazeOrigin.valid;
                 qHave       = [qHaveLeft qHaveRight];
@@ -972,6 +976,8 @@ classdef Titta < handle
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
                         elseif qHaveLeft
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
+                            pupSz = lPup/pupilRefDiam*pupilRefSz*eyeSz;
+                            drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
                             Screen('FillRect', wpnt, eyeClr, rect);
@@ -985,6 +991,8 @@ classdef Titta < handle
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
                         elseif qHaveRight
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
+                            pupSz = rPup/pupilRefDiam*pupilRefSz*eyeSz;
+                            drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
                             Screen('FillRect', wpnt, eyeClr, rect);
