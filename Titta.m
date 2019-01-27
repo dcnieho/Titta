@@ -467,6 +467,16 @@ classdef Titta < handle
             % either data (might be empty if no data has been received yet) or
             % any error that happened during the subscription.
             % TODO: support optional size of buffer input
+            
+            % TODO:
+            % why don't i just let users interact with buffers directly? I guess
+            % Marcus has a similar interface?
+            % That way user can't fuck up recstate behind my back either.
+            % EThndl.buffer.start('gaze'), etc?
+            % state = 'recording','not recording','not supported'? Dependent
+            % property so internally we can use simple boolean and when creating
+            % this output first test for support.
+            
             result = true;
             assert(nargin>1,'Titta: startRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             switch lower(stream)
