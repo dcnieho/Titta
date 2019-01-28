@@ -856,8 +856,9 @@ classdef Titta < handle
             eyeClr      = [255 255 255];
             eyeSzFac    = .25;
             eyeMarginFac= .25;
-            pupilRefSz  = .40;
+            pupilRefSz  = .50;
             pupilRefDiam= 5;    % mm
+            pupilSzGain = 1.5;
 
             % setup buttons
             buttonSz    = {[220 45] [320 45] [400 45]};
@@ -976,7 +977,7 @@ classdef Titta < handle
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
                         elseif qHaveLeft
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
-                            pupSz = lPup/pupilRefDiam*pupilRefSz*eyeSz;
+                            pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz;
                             drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
@@ -991,7 +992,7 @@ classdef Titta < handle
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*base,pos(:)).', 1);
                         elseif qHaveRight
                             drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
-                            pupSz = rPup/pupilRefDiam*pupilRefSz*eyeSz;
+                            pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz;
                             drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
                             rect = CenterRectOnPointd([-eyeSz -eyeSz/5 eyeSz eyeSz/5],pos(1),pos(2));
