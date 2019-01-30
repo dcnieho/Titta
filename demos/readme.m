@@ -4,6 +4,7 @@ bgclr       = 255/2;
 fixClr      = 0;
 fixTime     = .5;
 imageTime   = 2;
+scr         = max(Screen('Screens'));
 
 addpath(genpath(fullfile(cd,'..')));
 
@@ -38,7 +39,6 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    scr = max(Screen('Screens'));
     [wpnt,winRect] = PsychImaging('OpenWindow', scr, bgclr);
     hz=Screen('NominalFrameRate', wpnt);
     Priority(1);
