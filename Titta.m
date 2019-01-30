@@ -898,7 +898,8 @@ classdef Titta < handle
             cursor  = cursorUpdater(cursors);
             
             % get tracking status and visualize
-            eyeDist = nan;
+            eyeDist          = 6.2;
+            qEyeDistMeasured = false;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -924,19 +925,19 @@ classdef Titta < handle
                 dists   = [lEye(3) rEye(3)]./10;
                 avgDist = mean(dists(qHave));
                 Xs      = [lEye(1) rEye(1)]./10;
-                if isnan(eyeDist) && any(qHave)
+                if ~qEyeDistMeasured && all(qHave)
                     % get distance between eyes
-                    eyeDist = hypot(diff(Xs),diff(dists));
+                    eyeDist          = hypot(diff(Xs),diff(dists));
+                    qEyeDistMeasured = true;
                 end
-                if any(qHave) && ~isnan(eyeDist)
-                    % if we have only one eye, make fake second eye
-                    % position so drawn head position doesn't jump so much.
-                    if ~qHaveLeft
-                        Xs(1) = Xs(2)-eyeDist;
-                    elseif ~qHaveRight
-                        Xs(2) = Xs(1)+eyeDist;
-                    end
+                % if we have only one eye, make fake second eye
+                % position so drawn head position doesn't jump so much.
+                if ~qHaveLeft
+                    Xs(1) = Xs(2)-eyeDist;
+                elseif ~qHaveRight
+                    Xs(2) = Xs(1)+eyeDist;
                 end
+                % determine head position in user coordinate system
                 avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs above
                 Ys      = [lEye(2) rEye(2)]./10;
                 avgY    = mean(Ys(qHave));
