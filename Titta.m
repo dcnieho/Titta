@@ -853,6 +853,7 @@ classdef Titta < handle
             headFillClr = [headClr .3*255];
             % setup head position visualization
             distGain    = 1.5;
+            dDistGain   = 8;
             eyeClr      = [255 255 255];
             eyeSzFac    = .25;
             eyeMarginFac= .25;
@@ -901,6 +902,7 @@ classdef Titta < handle
             eyeDist             = 6.2;
             qEyeDistMeasured    = false;
             Rori                = [1 0; 0 1];
+            dZ                  = 0;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -924,13 +926,13 @@ classdef Titta < handle
                 % get average eye distance. use distance from one eye if only one eye
                 % available
                 dists   = [lEye(3) rEye(3)]./10;
-                avgDist = mean(dists(qHave));
                 Xs      = [lEye(1) rEye(1)]./10;
                 Ys      = [lEye(2) rEye(2)]./10;
                 if all(qHave)
                     % get orientation of eyes in X-Y plane
                     dX          = diff(Xs);
                     dY          = diff(Ys);
+                    dZ          = diff(dists);
                     orientation = atan2(dY,dX);
                     Rori = [cos(orientation) sin(orientation); -sin(orientation) cos(orientation)];
                     if ~qEyeDistMeasured
@@ -943,15 +945,18 @@ classdef Titta < handle
                 % position so drawn head position doesn't jump so much.
                 off   = Rori*[eyeDist; 0];
                 if ~qHaveLeft
-                    Xs(1) = Xs(2)-off(1);
-                    Ys(1) = Ys(2)+off(2);
+                    Xs(1)   = Xs(2)   -off(1);
+                    Ys(1)   = Ys(2)   +off(2);
+                    dists(1)= dists(2)-dZ;
                 elseif ~qHaveRight
-                    Xs(2) = Xs(1)+off(1);
-                    Ys(2) = Ys(1)-off(2);
+                    Xs(2)   = Xs(1)   +off(1);
+                    Ys(2)   = Ys(1)   -off(2);
+                    dists(2)= dists(1)+dZ;
                 end
                 % determine head position in user coordinate system
                 avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs and Ys above
                 avgY    = mean(Ys(~isnan(Xs)));
+                avgDist = mean(dists(~isnan(Xs)));
                 % convert from UCS to trackBox coordinates
                 tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (avgDist);
                 avgX    = avgX/tbWidth /2+.5;
@@ -965,7 +970,7 @@ classdef Titta < handle
                     % determine size of oval, based on distance from reference distance
                     fac     = avgDist/obj.settings.setup.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
-                    eyeSz   = eyeSzFac*headSz;
+                    eyeSz   = eyeSzFac*headSz*((avgDist./dists-1)*dDistGain+1);
                     eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
                     % move
                     headPos = pos.*obj.scrInfo.resolution;
@@ -985,31 +990,31 @@ classdef Titta < handle
                         off = Rori*[eyeMargin; 0];
                         pos = pos-off.';
                         if ~obj.calibrateLeftEye
-                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/4 -eyeSz/4 eyeSz/4 eyeSz/4];
+                            base = eyeSz(1)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveLeft
-                            drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
-                            pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz;
+                            drawCircle(wpnt,[],pos,eyeSz(1),0,eyeClr);
+                            pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
                             drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
-                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/5 -eyeSz/5 eyeSz/5 eyeSz/5];
+                            base = eyeSz(1)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
                             Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                         % right eye
                         pos = pos+2*off.';
                         if ~obj.calibrateRightEye
-                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/4 -eyeSz/4 eyeSz/4 eyeSz/4];
+                            base = eyeSz(2)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveRight
-                            drawCircle(wpnt,[],pos,eyeSz,0,eyeClr);
-                            pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz;
+                            drawCircle(wpnt,[],pos,eyeSz(2),0,eyeClr);
+                            pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
                             drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
                         else
-                            base = [-eyeSz eyeSz eyeSz -eyeSz; -eyeSz/5 -eyeSz/5 eyeSz/5 eyeSz/5];
+                            base = eyeSz(2)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
                             Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                     end
