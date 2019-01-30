@@ -321,7 +321,7 @@ classdef Titta < handle
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
             if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the SMIWrapper constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call SMIWrapper.getDefaults(), as it has differnt settings than the recommended TextRendered number 1')
+                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end
             
             % init key, mouse state
