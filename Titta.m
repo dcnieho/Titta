@@ -1586,42 +1586,35 @@ classdef Titta < handle
             qHasCal                = ~isempty(cal{selection}.cal.result);
             qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
             
-            % set up box representing screen
-            scale       = .8;
-            boxRect     = CenterRectOnPoint([0 0 obj.scrInfo.resolution*scale],obj.scrInfo.center(1),obj.scrInfo.center(2));
-            boxRect     = OffsetRect(boxRect,0,20);
-            [brw,brh]   = RectSize(boxRect);
-            
             % set up buttons
             % 1. below screen
-            yPosMid     = boxRect(4)+(obj.scrInfo.resolution(2)-boxRect(4))/2;
+            yPosBot     = .97*obj.scrInfo.resolution(2);
             buttonSz    = [300 45; 300 45; 350 45];
             buttonSz    = buttonSz(1:2+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
             buttonOff   = 80;
             totWidth    = sum(buttonSz(:,1))+(size(buttonSz,1)-1)*buttonOff;
             buttonRectsX= cumsum([0 buttonSz(:,1).']+[0 ones(1,size(buttonSz,1))]*buttonOff)-totWidth/2;
-            recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz(1,2)],obj.scrInfo.center(1),yPosMid-buttonSz(1,2)/2);
+            recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz(1,2)],obj.scrInfo.center(1),yPosBot-buttonSz(1,2));
             recalButTextCache   = obj.getTextCache(wpnt,'recalibrate (<i>esc<i>)'  ,    recalButRect);
-            continueButRect     = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosMid-buttonSz(2,2)/2);
+            continueButRect     = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosBot-buttonSz(2,2));
             continueButTextCache= obj.getTextCache(wpnt,'continue (<i>spacebar<i>)', continueButRect);
             if qHaveMultipleValidCals
-                selectButRect       = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosMid-buttonSz(3,2)/2);
+                selectButRect       = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosBot-buttonSz(3,2));
                 selectButTextCache  = obj.getTextCache(wpnt,'select other cal (<i>c<i>)', selectButRect);
             else
                 selectButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
             % 2. atop screen
-            yPosMid             = boxRect(2)/2;
+            yPosTop             = .02*obj.scrInfo.resolution(2);
             buttonSz            = [200 45; 250 45];
-            buttonOff           = 750;
+            buttonOff           = 900;
             showGazeButClrs     = {[37  97 163],[11 122 244]};
-            setupButRect        = OffsetRect([0 0 buttonSz(1,:)],obj.scrInfo.center(1)-buttonOff/2-buttonSz(1,1),yPosMid-buttonSz(1,2)/2);
+            setupButRect        = OffsetRect([0 0 buttonSz(1,:)],obj.scrInfo.center(1)-buttonOff/2-buttonSz(1,1),yPosTop);
             setupButTextCache   = obj.getTextCache(wpnt,'setup (<i>s<i>)'    ,   setupButRect);
-            showGazeButRect     = OffsetRect([0 0 buttonSz(2,:)],obj.scrInfo.center(1)+buttonOff/2              ,yPosMid-buttonSz(2,2)/2);
+            showGazeButRect     = OffsetRect([0 0 buttonSz(2,:)],obj.scrInfo.center(1)+buttonOff/2              ,yPosTop);
             showGazeButTextCache= obj.getTextCache(wpnt,'show gaze (<i>g<i>)',showGazeButRect);
             % 3. left side
-            yPosTop             = boxRect(2);
-            buttonSz            = [boxRect(1) 45];
+            buttonSz            = [190 45];
             toggleCVButClr      = [37  97 163];
             if qHasCal
                 toggleCVButRect = OffsetRect([0 0 buttonSz],0,yPosTop);
@@ -1737,17 +1730,17 @@ classdef Titta < handle
                     % for simpler logic
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf(' <color=%s>Left eye<color>: %.2f°, (%.2f°,%.2f°)  %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
+                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right eye<color>: %.2f°, (%.2f°,%.2f°)  %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
+                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
-                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>   <i>offset 2D, (X,Y)     SD   RMS-S2S  loss<i>\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),'vSpacing',obj.settings.text.vSpacing,'xlayout','left');
+                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.text.vSpacing,'yalign','top','xlayout','left');
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1760,11 +1753,11 @@ classdef Titta < handle
                     calValPos   = zeros(nPoints,2);
                     if qShowCal
                         for p=1:nPoints
-                            calValPos(p,:)  = cal{selection}.cal.result.gazeData(p).calPos.'.*[brw brh]+boxRect(1:2);
+                            calValPos(p,:)  = cal{selection}.cal.result.gazeData(p).calPos.'.*obj.scrInfo.resolution;
                         end
                     else
                         for p=1:nPoints
-                            calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3)./obj.scrInfo.resolution.*[brw brh]+boxRect(1:2);
+                            calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3);
                         end
                     end
                     % get rects around validation points
@@ -1779,7 +1772,7 @@ classdef Titta < handle
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
                     if qHasCal
-                        calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
+                        calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
                     end
                 end
                 
@@ -1808,8 +1801,6 @@ classdef Titta < handle
                 
                 while true % draw loop
                     % draw validation screen image
-                    % draw box
-                    Screen('FillRect',wpnt,80,boxRect);
                     % draw calibration points
                     obj.drawFixPoints(wpnt,calValPos);
                     % draw captured data in characteristic tobii plot
@@ -1820,12 +1811,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = strcmp(myCal.gazeData(p).left.validity,'ValidAndUsed');
-                                lEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p). left.pos(:,qVal),[brw brh].'),boxRect(1:2).');
+                                lEpos= bsxfun(@times,myCal.gazeData(p). left.pos(:,qVal),obj.scrInfo.resolution.');
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = strcmp(myCal.gazeData(p).right.validity,'ValidAndUsed');
-                                rEpos= bsxfun(@plus,bsxfun(@times,myCal.gazeData(p).right.pos(:,qVal),[brw brh].'),boxRect(1:2).');
+                                rEpos= bsxfun(@times,myCal.gazeData(p).right.pos(:,qVal),obj.scrInfo.resolution.');
                             end
                         else
                             myVal = cal{selection}.val;
@@ -1833,12 +1824,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                lEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
+                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution.');
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = myVal.gazeData(p).right.gazePoint.valid;
-                                rEpos= bsxfun(@plus,bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),[brw brh].'),boxRect(1:2).');
+                                rEpos= bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution.');
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
