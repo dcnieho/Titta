@@ -724,7 +724,6 @@ classdef Titta < handle
             settings.UI.setupShowPupils     = true;
             settings.UI.viewingDist         = 65;
             settings.UI.eyeColors           = {[177 97 24],[37 88 122]};        % L, R eye
-            % TODO: do we support zero points? and also for val?
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
@@ -1228,24 +1227,28 @@ classdef Titta < handle
             obj.sendMessage(sprintf('CALIBRATION END %d',kCal));
             out.cal.data = obj.ConsumeAllData(calStartT);
             if status==1
-                % compute calibration
-                out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
-            end
-            
-            % if valid calibration retrieve data, so user can select different ones
-            if status==1
-                if strcmp(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
-                    out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
-                else
-                    % calibration failed, back to setup screen
-                    status = -2;
-                    DrawFormattedText(wpnt,'Calibration failed\nPress any key to continue','center','center',obj.settings.text.color);
-                    Screen('Flip',wpnt);
-                    obj.getNewMouseKeyPress();
-                    keyCode = false;
-                    while ~any(keyCode)
-                        [~,~,~,keyCode] = obj.getNewMouseKeyPress();
+                if ~isempty(obj.settings.cal.pointPos)
+                    % compute calibration
+                    out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
+                    
+                    % if valid calibration retrieve data, so user can select different ones
+                    if strcmp(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                        out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
+                    else
+                        % calibration failed, back to setup screen
+                        status = -2;
+                        DrawFormattedText(wpnt,'Calibration failed\nPress any key to continue','center','center',obj.settings.text.color);
+                        Screen('Flip',wpnt);
+                        obj.getNewMouseKeyPress();
+                        keyCode = false;
+                        while ~any(keyCode)
+                            [~,~,~,keyCode] = obj.getNewMouseKeyPress();
+                        end
                     end
+                else
+                    % can't compute if user requested no calibration points
+                    out.cal.result = [];
+                    out.cal.computedCal = [];
                 end
             end
             
@@ -1357,9 +1360,11 @@ classdef Titta < handle
                 out.gazeData    = [];
             end
             nPoint = size(points,1);
-            points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
-            if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
-                points = points(randperm(nPoint),:);
+            if nPoint>0
+                points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
+                if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
+                    points = points(randperm(nPoint),:);
+                end
             end
             if isempty(obj.settings.cal.drawFunction)
                 drawFunction = @obj.drawFixationPointDefault;
@@ -1573,12 +1578,13 @@ classdef Titta < handle
             
             % find how many valid calibrations we have:
             iValid = getValidCalibrations(cal);
-            if ~ismember(selection,iValid)
+            if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
                 % this happens if setup cancelled to go directly to this validation
                 % viewer
                 selection = iValid(end);
             end
-            qHaveMultipleValidCals = ~isscalar(iValid);
+            qHasCal                = ~isempty(cal{selection}.cal.result);
+            qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
             
             % set up box representing screen
             scale       = .8;
@@ -1617,8 +1623,12 @@ classdef Titta < handle
             yPosTop             = boxRect(2);
             buttonSz            = [boxRect(1) 45];
             toggleCVButClr      = [37  97 163];
-            toggleCVButRect     = OffsetRect([0 0 buttonSz],0,yPosTop);
-            toggleCVButTextCache= {obj.getTextCache(wpnt,'show cal (<i>t<i>)',toggleCVButRect), obj.getTextCache(wpnt,'show val (<i>t<i>)',toggleCVButRect)};
+            if qHasCal
+                toggleCVButRect = OffsetRect([0 0 buttonSz],0,yPosTop);
+                toggleCVButTextCache= {obj.getTextCache(wpnt,'show cal (<i>t<i>)',toggleCVButRect), obj.getTextCache(wpnt,'show val (<i>t<i>)',toggleCVButRect)};
+            else
+                toggleCVButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
+            end
             
             
             % setup menu, if any
@@ -1768,7 +1778,9 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
-                    calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
+                    if qHasCal
+                        calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',boxRect(1),'sy',boxRect(2)-3,'xalign','left','yalign','bottom');
+                    end
                 end
                 
                 % setup overlay with data quality info for specific point
@@ -1843,9 +1855,11 @@ classdef Titta < handle
                     Screen('TextStyle', wpnt, obj.settings.text.style);
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
-                    % draw text indicating whether calibration or
-                    % validation is currently shown
-                    obj.drawCachedText(calValLblCache);
+                    if qHasCal
+                        % draw text indicating whether calibration or
+                        % validation is currently shown
+                        obj.drawCachedText(calValLblCache);
+                    end
                     % draw buttons
                     Screen('FillRect',wpnt,[150 0 0],recalButRect);
                     obj.drawCachedText(recalButTextCache);
@@ -1859,8 +1873,10 @@ classdef Titta < handle
                     obj.drawCachedText(setupButTextCache);
                     Screen('FillRect',wpnt,showGazeButClrs{qShowGaze+1},showGazeButRect);
                     obj.drawCachedText(showGazeButTextCache);
-                    Screen('FillRect',wpnt,toggleCVButClr,toggleCVButRect);
-                    obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
+                    if qHasCal
+                        Screen('FillRect',wpnt,toggleCVButClr,toggleCVButRect);
+                        obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
+                    end
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
@@ -1981,7 +1997,7 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,'g'))
                                 qToggleGaze         = true;
                                 break;
-                            elseif any(strcmpi(keys,'t'))
+                            elseif any(strcmpi(keys,'t')) && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
                                 break;
@@ -2065,7 +2081,7 @@ angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
 function iValid = getValidCalibrations(cal)
-iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && strcmp(x.cal.result.status(1:7),'Success'),cal));
+iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && ~isempty(x.cal.result) && strcmp(x.cal.result.status(1:7),'Success'),cal));
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
