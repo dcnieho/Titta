@@ -1509,7 +1509,7 @@ classdef Titta < handle
                 rights = [val.quality.right];
             end
             [l,r] = deal([]);
-            for f={'acc','RMS2D','STD2D','trackRatio'}
+            for f={'acc','acc2D','RMS2D','STD2D','dataLoss'}
                 % NB: abs when averaging over eyes, we need average size of
                 % error for accuracy and for other fields its all positive
                 % anyway
@@ -1536,6 +1536,7 @@ classdef Titta < handle
             angs2D      = AngleBetweenVectors(vecToPoint,gazeVec);
             out.offs    = bsxfun(@times,angs2D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
             out.acc     = mean(out.offs,2,'omitnan');
+            out.acc2D   = mean( angs2D ,2,'omitnan');
             
             % 2. RMS
             out.RMS     = sqrt(mean(diff(out.offs,[],2).^2,2,'omitnan'));
@@ -1545,8 +1546,8 @@ classdef Titta < handle
             out.STD     = std(out.offs,[],2,'omitnan');
             out.STD2D   = hypot(out.STD(1),out.STD(2));
             
-            % 4. track ratio
-            out.trackRatio  = sum(gazeData.gazePoint.valid)/length(gazeData.gazePoint.valid);
+            % 4. data loss
+            out.dataLoss  = 1-sum(gazeData.gazePoint.valid)/length(gazeData.gazePoint.valid);
         end
         
         function out = ADCSToUCS(obj,data)
@@ -1638,10 +1639,11 @@ classdef Titta < handle
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf('<color=%s>Left<color>: (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{1},cal{iValid(c)}.val.acc(:,1));
+                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{1},cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
                     end
                     if obj.calibrateRightEye
-                        strr = sprintf('<color=%s>Right<color>: (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{2},cal{iValid(c)}.val.acc(:,2));
+                        idx = 1+obj.calibrateLeftEye;
+                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{2},cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
@@ -1725,16 +1727,16 @@ classdef Titta < handle
                     % for simpler logic
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf('  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.trackRatio( 1 )*100);
+                        strl = sprintf(' <color=%s>Left eye<color>: %.2f°, (%.2f°,%.2f°)  %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf(' <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.trackRatio(idx)*100);
+                        strr = sprintf('<color=%s>Right eye<color>: %.2f°, (%.2f°,%.2f°)  %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
-                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>   accuracy (X,Y)   SD     RMS  track\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
+                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>   <i>offset 2D, (X,Y)     SD   RMS-S2S  loss<i>\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
                     valInfoTopTextCache = obj.getTextCache(wpnt,valText,CenterRectOnPoint([0 0 10 10],obj.scrInfo.resolution(1)/2,boxRect(2)/2),'vSpacing',obj.settings.text.vSpacing,'xlayout','left');
                     
                     % get info about where points were on screen
@@ -1777,13 +1779,13 @@ classdef Titta < handle
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     elseif obj.calibrateLeftEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
-                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
                     elseif obj.calibrateRightEye
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Accuracy:     <color=%2$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%2$s>%5$.2f°<color>\nPrecision RMS:    <color=%2$s>%6$.2f°<color>\nTrack ratio:      <color=%2$s>%7$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                        str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left');
                     % get box around text
@@ -1874,6 +1876,13 @@ classdef Titta < handle
                     % if hovering over validation point, show info
                     if ~isnan(pointToShowInfoFor)
                         rect = OffsetRect(infoBoxRect,mx,my);
+                        % mak sure does not go offscreen
+                        if rect(3)>obj.scrInfo.resolution(1)
+                            rect = OffsetRect(rect,obj.scrInfo.resolution(1)-rect(3),0);
+                        end
+                        if rect(4)>obj.scrInfo.resolution(2)
+                            rect = OffsetRect(rect,0,obj.scrInfo.resolution(2)-rect(4));
+                        end
                         Screen('FillRect',wpnt,110,rect);
                         obj.drawCachedText(pointTextCache,rect);
                     end
