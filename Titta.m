@@ -120,8 +120,8 @@ classdef Titta < handle
             obj.settings.cal.bgColor        = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor   = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.setup.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x,2).',1,[]),obj.settings.setup.eyeColors,'uni',false);
-            obj.settings.setup.eyeColors    = cellfun(@color2RGBA                      ,obj.settings.setup.eyeColors,'uni',false);
+            obj.settings.UI.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x,2).',1,[]),obj.settings.UI.eyeColors,'uni',false);
+            obj.settings.UI.eyeColors    = cellfun(@color2RGBA                      ,obj.settings.UI.eyeColors,'uni',false);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -357,7 +357,7 @@ classdef Titta < handle
             % 0. skip head positioning, go straight to calibration
             % 1. start with simple head positioning interface
             % 2. start with advanced head positioning interface
-            startScreen = obj.settings.setup.startScreen;
+            startScreen = obj.settings.UI.startScreen;
             kCal = 0;
             while true
                 qGoToValidationViewer = false;
@@ -365,7 +365,7 @@ classdef Titta < handle
                 out.attempt{kCal}.eye  = obj.settings.calibrateEye;
                 if startScreen>0
                     %%% 2a: show head positioning screen
-                    out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out,startScreen);
+                    out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out);
                     switch out.attempt{kCal}.setupStatus
                         case 1
                             % all good, continue
@@ -401,7 +401,7 @@ classdef Titta < handle
                             continue;
                         case -2
                             % go to setup
-                            startScreen = max(1,startScreen);
+                            startScreen = 1;
                             continue;
                         case -4
                             % full stop
@@ -411,7 +411,7 @@ classdef Titta < handle
                     end
                 end
                 % TODO: somewhere here store info about calibration quality
-                % (only mean accuracy I guess)
+                % (mean accuracy and the other variables)
             
                 % TODO: have button to only revalidate, not recalibrate
                 
@@ -432,7 +432,7 @@ classdef Titta < handle
                         continue;
                     case -2
                         % go to setup
-                        startScreen = max(1,startScreen);
+                        startScreen = 1;
                         continue;
                     case -4
                         % full stop
@@ -719,10 +719,11 @@ classdef Titta < handle
             settings.licenseFile            = '';
             settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
             settings.connectRetryWait       = 4;                                % seconds
-            settings.setup.startScreen      = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with simple head positioning interface; 2. start with advanced head positioning interface
-            settings.setup.simpleShowEyes   = true;
-            settings.setup.viewingDist      = 65;
-            settings.setup.eyeColors        = {[177 97 24],[37 88 122]};        % L, R eye
+            settings.UI.startScreen         = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
+            settings.UI.setupShowEyes       = true;
+            settings.UI.setupShowPupils     = true;
+            settings.UI.viewingDist         = 65;
+            settings.UI.eyeColors           = {[177 97 24],[37 88 122]};        % L, R eye
             % TODO: do we support zero points? and also for val?
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
@@ -751,7 +752,7 @@ classdef Titta < handle
             else
                 settings.text.size          = 24;
             end
-            settings.string.simplePositionInstruction = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
+            settings.string.setupPositioningInstruction = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
             settings.debugMode              = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -764,10 +765,11 @@ classdef Titta < handle
         function allowed = getAllowedOptions(obj)
             allowed = {...
                 'calibrateEye',''
-                'setup','startScreen'
-                'setup','viewingDist'
-                'setup','eyeColors'
-                'setup','simpleShowEyes'
+                'UI','startScreen'
+                'UI','viewingDist'
+                'UI','eyeColors'
+                'UI','setupShowEyes'
+                'UI','setupShowPupils'
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
@@ -789,7 +791,7 @@ classdef Titta < handle
                 'text','wrapAt'
                 'text','vSpacing'
                 'text','lineCentOff'
-                'string','simplePositionInstruction'
+                'string','setupPositioningInstruction'
                 };
             for p=size(allowed,1):-1:1
                 if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
@@ -802,7 +804,7 @@ classdef Titta < handle
             out = ismember(cap,obj.eyetracker.DeviceCapabilities);
         end
         
-        function status = showHeadPositioning(obj,wpnt,out,startScreen)
+        function status = showHeadPositioning(obj,wpnt,out)            
             % status output:
             %  1: continue (setup seems good) (space)
             %  2: skip calibration and continue with task (shift+s)
@@ -811,34 +813,15 @@ classdef Titta < handle
             % -4: Exit completely (control+escape)
             % (NB: no -1 for this function)
             
-            % init
-            status = 5+5*(startScreen==2);  % 5 if simple screen requested, 10 if advanced screen
-            startT = obj.sendMessage('SETUP START');
-            obj.startRecording('gaze');
-            % see if we already have valid calibrations
-            qHaveValidCalibrations = ~isempty(getValidCalibrations(out.attempt));
+            % logic: if user is at reference viewing distance and at center
+            % of head box vertically and horizontally, two circles will
+            % overlap indicating correct positioning
             
-            while true
-                if status==5
-                    % simple setup screen. has two circles for positioning, a button to
-                    % start calibration and a button to go to advanced view
-                    status = obj.showHeadPositioningSimple  (wpnt,qHaveValidCalibrations);
-                elseif status==10
-                    % advanced interface, has head box and eye image
-                    status = obj.showHeadPositioningAdvanced(wpnt,qHaveValidCalibrations);
-                else
-                    break;
-                end
-            end
-            obj.stopRecording('gaze');
-            endT = obj.sendMessage('SETUP END');
-            obj.clearBufferTimeRange('gaze',startT,endT);
-        end
-        
-        function status = showHeadPositioningSimple(obj,wpnt,qHaveValidCalibrations)
-            % if user is at reference viewing distance and at center of
-            % head box vertically and horizontally, two circles will
-            % overlap
+            startT                  = obj.sendMessage('SETUP START');
+            obj.startRecording('gaze');
+            qHasEyeIm               = obj.hasCap(EyeTrackerCapabilities.HasEyeImages);
+            % see if we already have valid calibrations
+            qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             
             % setup text
             Screen('TextFont',  wpnt, obj.settings.text.font);
@@ -862,8 +845,14 @@ classdef Titta < handle
             pupilSzGain = 1.5;
 
             % setup buttons
-            buttonSz    = {[220 45] [320 45] [400 45]};
-            buttonSz    = buttonSz(1:2+qHaveValidCalibrations);  % third button only when more than one calibration available
+            buttonSz            = {[250 45] [320 45] [400 45]};
+            showEyeImButClrs    = {[37  97 163],[11 122 244]};
+            if ~qHasEyeIm
+                buttonSz(1) = [];
+            end
+            if ~qHaveValidCalibrations
+                buttonSz(end) = [];
+            end
             buttonOff   = 80;
             yposBase    = round(obj.scrInfo.resolution(2)*.95);
             % place buttons for go to advanced interface, or calibrate
@@ -871,9 +860,13 @@ classdef Titta < handle
             totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
             buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
             b = 1;
-            advancedButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-            advancedButTextCache    = obj.getTextCache(wpnt,'advanced (<i>a<i>)'        ,advancedButRect);
-            b=b+1;
+            if qHasEyeIm
+                eyeImageButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
+                eyeImageButTextCache    = obj.getTextCache(wpnt,'eye images (<i>e<i>)'      ,eyeImageButRect);
+                b=b+1;
+            else
+                eyeImageButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
+            end
             
             calibButRect            = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
             calibButTextCache       = obj.getTextCache(wpnt,'calibrate (<i>spacebar<i>)',   calibButRect);
@@ -890,7 +883,7 @@ classdef Titta < handle
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
             
             % setup cursors
-            cursors.rect    = {advancedButRect.' calibButRect.' validateButRect.'};
+            cursors.rect    = {eyeImageButRect.' calibButRect.' validateButRect.'};
             cursors.cursor  = [2 2 2];      % Hand
             cursors.other   = 0;            % Arrow
             if ~obj.settings.debugMode      % for cleanup
@@ -903,10 +896,45 @@ classdef Titta < handle
             qEyeDistMeasured    = false;
             Rori                = [1 0; 0 1];
             dZ                  = 0;
+            qToggleEyeImage     = false;
+            qShowEyeImage       = false;
+            texs                = [0 0];
+            szs                 = [];
+            eyeImageRect        = repmat({zeros(1,4)},1,2);
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             while true
+                if qHasEyeIm
+                    % toggle eye images on or off if requested
+                    if qToggleEyeImage
+                        if qShowEyeImage
+                            % switch off
+                            obj.stopRecording('eyeImage');
+                            obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
+                        else
+                            % switch on
+                            eyeStartTime = obj.getSystemTime();
+                            obj.startRecording('eyeImage');
+                        end
+                        qShowEyeImage   = ~qShowEyeImage;
+                        qToggleEyeImage = false;
+                    end
+                    
+                    if qShowEyeImage
+                        % get eye image
+                        eyeIm       = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
+                        
+                        % update eye image locations if size of returned eye image changed
+                        if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
+                            margin = 20;
+                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center(1)-szs(1,1)-margin/2,calibButRect(2)-margin-szs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center(1)         +margin/2,calibButRect(2)-margin-szs(2,2));
+                        end
+                    end
+                end
+                
                 % get latest data from eye-tracker
                 eyeData = obj.buffers.peekN('sample',1);
                 [lEye,rEye] = deal(nan(3,1));
@@ -968,7 +996,7 @@ classdef Titta < handle
                 if ~isnan(avgDist)
                     pos     = [avgX 1-avgY];  %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                     % determine size of oval, based on distance from reference distance
-                    fac     = avgDist/obj.settings.setup.viewingDist;
+                    fac     = avgDist/obj.settings.UI.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
                     eyeSz   = eyeSzFac*headSz*((avgDist./dists-1)*dDistGain+1);
                     eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
@@ -978,50 +1006,81 @@ classdef Titta < handle
                     headPos = [];
                 end
                 
+                % draw eye images, if any
+                if qShowEyeImage
+                    if texs(1)
+                        Screen('DrawTexture', wpnt, texs(1),[],eyeImageRect{1});
+                    else
+                        Screen('FillRect', wpnt, 0, eyeImageRect{1});
+                    end
+                    if texs(2)
+                        Screen('DrawTexture', wpnt, texs(2),[],eyeImageRect{2});
+                    else
+                        Screen('FillRect', wpnt, 0, eyeImageRect{2});
+                    end
+                end
                 % draw distance info
-                DrawFormattedText(wpnt,sprintf(obj.settings.string.simplePositionInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.text.color,[],[],[],1.5);
+                if ~(qShowEyeImage && isempty(headPos))
+                    DrawFormattedText(wpnt,sprintf(obj.settings.string.setupPositioningInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.text.color,[],[],[],1.5);
+                end
                 % draw ovals
-                drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
+                % reference circle--don't draw if showing eye images and no
+                % tracking data available
+                if ~(qShowEyeImage && isempty(headPos))
+                    drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
+                end
+                % stylized head
                 if ~isempty(headPos)
                     drawCircle(wpnt,headClr,headPos,headSz,5,headFillClr);
-                    if obj.settings.setup.simpleShowEyes
+                    if obj.settings.UI.setupShowEyes
                         % left eye
-                        pos = headPos;
                         off = Rori*[eyeMargin; 0];
-                        pos = pos-off.';
+                        pos = headPos-off.';
                         if ~obj.calibrateLeftEye
+                            % draw cross indicating not calibrated
                             base = eyeSz(1)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveLeft
+                            % draw eye with optional pupil
                             drawCircle(wpnt,[],pos,eyeSz(1),0,eyeClr);
-                            pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
-                            drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                            if obj.settings.UI.setupShowPupils
+                                pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
+                                drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                            end
                         else
+                            % draw line indicating closed/missing eye
                             base = eyeSz(1)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
                             Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                         % right eye
-                        pos = pos+2*off.';
+                        pos = headPos+off.';
                         if ~obj.calibrateRightEye
+                            % draw cross indicating not calibrated
                             base = eyeSz(2)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
                             Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveRight
+                            % draw eye with optional pupil
                             drawCircle(wpnt,[],pos,eyeSz(2),0,eyeClr);
-                            pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
-                            drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                            if obj.settings.UI.setupShowPupils
+                                pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
+                                drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                            end
                         else
+                            % draw line indicating closed/missing eye
                             base = eyeSz(2)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
                             Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                     end
                 end
                 % draw buttons
-                Screen('FillRect',wpnt,[ 37  97 163],advancedButRect);
-                obj.drawCachedText(advancedButTextCache);
+                if qHasEyeIm
+                    Screen('FillRect',wpnt,showEyeImButClrs{qShowEyeImage+1},eyeImageButRect);
+                    obj.drawCachedText(eyeImageButTextCache);
+                end
                 Screen('FillRect',wpnt,[  0 120   0],calibButRect);
                 obj.drawCachedText(calibButTextCache);
                 if qHaveValidCalibrations
@@ -1042,10 +1101,9 @@ classdef Titta < handle
                 if any(buttons)
                     % don't care which button for now. determine if clicked on either
                     % of the buttons
-                    qIn = inRect([mx my],[advancedButRect.' calibButRect.' validateButRect.']);
+                    qIn = inRect([mx my],[eyeImageButRect.' calibButRect.' validateButRect.']);
                     if qIn(1)
-                        status = 10;
-                        break;
+                        qToggleEyeImage = true;
                     elseif qIn(2)
                         status = 1;
                         break;
@@ -1055,9 +1113,8 @@ classdef Titta < handle
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,'a'))
-                        status = 10;
-                        break;
+                    if any(strcmpi(keys,'e'))
+                        qToggleEyeImage = true;
                     elseif any(strcmpi(keys,'space'))
                         status = 1;
                         break;
@@ -1076,333 +1133,16 @@ classdef Titta < handle
             end
             % clean up
             HideCursor;
-        end
-        
-        
-        function status = showHeadPositioningAdvanced(obj,wpnt,qHaveValidCalibrations)
-            qHasEyeIm = obj.hasCap(EyeTrackerCapabilities.HasEyeImages);
-            if qHasEyeIm
-                eyeStartTime = obj.getSystemTime();
-                obj.startRecording('eyeImage');
-            end
-            
-            % setup text
-            Screen('TextFont',  wpnt, obj.settings.text.font);
-            Screen('TextSize',  wpnt, obj.settings.text.size);
-            Screen('TextStyle', wpnt, obj.settings.text.style);
-            % setup box
-            trackBoxDepths  = double([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)]./10);
-            boxSize = double((obj.geom.trackBox.FrontUpperRight-obj.geom.trackBox.FrontLowerLeft)./10);
-            boxSize = round(500.*boxSize(1:2)./boxSize(1));
-            [boxCenter(1),boxCenter(2)] = RectCenter([0 0 boxSize]);
-            % setup eye image
-            if qHasEyeIm
-                margin  = 80;
-                texs    = [0 0];
-                eyeIm   = [];
-                count   = 0;
-                while (isempty(eyeIm) || isempty(eyeIm.deviceTimeStamp)) && count<20
-                    eyeIm = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward
-                    WaitSecs('YieldSecs',0.15);
-                    count = count+1;
-                end
-                if ~isempty(eyeIm)
-                    [texs,szs]  = UploadImages(texs,[],wpnt,eyeIm);
-                else
-                    szs         = [496 175; 496 175].';     % init at size of Spectrum@600Hz, decent enough guess for now
-                end
-                eyeImRect   = [zeros(2) szs.'];
-                maxEyeImRect= max(eyeImRect,[],1);
-            else
-                margin       = 0;
-                maxEyeImRect = [0 0 0 0];
-            end
-            
-            % setup buttons
-            buttonSz    = {[200 45] [320 45] [400 45]};
-            buttonSz    = buttonSz(1:2+qHaveValidCalibrations);  % third button only when more than one calibration available
-            buttonOff   = 80;
-            yposBase    = round(obj.scrInfo.resolution(2)*.95);
-            
-            % position eye image, head box and buttons
-            % center headbox and eye image on screen
-            offsetV         = (obj.scrInfo.resolution(2)-boxSize(2)-margin-RectHeight(maxEyeImRect))/2;
-            offsetH         = (obj.scrInfo.resolution(1)-boxSize(1))/2;
-            boxRect         = OffsetRect([0 0 boxSize],offsetH,offsetV);
-            if qHasEyeIm
-                eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
-                eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
-            end
-            % place buttons for back to simple interface, or calibrate
-            buttonWidths= cellfun(@(x) x(1),buttonSz);
-            totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
-            buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
-            basicButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz{1}(2)],obj.scrInfo.center(1),yposBase-buttonSz{1}(2));
-            basicButTextCache   = obj.getTextCache(wpnt,'basic (<i>b<i>)'          , basicButRect);
-            calibButRect        = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz{2}(2)],obj.scrInfo.center(1),yposBase-buttonSz{2}(2));
-            calibButTextCache   = obj.getTextCache(wpnt,'calibrate (<i>spacebar<i>)',calibButRect);
-            if qHaveValidCalibrations
-                validateButRect         = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz{3}(2)],obj.scrInfo.center(1),yposBase-buttonSz{3}(2));
-                validateButTextCache    = obj.getTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
-            else
-                validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
-            end
-            
-            Screen('FillRect', wpnt, obj.settings.cal.bgColor); % clear what we've just drawn
-            
-            % setup fixation points in the corners of the screen
-            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
-            
-            gain = 1.5;     % 1.5 is a gain to make differences larger
-            sz   = 15;      % base size at reference distance
-            % setup arrows + their positions
-            aSize = 26;
-            arrow = [
-                -0.52  -0.64
-                 0.52  -0.64
-                 0.52  -0.16
-                 1.00  -0.16
-                 0.00   0.64
-                -1.00  -0.16
-                -0.52  -0.16];
-            arrowsLRUDNF = {[-arrow(:,2) arrow(:,1)],[arrow(:,2) -arrow(:,1)],arrow,-arrow,arrow,-arrow};
-            arrowsLRUDNF{5}(1:2,1) = arrowsLRUDNF{5}(1:2,1)*.75;
-            arrowsLRUDNF{5}( : ,2) = arrowsLRUDNF{5}( : ,2)*.6;
-            arrowsLRUDNF{6}(1:2,1) = arrowsLRUDNF{6}(1:2,1)/.75;
-            arrowsLRUDNF{6}( : ,2) = arrowsLRUDNF{6}( : ,2)*.6;
-            arrowsLRUDNF = cellfun(@(x) round(x.*aSize),arrowsLRUDNF,'uni',false);
-            % positions relative to boxRect. add position to arrowsLRDUNF to get
-            % position of vertices in boxRect;
-            margin = 4;
-            arrowPos = cell(1,6);
-            arrowPos{1} = [boxSize(1)-margin-max(arrowsLRUDNF{1}(:,1)) boxCenter(2)];
-            arrowPos{2} = [           margin-min(arrowsLRUDNF{2}(:,1)) boxCenter(2)];
-            % down is special as need space underneath for near and far arrows
-            arrowPos{3} = [boxCenter(1)            margin-min(arrowsLRUDNF{3}(:,2))];
-            arrowPos{4} = [boxCenter(1) boxSize(2)-margin-max(arrowsLRUDNF{4}(:,2))-max(arrowsLRUDNF{5}(:,2))+min(arrowsLRUDNF{5}(:,2))];
-            arrowPos{5} = [boxCenter(1) boxSize(2)-margin-max(arrowsLRUDNF{5}(:,2))];
-            arrowPos{6} = [boxCenter(1) boxSize(2)-margin-max(arrowsLRUDNF{6}(:,2))];
-            % setup arrow colors and thresholds
-            col1 = [255 255 0]; % color for arrow when just visible, exceeding first threshold
-            col2 = [255 155 0]; % color for arrow when just visible, just before exceeding second threshold
-            col3 = [255 0   0]; % color for arrow when extreme, exceeding second threshold
-            xThresh = [2/3 .8];
-            yThresh = [.7  .85];
-            zThresh = [.7  .85];
-            
-            % setup cursors
-            cursors.rect    = {basicButRect.' calibButRect.' validateButRect.'};
-            cursors.cursor  = [2 2 2];      % Hand
-            cursors.other   = 0;            % Arrow
-            if ~obj.settings.debugMode      % for cleanup
-                cursors.reset = -1;         % hide cursor (else will reset to cursor.other by default, so we're good with that default
-            end
-            cursor          = cursorUpdater(cursors);
-            
-            
-            % Refresh internal key-/mouseState to make sure we don't
-            % trigger on already pressed buttons
-            obj.getNewMouseKeyPress();
-            arrowColor  = zeros(3,6);
-            relPos      =   nan(3,1);
-            while true
-                eyeData = obj.buffers.peekN('sample',1);
-                [lEye,rEye]     = deal(nan(3,1));
-                [lValid,rValid] = deal(false);
-                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateLeftEye
-                    lValid  = eyeData. left.gazeOrigin.valid;
-                    lEye = eyeData. left.gazeOrigin.inTrackBoxCoords;
-                end
-                if ~isempty(eyeData.systemTimeStamp) && obj.calibrateRightEye
-                    rValid  = eyeData.right.gazeOrigin.valid;
-                    rEye = eyeData.right.gazeOrigin.inTrackBoxCoords;
-                end
-                
-                % if one eye missing, estimate where it would be if user
-                % kept head yaw constant
-                if ~lValid && rValid
-                    lEye = rEye-relPos;
-                elseif ~rValid
-                    rEye = lEye+relPos;
-                end
-                
-                % get average eye distance. use distance from one eye if only one eye
-                % available
-                distL   = lEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
-                distR   = rEye(3)*diff(trackBoxDepths)+trackBoxDepths(1);
-                dists   = [distL distR];
-                avgDist = mean(dists(~isnan(dists)));
-                
-                % see which arrows to draw
-                qDrawArrow = false(1,6);
-                xMid = -(     [lEye(1) rEye(1)] *2-1);
-                yMid = -(     [lEye(2) rEye(2)] *2-1);
-                zMid =   mean([lEye(3) rEye(3)])*2-1;
-                if any(abs(xMid)>xThresh(1))
-                    [~,i] = max(abs(xMid));
-                    idx = 1 + (xMid(i)<0);  % if too far on the left, arrow should point to the right, etc below
-                    qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = getArrowColor(xMid(i),xThresh,col1,col2,col3);
-                end
-                if any(abs(yMid)>yThresh(1))
-                    [~,i] = max(abs(yMid));
-                    idx = 3 + (yMid(i)<0);
-                    qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = getArrowColor(yMid(i),yThresh,col1,col2,col3);
-                end
-                if abs(zMid)>zThresh(1)
-                    idx = 5 + (zMid>0);
-                    qDrawArrow(idx) = true;
-                    arrowColor(:,idx) = getArrowColor(zMid,zThresh,col1,col2,col3);
-                end
-                
-                if qHasEyeIm
-                    % get eye image
-                    eyeIm       = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward
-                    [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
-                    
-                    % update eye image locations (and possibly track box) if
-                    % size of returned eye image changed
-                    if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=eyeImRect(1,3:4))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=eyeImRect(2,3:4)))
-                        if ~any(isnan(szs(:,1)))
-                            eyeImRect(1,3:4) = szs(:,1).';
-                        end
-                        if ~any(isnan(szs(:,2)))
-                            eyeImRect(2,3:4) = szs(:,2).';
-                        end
-                        if max(eyeImRect(:,4))>maxEyeImRect(4)
-                            % just got a larger eye image, make room to
-                            % accomodate it
-                            maxEyeImRect    = max(eyeImRect,[],1);
-                            offsetV         = (obj.scrInfo.resolution(2)-boxSize(2)-margin-RectHeight(maxEyeImRect))/2;
-                            offsetH         = (obj.scrInfo.resolution(1)-boxSize(1))/2;
-                            boxRect         = OffsetRect([0 0 boxSize],offsetH,offsetV);
-                        end
-                        eyeImageRect{1} = OffsetRect(eyeImRect(1,:),obj.scrInfo.center(1)-eyeImRect(1,3)-10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(1,:))/2);
-                        eyeImageRect{2} = OffsetRect(eyeImRect(2,:),obj.scrInfo.center(1)               +10,boxRect(4)+margin+RectHeight(maxEyeImRect-eyeImRect(2,:))/2);
-                    end
-                end
-                
-                % do drawing
-                % draw box
-                Screen('FillRect',wpnt,80,boxRect);
-                % draw distance
-                if ~isnan(avgDist)
-                    if obj.usingFTGLTextRenderer
-                        Screen('TextSize', wpnt, 12);
-                    else
-                        Screen('TextSize', wpnt, 10);
-                    end
-                    Screen('DrawText',wpnt,sprintf('%.0f cm',avgDist) ,boxRect(3)-40,boxRect(4)-16,255);
-                end
-                % draw eyes in box
-                Screen('TextSize',  wpnt, obj.settings.text.size);
-                if lValid || rValid
-                    posL     = [1-lEye(1) lEye(2)];  %1-X as 0 is right and 1 is left edge. needs to be reflected for screen drawing
-                    posR     = [1-rEye(1) rEye(2)];
-                    % determine size of eye. based on distance from viewing
-                    % distance, calculate size change
-                    facL = obj.settings.setup.viewingDist/distL;
-                    facR = obj.settings.setup.viewingDist/distR;
-                    style = Screen('TextStyle', wpnt, 1);
-                    % left eye
-                    if ~isnan(posL(1))
-                        drawEye(wpnt,lValid,posL,obj.settings.setup.eyeColors{1},round(sz*facL*gain),'L',boxRect);
-                    end
-                    % right eye
-                    if ~isnan(posR(1))
-                        drawEye(wpnt,rValid,posR,obj.settings.setup.eyeColors{2},round(sz*facR*gain),'R',boxRect);
-                    end
-                    Screen('TextStyle', wpnt, style);
-                    % update relative eye positions - used for drawing estimated
-                    % position of missing eye. X and Y are relative position in
-                    % headbox, Z is difference in measured eye depths
-                    if lValid && rValid
-                        relPos = rEye-lEye;
-                    end
-                end
-                % draw arrows
-                for p=find(qDrawArrow)
-                    Screen('FillPoly', wpnt, arrowColor(:,p), bsxfun(@plus,arrowsLRUDNF{p},arrowPos{p}+boxRect(1:2)) ,0);
-                end
-                % draw eye images, if any
-                if qHasEyeIm
-                    if texs(1)
-                        Screen('DrawTexture', wpnt, texs(1),[],eyeImageRect{1});
-                    else
-                        Screen('FillRect', wpnt, 0, eyeImageRect{1});
-                    end
-                    if texs(2)
-                        Screen('DrawTexture', wpnt, texs(2),[],eyeImageRect{2});
-                    else
-                        Screen('FillRect', wpnt, 0, eyeImageRect{2});
-                    end
-                end
-                % draw buttons
-                Screen('FillRect',wpnt,[37  97 163],basicButRect);
-                obj.drawCachedText(basicButTextCache);
-                Screen('FillRect',wpnt,[ 0 120   0],calibButRect);
-                obj.drawCachedText(calibButTextCache);
-                if qHaveValidCalibrations
-                    Screen('FillRect',wpnt,[150 150   0],validateButRect);
-                    obj.drawCachedText(validateButTextCache);
-                end
-                % draw fixation points
-                obj.drawFixPoints(wpnt,fixPos);
-                
-                % drawing done, show
-                Screen('Flip',wpnt);
-                
-                % get user response
-                [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
-                % update cursor look if needed
-                cursor.update(mx,my);
-                if any(buttons)
-                    % don't care which button for now. determine if clicked on either
-                    % of the buttons
-                    qIn = inRect([mx my],[basicButRect.' calibButRect.' validateButRect.']);
-                    if any(qIn)
-                        if qIn(1)
-                            status = 5;
-                            break;
-                        elseif qIn(2)
-                            status = 1;
-                            break;
-                        elseif qIn(3)
-                            status = -3;
-                            break;
-                        end
-                    end
-                elseif any(keyCode)
-                    keys = KbName(keyCode);
-                    if any(strcmpi(keys,'b'))
-                        status = 5;
-                        break;
-                    elseif any(strcmpi(keys,'space'))
-                        status = 1;
-                        break;
-                    elseif any(strcmpi(keys,'p')) && qHaveValidCalibrations
-                        status = -3;
-                        break;
-                    elseif any(strcmpi(keys,'escape')) && shiftIsDown
-                        status = -4;
-                        break;
-                    elseif any(strcmpi(keys,'s')) && shiftIsDown
-                        % skip calibration
-                        status = 2;
-                        break;
-                    end
-                end
-            end
-            % clean up
+            obj.stopRecording('gaze');
+            obj.sendMessage('SETUP END');
+            obj.clearBufferTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
             if qHasEyeIm
                 obj.stopRecording('eyeImage');
-                obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % from start time onward
+                obj.clearBufferTimeRange('eyeImage',startT);    % clear buffer from start time until now (now=default third argument)
                 if any(texs)
                     Screen('Close',texs(texs>0));
                 end
             end
-            HideCursor;
         end
         
         function [cache,txtbounds] = getTextCache(obj,wpnt,text,rect,varargin)
@@ -1898,10 +1638,10 @@ classdef Titta < handle
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf('<color=%s>Left<color>: (%.2f°,%.2f°)',obj.settings.setup.eyeColorsHex{1},cal{iValid(c)}.val.acc(:,1));
+                        strl = sprintf('<color=%s>Left<color>: (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{1},cal{iValid(c)}.val.acc(:,1));
                     end
                     if obj.calibrateRightEye
-                        strr = sprintf('<color=%s>Right<color>: (%.2f°,%.2f°)',obj.settings.setup.eyeColorsHex{2},cal{iValid(c)}.val.acc(:,2));
+                        strr = sprintf('<color=%s>Right<color>: (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{2},cal{iValid(c)}.val.acc(:,2));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
@@ -1985,11 +1725,11 @@ classdef Titta < handle
                     % for simpler logic
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf('  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColorsHex{1},cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.trackRatio( 1 )*100);
+                        strl = sprintf('  <color=%s>Left eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.trackRatio( 1 )*100);
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf(' <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.setup.eyeColorsHex{2},cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.trackRatio(idx)*100);
+                        strr = sprintf(' <color=%s>Right eye<color>:   (%.2f°,%.2f°)  %.2f°  %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.trackRatio(idx)*100);
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
@@ -2037,13 +1777,13 @@ classdef Titta < handle
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>, <color=%2$s>(%8$.2f°,%9$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>          <color=%2$s>%10$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>          <color=%2$s>%11$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>           <color=%2$s>%12$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     elseif obj.calibrateLeftEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
-                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100);
+                        str = sprintf('Accuracy:     <color=%1$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%1$s>%5$.2f°<color>\nPrecision RMS:    <color=%1$s>%6$.2f°<color>\nTrack ratio:      <color=%1$s>%7$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.trackRatio*100);
                     elseif obj.calibrateRightEye
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Accuracy:     <color=%2$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%2$s>%5$.2f°<color>\nPrecision RMS:    <color=%2$s>%6$.2f°<color>\nTrack ratio:      <color=%2$s>%7$3.0f%%<color>',obj.settings.setup.eyeColorsHex{:},abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
+                        str = sprintf('Accuracy:     <color=%2$s>(%3$.2f°,%4$.2f°)<color>\nPrecision SD:     <color=%2$s>%5$.2f°<color>\nPrecision RMS:    <color=%2$s>%6$.2f°<color>\nTrack ratio:      <color=%2$s>%7$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.trackRatio*100);
                     end
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left');
                     % get box around text
@@ -2088,10 +1828,10 @@ classdef Titta < handle
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.setup.eyeColors{1},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.UI.eyeColors{1},[],2);
                         end
                         if obj.calibrateRightEye && ~isempty(rEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.setup.eyeColors{2},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.UI.eyeColors{2},[],2);
                         end
                     end
                     
@@ -2147,10 +1887,10 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{1}, lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt,obj.settings.UI.eyeColors{1}, lE(1), lE(2), 10);
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.setup.eyeColors{2}, rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt,obj.settings.UI.eyeColors{2}, rE(1), rE(2), 10);
                             end
                         end
                     end
@@ -2426,20 +2166,6 @@ rgb = rgb + ...
 
 rgb = round(rgb*255);
 end
-        
-function drawEye(wpnt,valid,pos,clr,sz,lbl,boxRect)
-if ~valid
-    hsv = rgb2hsv(clr(1:3));
-    clr = [hsv2rgb([hsv(:,1) hsv(:,2)/2 hsv(:,3)]) clr(4)];
-end
-pos = pos.*[diff(boxRect([1 3])) diff(boxRect([2 4]))]+boxRect(1:2);
-Screen('gluDisk',wpnt,clr,pos(1),pos(2),sz)
-if valid
-    bbox = Screen('TextBounds',wpnt,lbl);
-    pos  = round(pos-bbox(3:4)/2);
-    Screen('DrawText',wpnt,lbl,pos(1),pos(2),255);
-end
-end
 
 function [texs,szs] = UploadImages(texs,szs,wpnt,image)
 if isempty(image)
@@ -2495,14 +2221,6 @@ if nargin>=6
 end
 if lineWidth && ~isempty(clr)
     Screen('DrawLines', wpnt, xy, lineWidth ,clr ,center,2);
-end
-end
-
-function arrowColor = getArrowColor(posRating,thresh,col1,col2,col3)
-if abs(posRating)>thresh(2)
-    arrowColor = col3;
-else
-    arrowColor = col1+(abs(posRating)-thresh(1))./diff(thresh)*(col2-col1);
 end
 end
 
