@@ -120,8 +120,7 @@ classdef Titta < handle
             obj.settings.cal.bgColor        = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor   = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.UI.eyeColorsHex = cellfun(@(x) reshape(dec2hex(x,2).',1,[]),obj.settings.UI.eyeColors,'uni',false);
-            obj.settings.UI.eyeColors    = cellfun(@color2RGBA                      ,obj.settings.UI.eyeColors,'uni',false);
+            obj.settings.UI.eyeColors       = cellfun(@color2RGBA,obj.settings.UI.eyeColors,'uni',false);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -723,7 +722,7 @@ classdef Titta < handle
             settings.UI.setupShowEyes       = true;
             settings.UI.setupShowPupils     = true;
             settings.UI.viewingDist         = 65;
-            settings.UI.eyeColors           = {[177 97 24],[37 88 122]};        % L, R eye
+            settings.UI.eyeColors           = {[255 127 0],[0 127 255]};        % L, R eye
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
@@ -1626,12 +1625,14 @@ classdef Titta < handle
             
             % setup menu, if any
             if qHaveMultipleValidCals
-                margin      = 10;
-                pad         = 3;
-                height      = 45;
-                nElem       = length(iValid);
-                totHeight   = nElem*(height+pad)-pad;
-                width       = 700;
+                margin          = 10;
+                pad             = 3;
+                height          = 45;
+                nElem           = length(iValid);
+                totHeight       = nElem*(height+pad)-pad;
+                width           = 700;
+                menuBgColor     = [140 140 140 255];
+                menuItemBgColor = [110 110 110 255];
                 % menu background
                 menuBackRect= [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
                 % menuRects
@@ -1642,11 +1643,13 @@ classdef Titta < handle
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{1},cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
+                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},menuItemBgColor);
+                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(clr),cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',obj.settings.UI.eyeColorsHex{2},cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
+                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},menuItemBgColor);
+                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(clr),cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
@@ -1730,11 +1733,13 @@ classdef Titta < handle
                     % for simpler logic
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{1},cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
+                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},obj.settings.cal.bgColor);
+                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(clr),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',obj.settings.UI.eyeColorsHex{2},cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
+                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},obj.settings.cal.bgColor);
+                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(clr),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
@@ -1780,17 +1785,20 @@ classdef Titta < handle
                 if ~isnan(openInfoForPoint)
                     pointToShowInfoFor = openInfoForPoint;
                     openInfoForPoint   = nan;
+                    infoPopBgColor     = [110 110 110 255];
                     % 1. prepare text
+                    clrL = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},infoPopBgColor);
+                    clrR = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},infoPopBgColor);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     elseif obj.calibrateLeftEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
-                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
                     elseif obj.calibrateRightEye
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',obj.settings.UI.eyeColorsHex{:},rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left');
                     % get box around text
@@ -1871,9 +1879,9 @@ classdef Titta < handle
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
-                        Screen('FillRect',wpnt,140,menuBackRect);
+                        Screen('FillRect',wpnt,menuBgColor,menuBackRect);
                         % menuRects
-                        Screen('FillRect',wpnt,110,menuRects.');
+                        Screen('FillRect',wpnt,menuItemBgColor,menuRects.');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -1890,7 +1898,7 @@ classdef Titta < handle
                         if rect(4)>obj.scrInfo.resolution(2)
                             rect = OffsetRect(rect,0,obj.scrInfo.resolution(2)-rect(4));
                         end
-                        Screen('FillRect',wpnt,110,rect);
+                        Screen('FillRect',wpnt,infoPopBgColor,rect);
                         obj.drawCachedText(pointTextCache,rect);
                     end
                     % if showing gaze, draw
@@ -2120,67 +2128,73 @@ end
 warning(warnState.state,warnState.identifier);
 end
 
-function hsv = rgb2hsv(rgb)
+function hex = clr2hex(clr)
+hex = reshape(dec2hex(clr(1:3),2).',1,[]);
+end
+
+function clr = chooseColorWithGoodContrast(clr,background)
+a = clr(4);
+hslc = rgb2hsl(clr);
+hslb = rgb2hsl(background);
+
+% simple rule: if background midgrey or darker: use lighter colors. if
+% brighter, use darker color
+if hslb(3)<=.5
+    % dark background use light color
+    clr = hsl2rgb([hslc(1:2) 0.65]);
+else
+    clr = hsl2rgb([hslc(1:2) 0.25]);
+end
+clr = round([clr a]);
+end
+
+function hsl = rgb2hsl(rgb)
 % takes 0-255 rgb values, outputs 0-1 hsv values
-% code from Octave
-rgb = rgb/255;
-s = min(rgb,[],2);
-v = max(rgb,[],2);
+rgb = rgb(:,1:3)/255;
+mx=max(rgb,[],2);%max of the 3 colors
+mn=min(rgb,[],2);%min of the 3 colors
+d = mx - mn;
 
-% set hue to zero for undefined values (gray has no hue)
-h = zeros(size(v));
-notgray = (s ~= v);
+% luminance
+L = (mx + mn) / 2;
 
-% blue hue
-idx = (v == rgb(:,3) & notgray);
-if (any (idx))
-    h(idx) = 2/3 + 1/6 * (rgb(idx,1) - rgb(idx,2)) ./ (v(idx) - s(idx));
-end
+% saturation
+S = d./(mx + mn).*(L <= 0.5) + d./(2-mx-mn).*(L > 0.5);
 
-% green hue
-idx = (v == rgb(:,2) & notgray);
-if (any (idx))
-    h(idx) = 1/3 + 1/6 * (rgb(idx,3) - rgb(idx,1)) ./ (v(idx) - s(idx));
-end
+% Hue
+H = 0 ...
+    + (mx == rgb(:,1)) .* ((rgb(:,2) - rgb(:,3))./d + 6.*(rgb(:,2)<rgb(:,3))) ...
+    + (mx == rgb(:,2)) .* ((rgb(:,3) - rgb(:,1))./d + 2)                      ...
+    + (mx == rgb(:,3)) .* ((rgb(:,1) - rgb(:,2))./d + 4);
+H = H/6;
 
-% red hue
-idx = (v == rgb(:,1) & notgray);
-if (any (idx))
-    h(idx) =       1/6 * (rgb(idx,2) - rgb(idx,3)) ./ (v(idx) - s(idx));
-end
+% correct for achromatic
+gray = (mn == mx);
+S(gray) = 0;
+H(gray) = 0;
 
-% correct for negative red
-idx = (h < 0);
-h(idx) = 1+h(idx);
-
-% set the saturation
-s(~notgray) = 0;
-s(notgray) = 1 - s(notgray) ./ v(notgray);
-
-hsv = [h s v];
+% output (all [0 1] range), maps onto 0-360 deg for H, 0-100% for the
+% others
+hsl=[H, S, L];
 end
 
 
-function rgb = hsv2rgb(hsv)
-% takes 0-1 hsv values, outputs 0-255 rgb values
-% code from Octave
-% Prefill rgb map with v*(1-s)
-rgb = repmat (hsv(:,3) .* (1 - hsv(:,2)), 1, 3);
+function rgb = hsl2rgb(hsl)
+% takes 0-1 hsl values, outputs 0-255 rgb values
+S = hsl(:,2);
+L = hsl(:,3);
+q = L.*(1 + S).*(L<0.5) + (L+S-L.*S).*(L>=0.5);
+p = repmat(2.*L - q,1,3);
+q = repmat(q       ,1,3);
+t = [mod(hsl(:,1) + 1/3, 1), hsl(:,1) , mod(hsl(:,1) - 1/3, 1)];
 
-% red = hue-2/3 : green = hue : blue = hue-1/3
-% Apply modulo 1 for red and blue to keep within range [0, 1]
-hue = [mod(hsv(:,1) - 2/3, 1), hsv(:,1) , mod(hsv(:,1) - 1/3, 1)];
+rgb = 0 ...
+    + (t < 1/6)            .* (p + (q - p) .* 6 .* t) ...
+    + (t >= 1/6 & t < 1/2) .* q ...
+    + (t >= 1/2 & t < 2/3) .* (p + (q - p) .* (2/3 - t) .* 6) ...
+    + (t >= 2/3)           .* p;
 
-% factor s*v -> f
-f = repmat(hsv(:,2) .* hsv(:,3), 1, 3);
-
-% add s*v*hue-function to rgb map
-rgb = rgb + ...
-    f .* (6 * (hue < 1/6) .* hue ...
-    + (hue >= 1/6 & hue < 1/2) ...
-    + (hue >= 1/2 & hue < 2/3) .* (4 - 6 * hue));
-
-rgb = round(rgb*255);
+rgb = rgb*255;
 end
 
 function [texs,szs] = UploadImages(texs,szs,wpnt,image)
