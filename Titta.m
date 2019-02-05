@@ -14,6 +14,7 @@ classdef Titta < handle
         keyState;
         shiftKey;
         mouseState;
+        qFloatColorRange;
         calibrateLeftEye    = true;
         calibrateRightEye   = true;
         
@@ -316,6 +317,8 @@ classdef Titta < handle
             obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
             obj.scrInfo.center      = obj.scrInfo.resolution/2;
             [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
+            % TODO: get background color so we can reset that too
             
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
@@ -875,7 +878,7 @@ classdef Titta < handle
             else
                 validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
-            Screen('FillRect', wpnt, obj.settings.cal.bgColor); % clear what we've just drawn
+            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % clear what we've just drawn
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
@@ -1025,11 +1028,11 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~(qShowEyeImage && isempty(headPos))
-                    drawCircle(wpnt,refClr,obj.scrInfo.center,refSz,5);
+                    drawCircle(wpnt,obj.getColorForWindow(refClr),obj.scrInfo.center,refSz,5);
                 end
                 % stylized head
                 if ~isempty(headPos)
-                    drawCircle(wpnt,headClr,headPos,headSz,5,headFillClr);
+                    drawCircle(wpnt,obj.getColorForWindow(headClr),headPos,headSz,5,obj.getColorForWindow(headFillClr));
                     if obj.settings.UI.setupShowEyes
                         % left eye
                         off = Rori*[eyeMargin; 0];
@@ -1038,19 +1041,19 @@ classdef Titta < handle
                             % draw cross indicating not calibrated
                             base = eyeSz(1)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveLeft
                             % draw eye with optional pupil
-                            drawCircle(wpnt,[],pos,eyeSz(1),0,eyeClr);
+                            drawCircle(wpnt,[],pos,eyeSz(1),0,obj.getColorForWindow(eyeClr));
                             if obj.settings.UI.setupShowPupils
                                 pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
-                                drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                                drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
                             end
                         else
                             % draw line indicating closed/missing eye
                             base = eyeSz(1)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                            Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                         % right eye
                         pos = headPos+off.';
@@ -1058,31 +1061,31 @@ classdef Titta < handle
                             % draw cross indicating not calibrated
                             base = eyeSz(2)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                             R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                            Screen('FillPoly', wpnt, [255 0 0], bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                         elseif qHaveRight
                             % draw eye with optional pupil
-                            drawCircle(wpnt,[],pos,eyeSz(2),0,eyeClr);
+                            drawCircle(wpnt,[],pos,eyeSz(2),0,obj.getColorForWindow(eyeClr));
                             if obj.settings.UI.setupShowPupils
                                 pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
-                                drawCircle(wpnt,[],pos,pupSz,0,[0 0 0]);
+                                drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
                             end
                         else
                             % draw line indicating closed/missing eye
                             base = eyeSz(2)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                            Screen('FillPoly', wpnt, eyeClr, bsxfun(@plus,Rori*base,pos(:)).', 1);
+                            Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                     end
                 end
                 % draw buttons
                 if qHasEyeIm
-                    Screen('FillRect',wpnt,showEyeImButClrs{qShowEyeImage+1},eyeImageButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow(showEyeImButClrs{qShowEyeImage+1}),eyeImageButRect);
                     obj.drawCachedText(eyeImageButTextCache);
                 end
-                Screen('FillRect',wpnt,[  0 120   0],calibButRect);
+                Screen('FillRect',wpnt,obj.getColorForWindow([0 120 0]),calibButRect);
                 obj.drawCachedText(calibButTextCache);
                 if qHaveValidCalibrations
-                    Screen('FillRect',wpnt,[150 150   0],validateButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow([150 150 0]),validateButRect);
                     obj.drawCachedText(validateButTextCache);
                 end
                 % draw fixation points
@@ -1149,7 +1152,7 @@ classdef Titta < handle
             inputs.sy           = 0;
             inputs.yalign       = 'center';
             inputs.xlayout      = 'left';
-            inputs.baseColor    = 0;
+            inputs.baseColor    = obj.getColorForWindow(0);
             if ~isempty(rect)
                 [inputs.sx,inputs.sy] = RectCenterd(rect);
             end
@@ -1201,15 +1204,15 @@ classdef Titta < handle
             for p=1:size(pos,1)
                 rectH = CenterRectOnPointd([0 0        sz ], pos(p,1), pos(p,2));
                 rectV = CenterRectOnPointd([0 0 fliplr(sz)], pos(p,1), pos(p,2));
-                Screen('gluDisk', wpnt,obj.settings.cal. fixBackColor, pos(p,1), pos(p,2), sz(1)/2);
-                Screen('FillRect',wpnt,obj.settings.cal.fixFrontColor, rectH);
-                Screen('FillRect',wpnt,obj.settings.cal.fixFrontColor, rectV);
-                Screen('gluDisk', wpnt,obj.settings.cal. fixBackColor, pos(p,1), pos(p,2), sz(2)/2);
+                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.cal. fixBackColor), pos(p,1), pos(p,2), sz(1)/2);
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.cal.fixFrontColor), rectH);
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.cal.fixFrontColor), rectV);
+                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.cal. fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
             end
         end
         
         function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass)
-            Screen('FillRect', wpnt, obj.settings.cal.bgColor); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % do calibration
             calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
@@ -1841,10 +1844,10 @@ classdef Titta < handle
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.settings.UI.eyeColors{1},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.eyeColors{1}),[],2);
                         end
                         if obj.calibrateRightEye && ~isempty(rEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.settings.UI.eyeColors{2},[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.eyeColors{2}),[],2);
                         end
                     end
                     
@@ -1860,28 +1863,28 @@ classdef Titta < handle
                         obj.drawCachedText(calValLblCache);
                     end
                     % draw buttons
-                    Screen('FillRect',wpnt,[150 0 0],recalButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),recalButRect);
                     obj.drawCachedText(recalButTextCache);
-                    Screen('FillRect',wpnt,[0 120 0],continueButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow([0 120 0]),continueButRect);
                     obj.drawCachedText(continueButTextCache);
                     if qHaveMultipleValidCals
-                        Screen('FillRect',wpnt,[150 150 0],selectButRect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow([150 150 0]),selectButRect);
                         obj.drawCachedText(selectButTextCache);
                     end
-                    Screen('FillRect',wpnt,[150 0 0],setupButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),setupButRect);
                     obj.drawCachedText(setupButTextCache);
-                    Screen('FillRect',wpnt,showGazeButClrs{qShowGaze+1},showGazeButRect);
+                    Screen('FillRect',wpnt,obj.getColorForWindow(showGazeButClrs{qShowGaze+1}),showGazeButRect);
                     obj.drawCachedText(showGazeButTextCache);
                     if qHasCal
-                        Screen('FillRect',wpnt,toggleCVButClr,toggleCVButRect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow(toggleCVButClr),toggleCVButRect);
                         obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
                     end
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
-                        Screen('FillRect',wpnt,menuBgColor,menuBackRect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow(menuBgColor),menuBackRect);
                         % menuRects
-                        Screen('FillRect',wpnt,menuItemBgColor,menuRects.');
+                        Screen('FillRect',wpnt,obj.getColorForWindow(menuItemBgColor),menuRects.');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -1898,7 +1901,7 @@ classdef Titta < handle
                         if rect(4)>obj.scrInfo.resolution(2)
                             rect = OffsetRect(rect,0,obj.scrInfo.resolution(2)-rect(4));
                         end
-                        Screen('FillRect',wpnt,infoPopBgColor,rect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow(infoPopBgColor),rect);
                         obj.drawCachedText(pointTextCache,rect);
                     end
                     % if showing gaze, draw
@@ -1911,10 +1914,10 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.UI.eyeColors{1}, lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.eyeColors{1}), lE(1), lE(2), 10);
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.settings.UI.eyeColors{2}, rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.eyeColors{2}), rE(1), rE(2), 10);
                             end
                         end
                     end
@@ -2068,6 +2071,12 @@ classdef Titta < handle
             % store to state
             obj.keyState    = keyCode;
             obj.mouseState  = buttons;
+        end
+        
+        function clr = getColorForWindow(obj,clr)
+            if obj.qFloatColorRange
+                clr = double(clr)/255;
+            end
         end
     end
 end
