@@ -318,7 +318,12 @@ classdef Titta < handle
             obj.scrInfo.center      = obj.scrInfo.resolution/2;
             [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
-            % TODO: get background color so we can reset that too
+            % get background color so we can reset that too. There is only
+            % one way to do that annoyingly:
+            % 1. clear back buffer by flipping
+            Screen('Flip',wpnt);
+            % 2. read a pixel, this gets us the background color
+            bgClr = reshape(Screen('GetImage',wpnt,[1 1 2 2],'backBuffer',[],4),1,4);
             
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
@@ -445,8 +450,10 @@ classdef Titta < handle
             end
             
             % clean up
-            Screen('Flip',wpnt);
-            Screen('BlendFunction', wpnt, osf,odf,ocm);
+            Screen('FillRect',wpnt,bgClr);              % reset background color
+            Screen('BlendFunction', wpnt, osf,odf,ocm); % reset blend function
+            Screen('Flip',wpnt);                        % clear screen
+            
             if bitand(flag,2)
                 calibClass.leave_calibration_mode();
             end
