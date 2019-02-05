@@ -355,6 +355,8 @@ classdef Titta < handle
             if bitand(flag,1)
                 calibClass.enter_calibration_mode();
             end
+            % log eye that we are calibrating
+            obj.sendMessage(sprintf('Setting up %s eye',obj.settings.calibrateEye));
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -428,7 +430,6 @@ classdef Titta < handle
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
-                        % TODO: note which calibration was chosen
                         break;
                     case 2
                         % skip setup
@@ -459,7 +460,7 @@ classdef Titta < handle
             end
             % log to messages which calibration was selected
             if isfield(out,'attempt') && isfield(out.attempt{kCal},'calSelection')
-                obj.sendMessage(sprintf('Selected calibration %d',out.attempt{kCal}.calSelection));
+                obj.sendMessage(sprintf('Selected calibration (%s) %d',obj.settings.calibrateEye,out.attempt{kCal}.calSelection));
             end
             
             % store calibration info in calibration history, for later
@@ -676,7 +677,7 @@ classdef Titta < handle
             filename = fullfile(path,file);
             
             % 2. collect all data to save
-            dat = obj.collectSessionData(); %#ok<NASGU>
+            dat = obj.collectSessionData();
             
             % save
             try
@@ -825,7 +826,7 @@ classdef Titta < handle
             % of head box vertically and horizontally, two circles will
             % overlap indicating correct positioning
             
-            startT                  = obj.sendMessage('SETUP START');
+            startT                  = obj.sendMessage(sprintf('SETUP START %s',obj.settings.calibrateEye));
             obj.startRecording('gaze');
             qHasEyeIm               = obj.hasCap(EyeTrackerCapabilities.HasEyeImages);
             % see if we already have valid calibrations
@@ -1142,7 +1143,7 @@ classdef Titta < handle
             % clean up
             HideCursor;
             obj.stopRecording('gaze');
-            obj.sendMessage('SETUP END');
+            obj.sendMessage(sprintf('SETUP END %s',obj.settings.calibrateEye));
             obj.clearBufferTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
             if qHasEyeIm
                 obj.stopRecording('eyeImage');
@@ -1222,7 +1223,7 @@ classdef Titta < handle
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % do calibration
-            calStartT = obj.sendMessage(sprintf('CALIBRATION START %d',kCal));
+            calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
             obj.startRecording('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.hasCap(EyeTrackerCapabilities.HasEyeImages)
                 obj.startRecording('eyeImage');
@@ -1233,7 +1234,7 @@ classdef Titta < handle
             obj.startRecording('timeSync');
             % show display
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
-            obj.sendMessage(sprintf('CALIBRATION END %d',kCal));
+            obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
             out.cal.data = obj.ConsumeAllData(calStartT);
             if status==1
                 if ~isempty(obj.settings.cal.pointPos)
@@ -1281,11 +1282,11 @@ classdef Titta < handle
             end
             
             % do validation
-            valStartT = obj.sendMessage(sprintf('VALIDATION START %d',kCal));
+            valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
             obj.ClearAllBuffers(calStartT);    % clean up data
             % show display
             [status,out.val] = obj.DoCalPointDisplay(wpnt,[],tick,out.cal.flips(end));
-            obj.sendMessage(sprintf('VALIDATION END %d',kCal));
+            obj.sendMessage(sprintf('VALIDATION END %s %d',obj.settings.calibrateEye,kCal));
             out.val.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
             obj.ClearAllBuffers(valStartT);    % clean up data
