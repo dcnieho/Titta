@@ -1,7 +1,13 @@
 sca
 qDEBUG      = 0;
-bgclr       = 255/2;
-fixClr      = 0;
+useDarkMode = true;
+if useDarkMode
+    bgclr       = 0;
+    fixClrs     = [255 40];
+else
+    bgclr       = 255/2;
+    fixClrs     = [0 255];
+end
 fixTime     = .5;
 imageTime   = 2;
 scr         = max(Screen('Screens'));
@@ -16,7 +22,11 @@ try
     settings.cal.drawFunction = @calViz.doDraw;
     settings.debugMode      = true;
     settings.cal.bgColor    = bgclr;
+    settings.UI.setupMsg.color = fixClrs(1);
+    settings.UI.valTopText.color = fixClrs(1);
     calViz.bgColor          = settings.cal.bgColor;
+    % TODO set fix colors for all displays, and animated calibration
+    settings.cal.pointPos   = [.5 .5];
     
     % init
     EThndl          = Titta(settings);
@@ -76,7 +86,7 @@ try
     EThndl.sendMessage('test');
     
     % First draw a fixation point
-    Screen('gluDisk',wpnt,fixClr,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
+    Screen('gluDisk',wpnt,fixClrs(1),winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
     startT = Screen('Flip',wpnt);
     % log when fixation dot appeared in eye-tracker time. NB:
     % system_timestamp of the Tobii data uses the same clock as
@@ -114,7 +124,7 @@ try
     %    EThndl.startRecording('eyeImage');
     %end
     % 1. fixation point
-    Screen('gluDisk',wpnt,fixClr,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
+    Screen('gluDisk',wpnt,fixClrs(1),winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
     startT = Screen('Flip',wpnt);
     EThndl.sendMessage('FIX ON',startT);
     % 2. image
