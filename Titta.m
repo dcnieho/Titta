@@ -316,19 +316,26 @@ classdef Titta < handle
             % get info about screen
             obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
             obj.scrInfo.center      = obj.scrInfo.resolution/2;
-            [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
-            % get background color so we can reset that too. There is only
+            % get current PTB state so we can restore when returning
+            % 1. alpha blending
+            [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            % 2. screen clear color so we can reset that too. There is only
             % one way to do that annoyingly:
-            % 1. clear back buffer by flipping
+            % 2.1. clear back buffer by flipping
             Screen('Flip',wpnt);
-            % 2. read a pixel, this gets us the background color
+            % 2.2. read a pixel, this gets us the background color
             bgClr = reshape(Screen('GetImage',wpnt,[1 1 2 2],'backBuffer',[],4),1,4);
+            % 3. text
+            text.style  = Screen('TextStyle', wpnt);
+            text.size   = Screen('TextSize' , wpnt);
+            text.font   = Screen('TextFont' , wpnt);
+            text.color  = Screen('TextColor', wpnt);
             
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
             if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
+                assert(isfield(obj.settings.UI.buttons,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end
             
             % init key, mouse state
@@ -450,9 +457,12 @@ classdef Titta < handle
                 end
             end
             
-            % clean up
+            % clean up and reset PTB state
             Screen('FillRect',wpnt,bgClr);              % reset background color
             Screen('BlendFunction', wpnt, osf,odf,ocm); % reset blend function
+            Screen('TextFont',wpnt,text.font,text.style);
+            Screen('TextColor',wpnt,text.color);
+            Screen('TextSize',wpnt,text.size);
             Screen('Flip',wpnt);                        % clear screen
             
             if bitand(flag,2)
@@ -723,6 +733,14 @@ classdef Titta < handle
                     settings.trackingMode           = 'Default';
             end
             
+            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
+                % seems text gets rendered a little larger with this one,
+                % make sure we have good default sizes anyway
+                textFac = 0.75;
+            else
+                textFac = 1;
+            end
+            
             % the rest here are good defaults for all
             settings.calibrateEye           = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber           = '';
@@ -730,10 +748,43 @@ classdef Titta < handle
             settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
             settings.connectRetryWait       = 4;                                % seconds
             settings.UI.startScreen         = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
-            settings.UI.setupShowEyes       = true;
-            settings.UI.setupShowPupils     = true;
-            settings.UI.viewingDist         = 65;
             settings.UI.eyeColors           = {[255 127 0],[0 127 255]};        % L, R eye
+            settings.UI.setup.showEyes      = true;
+            settings.UI.setup.showPupils    = true;
+            settings.UI.setup.viewingDist   = 65;
+            settings.UI.setupMsg.string     = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
+            settings.UI.setupMsg.font       = 'Consolas';
+            settings.UI.setupMsg.size       = 24*textFac;
+            settings.UI.setupMsg.color      = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.setupMsg.style      = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.setupMsg.vSpacing   = 1.5;
+            % TODO: make it into settings.UI.cal.errMsg
+            settings.UI.calErrMsg.string    = 'Calibration failed\nPress any key to continue';
+            settings.UI.calErrMsg.font      = 'Consolas';
+            settings.UI.calErrMsg.size      = 36*textFac;
+            settings.UI.calErrMsg.color     = [255 0 0];                        % only for messages on the screen, doesn't affect buttons
+            settings.UI.calErrMsg.style     = 1;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.calErrMsg.wrapAt    = 62;
+            settings.UI.valTopText.font     = 'Consolas';
+            settings.UI.valTopText.size     = 24*textFac;
+            settings.UI.valTopText.color    = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.valTopText.style    = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.valTopText.vSpacing = 1;
+            settings.UI.valHoverText.font   = 'Consolas';
+            settings.UI.valHoverText.size   = 20*textFac;
+            settings.UI.valHoverText.color  = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.valHoverText.style  = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.buttons.font        = 'Consolas';
+            settings.UI.buttons.size        = 24*textFac;
+            settings.UI.buttons.color       = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.buttons.style       = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.buttons.wrapAt      = 62;
+            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
+                settings.UI.buttons.lineCentOff     = 3;                        % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
+            end
+            % TODO: implement fields with text per button (means their size
+            % must become dynamic and we need to implement margins)
+            % and also colors
             settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
@@ -750,18 +801,6 @@ classdef Titta < handle
             settings.val.paceDuration       = 1.5;
             settings.val.collectDuration    = 0.5;
             settings.val.qRandPoints        = true;
-            settings.text.font              = 'Consolas';
-            settings.text.color             = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.text.style             = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.text.wrapAt            = 62;
-            settings.text.vSpacing          = 1;
-            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
-                settings.text.size          = 18;
-                settings.text.lineCentOff   = 3;                                % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
-            else
-                settings.text.size          = 24;
-            end
-            settings.string.setupPositioningInstruction = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
             settings.debugMode              = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -772,6 +811,8 @@ classdef Titta < handle
     
     methods (Access = private, Hidden)
         function allowed = getAllowedOptions(obj)
+            % TODO: update for all the UI stuff. in set and getoptions,
+            % allow deeper nesting
             allowed = {...
                 'calibrateEye',''
                 'UI','startScreen'
@@ -832,10 +873,9 @@ classdef Titta < handle
             % see if we already have valid calibrations
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             
-            % setup text
-            Screen('TextFont',  wpnt, obj.settings.text.font);
-            Screen('TextSize',  wpnt, obj.settings.text.size);
-            Screen('TextStyle', wpnt, obj.settings.text.style);
+            % setup text for buttons
+            Screen('TextFont',  wpnt, obj.settings.UI.buttons.font, obj.settings.UI.buttons.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.buttons.size);
             
             % setup ovals
             ovalVSz     = .15;
@@ -899,6 +939,10 @@ classdef Titta < handle
                 cursors.reset = -1;         % hide cursor (else will reset to cursor.other by default, so we're good with that default
             end
             cursor  = cursorUpdater(cursors);
+            
+            % setup text for positioning message
+            Screen('TextFont',  wpnt, obj.settings.UI.setupMsg.font, obj.settings.UI.setupMsg.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.setupMsg.size);
             
             % get tracking status and visualize
             eyeDist             = 6.2;
@@ -1005,7 +1049,7 @@ classdef Titta < handle
                 if ~isnan(avgDist)
                     pos     = [avgX 1-avgY];  %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                     % determine size of oval, based on distance from reference distance
-                    fac     = avgDist/obj.settings.UI.viewingDist;
+                    fac     = avgDist/obj.settings.UI.setup.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
                     eyeSz   = eyeSzFac*headSz*((avgDist./dists-1)*dDistGain+1);
                     eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
@@ -1030,7 +1074,7 @@ classdef Titta < handle
                 end
                 % draw distance info
                 if ~(qShowEyeImage && isempty(headPos))
-                    DrawFormattedText(wpnt,sprintf(obj.settings.string.setupPositioningInstruction,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.text.color,[],[],[],1.5);
+                    DrawFormattedText(wpnt,sprintf(obj.settings.UI.setupMsg.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setupMsg.color,[],[],[],obj.settings.UI.setupMsg.vSpacing);
                 end
                 % draw ovals
                 % reference circle--don't draw if showing eye images and no
@@ -1041,7 +1085,7 @@ classdef Titta < handle
                 % stylized head
                 if ~isempty(headPos)
                     drawCircle(wpnt,obj.getColorForWindow(headClr),headPos,headSz,5,obj.getColorForWindow(headFillClr));
-                    if obj.settings.UI.setupShowEyes
+                    if obj.settings.UI.setup.showEyes
                         % left eye
                         off = Rori*[eyeMargin; 0];
                         pos = headPos-off.';
@@ -1054,7 +1098,7 @@ classdef Titta < handle
                         elseif qHaveLeft
                             % draw eye with optional pupil
                             drawCircle(wpnt,[],pos,eyeSz(1),0,obj.getColorForWindow(eyeClr));
-                            if obj.settings.UI.setupShowPupils
+                            if obj.settings.UI.setup.showPupils
                                 pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
                                 drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
                             end
@@ -1074,7 +1118,7 @@ classdef Titta < handle
                         elseif qHaveRight
                             % draw eye with optional pupil
                             drawCircle(wpnt,[],pos,eyeSz(2),0,obj.getColorForWindow(eyeClr));
-                            if obj.settings.UI.setupShowPupils
+                            if obj.settings.UI.setup.showPupils
                                 pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
                                 drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
                             end
@@ -1181,9 +1225,9 @@ classdef Titta < handle
                     end
                 end
                 if ~isempty(rect)
-                    inputs.sy = inputs.sy + obj.settings.text.lineCentOff;
+                    inputs.sy = inputs.sy + obj.settings.UI.buttons.lineCentOff;
                 end
-                [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,0,[],inputs.vSpacing,[],[],true);
+                [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,inputs.baseColor,[],inputs.vSpacing,[],[],true);
             end
         end
         
@@ -1247,7 +1291,9 @@ classdef Titta < handle
                     else
                         % calibration failed, back to setup screen
                         status = -2;
-                        DrawFormattedText(wpnt,'Calibration failed\nPress any key to continue','center','center',obj.settings.text.color);
+                        Screen('TextFont',  wpnt, obj.settings.UI.calErrMsg.font, obj.settings.UI.calErrMsg.style);
+                        Screen('TextSize',  wpnt, obj.settings.UI.calErrMsg.size);
+                        DrawFormattedText(wpnt,obj.settings.UI.calErrMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.calErrMsg.color));
                         Screen('Flip',wpnt);
                         obj.getNewMouseKeyPress();
                         keyCode = false;
@@ -1596,6 +1642,10 @@ classdef Titta < handle
             qHasCal                = ~isempty(cal{selection}.cal.result);
             qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
             
+            % setup text for buttons
+            Screen('TextFont',  wpnt, obj.settings.UI.buttons.font, obj.settings.UI.buttons.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.buttons.size);
+            
             % set up buttons
             % 1. below screen
             yPosBot     = .97*obj.scrInfo.resolution(2);
@@ -1666,7 +1716,9 @@ classdef Titta < handle
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:));
+                    Screen('TextFont',  wpnt, obj.settings.UI.valMenuText.font, obj.settings.UI.valMenuText.style);
+                    Screen('TextSize',  wpnt, obj.settings.UI.valMenuText.size);
+                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.valMenuText.color);
                 end
             end
             
@@ -1742,6 +1794,8 @@ classdef Titta < handle
                     % when switching between viewing calibration and
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
+                    Screen('TextFont',  wpnt, obj.settings.UI.valTopText.font, obj.settings.UI.valTopText.style);
+                    Screen('TextSize',  wpnt, obj.settings.UI.valTopText.size);
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
                         clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},obj.settings.cal.bgColor);
@@ -1755,8 +1809,8 @@ classdef Titta < handle
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
-                    valText = sprintf('<font=Consolas><size=%d><u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',obj.settings.text.size,strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.text.vSpacing,'yalign','top','xlayout','left');
+                    valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.valTopText.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.valTopText.color);
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1798,6 +1852,8 @@ classdef Titta < handle
                     openInfoForPoint   = nan;
                     infoPopBgColor     = [110 110 110 255];
                     % 1. prepare text
+                    Screen('TextFont',  wpnt, obj.settings.UI.valHoverText.font, obj.settings.UI.valHoverText.style);
+                    Screen('TextSize',  wpnt, obj.settings.UI.valHoverText.size);
                     clrL = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},infoPopBgColor);
                     clrR = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},infoPopBgColor);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
@@ -1811,7 +1867,7 @@ classdef Titta < handle
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left');
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.valHoverText.color);
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
@@ -1859,10 +1915,6 @@ classdef Titta < handle
                         end
                     end
                     
-                    % setup text
-                    Screen('TextFont',  wpnt, obj.settings.text.font);
-                    Screen('TextSize',  wpnt, obj.settings.text.size);
-                    Screen('TextStyle', wpnt, obj.settings.text.style);
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
                     if qHasCal
