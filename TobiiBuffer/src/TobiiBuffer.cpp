@@ -596,20 +596,20 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
     switch (stream_)
     {
         case DataStream::Gaze:
-            result = tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback);
+            result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback);
             stateVar = &_recordingGaze;
             break;
         case DataStream::EyeImage:
-            result = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+            result = !_recordingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
 
             stateVar = &_recordingEyeImages;
             break;
         case DataStream::ExtSignal:
-            result = tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback);
+            result = !_recordingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback);
             stateVar = &_recordingExtSignal;
             break;
         case DataStream::TimeSync:
-            result = tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback);
+            result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback);
             stateVar = &_recordingTimeSync;
             break;
     }
@@ -636,13 +636,11 @@ template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeTimeRange(std::o
 template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
-
 // external signals, instantiate templated functions
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-
 
 // time sync data, instantiate templated functions
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
