@@ -103,8 +103,8 @@ classdef Titta < handle
                 end
             else
                 defaults    = obj.getDefaults(settings.tracker);
-                expected    = getStructFields(defaults);
-                input       = getStructFields(settings);
+                expected    = getStructFieldsString(defaults);
+                input       = getStructFieldsString(settings);
                 qMissing    = ~ismember(expected,input);
                 qAdded      = ~ismember(input,expected);
                 if any(qMissing)
@@ -118,10 +118,15 @@ classdef Titta < handle
                 obj.settings = settings;
             end
             % setup colors
-            obj.settings.cal.bgColor        = color2RGBA(obj.settings.cal.bgColor);
-            obj.settings.cal.fixBackColor   = color2RGBA(obj.settings.cal.fixBackColor);
-            obj.settings.cal.fixFrontColor  = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.UI.eyeColors       = cellfun(@color2RGBA,obj.settings.UI.eyeColors,'uni',false);
+            obj.settings.UI.eyeColors           = cellfun(@color2RGBA,obj.settings.UI.eyeColors,'uni',false);
+            obj.settings.UI.setup.instruct.color= color2RGBA(obj.settings.UI.setup.instruct.color);
+            obj.settings.UI.cal.errMsg.color    = color2RGBA(obj.settings.UI.cal.errMsg.color);
+            obj.settings.UI.val.topText.color   = color2RGBA(obj.settings.UI.val.topText.color);
+            obj.settings.UI.val.hoverText.color = color2RGBA(obj.settings.UI.val.hoverText.color);
+            obj.settings.UI.buttons.color       = color2RGBA(obj.settings.UI.buttons.color);
+            obj.settings.cal.bgColor            = color2RGBA(obj.settings.cal.bgColor);
+            obj.settings.cal.fixBackColor       = color2RGBA(obj.settings.cal.fixBackColor);
+            obj.settings.cal.fixFrontColor      = color2RGBA(obj.settings.cal.fixFrontColor);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -735,22 +740,21 @@ classdef Titta < handle
     % helpers
     methods (Static)
         function settings = getDefaults(tracker)
+            assert(nargin>=1,'Titta: you must provide a tracker name when calling getDefaults')
             settings.tracker    = tracker;
             
             % default tracking settings per eye-tracker
+            settings.trackingMode           = 'Default';    % if tracker doesn't support trackingMode, SDK will use "Default" it seems. so use that by Default here too
             switch tracker
                 case 'Tobii Pro Spectrum'
                     settings.freq                   = 600;
                     settings.trackingMode           = 'human';
                 case 'Tobii TX300'
                     settings.freq                   = 300;
-                    settings.trackingMode           = 'Default';
                 case 'IS4_Large_Peripheral'
                     settings.freq                   = 90;
-                    settings.trackingMode           = 'Default';
                 case 'X2-60_Compact'
                     settings.freq                   = 60;
-                    settings.trackingMode           = 'Default';
             end
             
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
@@ -830,15 +834,16 @@ classdef Titta < handle
     
     methods (Access = private, Hidden)
         function allowed = getAllowedOptions(obj)
-            % TODO: update for all the UI stuff. in set and getoptions,
-            % allow deeper nesting
+            % NB: while some settings are nested a few levels deeper than
+            % this, the two level info below has sufficient granularity
             allowed = {...
                 'calibrateEye',''
                 'UI','startScreen'
-                'UI','viewingDist'
                 'UI','eyeColors'
-                'UI','setupShowEyes'
-                'UI','setupShowPupils'
+                'UI','setup'
+                'UI','cal'
+                'UI','val'
+                'UI','buttons'
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
@@ -849,18 +854,12 @@ classdef Titta < handle
                 'cal','fixBackColor'
                 'cal','fixFrontColor'
                 'cal','drawFunction'
+                'cal','doRecordEyeImages'
+                'cal','doRecordExtSignal'
                 'val','pointPos'
                 'val','paceDuration'
                 'val','collectDuration'
                 'val','qRandPoints'
-                'text','font'
-                'text','color'
-                'text','size'
-                'text','style'
-                'text','wrapAt'
-                'text','vSpacing'
-                'text','lineCentOff'
-                'string','setupPositioningInstruction'
                 };
             for p=size(allowed,1):-1:1
                 if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
@@ -2342,22 +2341,34 @@ if lineWidth && ~isempty(clr)
 end
 end
 
-function fieldString = getStructFields(defaults)
-values                  = struct2cell(defaults);
-qSubStruct              = cellfun(@isstruct,values);
-fieldInfo               = fieldnames(defaults);
-fieldInfoSub            = fieldInfo(qSubStruct);
-fieldInfo(qSubStruct)   = [];
-fieldInfo               = [fieldInfo repmat({''},size(fieldInfo))];
-for p=1:length(fieldInfoSub)
-    fields      = fieldnames(defaults.(fieldInfoSub{p}));
-    fieldInfo   = [fieldInfo; [repmat(fieldInfoSub(p),size(fields)) fields]]; %#ok<AGROW>
+function fieldString = getStructFieldsString(str)
+fieldInfo = getStructFields(str);
+
+% add dots
+for c=size(fieldInfo,2):-1:2
+    qHasField = ~cellfun(@isempty,fieldInfo(:,c));
+    temp = cell(size(fieldInfo,1),1);
+    temp(qHasField) = {'.'};
+    fieldInfo = [fieldInfo(:,1:c-1) temp fieldInfo(:,c:end)];
 end
-% turn into string
-fieldString = fieldInfo(:,1);
-for i=1:size(fieldInfo,1)
-    if ~isempty(fieldInfo{i,2})
-        fieldString{i} = [fieldString{i} '.' fieldInfo{i,2}];
+
+% concat per row
+fieldInfo = num2cell(fieldInfo,2);
+fieldString = cellfun(@(x) cat(2,x{:}),fieldInfo,'uni',false);
+end
+
+function fieldInfo = getStructFields(str)
+qSubStruct  = structfun(@isstruct,str);
+fieldInfo   = fieldnames(str);
+if any(qSubStruct)
+    idx         = find(qSubStruct);
+    for p=length(idx):-1:1
+        temp = getStructFields(str.(fieldInfo{idx(p),1}));
+        if size(temp,2)+1>size(fieldInfo,2)
+            extraCol = size(temp,2)+1-size(fieldInfo,2);
+            fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)];
+        end
+        fieldInfo = [fieldInfo(1:idx(p)-1,:); [repmat(fieldInfo(idx(p),1),size(temp,1),1) temp]; fieldInfo(idx(p)+1:end,:)];
     end
 end
 end
