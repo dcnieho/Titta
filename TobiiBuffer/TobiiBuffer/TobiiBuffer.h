@@ -36,8 +36,9 @@ public:
         ExtSignal,
         TimeSync
     };
-    // "sample", "eyeImage", "extSignal", or "timeSync"
+    // "gaze", "eyeImage", "externalSignal", or "timeSync"
     static TobiiBuffer::DataStream stringToDataStream(std::string stream_);
+    static std::string dataStreamToString(TobiiBuffer::DataStream stream_);
 
 public:
     TobiiBuffer(std::string address_);
@@ -48,6 +49,11 @@ public:
     // start stream
     bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
     bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
+
+    // request stream state
+    bool isBuffering(std::string stream_);
+    bool isBuffering(DataStream  stream_);
+
 
     // consume samples (by default all)
     template <typename T>
@@ -97,16 +103,19 @@ private:
     template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
 
 private:
-    TobiiResearchEyeTracker*	_eyetracker				= nullptr;
+    TobiiResearchEyeTracker*    _eyetracker             = nullptr;
 
+    bool                        _recordingGaze          = false;
     std::vector<gaze>           _gaze;
 
-    bool					    _recordingEyeImages		= false;
-    std::vector<eyeImage>	    _eyeImages;
-    bool					    _eyeImIsGif				= false;
+    bool                        _recordingEyeImages     = false;
+    std::vector<eyeImage>       _eyeImages;
+    bool                        _eyeImIsGif             = false;
 
-    std::vector<extSignal>	    _extSignal;
+    bool                        _recordingExtSignal     = false;
+    std::vector<extSignal>      _extSignal;
 
+    bool                        _recordingTimeSync      = false;
     std::vector<timeSync>       _timeSync;
 
     static std::unique_ptr<

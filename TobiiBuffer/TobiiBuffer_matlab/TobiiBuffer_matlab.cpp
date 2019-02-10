@@ -81,6 +81,7 @@ namespace {
         Delete,
 
         Start,
+        IsBuffering,
         Clear,
         ClearTimeRange,
         Stop,
@@ -102,8 +103,9 @@ namespace {
         { "delete",				Action::Delete },
 
         { "start",		        Action::Start },
-        { "clear",				Action::Clear},
-        { "clearTimeRange",		Action::ClearTimeRange},
+        { "isBuffering",        Action::IsBuffering },
+        { "clear",				Action::Clear },
+        { "clearTimeRange",		Action::ClearTimeRange },
         { "stop",		        Action::Stop },
         { "consumeN",			Action::ConsumeN },
         { "consumeTimeRange",   Action::ConsumeTimeRange },
@@ -211,7 +213,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("start: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get optional input arguments
             std::optional<uint64_t> bufSize;
@@ -235,10 +237,21 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             mxFree(bufferCstr);
             return;
         }
+        case Action::IsBuffering:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("isBuffering: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+
+            // get data stream identifier string, call isBuffering() on instance
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            plhs[0] = mxCreateLogicalScalar(instance->isBuffering(bufferCstr));
+            mxFree(bufferCstr);
+            return;
+        }
         case Action::Clear:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clear: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get data stream identifier string, clear buffer
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -249,7 +262,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::ClearTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
@@ -276,7 +289,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::Stop:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("stop: first input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get optional input argument
             std::optional<bool> deleteBuffer;
@@ -296,7 +309,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::ConsumeN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -331,7 +344,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::ConsumeTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("consumeTimeRange: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("consumeTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -373,7 +386,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -409,7 +422,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
         case Action::PeekTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("peekTimeRange: First input must be a data stream identifier string ('sample', 'eyeImage', 'extSignal', or 'timeSync').");
+                mexErrMsgTxt("peekTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);

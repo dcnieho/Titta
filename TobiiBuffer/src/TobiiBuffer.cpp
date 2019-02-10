@@ -95,6 +95,12 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
     return it->second;
 }
 
+std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
+{
+    auto v = *find_if(dataStreamMap.begin(), dataStreamMap.end(), [&stream_](auto p) {return p.second == stream_;});
+    return v.first;
+}
+
 // logging static functions and member
 std::unique_ptr<std::vector<TobiiBuffer::logMessage>> TobiiBuffer::_logMessages;
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
@@ -184,19 +190,19 @@ void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_
 namespace
 {
     // eye image helpers
-    bool doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
+    TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
     {
         if (asGif_)
-            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_);
         else
-            return tobii_research_subscribe_to_eye_image       (eyetracker_,    TobiiEyeImageCallback, instance_) == TOBII_RESEARCH_STATUS_OK;
+            return tobii_research_subscribe_to_eye_image       (eyetracker_,    TobiiEyeImageCallback, instance_);
     }
-    bool doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
+    TobiiResearchStatus doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
     {
         if (isGif_)
-            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback) == TOBII_RESEARCH_STATUS_OK;
+            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback);
         else
-            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback) == TOBII_RESEARCH_STATUS_OK;
+            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback);
     }
 }
 
@@ -281,68 +287,136 @@ bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBuffer
 }
 bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
+    TobiiResearchStatus result;
+    bool* stateVar = nullptr;
+    switch (stream_)
+    {
+        case DataStream::Gaze:
+        {
+            if (_recordingGaze)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                if (!initialBufferSize_)
+                    initialBufferSize_ = defaults::sampleBufSize;
+                // prepare and start buffer
+                auto l = lockForWriting<gaze>();
+                _gaze.reserve(*initialBufferSize_);
+                result = tobii_research_subscribe_to_gaze_data(_eyetracker, TobiiGazeCallback, this);
+                stateVar = &_recordingGaze;
+            }
+            break;
+        }
+        case DataStream::EyeImage:
+        {
+            if (_recordingEyeImages)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                if (!initialBufferSize_)
+                    initialBufferSize_ = defaults::eyeImageBufSize;
+                if (!asGif_)
+                    asGif_ = defaults::eyeImageAsGIF;
+
+                // prepare and start buffer
+                auto l = lockForWriting<eyeImage>();
+                _eyeImages.reserve(*initialBufferSize_);
+
+                // if already recording and switching from gif to normal or other way, first stop old stream
+                if (_recordingEyeImages)
+                    if (*asGif_ != _eyeImIsGif)
+                        doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+                    else
+                        // nothing to do
+                        return true;
+
+                // subscribe to new stream
+                result = doSubscribeEyeImage(_eyetracker, this, *asGif_);
+                stateVar = &_recordingEyeImages;
+                if (_recordingEyeImages)
+                    // update type being recorded if subscription to stream was successful
+                    _eyeImIsGif = *asGif_;
+            }
+            break;
+        }
+        case DataStream::ExtSignal:
+        {
+            if (_recordingExtSignal)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                if (!initialBufferSize_)
+                    initialBufferSize_ = defaults::extSignalBufSize;
+                // prepare and start buffer
+                auto l = lockForWriting<extSignal>();
+                _extSignal.reserve(*initialBufferSize_);
+                result = tobii_research_subscribe_to_external_signal_data(_eyetracker, TobiiExtSignalCallback, this);
+                stateVar = &_recordingExtSignal;
+            }
+            break;
+        }
+        case DataStream::TimeSync:
+        {
+            if (_recordingGaze)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                if (!initialBufferSize_)
+                    initialBufferSize_ = defaults::timeSyncBufSize;
+                // prepare and start buffer
+                auto l = lockForWriting<timeSync>();
+                _timeSync.reserve(*initialBufferSize_);
+                result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback, this);
+                stateVar = &_recordingTimeSync;
+            }
+            break;
+        }
+    }
+
+    if (stateVar)
+        *stateVar = result==TOBII_RESEARCH_STATUS_OK;
+
+    if (result != TOBII_RESEARCH_STATUS_OK)
+    {
+        std::stringstream os;
+        os << "Cannot start recording " << dataStreamToString(stream_) << " stream";
+        ErrorExit(os.str(), result);
+    }
+
+    return result == TOBII_RESEARCH_STATUS_OK;
+}
+
+bool TobiiBuffer::isBuffering(std::string stream_)
+{
+    return isBuffering(stringToDataStream(stream_));
+}
+bool TobiiBuffer::isBuffering(DataStream  stream_)
+{
     bool success = false;
     switch (stream_)
     {
         case DataStream::Gaze:
         {
-            // deal with default arguments
-            if (!initialBufferSize_)
-                initialBufferSize_ = defaults::sampleBufSize;
-            // prepare and start buffer
-            auto l = lockForWriting<gaze>();
-            _gaze.reserve(*initialBufferSize_);
-            success = tobii_research_subscribe_to_gaze_data(_eyetracker, TobiiGazeCallback, this) == TOBII_RESEARCH_STATUS_OK;
+            return _recordingGaze;
             break;
         }
         case DataStream::EyeImage:
         {
-            // deal with default arguments
-            if (!initialBufferSize_)
-                initialBufferSize_ = defaults::eyeImageBufSize;
-            if (!asGif_)
-                asGif_ = defaults::eyeImageAsGIF;
-
-            // prepare and start buffer
-            auto l = lockForWriting<eyeImage>();
-            _eyeImages.reserve(*initialBufferSize_);
-
-            // if already recording and switching from gif to normal or other way, first stop old stream
-            if (_recordingEyeImages)
-                if (*asGif_ != _eyeImIsGif)
-                    doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-                else
-                    // nothing to do
-                    return true;
-
-            // subscribe to new stream
-            _recordingEyeImages = doSubscribeEyeImage(_eyetracker, this, *asGif_);
-            if (_recordingEyeImages)
-                // update type being recorded if subscription to stream was successful
-                _eyeImIsGif = *asGif_;
-            success = _recordingEyeImages;
+            return _recordingEyeImages;
             break;
         }
         case DataStream::ExtSignal:
         {
-            // deal with default arguments
-            if (!initialBufferSize_)
-                initialBufferSize_ = defaults::extSignalBufSize;
-            // prepare and start buffer
-            auto l = lockForWriting<extSignal>();
-            _extSignal.reserve(*initialBufferSize_);
-            success = tobii_research_subscribe_to_external_signal_data(_eyetracker, TobiiExtSignalCallback, this) == TOBII_RESEARCH_STATUS_OK;
+            return _recordingExtSignal;
             break;
         }
         case DataStream::TimeSync:
         {
-            // deal with default arguments
-            if (!initialBufferSize_)
-                initialBufferSize_ = defaults::timeSyncBufSize;
-            // prepare and start buffer
-            auto l = lockForWriting<timeSync>();
-            _timeSync.reserve(*initialBufferSize_);
-            success = tobii_research_subscribe_to_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback, this) == TOBII_RESEARCH_STATUS_OK;
+            return _recordingTimeSync;
             break;
         }
     }
@@ -504,27 +578,35 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
     if (!emptyBuffer_)
         emptyBuffer_ = defaults::stopBufferEmpties;
 
-    bool success = false;
+    TobiiResearchStatus result;
+    bool* stateVar = nullptr;
     switch (stream_)
     {
         case DataStream::Gaze:
-            success = tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback) == TOBII_RESEARCH_STATUS_OK;
+            result = tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback);
+            stateVar = &_recordingGaze;
             break;
         case DataStream::EyeImage:
-            success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-            if (success)
-                _recordingEyeImages = false;
+            result = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+
+            stateVar = &_recordingEyeImages;
             break;
         case DataStream::ExtSignal:
-            success = tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback) == TOBII_RESEARCH_STATUS_OK;
+            result = tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback);
+            stateVar = &_recordingExtSignal;
             break;
         case DataStream::TimeSync:
-            success = tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback) == TOBII_RESEARCH_STATUS_OK;
+            result = tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback);
+            stateVar = &_recordingTimeSync;
             break;
     }
 
     if (*emptyBuffer_)
         clear(stream_);
+
+    bool success = result == TOBII_RESEARCH_STATUS_OK;
+    if (stateVar && success)
+        *stateVar = true;
 
     return success;
 }

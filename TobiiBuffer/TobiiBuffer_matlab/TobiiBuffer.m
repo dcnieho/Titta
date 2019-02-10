@@ -108,6 +108,11 @@ classdef TobiiBuffer < handle
                 success = this.cppmethod('stop',stream);
             end
         end
+        function status = isRecording(this,stream)
+            assert(nargin>1,'Titta::buffer:isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
+            status = this.cppmethod('isBuffering',stream);
+        end
         function clear(this,stream)
             assert(nargin>1,'Titta::buffer:clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = checkStringIsChar(stream);
