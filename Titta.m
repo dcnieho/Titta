@@ -3,7 +3,6 @@ classdef Titta < handle
         % dll and mex files
         tobii;
         eyetracker;
-        buffers;
         
         % message buffer
         msgs                = simpleVec(cell(1,2),1024);   % initialize with space for 1024 messages
@@ -27,14 +26,13 @@ classdef Titta < handle
         systemInfo;
         geom;
         calibrateHistory;
-        recState;
+        buffer;
     end
     
     % computed properties (so not actual properties)
     properties (Dependent, SetAccess = private)
         rawSDK;         % get naked Tobii SDK instance
         rawET;          % get naked Tobii SDK handle to eyetracker
-        rawBuffers;     % get naked Tobiibuffer instance
     end
     
     methods
@@ -64,10 +62,6 @@ classdef Titta < handle
         
         function out = get.rawET(obj)
             out = obj.eyetracker;
-        end
-        
-        function out = get.rawBuffers(obj)
-            out = obj.buffers;
         end
         
         function out = getOptions(obj)
@@ -151,8 +145,8 @@ classdef Titta < handle
             obj.tobii = EyeTrackingOperations();
             
             % Load in our callback buffer mex
-            obj.buffers = TobiiBuffer();
-            obj.buffers.startLogging();
+            obj.buffer = TobiiBuffer();
+            obj.buffer.startLogging();
             
             % Connect to eyetracker
             iTry = 1;
@@ -215,7 +209,7 @@ classdef Titta < handle
             obj.eyetracker = trackers(qTracker);
             
             % provide callback buffer mex with eye tracker
-            obj.buffers.init(obj.eyetracker.Address);
+            obj.buffer.init(obj.eyetracker.Address);
             
             % apply license(s) if needed
             if ~isempty(obj.settings.licenseFile)
@@ -294,12 +288,6 @@ classdef Titta < handle
             obj.geom.UCS2TB.trackBoxYSlope      = diff([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/diff(obj.geom.UCS2TB.trackBoxDepths*10); % slope: grows taller by x cm if depth increases by y cm
             obj.geom.UCS2TB.trackBoxHalfHeight  = @(x) obj.geom.UCS2TB.trackBoxMinY+obj.geom.UCS2TB.trackBoxYSlope*(x-obj.geom.UCS2TB.trackBoxDepths(1));
             out.geom                = obj.geom;
-            
-            % init recording state
-            obj.recState.gaze           = false;
-            obj.recState.timeSync       = false;
-            obj.recState.externalSignal = false;
-            obj.recState.eyeImage       = false;
             
             % mark as inited
             obj.isInitialized = true;
@@ -507,136 +495,6 @@ classdef Titta < handle
             end
         end
         
-        function result = startRecording(obj,stream)
-            % For these, the first call subscribes to the stream and returns
-            % either data (might be empty if no data has been received yet) or
-            % any error that happened during the subscription.
-            % TODO: support optional size of buffer input
-            
-            % TODO:
-            % why don't i just let users interact with buffers directly? I guess
-            % Marcus has a similar interface?
-            % That way user can't fuck up recstate behind my back either.
-            % EThndl.buffer.start('gaze'), etc?
-            % state = 'recording','not recording','not supported'? Dependent
-            % property so internally we can use simple boolean and when creating
-            % this output first test for support.
-            
-            result = true;
-            assert(nargin>1,'Titta: startRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            switch lower(stream)
-                case 'gaze'
-                    field       = 'gaze';
-                    if ~obj.recState.gaze
-                        result      = obj.buffers.start('sample');
-                        streamLbl   = 'gaze data';
-                    end
-                case 'eyeimage'
-                    if obj.hasCap(EyeTrackerCapabilities.HasEyeImages)
-                        field   	= 'eyeImage';
-                        if ~obj.recState.eyeImage
-                            result      = obj.buffers.start('eyeImage');
-                            streamLbl   = 'eye images';
-                        end
-                    else
-                        error('Titta: recording of eye images is not supported by this eye-tracker')
-                    end
-                case 'externalsignal'
-                    if obj.hasCap(EyeTrackerCapabilities.HasExternalSignal)
-                        field       = 'externalSignal';
-                        if ~obj.recState.externalSignal
-                            result      = obj.buffers.start('extSignal');
-                            streamLbl   = 'external signals';
-                        end
-                    else
-                        error('Titta: recording of external signals is not supported by this eye-tracker')
-                    end
-                case 'timesync'
-                    field       = 'timeSync';
-                    if ~obj.recState.timeSync
-                        result      = obj.buffers.start('timeSync');
-                        streamLbl   = 'sync data';
-                    end
-                otherwise
-                    error('Titta: signal "%s" not known\nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"',stream);
-            end
-            
-            % check for errors
-            if ~result
-                error('Titta: Error starting recording %s',streamLbl);
-            end
-            % mark that we are recording
-            obj.recState.(field) = true;
-        end
-        
-        function data = consumeN(obj,stream,varargin)
-            % optional input argument firstN: how many samples to consume
-            % from start. Default: all
-            data = obj.consumeOrPeek(stream,'consumeN',varargin{:});
-        end
-        
-        function data = consumeTimeRange(obj,stream,varargin)
-            % optional inputs startT and endT. Default: whole range
-            data = obj.consumeOrPeek(stream,'consumeTimeRange',varargin{:});
-        end
-        
-        function data = peekN(obj,stream,varargin)
-            % optional input argument lastN: how many samples to peek from
-            % end. Default: 1. To get all, ask for -1 samples
-            data = obj.consumeOrPeek(stream,'peekN',varargin{:});
-        end
-        
-        function data = peekTimeRange(obj,stream,varargin)
-            % optional inputs startT and endT. Default: whole range
-            data = obj.consumeOrPeek(stream,'peekTimeRange',varargin{:});
-        end
-        
-        function clearBuffer(obj,stream)
-            obj.clearImpl(stream,'clear');
-        end
-        
-        function clearBufferTimeRange(obj,stream,varargin)
-            % optional inputs startT and endT. Default: whole range
-            obj.clearImpl(stream,'clearTimeRange',varargin{:});
-        end
-        
-        function stopRecording(obj,stream,qClearBuffer)
-            assert(nargin>1,'Titta: stopRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            if nargin<3 || isempty(qClearBuffer)
-                qClearBuffer = false;
-            end
-            field = '';
-            switch lower(stream)
-                case 'gaze'
-                    if obj.recState.gaze
-                        success = obj.buffers.stop('sample',qClearBuffer);
-                        field   = 'gaze';
-                    end
-                case 'eyeimage'
-                    if obj.recState.eyeImage
-                        success = obj.buffers.stop('eyeImage',qClearBuffer);
-                        field   = 'eyeImage';
-                    end
-                case 'externalsignal'
-                    if obj.recState.externalSignal
-                        success = obj.buffers.stop('extSignal',qClearBuffer);
-                        field   = 'externalSignal';
-                    end
-                case 'timesync'
-                    if obj.recState.timeSync
-                        success = obj.buffers.stop('timeSync',qClearBuffer);
-                        field   = 'timeSync';
-                    end
-                otherwise
-                    error('Titta: stream "%s" not known\nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"',stream);
-            end
-            
-            % mark that we stopped recording
-            if ~isempty(field) && success
-                obj.recState.(field) = false;
-            end
-        end
-        
         function time = sendMessage(obj,str,time)
             % Tobii system timestamp is from same clock as PTB's clock. So
             % we're good. If an event has a known time (e.g. a screen
@@ -669,7 +527,7 @@ classdef Titta < handle
             if isa(dat.settings.cal.drawFunction,'function_handle')
                 dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
             end
-            dat.TobiiLog    = obj.buffers.getLog(false);
+            dat.TobiiLog    = obj.buffer.getLog(false);
             dat.data        = obj.ConsumeAllData();
         end
         
@@ -723,10 +581,10 @@ classdef Titta < handle
         end
         
         function out = deInit(obj)
-            if ~isempty(obj.rawBuffers)
+            if ~isempty(obj.buffer)
                 % return and stop log
-                out = obj.rawBuffers.getLog();
-                obj.rawBuffers.stopLogging();
+                out = obj.buffer.getLog();
+                obj.buffer.stopLogging();
             end
             
             % mark as deinited
@@ -886,8 +744,8 @@ classdef Titta < handle
             % overlap indicating correct positioning
             
             startT                  = obj.sendMessage(sprintf('SETUP START %s',obj.settings.calibrateEye));
-            obj.startRecording('gaze');
-            qHasEyeIm               = obj.hasCap(EyeTrackerCapabilities.HasEyeImages);
+            obj.buffer.start('gaze');
+            qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             
@@ -981,12 +839,12 @@ classdef Titta < handle
                     if qToggleEyeImage
                         if qShowEyeImage
                             % switch off
-                            obj.stopRecording('eyeImage');
-                            obj.clearBufferTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
+                            obj.buffer.stop('eyeImage');
+                            obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
                         else
                             % switch on
                             eyeStartTime = obj.getSystemTime();
-                            obj.startRecording('eyeImage');
+                            obj.buffer.start('eyeImage');
                         end
                         qShowEyeImage   = ~qShowEyeImage;
                         qToggleEyeImage = false;
@@ -994,7 +852,7 @@ classdef Titta < handle
                     
                     if qShowEyeImage
                         % get eye image
-                        eyeIm       = obj.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
                         [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
                         
                         % update eye image locations if size of returned eye image changed
@@ -1007,7 +865,7 @@ classdef Titta < handle
                 end
                 
                 % get latest data from eye-tracker
-                eyeData = obj.buffers.peekN('sample',1);
+                eyeData = obj.buffer.peekN('sample',1);
                 [lEye,rEye] = deal(nan(3,1));
                 if ~isempty(eyeData.systemTimeStamp)
                     lEye = eyeData. left.gazeOrigin.inUserCoords;
@@ -1204,12 +1062,12 @@ classdef Titta < handle
             end
             % clean up
             HideCursor;
-            obj.stopRecording('gaze');
+            obj.buffer.stop('gaze');
             obj.sendMessage(sprintf('SETUP END %s',obj.settings.calibrateEye));
-            obj.clearBufferTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
+            obj.buffer.clearTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
             if qHasEyeIm
-                obj.stopRecording('eyeImage');
-                obj.clearBufferTimeRange('eyeImage',startT);    % clear buffer from start time until now (now=default third argument)
+                obj.buffer.stop('eyeImage');
+                obj.buffer.clearTimeRange('eyeImage',startT);    % clear buffer from start time until now (now=default third argument)
                 if any(texs)
                     Screen('Close',texs(texs>0));
                 end
@@ -1286,14 +1144,14 @@ classdef Titta < handle
             
             % do calibration
             calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
-            obj.startRecording('gaze');
-            if obj.settings.cal.doRecordEyeImages && obj.hasCap(EyeTrackerCapabilities.HasEyeImages)
-                obj.startRecording('eyeImage');
+            obj.buffer.start('gaze');
+            if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
+                obj.buffer.start('eyeImage');
             end
-            if obj.settings.cal.doRecordExtSignal && obj.hasCap(EyeTrackerCapabilities.HasExternalSignal)
-                obj.startRecording('externalSignal');
+            if obj.settings.cal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
+                obj.buffer.start('externalSignal');
             end
-            obj.startRecording('timeSync');
+            obj.buffer.start('timeSync');
             % show display
             [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
             obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
@@ -1371,34 +1229,24 @@ classdef Titta < handle
         end
         
         function data = ConsumeAllData(obj,varargin)
-            data.gaze           = obj.consumeTimeRange('gaze',varargin{:});
-            data.eyeImages      = obj.consumeTimeRange('eyeImage',varargin{:});
-            data.externalSignals= obj.consumeTimeRange('externalSignal',varargin{:});
-            data.timeSync       = obj.consumeTimeRange('timeSync',varargin{:});
-        end
-        
-        function data = consumeOrPeek(obj,stream,action,varargin)
-            stream = getInternalStreamName(stream,action);
-            data = obj.buffers.(action)(stream,varargin{:});
-        end
-        
-        function clearImpl(obj,stream,action,varargin)
-            stream = getInternalStreamName(stream,action);
-            obj.buffers.(action)(stream,varargin{:});
+            data.gaze           = obj.buffer.consumeTimeRange('gaze',varargin{:});
+            data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
+            data.externalSignals= obj.buffer.consumeTimeRange('externalSignal',varargin{:});
+            data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
         end
         
         function ClearAllBuffers(obj,varargin)
-            obj.buffers.clearTimeRange('sample',varargin{:});
-            obj.buffers.clearTimeRange('eyeImage',varargin{:});
-            obj.buffers.clearTimeRange('extSignal',varargin{:});
-            obj.buffers.clearTimeRange('timeSync',varargin{:});
+            obj.buffer.clearTimeRange('sample',varargin{:});
+            obj.buffer.clearTimeRange('eyeImage',varargin{:});
+            obj.buffer.clearTimeRange('extSignal',varargin{:});
+            obj.buffer.clearTimeRange('timeSync',varargin{:});
         end
         
         function StopRecordAll(obj)
-            obj.stopRecording('gaze');
-            obj.stopRecording('eyeImage');
-            obj.stopRecording('externalSignal');
-            obj.stopRecording('timeSync');
+            obj.buffer.stop('gaze');
+            obj.buffer.stop('eyeImage');
+            obj.buffer.stop('externalSignal');
+            obj.buffer.stop('timeSync');
         end
         
         function [status,out,tick] = DoCalPointDisplay(obj,wpnt,calibClass,tick,lastFlip)
@@ -1547,7 +1395,7 @@ classdef Titta < handle
                             tick0v = tick;
                         end
                         if tick>tick0v+collectInterval
-                            dat = obj.peekN('gaze',nDataPoint);
+                            dat = obj.buffer.peekN('gaze',nDataPoint);
                             if isempty(out.gazeData)
                                 out.gazeData = dat;
                             else
@@ -1762,12 +1610,12 @@ classdef Titta < handle
                 if qToggleGaze
                     if qShowGaze
                         % switch off
-                        obj.stopRecording('gaze');
-                        obj.clearBufferTimeRange('gaze',gazeStartT);
+                        obj.buffer.stop('gaze');
+                        obj.buffer.clearTimeRange('gaze',gazeStartT);
                     else
                         % switch on
                         gazeStartT = obj.getSystemTime();
-                        obj.startRecording('gaze');
+                        obj.buffer.start('gaze');
                     end
                     qShowGaze   = ~qShowGaze;
                     qToggleGaze = false;
@@ -1987,7 +1835,7 @@ classdef Titta < handle
                         % draw fixation points
                         obj.drawFixPoints(wpnt,fixPos);
                         % draw gaze data
-                        eyeData = obj.buffers.consumeN('sample');
+                        eyeData = obj.buffer.consumeN('sample');
                         if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
@@ -2120,8 +1968,8 @@ classdef Titta < handle
             end
             if qShowGaze
                 % if showing gaze, switch off gaze data stream
-                obj.stopRecording('gaze');
-                obj.clearBufferTimeRange('gaze',gazeStartT);
+                obj.buffer.stop('gaze');
+                obj.buffer.clearTimeRange('gaze',gazeStartT);
             end
             HideCursor;
         end
@@ -2371,18 +2219,9 @@ if any(qSubStruct)
         temp = getStructFields(str.(fieldInfo{idx(p),1}));
         if size(temp,2)+1>size(fieldInfo,2)
             extraCol = size(temp,2)+1-size(fieldInfo,2);
-            fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)];
+            fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)]; %#ok<AGROW>
         end
         fieldInfo = [fieldInfo(1:idx(p)-1,:); [repmat(fieldInfo(idx(p),1),size(temp,1),1) temp]; fieldInfo(idx(p)+1:end,:)];
     end
 end
-end
-
-function stream = getInternalStreamName(stream,action)
-fields = {'gaze','eyeImage','externalSignal','timeSync'};
-q = strcmpi(stream,fields);
-assert(any(q),'Titta: %sData: stream ''%s'' not known',action,stream);
-
-get     = {'sample','eyeImage','extSignal','timeSync'};
-stream  = get{q};
 end

@@ -79,7 +79,7 @@ try
     % TobiiProLabInstance.sendTittaCalibration(tobii.calVal{1})
     
     % later:
-    EThndl.startRecording('gaze');
+    EThndl.buffer.start('gaze');
     % TobiiProLabInstance.startRecording('gaze');
      
     % send message into ET data file
@@ -119,10 +119,10 @@ try
     WaitSecs(1);
     
     % repeat the above but show a different image. lets also record some
-    % eye images
-    %if EThndl.rawBuffers.hasStream('eyeImage')
-    %    EThndl.startRecording('eyeImage');
-    %end
+    % eye images, if supported on connected eye tracker
+    if EThndl.buffer.hasStream('eyeImage')
+       EThndl.buffer.start('eyeImage');
+    end
     % 1. fixation point
     Screen('gluDisk',wpnt,fixClrs(1),winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
     startT = Screen('Flip',wpnt);
@@ -144,7 +144,7 @@ try
     %if EThndl.rawBuffers.hasStream('eyeImage')
     %    EThndl.stopRecording('eyeImage');
     %end
-    EThndl.stopRecording('gaze');
+    EThndl.buffer.stop('gaze');
     EThndl.saveData(fullfile(cd,'t'), true);
     
     % shut down

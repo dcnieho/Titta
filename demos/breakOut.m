@@ -118,7 +118,7 @@ try
     
     % do calibration, start recording
     calValInfo = EThndl.calibrate(wpnt);
-    EThndl.startRecording('gaze');
+    EThndl.buffer.start('gaze');
     
     paddlePos = XMAX/2;     % start in center of screen horizontally
     paddle.translate([paddlePos 0]);
@@ -150,7 +150,7 @@ try
         
         % update paddle
         % 1. get eye data, determine how far to move
-        samp    = EThndl.consumeN('gaze');
+        samp    = EThndl.buffer.consumeN('gaze');
         % see if have a sample with both eyes
         qSelect = samp.left.gazePoint.valid & samp.left.gazePoint.valid;
         if ~any(qSelect)
@@ -191,7 +191,7 @@ try
     end
     
     % stopping
-    EThndl.stopRecording('gaze');
+    EThndl.buffer.stop('gaze');
     
     % show performance feedback
     if qWin
