@@ -341,6 +341,7 @@ classdef Titta < handle
             if strcmp(obj.settings.calibrateEye,'both')
                 calibClass = ScreenBasedCalibration(obj.eyetracker);
             else
+                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
                 calibClass = ScreenBasedMonocularCalibration(obj.eyetracker);
             end
             try
@@ -1139,75 +1140,80 @@ classdef Titta < handle
             end
         end
         
-        function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass)
+        function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qValOnly)
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % do calibration
-            calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
-            obj.buffer.start('gaze');
-            if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
-                obj.buffer.start('eyeImage');
-            end
-            if obj.settings.cal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
-                obj.buffer.start('externalSignal');
-            end
-            obj.buffer.start('timeSync');
-            % show display
-            [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
-            obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
-            out.cal.data = obj.ConsumeAllData(calStartT);
-            if status==1
-                if ~isempty(obj.settings.cal.pointPos)
-                    % compute calibration
-                    out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
-                    
-                    % if valid calibration retrieve data, so user can select different ones
-                    if strcmp(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
-                        out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
-                    else
-                        % calibration failed, back to setup screen
-                        status = -2;
-                        Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
-                        Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
-                        DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
-                        Screen('Flip',wpnt);
-                        obj.getNewMouseKeyPress();
-                        keyCode = false;
-                        while ~any(keyCode)
-                            [~,~,~,keyCode] = obj.getNewMouseKeyPress();
+            if qValOnly
+                calLastFlip = {-1};
+            else
+                calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
+                obj.buffer.start('gaze');
+                if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
+                    obj.buffer.start('eyeImage');
+                end
+                if obj.settings.cal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
+                    obj.buffer.start('externalSignal');
+                end
+                obj.buffer.start('timeSync');
+                % show display
+                [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
+                obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
+                out.cal.data = obj.ConsumeAllData(calStartT);
+                if status==1
+                    if ~isempty(obj.settings.cal.pointPos)
+                        % compute calibration
+                        out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
+                        
+                        % if valid calibration retrieve data, so user can select different ones
+                        if strcmp(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                            out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
+                        else
+                            % calibration failed, back to setup screen
+                            status = -2;
+                            Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
+                            Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
+                            DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
+                            Screen('Flip',wpnt);
+                            obj.getNewMouseKeyPress();
+                            keyCode = false;
+                            while ~any(keyCode)
+                                [~,~,~,keyCode] = obj.getNewMouseKeyPress();
+                            end
                         end
+                    else
+                        % can't compute if user requested no calibration points
+                        out.cal.result = [];
+                        out.cal.computedCal = [];
                     end
-                else
-                    % can't compute if user requested no calibration points
-                    out.cal.result = [];
-                    out.cal.computedCal = [];
                 end
-            end
-            
-            if status~=1
-                obj.StopRecordAll();
-                obj.ClearAllBuffers(calStartT);    % clean up data
-                if status~=-1
-                    % -1 means restart calibration from start. if we do not
-                    % clean up here, we e.g. get a nice animation of the
-                    % point back to the center of the screen, or however
-                    % the user wants to indicate change of point. Clean up
-                    % in all other cases, or we would maintain drawstate
-                    % accross setup screens and such.
-                    % So, send cleanup message to user function (if any)
-                    if isa(obj.settings.cal.drawFunction,'function_handle')
-                        obj.settings.cal.drawFunction(nan);
+                calLastFlip = {tick,out.cal.flips(end)};
+                
+                if status~=1
+                    obj.StopRecordAll();
+                    obj.ClearAllBuffers(calStartT);    % clean up data
+                    if status~=-1
+                        % -1 means restart calibration from start. if we do not
+                        % clean up here, we e.g. get a nice animation of the
+                        % point back to the center of the screen, or however
+                        % the user wants to indicate change of point. Clean up
+                        % in all other cases, or we would maintain drawstate
+                        % accross setup screens and such.
+                        % So, send cleanup message to user function (if any)
+                        if isa(obj.settings.cal.drawFunction,'function_handle')
+                            obj.settings.cal.drawFunction(nan);
+                        end
+                        Screen('Flip',wpnt);
                     end
-                    Screen('Flip',wpnt);
+                    return;
                 end
-                return;
             end
             
             % do validation
             valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
             obj.ClearAllBuffers(calStartT);    % clean up data
             % show display
-            [status,out.val] = obj.DoCalPointDisplay(wpnt,[],tick,out.cal.flips(end));
+            [status,out.val] = obj.DoCalPointDisplay(wpnt,[],calLastFlip{:});
             obj.sendMessage(sprintf('VALIDATION END %s %d',obj.settings.calibrateEye,kCal));
             out.val.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
