@@ -281,6 +281,31 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
     return {startIt,endIt, inclFirst&&inclLast};
 }
 
+
+bool TobiiBuffer::hasStream(std::string stream_)
+{
+    return hasStream(stringToDataStream(stream_));
+}
+bool TobiiBuffer::hasStream(DataStream  stream_)
+{
+    bool supported = false;
+    TobiiResearchCapabilities caps;
+    tobii_research_get_capabilities(_eyetracker, &caps);
+    switch (stream_)
+    {
+        case DataStream::Gaze:
+            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA;
+        case DataStream::EyeImage:
+            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES;
+        case DataStream::ExtSignal:
+            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL;
+        case DataStream::TimeSync:
+            return true;    // no capability that can be checked for this one
+    }
+
+    return supported;
+}
+
 bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
     return start(stringToDataStream(stream_), initialBufferSize_, asGif_);
@@ -400,25 +425,13 @@ bool TobiiBuffer::isBuffering(DataStream  stream_)
     switch (stream_)
     {
         case DataStream::Gaze:
-        {
             return _recordingGaze;
-            break;
-        }
         case DataStream::EyeImage:
-        {
             return _recordingEyeImages;
-            break;
-        }
         case DataStream::ExtSignal:
-        {
             return _recordingExtSignal;
-            break;
-        }
         case DataStream::TimeSync:
-        {
             return _recordingTimeSync;
-            break;
-        }
     }
 
     return success;

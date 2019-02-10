@@ -46,6 +46,10 @@ public:
     ~TobiiBuffer();
 
 
+    // query if stream is supported
+    bool hasStream(std::string stream_);
+    bool hasStream(DataStream  stream_);
+
     // start stream
     bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
     bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);

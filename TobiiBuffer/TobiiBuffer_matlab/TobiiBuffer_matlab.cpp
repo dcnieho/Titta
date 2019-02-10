@@ -80,6 +80,7 @@ namespace {
         New,
         Delete,
 
+        HasStream,
         Start,
         IsBuffering,
         Clear,
@@ -102,6 +103,7 @@ namespace {
         { "new",				Action::New },
         { "delete",				Action::Delete },
 
+        { "hasStream",          Action::HasStream },
         { "start",		        Action::Start },
         { "isBuffering",        Action::IsBuffering },
         { "clear",				Action::Clear },
@@ -209,7 +211,17 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
             break;
         }
 
+        case Action::HasStream:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
 
+            // get data stream identifier string, call hasStream() on instance
+            char *bufferCstr = mxArrayToString(prhs[2]);
+            plhs[0] = mxCreateLogicalScalar(instance->hasStream(bufferCstr));
+            mxFree(bufferCstr);
+            return;
+        }
         case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))

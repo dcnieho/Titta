@@ -84,6 +84,11 @@ classdef TobiiBuffer < handle
             this.instanceHandle = this.cppmethodGlobal('new',char(address));
         end
         
+        function supported = hasStream(this,stream)
+            assert(nargin>1,'Titta::buffer:hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
+            supported = this.cppmethod('hasStream',stream);
+        end
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
