@@ -772,28 +772,27 @@ classdef Titta < handle
             settings.UI.setup.showEyes      = true;
             settings.UI.setup.showPupils    = true;
             settings.UI.setup.viewingDist   = 65;
-            settings.UI.setupMsg.string     = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
-            settings.UI.setupMsg.font       = 'Consolas';
-            settings.UI.setupMsg.size       = 24*textFac;
-            settings.UI.setupMsg.color      = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.setupMsg.style      = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.setupMsg.vSpacing   = 1.5;
-            % TODO: make it into settings.UI.cal.errMsg
-            settings.UI.calErrMsg.string    = 'Calibration failed\nPress any key to continue';
-            settings.UI.calErrMsg.font      = 'Consolas';
-            settings.UI.calErrMsg.size      = 36*textFac;
-            settings.UI.calErrMsg.color     = [255 0 0];                        % only for messages on the screen, doesn't affect buttons
-            settings.UI.calErrMsg.style     = 1;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.calErrMsg.wrapAt    = 62;
-            settings.UI.valTopText.font     = 'Consolas';
-            settings.UI.valTopText.size     = 24*textFac;
-            settings.UI.valTopText.color    = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.valTopText.style    = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.valTopText.vSpacing = 1;
-            settings.UI.valHoverText.font   = 'Consolas';
-            settings.UI.valHoverText.size   = 20*textFac;
-            settings.UI.valHoverText.color  = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.valHoverText.style  = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.setup.instruct.string   = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
+            settings.UI.setup.instruct.font     = 'Consolas';
+            settings.UI.setup.instruct.size     = 24*textFac;
+            settings.UI.setup.instruct.color    = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.setup.instruct.style    = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.setup.instruct.vSpacing = 1.5;
+            settings.UI.cal.errMsg.string   = 'Calibration failed\nPress any key to continue';
+            settings.UI.cal.errMsg.font     = 'Consolas';
+            settings.UI.cal.errMsg.size     = 36*textFac;
+            settings.UI.cal.errMsg.color    = [255 0 0];                        % only for messages on the screen, doesn't affect buttons
+            settings.UI.cal.errMsg.style    = 1;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.cal.errMsg.wrapAt   = 62;
+            settings.UI.val.topText.font    = 'Consolas';
+            settings.UI.val.topText.size    = 24*textFac;
+            settings.UI.val.topText.color   = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.topText.style   = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.val.topText.vSpacing= 1;
+            settings.UI.val.hoverText.font  = 'Consolas';
+            settings.UI.val.hoverText.size  = 20*textFac;
+            settings.UI.val.hoverText.color = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.hoverText.style = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.buttons.font        = 'Consolas';
             settings.UI.buttons.size        = 24*textFac;
             settings.UI.buttons.color       = 0;                                % only for messages on the screen, doesn't affect buttons
@@ -961,8 +960,8 @@ classdef Titta < handle
             cursor  = cursorUpdater(cursors);
             
             % setup text for positioning message
-            Screen('TextFont',  wpnt, obj.settings.UI.setupMsg.font, obj.settings.UI.setupMsg.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.setupMsg.size);
+            Screen('TextFont',  wpnt, obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.setup.instruct.size);
             
             % get tracking status and visualize
             eyeDist             = 6.2;
@@ -1094,7 +1093,7 @@ classdef Titta < handle
                 end
                 % draw distance info
                 if ~(qShowEyeImage && isempty(headPos))
-                    DrawFormattedText(wpnt,sprintf(obj.settings.UI.setupMsg.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setupMsg.color,[],[],[],obj.settings.UI.setupMsg.vSpacing);
+                    DrawFormattedText(wpnt,sprintf(obj.settings.UI.setup.instruct.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw ovals
                 % reference circle--don't draw if showing eye images and no
@@ -1311,9 +1310,9 @@ classdef Titta < handle
                     else
                         % calibration failed, back to setup screen
                         status = -2;
-                        Screen('TextFont',  wpnt, obj.settings.UI.calErrMsg.font, obj.settings.UI.calErrMsg.style);
-                        Screen('TextSize',  wpnt, obj.settings.UI.calErrMsg.size);
-                        DrawFormattedText(wpnt,obj.settings.UI.calErrMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.calErrMsg.color));
+                        Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
+                        Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
+                        DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
                         Screen('Flip',wpnt);
                         obj.getNewMouseKeyPress();
                         keyCode = false;
@@ -1814,8 +1813,8 @@ classdef Titta < handle
                     % when switching between viewing calibration and
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
-                    Screen('TextFont',  wpnt, obj.settings.UI.valTopText.font, obj.settings.UI.valTopText.style);
-                    Screen('TextSize',  wpnt, obj.settings.UI.valTopText.size);
+                    Screen('TextFont', wpnt, obj.settings.UI.val.topText.font, obj.settings.UI.val.topText.style);
+                    Screen('TextSize', wpnt, obj.settings.UI.val.topText.size);
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
                         clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},obj.settings.cal.bgColor);
@@ -1830,7 +1829,7 @@ classdef Titta < handle
                         strsep = '\n';
                     end
                     valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.valTopText.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.valTopText.color);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.topText.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.topText.color);
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1872,8 +1871,8 @@ classdef Titta < handle
                     openInfoForPoint   = nan;
                     infoPopBgColor     = [110 110 110 255];
                     % 1. prepare text
-                    Screen('TextFont',  wpnt, obj.settings.UI.valHoverText.font, obj.settings.UI.valHoverText.style);
-                    Screen('TextSize',  wpnt, obj.settings.UI.valHoverText.size);
+                    Screen('TextFont', wpnt, obj.settings.UI.val.hoverText.font, obj.settings.UI.val.hoverText.style);
+                    Screen('TextSize', wpnt, obj.settings.UI.val.hoverText.size);
                     clrL = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},infoPopBgColor);
                     clrR = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},infoPopBgColor);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
@@ -1887,7 +1886,7 @@ classdef Titta < handle
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.valHoverText.color);
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.val.hoverText.color);
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
