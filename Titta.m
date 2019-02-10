@@ -2226,11 +2226,16 @@ hslb = rgb2hsl(background);
 
 % simple rule: if background midgrey or darker: use lighter colors. if
 % brighter, use darker color
-if hslb(3)<=.5
+% NB: take monitor gamma (assume 2.2) into account. Midgrey is then at
+% l=0.7297.
+% to get that:
+% fun=@(x) abs(x^2.2 -  255.^2.2 * .5);
+% frac = fminsearch(fun,1)/255;
+if hslb(3)<=0.7297
     % dark background use light color
-    clr = hsl2rgb([hslc(1:2) 0.65]);
+    clr = hsl2rgb([hslc(1:2) 0.8222]);  % optimize above with 0.65
 else
-    clr = hsl2rgb([hslc(1:2) 0.25]);
+    clr = hsl2rgb([hslc(1:2) 0.5325]);  % optimize above with 0.25
 end
 clr = round([clr a]);
 end
