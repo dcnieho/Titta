@@ -425,9 +425,29 @@ classdef Titta < handle
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
                     end
+                    
+                    % store information about last calibration as message
+                    if out.attempt{kCal}.calStatus==1
+                        % 1 get data to put in message, output per eye
+                        % separately.
+                        eyes    = fieldnames(out.attempt{kCal}.val.quality);
+                        nPoint  = length(out.attempt{kCal}.val.quality);
+                        msg     = cell(1,length(eyes));
+                        for e=1:length(eyes)
+                            dat = cell(7,nPoint+1);
+                            for k=1:nPoint
+                                val = out.attempt{kCal}.val.quality(k).(eyes{e});
+                                dat(:,k) = {sprintf('%d @ (%d,%d)',k,out.attempt{kCal}.val.pointPos(k,2:3)),val.acc2D,val.acc(1),val.acc(2),val.STD2D,val.RMS2D,val.dataLoss*100};
+                            end
+                            % also get average
+                            val = out.attempt{kCal}.val;
+                            dat(:,end) = {'average',val.acc2D(e),val.acc(1,e),val.acc(2,e),val.STD2D(e),val.RMS2D(e),val.dataLoss(e)*100};
+                            msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.1f%%\n',dat{:}));
+                        end
+                        msg = [msg{:}]; msg(end) = [];
+                        obj.sendMessage(sprintf('VALIDATION %d Data Quality:\npoint\tacc2D\taccX\taccY\tSTD2D\tRMS2D\tdata loss\n%s',kCal,msg));
+                    end
                 end
-                % TODO: somewhere here store info about calibration quality
-                % (mean accuracy and the other variables)
             
                 % TODO: have button to only revalidate, not recalibrate
                 
