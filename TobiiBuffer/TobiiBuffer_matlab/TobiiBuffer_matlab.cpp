@@ -314,8 +314,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             switch (dataStream)
             {
-                case TobiiBuffer::DataStream::Sample:
-                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::sample>(nSamp));
+                case TobiiBuffer::DataStream::Gaze:
+                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::gaze>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
                     plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::eyeImage>(nSamp));
@@ -356,8 +356,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             switch (dataStream)
             {
-                case TobiiBuffer::DataStream::Sample:
-                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::sample>(timeStart, timeEnd));
+                case TobiiBuffer::DataStream::Gaze:
+                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
                     plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
@@ -391,8 +391,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             switch (dataStream)
             {
-                case TobiiBuffer::DataStream::Sample:
-                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::sample>(nSamp));
+                case TobiiBuffer::DataStream::Gaze:
+                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::gaze>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
                     plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::eyeImage>(nSamp));
@@ -434,8 +434,8 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
 
             switch (dataStream)
             {
-                case TobiiBuffer::DataStream::Sample:
-                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::sample>(timeStart, timeEnd));
+                case TobiiBuffer::DataStream::Gaze:
+                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
                     plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
@@ -448,7 +448,7 @@ void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArr
                     return;
             }
         }
-        
+
         case Action::StartLogging:
         {
             // get optional input argument

@@ -24,7 +24,7 @@ namespace
     template <typename T>
     mutex_type& getMutex()
     {
-        if constexpr (std::is_same_v<T, TobiiBuffer::sample>)
+        if constexpr (std::is_same_v<T, TobiiBuffer::gaze>)
             return g_mSamp;
         if constexpr (std::is_same_v<T, TobiiBuffer::eyeImage>)
             return g_mEyeImage;
@@ -49,10 +49,10 @@ namespace
     // Map string to an Data Stream
     const std::map<std::string, TobiiBuffer::DataStream> dataStreamMap =
     {
-        { "sample",    TobiiBuffer::DataStream::Sample },
-        { "eyeImage",  TobiiBuffer::DataStream::EyeImage },
-        { "extSignal", TobiiBuffer::DataStream::ExtSignal },
-        { "timeSync",  TobiiBuffer::DataStream::TimeSync }
+        { "gaze",           TobiiBuffer::DataStream::Gaze },
+        { "eyeImage",       TobiiBuffer::DataStream::EyeImage },
+        { "externalSignal", TobiiBuffer::DataStream::ExtSignal },
+        { "timeSync",       TobiiBuffer::DataStream::TimeSync }
     };
 
     // default argument values
@@ -132,12 +132,12 @@ bool TobiiBuffer::stopLogging()
 }
 
 
-void TobiiSampleCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
+void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::sample>();
-        static_cast<TobiiBuffer*>(user_data)->_samples.push_back(*gaze_data_);
+        auto l = lockForWriting<TobiiBuffer::gaze>();
+        static_cast<TobiiBuffer*>(user_data)->_gaze.push_back(*gaze_data_);
     }
 }
 void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
@@ -219,7 +219,7 @@ TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
 }
 TobiiBuffer::~TobiiBuffer()
 {
-    stop(DataStream::Sample,    true);
+    stop(DataStream::Gaze,      true);
     stop(DataStream::EyeImage,  true);
     stop(DataStream::ExtSignal, true);
     stop(DataStream::TimeSync,  true);
@@ -231,8 +231,8 @@ TobiiBuffer::~TobiiBuffer()
 template <typename T>
 std::vector<T>& TobiiBuffer::getBuffer()
 {
-    if constexpr (std::is_same_v<T, sample>)
-        return _samples;
+    if constexpr (std::is_same_v<T, gaze>)
+        return _gaze;
     if constexpr (std::is_same_v<T, eyeImage>)
         return _eyeImages;
     if constexpr (std::is_same_v<T, extSignal>)
@@ -284,15 +284,15 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
     bool success = false;
     switch (stream_)
     {
-        case DataStream::Sample:
+        case DataStream::Gaze:
         {
             // deal with default arguments
             if (!initialBufferSize_)
                 initialBufferSize_ = defaults::sampleBufSize;
             // prepare and start buffer
-            auto l = lockForWriting<sample>();
-            _samples.reserve(*initialBufferSize_);
-            success = tobii_research_subscribe_to_gaze_data(_eyetracker, TobiiSampleCallback, this) == TOBII_RESEARCH_STATUS_OK;
+            auto l = lockForWriting<gaze>();
+            _gaze.reserve(*initialBufferSize_);
+            success = tobii_research_subscribe_to_gaze_data(_eyetracker, TobiiGazeCallback, this) == TOBII_RESEARCH_STATUS_OK;
             break;
         }
         case DataStream::EyeImage:
@@ -478,8 +478,8 @@ void TobiiBuffer::clearTimeRange(DataStream stream_, std::optional<int64_t> time
 
     switch (stream_)
     {
-        case DataStream::Sample:
-            clearImpl<sample>(*timeStart_, *timeEnd_);
+        case DataStream::Gaze:
+            clearImpl<gaze>(*timeStart_, *timeEnd_);
             break;
         case TobiiBuffer::DataStream::EyeImage:
             clearImpl<eyeImage>(*timeStart_, *timeEnd_);
@@ -507,8 +507,8 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
     bool success = false;
     switch (stream_)
     {
-        case DataStream::Sample:
-            success = tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiSampleCallback) == TOBII_RESEARCH_STATUS_OK;
+        case DataStream::Gaze:
+            success = tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback) == TOBII_RESEARCH_STATUS_OK;
             break;
         case DataStream::EyeImage:
             success = doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
@@ -530,10 +530,10 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 }
 
 // gaze data, instantiate templated functions
-template std::vector<TobiiBuffer::sample> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::sample> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::sample> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::sample> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // eye images, instantiate templated functions
 template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeN(std::optional<size_t> lastN_);

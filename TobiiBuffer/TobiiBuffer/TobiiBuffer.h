@@ -21,7 +21,7 @@ class TobiiBuffer
 {
 public:
     // short names for very long Tobii data types
-    using sample     = TobiiResearchGazeData;
+    using gaze       = TobiiResearchGazeData;
     using eyeImage   = TobiiTypes::eyeImage;
     using extSignal  = TobiiResearchExternalSignalData;
     using timeSync   = TobiiResearchTimeSynchronizationData;
@@ -31,7 +31,7 @@ public:
     enum class DataStream
     {
         Unknown,
-        Sample,
+        Gaze,
         EyeImage,
         ExtSignal,
         TimeSync
@@ -52,21 +52,24 @@ public:
     // consume samples (by default all)
     template <typename T>
     std::vector<T> consumeN(std::optional<size_t> firstN_ = std::nullopt);
+    // consume samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
     std::vector<T> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // peek samples (by default only last one, can specify how many to peek from end of buffer)
     template <typename T>
     std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
+    // peek samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
     std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // clear all buffer contents
     void clear(std::string stream_);
     void clear(DataStream  stream_);
+    // clear contents buffer within given timestamps (inclusive, by default whole buffer)
     void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
     void clearTimeRange(DataStream  stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
-    
+
     // stop optionally deletes the buffer
     bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
     bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
@@ -78,7 +81,7 @@ public:
 
 private:
     // Tobii callbacks needs to be friends
-    friend void TobiiSampleCallback     (TobiiResearchGazeData*                     gaze_data_, void* user_data);
+    friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
     friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
     friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
@@ -96,7 +99,7 @@ private:
 private:
     TobiiResearchEyeTracker*	_eyetracker				= nullptr;
 
-    std::vector<sample>		    _samples;
+    std::vector<gaze>           _gaze;
 
     bool					    _recordingEyeImages		= false;
     std::vector<eyeImage>	    _eyeImages;

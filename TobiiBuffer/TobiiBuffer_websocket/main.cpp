@@ -108,7 +108,7 @@ namespace {
             x = (lx+rx)/2;
             y = (ly+ry)/2;
         }
-        
+
         return
         {
             {"ts", sample_.system_time_stamp},
@@ -399,12 +399,12 @@ int main()
                 auto jsonOutput = json::array();   // empty array if no samples
                 if (TobiiBufferInstance.get())
                 {
-                    using argType = function_traits<decltype(&TobiiBuffer::peekN<TobiiBuffer::sample>)>::argument<1>::type::value_type;
+                    using argType = function_traits<decltype(&TobiiBuffer::peekN<TobiiBuffer::gaze>)>::argument<1>::type::value_type;
                     std::optional<argType> nSamples;
                     if (jsonInput.count("nSamples"))
                         nSamples = jsonInput.at("nSamples").get<argType>();
 
-                    auto samples = TobiiBufferInstance.get()->peekN<TobiiBuffer::sample>(nSamples);
+                    auto samples = TobiiBufferInstance.get()->peekN<TobiiBuffer::gaze>(nSamples);
                     if (!samples.empty())
                     {
                         for (auto sample: samples)
@@ -429,7 +429,7 @@ int main()
             {
                 if (TobiiBufferInstance.get())
                 {
-                    auto samples = TobiiBufferInstance.get()->consumeN<TobiiBuffer::sample>();
+                    auto samples = TobiiBufferInstance.get()->consumeN<TobiiBuffer::gaze>();
                     // TODO: store all to file somehow
                 }
                 break;
@@ -477,7 +477,7 @@ int main()
         sendJson(ws, {{"action", "peekSamples"}});
     });
 
-    h.onDisconnection([&h](uWS::WebSocket<uWS::CLIENT> *ws, int code, char *message, size_t length) 
+    h.onDisconnection([&h](uWS::WebSocket<uWS::CLIENT> *ws, int code, char *message, size_t length)
     {
         std::cout << "Server has disconnected me with status code " << code << " and message: " << std::string(message, length) << std::endl;
     });

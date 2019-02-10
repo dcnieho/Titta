@@ -80,18 +80,15 @@ classdef TobiiBuffer < handle
         end
         
         function init(this,address)
-            if isa(address,'string')
-                address = char(address);    % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            address = checkStringIsChar(address);
             this.instanceHandle = this.cppmethodGlobal('new',char(address));
         end
         
         function success = start(this,stream,initialBufferSize,asGif)
-            % optional buffer size input, and input requesting gif-encoded
-            % instead of raw images
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional buffer size input, and optional input to request
+            % gif-encoded instead of raw images
+            assert(nargin>1,'Titta::buffer:start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
             elseif nargin>2 && ~isempty(initialBufferSize)
@@ -100,17 +97,26 @@ classdef TobiiBuffer < handle
                 success = this.cppmethod('start',stream);
             end
         end
-        function clear(this,stream)
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+        function success = stop(this,stream,doClearBuffer)
+            % optional boolean input indicating whether buffer should be
+            % cleared out
+            assert(nargin>1,'Titta::buffer:stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
+            if nargin>2 && ~isempty(doClearBuffer)
+                success = this.cppmethod('stop',stream,logical(doClearBuffer));
+            else
+                success = this.cppmethod('stop',stream);
             end
+        end
+        function clear(this,stream)
+            assert(nargin>1,'Titta::buffer:clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             this.cppmethod('clear',stream);
         end
         function clearTimeRange(this,stream,startT,endT)
-            % optional start and end time inputs. Default: whole range
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional start and end time inputs. Default: whole buffer
+            assert(nargin>1,'Titta::buffer:clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
@@ -119,24 +125,11 @@ classdef TobiiBuffer < handle
                 this.cppmethod('clearTimeRange',stream);
             end
         end
-        function success = stop(this,stream,doDeleteBuffer)
-            % optional boolean input indicating whether buffer should be
-            % deleted
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
-            if nargin>2 && ~isempty(doDeleteBuffer)
-                success = this.cppmethod('stop',stream,logical(doDeleteBuffer));
-            else
-                success = this.cppmethod('stop',stream);
-            end
-        end
         function data = consumeN(this,stream,firstN)
-            % optional input indicating how many samples to read from the
-            % beginning of buffer. Default: all
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional input argument firstN: how many samples to consume
+            % from start. Default: all
+            assert(nargin>1,'Titta::buffer:consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>2 && ~isempty(firstN)
                 data = this.cppmethod('consumeN',stream,uint64(firstN));
             else
@@ -144,10 +137,9 @@ classdef TobiiBuffer < handle
             end
         end
         function data = consumeTimeRange(this,stream,startT,endT)
-            % optional start and end time inputs. Default: whole range
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional inputs startT and endT. Default: whole buffer
+            assert(nargin>1,'Titta::buffer:consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
@@ -157,11 +149,10 @@ classdef TobiiBuffer < handle
             end
         end
         function data = peekN(this,stream,lastN)
-            % optional input indicating how many items to read from the
-            % end of buffer. Default: 1
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional input argument lastN: how many samples to peek from
+            % end. Default: 1. To get all, ask for -1 samples
+            assert(nargin>1,'Titta::buffer:peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>2 && ~isempty(lastN)
                 data = this.cppmethod('peekN',stream,uint64(lastN));
             else
@@ -169,10 +160,9 @@ classdef TobiiBuffer < handle
             end
         end
         function data = peekTimeRange(this,stream,startT,endT)
-            % optional start and end time inputs. Default: whole range
-            if isa(stream,'string')
-                stream = char(stream);      % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
-            end
+            % optional inputs startT and endT. Default: whole buffer
+            assert(nargin>1,'Titta::buffer:peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = checkStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
@@ -203,4 +193,12 @@ classdef TobiiBuffer < handle
             this.cppmethodGlobal('stopLogging');
         end
     end
+end
+
+
+% helpers
+function str = checkStringIsChar(str)
+if isa(str,'string')
+    str = char(str);        % seems matlab also has a string type, shows up if user accidentally uses double quotes, convert to char
+end
 end
