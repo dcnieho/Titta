@@ -153,7 +153,7 @@ namespace {
     mxArray* ToMxArray(std::vector<TobiiBuffer::logMessage             > data_);
 }
 
-void DLL_EXPORT_SYM mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nrhs < 1 || !mxIsChar(prhs[0]))
         mexErrMsgTxt("First input must be an action string ('new', 'delete', or a method name).");

@@ -46,6 +46,33 @@ namespace
         DoExitWithMsg(os.str());
     }
 
+    // default argument values
+    namespace defaults
+    {
+        constexpr size_t  sampleBufSize         = 2<<19;        // about half an hour at 600Hz
+
+        constexpr size_t  eyeImageBufSize       = 2<<11;        // about seven minutes at 2*5Hz
+        constexpr bool    eyeImageAsGIF         = false;
+
+        constexpr size_t  extSignalBufSize      = 2<<9;
+
+        constexpr size_t  timeSyncBufSize       = 2<<9;
+
+        constexpr int64_t clearTimeRangeStart   = 0;
+        constexpr int64_t clearTimeRangeEnd     = std::numeric_limits<int64_t>::max();
+
+        constexpr bool    stopBufferEmpties     = false;
+        constexpr size_t  consumeAmount         = -1;           // this overflows on purpose, consume all samples is default
+        constexpr int64_t consumeTimeRangeStart = 0;
+        constexpr int64_t consumeTimeRangeEnd   = std::numeric_limits<int64_t>::max();
+        constexpr size_t  peekAmount            = 1;
+        constexpr int64_t peekTimeRangeStart    = 0;
+        constexpr int64_t peekTimeRangeEnd      = std::numeric_limits<int64_t>::max();
+
+        constexpr size_t  logBufSize            = 2<<8;
+        constexpr bool    logBufClear           = true;
+    }
+
     // Map string to an Data Stream
     const std::map<std::string, TobiiBuffer::DataStream> dataStreamMap =
     {
@@ -54,33 +81,6 @@ namespace
         { "externalSignal", TobiiBuffer::DataStream::ExtSignal },
         { "timeSync",       TobiiBuffer::DataStream::TimeSync }
     };
-
-    // default argument values
-    namespace defaults
-    {
-        constexpr size_t  sampleBufSize = 2<<19;        // about half an hour at 600Hz
-
-        constexpr size_t  eyeImageBufSize = 2<<11;      // about seven minutes at 2*5Hz
-        constexpr bool    eyeImageAsGIF = false;
-
-        constexpr size_t  extSignalBufSize = 2<<9;
-
-        constexpr size_t  timeSyncBufSize = 2<<9;
-
-        constexpr int64_t clearTimeRangeStart = 0;
-        constexpr int64_t clearTimeRangeEnd = std::numeric_limits<int64_t>::max();
-
-        constexpr bool    stopBufferEmpties = false;
-        constexpr size_t  consumeAmount = -1;           // this overflows on purpose, consume all samples is default
-        constexpr int64_t consumeTimeRangeStart = 0;
-        constexpr int64_t consumeTimeRangeEnd = std::numeric_limits<int64_t>::max();
-        constexpr size_t  peekAmount = 1;
-        constexpr int64_t peekTimeRangeStart = 0;
-        constexpr int64_t peekTimeRangeEnd = std::numeric_limits<int64_t>::max();
-
-        constexpr size_t  logBufSize = 2<<8;
-        constexpr bool    logBufClear = true;
-    }
 }
 
 TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
@@ -89,7 +89,7 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << "Unrecognized data stream (not in dataStreamMap): \"" << stream_ << "\"";
+        os << "Titta: Requested stream \"" << stream_ << "\" is not recognized. Supported streams are: \"gaze\", \"eyeImage\", \"externalSignal\" and \"timeSync\"";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -360,7 +360,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // subscribe to new stream
                 result = doSubscribeEyeImage(_eyetracker, this, *asGif_);
                 stateVar = &_recordingEyeImages;
-                if (_recordingEyeImages)
+                if (result==TOBII_RESEARCH_STATUS_OK)
                     // update type being recorded if subscription to stream was successful
                     _eyeImIsGif = *asGif_;
             }
@@ -385,7 +385,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
         }
         case DataStream::TimeSync:
         {
-            if (_recordingGaze)
+            if (_recordingTimeSync)
                 result = TOBII_RESEARCH_STATUS_OK;
             else
             {
@@ -601,7 +601,6 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
             break;
         case DataStream::EyeImage:
             result = !_recordingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
-
             stateVar = &_recordingEyeImages;
             break;
         case DataStream::ExtSignal:
@@ -619,7 +618,7 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 
     bool success = result == TOBII_RESEARCH_STATUS_OK;
     if (stateVar && success)
-        *stateVar = true;
+        *stateVar = false;
 
     return success;
 }
