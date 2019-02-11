@@ -387,6 +387,7 @@ classdef Titta < handle
                             qGoToValidationViewer = true;
                         case -4
                             % full stop
+                            calibClass.leave_calibration_mode();
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.setupStatus);
@@ -415,6 +416,7 @@ classdef Titta < handle
                             continue;
                         case -4
                             % full stop
+                            calibClass.leave_calibration_mode();
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
@@ -465,6 +467,7 @@ classdef Titta < handle
                         continue;
                     case -4
                         % full stop
+                        calibClass.leave_calibration_mode();
                         error('Titta: run ended from Tobii routine')
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
