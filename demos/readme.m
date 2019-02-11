@@ -22,8 +22,8 @@ try
     settings.cal.drawFunction = @calViz.doDraw;
     settings.debugMode      = true;
     settings.cal.bgColor    = bgclr;
-    settings.UI.setupMsg.color = fixClrs(1);
-    settings.UI.valTopText.color = fixClrs(1);
+    settings.UI.setup.instruct.color = fixClrs(1);
+    settings.UI.val.topText.color = fixClrs(1);
     calViz.bgColor          = settings.cal.bgColor;
     % TODO set fix colors for all displays, and animated calibration
     settings.cal.pointPos   = [.5 .5];
@@ -141,9 +141,9 @@ try
     Screen('Close',tex);
     
     % stopping and saving
-    %if EThndl.rawBuffers.hasStream('eyeImage')
-    %    EThndl.stopRecording('eyeImage');
-    %end
+    if EThndl.buffer.hasStream('eyeImage')
+        EThndl.buffer.stop('eyeImage');
+    end
     EThndl.buffer.stop('gaze');
     EThndl.saveData(fullfile(cd,'t'), true);
     
