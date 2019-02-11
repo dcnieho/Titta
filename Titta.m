@@ -656,6 +656,10 @@ classdef Titta < handle
             settings.UI.val.hoverText.size  = 20*textFac;
             settings.UI.val.hoverText.color = 0;                                % only for messages on the screen, doesn't affect buttons
             settings.UI.val.hoverText.style = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.val.menuText.font   = 'Consolas';
+            settings.UI.val.menuText.size   = 24*textFac;
+            settings.UI.val.menuText.color  = 0;                                % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.menuText.style  = 0;
             settings.UI.buttons.font        = 'Consolas';
             settings.UI.buttons.size        = 24*textFac;
             settings.UI.buttons.color       = 0;                                % only for messages on the screen, doesn't affect buttons
@@ -1588,9 +1592,9 @@ classdef Titta < handle
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                    Screen('TextFont',  wpnt, obj.settings.UI.valMenuText.font, obj.settings.UI.valMenuText.style);
-                    Screen('TextSize',  wpnt, obj.settings.UI.valMenuText.size);
-                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.valMenuText.color);
+                    Screen('TextFont',  wpnt, obj.settings.UI.val.menuText.font, obj.settings.UI.val.menuText.style);
+                    Screen('TextSize',  wpnt, obj.settings.UI.val.menuText.size);
+                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.val.menuText.color);
                 end
             end
             
