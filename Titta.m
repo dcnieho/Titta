@@ -438,7 +438,7 @@ classdef Titta < handle
                             % also get average
                             val = out.attempt{kCal}.val;
                             dat(:,end) = {'average',val.acc2D(e),val.acc(1,e),val.acc(2,e),val.STD2D(e),val.RMS2D(e),val.dataLoss(e)*100};
-                            msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.1f%%\n',dat{:}));
+                            msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.1f%%\n',dat{:}));
                         end
                         msg = [msg{:}]; msg(end) = [];
                         obj.sendMessage(sprintf('VALIDATION %d Data Quality:\npoint\tacc2D\taccX\taccY\tSTD2D\tRMS2D\tdata loss\n%s',kCal,msg));
