@@ -870,7 +870,7 @@ classdef Titta < handle
                 end
                 
                 % get latest data from eye-tracker
-                eyeData = obj.buffer.peekN('sample',1);
+                eyeData = obj.buffer.peekN('gaze',1);
                 [lEye,rEye] = deal(nan(3,1));
                 if ~isempty(eyeData.systemTimeStamp)
                     lEye = eyeData. left.gazeOrigin.inUserCoords;
@@ -1246,9 +1246,9 @@ classdef Titta < handle
         end
         
         function ClearAllBuffers(obj,varargin)
-            obj.buffer.clearTimeRange('sample',varargin{:});
+            obj.buffer.clearTimeRange('gaze',varargin{:});
             obj.buffer.clearTimeRange('eyeImage',varargin{:});
-            obj.buffer.clearTimeRange('extSignal',varargin{:});
+            obj.buffer.clearTimeRange('externalSignal',varargin{:});
             obj.buffer.clearTimeRange('timeSync',varargin{:});
         end
         
@@ -1845,7 +1845,7 @@ classdef Titta < handle
                         % draw fixation points
                         obj.drawFixPoints(wpnt,fixPos);
                         % draw gaze data
-                        eyeData = obj.buffer.consumeN('sample');
+                        eyeData = obj.buffer.consumeN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
