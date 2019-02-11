@@ -396,7 +396,7 @@ classdef Titta < handle
                 
                 %%% 2b: calibrate and validate
                 if ~qGoToValidationViewer
-                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,calibClass);
+                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,calibClass,false);
                     warning('off','catstruct:DuplicatesFound')  % field already exists but is empty, will be overwritten with the output from the function here
                     out.attempt{kCal} = catstruct(out.attempt{kCal},temp);
                     % check returned action state
