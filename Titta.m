@@ -644,6 +644,10 @@ classdef Titta < handle
                 textFac = 1;
             end
             
+            % TODO: set eye colors for various defaults to something good
+            % TODO: allow to navigate menu with arrow key, enter to commit
+            % choice
+            
             % the rest here are good defaults for all
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber               = '';
@@ -1609,7 +1613,7 @@ classdef Titta < handle
                 height          = 45;
                 nElem           = length(iValid);
                 totHeight       = nElem*(height+pad)-pad;
-                width           = 700;
+                width           = 900;
                 % menu background
                 menuBackRect    = [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
                 % menuRects
