@@ -644,7 +644,6 @@ classdef Titta < handle
                 textFac = 1;
             end
             
-            % TODO: set eye colors for various defaults to something good
             % TODO: allow to navigate menu with arrow key, enter to commit
             % choice
             
@@ -675,13 +674,13 @@ classdef Titta < handle
             settings.UI.cal.errMsg.color        = [255 0 0];                    % only for messages on the screen, doesn't affect buttons
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.cal.errMsg.wrapAt       = 62;
-            settings.UI.val.eyeColors           = {[255 127 0],[0 127 255]};    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.eyeColors           = {[255 127 0],[0 95 191]};     % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.bgColor             = 127;                          % background color for validation output screen
             settings.UI.val.fixBackSize         = 20;
             settings.UI.val.fixFrontSize        = 5;
             settings.UI.val.fixBackColor        = 0;
             settings.UI.val.fixFrontColor       = 255;
-            settings.UI.val.onlineGaze.eyeColors= {[255 127 0],[0 127 255]};    % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.onlineGaze.eyeColors= {[255 127 0],[0 95 191]};     % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.onlineGaze.fixBackSize  = 20;
             settings.UI.val.onlineGaze.fixFrontSize = 5;
             settings.UI.val.onlineGaze.fixBackColor = 0;
@@ -689,14 +688,14 @@ classdef Titta < handle
             settings.UI.val.avg.text.font       = 'Consolas';
             settings.UI.val.avg.text.size       = 24*textFac;
             settings.UI.val.avg.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.avg.text.eyeColors  = {[255 127 0],[0 127 255]};    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.avg.text.eyeColors  = {[255 127 0],[0 95 191]};     % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
             settings.UI.val.hover.bgColor       = 110;
             settings.UI.val.hover.text.font     = 'Consolas';
             settings.UI.val.hover.text.size     = 20*textFac;
             settings.UI.val.hover.text.color    = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 127 255]};    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 95 191]};     % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.doShowValCalSwitch  = false;                        % if true, button to switch between showing calibration and validation results. Even if false, pressing the 't' key will toggle which is shown
             settings.UI.val.menu.bgColor        = 140;
@@ -704,7 +703,7 @@ classdef Titta < handle
             settings.UI.val.menu.text.font      = 'Consolas';
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.menu.text.eyeColors = {[255 127 0],[0 127 255]};    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.menu.text.eyeColors = {[255 127 0],[0 95 191]};     % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
             settings.UI.buttons.text.font       = 'Consolas';
             settings.UI.buttons.text.size       = 24*textFac;
