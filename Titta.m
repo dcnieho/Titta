@@ -694,6 +694,7 @@ classdef Titta < handle
             settings.UI.val.hover.text.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 127 255]};    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.val.doShowValCalSwitch  = false;                        % if true, button to switch between showing calibration and validation results. Even if false, pressing the 't' key will toggle which is shown
             settings.UI.val.menu.bgColor        = 140;
             settings.UI.val.menu.itemColor      = 110;
             settings.UI.val.menu.text.font      = 'Consolas';
@@ -1593,7 +1594,7 @@ classdef Titta < handle
             % 3. left side
             buttonSz            = [190 45];
             toggleCVButClr      = [37  97 163];
-            if qHasCal
+            if qHasCal && obj.settings.UI.val.doShowValCalSwitch
                 toggleCVButRect = OffsetRect([0 0 buttonSz],0,yPosTop);
                 toggleCVButTextCache= {obj.getTextCache(wpnt,'show cal (<i>t<i>)',toggleCVButRect), obj.getTextCache(wpnt,'show val (<i>t<i>)',toggleCVButRect)};
             else
@@ -1752,7 +1753,7 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
-                    if qHasCal
+                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
                         calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
                     end
                 end
@@ -1825,7 +1826,7 @@ classdef Titta < handle
                     
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
-                    if qHasCal
+                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
                         % draw text indicating whether calibration or
                         % validation is currently shown
                         obj.drawCachedText(calValLblCache);
@@ -1843,7 +1844,7 @@ classdef Titta < handle
                     obj.drawCachedText(setupButTextCache);
                     Screen('FillRect',wpnt,obj.getColorForWindow(showGazeButClrs{qShowGaze+1}),showGazeButRect);
                     obj.drawCachedText(showGazeButTextCache);
-                    if qHasCal
+                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
                         Screen('FillRect',wpnt,obj.getColorForWindow(toggleCVButClr),toggleCVButRect);
                         obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
                     end
