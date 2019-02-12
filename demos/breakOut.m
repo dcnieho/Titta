@@ -1,7 +1,7 @@
 sca
 clear variables
 
-addpath(genpath(fullfile(cd,'..')));
+addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
 qDEBUG = 0;
 

@@ -13,7 +13,7 @@ fixTime                 = .5;
 imageTime               = 2;
 scr                     = max(Screen('Screens'));
 
-addpath(genpath(fullfile(cd,'..')));
+addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
 try
     % get setup struct (can edit that of course):
