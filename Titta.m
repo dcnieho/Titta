@@ -112,15 +112,26 @@ classdef Titta < handle
                 obj.settings = settings;
             end
             % setup colors
-            obj.settings.UI.eyeColors           = cellfun(@color2RGBA,obj.settings.UI.eyeColors,'uni',false);
+            obj.settings.UI.val.eyeColors           = cellfun(@color2RGBA,obj.settings.UI.val.eyeColors           ,'uni',false);
+            obj.settings.UI.val.onlineGaze.eyeColors= cellfun(@color2RGBA,obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
+            obj.settings.UI.val.avg.text.eyeColors  = cellfun(@color2RGBA,obj.settings.UI.val.avg.text.eyeColors  ,'uni',false);
+            obj.settings.UI.val.hover.text.eyeColors= cellfun(@color2RGBA,obj.settings.UI.val.hover.text.eyeColors,'uni',false);
+            obj.settings.UI.val.menu.text.eyeColors = cellfun(@color2RGBA,obj.settings.UI.val.menu.text.eyeColors ,'uni',false);
+            
+            obj.settings.UI.setup.bgColor       = color2RGBA(obj.settings.UI.setup.bgColor);
             obj.settings.UI.setup.instruct.color= color2RGBA(obj.settings.UI.setup.instruct.color);
             obj.settings.UI.cal.errMsg.color    = color2RGBA(obj.settings.UI.cal.errMsg.color);
-            obj.settings.UI.val.topText.color   = color2RGBA(obj.settings.UI.val.topText.color);
-            obj.settings.UI.val.hoverText.color = color2RGBA(obj.settings.UI.val.hoverText.color);
-            obj.settings.UI.buttons.color       = color2RGBA(obj.settings.UI.buttons.color);
+            obj.settings.UI.val.bgColor         = color2RGBA(obj.settings.UI.val.bgColor);
+            obj.settings.UI.val.avg.text.color  = color2RGBA(obj.settings.UI.val.avg.text.color);
+            obj.settings.UI.val.hover.bgColor   = color2RGBA(obj.settings.UI.val.hover.bgColor);
+            obj.settings.UI.val.hover.text.color= color2RGBA(obj.settings.UI.val.hover.text.color);
+            obj.settings.UI.val.menu.bgColor    = color2RGBA(obj.settings.UI.val.menu.bgColor);
+            obj.settings.UI.val.menu.itemColor  = color2RGBA(obj.settings.UI.val.menu.itemColor);
+            obj.settings.UI.val.menu.text.color = color2RGBA(obj.settings.UI.val.menu.text.color);
             obj.settings.cal.bgColor            = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor       = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor      = color2RGBA(obj.settings.cal.fixFrontColor);
+            obj.settings.UI.buttons.text.color  = color2RGBA(obj.settings.UI.buttons.text.color);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -328,7 +339,7 @@ classdef Titta < handle
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
             if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.UI.buttons,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
+                assert(isfield(obj.settings.UI.buttons.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end
             
             % init key, mouse state
@@ -628,69 +639,80 @@ classdef Titta < handle
             end
             
             % the rest here are good defaults for all
-            settings.calibrateEye           = 'both';                           % 'both', also possible if supported by eye tracker: 'left' and 'right'
-            settings.serialNumber           = '';
-            settings.licenseFile            = '';
-            settings.nTryConnect            = 1;                                % How many times to try to connect before giving up
-            settings.connectRetryWait       = 4;                                % seconds
-            settings.UI.startScreen         = 1;                                % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
-            settings.UI.eyeColors           = {[255 127 0],[0 127 255]};        % L, R eye
-            settings.UI.setup.showEyes      = true;
-            settings.UI.setup.showPupils    = true;
-            settings.UI.setup.viewingDist   = 65;
+            settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
+            settings.serialNumber               = '';
+            settings.licenseFile                = '';
+            settings.nTryConnect                = 1;                            % How many times to try to connect before giving up
+            settings.connectRetryWait           = 4;                            % seconds
+            settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
+            settings.UI.setup.showEyes          = true;
+            settings.UI.setup.showPupils        = true;
+            settings.UI.setup.viewingDist       = 65;
+            settings.UI.setup.bgColor           = 127;
             settings.UI.setup.instruct.string   = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
             settings.UI.setup.instruct.font     = 'Consolas';
             settings.UI.setup.instruct.size     = 24*textFac;
-            settings.UI.setup.instruct.color    = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.setup.instruct.style    = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
-            settings.UI.cal.errMsg.string   = 'Calibration failed\nPress any key to continue';
-            settings.UI.cal.errMsg.font     = 'Consolas';
-            settings.UI.cal.errMsg.size     = 36*textFac;
-            settings.UI.cal.errMsg.color    = [255 0 0];                        % only for messages on the screen, doesn't affect buttons
-            settings.UI.cal.errMsg.style    = 1;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.cal.errMsg.wrapAt   = 62;
-            settings.UI.val.topText.font    = 'Consolas';
-            settings.UI.val.topText.size    = 24*textFac;
-            settings.UI.val.topText.color   = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.topText.style   = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.val.topText.vSpacing= 1;
-            settings.UI.val.hoverText.font  = 'Consolas';
-            settings.UI.val.hoverText.size  = 20*textFac;
-            settings.UI.val.hoverText.color = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.hoverText.style = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.val.menuText.font   = 'Consolas';
-            settings.UI.val.menuText.size   = 24*textFac;
-            settings.UI.val.menuText.color  = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.menuText.style  = 0;
-            settings.UI.buttons.font        = 'Consolas';
-            settings.UI.buttons.size        = 24*textFac;
-            settings.UI.buttons.color       = 0;                                % only for messages on the screen, doesn't affect buttons
-            settings.UI.buttons.style       = 0;                                % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.buttons.wrapAt      = 62;
+            settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
+            settings.UI.cal.errMsg.font         = 'Consolas';
+            settings.UI.cal.errMsg.size         = 36*textFac;
+            settings.UI.cal.errMsg.color        = [255 0 0];                    % only for messages on the screen, doesn't affect buttons
+            settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.cal.errMsg.wrapAt       = 62;
+            settings.UI.val.eyeColors           = {[255 127 0],[0 127 255]};    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.bgColor             = 127;                          % background color for validation output screen
+            settings.UI.val.onlineGaze.eyeColors= {[255 127 0],[0 127 255]};    % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.avg.text.font       = 'Consolas';
+            settings.UI.val.avg.text.size       = 24*textFac;
+            settings.UI.val.avg.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.avg.text.eyeColors  = {[255 127 0],[0 127 255]};    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.val.avg.text.vSpacing   = 1;
+            settings.UI.val.hover.bgColor       = 110;
+            settings.UI.val.hover.text.font     = 'Consolas';
+            settings.UI.val.hover.text.size     = 20*textFac;
+            settings.UI.val.hover.text.color    = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 127 255]};    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.val.menu.bgColor        = 140;
+            settings.UI.val.menu.itemColor      = 110;
+            settings.UI.val.menu.text.font      = 'Consolas';
+            settings.UI.val.menu.text.size      = 24*textFac;
+            settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.menu.text.eyeColors = {[255 127 0],[0 127 255]};    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.menu.text.style     = 0;
+            settings.UI.buttons.text.font       = 'Consolas';
+            settings.UI.buttons.text.size       = 24*textFac;
+            settings.UI.buttons.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.buttons.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.buttons.text.wrapAt     = 62;
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
-                settings.UI.buttons.lineCentOff     = 3;                        % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
+                settings.UI.buttons.text.lineCentOff= 3;                        % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
             end
+            % TODO: colors for fixation points per screen
+            %
             % TODO: implement fields with text per button (means their size
             % must become dynamic and we need to implement margins)
             % and also colors
-            settings.cal.pointPos           = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
-            settings.cal.autoPace           = 1;                                % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
-            settings.cal.paceDuration       = 1.5;                              % minimum duration (s) that each point is shown
-            settings.cal.qRandPoints        = true;
-            settings.cal.bgColor            = 127;
-            settings.cal.fixBackSize        = 20;
-            settings.cal.fixFrontSize       = 5;
-            settings.cal.fixBackColor       = 0;
-            settings.cal.fixFrontColor      = 255;
-            settings.cal.drawFunction       = [];
-            settings.cal.doRecordEyeImages  = false;
-            settings.cal.doRecordExtSignal  = false;
-            settings.val.pointPos           = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
-            settings.val.paceDuration       = 1.5;
-            settings.val.collectDuration    = 0.5;
-            settings.val.qRandPoints        = true;
-            settings.debugMode              = false;                            % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
+            settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.cal.autoPace               = 1;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
+            settings.cal.paceDuration           = 1.5;                          % minimum duration (s) that each point is shown
+            settings.cal.qRandPoints            = true;
+            settings.cal.bgColor                = 127;
+            settings.cal.fixBackSize            = 20;
+            settings.cal.fixFrontSize           = 5;
+            settings.cal.fixBackColor           = 0;
+            settings.cal.fixFrontColor          = 255;
+            settings.cal.drawFunction           = [];
+            settings.cal.doRecordEyeImages      = false;
+            settings.cal.doRecordExtSignal      = false;
+            settings.val.pointPos               = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
+            settings.val.paceDuration           = 1.5;
+            settings.val.collectDuration        = 0.5;
+            settings.val.qRandPoints            = true;
+            settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
         function time = getSystemTime()
@@ -705,7 +727,6 @@ classdef Titta < handle
             allowed = {...
                 'calibrateEye',''
                 'UI','startScreen'
-                'UI','eyeColors'
                 'UI','setup'
                 'UI','cal'
                 'UI','val'
@@ -758,8 +779,8 @@ classdef Titta < handle
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.buttons.font, obj.settings.UI.buttons.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.buttons.size);
+            Screen('TextFont',  wpnt, obj.settings.UI.buttons.text.font, obj.settings.UI.buttons.text.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.buttons.text.size);
             
             % setup ovals
             ovalVSz     = .15;
@@ -810,7 +831,7 @@ classdef Titta < handle
             else
                 validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
             end
-            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % clear what we've just drawn
+            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % clear what we've just drawn. NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
@@ -1109,7 +1130,7 @@ classdef Titta < handle
                     end
                 end
                 if ~isempty(rect)
-                    inputs.sy = inputs.sy + obj.settings.UI.buttons.lineCentOff;
+                    inputs.sy = inputs.sy + obj.settings.UI.buttons.text.lineCentOff;
                 end
                 [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,inputs.baseColor,[],inputs.vSpacing,[],[],true);
             end
@@ -1510,6 +1531,7 @@ classdef Titta < handle
             % g: show gaze (and fixation points)
             % t: toggle between seeing validation results and calibration
             %    result
+            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.val.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % find how many valid calibrations we have:
             iValid = getValidCalibrations(cal);
@@ -1522,8 +1544,8 @@ classdef Titta < handle
             qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.buttons.font, obj.settings.UI.buttons.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.buttons.size);
+            Screen('TextFont',  wpnt, obj.settings.UI.buttons.text.font, obj.settings.UI.buttons.text.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.buttons.text.size);
             
             % set up buttons
             % 1. below screen
@@ -1571,33 +1593,29 @@ classdef Titta < handle
                 nElem           = length(iValid);
                 totHeight       = nElem*(height+pad)-pad;
                 width           = 700;
-                menuBgColor     = [140 140 140 255];
-                menuItemBgColor = [110 110 110 255];
                 % menu background
-                menuBackRect= [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
+                menuBackRect    = [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
                 % menuRects
-                menuRects = repmat([-.5*width+obj.scrInfo.center(1) -height/2+obj.scrInfo.center(2) .5*width+obj.scrInfo.center(1) height/2+obj.scrInfo.center(2)],length(iValid),1);
-                menuRects = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                menuRects       = repmat([-.5*width+obj.scrInfo.center(1) -height/2+obj.scrInfo.center(2) .5*width+obj.scrInfo.center(1) height/2+obj.scrInfo.center(2)],length(iValid),1);
+                menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
                 for c=length(iValid):-1:1
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},menuItemBgColor);
-                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(clr),cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
+                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},menuItemBgColor);
-                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(clr),cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
+                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                    Screen('TextFont',  wpnt, obj.settings.UI.val.menuText.font, obj.settings.UI.val.menuText.style);
-                    Screen('TextSize',  wpnt, obj.settings.UI.val.menuText.size);
-                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.val.menuText.color);
+                    Screen('TextFont',  wpnt, obj.settings.UI.val.menu.text.font, obj.settings.UI.val.menu.text.style);
+                    Screen('TextSize',  wpnt, obj.settings.UI.val.menu.text.size);
+                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.val.menu.text.color);
                 end
             end
             
@@ -1673,23 +1691,21 @@ classdef Titta < handle
                     % when switching between viewing calibration and
                     % validation output, thats an unimportant price to pay
                     % for simpler logic
-                    Screen('TextFont', wpnt, obj.settings.UI.val.topText.font, obj.settings.UI.val.topText.style);
-                    Screen('TextSize', wpnt, obj.settings.UI.val.topText.size);
+                    Screen('TextFont', wpnt, obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
+                    Screen('TextSize', wpnt, obj.settings.UI.val.avg.text.size);
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},obj.settings.cal.bgColor);
-                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(clr),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
+                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        clr = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},obj.settings.cal.bgColor);
-                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(clr),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
+                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = '\n';
                     end
                     valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.topText.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.topText.color);
+                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                     
                     % get info about where points were on screen
                     if qShowCal
@@ -1729,24 +1745,21 @@ classdef Titta < handle
                 if ~isnan(openInfoForPoint)
                     pointToShowInfoFor = openInfoForPoint;
                     openInfoForPoint   = nan;
-                    infoPopBgColor     = [110 110 110 255];
                     % 1. prepare text
-                    Screen('TextFont', wpnt, obj.settings.UI.val.hoverText.font, obj.settings.UI.val.hoverText.style);
-                    Screen('TextSize', wpnt, obj.settings.UI.val.hoverText.size);
-                    clrL = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{1},infoPopBgColor);
-                    clrR = chooseColorWithGoodContrast(obj.settings.UI.eyeColors{2},infoPopBgColor);
+                    Screen('TextFont', wpnt, obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
+                    Screen('TextSize', wpnt, obj.settings.UI.val.hover.text.size);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     elseif obj.calibrateLeftEye
                         lE = cal{selection}.val.quality(pointToShowInfoFor).left;
-                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
                     elseif obj.calibrateRightEye
                         rE = cal{selection}.val.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%2$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>\nPrecision SD:        <color=%2$s>%6$.2f°<color>\nPrecision RMS:       <color=%2$s>%7$.2f°<color>\nData loss:            <color=%2$s>%8$3.0f%%<color>',clr2hex(clrL),clr2hex(clrR),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.val.hoverText.color);
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
@@ -1787,10 +1800,10 @@ classdef Titta < handle
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.eyeColors{1}),[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{1}),[],2);
                         end
                         if obj.calibrateRightEye && ~isempty(rEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.eyeColors{2}),[],2);
+                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{2}),[],2);
                         end
                     end
                     
@@ -1821,9 +1834,9 @@ classdef Titta < handle
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
-                        Screen('FillRect',wpnt,obj.getColorForWindow(menuBgColor),menuBackRect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.bgColor),menuBackRect);
                         % menuRects
-                        Screen('FillRect',wpnt,obj.getColorForWindow(menuItemBgColor),menuRects.');
+                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColor),menuRects.');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -1840,7 +1853,7 @@ classdef Titta < handle
                         if rect(4)>obj.scrInfo.resolution(2)
                             rect = OffsetRect(rect,0,obj.scrInfo.resolution(2)-rect(4));
                         end
-                        Screen('FillRect',wpnt,obj.getColorForWindow(infoPopBgColor),rect);
+                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.hover.bgColor),rect);
                         obj.drawCachedText(pointTextCache,rect);
                     end
                     % if showing gaze, draw
@@ -1853,10 +1866,10 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.eyeColors{1}), lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1}), lE(1), lE(2), 10);
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.eyeColors{2}), rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2}), rE(1), rE(2), 10);
                             end
                         end
                     end
@@ -2080,76 +2093,6 @@ function hex = clr2hex(clr)
 hex = reshape(dec2hex(clr(1:3),2).',1,[]);
 end
 
-function clr = chooseColorWithGoodContrast(clr,background)
-a = clr(4);
-hslc = rgb2hsl(clr);
-hslb = rgb2hsl(background);
-
-% simple rule: if background midgrey or darker: use lighter colors. if
-% brighter, use darker color
-% NB: take monitor gamma (assume 2.2) into account. Midgrey is then at
-% l=0.7297.
-% to get that:
-% fun=@(x) abs(x^2.2 -  255.^2.2 * .5);
-% frac = fminsearch(fun,1)/255;
-if hslb(3)<=0.7297
-    % dark background use light color
-    clr = hsl2rgb([hslc(1:2) 0.8222]);  % optimize above with 0.65
-else
-    clr = hsl2rgb([hslc(1:2) 0.5325]);  % optimize above with 0.25
-end
-clr = round([clr a]);
-end
-
-function hsl = rgb2hsl(rgb)
-% takes 0-255 rgb values, outputs 0-1 hsv values
-rgb = rgb(:,1:3)/255;
-mx=max(rgb,[],2);%max of the 3 colors
-mn=min(rgb,[],2);%min of the 3 colors
-d = mx - mn;
-
-% luminance
-L = (mx + mn) / 2;
-
-% saturation
-S = d./(mx + mn).*(L <= 0.5) + d./(2-mx-mn).*(L > 0.5);
-
-% Hue
-H = 0 ...
-    + (mx == rgb(:,1)) .* ((rgb(:,2) - rgb(:,3))./d + 6.*(rgb(:,2)<rgb(:,3))) ...
-    + (mx == rgb(:,2)) .* ((rgb(:,3) - rgb(:,1))./d + 2)                      ...
-    + (mx == rgb(:,3)) .* ((rgb(:,1) - rgb(:,2))./d + 4);
-H = H/6;
-
-% correct for achromatic
-gray = (mn == mx);
-S(gray) = 0;
-H(gray) = 0;
-
-% output (all [0 1] range), maps onto 0-360 deg for H, 0-100% for the
-% others
-hsl=[H, S, L];
-end
-
-
-function rgb = hsl2rgb(hsl)
-% takes 0-1 hsl values, outputs 0-255 rgb values
-S = hsl(:,2);
-L = hsl(:,3);
-q = L.*(1 + S).*(L<0.5) + (L+S-L.*S).*(L>=0.5);
-p = repmat(2.*L - q,1,3);
-q = repmat(q       ,1,3);
-t = [mod(hsl(:,1) + 1/3, 1), hsl(:,1) , mod(hsl(:,1) - 1/3, 1)];
-
-rgb = 0 ...
-    + (t < 1/6)            .* (p + (q - p) .* 6 .* t) ...
-    + (t >= 1/6 & t < 1/2) .* q ...
-    + (t >= 1/2 & t < 2/3) .* (p + (q - p) .* (2/3 - t) .* 6) ...
-    + (t >= 2/3)           .* p;
-
-rgb = rgb*255;
-end
-
 function [texs,szs] = UploadImages(texs,szs,wpnt,image)
 if isempty(image)
     return;
@@ -2234,7 +2177,9 @@ if any(qSubStruct)
             extraCol = size(temp,2)+1-size(fieldInfo,2);
             fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)]; %#ok<AGROW>
         end
-        fieldInfo = [fieldInfo(1:idx(p)-1,:); [repmat(fieldInfo(idx(p),1),size(temp,1),1) temp]; fieldInfo(idx(p)+1:end,:)];
+        add = repmat(fieldInfo(idx(p),:),size(temp,1),1);
+        add(:,[1:size(temp,2)]+1) = temp;
+        fieldInfo = [fieldInfo(1:idx(p)-1,:); add; fieldInfo(idx(p)+1:end,:)];
     end
 end
 end

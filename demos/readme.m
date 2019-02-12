@@ -2,32 +2,50 @@ sca
 qDEBUG      = 0;
 useDarkMode = true;
 if useDarkMode
-    bgclr       = 0;
-    fixClrs     = [255 40];
+    bgclr                   = 0;
+    fixClrs                 = [255 100];
+    setupScreenAlsoDark     = true;
+    validationResultAlsoDark= true;
 else
-    bgclr       = 255/2;
-    fixClrs     = [0 255];
+    bgclr                   = 255/2;
+    fixClrs                 = [0 255];
 end
-fixTime     = .5;
-imageTime   = 2;
-scr         = max(Screen('Screens'));
+useAnimatedCalibration  = true;
+% task parameters
+fixTime                 = .5;
+imageTime               = 2;
+scr                     = max(Screen('Screens'));
 
 addpath(genpath(fullfile(cd,'..')));
 
 try
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
-    % custom calibration drawer
-    calViz = AnimatedCalibrationDisplay();
     settings.cal.drawFunction = @calViz.doDraw;
     settings.debugMode      = true;
     settings.cal.bgColor    = bgclr;
-    settings.UI.setup.instruct.color = fixClrs(1);
-    settings.UI.val.topText.color = fixClrs(1);
-    calViz.bgColor          = settings.cal.bgColor;
-    % TODO set fix colors for all displays, and animated calibration
+    % TODO: allow set colors for fixation points per screen, except for
+    % those drawn by custom calibration screen drawer
+    if useDarkMode && setupScreenAlsoDark
+        settings.UI.setup.bgColor       = bgclr;
+        settings.UI.setup.instruct.color= fixClrs(1);
+    end
+    if useDarkMode && validationResultAlsoDark
+        settings.UI.val.bgColor         = bgclr;
+        settings.UI.val.avg.text.color  = fixClrs(1);
+    end
+    if useAnimatedCalibration
+        % custom calibration drawer
+        calViz = AnimatedCalibrationDisplay();
+        calViz.bgColor          = settings.cal.bgColor;
+        calViz.fixBackColor     = fixClrs(1);
+        calViz.fixFrontColor    = fixClrs(2);
+    else
+        % set color of built-in fixation points
+        settings.cal.fixBackColor   = fixClrs(1);
+        settings.cal.fixFrontColor  = fixClrs(2);
+    end
     settings.cal.pointPos   = [.5 .5];
-    
     % init
     EThndl          = Titta(settings);
 %     EThndl         = ETFhndl.setDummyMode();
