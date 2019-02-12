@@ -133,6 +133,7 @@ classdef Titta < handle
             obj.settings.UI.val.hover.text.color        = color2RGBA(obj.settings.UI.val.hover.text.color);
             obj.settings.UI.val.menu.bgColor            = color2RGBA(obj.settings.UI.val.menu.bgColor);
             obj.settings.UI.val.menu.itemColor          = color2RGBA(obj.settings.UI.val.menu.itemColor);
+            obj.settings.UI.val.menu.itemColorActive    = color2RGBA(obj.settings.UI.val.menu.itemColorActive);
             obj.settings.UI.val.menu.text.color         = color2RGBA(obj.settings.UI.val.menu.text.color);
             obj.settings.cal.bgColor                    = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
@@ -644,8 +645,11 @@ classdef Titta < handle
                 textFac = 1;
             end
             
-            % TODO: allow to navigate menu with arrow key, enter to commit
-            % choice
+            % TODO: change button colors to something brighter with more
+            % contrast with the background
+            % TODO: common file format
+            % TODO: teaching perspective of showing all the data quality
+            % measures, write about that in the paper.
             
             % the rest here are good defaults for all
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
@@ -698,8 +702,9 @@ classdef Titta < handle
             settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 95 191]};     % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.doShowValCalSwitch  = false;                        % if true, button to switch between showing calibration and validation results. Even if false, pressing the 't' key will toggle which is shown
-            settings.UI.val.menu.bgColor        = 140;
-            settings.UI.val.menu.itemColor      = 110;
+            settings.UI.val.menu.bgColor        = 110;
+            settings.UI.val.menu.itemColor      = 140;
+            settings.UI.val.menu.itemColorActive= 180;
             settings.UI.val.menu.text.font      = 'Consolas';
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -1645,6 +1650,7 @@ classdef Titta < handle
             qDoneCalibSelection = false;
             qToggleSelectMenu   = true;
             qSelectMenuOpen     = true;     % gets set to false on first draw as toggle above is true (hack to make sure we're set up on first entrance of draw loop)
+            qChangeMenuArrow    = false;
             qToggleGaze         = false;
             qShowGaze           = false;
             qUpdateCalDisplay   = true;
@@ -1674,15 +1680,13 @@ classdef Titta < handle
                 
                 % setup cursors
                 if qToggleSelectMenu
+                    currentMenuSel      = find(selection==iValid);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
+                    qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
                         cursors.rect    = {menuRects.',continueButRect.',recalButRect.'};
                         cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
-                        % setup indicator which calibration is active
-                        rect = menuRects(selection==iValid,:);
-                        rect(3) = rect(1)+RectWidth(rect)*.07;
-                        menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
                     else
                         cursors.rect    = {continueButRect.',recalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
                         cursors.cursor  = [2 2 2 2 2 2];  % 2: Hand
@@ -1692,6 +1696,13 @@ classdef Titta < handle
                     % NB: don't reset cursor to invisible here as it will then flicker every
                     % time you click something. default behaviour is good here
                     cursor = cursorUpdater(cursors);
+                end
+                if qChangeMenuArrow
+                    % setup arrow that can be moved with arrow keys
+                    rect = menuRects(currentMenuSel,:);
+                    rect(3) = rect(1)+RectWidth(rect)*.07;
+                    menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
+                    qChangeMenuArrow = false;
                 end
                 
                 % setup fixation point positions for cal or val
@@ -1855,8 +1866,10 @@ classdef Titta < handle
                     if qSelectMenuOpen
                         % menu background
                         Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.bgColor),menuBackRect);
-                        % menuRects
-                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColor),menuRects.');
+                        % menuRects, inactive and currentlyactive
+                        qActive = iValid==selection;
+                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ),menuRects(~qActive,:).');
+                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive),menuRects( qActive,:).');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -1951,6 +1964,32 @@ classdef Titta < handle
                                 selection           = idx;
                                 qToggleSelectMenu   = true;
                                 break;
+                            elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
+                                idx                 = iValid(currentMenuSel);
+                                qSelectedCalChanged = selection~=idx;
+                                selection           = idx;
+                                qToggleSelectMenu   = true;
+                                break;
+                            else
+                                if ~iscell(keys), keys = {keys}; end
+                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+                                    % up arrow key (test so round-about
+                                    % because KbName could return both 'up'
+                                    % and 'UpArrow', depending on platform
+                                    % and mode)
+                                    if currentMenuSel>1
+                                        currentMenuSel   = currentMenuSel-1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+                                    % down key
+                                    if currentMenuSel<length(iValid)
+                                        currentMenuSel   = currentMenuSel+1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                end
                             end
                         else
                             if any(strcmpi(keys,'space'))
@@ -2198,7 +2237,7 @@ if any(qSubStruct)
             fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)]; %#ok<AGROW>
         end
         add = repmat(fieldInfo(idx(p),:),size(temp,1),1);
-        add(:,[1:size(temp,2)]+1) = temp;
+        add(:,(1:size(temp,2))+1) = temp;
         fieldInfo = [fieldInfo(1:idx(p)-1,:); add; fieldInfo(idx(p)+1:end,:)];
     end
 end
