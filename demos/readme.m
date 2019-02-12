@@ -1,15 +1,12 @@
 sca
-qDEBUG      = 0;
-useDarkMode = true;
-if useDarkMode
-    bgclr                   = 0;
-    fixClrs                 = [255 100];
-    setupScreenAlsoDark     = true;
-    validationResultAlsoDark= true;
-else
-    bgclr                   = 255/2;
-    fixClrs                 = [0 255];
-end
+qDEBUG                  = 0;
+useDarkMode             = false;
+fixClrs                 = [0 255];
+fixClrsDark             = [255 100];
+bgClr                   = 255/2;
+bgClrDark               = 0;
+setupScreenAlsoDark     = true;
+validationResultAlsoDark= true;
 useAnimatedCalibration  = true;
 % task parameters
 fixTime                 = .5;
@@ -21,31 +18,68 @@ addpath(genpath(fullfile(cd,'..')));
 try
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
-    settings.cal.drawFunction = @calViz.doDraw;
     settings.debugMode      = true;
-    settings.cal.bgColor    = bgclr;
-    % TODO: allow set colors for fixation points per screen, except for
-    % those drawn by custom calibration screen drawer
+    % customize colors of setup and calibration interface (yes, colors of
+    % everything can be set, so there is a lot here).
+    % 1. setup screen
     if useDarkMode && setupScreenAlsoDark
-        settings.UI.setup.bgColor       = bgclr;
+        settings.UI.setup.bgColor       = bgClrDark;
+        settings.UI.setup.instruct.color= fixClrsDark(1);
+        settings.UI.setup.fixBackColor  = fixClrsDark(1);
+        settings.UI.setup.fixFrontColor = fixClrsDark(2);
+    else
+        settings.UI.setup.bgColor       = bgClr;
         settings.UI.setup.instruct.color= fixClrs(1);
+        settings.UI.setup.fixBackColor  = fixClrs(1);
+        settings.UI.setup.fixFrontColor = fixClrs(2);
     end
+    % 2. validation result screen
     if useDarkMode && validationResultAlsoDark
-        settings.UI.val.bgColor         = bgclr;
-        settings.UI.val.avg.text.color  = fixClrs(1);
+        settings.UI.val.bgColor                 = bgClrDark;
+        settings.UI.val.avg.text.color          = fixClrsDark(1);
+        settings.UI.val.fixBackColor            = fixClrsDark(1);
+        settings.UI.val.fixFrontColor           = fixClrsDark(2);
+        settings.UI.val.onlineGaze.fixBackColor = fixClrsDark(1);
+        settings.UI.val.onlineGaze.fixFrontColor= fixClrsDark(2);
+    else
+        settings.UI.val.bgColor                 = bgClr;
+        settings.UI.val.avg.text.color          = fixClrs(1);
+        settings.UI.val.fixBackColor            = fixClrs(1);
+        settings.UI.val.fixFrontColor           = fixClrs(2);
+        settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
+        settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     end
+    % calibration display
     if useAnimatedCalibration
         % custom calibration drawer
-        calViz = AnimatedCalibrationDisplay();
-        calViz.bgColor          = settings.cal.bgColor;
-        calViz.fixBackColor     = fixClrs(1);
-        calViz.fixFrontColor    = fixClrs(2);
+        calViz                      = AnimatedCalibrationDisplay();
+        calViz.bgColor              = bgClr;
+        calViz.fixBackColor         = fixClrs(1);
+        calViz.fixFrontColor        = fixClrs(2);
+        settings.cal.drawFunction   = @calViz.doDraw;
+        if useDarkMode
+            calViz.bgColor              = bgClrDark;
+            calViz.fixBackColor         = fixClrsDark(1);
+            calViz.fixFrontColor        = fixClrsDark(2);
+        else
+            calViz.bgColor              = bgClr;
+            calViz.fixBackColor         = fixClrs(1);
+            calViz.fixFrontColor        = fixClrs(2);
+        end
     else
         % set color of built-in fixation points
-        settings.cal.fixBackColor   = fixClrs(1);
-        settings.cal.fixFrontColor  = fixClrs(2);
+        if useDarkMode
+            settings.cal.bgColor        = bgClrDark;
+            settings.cal.fixBackColor   = fixClrsDark(1);
+            settings.cal.fixFrontColor  = fixClrsDark(2);
+        else
+            settings.cal.bgColor        = bgClr;
+            settings.cal.fixBackColor   = fixClrs(1);
+            settings.cal.fixFrontColor  = fixClrs(2);
+        end
     end
     settings.cal.pointPos   = [.5 .5];
+    
     % init
     EThndl          = Titta(settings);
 %     EThndl         = ETFhndl.setDummyMode();
@@ -68,7 +102,7 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    [wpnt,winRect] = PsychImaging('OpenWindow', scr, bgclr);
+    [wpnt,winRect] = PsychImaging('OpenWindow', scr, bgClr);
     hz=Screen('NominalFrameRate', wpnt);
     Priority(1);
     Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

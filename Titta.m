@@ -112,26 +112,32 @@ classdef Titta < handle
                 obj.settings = settings;
             end
             % setup colors
-            obj.settings.UI.val.eyeColors           = cellfun(@color2RGBA,obj.settings.UI.val.eyeColors           ,'uni',false);
-            obj.settings.UI.val.onlineGaze.eyeColors= cellfun(@color2RGBA,obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
-            obj.settings.UI.val.avg.text.eyeColors  = cellfun(@color2RGBA,obj.settings.UI.val.avg.text.eyeColors  ,'uni',false);
-            obj.settings.UI.val.hover.text.eyeColors= cellfun(@color2RGBA,obj.settings.UI.val.hover.text.eyeColors,'uni',false);
-            obj.settings.UI.val.menu.text.eyeColors = cellfun(@color2RGBA,obj.settings.UI.val.menu.text.eyeColors ,'uni',false);
+            obj.settings.UI.val.eyeColors               = cellfun(@color2RGBA,obj.settings.UI.val.eyeColors           ,'uni',false);
+            obj.settings.UI.val.onlineGaze.eyeColors    = cellfun(@color2RGBA,obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
+            obj.settings.UI.val.avg.text.eyeColors      = cellfun(@color2RGBA,obj.settings.UI.val.avg.text.eyeColors  ,'uni',false);
+            obj.settings.UI.val.hover.text.eyeColors    = cellfun(@color2RGBA,obj.settings.UI.val.hover.text.eyeColors,'uni',false);
+            obj.settings.UI.val.menu.text.eyeColors     = cellfun(@color2RGBA,obj.settings.UI.val.menu.text.eyeColors ,'uni',false);
             
-            obj.settings.UI.setup.bgColor       = color2RGBA(obj.settings.UI.setup.bgColor);
-            obj.settings.UI.setup.instruct.color= color2RGBA(obj.settings.UI.setup.instruct.color);
-            obj.settings.UI.cal.errMsg.color    = color2RGBA(obj.settings.UI.cal.errMsg.color);
-            obj.settings.UI.val.bgColor         = color2RGBA(obj.settings.UI.val.bgColor);
-            obj.settings.UI.val.avg.text.color  = color2RGBA(obj.settings.UI.val.avg.text.color);
-            obj.settings.UI.val.hover.bgColor   = color2RGBA(obj.settings.UI.val.hover.bgColor);
-            obj.settings.UI.val.hover.text.color= color2RGBA(obj.settings.UI.val.hover.text.color);
-            obj.settings.UI.val.menu.bgColor    = color2RGBA(obj.settings.UI.val.menu.bgColor);
-            obj.settings.UI.val.menu.itemColor  = color2RGBA(obj.settings.UI.val.menu.itemColor);
-            obj.settings.UI.val.menu.text.color = color2RGBA(obj.settings.UI.val.menu.text.color);
-            obj.settings.cal.bgColor            = color2RGBA(obj.settings.cal.bgColor);
-            obj.settings.cal.fixBackColor       = color2RGBA(obj.settings.cal.fixBackColor);
-            obj.settings.cal.fixFrontColor      = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.UI.buttons.text.color  = color2RGBA(obj.settings.UI.buttons.text.color);
+            obj.settings.UI.setup.bgColor               = color2RGBA(obj.settings.UI.setup.bgColor);
+            obj.settings.UI.setup.fixBackColor          = color2RGBA(obj.settings.UI.setup.fixBackColor);
+            obj.settings.UI.setup.fixFrontColor         = color2RGBA(obj.settings.UI.setup.fixFrontColor);
+            obj.settings.UI.setup.instruct.color        = color2RGBA(obj.settings.UI.setup.instruct.color);
+            obj.settings.UI.cal.errMsg.color            = color2RGBA(obj.settings.UI.cal.errMsg.color);
+            obj.settings.UI.val.bgColor                 = color2RGBA(obj.settings.UI.val.bgColor);
+            obj.settings.UI.val.fixBackColor            = color2RGBA(obj.settings.UI.val.fixBackColor);
+            obj.settings.UI.val.fixFrontColor           = color2RGBA(obj.settings.UI.val.fixFrontColor);
+            obj.settings.UI.val.onlineGaze.fixBackColor = color2RGBA(obj.settings.UI.val.onlineGaze.fixBackColor);
+            obj.settings.UI.val.onlineGaze.fixFrontColor= color2RGBA(obj.settings.UI.val.onlineGaze.fixFrontColor);
+            obj.settings.UI.val.avg.text.color          = color2RGBA(obj.settings.UI.val.avg.text.color);
+            obj.settings.UI.val.hover.bgColor           = color2RGBA(obj.settings.UI.val.hover.bgColor);
+            obj.settings.UI.val.hover.text.color        = color2RGBA(obj.settings.UI.val.hover.text.color);
+            obj.settings.UI.val.menu.bgColor            = color2RGBA(obj.settings.UI.val.menu.bgColor);
+            obj.settings.UI.val.menu.itemColor          = color2RGBA(obj.settings.UI.val.menu.itemColor);
+            obj.settings.UI.val.menu.text.color         = color2RGBA(obj.settings.UI.val.menu.text.color);
+            obj.settings.cal.bgColor                    = color2RGBA(obj.settings.cal.bgColor);
+            obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
+            obj.settings.cal.fixFrontColor              = color2RGBA(obj.settings.cal.fixFrontColor);
+            obj.settings.UI.buttons.text.color          = color2RGBA(obj.settings.UI.buttons.text.color);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -649,6 +655,10 @@ classdef Titta < handle
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.viewingDist       = 65;
             settings.UI.setup.bgColor           = 127;
+            settings.UI.setup.fixBackSize       = 20;
+            settings.UI.setup.fixFrontSize      = 5;
+            settings.UI.setup.fixBackColor      = 0;
+            settings.UI.setup.fixFrontColor     = 255;
             settings.UI.setup.instruct.string   = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
             settings.UI.setup.instruct.font     = 'Consolas';
             settings.UI.setup.instruct.size     = 24*textFac;
@@ -663,7 +673,15 @@ classdef Titta < handle
             settings.UI.cal.errMsg.wrapAt       = 62;
             settings.UI.val.eyeColors           = {[255 127 0],[0 127 255]};    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.bgColor             = 127;                          % background color for validation output screen
+            settings.UI.val.fixBackSize         = 20;
+            settings.UI.val.fixFrontSize        = 5;
+            settings.UI.val.fixBackColor        = 0;
+            settings.UI.val.fixFrontColor       = 255;
             settings.UI.val.onlineGaze.eyeColors= {[255 127 0],[0 127 255]};    % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.onlineGaze.fixBackSize  = 20;
+            settings.UI.val.onlineGaze.fixFrontSize = 5;
+            settings.UI.val.onlineGaze.fixBackColor = 0;
+            settings.UI.val.onlineGaze.fixFrontColor= 255;
             settings.UI.val.avg.text.font       = 'Consolas';
             settings.UI.val.avg.text.size       = 24*textFac;
             settings.UI.val.avg.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -691,8 +709,6 @@ classdef Titta < handle
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.buttons.text.lineCentOff= 3;                        % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
             end
-            % TODO: colors for fixation points per screen
-            %
             % TODO: implement fields with text per button (means their size
             % must become dynamic and we need to implement margins)
             % and also colors
@@ -1046,7 +1062,7 @@ classdef Titta < handle
                     obj.drawCachedText(validateButTextCache);
                 end
                 % draw fixation points
-                obj.drawFixPoints(wpnt,fixPos);
+                obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
                 
                 % drawing done, show
                 Screen('Flip',wpnt);
@@ -1153,18 +1169,18 @@ classdef Titta < handle
             end
         end
         
-        function drawFixPoints(obj,wpnt,pos)
+        function drawFixPoints(obj,wpnt,pos,fixBackSize,fixFrontSize,fixBackColor,fixFrontColor)
             % draws Thaler et al. 2012's ABC fixation point
-            sz = [obj.settings.cal.fixBackSize obj.settings.cal.fixFrontSize];
+            sz = [fixBackSize fixFrontSize];
             
             % draw
             for p=1:size(pos,1)
                 rectH = CenterRectOnPointd([0 0        sz ], pos(p,1), pos(p,2));
                 rectV = CenterRectOnPointd([0 0 fliplr(sz)], pos(p,1), pos(p,2));
-                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.cal. fixBackColor), pos(p,1), pos(p,2), sz(1)/2);
-                Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.cal.fixFrontColor), rectH);
-                Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.cal.fixFrontColor), rectV);
-                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.cal. fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
+                Screen('gluDisk', wpnt,obj.getColorForWindow( fixBackColor), pos(p,1), pos(p,2), sz(1)/2);
+                Screen('FillRect',wpnt,obj.getColorForWindow(fixFrontColor), rectH);
+                Screen('FillRect',wpnt,obj.getColorForWindow(fixFrontColor), rectV);
+                Screen('gluDisk', wpnt,obj.getColorForWindow( fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
             end
         end
         
@@ -1448,7 +1464,7 @@ classdef Titta < handle
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~)
-            obj.drawFixPoints(wpnt,pos);
+            obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
             qAllowAcceptKey = true;
         end
         
@@ -1769,7 +1785,7 @@ classdef Titta < handle
                 while true % draw loop
                     % draw validation screen image
                     % draw calibration points
-                    obj.drawFixPoints(wpnt,calValPos);
+                    obj.drawFixPoints(wpnt,calValPos,obj.settings.UI.val.fixBackSize,obj.settings.UI.val.fixFrontSize,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
                     % draw captured data in characteristic tobii plot
                     for p=1:nPoints
                         if qShowCal
@@ -1859,7 +1875,7 @@ classdef Titta < handle
                     % if showing gaze, draw
                     if qShowGaze
                         % draw fixation points
-                        obj.drawFixPoints(wpnt,fixPos);
+                        obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.val.onlineGaze.fixBackSize,obj.settings.UI.val.onlineGaze.fixFrontSize,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
                         % draw gaze data
                         eyeData = obj.buffer.consumeN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
