@@ -451,7 +451,7 @@ classdef Titta < handle
                             dat = cell(7,nPoint+1);
                             for k=1:nPoint
                                 val = out.attempt{kCal}.val.quality(k).(eyes{e});
-                                dat(:,k) = {sprintf('%d @ (%d,%d)',k,out.attempt{kCal}.val.pointPos(k,2:3)),val.acc2D,val.acc(1),val.acc(2),val.STD2D,val.RMS2D,val.dataLoss*100};
+                                dat(:,k) = {sprintf('%d @ (%.0f,%.0f)',k,out.attempt{kCal}.val.pointPos(k,2:3)),val.acc2D,val.acc(1),val.acc(2),val.STD2D,val.RMS2D,val.dataLoss*100};
                             end
                             % also get average
                             val = out.attempt{kCal}.val;
