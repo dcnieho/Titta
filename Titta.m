@@ -386,7 +386,9 @@ classdef Titta < handle
             % 1. start with simple head positioning interface
             % 2. start with advanced head positioning interface
             startScreen = obj.settings.UI.startScreen;
-            kCal = 0;
+            qDoCal      = true;
+            kCal        = 0;
+            activeCal   = nan;
             while true
                 qGoToValidationViewer = false;
                 kCal = kCal+1;
@@ -400,10 +402,10 @@ classdef Titta < handle
                         case 2
                             % skip setup
                             break;
-                        case -3
+                        case -4
                             % go to validation viewer screen
                             qGoToValidationViewer = true;
-                        case -4
+                        case -5
                             % full stop
                             calibClass.leave_calibration_mode();
                             error('Titta: run ended from calibration routine')
@@ -414,9 +416,18 @@ classdef Titta < handle
                 
                 %%% 2b: calibrate and validate
                 if ~qGoToValidationViewer
-                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,calibClass,false);
-                    warning('off','catstruct:DuplicatesFound')  % field already exists but is empty, will be overwritten with the output from the function here
+                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,calibClass,qDoCal);
+                    oldwarn = warning('off','catstruct:DuplicatesFound');   % field already exists but is empty, will be overwritten with the output from the function here
                     out.attempt{kCal} = catstruct(out.attempt{kCal},temp);
+                    warning(oldwarn);
+                    % if only validating, copy info of active calibration
+                    if ~qDoCal
+                        out.attempt{kCal}.cal = out.attempt{activeCal}.cal;
+                        out.attempt{kCal}.calIsCopiedFrom = activeCal;
+                        % reset
+                        qDoCal    = true;
+                        activeCal = nan;
+                    end
                     % check returned action state
                     switch out.attempt{kCal}.calStatus
                         case 1
@@ -428,11 +439,11 @@ classdef Titta < handle
                             % restart calibration
                             startScreen = 0;
                             continue;
-                        case -2
+                        case -3
                             % go to setup
                             startScreen = 1;
                             continue;
-                        case -4
+                        case -5
                             % full stop
                             calibClass.leave_calibration_mode();
                             error('Titta: run ended from calibration routine')
@@ -462,12 +473,10 @@ classdef Titta < handle
                         obj.sendMessage(sprintf('VALIDATION %d Data Quality:\npoint\tacc2D\taccX\taccY\tSTD2D\tRMS2D\tdata loss\n%s',kCal,msg));
                     end
                 end
-            
-                % TODO: have button to only revalidate, not recalibrate
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt{kCal}.valReviewStatus,out.attempt{kCal}.calSelection] = obj.showCalValResult(wpnt,out.attempt,kCal);
+                [out.attempt{kCal}.valReviewStatus,out.attempt{kCal}.calSelection,activeCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
@@ -480,10 +489,15 @@ classdef Titta < handle
                         startScreen = 0;
                         continue;
                     case -2
+                        % redo validation only
+                        startScreen = 0;
+                        qDoCal      = false;
+                        continue;
+                    case -3
                         % go to setup
                         startScreen = 1;
                         continue;
-                    case -4
+                    case -5
                         % full stop
                         calibClass.leave_calibration_mode();
                         error('Titta: run ended from Tobii routine')
@@ -788,9 +802,9 @@ classdef Titta < handle
             % status output:
             %  1: continue (setup seems good) (space)
             %  2: skip calibration and continue with task (shift+s)
-            % -3: go to validation screen (p) -- only if there are already
+            % -4: go to validation screen (p) -- only if there are already
             %     completed calibrations
-            % -4: Exit completely (control+escape)
+            % -5: Exit completely (control+escape)
             % (NB: no -1 for this function)
             
             % logic: if user is at reference viewing distance and at center
@@ -1091,7 +1105,7 @@ classdef Titta < handle
                         status = 1;
                         break;
                     elseif qIn(3)
-                        status = -3;
+                        status = -4;
                         break;
                     end
                 elseif any(keyCode)
@@ -1102,10 +1116,10 @@ classdef Titta < handle
                         status = 1;
                         break;
                     elseif any(strcmpi(keys,'p')) && qHaveValidCalibrations
-                        status = -3;
+                        status = -4;
                         break;
                     elseif any(strcmpi(keys,'escape')) && shiftIsDown
-                        status = -4;
+                        status = -5;
                         break;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
@@ -1193,22 +1207,26 @@ classdef Titta < handle
             end
         end
         
-        function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qValOnly)
+        function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qDoCal)
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
-            % do calibration
-            if qValOnly
-                calLastFlip = {-1};
-            else
+            % get data streams started
+            if qDoCal
                 calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
-                obj.buffer.start('gaze');
-                if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
-                    obj.buffer.start('eyeImage');
-                end
-                if obj.settings.cal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
-                    obj.buffer.start('externalSignal');
-                end
-                obj.buffer.start('timeSync');
+            else
+                valStartT = obj.sendMessage(sprintf( 'VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
+            end
+            obj.buffer.start('gaze');
+            if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
+                obj.buffer.start('eyeImage');
+            end
+            if obj.settings.cal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
+                obj.buffer.start('externalSignal');
+            end
+            obj.buffer.start('timeSync');
+            
+            % do calibration
+            if qDoCal
                 % show display
                 [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
                 obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
@@ -1260,11 +1278,15 @@ classdef Titta < handle
                     end
                     return;
                 end
+            else
+                calLastFlip = {-1};
             end
             
             % do validation
-            valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
-            obj.ClearAllBuffers(calStartT);    % clean up data
+            if qDoCal
+                valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
+                obj.ClearAllBuffers(calStartT);    % clean up data from calibration
+            end
             % show display
             [status,out.val] = obj.DoCalPointDisplay(wpnt,[],calLastFlip{:});
             obj.sendMessage(sprintf('VALIDATION END %s %d',obj.settings.calibrateEye,kCal));
@@ -1314,8 +1336,8 @@ classdef Titta < handle
             %     they agree that calibration was succesful though)
             %  2: skip calibration and continue with task (shift+s)
             % -1: restart calibration (r)
-            % -2: abort calibration and go back to setup (escape key)
-            % -4: Exit completely (control+escape)
+            % -3: abort calibration and go back to setup (escape key)
+            % -5: Exit completely (control+escape)
             qFirst = nargin<5;
             qCal   = ~isempty(calibClass);
             
@@ -1369,7 +1391,7 @@ classdef Titta < handle
             obj.getNewMouseKeyPress();
             
             currentPoint    = 0;
-            needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && qCal && cp==1);
+            needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && tick==-1 && cp==1);
             advancePoint    = true;
             pointOff        = 0;
             while true
@@ -1418,9 +1440,9 @@ classdef Titta < handle
                         % NB: no need to cancel calibration here,
                         % leaving calibration mode is done by caller
                         if shiftIsDown
-                            status = -4;
+                            status = -5;
                         else
-                            status = -2;
+                            status = -3;
                         end
                         break;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
@@ -1543,13 +1565,14 @@ classdef Titta < handle
             out  = bsxfun(@plus,obj.geom.displayArea.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
         end
         
-        function [status,selection] = showCalValResult(obj,wpnt,cal,selection)
+        function [status,selection,activeCal] = showCalValResult(obj,wpnt,cal,selection)
             % status output:
             %  1: calibration/validation accepted, continue (a)
             %  2: just continue with task (shift+s)
             % -1: restart calibration (escape key)
-            % -2: go back to setup (s)
-            % -4: exit completely (control+escape)
+            % -2: redo validation only (v)
+            % -3: go back to setup (s)
+            % -5: exit completely (control+escape)
             %
             % additional buttons
             % c: chose other calibration (if have more than one valid)
@@ -1575,17 +1598,19 @@ classdef Titta < handle
             % set up buttons
             % 1. below screen
             yPosBot     = .97*obj.scrInfo.resolution(2);
-            buttonSz    = [300 45; 300 45; 350 45];
-            buttonSz    = buttonSz(1:2+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
+            buttonSz    = [300 45; 300 45; 300 45; 350 45];
+            buttonSz    = buttonSz(1:3+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
             buttonOff   = 80;
             totWidth    = sum(buttonSz(:,1))+(size(buttonSz,1)-1)*buttonOff;
             buttonRectsX= cumsum([0 buttonSz(:,1).']+[0 ones(1,size(buttonSz,1))]*buttonOff)-totWidth/2;
             recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz(1,2)],obj.scrInfo.center(1),yPosBot-buttonSz(1,2));
             recalButTextCache   = obj.getTextCache(wpnt,'recalibrate (<i>esc<i>)'  ,    recalButRect);
-            continueButRect     = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosBot-buttonSz(2,2));
+            revalButRect        = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosBot-buttonSz(2,2));
+            revalButTextCache   = obj.getTextCache(wpnt,'revalidate (<i>v<i>)'     ,    revalButRect);
+            continueButRect     = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosBot-buttonSz(3,2));
             continueButTextCache= obj.getTextCache(wpnt,'continue (<i>spacebar<i>)', continueButRect);
             if qHaveMultipleValidCals
-                selectButRect       = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosBot-buttonSz(3,2));
+                selectButRect       = OffsetRect([buttonRectsX(4) 0 buttonRectsX(5)-buttonOff buttonSz(4,2)],obj.scrInfo.center(1),yPosBot-buttonSz(4,2));
                 selectButTextCache  = obj.getTextCache(wpnt,'select other cal (<i>c<i>)', selectButRect);
             else
                 selectButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
@@ -1685,10 +1710,10 @@ classdef Titta < handle
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = {menuRects.',continueButRect.',recalButRect.'};
+                        cursors.rect    = {menuRects.',continueButRect.',recalButRect.',revalButRect.'};
                         cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
                     else
-                        cursors.rect    = {continueButRect.',recalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
+                        cursors.rect    = {continueButRect.',recalButRect.',revalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
                         cursors.cursor  = [2 2 2 2 2 2];  % 2: Hand
                     end
                     cursors.other   = 0;    % 0: Arrow
@@ -1848,6 +1873,8 @@ classdef Titta < handle
                     % draw buttons
                     Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),recalButRect);
                     obj.drawCachedText(recalButTextCache);
+                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),revalButRect);
+                    obj.drawCachedText(revalButTextCache);
                     Screen('FillRect',wpnt,obj.getColorForWindow([0 120 0]),continueButRect);
                     obj.drawCachedText(continueButTextCache);
                     if qHaveMultipleValidCals
@@ -1930,7 +1957,7 @@ classdef Titta < handle
                             end
                         end
                         if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qIn = inRect([mx my],[continueButRect.' recalButRect.' selectButRect.' setupButRect.' showGazeButRect.' toggleCVButRect.']);
+                            qIn = inRect([mx my],[continueButRect.' recalButRect.' revalButRect.' selectButRect.' setupButRect.' showGazeButRect.' toggleCVButRect.']);
                             if any(qIn)
                                 if qIn(1)
                                     status = 1;
@@ -1939,13 +1966,16 @@ classdef Titta < handle
                                     status = -1;
                                     qDoneCalibSelection = true;
                                 elseif qIn(3)
-                                    qToggleSelectMenu   = true;
-                                elseif qIn(4)
                                     status = -2;
                                     qDoneCalibSelection = true;
+                                elseif qIn(4)
+                                    qToggleSelectMenu   = true;
                                 elseif qIn(5)
-                                    qToggleGaze         = true;
+                                    status = -3;
+                                    qDoneCalibSelection = true;
                                 elseif qIn(6)
+                                    qToggleGaze         = true;
+                                elseif qIn(7)
                                     qUpdateCalDisplay   = true;
                                     qShowCal            = ~qShowCal;
                                 end
@@ -2000,8 +2030,12 @@ classdef Titta < handle
                                 status = -1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'s')) && ~shiftIsDown
+                            elseif any(strcmpi(keys,'v'))
                                 status = -2;
+                                qDoneCalibSelection = true;
+                                break;
+                            elseif any(strcmpi(keys,'s')) && ~shiftIsDown
+                                status = -3;
                                 qDoneCalibSelection = true;
                                 break;
                             elseif any(strcmpi(keys,'c')) && qHaveMultipleValidCals
@@ -2019,7 +2053,7 @@ classdef Titta < handle
                         
                         % these two key combinations should always be available
                         if any(strcmpi(keys,'escape')) && shiftIsDown
-                            status = -4;
+                            status = -5;
                             qDoneCalibSelection = true;
                             break;
                         elseif any(strcmpi(keys,'s')) && shiftIsDown
@@ -2048,6 +2082,7 @@ classdef Titta < handle
             end
             % done, clean up
             cursor.reset();
+            activeCal = selection;
             if status~=1
                 selection = NaN;
             end
