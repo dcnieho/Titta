@@ -2250,7 +2250,7 @@ fieldInfo = getStructFields(str);
 % add dots
 for c=size(fieldInfo,2):-1:2
     qHasField = ~cellfun(@isempty,fieldInfo(:,c));
-    temp = cell(size(fieldInfo,1),1);
+    temp = repmat({''},size(fieldInfo,1),1);
     temp(qHasField) = {'.'};
     fieldInfo = [fieldInfo(:,1:c-1) temp fieldInfo(:,c:end)];
 end
@@ -2269,7 +2269,7 @@ if any(qSubStruct)
         temp = getStructFields(str.(fieldInfo{idx(p),1}));
         if size(temp,2)+1>size(fieldInfo,2)
             extraCol = size(temp,2)+1-size(fieldInfo,2);
-            fieldInfo = [fieldInfo cell(size(fieldInfo,1),extraCol)]; %#ok<AGROW>
+            fieldInfo = [fieldInfo repmat({''},size(fieldInfo,1),extraCol)]; %#ok<AGROW>
         end
         add = repmat(fieldInfo(idx(p),:),size(temp,1),1);
         add(:,(1:size(temp,2))+1) = temp;

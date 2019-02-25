@@ -56,7 +56,7 @@ try
         calViz.bgColor              = bgClr;
         calViz.fixBackColor         = fixClrs(1);
         calViz.fixFrontColor        = fixClrs(2);
-        settings.cal.drawFunction   = @calViz.doDraw;
+        settings.cal.drawFunction   = @() calViz.doDraw;
         if useDarkMode
             calViz.bgColor              = bgClrDark;
             calViz.fixBackColor         = fixClrsDark(1);
