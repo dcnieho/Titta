@@ -689,7 +689,7 @@ classdef Titta < handle
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
             settings.UI.cal.errMsg.font         = 'Consolas';
             settings.UI.cal.errMsg.size         = 36*textFac;
-            settings.UI.cal.errMsg.color        = [255 0 0];                    % only for messages on the screen, doesn't affect buttons
+            settings.UI.cal.errMsg.color        = [150 0 0];                    % only for messages on the screen, doesn't affect buttons
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.cal.errMsg.wrapAt       = 62;
             settings.UI.val.eyeColors           = {[255 127 0],[0 95 191]};     % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
