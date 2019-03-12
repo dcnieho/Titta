@@ -39,6 +39,12 @@ classdef EyeTracker
         %   eyetracker.FirmwareVersion
         %
         FirmwareVersion
+        %% Runtime Version
+        % Gets the runtime version of the eye tracker.
+        %
+        %   eyetracker.RuntimeVersion
+        %
+        RuntimeVersion
         %% Address
         % Gets the address of the eye tracker device
         %
@@ -112,6 +118,7 @@ classdef EyeTracker
                 tracker.SerialNumber = new_tracker.serial_number;
                 tracker.Model = new_tracker.model;
                 tracker.FirmwareVersion = new_tracker.firmware_version;
+                tracker.RuntimeVersion = new_tracker.runtime_version;
                 tracker.CoreEyeTracker = new_tracker.core_eyetracker;
 
                 warning('off', 'all');
