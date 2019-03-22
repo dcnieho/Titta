@@ -55,16 +55,6 @@ classdef TobiiBuffer < handle
             end
             
             % construct C++ class instance
-%             dlls = which('tobii_research.dll','-ALL');
-%             if Is64Bit
-%                 qFind = ~cellfun(@isempty,strfind(dlls,'64'));
-%             else
-%                 qFind = ~cellfun(@isempty,strfind(dlls,'32'));
-%             end
-%             cellfun(@(x)rmpath(fileparts(x)),dlls);
-%             dllDir = fileparts(dlls{qFind});
-%             addpath(dllDir);
-
             this.mexClassWrapperFnc = this.checkMEXFnc(mexFnc);
             
             % call no-op to load the mex file, so we fail early when load
