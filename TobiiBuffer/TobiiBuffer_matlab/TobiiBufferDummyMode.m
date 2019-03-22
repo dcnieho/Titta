@@ -12,7 +12,7 @@ classdef TobiiBufferDummyMode < TobiiBuffer
             
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            if 1
+            if 0
                 thisInfo = metaclass(this);
                 superMethods = thisInfo.SuperclassList.MethodList;
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static])) = [];
