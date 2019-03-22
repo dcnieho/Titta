@@ -1,8 +1,4 @@
 classdef TittaDummyMode < Titta
-    properties (Access = protected, Hidden = true)
-        isRecordingGaze = false;
-    end
-    
     methods
         function obj = TittaDummyMode(TittaInstance)
             qPassedSuperClass = false;
@@ -95,59 +91,14 @@ classdef TittaDummyMode < Titta
         
         function out = init(obj)
             out = [];
+            % make dummyMode buffer
+            obj.buffer = TobiiBufferDummyMode();
             % mark as inited
             obj.isInitialized = true;
         end
         
         function out = calibrate(~,~,~)
             out = [];
-        end
-        
-        function result = startRecording(obj,stream)
-            result = true;
-            if strcmpi(stream,'gaze')
-                obj.isRecordingGaze = true;
-            end
-        end
-        
-        function data = consumeN(~,stream,~)
-            data = [];
-            if strcmpi(stream,'gaze')
-                data = getMouseSample();
-            end
-        end
-        
-        function data = consumeTimeRange(~,stream,~,~)
-            data = [];
-            if strcmpi(stream,'gaze')
-                data = getMouseSample();
-            end
-        end
-        
-        function data = peekN(~,stream,~)
-            data = [];
-            if strcmpi(stream,'gaze')
-                data = getMouseSample();
-            end
-        end
-        
-        function data = peekTimeRange(~,stream,~,~)
-            data = [];
-            if strcmpi(stream,'gaze')
-                data = getMouseSample();
-            end
-        end
-        
-        function clearBuffer(~,~)
-        end
-        
-        function clearBufferTimeRange(~,~,~)
-        end
-        
-        function stopRecording(obj,stream,~)
-            if strcmpi(stream,'gaze')
-                obj.isRecordingGaze = false;
-            end
         end
         
         function dat = collectSessionData(~)
@@ -163,17 +114,4 @@ classdef TittaDummyMode < Titta
             obj.isInitialized = false;
         end
     end
-end
-
-
-function sample = getMouseSample()
-[mx, my] = GetMouse();
-rect = Screen('Rect',0);
-% put into fake SampleStruct
-ts = round(GetSecs*1000*1000);
-gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true);
-pu = struct('diameter',0,'valid',false);
-gO = struct('inUserCoords',zeros(3,1),'inTrackBoxCoords',zeros(3,1),'valid',false);
-edat = struct('gazePoint',gP,'pupil',pu,'gazeOrigin',gO);
-sample = struct('deviceTimeStamp',ts,'systemTimeStamp',ts,'left',edat,'right',edat);
 end
