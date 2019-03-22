@@ -22,7 +22,7 @@ classdef Titta < handle
         scrInfo;
     end
     
-    properties (SetAccess=private)
+    properties (SetAccess=protected)
         systemInfo;
         geom;
         calibrateHistory;
