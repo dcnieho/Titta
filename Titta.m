@@ -1241,7 +1241,7 @@ classdef Titta < handle
                             out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
                         else
                             % calibration failed, back to setup screen
-                            status = -2;
+                            status = -3;
                             Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
                             Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
                             DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
