@@ -336,7 +336,7 @@ classdef Titta < handle
             % 2.1. clear back buffer by flipping
             Screen('Flip',wpnt);
             % 2.2. read a pixel, this gets us the background color
-            bgClr = reshape(Screen('GetImage',wpnt,[1 1 2 2],'backBuffer',[],4),1,4);
+            bgClr = double(reshape(Screen('GetImage',wpnt,[1 1 2 2],'backBuffer',obj.qFloatColorRange,4),1,4));
             % 3. text
             text.style  = Screen('TextStyle', wpnt);
             text.size   = Screen('TextSize' , wpnt);
