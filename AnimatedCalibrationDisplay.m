@@ -27,6 +27,9 @@ classdef AnimatedCalibrationDisplay < handle
         fixFrontColor       = 255;
         bgColor             = 127;
     end
+    properties (Access=private, Hidden = true)
+        qFloatColorRange    = [];
+    end
     
     
     methods
@@ -51,6 +54,11 @@ classdef AnimatedCalibrationDisplay < handle
             if isnan(wpnt)
                 obj.setCleanState();
                 return;
+            end
+            
+            
+            if isempty(obj.qFloatColorRange)
+                obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
             end
             
             % check point changed
@@ -127,7 +135,7 @@ classdef AnimatedCalibrationDisplay < handle
             qAllowAcceptKey = obj.calState~=obj.calStateEnum.moving;
             
             % draw
-            Screen('FillRect',wpnt,obj.bgColor);
+            Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor));
             obj.drawAFixPoint(wpnt,curPos,sz);
         end
     end
@@ -138,10 +146,16 @@ classdef AnimatedCalibrationDisplay < handle
             for p=1:size(pos,1)
                 rectH = CenterRectOnPointd([0 0        sz ], pos(p,1), pos(p,2));
                 rectV = CenterRectOnPointd([0 0 fliplr(sz)], pos(p,1), pos(p,2));
-                Screen('gluDisk', wpnt,obj. fixBackColor, pos(p,1), pos(p,2), sz(1)/2);
-                Screen('FillRect',wpnt,obj.fixFrontColor, rectH);
-                Screen('FillRect',wpnt,obj.fixFrontColor, rectV);
-                Screen('gluDisk', wpnt,obj. fixBackColor, pos(p,1), pos(p,2), sz(2)/2);
+                Screen('gluDisk', wpnt,obj.getColorForWindow(obj. fixBackColor), pos(p,1), pos(p,2), sz(1)/2);
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.fixFrontColor), rectH);
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.fixFrontColor), rectV);
+                Screen('gluDisk', wpnt,obj.getColorForWindow(obj. fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
+            end
+        end
+        
+        function clr = getColorForWindow(obj,clr)
+            if obj.qFloatColorRange
+                clr = double(clr)/255;
             end
         end
     end
