@@ -6,6 +6,7 @@ classdef simpleVec < handle
     properties (Dependent, SetAccess = private)
         data;
         N;
+        capacity;
     end
     properties (SetAccess = private)
         axis;
@@ -60,6 +61,9 @@ classdef simpleVec < handle
             out = obj.nElem;
         end
         
+        function out = get.capacity(obj)
+            out = size(obj.dataStore,obj.axis);
+        end
     end
     
     methods (Access = protected, Hidden = true)
