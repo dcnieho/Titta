@@ -623,6 +623,9 @@ classdef Titta < handle
                 obj.buffer.stopLogging();
             end
             
+            % clear msgs
+            warning('TODO: need to fully reset, importantly dumping all msgs!')
+            
             % mark as deinited
             obj.isInitialized = false;
         end
