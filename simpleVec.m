@@ -51,6 +51,15 @@ classdef simpleVec < handle
             obj.nElem               = obj.nElem+nIn;
         end
         
+        function update(obj,idx,val)
+            % to update a value, retrieve it first using .data(), then put
+            % it back in (overwriting) using .update()
+            assert(idx<=obj.nElem,'simpleVec::update: provided index out of bounds (too large, max is %d)',obj.nElem);
+            idxs            = repmat({':'},1,ndims(obj.dataStore));
+            idxs{obj.axis}  = idx;
+            obj.dataStore(idxs{:}) = val;
+        end
+        
         function out = get.data(obj)
             idxs            = repmat({':'},1,ndims(obj.dataStore));
             idxs{obj.axis}  = 1:obj.nElem;
