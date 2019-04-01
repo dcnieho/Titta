@@ -5,7 +5,7 @@ classdef Titta < handle
         eyetracker;
         
         % message buffer
-        msgs                = simpleVec(cell(1,2),1024);   % initialize with space for 1024 messages
+        msgs;
         
         % state
         isInitialized       = false;
@@ -45,6 +45,8 @@ classdef Titta < handle
             else
                 obj.setOptions(settingsOrETName);
             end
+            
+            obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
         end
         
         function delete(obj)
@@ -624,7 +626,7 @@ classdef Titta < handle
             end
             
             % clear msgs
-            warning('TODO: need to fully reset, importantly dumping all msgs!')
+            obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
             
             % mark as deinited
             obj.isInitialized = false;
