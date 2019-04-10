@@ -620,9 +620,21 @@ classdef Titta < handle
         
         function out = deInit(obj)
             if ~isempty(obj.buffer)
-                % return and stop log
-                out = obj.buffer.getLog();
+                % stop log, return and clear buffer
+                out = obj.buffer.getLog(true);
                 obj.buffer.stopLogging();
+                
+                % stop all streams
+                obj.buffer.stop('gaze');
+                obj.buffer.stop('eyeImage');
+                obj.buffer.stop('externalSignal');
+                obj.buffer.stop('timeSync');
+                
+                % clear all buffers
+                obj.buffer.clear('gaze');
+                obj.buffer.clear('eyeImage');
+                obj.buffer.clear('externalSignal');
+                obj.buffer.clear('timeSync');
             end
             
             % clear msgs
@@ -1322,6 +1334,7 @@ classdef Titta < handle
         end
         
         function ClearAllBuffers(obj,varargin)
+            % clear all buffer, optionally only within specified time range
             obj.buffer.clearTimeRange('gaze',varargin{:});
             obj.buffer.clearTimeRange('eyeImage',varargin{:});
             obj.buffer.clearTimeRange('externalSignal',varargin{:});
