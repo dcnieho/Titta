@@ -47,16 +47,16 @@ public:
 
 
     // query if stream is supported
-    bool hasStream(std::string stream_);
-    bool hasStream(DataStream  stream_);
+    bool hasStream(std::string stream_) const;
+    bool hasStream(DataStream  stream_) const;
 
     // start stream
     bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
     bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
 
     // request stream state
-    bool isBuffering(std::string stream_);
-    bool isBuffering(DataStream  stream_);
+    bool isBuffering(std::string stream_) const;
+    bool isBuffering(DataStream  stream_) const;
 
 
     // consume samples (by default all)
@@ -68,10 +68,10 @@ public:
 
     // peek samples (by default only last one, can specify how many to peek from end of buffer)
     template <typename T>
-    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
+    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt) const;
     // peek samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
-    std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt) const;
 
     // clear all buffer contents
     void clear(std::string stream_);

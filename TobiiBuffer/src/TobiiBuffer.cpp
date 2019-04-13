@@ -282,11 +282,11 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 }
 
 
-bool TobiiBuffer::hasStream(std::string stream_)
+bool TobiiBuffer::hasStream(std::string stream_) const
 {
     return hasStream(stringToDataStream(stream_));
 }
-bool TobiiBuffer::hasStream(DataStream  stream_)
+bool TobiiBuffer::hasStream(DataStream  stream_) const
 {
     bool supported = false;
     TobiiResearchCapabilities caps;
@@ -415,11 +415,11 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
     return result == TOBII_RESEARCH_STATUS_OK;
 }
 
-bool TobiiBuffer::isBuffering(std::string stream_)
+bool TobiiBuffer::isBuffering(std::string stream_) const
 {
     return isBuffering(stringToDataStream(stream_));
 }
-bool TobiiBuffer::isBuffering(DataStream  stream_)
+bool TobiiBuffer::isBuffering(DataStream  stream_) const
 {
     bool success = false;
     switch (stream_)
@@ -488,7 +488,7 @@ std::vector<T> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, 
 }
 
 template <typename T>
-std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vector<T>::const_iterator startIt_, typename const std::vector<T>::const_iterator endIt_)
+std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vector<T>::const_iterator startIt_, typename const std::vector<T>::const_iterator endIt_) const
 {
     if (std::empty(buf_))
         return std::vector<T>{};
@@ -497,7 +497,7 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vecto
     return std::vector<T>(startIt_, endIt_);
 }
 template <typename T>
-std::vector<T> TobiiBuffer::peekN(std::optional<size_t> lastN_)
+std::vector<T> TobiiBuffer::peekN(std::optional<size_t> lastN_) const
 {
     // deal with default arguments
     if (!lastN_)
@@ -512,7 +512,7 @@ std::vector<T> TobiiBuffer::peekN(std::optional<size_t> lastN_)
     return peekFromVec(buf, startIt,endIt);
 }
 template <typename T>
-std::vector<T> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+std::vector<T> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_) const
 {
     // deal with default arguments
     if (!timeStart_)
@@ -626,23 +626,23 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 // gaze data, instantiate templated functions
 template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekN(std::optional<size_t> lastN_) const;
+template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_) const;
 
 // eye images, instantiate templated functions
 template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekN(std::optional<size_t> lastN_) const;
+template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_) const;
 
 // external signals, instantiate templated functions
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekN(std::optional<size_t> lastN_) const;
+template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_) const;
 
 // time sync data, instantiate templated functions
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<size_t> lastN_) const;
+template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_) const;
