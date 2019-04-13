@@ -281,14 +281,14 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
                 if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    mexErrMsgTxt("clearTimeRange: Expected second argument to be a uint64 scalar.");
+                    mexErrMsgTxt("clearTimeRange: Expected second argument to be a int64 scalar.");
                 timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
             }
             std::optional<int64_t> timeEnd;
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
             {
                 if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
-                    mexErrMsgTxt("clearTimeRange: Expected third argument to be a uint64 scalar.");
+                    mexErrMsgTxt("clearTimeRange: Expected third argument to be a int64 scalar.");
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
 
