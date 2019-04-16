@@ -67,11 +67,10 @@
 
 
 namespace {
-    typedef TobiiBuffer class_type;
-    typedef unsigned int handle_type;
-    typedef std::pair<handle_type, std::shared_ptr<class_type>> indPtrPair_type;
-    typedef std::map<indPtrPair_type::first_type, indPtrPair_type::second_type> instanceMap_type;
-    typedef indPtrPair_type::second_type instPtr_t;
+    using ClassType         = TobiiBuffer;
+    using HandleType        = unsigned int;
+    using InstancePtrType   = std::shared_ptr<ClassType>;
+    using InstanceMapType   = std::map<HandleType, InstancePtrType>;
 
     // List actions
     enum class Action
@@ -121,20 +120,20 @@ namespace {
 
 
     // table mapping handles to instances
-    static instanceMap_type instanceTab;
+    static InstanceMapType instanceTab;
     // for unique handles
-    std::atomic<handle_type> handleVal = {0};
+    std::atomic<HandleType> handleVal = {0};
 
     // getHandle pulls the integer handle out of prhs[1]
-    handle_type getHandle(int nrhs, const mxArray *prhs[])
+    HandleType getHandle(int nrhs, const mxArray *prhs[])
     {
         if (nrhs < 2 || !mxIsScalar(prhs[1]))
             mexErrMsgTxt("Specify an instance with an integer handle.");
-        return static_cast<handle_type>(mxGetScalar(prhs[1]));
+        return static_cast<HandleType>(mxGetScalar(prhs[1]));
     }
 
     // checkHandle gets the position in the instance table
-    instanceMap_type::const_iterator checkHandle(const instanceMap_type& m, handle_type h)
+    InstanceMapType::const_iterator checkHandle(const InstanceMapType& m, HandleType h)
     {
         auto it = m.find(h);
         if (it == m.end())
@@ -170,8 +169,8 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
     Action action = it->second;
 
     // If action is not "new" or others that don't require a handle, try to locate an existing instance based on input handle
-    instanceMap_type::const_iterator instIt;
-    instPtr_t instance;
+    InstanceMapType::const_iterator instIt;
+    InstancePtrType instance;
     if (action != Action::Touch && action != Action::New && action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
     {
         instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
@@ -190,7 +189,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                 mexErrMsgTxt("TobiiBuffer: Second argument must be a string.");
 
             char* address = mxArrayToString(prhs[1]);
-            auto insResult = instanceTab.insert(indPtrPair_type(++handleVal, std::make_shared<class_type>(address)));
+            auto insResult = instanceTab.insert({++handleVal, std::make_shared<ClassType>(address)});
             mxFree(address);
 
             if (!insResult.second) // sanity check
