@@ -114,11 +114,11 @@ classdef Titta < handle
                 obj.settings = settings;
             end
             % setup colors
-            obj.settings.UI.val.eyeColors               = cellfun(@color2RGBA,obj.settings.UI.val.eyeColors           ,'uni',false);
-            obj.settings.UI.val.onlineGaze.eyeColors    = cellfun(@color2RGBA,obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
-            obj.settings.UI.val.avg.text.eyeColors      = cellfun(@color2RGBA,obj.settings.UI.val.avg.text.eyeColors  ,'uni',false);
-            obj.settings.UI.val.hover.text.eyeColors    = cellfun(@color2RGBA,obj.settings.UI.val.hover.text.eyeColors,'uni',false);
-            obj.settings.UI.val.menu.text.eyeColors     = cellfun(@color2RGBA,obj.settings.UI.val.menu.text.eyeColors ,'uni',false);
+            obj.settings.UI.val.eyeColors               = color2RGBA(obj.settings.UI.val.eyeColors);
+            obj.settings.UI.val.onlineGaze.eyeColors    = color2RGBA(obj.settings.UI.val.onlineGaze.eyeColors);
+            obj.settings.UI.val.avg.text.eyeColors      = color2RGBA(obj.settings.UI.val.avg.text.eyeColors);
+            obj.settings.UI.val.hover.text.eyeColors    = color2RGBA(obj.settings.UI.val.hover.text.eyeColors);
+            obj.settings.UI.val.menu.text.eyeColors     = color2RGBA(obj.settings.UI.val.menu.text.eyeColors);
             
             obj.settings.UI.setup.bgColor               = color2RGBA(obj.settings.UI.setup.bgColor);
             obj.settings.UI.setup.fixBackColor          = color2RGBA(obj.settings.UI.setup.fixBackColor);
@@ -140,7 +140,27 @@ classdef Titta < handle
             obj.settings.cal.bgColor                    = color2RGBA(obj.settings.cal.bgColor);
             obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor              = color2RGBA(obj.settings.cal.fixFrontColor);
-            obj.settings.UI.buttons.text.color          = color2RGBA(obj.settings.UI.buttons.text.color);
+            
+            obj.settings.UI.button.setup.eyeIm.buttonColor  = color2RGBA(obj.settings.UI.button.setup.eyeIm.buttonColor);
+            obj.settings.UI.button.setup.eyeIm.textColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.textColor);
+            obj.settings.UI.button.setup.cal.buttonColor    = color2RGBA(obj.settings.UI.button.setup.cal.buttonColor);
+            obj.settings.UI.button.setup.cal.textColor      = color2RGBA(obj.settings.UI.button.setup.cal.textColor);
+            obj.settings.UI.button.setup.prevcal.buttonColor= color2RGBA(obj.settings.UI.button.setup.prevcal.buttonColor);
+            obj.settings.UI.button.setup.prevcal.textColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.textColor);
+            obj.settings.UI.button.val.recal.buttonColor    = color2RGBA(obj.settings.UI.button.val.recal.buttonColor);
+            obj.settings.UI.button.val.recal.textColor      = color2RGBA(obj.settings.UI.button.val.recal.textColor);
+            obj.settings.UI.button.val.reval.buttonColor    = color2RGBA(obj.settings.UI.button.val.reval.buttonColor);
+            obj.settings.UI.button.val.reval.textColor      = color2RGBA(obj.settings.UI.button.val.reval.textColor);
+            obj.settings.UI.button.val.continue.buttonColor = color2RGBA(obj.settings.UI.button.val.continue.buttonColor);
+            obj.settings.UI.button.val.continue.textColor   = color2RGBA(obj.settings.UI.button.val.continue.textColor);
+            obj.settings.UI.button.val.selcal.buttonColor   = color2RGBA(obj.settings.UI.button.val.selcal.buttonColor);
+            obj.settings.UI.button.val.selcal.textColor     = color2RGBA(obj.settings.UI.button.val.selcal.textColor);
+            obj.settings.UI.button.val.setup.buttonColor    = color2RGBA(obj.settings.UI.button.val.setup.buttonColor);
+            obj.settings.UI.button.val.setup.textColor      = color2RGBA(obj.settings.UI.button.val.setup.textColor);
+            obj.settings.UI.button.val.showgaze.buttonColor = color2RGBA(obj.settings.UI.button.val.showgaze.buttonColor);
+            obj.settings.UI.button.val.showgaze.textColor   = color2RGBA(obj.settings.UI.button.val.showgaze.textColor);
+            obj.settings.UI.button.val.toggCal.buttonColor  = color2RGBA(obj.settings.UI.button.val.toggCal.buttonColor);
+            obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
             
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
@@ -676,6 +696,13 @@ classdef Titta < handle
                 textFac = 1;
             end
             
+            % some default colors to be used below
+            eyeColors           = {[255 127   0],[ 0  95 191]};
+            toggleButColors     = {[ 37  97 163],[11 122 244]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
+            continueButtonColor = [150 0 0];                        % continue calibration, start recording
+            backButtonColor     = [0 120 0];                        % redo cal, val, go back to set up
+            optionButtonColor   = [150 150 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
+            
             % TODO: change button colors to something brighter with more
             % contrast with the background
             % TODO: common file format
@@ -703,19 +730,79 @@ classdef Titta < handle
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
+            settings.UI.button.margins          = [22 10];
+            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
+                settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
+            end
+            settings.UI.button.setup.text.font  = 'Consolas';
+            settings.UI.button.setup.text.size  = 24*textFac;
+            settings.UI.button.setup.text.style = 0;
+            settings.UI.button.setup.eyeIm.accelerator  = 'e';
+            settings.UI.button.setup.eyeIm.qShow        = true;
+            settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
+            settings.UI.button.setup.eyeIm.buttonColor  = toggleButColors;
+            settings.UI.button.setup.eyeIm.textColor    = 0;
+            settings.UI.button.setup.cal.accelerator    = 'space';
+            settings.UI.button.setup.cal.qShow          = true;
+            settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
+            settings.UI.button.setup.cal.buttonColor    = continueButtonColor;
+            settings.UI.button.setup.cal.textColor      = 0;
+            settings.UI.button.setup.prevcal.accelerator= 'p';
+            settings.UI.button.setup.prevcal.qShow      = true;
+            settings.UI.button.setup.prevcal.string     = 'previous calibrations (<i>p<i>)';
+            settings.UI.button.setup.prevcal.buttonColor= optionButtonColor;
+            settings.UI.button.setup.prevcal.textColor  = 0;
+            settings.UI.button.val.text.font    = 'Consolas';
+            settings.UI.button.val.text.size    = 24*textFac;
+            settings.UI.button.val.text.style   = 0;
+            settings.UI.button.val.recal.accelerator    = 'escape';
+            settings.UI.button.val.recal.qShow          = true;
+            settings.UI.button.val.recal.string         = 'recalibrate (<i>esc<i>)';
+            settings.UI.button.val.recal.buttonColor    = backButtonColor;
+            settings.UI.button.val.recal.textColor      = 0;
+            settings.UI.button.val.reval.accelerator    = 'v';
+            settings.UI.button.val.reval.qShow          = true;
+            settings.UI.button.val.reval.string         = 'revalidate (<i>v<i>)';
+            settings.UI.button.val.reval.buttonColor    = backButtonColor;
+            settings.UI.button.val.reval.textColor      = 0;
+            settings.UI.button.val.continue.accelerator = 'space';
+            settings.UI.button.val.continue.qShow       = true;
+            settings.UI.button.val.continue.string      = 'continue (<i>spacebar<i>)';
+            settings.UI.button.val.continue.buttonColor = continueButtonColor;
+            settings.UI.button.val.continue.textColor   = 0;
+            settings.UI.button.val.selcal.accelerator   = 'c';
+            settings.UI.button.val.selcal.qShow         = true;
+            settings.UI.button.val.selcal.string        = 'select other cal (<i>c<i>)';
+            settings.UI.button.val.selcal.buttonColor   = optionButtonColor;
+            settings.UI.button.val.selcal.textColor     = 0;
+            settings.UI.button.val.setup.accelerator    = 'e';
+            settings.UI.button.val.setup.qShow          = true;
+            settings.UI.button.val.setup.string         = 'setup (<i>s<i>)';
+            settings.UI.button.val.setup.buttonColor    = backButtonColor;
+            settings.UI.button.val.setup.textColor      = 0;
+            settings.UI.button.val.showgaze.accelerator = 'e';
+            settings.UI.button.val.showgaze.qShow       = true;
+            settings.UI.button.val.showgaze.string      = 'show gaze (<i>g<i>)';
+            settings.UI.button.val.showgaze.buttonColor = toggleButColors;
+            settings.UI.button.val.showgaze.textColor   = 0;
+            settings.UI.button.val.toggCal.accelerator  = 't';
+            settings.UI.button.val.toggCal.qShow        = false;
+            settings.UI.button.val.toggCal.string       = {'show cal (<i>t<i>)','show val (<i>t<i>)'};
+            settings.UI.button.val.toggCal.buttonColor  = toggleButColors{1};
+            settings.UI.button.val.toggCal.textColor    = 0;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
             settings.UI.cal.errMsg.font         = 'Consolas';
             settings.UI.cal.errMsg.size         = 36*textFac;
             settings.UI.cal.errMsg.color        = [150 0 0];                    % only for messages on the screen, doesn't affect buttons
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.cal.errMsg.wrapAt       = 62;
-            settings.UI.val.eyeColors           = {[255 127 0],[0 95 191]};     % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.eyeColors           = eyeColors;                    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.bgColor             = 127;                          % background color for validation output screen
             settings.UI.val.fixBackSize         = 20;
             settings.UI.val.fixFrontSize        = 5;
             settings.UI.val.fixBackColor        = 0;
             settings.UI.val.fixFrontColor       = 255;
-            settings.UI.val.onlineGaze.eyeColors= {[255 127 0],[0 95 191]};     % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.onlineGaze.eyeColors    = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.onlineGaze.fixBackSize  = 20;
             settings.UI.val.onlineGaze.fixFrontSize = 5;
             settings.UI.val.onlineGaze.fixBackColor = 0;
@@ -723,35 +810,23 @@ classdef Titta < handle
             settings.UI.val.avg.text.font       = 'Consolas';
             settings.UI.val.avg.text.size       = 24*textFac;
             settings.UI.val.avg.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.avg.text.eyeColors  = {[255 127 0],[0 95 191]};     % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.avg.text.eyeColors  = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
             settings.UI.val.hover.bgColor       = 110;
             settings.UI.val.hover.text.font     = 'Consolas';
             settings.UI.val.hover.text.size     = 20*textFac;
             settings.UI.val.hover.text.color    = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.hover.text.eyeColors= {[255 127 0],[0 95 191]};     % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.hover.text.eyeColors= eyeColors;                    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.val.doShowValCalSwitch  = false;                        % if true, button to switch between showing calibration and validation results. Even if false, pressing the 't' key will toggle which is shown
             settings.UI.val.menu.bgColor        = 110;
             settings.UI.val.menu.itemColor      = 140;
             settings.UI.val.menu.itemColorActive= 180;
             settings.UI.val.menu.text.font      = 'Consolas';
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.val.menu.text.eyeColors = {[255 127 0],[0 95 191]};     % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
-            settings.UI.buttons.text.font       = 'Consolas';
-            settings.UI.buttons.text.size       = 24*textFac;
-            settings.UI.buttons.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
-            settings.UI.buttons.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.UI.buttons.text.wrapAt     = 62;
-            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
-                settings.UI.buttons.text.lineCentOff= 3;                        % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
-            end
-            % TODO: implement fields with text per button (means their size
-            % must become dynamic and we need to implement margins)
-            % and also colors
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace               = 1;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration           = 1.5;                          % minimum duration (s) that each point is shown
@@ -786,7 +861,7 @@ classdef Titta < handle
                 'UI','setup'
                 'UI','cal'
                 'UI','val'
-                'UI','buttons'
+                'UI','button'
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
@@ -835,8 +910,8 @@ classdef Titta < handle
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.buttons.text.font, obj.settings.UI.buttons.text.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.buttons.text.size);
+            Screen('TextFont',  wpnt, obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.button.setup.text.size);
             
             % setup ovals
             ovalVSz     = .15;
@@ -855,49 +930,50 @@ classdef Titta < handle
             pupilSzGain = 1.5;
 
             % setup buttons
-            buttonSz            = {[250 45] [320 45] [400 45]};
-            showEyeImButClrs    = {[37  97 163],[11 122 244]};
-            if ~qHasEyeIm
-                buttonSz(1) = [];
+            % which to show
+            but(1)  = obj.settings.UI.button.setup.eyeIm;
+            but(2)  = obj.settings.UI.button.setup.cal;
+            but(3)  = obj.settings.UI.button.setup.prevcal;
+            but(1).qShow = but(1).qShow && qHasEyeIm;
+            but(3).qShow = but(3).qShow && qHaveValidCalibrations;
+            % where and get text
+            [but.rect] = deal([-100 -90 -100 -90]); % offscreen so mouse handler doesn't fuck up because of it
+            for p=1:length(but)
+                if but(p).qShow
+                    [but(p).rect,but(p).cache] = getButton(wpnt, but(p).string, obj.settings.UI.button.margins);
+                end
             end
-            if ~qHaveValidCalibrations
-                buttonSz(end) = [];
-            end
+            % arrange them 
+            butRectsBase= cat(1,but([but.qShow]).rect);
             buttonOff   = 80;
             yposBase    = round(obj.scrInfo.resolution(2)*.95);
             % place buttons for go to advanced interface, or calibrate
-            buttonWidths= cellfun(@(x) x(1),buttonSz);
-            totWidth    = sum(buttonWidths)+(length(buttonSz)-1)*buttonOff;
-            buttonRectsX= cumsum([0 buttonWidths]+[0 ones(1,length(buttonWidths))]*buttonOff)-totWidth/2;
-            b = 1;
-            if qHasEyeIm
-                eyeImageButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-                eyeImageButTextCache    = obj.getTextCache(wpnt,'eye images (<i>e<i>)'      ,eyeImageButRect);
-                b=b+1;
-            else
-                eyeImageButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
+            buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
+            totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
+            xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+            xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
+            butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
+            butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
+            butRects(:,4)     = yposBase;
+            butRects          = num2cell(butRects,2);
+            [but([but.qShow]).rect] = butRects{:};
+            % now position text correctly
+            for p=1:length(but)
+                if but(p).qShow
+                    but(p).cache = positionButtonText(obj, but(p).cache, but(p).rect);
+                end
             end
-            
-            calibButRect            = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-            calibButTextCache       = obj.getTextCache(wpnt,'calibrate (<i>spacebar<i>)',   calibButRect);
-            b=b+1;
-            if qHaveValidCalibrations
-                validateButRect         = OffsetRect([buttonRectsX(b) 0 buttonRectsX(b+1)-buttonOff buttonSz{b}(2)],obj.scrInfo.center(1),yposBase-buttonSz{b}(2));
-                validateButTextCache    = obj.getTextCache(wpnt,'previous calibrations (<i>p<i>)',validateButRect);
-            else
-                validateButRect         = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
-            end
-            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % clear what we've just drawn. NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
             
             % setup cursors
-            cursors.rect    = {eyeImageButRect.' calibButRect.' validateButRect.'};
-            cursors.cursor  = [2 2 2];      % Hand
-            cursors.other   = 0;            % Arrow
-            if ~obj.settings.debugMode      % for cleanup
-                cursors.reset = -1;         % hide cursor (else will reset to cursor.other by default, so we're good with that default
+            butRects        = cat(1,but.rect).';
+            cursors.rect    = num2cell(butRects,1);
+            cursors.cursor  = repmat(2,size(cursors.rect)); % Hand
+            cursors.other   = 0;                            % Arrow
+            if ~obj.settings.debugMode                      % for cleanup
+                cursors.reset = -1;                         % hide cursor (else will reset to cursor.other by default, so we're good with that default
             end
             cursor  = cursorUpdater(cursors);
             
@@ -918,6 +994,7 @@ classdef Titta < handle
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
+            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
             while true
                 if qHasEyeIm
                     % toggle eye images on or off if requested
@@ -963,7 +1040,6 @@ classdef Titta < handle
                 end
                 qHaveRight  = ~isempty(eyeData.systemTimeStamp) && eyeData.right.gazeOrigin.valid;
                 qHave       = [qHaveLeft qHaveRight];
-                
                 
                 % get average eye distance. use distance from one eye if only one eye
                 % available
@@ -1034,6 +1110,10 @@ classdef Titta < handle
                     end
                 end
                 % draw distance info
+                % TODO: hide only after e.g. 50 or 100 ms of data missing,
+                % else text etc flickers all the time when unstable track
+                % e.g. store last timestamp of good data, compare to
+                % current last timestamp
                 if ~(qShowEyeImage && isempty(headPos))
                     DrawFormattedText(wpnt,sprintf(obj.settings.UI.setup.instruct.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
@@ -1047,6 +1127,7 @@ classdef Titta < handle
                 if ~isempty(headPos)
                     drawCircle(wpnt,obj.getColorForWindow(headClr),headPos,headSz,5,obj.getColorForWindow(headFillClr));
                     if obj.settings.UI.setup.showEyes
+                        % TODO remove code duplication with for loop
                         % left eye
                         off = Rori*[eyeMargin; 0];
                         pos = headPos-off.';
@@ -1090,17 +1171,12 @@ classdef Titta < handle
                         end
                     end
                 end
+                
                 % draw buttons
-                if qHasEyeIm
-                    Screen('FillRect',wpnt,obj.getColorForWindow(showEyeImButClrs{qShowEyeImage+1}),eyeImageButRect);
-                    obj.drawCachedText(eyeImageButTextCache);
-                end
-                Screen('FillRect',wpnt,obj.getColorForWindow([0 120 0]),calibButRect);
-                obj.drawCachedText(calibButTextCache);
-                if qHaveValidCalibrations
-                    Screen('FillRect',wpnt,obj.getColorForWindow([150 150 0]),validateButRect);
-                    obj.drawCachedText(validateButTextCache);
-                end
+                obj.drawButton(wpnt,but(1),qShowEyeImage+1);
+                obj.drawButton(wpnt,but(2));
+                obj.drawButton(wpnt,but(3));
+                
                 % draw fixation points
                 obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
                 
@@ -1115,7 +1191,7 @@ classdef Titta < handle
                 if any(buttons)
                     % don't care which button for now. determine if clicked on either
                     % of the buttons
-                    qIn = inRect([mx my],[eyeImageButRect.' calibButRect.' validateButRect.']);
+                    qIn = inRect([mx my],butRects);
                     if qIn(1)
                         qToggleEyeImage = true;
                     elseif qIn(2)
@@ -1127,12 +1203,12 @@ classdef Titta < handle
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,'e'))
+                    if any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
                         qToggleEyeImage = true;
-                    elseif any(strcmpi(keys,'space'))
+                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                         status = 1;
                         break;
-                    elseif any(strcmpi(keys,'p')) && qHaveValidCalibrations
+                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidCalibrations
                         status = -4;
                         break;
                     elseif any(strcmpi(keys,'escape')) && shiftIsDown
@@ -1192,6 +1268,34 @@ classdef Titta < handle
             end
         end
         
+        function [rect,cache] = getButton(obj, wpnt, string, buttonMargins)
+            if ~iscell(string)
+                string = {string};
+            end
+            
+            % get strings
+            for p=length(string):-1:1
+                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,'eye images (<i>e<i>)');
+            end
+            % get rect around largest
+            rect = [0 0 max(rect(:,3)-rect(:,1)) max(rect(:,4)-rect(:,2))] + 2*[0 0 buttonMargins];
+        end
+        
+        function cache = positionButtonText(obj, cache, rect)
+            [sx,sy] = RectCenterd(rect);
+            if obj.usingFTGLTextRenderer
+                for p=1:length(cache)
+                    [~,~,~,cache] = DrawFormattedText2(cache(p),'cacheOnly',true,'sx',sx,'sy',sy,'xalign','center','yalign','center');
+                end
+            else
+                % TODO offset the below somehow
+                for p=1:length(cache)
+                    cache.px
+                    cache.py
+                end
+            end
+        end
+        
         function drawCachedText(obj,cache,rect)
             if obj.usingFTGLTextRenderer
                 args = {};
@@ -1222,6 +1326,24 @@ classdef Titta < handle
                 Screen('FillRect',wpnt,obj.getColorForWindow(fixFrontColor), rectV);
                 Screen('gluDisk', wpnt,obj.getColorForWindow( fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
             end
+        end
+        
+        function drawButton(obj,wpnt,but,idx)
+            if nargin<4
+                idx = 1;
+            end
+            if iscell(but.color)
+                clr = but.color{min(idx,end)};
+            else
+                clr = but.color;
+            end
+            Screen('FillRect',wpnt,obj.getColorForWindow(clr),but.rect);
+            if iscell(but.cache)
+                cache = but.cache{min(idx,end)};
+            else
+                cache = but.cache;
+            end
+            obj.drawCachedText(cache);
         end
         
         function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qDoCal)
