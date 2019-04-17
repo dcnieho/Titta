@@ -517,7 +517,7 @@ namespace
 {
     // get field indicated by list of pointers-to-member-variable in fields
     template <typename O, typename T, typename... Os, typename... Ts>
-    auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
+    constexpr auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
     {
         if constexpr (!sizeof...(fields))
             return obj.*field1;
@@ -527,18 +527,18 @@ namespace
 
     // get field indicated by list of pointers-to-member-variable in fields, cast return value to user specified type
     template <typename Obj, typename Out, typename... Fs, typename... Ts>
-    auto getField(const Obj& obj, Out, Ts Fs::*...fields)
+    constexpr auto getField(const Obj& obj, Out, Ts Fs::*...fields)
     {
         return static_cast<Out>(getField(obj, fields...));
     }
 
     template <typename Obj, typename... Fs>
-    auto getFieldWrapper(const Obj& obj, Fs... fields)
+    constexpr auto getFieldWrapper(const Obj& obj, Fs... fields)
     {
         // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
         if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
             return rotate_right_except_last(
-            [&](auto... elems)
+            [&](auto... elems) constexpr
             {
                 return getField(obj, elems...);
             }, fields...);
@@ -551,7 +551,7 @@ namespace
         {
             auto tuple = std::make_tuple(fields...);
             return drop_last(
-            [&](auto... elems)
+            [&](auto... elems) constexpr
             {
                 return getField(obj, elems...);
             }, fields...) == std::get<sizeof...(Fs)-1>(tuple);
@@ -559,7 +559,7 @@ namespace
         // if last is not pointer-to-member-variable, casting of return value requested, call getField with correct order of arguments
         else
             return rotate_right(
-            [&](auto... elems)
+            [&](auto... elems) constexpr
             {
                 return getField(obj, elems...);
             }, fields...);

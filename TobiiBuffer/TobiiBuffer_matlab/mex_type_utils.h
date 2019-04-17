@@ -30,4 +30,31 @@ namespace {
         else if constexpr (std::is_same_v<T, int8_t>)
             return mxINT8_CLASS;
     }
+
+    template <mxClassID T>
+    constexpr mxClassID MxClassToType()
+    {
+        if      constexpr (T == mxDOUBLE_CLASS)
+            using type = double;
+        else if constexpr (T == mxSINGLE_CLASS)
+            using type = float;
+        else if constexpr (T == mxLOGICAL_CLASS)
+            using type = bool;
+        else if constexpr (T == mxUINT64_CLASS)
+            using type = uint64_t;
+        else if constexpr (T == mxINT64_CLASS)
+            using type = int64_t;
+        else if constexpr (T == mxUINT32_CLASS)
+            using type = uint32_t;
+        else if constexpr (T == mxINT32_CLASS)
+            using type = int32_t;
+        else if constexpr (T == mxUINT16_CLASS)
+            using type = uint16_t;
+        else if constexpr (T == mxINT16_CLASS)
+            using type = int16_t;
+        else if constexpr (T == mxUINT8_CLASS)
+            using type = uint8_t;
+        else if constexpr (T == mxINT8_CLASS)
+            using type = int8_t;
+    }
 }

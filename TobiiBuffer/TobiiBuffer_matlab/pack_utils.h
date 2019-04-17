@@ -6,7 +6,7 @@ namespace
 {
     // get last type (or optionally 2nd last when N=2, 3rd last when N=3, etc) in variadic template
     template<class T> struct tag_t { using type = T; };
-    template<class...Ts, size_t N = 1>
+    template<class... Ts, size_t N = 1>
     using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<tag_t<Ts>...> >::type;
 
     // higher order function to forward an index sequence
@@ -49,9 +49,9 @@ namespace
     }
     // Given f and some args t0, t1, ..., tn, calls f(t0, t1, ..., tn-1)
     template <typename F, typename... Ts>
-    auto drop_last(F f, Ts... ts)
+    constexpr auto drop_last(F f, Ts... ts)
     {
-        return indices<sizeof...(Ts) - 1>([&](auto... Is)
+        return indices<sizeof...(Ts) - 1>([&](auto... Is) constexpr
         {
             auto tuple = std::make_tuple(ts...);
             return f(std::get<Is>(tuple)...);
