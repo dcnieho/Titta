@@ -157,8 +157,8 @@ classdef Titta < handle
             obj.settings.UI.button.val.selcal.textColor     = color2RGBA(obj.settings.UI.button.val.selcal.textColor);
             obj.settings.UI.button.val.setup.buttonColor    = color2RGBA(obj.settings.UI.button.val.setup.buttonColor);
             obj.settings.UI.button.val.setup.textColor      = color2RGBA(obj.settings.UI.button.val.setup.textColor);
-            obj.settings.UI.button.val.showgaze.buttonColor = color2RGBA(obj.settings.UI.button.val.showgaze.buttonColor);
-            obj.settings.UI.button.val.showgaze.textColor   = color2RGBA(obj.settings.UI.button.val.showgaze.textColor);
+            obj.settings.UI.button.val.toggGaze.buttonColor = color2RGBA(obj.settings.UI.button.val.toggGaze.buttonColor);
+            obj.settings.UI.button.val.toggGaze.textColor   = color2RGBA(obj.settings.UI.button.val.toggGaze.textColor);
             obj.settings.UI.button.val.toggCal.buttonColor  = color2RGBA(obj.settings.UI.button.val.toggCal.buttonColor);
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
             
@@ -780,11 +780,11 @@ classdef Titta < handle
             settings.UI.button.val.setup.string         = 'setup (<i>s<i>)';
             settings.UI.button.val.setup.buttonColor    = backButtonColor;
             settings.UI.button.val.setup.textColor      = 0;
-            settings.UI.button.val.showgaze.accelerator = 'e';
-            settings.UI.button.val.showgaze.qShow       = true;
-            settings.UI.button.val.showgaze.string      = 'show gaze (<i>g<i>)';
-            settings.UI.button.val.showgaze.buttonColor = toggleButColors;
-            settings.UI.button.val.showgaze.textColor   = 0;
+            settings.UI.button.val.toggGaze.accelerator = 'e';
+            settings.UI.button.val.toggGaze.qShow       = true;
+            settings.UI.button.val.toggGaze.string      = 'show gaze (<i>g<i>)';
+            settings.UI.button.val.toggGaze.buttonColor = toggleButColors;
+            settings.UI.button.val.toggGaze.textColor   = 0;
             settings.UI.button.val.toggCal.accelerator  = 't';
             settings.UI.button.val.toggCal.qShow        = false;
             settings.UI.button.val.toggCal.string       = {'show cal (<i>t<i>)','show val (<i>t<i>)'};
@@ -941,7 +941,7 @@ classdef Titta < handle
             [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
             for p=1:length(but)
                 if but(p).qShow
-                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, obj.settings.UI.button.margins);
+                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
                 end
             end
             % arrange them 
@@ -1277,14 +1277,24 @@ classdef Titta < handle
             end
         end
         
-        function [rect,cache] = getButton(obj, wpnt, string, buttonMargins)
+        function [rect,cache] = getButton(obj, wpnt, string, color, buttonMargins)
             if ~iscell(string)
                 string = {string};
+            end
+            assert(ismember(numel(string),[1 2]),'number of strings for button ''%s'' should be 1 or 2',string{1});
+            if ~iscell(color)
+                color = {color};
+            end
+            assert(ismember(numel(color),[1 2]),'number of textColors for button ''%s'' should be 1 or 2',string{1});
+            if length(color)<length(string)
+                color = [color color];
+            elseif length(string)<length(color)
+                string = [string string];
             end
             
             % get strings
             for p=length(string):-1:1
-                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,string{p});
+                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,sprintf('<color=%s>%s',string{p},clr2hex(color{p})));
             end
             % get rect around largest
             rect = [0 0 max(rect(:,3)-rect(:,1)) max(rect(:,4)-rect(:,2))] + 2*[0 0 buttonMargins];
@@ -1743,42 +1753,75 @@ classdef Titta < handle
             Screen('TextSize',  wpnt, obj.settings.UI.buttons.text.size);
             
             % set up buttons
+            % which to show
+            but(1)  = obj.settings.UI.button.val.recal;
+            but(2)  = obj.settings.UI.button.val.reval;
+            but(3)  = obj.settings.UI.button.val.continue;
+            but(4)  = obj.settings.UI.button.val.selcal;
+            but(4).qShow = but(4).qShow && qHaveMultipleValidCals;
+            but(5)  = obj.settings.UI.button.val.setup;
+            but(6)  = obj.settings.UI.button.val.toggGaze;
+            but(7)  = obj.settings.UI.button.val.toggCal;
+            but(7).qShow = but(7).qShow && qHasCal;     %% TODO: HasCal can change when different attempt selected. Also, note validation only ones differently in menu?
+            offScreen   = [-100 -90 -100 -90];
+            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
             % 1. below screen
-            yPosBot     = .97*obj.scrInfo.resolution(2);
-            buttonSz    = [300 45; 300 45; 300 45; 350 45];
-            buttonSz    = buttonSz(1:3+qHaveMultipleValidCals,:);   % third button only when more than one calibration available
-            buttonOff   = 80;
-            totWidth    = sum(buttonSz(:,1))+(size(buttonSz,1)-1)*buttonOff;
-            buttonRectsX= cumsum([0 buttonSz(:,1).']+[0 ones(1,size(buttonSz,1))]*buttonOff)-totWidth/2;
-            recalButRect        = OffsetRect([buttonRectsX(1) 0 buttonRectsX(2)-buttonOff buttonSz(1,2)],obj.scrInfo.center(1),yPosBot-buttonSz(1,2));
-            recalButTextCache   = obj.getTextCache(wpnt,'recalibrate (<i>esc<i>)'  ,    recalButRect);
-            revalButRect        = OffsetRect([buttonRectsX(2) 0 buttonRectsX(3)-buttonOff buttonSz(2,2)],obj.scrInfo.center(1),yPosBot-buttonSz(2,2));
-            revalButTextCache   = obj.getTextCache(wpnt,'revalidate (<i>v<i>)'     ,    revalButRect);
-            continueButRect     = OffsetRect([buttonRectsX(3) 0 buttonRectsX(4)-buttonOff buttonSz(3,2)],obj.scrInfo.center(1),yPosBot-buttonSz(3,2));
-            continueButTextCache= obj.getTextCache(wpnt,'continue (<i>spacebar<i>)', continueButRect);
-            if qHaveMultipleValidCals
-                selectButRect       = OffsetRect([buttonRectsX(4) 0 buttonRectsX(5)-buttonOff buttonSz(4,2)],obj.scrInfo.center(1),yPosBot-buttonSz(4,2));
-                selectButTextCache  = obj.getTextCache(wpnt,'select other cal (<i>c<i>)', selectButRect);
-            else
-                selectButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
+            % size and get text
+            for p=1:4
+                if but(p).qShow
+                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
+                end
             end
+            % position them
+            butRectsBase= cat(1,but([but(1:4).qShow]).rect);
+            if ~isempty(butRectsBase)
+                buttonOff   = 80;
+                yposBase    = round(obj.scrInfo.resolution(2)*.97);
+                buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
+                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
+                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
+                butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
+                butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
+                butRects(:,4)     = yposBase;
+                butRects          = num2cell(butRects,2);
+                [but([1:length(but)]<=4&[but.qShow]).rect] = butRects{:};
+                % now position text correctly
+                for p=1:4
+                    if but(p).qShow
+                        but(p).cache = obj.positionButtonText(but(p).cache, but(p).rect);
+                    end
+                end
+            end
+            
             % 2. atop screen
+            % size and get text
+            offScreen   = [-100 -90 -100 -90];
+            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
+            for p=5:6
+                if but(p).qShow
+                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
+                end
+            end
+            % position them
             yPosTop             = .02*obj.scrInfo.resolution(2);
-            buttonSz            = [200 45; 250 45];
             buttonOff           = 900;
-            showGazeButClrs     = {[37  97 163],[11 122 244]};
-            setupButRect        = OffsetRect([0 0 buttonSz(1,:)],obj.scrInfo.center(1)-buttonOff/2-buttonSz(1,1),yPosTop);
-            setupButTextCache   = obj.getTextCache(wpnt,'setup (<i>s<i>)'    ,   setupButRect);
-            showGazeButRect     = OffsetRect([0 0 buttonSz(2,:)],obj.scrInfo.center(1)+buttonOff/2              ,yPosTop);
-            showGazeButTextCache= obj.getTextCache(wpnt,'show gaze (<i>g<i>)',showGazeButRect);
+            if but(5).qShow
+                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center(1)-buttonOff/2-but(5).rect(3),yPosTop);
+                but(5).cache    = obj.positionButtonText(but(5).cache, but(5).rect);
+            end
+            if but(6).qShow
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center(1)+buttonOff/2,yPosTop);
+                but(6).cache    = obj.positionButtonText(but(6).cache, but(6).rect);
+            end
+            
             % 3. left side
-            buttonSz            = [190 45];
-            toggleCVButClr      = [37  97 163];
-            if qHasCal && obj.settings.UI.val.doShowValCalSwitch
-                toggleCVButRect = OffsetRect([0 0 buttonSz],0,yPosTop);
-                toggleCVButTextCache= {obj.getTextCache(wpnt,'show cal (<i>t<i>)',toggleCVButRect), obj.getTextCache(wpnt,'show val (<i>t<i>)',toggleCVButRect)};
-            else
-                toggleCVButRect = [-100 -90 -100 -90]; % offscreen so mouse handler doesn't fuck up because of it
+            if but(7).qShow
+                % size and get text
+                [but(7).rect,but(7).cache] = obj.getButton(wpnt, but(7).string, but(7).textColor, obj.settings.UI.button.margins);
+                % position them
+                but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
+                but(7).cache    = obj.positionButtonText(but(7).cache, but(7).rect);
             end
             
             
@@ -1852,16 +1895,17 @@ classdef Titta < handle
                 
                 % setup cursors
                 if qToggleSelectMenu
+                    butRects            = cat(1,but.rect).';
                     currentMenuSel      = find(selection==iValid);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = {menuRects.',continueButRect.',recalButRect.',revalButRect.'};
-                        cursors.cursor  = 2*ones(1,size(menuRects,1)+2);    % 2: Hand
+                        cursors.rect    = [{menuRects.'} num2cell(butRects(:,1:3),1)];
+                        cursors.cursor  = repmat(2,1,size(menuRects,1)+3);    % 2: Hand
                     else
-                        cursors.rect    = {continueButRect.',recalButRect.',revalButRect.',selectButRect.',setupButRect.',showGazeButRect.',toggleCVButRect.'};
-                        cursors.cursor  = [2 2 2 2 2 2];  % 2: Hand
+                        cursors.rect    = num2cell(butRects,1);
+                        cursors.cursor  = repmat(2,1,7);  % 2: Hand
                     end
                     cursors.other   = 0;    % 0: Arrow
                     cursors.qReset  = false;
@@ -2018,24 +2062,13 @@ classdef Titta < handle
                         obj.drawCachedText(calValLblCache);
                     end
                     % draw buttons
-                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),recalButRect);
-                    obj.drawCachedText(recalButTextCache);
-                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),revalButRect);
-                    obj.drawCachedText(revalButTextCache);
-                    Screen('FillRect',wpnt,obj.getColorForWindow([0 120 0]),continueButRect);
-                    obj.drawCachedText(continueButTextCache);
-                    if qHaveMultipleValidCals
-                        Screen('FillRect',wpnt,obj.getColorForWindow([150 150 0]),selectButRect);
-                        obj.drawCachedText(selectButTextCache);
-                    end
-                    Screen('FillRect',wpnt,obj.getColorForWindow([150 0 0]),setupButRect);
-                    obj.drawCachedText(setupButTextCache);
-                    Screen('FillRect',wpnt,obj.getColorForWindow(showGazeButClrs{qShowGaze+1}),showGazeButRect);
-                    obj.drawCachedText(showGazeButTextCache);
-                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
-                        Screen('FillRect',wpnt,obj.getColorForWindow(toggleCVButClr),toggleCVButRect);
-                        obj.drawCachedText(toggleCVButTextCache{qShowCal+1});
-                    end
+                    obj.drawButton(wpnt,but(1));
+                    obj.drawButton(wpnt,but(2));
+                    obj.drawButton(wpnt,but(3));
+                    obj.drawButton(wpnt,but(4));
+                    obj.drawButton(wpnt,but(5));
+                    obj.drawButton(wpnt,but(6),qShowGaze+1);
+                    obj.drawButton(wpnt,but(7),qShowCal+1);
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
@@ -2104,16 +2137,16 @@ classdef Titta < handle
                             end
                         end
                         if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qIn = inRect([mx my],[continueButRect.' recalButRect.' revalButRect.' selectButRect.' setupButRect.' showGazeButRect.' toggleCVButRect.']);
+                            qIn = inRect([mx my],butRects);
                             if any(qIn)
                                 if qIn(1)
-                                    status = 1;
-                                    qDoneCalibSelection = true;
-                                elseif qIn(2)
                                     status = -1;
                                     qDoneCalibSelection = true;
-                                elseif qIn(3)
+                                elseif qIn(2)
                                     status = -2;
+                                    qDoneCalibSelection = true;
+                                elseif qIn(3)
+                                    status = 1;
                                     qDoneCalibSelection = true;
                                 elseif qIn(4)
                                     qToggleSelectMenu   = true;
@@ -2149,7 +2182,7 @@ classdef Titta < handle
                                 break;
                             else
                                 if ~iscell(keys), keys = {keys}; end
-                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys)) %#ok<STREMP>
                                     % up arrow key (test so round-about
                                     % because KbName could return both 'up'
                                     % and 'UpArrow', depending on platform
@@ -2159,7 +2192,7 @@ classdef Titta < handle
                                         qChangeMenuArrow = true;
                                         break;
                                     end
-                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys)) %#ok<STREMP>
                                     % down key
                                     if currentMenuSel<length(iValid)
                                         currentMenuSel   = currentMenuSel+1;
@@ -2169,29 +2202,29 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if any(strcmpi(keys,'space'))
+                            if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator))
                                 status = 1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'escape')) && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.recal.accelerator)) && ~shiftIsDown
                                 status = -1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'v'))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator))
                                 status = -2;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'s')) && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.setup.accelerator)) && ~shiftIsDown
                                 status = -3;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,'c')) && qHaveMultipleValidCals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && qHaveMultipleValidCals
                                 qToggleSelectMenu   = true;
                                 break;
-                            elseif any(strcmpi(keys,'g'))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 break;
-                            elseif any(strcmpi(keys,'t')) && qHasCal
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
                                 break;
