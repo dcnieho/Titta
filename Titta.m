@@ -1762,7 +1762,7 @@ classdef Titta < handle
             but(5)  = obj.settings.UI.button.val.setup;
             but(6)  = obj.settings.UI.button.val.toggGaze;
             but(7)  = obj.settings.UI.button.val.toggCal;
-            but(7).qShow = but(7).qShow && qHasCal;     %% TODO: HasCal can change when different attempt selected. Also, note validation only ones differently in menu?
+            but(7).qShow = but(7).qShow && qHasCal;
             offScreen   = [-100 -90 -100 -90];
             [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
             % 1. below screen
@@ -1874,6 +1874,7 @@ classdef Titta < handle
             fixPointRectSz      = 100;
             openInfoForPoint    = nan;
             pointToShowInfoFor  = nan;
+            but7Pos             = but(7).rect;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress();
@@ -1893,34 +1894,6 @@ classdef Titta < handle
                     qToggleGaze = false;
                 end
                 
-                % setup cursors
-                if qToggleSelectMenu
-                    butRects            = cat(1,but.rect).';
-                    currentMenuSel      = find(selection==iValid);
-                    qSelectMenuOpen     = ~qSelectMenuOpen;
-                    qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
-                    qToggleSelectMenu   = false;
-                    if qSelectMenuOpen
-                        cursors.rect    = [{menuRects.'} num2cell(butRects(:,1:3),1)];
-                        cursors.cursor  = repmat(2,1,size(menuRects,1)+3);    % 2: Hand
-                    else
-                        cursors.rect    = num2cell(butRects,1);
-                        cursors.cursor  = repmat(2,1,7);  % 2: Hand
-                    end
-                    cursors.other   = 0;    % 0: Arrow
-                    cursors.qReset  = false;
-                    % NB: don't reset cursor to invisible here as it will then flicker every
-                    % time you click something. default behaviour is good here
-                    cursor = cursorUpdater(cursors);
-                end
-                if qChangeMenuArrow
-                    % setup arrow that can be moved with arrow keys
-                    rect = menuRects(currentMenuSel,:);
-                    rect(3) = rect(1)+RectWidth(rect)*.07;
-                    menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
-                    qChangeMenuArrow = false;
-                end
-                
                 % setup fixation point positions for cal or val
                 if qUpdateCalDisplay || qSelectedCalChanged
                     if qSelectedCalChanged
@@ -1929,6 +1902,22 @@ classdef Titta < handle
                         Screen('Flip',wpnt);
                         obj.loadOtherCal(cal{selection});
                         qSelectedCalChanged = false;
+                        qHasCal = ~isempty(cal{selection}.cal.result);
+                        if ~qHasCal && qShowCal
+                            qShowCal            = false;
+                            % toggle selection menu to trigger updating of
+                            % cursors, but make sure menu doesn't actually
+                            % open by temporarily changing its state
+                            qToggleSelectMenu   = true;
+                            qSelectMenuOpen     = ~qSelectMenuOpen;
+                        end
+                        if ~qHasCal
+                            but(7).qShow    = false;
+                            but(7).rect     = offScreen;
+                        elseif obj.settings.UI.button.val.toggCal.qShow
+                            but(7).qShow    = true;
+                            but(7).rect     = but7Pos;
+                        end
                     end
                     % update info text
                     % acc field is [lx rx; ly ry]
@@ -1986,6 +1975,34 @@ classdef Titta < handle
                     if qHasCal && obj.settings.UI.val.doShowValCalSwitch
                         calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
                     end
+                end
+                
+                % setup cursors
+                if qToggleSelectMenu
+                    butRects            = cat(1,but.rect).';
+                    currentMenuSel      = find(selection==iValid);
+                    qSelectMenuOpen     = ~qSelectMenuOpen;
+                    qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
+                    qToggleSelectMenu   = false;
+                    if qSelectMenuOpen
+                        cursors.rect    = [{menuRects.'} num2cell(butRects(:,1:3),1)];
+                        cursors.cursor  = repmat(2,1,size(menuRects,1)+3);    % 2: Hand
+                    else
+                        cursors.rect    = num2cell(butRects,1);
+                        cursors.cursor  = repmat(2,1,7);  % 2: Hand
+                    end
+                    cursors.other   = 0;    % 0: Arrow
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
+                end
+                if qChangeMenuArrow
+                    % setup arrow that can be moved with arrow keys
+                    rect = menuRects(currentMenuSel,:);
+                    rect(3) = rect(1)+RectWidth(rect)*.07;
+                    menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
+                    qChangeMenuArrow = false;
                 end
                 
                 % setup overlay with data quality info for specific point
