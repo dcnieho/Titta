@@ -699,8 +699,8 @@ classdef Titta < handle
             % some default colors to be used below
             eyeColors           = {[255 127   0],[ 0  95 191]};
             toggleButColors     = {[ 37  97 163],[11 122 244]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
-            continueButtonColor = [150 0 0];                        % continue calibration, start recording
-            backButtonColor     = [0 120 0];                        % redo cal, val, go back to set up
+            continueButtonColor = [0 120 0];                        % continue calibration, start recording
+            backButtonColor     = [150 0 0];                        % redo cal, val, go back to set up
             optionButtonColor   = [150 150 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
             
             % TODO: change button colors to something brighter with more
@@ -730,7 +730,7 @@ classdef Titta < handle
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
-            settings.UI.button.margins          = [22 10];
+            settings.UI.button.margins          = [30 14];
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
@@ -739,9 +739,9 @@ classdef Titta < handle
             settings.UI.button.setup.text.style = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
             settings.UI.button.setup.eyeIm.qShow        = true;
-            settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
+            settings.UI.button.setup.eyeIm.string       = {'eye images (<i>e<i>)','no eye images (<i>e<i>)'};
             settings.UI.button.setup.eyeIm.buttonColor  = toggleButColors;
-            settings.UI.button.setup.eyeIm.textColor    = 0;
+            settings.UI.button.setup.eyeIm.textColor    = 255;
             settings.UI.button.setup.cal.accelerator    = 'space';
             settings.UI.button.setup.cal.qShow          = true;
             settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
@@ -937,30 +937,33 @@ classdef Titta < handle
             but(1).qShow = but(1).qShow && qHasEyeIm;
             but(3).qShow = but(3).qShow && qHaveValidCalibrations;
             % where and get text
-            [but.rect] = deal([-100 -90 -100 -90]); % offscreen so mouse handler doesn't fuck up because of it
+            offScreen   = [-100 -90 -100 -90];
+            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
             for p=1:length(but)
                 if but(p).qShow
-                    [but(p).rect,but(p).cache] = getButton(wpnt, but(p).string, obj.settings.UI.button.margins);
+                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, obj.settings.UI.button.margins);
                 end
             end
             % arrange them 
             butRectsBase= cat(1,but([but.qShow]).rect);
-            buttonOff   = 80;
-            yposBase    = round(obj.scrInfo.resolution(2)*.95);
-            % place buttons for go to advanced interface, or calibrate
-            buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
-            totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
-            xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
-            xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
-            butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
-            butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
-            butRects(:,4)     = yposBase;
-            butRects          = num2cell(butRects,2);
-            [but([but.qShow]).rect] = butRects{:};
-            % now position text correctly
-            for p=1:length(but)
-                if but(p).qShow
-                    but(p).cache = positionButtonText(obj, but(p).cache, but(p).rect);
+            if ~isempty(butRectsBase)
+                buttonOff   = 80;
+                yposBase    = round(obj.scrInfo.resolution(2)*.95);
+                % place buttons for go to advanced interface, or calibrate
+                buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
+                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
+                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
+                butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
+                butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
+                butRects(:,4)     = yposBase;
+                butRects          = num2cell(butRects,2);
+                [but([but.qShow]).rect] = butRects{:};
+                % now position text correctly
+                for p=1:length(but)
+                    if but(p).qShow
+                        but(p).cache = obj.positionButtonText(but(p).cache, but(p).rect);
+                    end
                 end
             end
             
@@ -1020,8 +1023,14 @@ classdef Titta < handle
                         % update eye image locations if size of returned eye image changed
                         if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
                             margin = 20;
-                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center(1)-szs(1,1)-margin/2,calibButRect(2)-margin-szs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center(1)         +margin/2,calibButRect(2)-margin-szs(2,2));
+                            qShow = [but.qShow];
+                            if ~any(qShow)
+                                basePos = round(obj.scrInfo.resolution(2)*.95);
+                            else
+                                basePos = min(butRects(2,[but.qShow]));
+                            end
+                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center(1)         +margin/2,basePos-margin-szs(2,2));
                         end
                     end
                 end
@@ -1242,7 +1251,7 @@ classdef Titta < handle
             inputs.yalign       = 'center';
             inputs.xlayout      = 'left';
             inputs.baseColor    = obj.getColorForWindow(0);
-            if ~isempty(rect)
+            if nargin>3 && ~isempty(rect)
                 [inputs.sx,inputs.sy] = RectCenterd(rect);
             end
             
@@ -1275,7 +1284,7 @@ classdef Titta < handle
             
             % get strings
             for p=length(string):-1:1
-                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,'eye images (<i>e<i>)');
+                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,string{p});
             end
             % get rect around largest
             rect = [0 0 max(rect(:,3)-rect(:,1)) max(rect(:,4)-rect(:,2))] + 2*[0 0 buttonMargins];
@@ -1285,7 +1294,7 @@ classdef Titta < handle
             [sx,sy] = RectCenterd(rect);
             if obj.usingFTGLTextRenderer
                 for p=1:length(cache)
-                    [~,~,~,cache] = DrawFormattedText2(cache(p),'cacheOnly',true,'sx',sx,'sy',sy,'xalign','center','yalign','center');
+                    [~,~,~,cache(p)] = DrawFormattedText2(cache(p),'cacheOnly',true,'sx',sx,'sy',sy,'xalign','center','yalign','center');
                 end
             else
                 % TODO offset the below somehow
@@ -1329,21 +1338,19 @@ classdef Titta < handle
         end
         
         function drawButton(obj,wpnt,but,idx)
+            if ~but.qShow
+                return;
+            end
             if nargin<4
                 idx = 1;
             end
-            if iscell(but.color)
-                clr = but.color{min(idx,end)};
+            if iscell(but.buttonColor)
+                clr = but.buttonColor{min(idx,end)};
             else
-                clr = but.color;
+                clr = but.buttonColor;
             end
             Screen('FillRect',wpnt,obj.getColorForWindow(clr),but.rect);
-            if iscell(but.cache)
-                cache = but.cache{min(idx,end)};
-            else
-                cache = but.cache;
-            end
-            obj.drawCachedText(cache);
+            obj.drawCachedText(but.cache(min(idx,end)));
         end
         
         function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qDoCal)
@@ -1411,7 +1418,7 @@ classdef Titta < handle
                         % accross setup screens and such.
                         % So, send cleanup message to user function (if any)
                         if isa(obj.settings.cal.drawFunction,'function_handle')
-                            obj.settings.cal.drawFunction(nan);
+                            obj.settings.cal.drawFunction(nan,nan,nan,nan);
                         end
                         Screen('Flip',wpnt);
                     end
@@ -1440,7 +1447,7 @@ classdef Titta < handle
             if status~=-1   % see comment above about why not when -1
                 % cleanup message to user function (if any)
                 if isa(obj.settings.cal.drawFunction,'function_handle')
-                    obj.settings.cal.drawFunction(nan);
+                    obj.settings.cal.drawFunction(nan,nan,nan,nan);
                 end
             end
             
