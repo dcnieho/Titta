@@ -78,7 +78,6 @@ try
             settings.cal.fixFrontColor  = fixClrs(2);
         end
     end
-    settings.cal.pointPos   = [.5 .5];
     
     % init
     EThndl          = Titta(settings);

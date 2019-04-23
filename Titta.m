@@ -368,7 +368,7 @@ classdef Titta < handle
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
             if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.UI.buttons.text,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
+                assert(isfield(obj.settings.UI.button.textVOff,'lineCentOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end
             
             % init key, mouse state
@@ -741,7 +741,7 @@ classdef Titta < handle
             settings.UI.button.setup.eyeIm.qShow        = true;
             settings.UI.button.setup.eyeIm.string       = {'eye images (<i>e<i>)','no eye images (<i>e<i>)'};
             settings.UI.button.setup.eyeIm.buttonColor  = toggleButColors;
-            settings.UI.button.setup.eyeIm.textColor    = 255;
+            settings.UI.button.setup.eyeIm.textColor    = 0;
             settings.UI.button.setup.cal.accelerator    = 'space';
             settings.UI.button.setup.cal.qShow          = true;
             settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
@@ -775,12 +775,12 @@ classdef Titta < handle
             settings.UI.button.val.selcal.string        = 'select other cal (<i>c<i>)';
             settings.UI.button.val.selcal.buttonColor   = optionButtonColor;
             settings.UI.button.val.selcal.textColor     = 0;
-            settings.UI.button.val.setup.accelerator    = 'e';
+            settings.UI.button.val.setup.accelerator    = 's';
             settings.UI.button.val.setup.qShow          = true;
             settings.UI.button.val.setup.string         = 'setup (<i>s<i>)';
             settings.UI.button.val.setup.buttonColor    = backButtonColor;
             settings.UI.button.val.setup.textColor      = 0;
-            settings.UI.button.val.toggGaze.accelerator = 'e';
+            settings.UI.button.val.toggGaze.accelerator = 'g';
             settings.UI.button.val.toggGaze.qShow       = true;
             settings.UI.button.val.toggGaze.string      = 'show gaze (<i>g<i>)';
             settings.UI.button.val.toggGaze.buttonColor = toggleButColors;
@@ -1271,7 +1271,7 @@ classdef Titta < handle
                     end
                 end
                 if ~isempty(rect)
-                    inputs.sy = inputs.sy + obj.settings.UI.buttons.text.lineCentOff;
+                    inputs.sy = inputs.sy + obj.settings.UI.button.textVOff;
                 end
                 [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,inputs.baseColor,[],inputs.vSpacing,[],[],true);
             end
@@ -1294,7 +1294,7 @@ classdef Titta < handle
             
             % get strings
             for p=length(string):-1:1
-                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,sprintf('<color=%s>%s',string{p},clr2hex(color{p})));
+                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,sprintf('<color=%s>%s',clr2hex(color{p}),string{p}));
             end
             % get rect around largest
             rect = [0 0 max(rect(:,3)-rect(:,1)) max(rect(:,4)-rect(:,2))] + 2*[0 0 buttonMargins];
@@ -1749,8 +1749,8 @@ classdef Titta < handle
             qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.buttons.text.font, obj.settings.UI.buttons.text.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.buttons.text.size);
+            Screen('TextFont',  wpnt, obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
+            Screen('TextSize',  wpnt, obj.settings.UI.button.val.text.size);
             
             % set up buttons
             % which to show
@@ -1796,8 +1796,6 @@ classdef Titta < handle
             
             % 2. atop screen
             % size and get text
-            offScreen   = [-100 -90 -100 -90];
-            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
             for p=5:6
                 if but(p).qShow
                     [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
@@ -1972,14 +1970,14 @@ classdef Titta < handle
                     end
                     qUpdateCalDisplay   = false;
                     pointToShowInfoFor  = nan;      % close info display, if any
-                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
+                    if qHasCal && obj.settings.UI.button.val.toggCal.qShow
                         calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
                     end
                 end
                 
                 % setup cursors
                 if qToggleSelectMenu
-                    butRects            = cat(1,but.rect).';
+                    butRects            = cat(1,but.rect).'
                     currentMenuSel      = find(selection==iValid);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
@@ -2073,7 +2071,7 @@ classdef Titta < handle
                     
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
-                    if qHasCal && obj.settings.UI.val.doShowValCalSwitch
+                    if qHasCal && obj.settings.UI.button.val.toggCal.qShow
                         % draw text indicating whether calibration or
                         % validation is currently shown
                         obj.drawCachedText(calValLblCache);
