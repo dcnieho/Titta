@@ -640,22 +640,12 @@ classdef Titta < handle
         
         function out = deInit(obj)
             if ~isempty(obj.buffer)
-                % stop log, return and clear buffer
+                % return log
                 out = obj.buffer.getLog(true);
-                obj.buffer.stopLogging();
-                
-                % stop all streams
-                obj.buffer.stop('gaze');
-                obj.buffer.stop('eyeImage');
-                obj.buffer.stop('externalSignal');
-                obj.buffer.stop('timeSync');
-                
-                % clear all buffers
-                obj.buffer.clear('gaze');
-                obj.buffer.clear('eyeImage');
-                obj.buffer.clear('externalSignal');
-                obj.buffer.clear('timeSync');
             end
+            % deleting the buffer object stops all streams and clears its
+            % buffers
+            obj.buffer = [];
             
             % clear msgs
             obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
