@@ -68,10 +68,10 @@ public:
 
     // peek samples (by default only last one, can specify how many to peek from end of buffer)
     template <typename T>
-    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt) const;
+    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
     // peek samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
-    std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt) const;
+    std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // clear all buffer contents
     void clear(std::string stream_);
