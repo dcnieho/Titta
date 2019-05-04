@@ -53,7 +53,7 @@ namespace TobiiTypes
         {
             memcpy(_eyeIm.get(), e_->image_data, e_->image_size);
         }
-        eyeImage(eyeImage&&) = default;
+        eyeImage(eyeImage&&) noexcept = default;
         eyeImage(const eyeImage& other_) :
             isGif(other_.isGif),
             device_time_stamp(other_.device_time_stamp),

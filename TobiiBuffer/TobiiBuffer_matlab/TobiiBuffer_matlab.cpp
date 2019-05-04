@@ -143,13 +143,21 @@ namespace {
         }
         return it;
     }
+}
 
+// extend set of function to convert C++ data to matlab
+namespace mxTypes
+{
     // forward declare
-    mxArray* ToMxArray(std::vector<TobiiResearchGazeData               > data_);
-    mxArray* ToMxArray(std::vector<TobiiBuffer::eyeImage               > data_);
-    mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_);
-    mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_);
-    mxArray* ToMxArray(std::vector<TobiiBuffer::logMessage             > data_);
+    template<typename Cont, typename... Fs>
+    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
+        FieldToMatlab(const Cont& data_, Fs... fields);
+    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
+    mxArray* ToMatlab(std::vector<TobiiResearchGazeData               > data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::eyeImage               > data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage             > data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -339,16 +347,16 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             switch (dataStream)
             {
                 case TobiiBuffer::DataStream::Gaze:
-                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::gaze>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::gaze>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
-                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::eyeImage>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::eyeImage>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::ExtSignal:
-                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::extSignal>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::extSignal>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
-                    plhs[0] = ToMxArray(instance->consumeN<TobiiBuffer::timeSync>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::timeSync>(nSamp));
                     return;
             }
         }
@@ -381,16 +389,16 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             switch (dataStream)
             {
                 case TobiiBuffer::DataStream::Gaze:
-                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
-                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::ExtSignal:
-                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
-                    plhs[0] = ToMxArray(instance->consumeTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
                     return;
             }
         }
@@ -416,16 +424,16 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             switch (dataStream)
             {
                 case TobiiBuffer::DataStream::Gaze:
-                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::gaze>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::gaze>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
-                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::eyeImage>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::eyeImage>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::ExtSignal:
-                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::extSignal>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::extSignal>(nSamp));
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
-                    plhs[0] = ToMxArray(instance->peekN<TobiiBuffer::timeSync>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::timeSync>(nSamp));
                     return;
             }
         }
@@ -459,16 +467,16 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             switch (dataStream)
             {
                 case TobiiBuffer::DataStream::Gaze:
-                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiBuffer::gaze>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::EyeImage:
-                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiBuffer::eyeImage>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::ExtSignal:
-                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiBuffer::extSignal>(timeStart, timeEnd));
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
-                    plhs[0] = ToMxArray(instance->peekTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
                     return;
             }
         }
@@ -498,7 +506,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                 clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
             }
 
-            plhs[0] = ToMxArray(TobiiBuffer::getLog(clearBuffer));
+            plhs[0] = mxTypes::ToMatlab(TobiiBuffer::getLog(clearBuffer));
             return;
         }
         case Action::StopLogging:
@@ -515,147 +523,6 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
 // helpers
 namespace
 {
-    // get field indicated by list of pointers-to-member-variable in fields
-    template <typename O, typename T, typename... Os, typename... Ts>
-    constexpr auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
-    {
-        if constexpr (!sizeof...(fields))
-            return obj.*field1;
-        else
-            return getField(obj.*field1, fields...);
-    }
-
-    // get field indicated by list of pointers-to-member-variable in fields, cast return value to user specified type
-    template <typename Obj, typename Out, typename... Fs, typename... Ts>
-    constexpr auto getField(const Obj& obj, Out, Ts Fs::*...fields)
-    {
-        return static_cast<Out>(getField(obj, fields...));
-    }
-
-    template <typename Obj, typename... Fs>
-    constexpr auto getFieldWrapper(const Obj& obj, Fs... fields)
-    {
-        // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
-        if      constexpr (sizeof...(Fs)>1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
-            return rotate_right_except_last(
-            [&](auto... elems) constexpr
-            {
-                return getField(obj, elems...);
-            }, fields...);
-        // if last is pointer-to-member-variable, no casting of return value requested through type tag, call getField
-        else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
-            return getField(obj, fields...);
-        // if last is an enum, compare the value of the field to it
-        // this turns enum fields into a boolean given reference enum value for which true should be returned
-        else if constexpr (std::disjunction_v<std::is_same<last<Obj, Fs...>, TobiiResearchValidity>, std::is_same<last<Obj, Fs...>, TobiiResearchEyeImageType>>)
-        {
-            auto tuple = std::make_tuple(fields...);
-            return drop_last(
-            [&](auto... elems) constexpr
-            {
-                return getField(obj, elems...);
-            }, fields...) == std::get<sizeof...(Fs)-1>(tuple);
-        }
-        // if last is not pointer-to-member-variable, casting of return value requested, call getField with correct order of arguments
-        else
-            return rotate_right(
-            [&](auto... elems) constexpr
-            {
-                return getField(obj, elems...);
-            }, fields...);
-    }
-
-    // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
-    template <typename S, typename... Fs>
-    mxArray* FieldToMatlab(const std::vector<S>& data_, Fs... fields)
-    {
-        mxArray* temp;
-        // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
-        using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<S, Fs...>>, last<S, Fs...>, last<S, Fs..., 2>>>;
-        // based on type, get number of rows for output
-        constexpr auto numRows = getNumRows<retT>();
-
-        size_t i = 0;
-        if constexpr (numRows > 1)
-        {
-            // this is one of the 2D/3D point types
-            // determine what return type we get
-            // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
-            using U = decltype(getFieldWrapper(S{}, fields..., &retT::x));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
-            for (auto &samp : data_)
-            {
-                storage[i++] = getFieldWrapper(samp, fields..., &retT::x);
-                storage[i++] = getFieldWrapper(samp, fields..., &retT::y);
-                if constexpr (numRows == 3)
-                    storage[i++] = getFieldWrapper(samp, fields..., &retT::z);
-            }
-        }
-        else
-        {
-            using U = decltype(getFieldWrapper(S{}, fields...));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
-            for (auto &samp : data_)
-                storage[i++] = getFieldWrapper(samp, fields...);
-        }
-        return temp;
-    }
-
-
-    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
-    {
-        const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
-        const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid"};
-        const char* fieldNamesPup[] = {"diameter","valid"};
-        const char* fieldNamesGO[] = {"inUserCoords","inTrackBoxCoords","valid"};
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNamesEye) / sizeof(*fieldNamesEye), fieldNamesEye);
-        mxArray* temp;
-
-        // 1. gazePoint
-        mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGP) / sizeof(*fieldNamesGP), fieldNamesGP));
-        // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));					// 0. causes values to be stored as double
-        // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));				// 0. causes values to be stored as double
-        // 1.3 gazePoint.validity
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
-
-        // 2. pupil
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
-        // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));									// 0. causes values to be stored as double
-        // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
-
-        // 3. gazePoint
-        mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
-        // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
-        // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
-        // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
-
-        return out;
-    }
-
-    mxArray* ToMxArray(std::vector<TobiiResearchGazeData> data_)
-    {
-        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
-
-        // 1. all device timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchGazeData::device_time_stamp));
-        // 2. all system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchGazeData::system_time_stamp));
-        // 3. left  eye data
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchGazeData::left_eye));
-        // 4. right eye data
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchGazeData::right_eye));
-
-        return out;
-    }
-
     template <typename S, typename T, typename R>
     bool allEquals(const std::vector<S>& data_, T S::* field_, const R& ref_)
     {
@@ -699,8 +566,102 @@ namespace
 
         return out;
     }
+}
+namespace mxTypes
+{
+    // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
+    template<typename Cont, typename... Fs>
+    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
+        FieldToMatlab(const Cont& data_, Fs... fields)
+    {
+        mxArray* temp;
+        using V = typename Cont::value_type;
+        // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
+        using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<V, Fs...>>, last<V, Fs...>, last<V, Fs..., 2>>>;
+        // based on type, get number of rows for output
+        constexpr auto numRows = getNumRows<retT>();
 
-    mxArray* ToMxArray(std::vector<TobiiBuffer::eyeImage> data_)
+        size_t i = 0;
+        if constexpr (numRows > 1)
+        {
+            // this is one of the 2D/3D point types
+            // determine what return type we get
+            // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
+            using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields..., &retT::x));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
+            for (auto &samp : data_)
+            {
+                storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::x);
+                storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::y);
+                if constexpr (numRows == 3)
+                    storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::z);
+            }
+        }
+        else
+        {
+            using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields...));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
+            for (auto &samp : data_)
+                storage[i++] = mxTypes::getFieldWrapper(samp, fields...);
+        }
+        return temp;
+    }
+
+    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
+    {
+        const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
+        const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid"};
+        const char* fieldNamesPup[] = {"diameter","valid"};
+        const char* fieldNamesGO[] = {"inUserCoords","inTrackBoxCoords","valid"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNamesEye) / sizeof(*fieldNamesEye), fieldNamesEye);
+        mxArray* temp;
+
+        // 1. gazePoint
+        mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGP) / sizeof(*fieldNamesGP), fieldNamesGP));
+        // 1.1 gazePoint.onDisplayArea
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));					// 0. causes values to be stored as double
+        // 1.2 gazePoint.inUserCoords
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));				// 0. causes values to be stored as double
+        // 1.3 gazePoint.validity
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
+
+        // 2. pupil
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
+        // 2.1 pupil.diameter
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));									// 0. causes values to be stored as double
+        // 2.2 pupil.validity
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
+
+        // 3. gazePoint
+        mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
+        // 3.1 gazeOrigin.inUserCoords
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
+        // 3.2 gazeOrigin.inTrackBoxCoords
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
+        // 3.3 gazeOrigin.validity
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
+
+        return out;
+    }
+
+    mxArray* ToMatlab(std::vector<TobiiResearchGazeData> data_)
+    {
+        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. all device timestamps
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchGazeData::device_time_stamp));
+        // 2. all system timestamps
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchGazeData::system_time_stamp));
+        // 3. left  eye data
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchGazeData::left_eye));
+        // 4. right eye data
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchGazeData::right_eye));
+
+        return out;
+    }
+
+    mxArray* ToMatlab(std::vector<TobiiBuffer::eyeImage> data_)
     {
         // check if all gif, then don't output unneeded fields
         bool allGif = allEquals(data_, &TobiiBuffer::eyeImage::isGif, true);
@@ -738,7 +699,7 @@ namespace
     }
 
 
-    mxArray* ToMxArray(std::vector<TobiiResearchExternalSignalData     > data_)
+    mxArray* ToMatlab(std::vector<TobiiResearchExternalSignalData     > data_)
     {
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -754,7 +715,7 @@ namespace
 
         return out;
     }
-    mxArray* ToMxArray(std::vector<TobiiResearchTimeSynchronizationData> data_)
+    mxArray* ToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
     {
         const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -769,7 +730,7 @@ namespace
         return out;
     }
 
-    mxArray* ToMxArray(std::vector<TobiiBuffer::logMessage> data_)
+    mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage> data_)
     {
         const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
