@@ -5,9 +5,8 @@
 namespace
 {
     // get last type (or optionally 2nd last when N=2, 3rd last when N=3, etc) in variadic template
-    template<class T> struct tag_t { using type = T; };
     template<class... Ts, size_t N = 1>
-    using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<tag_t<Ts>...> >::type;
+    using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<Ts...> >;
 
     // higher order function to forward an index sequence
     template <typename F, size_t... Is>
