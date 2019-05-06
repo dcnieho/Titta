@@ -230,6 +230,228 @@ TobiiBuffer::~TobiiBuffer()
     stop(DataStream::ExtSignal, true);
     stop(DataStream::TimeSync,  true);
     stopLogging();
+    leaveCalibrationMode(false);
+    if (_calibrationComputeResult)
+    {
+        tobii_research_free_screen_based_calibration_result(_calibrationComputeResult);
+        _calibrationComputeResult = nullptr;
+    }
+}
+
+
+// calibration
+void TobiiBuffer::calibrationThread()
+{
+    std::mutex                    calMutex;
+    std::unique_lock<std::mutex>  lock(calMutex);
+    bool keepRunning            = true;
+    while (keepRunning)
+    {
+        _calibrationThreadNotify.wait(lock);
+        switch (_calibrationAction)
+        {
+        case TobiiTypes::CalibrationAction::Nothing:
+            // no-op
+            break;
+        case TobiiTypes::CalibrationAction::CollectData:
+        {
+            // Start a data collection
+            _calibrationState = TobiiTypes::CalibrationState::CollectingData;
+            if (_calibrationIsMonocular)
+            {
+                TobiiResearchSelectedEye collectEye, ignore;
+                if (_calibrationEye == "left")
+                    collectEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
+                else if (_calibrationEye == "right")
+                    collectEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
+                _calibrationCollectionResult = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]), collectEye, &ignore);
+            }
+            else
+                _calibrationCollectionResult = tobii_research_screen_based_calibration_collect_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]));
+
+            _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+            break;
+        }
+        case TobiiTypes::CalibrationAction::DiscardData:
+        {
+            // discard calibration data for a specific point
+            if (_calibrationIsMonocular)
+            {
+                TobiiResearchSelectedEye discardEye;
+                if (_calibrationEye == "left")
+                    discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
+                else if (_calibrationEye == "right")
+                    discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
+                _calibrationCollectionResult = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]), discardEye);
+            }
+            else
+                _calibrationCollectionResult = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]));
+            break;
+        }
+        case TobiiTypes::CalibrationAction::Compute:
+        {
+            _calibrationState = TobiiTypes::CalibrationState::Computing;
+            if (_calibrationComputeResult)
+            {
+                tobii_research_free_screen_based_calibration_result(_calibrationComputeResult);
+                _calibrationComputeResult = nullptr;
+            }
+            if (_calibrationIsMonocular)
+            {
+                _calibrationComputeResultStatus = tobii_research_screen_based_monocular_calibration_compute_and_apply(_eyetracker, &_calibrationComputeResult);
+            }
+            else
+            {
+                _calibrationComputeResultStatus = tobii_research_screen_based_calibration_compute_and_apply(_eyetracker, &_calibrationComputeResult);
+            }
+            // add end, return to:
+            _calibrationState = TobiiTypes::CalibrationState::Computed;
+            break;
+        }
+        case TobiiTypes::CalibrationAction::Exit:
+            // no-op
+            keepRunning = false;
+            break;
+        }
+        _calibrationAction = TobiiTypes::CalibrationAction::Nothing;
+    }
+
+    tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
+    _calibrationState = TobiiTypes::CalibrationState::Left;
+}
+void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
+{
+    if (_calibrationState != TobiiTypes::CalibrationState::NotYetEntered && _calibrationState != TobiiTypes::CalibrationState::Left && !_calibrationThread.joinable())
+    {
+        DoExitWithMsg("enterCalibrationMode: Calibration mode already entered");
+    }
+
+    // enter calibration mode
+    _calibrationIsMonocular = doMonocular_;
+
+    _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
+    TobiiResearchStatus result;
+    if ((result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker)) != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("enterCalibrationMode: Error entering calibration mode", result);
+
+
+    // start new calibration worker
+    _calibrationAction          = TobiiTypes::CalibrationAction::Nothing;
+    _calibrationCollectionResult= TOBII_RESEARCH_STATUS_UNKNOWN;
+    _calibrationThread          = std::thread(&TobiiBuffer::calibrationThread, this);
+}
+void TobiiBuffer::leaveCalibrationMode(bool force_)
+{
+    if (force_)
+    {
+        // call leave calibration mode on Tobii SDK, ignore error
+        // this is provided as user code may need to ensure we're not in
+        // calibration mode, e.g. after a previous crash
+        tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
+    }
+    if (_calibrationState==TobiiTypes::CalibrationState::NotYetEntered)
+    {
+        return;
+    }
+
+    // tell thread to quit and wait until it quit
+    // this calls tobii_research_screen_based_calibration_leave_calibration_mode() in the thread function before exiting
+    _calibrationAction = TobiiTypes::CalibrationAction::Exit;
+    _calibrationThreadNotify.notify_one();
+    if (_calibrationThread.joinable())
+        _calibrationThread.join();
+
+    _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
+}
+void TobiiBuffer::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+{
+    if (_calibrationState!=TobiiTypes::CalibrationState::AwaitingCalPoint && _calibrationState!=TobiiTypes::CalibrationState::Computed)
+    {
+        DoExitWithMsg("calibrationCollectData: Cannot call calibrationCollectData unless calibration state is AwaitingCalPoint or Computed");
+    }
+
+    // unsynchronized, but should be fine unless user calls it twice in an extremely tight loop that prevents
+    // thread from waking before second entry into this function. Don't be stupid
+    _calibrationCoordinates = coordinates_;
+    if (eye_)
+    {
+        _calibrationEye = *eye_;
+        if (_calibrationEye != "left" && _calibrationEye != "right")
+        {
+            std::stringstream os;
+            os << "calibrationCollectData: Cannot start calibration for eye " << _calibrationEye << ", unknown. Expected left or right.";
+            DoExitWithMsg(os.str());
+        }
+    }
+    _calibrationAction = TobiiTypes::CalibrationAction::CollectData;
+    _calibrationThreadNotify.notify_one();
+}
+TobiiTypes::CalibrationState TobiiBuffer::calibrationCheckStatus()
+{
+    return _calibrationState;
+}
+std::string TobiiBuffer::calibrationCollectionStatus()
+{
+    if (_calibrationState==TobiiTypes::CalibrationState::AwaitingCalPoint)
+    {
+        if (_calibrationCollectionResult==TOBII_RESEARCH_STATUS_UNKNOWN)
+        {
+            return "not started";
+        }
+        else if (_calibrationCollectionResult == TOBII_RESEARCH_STATUS_OK)
+        {
+            return "success";
+        }
+        else
+        {
+            return "failure";
+        }
+    }
+    else if (_calibrationState == TobiiTypes::CalibrationState::CollectingData)
+    {
+        return "collecting";
+    }
+    return "unknown";
+}
+void TobiiBuffer::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+{
+    if (_calibrationState != TobiiTypes::CalibrationState::AwaitingCalPoint && _calibrationState != TobiiTypes::CalibrationState::Computed)
+    {
+        DoExitWithMsg("calibrationDiscardData: Cannot call calibrationDiscardData unless calibration state is AwaitingCalPoint or Computed");
+    }
+
+    // unsynchronized, but should be fine unless user calls it twice in an extremely tight loop that prevents
+    // thread from waking before second entry into this function. Don't be stupid
+    _calibrationCoordinates = coordinates_;
+    if (eye_)
+    {
+        _calibrationEye = *eye_;
+        if (_calibrationEye != "left" && _calibrationEye != "right")
+        {
+            std::stringstream os;
+            os << "calibrationDiscardData: Cannot discard calibration data for eye " << _calibrationEye << ", unknown. Expected left or right.";
+            DoExitWithMsg(os.str());
+        }
+    }
+    _calibrationAction = TobiiTypes::CalibrationAction::DiscardData;
+    _calibrationThreadNotify.notify_one();
+}
+void TobiiBuffer::calibrationComputeAndApply()
+{
+    if (_calibrationState != TobiiTypes::CalibrationState::AwaitingCalPoint && _calibrationState != TobiiTypes::CalibrationState::Computed)
+    {
+        DoExitWithMsg("calibrationComputeAndApply: Cannot call calibrationDiscardData unless calibration state is AwaitingCalPoint or Computed");
+    }
+
+    _calibrationAction = TobiiTypes::CalibrationAction::Compute;
+    _calibrationThreadNotify.notify_one();
+}
+std::optional<TobiiResearchCalibrationResult> TobiiBuffer::calibrationRetrieveComputeAndApplyResult()
+{
+    if (_calibrationComputeResult)
+        return *_calibrationComputeResult;
+    else
+        return {};
 }
 
 

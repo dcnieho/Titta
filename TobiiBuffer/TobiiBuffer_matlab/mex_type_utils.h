@@ -175,22 +175,27 @@ namespace mxTypes
         return std::visit([](auto& a)->mxArray* {return ToMatlab(a); }, val_);
     }
 
-	template <class T>
-	mxArray* ToMatlab(std::optional<T> val_)
-	{
-		if (!val_)
-			return mxCreateDoubleMatrix(0, 0, mxREAL);
-		else
-			return ToMatlab(*val_);
-	}
+    template <class T>
+    mxArray* ToMatlab(std::optional<T> val_)
+    {
+        if (!val_)
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+        else
+            return ToMatlab(*val_);
+    }
 
 
     //// array of structs
-    template<typename V, typename F, typename T, typename OutOrFun, typename... Fs>
-    void ToStructArrayImpl(mxArray* out_, const V& item_, const size_t& idx1_, int idx2_, std::tuple<T F::*, OutOrFun> expr, Fs... fields)
+    template<typename V, typename OutOrFun, typename... Fs, typename... Ts, typename... Fs2>
+    void ToStructArrayImpl(mxArray* out_, const V& item_, const size_t& idx1_, int idx2_, std::tuple<OutOrFun, Ts Fs::*...> expr, Fs2... fields)
     {
-        if constexpr (std::is_invocable_v<OutOrFun, T>)
-            mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<1>(expr)(item_.*std::get<0>(expr))));
+        if constexpr (std::is_invocable_v<OutOrFun, Ts...>)
+            if constexpr (sizeof...(Ts) == 2)
+                mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<0>(expr)(item_.*std::get<1>(expr), item_.*std::get<2>(expr))));
+            else if constexpr (sizeof...(Ts) == 1)
+                mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<0>(expr)(item_.*std::get<1>(expr))));
+            else
+                static_assert(false);   // not implemented
         else
             mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(static_cast<OutOrFun>(item_.*std::get<0>(expr))));
         if constexpr (!sizeof...(fields))

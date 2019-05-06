@@ -1,12 +1,17 @@
 #pragma once
 #include <vector>
+#include <array>
 #include <string>
 #include <limits>
 #include <tuple>
 #include <optional>
+#include <thread>
+#include <condition_variable>
+#include <atomic>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
+#include <tobii_research_calibration.h>
 #pragma comment(lib, "tobii_research.lib")
 #ifndef _DEBUG
 #   pragma comment(lib, "TobiiBuffer.lib")
@@ -44,6 +49,16 @@ public:
     TobiiBuffer(std::string address_);
     TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
+
+    // calibration
+    void enterCalibrationMode(bool doMonocular_);
+    void leaveCalibrationMode(bool force_);
+    void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
+    TobiiTypes::CalibrationState calibrationCheckStatus();
+    std::string calibrationCollectionStatus();
+    void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
+    void calibrationComputeAndApply();
+    std::optional<TobiiResearchCalibrationResult> calibrationRetrieveComputeAndApplyResult();
 
 
     // query if stream is supported
@@ -97,6 +112,8 @@ private:
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
     friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
+    // calibration
+    void calibrationThread();
     //// generic functions for internal use
     // helpers
     template <typename T>  std::vector<T>&  getBuffer();
@@ -111,6 +128,7 @@ private:
 
     bool                        _recordingGaze          = false;
     std::vector<gaze>           _gaze;
+    // TODO: make mutexes class members instead of globals so that we can have multiple instances of this class
 
     bool                        _recordingEyeImages     = false;
     std::vector<eyeImage>       _eyeImages;
@@ -124,4 +142,16 @@ private:
 
     static std::unique_ptr<
         std::vector<logMessage>>_logMessages;
+
+    // calibration
+    bool                                        _calibrationIsMonocular;
+    std::thread                                 _calibrationThread;
+    std::condition_variable_any                 _calibrationThreadNotify;
+    std::atomic<TobiiTypes::CalibrationState>   _calibrationState;
+    std::atomic<TobiiTypes::CalibrationAction>  _calibrationAction;
+    std::array<double, 2>                       _calibrationCoordinates;
+    std::string                                 _calibrationEye;
+    std::atomic<TobiiResearchStatus>            _calibrationCollectionResult;
+    std::atomic<TobiiResearchStatus>            _calibrationComputeResultStatus;
+    TobiiResearchCalibrationResult*             _calibrationComputeResult = nullptr;
 };

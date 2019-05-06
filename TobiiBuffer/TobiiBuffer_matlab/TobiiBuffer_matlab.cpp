@@ -79,6 +79,15 @@ namespace {
         New,
         Delete,
 
+        EnterCalibrationMode,
+        LeaveCalibrationMode,
+        CalibrationCollectData,
+        CalibrationCheckStatus,
+        CalibrationCollectionStatus,
+        CalibrationDiscardData,
+        CalibrationComputeAndApply,
+        CalibrationRetrieveComputeAndApplyResult,
+
         HasStream,
         Start,
         IsBuffering,
@@ -101,6 +110,15 @@ namespace {
         { "touch",				Action::Touch },
         { "new",				Action::New },
         { "delete",				Action::Delete },
+
+        { "enterCalibrationMode",			Action::EnterCalibrationMode },
+        { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
+        { "calibrationCollectData",		    Action::CalibrationCollectData },
+        { "calibrationCheckStatus",			Action::CalibrationCheckStatus },
+        { "calibrationCollectionStatus",    Action::CalibrationCollectionStatus },
+        { "calibrationDiscardData",			Action::CalibrationDiscardData },
+        { "calibrationComputeAndApply",		Action::CalibrationComputeAndApply },
+        { "calibrationRetrieveComputeAndApplyResult", Action::CalibrationRetrieveComputeAndApplyResult },
 
         { "hasStream",          Action::HasStream },
         { "start",		        Action::Start },
@@ -158,6 +176,14 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
     mxArray* ToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage             > data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationResult                    data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint>        data_);
+    mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationSample                    data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationEyeData                   data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -215,6 +241,85 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             instanceTab.erase(instIt);
             mexUnlock();
             plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
+            break;
+        }
+
+        case Action::EnterCalibrationMode:
+        {
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("enterCalibrationMode: First argument must be a logical scalar.");;
+
+            bool doMonocular = mxIsLogicalScalarTrue(prhs[2]);
+            instance->enterCalibrationMode(doMonocular);
+            break;
+        }
+        case Action::LeaveCalibrationMode:
+        {
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                mexErrMsgTxt("leaveCalibrationMode: First argument must be a logical scalar.");;
+
+            bool force = mxIsLogicalScalarTrue(prhs[2]);
+            instance->leaveCalibrationMode(force);
+            break;
+        }
+        case Action::CalibrationCollectData:
+        {
+            if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2])!=2)
+                mexErrMsgTxt("calibrationCollectData: First argument must be a 2-element double array.");
+            std::array<double, 2> point{*mxGetDoubles(prhs[2]),*(mxGetDoubles(prhs[2]) + 1)};
+
+            // get optional input argument
+            std::optional<std::string> eye;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsChar(prhs[3]))
+                    mexErrMsgTxt("calibrationCollectData: Expected second argument to be a char array.");
+                char *ceye = mxArrayToString(prhs[3]);
+                eye = ceye;
+                mxFree(ceye);
+            }
+
+            instance->calibrationCollectData(point,eye);
+            break;
+        }
+        case Action::CalibrationCheckStatus:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->calibrationCheckStatus());
+            break;
+        }
+        case Action::CalibrationCollectionStatus:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->calibrationCollectionStatus());
+            break;
+        }
+        case Action::CalibrationDiscardData:
+        {
+            if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
+                mexErrMsgTxt("calibrationDiscardData: First argument must be a 2-element double array.");
+            std::array<double, 2> point{*mxGetDoubles(prhs[2]),*(mxGetDoubles(prhs[2]) + 1)};
+
+            // get optional input argument
+            std::optional<std::string> eye;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsChar(prhs[3]))
+                    mexErrMsgTxt("calibrationDiscardData: Expected second argument to be a char array.");
+                char *ceye = mxArrayToString(prhs[3]);
+                eye = ceye;
+                mxFree(ceye);
+            }
+
+            instance->calibrationDiscardData(point, eye);
+            break;
+        }
+        case Action::CalibrationComputeAndApply:
+        {
+            instance->calibrationComputeAndApply();
+            break;
+        }
+        case Action::CalibrationRetrieveComputeAndApplyResult:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->calibrationRetrieveComputeAndApplyResult());
             break;
         }
 
@@ -756,6 +861,132 @@ namespace mxTypes
             mxSetCell(temp, i++, mxCreateString(msg.message.c_str()));
 
         return out;
+    }
+
+    mxArray* ToMatlab(TobiiTypes::CalibrationState data_)
+    {
+        std::string str;
+        switch (data_)
+        {
+        case TobiiTypes::CalibrationState::NotYetEntered:
+            str = "NotYetEntered";
+            break;
+        case TobiiTypes::CalibrationState::AwaitingCalPoint:
+            str = "AwaitingCalPoint";
+            break;
+        case TobiiTypes::CalibrationState::CollectingData:
+            str = "CollectingData";
+            break;
+        case TobiiTypes::CalibrationState::Computing:
+            str = "Computing";
+            break;
+        case TobiiTypes::CalibrationState::Computed:
+            str = "Computed";
+            break;
+        case TobiiTypes::CalibrationState::Left:
+            str = "Left";
+            break;
+        default:
+            str = "unknown";
+            break;
+        }
+        return mxCreateString(str.c_str());
+    }
+    mxArray* ToMatlab(TobiiResearchCalibrationResult data_)
+    {
+        std::vector points(data_.calibration_points, data_.calibration_points+data_.calibration_point_count);
+        const char* fieldNames[] = {"status","points"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. status
+        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.status));
+        // 2. data per calibration point
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(points));
+
+        return out;
+    }
+    mxArray* ToMatlab(TobiiResearchCalibrationStatus data_)
+    {
+        std::string str;
+        switch (data_)
+        {
+        case TOBII_RESEARCH_CALIBRATION_FAILURE:
+            str = "failure";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_SUCCESS:
+            str = "success";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_SUCCESS_LEFT_EYE:
+            str = "successLeftEye";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_SUCCESS_RIGHT_EYE:
+            str = "successRightEye";
+            break;
+        }
+        return mxCreateString(str.c_str());
+    }
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint> data_)
+    {
+        const char* fieldNames[] = {"position","samples"};
+        mxArray* out = mxCreateStructMatrix(data_.size(), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        ToStructArray(out, data_,
+                      &TobiiResearchCalibrationPoint::position_on_display_area,
+                      std::make_tuple([](auto a, auto b) {return std::vector(a,a+b); }, &TobiiResearchCalibrationPoint::calibration_samples, &TobiiResearchCalibrationPoint::calibration_sample_count)
+        );
+
+        return out;
+    }
+    mxArray* ToMatlab(TobiiResearchNormalizedPoint2D data_)
+    {
+        return ToMatlab(std::array{static_cast<double>(data_.x),static_cast<double>(data_.y)});
+    }
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample> data_)
+    {
+        const char* fieldNames[] = {"left","right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. left  eye data
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchCalibrationSample::left_eye));
+        // 2. right eye data
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchCalibrationSample::right_eye));
+
+        return out;
+    }
+    mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample> data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_)
+    {
+        const char* fieldNames[] = {"position","validity"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1 position on display area
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));					// 0. causes values to be stored as double
+        // 2 validity
+        mxArray* temp;
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(data_.size(), 1));
+        size_t i = 0;
+        for (auto &msg : data_)
+            mxSetCell(temp, i++, ToMatlab((msg.*field_).validity));
+
+    }
+    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity data_)
+    {
+        std::string str;
+        switch (data_)
+        {
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED:
+            str = "invalidAndNotUsed";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED:
+            str = "validButNotUsed";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED:
+            str = "validAndUsed";
+            break;
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN:
+            str = "unknown";
+            break;
+        }
+        return mxCreateString(str.c_str());
     }
 }
 

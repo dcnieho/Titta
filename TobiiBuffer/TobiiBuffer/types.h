@@ -130,4 +130,23 @@ namespace TobiiTypes
         TobiiResearchLogLevel  level = TOBII_RESEARCH_LOG_LEVEL_ERROR;
         std::string            message;
     };
+
+    enum class CalibrationState
+    {
+        NotYetEntered,
+        AwaitingCalPoint,
+        CollectingData,
+        Computing,
+        Computed,
+        Left
+    };
+
+    enum class CalibrationAction
+    {
+        Nothing,
+        CollectData,
+        DiscardData,
+        Compute,
+        Exit
+    };
 }
