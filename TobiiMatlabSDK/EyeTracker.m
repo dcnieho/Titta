@@ -242,7 +242,7 @@ classdef EyeTracker
         end
 
         %% Get Time Synchronization Data
-        % Provides data for the for time synchronization.
+        % Provides data for the time synchronization.
         % Only supports streaming from one eyetracker at a time.
         % If there is the need to use a different eyetracker,
         % use the method stop_time_sync_data first and start a new data
@@ -263,8 +263,13 @@ classdef EyeTracker
         % function will return a struct with arrays of the collected data
         % for each individual property of the time synchronization data.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be returned.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <EyeTracker/TimeSynchronizationReference.html TimeSynchronizationReference>.
         %
@@ -333,8 +338,13 @@ classdef EyeTracker
         % a struct with arrays of the collected data for each individual
         % property of the gaze data.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be returned.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <Gaze/GazeData.html GazeData>.
         %
@@ -412,8 +422,13 @@ classdef EyeTracker
         % If data is available an instance of UserPositionGuide will be returned,
         % otherwise the output will be empty.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be returned.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <Gaze/UserPositionGuide.html UserPositionGuide>.
         %
@@ -464,8 +479,13 @@ classdef EyeTracker
         % a struct with arrays of the collected data for each individual
         % property of the gaze data.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be returned.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <Gaze/HMDGazeData.html HMDGazeData>.
         %
@@ -543,8 +563,13 @@ classdef EyeTracker
         % a struct with arrays of the collected data for each individual
         % property of the external signal data.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be return.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <EyeTracker/ExternalSignal.html ExternalSignal>.
         %
@@ -616,8 +641,13 @@ classdef EyeTracker
         % a struct with arrays of the collected data for each individual
         % property of the eye image data.
         %
-        % If an error occurs durring this stream the data returned will be
+        % If an error occurs during this stream the data returned will be
         % of the class <Gaze/StreamError.html StreamError>.
+        %
+        % For every call of this method an array of the collected data will be returned.
+        % This means that on the first call, if no error has occurred, an empty array will be return.
+        % Note that the returned data will not be the data collected since the first call of this method,
+        % only the data collected in between calls will be returned.
         %
         % Returns: array with instances of class <EyeTracker/EyeImage.html EyeImage>.
         %
@@ -824,12 +854,12 @@ end
 %% Version
 % !version
 %
-% COPYRIGHT !year - PROPERTY OF TOBII AB
-% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+% COPYRIGHT !year - PROPERTY OF TOBII PRO AB
+% Copyright !year TOBII PRO AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
 %
-% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
-% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii Pro AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii Pro AB and its suppliers and
 % may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
 % Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
-% permission is obtained from Tobii AB.
+% permission is obtained from Tobii Pro AB.
 %

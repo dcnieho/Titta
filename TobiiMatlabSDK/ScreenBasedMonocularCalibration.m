@@ -113,11 +113,7 @@ classdef ScreenBasedMonocularCalibration
                 target_points = [];
             end
 
-            if size(target_points, 1) > 0
-                points(size(target_points,1)) = CalibrationPoint;
-            else
-                points = [];
-            end
+            points(size(target_points,1)) = CalibrationPoint;
 
             for i=1:size(target_points,1)
                 points(i) = CalibrationPoint(target_points(i,:),left(ic==i,:),right(ic==i,:),validity(ic==i,:));
@@ -143,12 +139,12 @@ end
 %% Version
 % !version
 %
-% COPYRIGHT !year - PROPERTY OF TOBII AB
-% Copyright !year TOBII AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
+% COPYRIGHT !year - PROPERTY OF TOBII PRO AB
+% Copyright !year TOBII PRO AB - KARLSROVAGEN 2D, DANDERYD 182 53, SWEDEN - All Rights Reserved.
 %
-% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii AB and its suppliers,
-% if any. The intellectual and technical concepts contained herein are proprietary to Tobii AB and its suppliers and
+% Copyright NOTICE: All information contained herein is, and remains, the property of Tobii Pro AB and its suppliers,
+% if any. The intellectual and technical concepts contained herein are proprietary to Tobii Pro AB and its suppliers and
 % may be covered by U.S.and Foreign Patents, patent applications, and are protected by trade secret or copyright law.
 % Dissemination of this information or reproduction of this material is strictly forbidden unless prior written
-% permission is obtained from Tobii AB.
+% permission is obtained from Tobii Pro AB.
 %
