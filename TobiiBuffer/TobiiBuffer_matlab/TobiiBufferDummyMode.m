@@ -73,23 +73,40 @@ classdef TobiiBufferDummyMode < TobiiBuffer
         function init(~,~)
         end
         
+        function enterCalibrationMode(~,~)
+        end
+        function leaveCalibrationMode(~,~)
+        end
+        function calibrationCollectData(~,~,~)
+        end
+        function status = calibrationCheckStatus(~)
+            status = [];
+        end
+        function status = calibrationCollectionStatus(~)
+            status = [];
+        end
+        function calibrationDiscardData(~,~,~)
+        end
+        function calibrationComputeAndApply(~)
+        end
+        function result = calibrationRetrieveComputeAndApplyResult(~)
+            result = [];
+        end
+        
         function supported = hasStream(~,stream)
             assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream      = ensureStringIsChar(stream);
-            supported   = checkValidStream(stream);
+            supported   = checkValidStream(ensureStringIsChar(stream));
         end
         function success = start(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream  = ensureStringIsChar(stream);
-            success = checkValidStream(stream);
+            success = checkValidStream(ensureStringIsChar(stream));
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = true;
             end
         end
         function success = stop(this,stream,~)
             assert(nargin>1,'Titta::buffer::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream  = ensureStringIsChar(stream);
-            success = checkValidStream(stream);
+            success = checkValidStream(ensureStringIsChar(stream));
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = false;
             end

@@ -71,13 +71,45 @@ classdef TobiiBuffer < handle
         
         function init(this,address)
             address = ensureStringIsChar(address);
-            this.instanceHandle = this.cppmethodGlobal('new',char(address));
+            this.instanceHandle = this.cppmethodGlobal('new',address);
+        end
+        
+        function enterCalibrationMode(this,doMonocular)
+            this.cppmethod('enterCalibrationMode',doMonocular);
+        end
+        function leaveCalibrationMode(this,doMonocular)
+            this.cppmethod('leaveCalibrationMode',doMonocular);
+        end
+        function calibrationCollectData(this,coordinates,eye)
+            if nargin>2 && ~isempty(eye)
+                this.cppmethod('calibrationCollectData',coordinates,ensureStringIsChar(eye));
+            else
+                this.cppmethod('calibrationCollectData',coordinates);
+            end
+        end
+        function status = calibrationCheckStatus(this)
+            status = this.cppmethod('calibrationCheckStatus');
+        end
+        function status = calibrationCollectionStatus(this)
+            status = this.cppmethod('calibrationCollectionStatus');
+        end
+        function calibrationDiscardData(this,coordinates,eye)
+            if nargin>2 && ~isempty(eye)
+                this.cppmethod('calibrationDiscardData',coordinates,ensureStringIsChar(eye));
+            else
+                this.cppmethod('calibrationDiscardData',coordinates);
+            end
+        end
+        function calibrationComputeAndApply(this)
+            this.cppmethod('calibrationComputeAndApply');
+        end
+        function result = calibrationRetrieveComputeAndApplyResult(this)
+            result = this.cppmethod('calibrationRetrieveComputeAndApplyResult');
         end
         
         function supported = hasStream(this,stream)
             assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
-            supported = this.cppmethod('hasStream',stream);
+            supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
@@ -105,13 +137,11 @@ classdef TobiiBuffer < handle
         end
         function status = isRecording(this,stream)
             assert(nargin>1,'Titta::buffer::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
-            status = this.cppmethod('isBuffering',stream);
+            status = this.cppmethod('isBuffering',ensureStringIsChar(stream));
         end
         function clear(this,stream)
             assert(nargin>1,'Titta::buffer::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
-            this.cppmethod('clear',stream);
+            this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole buffer
