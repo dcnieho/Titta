@@ -1969,7 +1969,7 @@ classdef Titta < handle
                 
                 % setup cursors
                 if qToggleSelectMenu
-                    butRects            = cat(1,but.rect).'
+                    butRects            = cat(1,but.rect).';
                     currentMenuSel      = find(selection==iValid);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
