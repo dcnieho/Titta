@@ -55,7 +55,7 @@
 #include <sstream>
 #include <atomic>
 
-#define MW_NEEDS_VERSION_H
+#define DLL_EXPORT_SYM __declspec(dllexport)
 #include <mex.h>
 #include "mex_type_utils.h"
 

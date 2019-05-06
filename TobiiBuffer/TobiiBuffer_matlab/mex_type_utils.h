@@ -9,7 +9,7 @@
 
 #include "pack_utils.h"
 
-#define MW_NEEDS_VERSION_H
+#define DLL_EXPORT_SYM __declspec(dllexport)
 #include "mex.h"
 
 namespace
