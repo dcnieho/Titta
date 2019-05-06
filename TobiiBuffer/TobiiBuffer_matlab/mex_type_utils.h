@@ -5,6 +5,7 @@
 #include <vector>
 #include <array>
 #include <tuple>
+#include <optional>
 
 #include "pack_utils.h"
 
@@ -173,6 +174,15 @@ namespace mxTypes
     {
         return std::visit([](auto& a)->mxArray* {return ToMatlab(a); }, val_);
     }
+
+	template <class T>
+	mxArray* ToMatlab(std::optional<T> val_)
+	{
+		if (!val_)
+			return mxCreateDoubleMatrix(0, 0, mxREAL);
+		else
+			return ToMatlab(*val_);
+	}
 
 
     //// array of structs
