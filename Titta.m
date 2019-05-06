@@ -676,6 +676,8 @@ classdef Titta < handle
                     settings.freq                   = 90;
                 case 'X2-60_Compact'
                     settings.freq                   = 60;
+                case 'Tobii Pro Nano'
+                    settings.freq                   = 60;
             end
             
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
