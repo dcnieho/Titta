@@ -249,7 +249,7 @@ namespace mxTypes
     constexpr auto getFieldWrapper(const Obj& obj, Fs... fields)
     {
         // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
-        if      constexpr (sizeof...(Fs) > 1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 2>>)
+        if      constexpr (sizeof...(Fs) > 1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 1>>)
             return rotate_right_except_last(
             [&](auto... elems) constexpr
             {

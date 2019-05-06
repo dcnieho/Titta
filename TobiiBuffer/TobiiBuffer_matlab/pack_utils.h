@@ -4,9 +4,9 @@
 
 namespace
 {
-    // get last type (or optionally 2nd last when N=2, 3rd last when N=3, etc) in variadic template
-    template<class... Ts, size_t N = 1>
-    using last = typename std::tuple_element_t< sizeof...(Ts) - N, std::tuple<Ts...> >;
+    // get last type in template parameter pack (or optionally 2nd last when N=1, 3rd last when N=2, etc)
+    template<class... Ts, size_t N = 0>
+    using last = typename std::tuple_element_t< sizeof...(Ts) - N - 1, std::tuple<Ts...> >;
 
     // higher order function to forward an index sequence
     template <typename F, size_t... Is>
