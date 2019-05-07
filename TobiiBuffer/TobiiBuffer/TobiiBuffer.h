@@ -6,6 +6,7 @@
 #include <tuple>
 #include <optional>
 #include <thread>
+#include <mutex>
 #include <condition_variable>
 #include <atomic>
 #include <tobii_research.h>
@@ -146,12 +147,13 @@ private:
     // calibration
     bool                                        _calibrationIsMonocular;
     std::thread                                 _calibrationThread;
+	std::mutex									_calMutex;
     std::condition_variable_any                 _calibrationThreadNotify;
     std::atomic<TobiiTypes::CalibrationState>   _calibrationState;
     std::atomic<TobiiTypes::CalibrationAction>  _calibrationAction;
     std::array<double, 2>                       _calibrationCoordinates;
     std::string                                 _calibrationEye;
     std::atomic<TobiiResearchStatus>            _calibrationCollectionResult;
-    std::atomic<TobiiResearchStatus>            _calibrationComputeResultStatus;
+    std::atomic<TobiiResearchStatus>            _calibrationComputeResultStatus = TOBII_RESEARCH_STATUS_OK;
     TobiiResearchCalibrationResult*             _calibrationComputeResult = nullptr;
 };

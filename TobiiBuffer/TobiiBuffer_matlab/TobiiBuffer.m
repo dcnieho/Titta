@@ -77,8 +77,11 @@ classdef TobiiBuffer < handle
         function enterCalibrationMode(this,doMonocular)
             this.cppmethod('enterCalibrationMode',doMonocular);
         end
-        function leaveCalibrationMode(this,doMonocular)
-            this.cppmethod('leaveCalibrationMode',doMonocular);
+        function leaveCalibrationMode(this,force)
+            if nargin<2
+                force = false;
+            end
+            this.cppmethod('leaveCalibrationMode',force);
         end
         function calibrationCollectData(this,coordinates,eye)
             if nargin>2 && ~isempty(eye)

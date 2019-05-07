@@ -18,3 +18,5 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 // the below function is called when an error occurred and application execution should halt
 // this function is not defined in this library, it is for the user to implement depending on his platform
 void DoExitWithMsg(std::string errMsg_);
+// this function is used to simply relay a message
+void RelayMsg(std::string errMsg_);

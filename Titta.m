@@ -378,23 +378,16 @@ classdef Titta < handle
             
             
             %%% 1. some preliminary setup, to make sure we are in known state
-            if strcmp(obj.settings.calibrateEye,'both')
-                calibClass = ScreenBasedCalibration(obj.eyetracker);
-            else
-                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
-                calibClass = ScreenBasedMonocularCalibration(obj.eyetracker);
-            end
-            try
-                if bitand(flag,1)
-                    calibClass.leave_calibration_mode();    % make sure we're not already in calibration mode (start afresh)
-                end
-            catch ME %#ok<NASGU>
-                % no-op, ok if fails, simply means we're not already in
-                % calibration mode
+            if bitand(flag,1)
+                obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
             end
             obj.StopRecordAll();
             if bitand(flag,1)
-                calibClass.enter_calibration_mode();
+                qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
+                if qDoMonocular
+                    assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                end
+                obj.buffer.enterCalibrationMode(qDoMonocular);
             end
             % log eye that we are calibrating
             obj.sendMessage(sprintf('Setting up %s eye',obj.settings.calibrateEye));
@@ -429,7 +422,7 @@ classdef Titta < handle
                             qGoToValidationViewer = true;
                         case -5
                             % full stop
-                            calibClass.leave_calibration_mode();
+                            obj.buffer.leaveCalibrationMode();
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.setupStatus);
@@ -438,7 +431,7 @@ classdef Titta < handle
                 
                 %%% 2b: calibrate and validate
                 if ~qGoToValidationViewer
-                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,calibClass,qDoCal);
+                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,qDoCal);
                     oldwarn = warning('off','catstruct:DuplicatesFound');   % field already exists but is empty, will be overwritten with the output from the function here
                     out.attempt{kCal} = catstruct(out.attempt{kCal},temp);
                     warning(oldwarn);
@@ -467,7 +460,7 @@ classdef Titta < handle
                             continue;
                         case -5
                             % full stop
-                            calibClass.leave_calibration_mode();
+                            obj.buffer.leaveCalibrationMode();
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
@@ -521,7 +514,7 @@ classdef Titta < handle
                         continue;
                     case -5
                         % full stop
-                        calibClass.leave_calibration_mode();
+                        obj.buffer.leaveCalibrationMode();
                         error('Titta: run ended from Tobii routine')
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
@@ -537,7 +530,7 @@ classdef Titta < handle
             Screen('Flip',wpnt);                        % clear screen
             
             if bitand(flag,2)
-                calibClass.leave_calibration_mode();
+                obj.buffer.leaveCalibrationMode();
             end
             % log to messages which calibration was selected
             if isfield(out,'attempt') && isfield(out.attempt{kCal},'calSelection')
@@ -1345,7 +1338,7 @@ classdef Titta < handle
             obj.drawCachedText(but.cache(min(idx,end)));
         end
         
-        function [status,out] = DoCalAndVal(obj,wpnt,kCal,calibClass,qDoCal)
+        function [status,out] = DoCalAndVal(obj,wpnt,kCal,qDoCal)
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % get data streams started
@@ -1366,16 +1359,22 @@ classdef Titta < handle
             % do calibration
             if qDoCal
                 % show display
-                [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,calibClass,-1);
+                [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1);
                 obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
                 out.cal.data = obj.ConsumeAllData(calStartT);
                 if status==1
                     if ~isempty(obj.settings.cal.pointPos)
                         % compute calibration
-                        out.cal.result = fixupTobiiCalResult(calibClass.compute_and_apply(),obj.calibrateLeftEye,obj.calibrateRightEye);
+                        obj.buffer.calibrationComputeAndApply();
+                        result = [];
+                        while isempty(result)
+                            result = obj.buffer.calibrationRetrieveComputeAndApplyResult();
+                            WaitSecs('YieldSecs',0.01);
+                        end
+                        out.cal.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
                         
                         % if valid calibration retrieve data, so user can select different ones
-                        if strcmp(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                        if strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                             out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
                         else
                             % calibration failed, back to setup screen
@@ -1426,7 +1425,7 @@ classdef Titta < handle
                 obj.ClearAllBuffers(calStartT);    % clean up data from calibration
             end
             % show display
-            [status,out.val] = obj.DoCalPointDisplay(wpnt,[],calLastFlip{:});
+            [status,out.val] = obj.DoCalPointDisplay(wpnt,false,calLastFlip{:});
             obj.sendMessage(sprintf('VALIDATION END %s %d',obj.settings.calibrateEye,kCal));
             out.val.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
@@ -1469,7 +1468,7 @@ classdef Titta < handle
             obj.buffer.stop('timeSync');
         end
         
-        function [status,out,tick] = DoCalPointDisplay(obj,wpnt,calibClass,tick,lastFlip)
+        function [status,out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)
             % status output:
             %  1: finished succesfully (you should query Tobii SDK whether
             %     they agree that calibration was succesful though)
@@ -1478,20 +1477,15 @@ classdef Titta < handle
             % -3: abort calibration and go back to setup (escape key)
             % -5: Exit completely (control+escape)
             qFirst = nargin<5;
-            qCal   = ~isempty(calibClass);
             
             % setup
             if qCal
                 points          = obj.settings.cal.pointPos;
                 paceInterval    = ceil(obj.settings.cal.paceDuration   *Screen('NominalFrameRate',wpnt));
-                out.status      = [];
-                switch obj.settings.calibrateEye
-                    case 'both'
-                        extraInp = {};
-                    case 'left'
-                        extraInp = {SelectedEye.LEFT};
-                    case 'right'
-                        extraInp = {SelectedEye.RIGHT};
+                out.status      = {};
+                extraInp        = {obj.settings.calibrateEye};
+                if strcmp(obj.settings.calibrateEye,'both')
+                    extraInp    = {};
                 end
             else
                 points          = obj.settings.val.pointPos;
@@ -1533,6 +1527,7 @@ classdef Titta < handle
             needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && tick==-1 && cp==1);
             advancePoint    = true;
             pointOff        = 0;
+            nCollecting     = 0;
             while true
                 tick        = tick+1;
                 nextFlipT   = out.flips(end)+1/1000;
@@ -1560,7 +1555,8 @@ classdef Titta < handle
                 out.flips(end+1)    = Screen('Flip',wpnt,nextFlipT);
                 if qNewPoint
                     obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
-                    qNewPoint = false;
+                    nCollecting     = 0;
+                    qNewPoint       = false;
                 end
                 
                 % get user response
@@ -1594,22 +1590,42 @@ classdef Titta < handle
                 % accept point
                 if haveAccepted && tick>tick0p+paceInterval
                     if qCal
-                        collect_result = calibClass.collect_data(points(currentPoint,1:2),extraInp{:});
-                        % if fails, retry immediately
-                        if collect_result.value==CalibrationStatus.Failure
-                            collect_result = calibClass.collect_data(points(currentPoint,1:2),extraInp{:});
+                        if ~nCollecting
+                            % start collection
+                            obj.buffer.calibrationCollectData(points(currentPoint,1:2),extraInp{:});
+                            nCollecting = 1;
+                        else
+                            % check status
+                            calStatus = obj.buffer.calibrationCollectionStatus();
+                            switch calStatus
+                                case 'collecting'
+                                    % carry on
+                                case 'success'
+                                    % next point
+                                    advancePoint = true;
+                                case 'failure'
+                                    if nCollecting==1
+                                        % if failed first time, immediately try again
+                                        obj.buffer.calibrationCollectData(points(currentPoint,1:2),extraInp{:});
+                                        nCollecting = 2;
+                                    else
+                                        % if still fails, retry one more time at end of
+                                        % point sequence (if this is not already a retried
+                                        % point)
+                                        if points(currentPoint,6)
+                                            points = [points; points(currentPoint,:)]; %#ok<AGROW>
+                                            points(end,6) = 0;  % indicate this is a point that is being retried so we don't try forever
+                                        end
+                                        % next point
+                                        advancePoint = true;
+                                    end
+                                otherwise
+                                    error('calibrationCollectionStatus returned status ''%s''',calStatus);
+                            end
+                            if advancePoint
+                                out.status{currentPoint} = calStatus;
+                            end
                         end
-                        out.status(currentPoint,1) = collect_result.value;
-                        % if still fails, retry one more time at end of
-                        % point sequence (if this is not already a retried
-                        % point)
-                        if collect_result.value==CalibrationStatus.Failure && points(currentPoint,6)
-                            points = [points; points(currentPoint,:)]; %#ok<AGROW>
-                            points(end,6) = 0;  % indicate this is a point that is being retried so we don't try forever
-                        end
-                        
-                        % next point
-                        advancePoint = true;
                     else
                         if isnan(tick0v)
                             tick0v = tick;
@@ -1630,7 +1646,23 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            obj.sendMessage(sprintf('POINT OFF %d',currentPoint-pointOff),out.flips(end));
+            currentPoint = currentPoint-pointOff;
+            obj.sendMessage(sprintf('POINT OFF %d',currentPoint),out.flips(end));
+            
+            if qCal && size(points,1)>0
+                % compute calibration
+                obj.buffer.calibrationComputeAndApply();
+                result  = [];
+                flipT   = out.flips(end);
+                while isempty(result)
+                    tick    = tick+1;
+                    drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick);
+                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                    
+                    result  = obj.buffer.calibrationRetrieveComputeAndApplyResult();
+                end
+                out.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
+            end
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~)
@@ -2316,6 +2348,8 @@ iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && ~isempty(
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
+result = calResult;
+return
 % status
 result.status = TobiiEnumToString(calResult.Status);
 
@@ -2334,30 +2368,6 @@ for p=length(calResult.CalibrationPoints):-1:1
         result.gazeData(p).right.pos      = cat(1,dat.RightEye.PositionOnDisplayArea).';
     end
 end
-end
-
-function enumLbl = TobiiEnumToString(enum)
-% turn off warning for converting object to struct
-warnState = warning('query','MATLAB:structOnObject');
-warning('off',warnState.identifier);
-
-names = fieldnames(enum);
-values= struct2cell(struct(enum(1)));
-qRem = cellfun(@(x) strcmp(x,'value'),names);
-names (qRem,:) = [];
-values(qRem,:) = []; values = cat(1,values{:});
-% store what the result status was
-if isobject(enum(1).value)
-    enumLbl = arrayfun(@(x) names{values==x.value.value},enum,'uni',false);
-else
-    enumLbl = arrayfun(@(x) names{values==x.value}      ,enum,'uni',false);
-end
-if isscalar(enumLbl)
-    enumLbl = enumLbl{1};
-end
-
-% reset warning
-warning(warnState.state,warnState.identifier);
 end
 
 function hex = clr2hex(clr)

@@ -242,8 +242,9 @@ TobiiBuffer::~TobiiBuffer()
 // calibration
 void TobiiBuffer::calibrationThread()
 {
-    std::mutex                    calMutex;
-    std::unique_lock<std::mutex>  lock(calMutex);
+	_calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+
+    std::unique_lock<std::mutex>  lock(_calMutex);
     bool keepRunning            = true;
     while (keepRunning)
     {
@@ -282,29 +283,26 @@ void TobiiBuffer::calibrationThread()
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
                 else if (_calibrationEye == "right")
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-                _calibrationCollectionResult = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]), discardEye);
+                tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]), discardEye);
             }
             else
-                _calibrationCollectionResult = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]));
+                tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(_calibrationCoordinates[0]), static_cast<float>(_calibrationCoordinates[1]));
             break;
         }
         case TobiiTypes::CalibrationAction::Compute:
         {
             _calibrationState = TobiiTypes::CalibrationState::Computing;
+
             if (_calibrationComputeResult)
             {
                 tobii_research_free_screen_based_calibration_result(_calibrationComputeResult);
                 _calibrationComputeResult = nullptr;
             }
             if (_calibrationIsMonocular)
-            {
                 _calibrationComputeResultStatus = tobii_research_screen_based_monocular_calibration_compute_and_apply(_eyetracker, &_calibrationComputeResult);
-            }
             else
-            {
                 _calibrationComputeResultStatus = tobii_research_screen_based_calibration_compute_and_apply(_eyetracker, &_calibrationComputeResult);
-            }
-            // add end, return to:
+
             _calibrationState = TobiiTypes::CalibrationState::Computed;
             break;
         }
@@ -331,9 +329,8 @@ void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
 
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
     TobiiResearchStatus result;
-    if ((result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker)) != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("enterCalibrationMode: Error entering calibration mode", result);
-
+	if ((result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker)) != TOBII_RESEARCH_STATUS_OK)
+		ErrorExit("enterCalibrationMode: Error entering calibration mode", result);
 
     // start new calibration worker
     _calibrationAction          = TobiiTypes::CalibrationAction::Nothing;
@@ -349,12 +346,13 @@ void TobiiBuffer::leaveCalibrationMode(bool force_)
         // calibration mode, e.g. after a previous crash
         tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
     }
-    if (_calibrationState==TobiiTypes::CalibrationState::NotYetEntered)
+    if (!_calibrationThread.joinable())
     {
+		_calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
         return;
     }
 
-    // tell thread to quit and wait until it quit
+    // tell thread to quit and wait until it quits
     // this calls tobii_research_screen_based_calibration_leave_calibration_mode() in the thread function before exiting
     _calibrationAction = TobiiTypes::CalibrationAction::Exit;
     _calibrationThreadNotify.notify_one();
@@ -448,10 +446,16 @@ void TobiiBuffer::calibrationComputeAndApply()
 }
 std::optional<TobiiResearchCalibrationResult> TobiiBuffer::calibrationRetrieveComputeAndApplyResult()
 {
+	if (_calibrationState != TobiiTypes::CalibrationState::Computed)
+		return std::nullopt;
+
+	if (_calibrationComputeResultStatus != TOBII_RESEARCH_STATUS_OK)
+		ErrorExit("calibrationComputeAndApply has failed", _calibrationComputeResultStatus);
+
     if (_calibrationComputeResult)
         return *_calibrationComputeResult;
     else
-        return {};
+        return std::nullopt;
 }
 
 
