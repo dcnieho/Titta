@@ -1131,47 +1131,34 @@ classdef Titta < handle
                 if ~isempty(headPos)
                     drawCircle(wpnt,obj.getColorForWindow(headClr),headPos,headSz,5,obj.getColorForWindow(headFillClr));
                     if obj.settings.UI.setup.showEyes
-                        % TODO remove code duplication with for loop
-                        % left eye
-                        off = Rori*[eyeMargin; 0];
-                        pos = headPos-off.';
-                        if ~obj.calibrateLeftEye
-                            % draw cross indicating not calibrated
-                            base = eyeSz(1)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
-                            R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
-                        elseif qHaveLeft
-                            % draw eye with optional pupil
-                            drawCircle(wpnt,[],pos,eyeSz(1),0,obj.getColorForWindow(eyeClr));
-                            if obj.settings.UI.setup.showPupils
-                                pupSz = (1+(lPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
-                                drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
+                        for p=1:2
+                            % left eye
+                            off = Rori*[eyeMargin; 0];
+                            if p==1
+                                pos = headPos-off.';
+                                pup = lPup;
+                            else
+                                pos = headPos+off.';
+                                pup = rPup;
                             end
-                        else
-                            % draw line indicating closed/missing eye
-                            base = eyeSz(1)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                            Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
-                        end
-                        % right eye
-                        pos = headPos+off.';
-                        if ~obj.calibrateRightEye
-                            % draw cross indicating not calibrated
-                            base = eyeSz(2)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
-                            R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                            Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
-                        elseif qHaveRight
-                            % draw eye with optional pupil
-                            drawCircle(wpnt,[],pos,eyeSz(2),0,obj.getColorForWindow(eyeClr));
-                            if obj.settings.UI.setup.showPupils
-                                pupSz = (1+(rPup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(2);
-                                drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
+                            if (p==1 && ~obj.calibrateLeftEye) || (p==2 && ~obj.calibrateRightEye)
+                                % draw cross indicating not calibrated
+                                base = eyeSz(p)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
+                                R    = [cosd(45) sind(45); -sind(45) cosd(45)];
+                                Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
+                                Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
+                            elseif (p==1 && qHaveLeft) || (p==2 && qHaveRight)
+                                % draw eye with optional pupil
+                                drawCircle(wpnt,[],pos,eyeSz(p),0,obj.getColorForWindow(eyeClr));
+                                if obj.settings.UI.setup.showPupils
+                                    pupSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
+                                    drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
+                                end
+                            else
+                                % draw line indicating closed/missing eye
+                                base = eyeSz(p)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
+                                Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
                             end
-                        else
-                            % draw line indicating closed/missing eye
-                            base = eyeSz(2)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                            Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
                         end
                     end
                 end
