@@ -182,8 +182,8 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint>        data_);
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationSample                    data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationEyeData                   data_);
+	mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>		data_);
+	mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample> data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
 }
 
@@ -970,6 +970,7 @@ namespace mxTypes
         for (auto &msg : data_)
             mxSetCell(temp, i++, ToMatlab((msg.*field_).validity));
 
+		return out;
     }
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity data_)
     {
