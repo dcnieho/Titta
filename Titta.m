@@ -1364,15 +1364,6 @@ classdef Titta < handle
                 out.cal.data = obj.ConsumeAllData(calStartT);
                 if status==1
                     if ~isempty(obj.settings.cal.pointPos)
-                        % compute calibration
-                        obj.buffer.calibrationComputeAndApply();
-                        result = [];
-                        while isempty(result)
-                            result = obj.buffer.calibrationRetrieveComputeAndApplyResult();
-                            WaitSecs('YieldSecs',0.01);
-                        end
-                        out.cal.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
-                        
                         % if valid calibration retrieve data, so user can select different ones
                         if strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                             out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
@@ -1390,7 +1381,9 @@ classdef Titta < handle
                             end
                         end
                     else
-                        % can't compute if user requested no calibration points
+                        % can't actually calibrate if user requested no
+                        % calibration points, so just make these fields
+                        % empty in that case.
                         out.cal.result = [];
                         out.cal.computedCal = [];
                     end
@@ -1620,7 +1613,7 @@ classdef Titta < handle
                                         advancePoint = true;
                                     end
                                 otherwise
-                                    error('calibrationCollectionStatus returned status ''%s''',calStatus);
+                                    error('calibrationCollectionStatus returned status ''%s'', don''t know what to do with that',calStatus);
                             end
                             if advancePoint
                                 out.status{currentPoint} = calStatus;
@@ -1649,6 +1642,8 @@ classdef Titta < handle
             currentPoint = currentPoint-pointOff;
             obj.sendMessage(sprintf('POINT OFF %d',currentPoint),out.flips(end));
             
+            % get calibration result while keeping animation on the screen
+            % alive for a smooth experience
             if qCal && size(points,1)>0
                 % compute calibration
                 obj.buffer.calibrationComputeAndApply();
