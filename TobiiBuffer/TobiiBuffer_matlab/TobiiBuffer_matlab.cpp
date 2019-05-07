@@ -55,7 +55,9 @@
 #include <sstream>
 #include <atomic>
 
-#define DLL_EXPORT_SYM __declspec(dllexport)
+#define TARGET_API_VERSION 700
+#define MX_COMPAT_32
+#define MW_NEEDS_VERSION_H	// looks like a bug in R2018b, don't know how to check if this is R2018b, define for now
 #include <mex.h>
 #include "mex_type_utils.h"
 
@@ -64,7 +66,6 @@
 
 #include "TobiiBuffer/TobiiBuffer.h"
 #include "TobiiBuffer/utils.h"
-
 
 namespace {
     using ClassType         = TobiiBuffer;
@@ -266,7 +267,8 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         {
             if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2])!=2)
                 mexErrMsgTxt("calibrationCollectData: First argument must be a 2-element double array.");
-            std::array<double, 2> point{*mxGetDoubles(prhs[2]),*(mxGetDoubles(prhs[2]) + 1)};
+			double* dat = static_cast<double*>(mxGetData(prhs[2]));
+			std::array<double, 2> point{ *dat, *(dat + 1) };
 
             // get optional input argument
             std::optional<std::string> eye;
@@ -296,7 +298,8 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         {
             if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
                 mexErrMsgTxt("calibrationDiscardData: First argument must be a 2-element double array.");
-            std::array<double, 2> point{*mxGetDoubles(prhs[2]),*(mxGetDoubles(prhs[2]) + 1)};
+			double* dat = static_cast<double*>(mxGetData(prhs[2]));
+            std::array<double, 2> point{*dat, *(dat + 1)};
 
             // get optional input argument
             std::optional<std::string> eye;
@@ -658,8 +661,8 @@ namespace
         }
         else
         {
-            out = mxCreateCellMatrix(1, data_.size());
-            size_t i = 0;
+            out = mxCreateCellMatrix(1, static_cast<mwSize>(data_.size()));
+            mwIndex i = 0;
             for (auto &frame : data_)
             {
                 mxArray* temp;
@@ -840,22 +843,22 @@ namespace mxTypes
         const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         mxArray* temp;
-        size_t i = 0;
+        mwIndex i = 0;
 
         // 1. system timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuffer::logMessage::system_time_stamp));
         // 2. log source
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(data_.size(), 1));
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
         i = 0;
         for (auto &msg : data_)
             mxSetCell(temp, i++, mxCreateString(TobiiResearchLogSourceToString(msg.source).c_str()));
         // 3. log level
-        mxSetFieldByNumber(out, 0, 2, temp = mxCreateCellMatrix(data_.size(), 1));
+        mxSetFieldByNumber(out, 0, 2, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
         i = 0;
         for (auto &msg : data_)
             mxSetCell(temp, i++, mxCreateString(TobiiResearchLogLevelToString(msg.level).c_str()));
         // 4. log messages
-        mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(data_.size(), 1));
+        mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
         i = 0;
         for (auto &msg : data_)
             mxSetCell(temp, i++, mxCreateString(msg.message.c_str()));
@@ -928,7 +931,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint> data_)
     {
         const char* fieldNames[] = {"position","samples"};
-        mxArray* out = mxCreateStructMatrix(data_.size(), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         ToStructArray(out, data_,
                       &TobiiResearchCalibrationPoint::position_on_display_area,
@@ -941,7 +944,7 @@ namespace mxTypes
     {
         return ToMatlab(std::array{static_cast<double>(data_.x),static_cast<double>(data_.y)});
     }
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample> data_)
+	mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample> data_)
     {
         const char* fieldNames[] = {"left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -962,8 +965,8 @@ namespace mxTypes
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));					// 0. causes values to be stored as double
         // 2 validity
         mxArray* temp;
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(data_.size(), 1));
-        size_t i = 0;
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
+        mwIndex i = 0;
         for (auto &msg : data_)
             mxSetCell(temp, i++, ToMatlab((msg.*field_).validity));
 

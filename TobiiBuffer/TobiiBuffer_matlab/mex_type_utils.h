@@ -9,8 +9,10 @@
 
 #include "pack_utils.h"
 
-#define DLL_EXPORT_SYM __declspec(dllexport)
-#include "mex.h"
+#define TARGET_API_VERSION 700
+#define MX_COMPAT_32
+#define MW_NEEDS_VERSION_H	// looks like a bug in R2018b, don't know how to check if this is R2018b, define for now
+#include <mex.h>
 
 namespace
 {
@@ -187,7 +189,7 @@ namespace mxTypes
 
     //// array of structs
     template<typename V, typename OutOrFun, typename... Fs, typename... Ts, typename... Fs2>
-    void ToStructArrayImpl(mxArray* out_, const V& item_, const size_t& idx1_, int idx2_, std::tuple<OutOrFun, Ts Fs::*...> expr, Fs2... fields)
+    void ToStructArrayImpl(mxArray* out_, const V& item_, const mwIndex& idx1_, int idx2_, std::tuple<OutOrFun, Ts Fs::*...> expr, Fs2... fields)
     {
         if constexpr (std::is_invocable_v<OutOrFun, Ts...>)
             if constexpr (sizeof...(Ts) == 2)
@@ -205,7 +207,7 @@ namespace mxTypes
     }
 
     template<typename V, typename F, typename T, typename... Fs>
-    void ToStructArrayImpl(mxArray* out_, const V& item_, const size_t& idx1_, int idx2_, T F::*field, Fs... fields)
+    void ToStructArrayImpl(mxArray* out_, const V& item_, const mwIndex& idx1_, int idx2_, T F::*field, Fs... fields)
     {
         mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(item_.*field));
         if constexpr (!sizeof...(fields))
@@ -217,7 +219,7 @@ namespace mxTypes
     template<template<typename, typename> class Cont, typename V, typename... Rest, typename... Fs>
     void ToStructArray(mxArray* out_, const Cont<V, Rest...>& data_, Fs... fields)
     {
-        size_t i = 0;
+        mwIndex i = 0;
         for (const auto& item : data_)
         {
             ToStructArrayImpl(out_, item, i, 0, fields...);
