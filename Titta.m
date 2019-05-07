@@ -990,6 +990,7 @@ classdef Titta < handle
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
+            headPostLastT       = 0;
             while true
                 if qHasEyeIm
                     % toggle eye images on or off if requested
@@ -1093,6 +1094,7 @@ classdef Titta < handle
                     eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
                     % move
                     headPos = pos.*obj.scrInfo.resolution;
+                    headPostLastT = eyeData.systemTimeStamp;
                 else
                     headPos = [];
                 end
@@ -1110,18 +1112,19 @@ classdef Titta < handle
                         Screen('FillRect', wpnt, 0, eyeImageRect{2});
                     end
                 end
+                % for distance info and ovals: hide when eye image is shown
+                % and data is missing. But only do so after 200 ms of data
+                % missing, so that these elements don't flicker all the
+                % time when unstable track
+                qHideSetup = qShowEyeImage && isempty(headPos) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
                 % draw distance info
-                % TODO: hide only after e.g. 50 or 100 ms of data missing,
-                % else text etc flickers all the time when unstable track
-                % e.g. store last timestamp of good data, compare to
-                % current last timestamp
-                if ~(qShowEyeImage && isempty(headPos))
+                if ~qHideSetup
                     DrawFormattedText(wpnt,sprintf(obj.settings.UI.setup.instruct.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw ovals
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
-                if ~(qShowEyeImage && isempty(headPos))
+                if ~qHideSetup
                     drawCircle(wpnt,obj.getColorForWindow(refClr),obj.scrInfo.center,refSz,5);
                 end
                 % stylized head
