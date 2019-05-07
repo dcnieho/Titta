@@ -147,7 +147,7 @@ private:
     // calibration
     bool                                        _calibrationIsMonocular;
     std::thread                                 _calibrationThread;
-	std::mutex									_calMutex;
+    std::mutex									_calMutex;
     std::condition_variable_any                 _calibrationThreadNotify;
     std::atomic<TobiiTypes::CalibrationState>   _calibrationState;
     std::atomic<TobiiTypes::CalibrationAction>  _calibrationAction;

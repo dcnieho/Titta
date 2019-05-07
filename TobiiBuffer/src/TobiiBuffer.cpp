@@ -242,7 +242,7 @@ TobiiBuffer::~TobiiBuffer()
 // calibration
 void TobiiBuffer::calibrationThread()
 {
-	_calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+    _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
 
     std::unique_lock<std::mutex>  lock(_calMutex);
     bool keepRunning            = true;
@@ -329,8 +329,8 @@ void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
 
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
     TobiiResearchStatus result;
-	if ((result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker)) != TOBII_RESEARCH_STATUS_OK)
-		ErrorExit("enterCalibrationMode: Error entering calibration mode", result);
+    if ((result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker)) != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("enterCalibrationMode: Error entering calibration mode", result);
 
     // start new calibration worker
     _calibrationAction          = TobiiTypes::CalibrationAction::Nothing;
@@ -348,7 +348,7 @@ void TobiiBuffer::leaveCalibrationMode(bool force_)
     }
     if (!_calibrationThread.joinable())
     {
-		_calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
+        _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
         return;
     }
 
@@ -446,11 +446,11 @@ void TobiiBuffer::calibrationComputeAndApply()
 }
 std::optional<TobiiResearchCalibrationResult> TobiiBuffer::calibrationRetrieveComputeAndApplyResult()
 {
-	if (_calibrationState != TobiiTypes::CalibrationState::Computed)
-		return std::nullopt;
+    if (_calibrationState != TobiiTypes::CalibrationState::Computed)
+        return std::nullopt;
 
-	if (_calibrationComputeResultStatus != TOBII_RESEARCH_STATUS_OK)
-		ErrorExit("calibrationComputeAndApply has failed", _calibrationComputeResultStatus);
+    if (_calibrationComputeResultStatus != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("calibrationComputeAndApply has failed", _calibrationComputeResultStatus);
 
     if (_calibrationComputeResult)
         return *_calibrationComputeResult;
