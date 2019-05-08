@@ -1644,7 +1644,7 @@ classdef Titta < handle
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
-            if qCal && size(points,1)>0
+            if qCal && status==1 && size(points,1)>0
                 % compute calibration
                 obj.buffer.calibrationComputeAndApply();
                 result  = [];
