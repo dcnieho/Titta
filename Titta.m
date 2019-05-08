@@ -1644,19 +1644,26 @@ classdef Titta < handle
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
-            if qCal && status==1 && size(points,1)>0
-                % compute calibration
-                obj.buffer.calibrationComputeAndApply();
-                result  = [];
-                flipT   = out.flips(end);
-                while isempty(result)
-                    tick    = tick+1;
-                    drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick);
-                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
-                    
-                    result  = obj.buffer.calibrationRetrieveComputeAndApplyResult();
+            if qCal && size(points,1)>0
+                if status==1
+                    % compute calibration
+                    obj.buffer.calibrationComputeAndApply();
+                    result  = [];
+                    flipT   = out.flips(end);
+                    while isempty(result)
+                        tick    = tick+1;
+                        drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick);
+                        flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                        
+                        result  = obj.buffer.calibrationRetrieveComputeAndApplyResult();
+                    end
+                    out.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
+                elseif currentPoint>0
+                    % discard data from completed points, if any
+                    for p=1:currentPoint
+                        obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
+                    end
                 end
-                out.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
             end
         end
         
