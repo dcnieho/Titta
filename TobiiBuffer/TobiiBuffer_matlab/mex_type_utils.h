@@ -152,17 +152,27 @@ namespace mxTypes
         using V = typename Cont::value_type;
         if constexpr (typeNeedsMxCellStorage<V>())
         {
-            temp = mxCreateCellMatrix(data_.size(), 1);
-            size_t i = 0;
-            for (auto &item : data_)
-                mxSetCell(temp, i++, ToMatlab(item));
+            if (!data_.size())
+                temp = mxCreateCellMatrix(0, 0);
+            else
+            {
+                temp = mxCreateCellMatrix(data_.size(), 1);
+                size_t i = 0;
+                for (auto &item : data_)
+                    mxSetCell(temp, i++, ToMatlab(item));
+            }
         }
         else if constexpr (is_guaranteed_contiguous_v<Cont>)
         {
-            auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass<V>(), mxREAL)));
-            // contiguous storage, can memcopy
-            if (data_.size())
-                memcpy(storage, &data_[0], data_.size());
+            if (!data_.size())
+                temp = mxCreateNumericMatrix(0, 0, typeToMxClass<V>(), mxREAL);
+            else
+            {
+                auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass<V>(), mxREAL)));
+                // contiguous storage, can memcopy
+                if (data_.size())
+                    memcpy(storage, &data_[0], data_.size());
+            }
         }
         else
         {
