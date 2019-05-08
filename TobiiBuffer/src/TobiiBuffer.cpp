@@ -418,7 +418,7 @@ std::optional<TobiiTypes::CalibrationWorkResult> TobiiBuffer::calibrationRetriev
         if (makeString)
         {
             std::stringstream os;
-            os << "Tobii SDK code: " << static_cast<int>(out.status) << ": " << TobiiResearchStatusToString(out.status) << " (" << TobiiResearchStatusToExplanation(out.status) << ")" << std::endl;
+            os << "Tobii SDK code: " << static_cast<int>(out.status) << ": " << TobiiResearchStatusToString(out.status) << " (" << TobiiResearchStatusToExplanation(out.status) << ")";
             out.statusString = os.str();
         }
         return out;
