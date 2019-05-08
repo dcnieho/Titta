@@ -156,8 +156,8 @@ namespace mxTypes
                 temp = mxCreateCellMatrix(0, 0);
             else
             {
-                temp = mxCreateCellMatrix(data_.size(), 1);
-                size_t i = 0;
+                temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1);
+                mwIndex i = 0;
                 for (auto &item : data_)
                     mxSetCell(temp, i++, ToMatlab(item));
             }
@@ -168,7 +168,7 @@ namespace mxTypes
                 temp = mxCreateNumericMatrix(0, 0, typeToMxClass<V>(), mxREAL);
             else
             {
-                auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(data_.size(), 1, typeToMxClass<V>(), mxREAL)));
+                auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(static_cast<mwSize>(data_.size()), 1, typeToMxClass<V>(), mxREAL)));
                 // contiguous storage, can memcopy
                 if (data_.size())
                     memcpy(storage, &data_[0], data_.size());
