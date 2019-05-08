@@ -896,7 +896,6 @@ namespace mxTypes
     {
         const char* fieldNames[] = { "workItem","status","statusString","calibrationResult" };
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
-        RelayMsg(data_.statusString);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.workItem));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.status));
@@ -984,6 +983,9 @@ namespace mxTypes
     }
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint> data_)
     {
+        if (!data_.size())
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+
         const char* fieldNames[] = {"position","samples"};
         mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 

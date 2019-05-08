@@ -1504,7 +1504,7 @@ classdef Titta < handle
             end
             % anchor timing, get ready for displaying calibration points
             if qFirst
-                flipT   = [];
+                flipT   = GetSecs();
             else
                 flipT   = lastFlip;
             end
@@ -1977,7 +1977,7 @@ classdef Titta < handle
                     % get info about where points were on screen
                     if qShowCal
                         lbl      = 'calibration';
-                        nPoints  = length(cal{selection}.cal.result.gazeData);
+                        nPoints  = length(cal{selection}.cal.result.points);
                     else
                         lbl      = 'validation';
                         nPoints  = size(cal{selection}.val.pointPos,1);
@@ -1985,7 +1985,7 @@ classdef Titta < handle
                     calValPos   = zeros(nPoints,2);
                     if qShowCal
                         for p=1:nPoints
-                            calValPos(p,:)  = cal{selection}.cal.result.gazeData(p).calPos.'.*obj.scrInfo.resolution;
+                            calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution;
                         end
                     else
                         for p=1:nPoints
@@ -2072,13 +2072,13 @@ classdef Titta < handle
                             bpos = calValPos(p,:).';
                             % left eye
                             if obj.calibrateLeftEye
-                                qVal = strcmp(myCal.gazeData(p).left.validity,'ValidAndUsed');
-                                lEpos= bsxfun(@times,myCal.gazeData(p). left.pos(:,qVal),obj.scrInfo.resolution.');
+                                qVal = strcmp(myCal.points(p).samples. left.validity,'validAndUsed');
+                                lEpos= bsxfun(@times,myCal.points(p).samples. left.position(:,qVal),obj.scrInfo.resolution.');
                             end
                             % right eye
                             if obj.calibrateRightEye
-                                qVal = strcmp(myCal.gazeData(p).right.validity,'ValidAndUsed');
-                                rEpos= bsxfun(@times,myCal.gazeData(p).right.pos(:,qVal),obj.scrInfo.resolution.');
+                                qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution.');
                             end
                         else
                             myVal = cal{selection}.val;
@@ -2363,28 +2363,23 @@ angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
 function iValid = getValidCalibrations(cal)
-iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && ~isempty(x.cal.result) && strcmp(x.cal.result.status(1:7),'Success'),cal));
+iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && ~isempty(x.cal.result) && strcmpi(x.cal.result.status(1:7),'success'),cal));
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
 result = calResult;
-return
-% status
-result.status = TobiiEnumToString(calResult.Status);
+if hasLeft&&hasRight
+    % we want data for both eyes, so we're done
+    return
+end
 
-% data points used for calibration
-for p=length(calResult.CalibrationPoints):-1:1
-    dat = calResult.CalibrationPoints(p);
-    % calibration point position
-    result.gazeData(p).calPos   = dat.PositionOnDisplayArea.';
-    % gaze data for the point
-    if hasLeft
-        result.gazeData(p). left.validity = TobiiEnumToString(cat(2,dat. LeftEye.Validity));
-        result.gazeData(p). left.pos      = cat(1,dat. LeftEye.PositionOnDisplayArea).';
+% only have one of the eyes, remove data for the other eye
+for p=1:length(result.points)
+    if ~hasLeft
+        result.points(p).samples = rmfield(result.points(p).samples,'left');
     end
-    if hasRight
-        result.gazeData(p).right.validity = TobiiEnumToString(cat(2,dat.RightEye.Validity));
-        result.gazeData(p).right.pos      = cat(1,dat.RightEye.PositionOnDisplayArea).';
+    if ~hasRight
+        result.points(p).samples = rmfield(result.points(p).samples,'right');
     end
 end
 end
