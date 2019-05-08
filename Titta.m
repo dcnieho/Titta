@@ -1617,7 +1617,6 @@ classdef Titta < handle
                             % check status
                             result  = obj.buffer.calibrationRetrieveResult();
                             if ~isempty(result)
-                                result
                                 if strcmp(result.workItem.action,'CollectData') && result.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
