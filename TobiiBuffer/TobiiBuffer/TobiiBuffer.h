@@ -55,11 +55,10 @@ public:
     void enterCalibrationMode(bool doMonocular_);
     void leaveCalibrationMode(bool force_);
     void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
-    TobiiTypes::CalibrationState calibrationCheckStatus();
-    std::string calibrationCollectionStatus();
     void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationComputeAndApply();
-    std::optional<TobiiResearchCalibrationResult> calibrationRetrieveComputeAndApplyResult();
+    TobiiTypes::CalibrationState calibrationGetStatus();
+    std::optional<TobiiTypes::CalibrationWorkResult> calibrationRetrieveResult(bool makeString = false);
 
 
     // query if stream is supported
@@ -147,13 +146,7 @@ private:
     // calibration
     bool                                        _calibrationIsMonocular;
     std::thread                                 _calibrationThread;
-    std::mutex									_calMutex;
-    std::condition_variable_any                 _calibrationThreadNotify;
+	moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkItem>   _calibrationWorkQueue;
+	moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkResult> _calibrationWorkResultQueue;
     std::atomic<TobiiTypes::CalibrationState>   _calibrationState;
-    std::atomic<TobiiTypes::CalibrationAction>  _calibrationAction;
-    std::array<double, 2>                       _calibrationCoordinates;
-    std::string                                 _calibrationEye;
-    std::atomic<TobiiResearchStatus>            _calibrationCollectionResult;
-    std::atomic<TobiiResearchStatus>            _calibrationComputeResultStatus = TOBII_RESEARCH_STATUS_OK;
-    TobiiResearchCalibrationResult*             _calibrationComputeResult = nullptr;
 };

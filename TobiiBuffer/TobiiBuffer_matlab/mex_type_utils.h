@@ -6,6 +6,7 @@
 #include <array>
 #include <tuple>
 #include <optional>
+#include <memory>
 
 #include "pack_utils.h"
 
@@ -179,6 +180,15 @@ namespace mxTypes
 
     template <class T>
     mxArray* ToMatlab(std::optional<T> val_)
+    {
+        if (!val_)
+            return mxCreateDoubleMatrix(0, 0, mxREAL);
+        else
+            return ToMatlab(*val_);
+    }
+
+    template <class T>
+    mxArray* ToMatlab(std::shared_ptr<T> val_)
     {
         if (!val_)
             return mxCreateDoubleMatrix(0, 0, mxREAL);

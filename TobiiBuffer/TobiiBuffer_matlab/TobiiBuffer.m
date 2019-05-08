@@ -90,12 +90,6 @@ classdef TobiiBuffer < handle
                 this.cppmethod('calibrationCollectData',coordinates);
             end
         end
-        function status = calibrationCheckStatus(this)
-            status = this.cppmethod('calibrationCheckStatus');
-        end
-        function status = calibrationCollectionStatus(this)
-            status = this.cppmethod('calibrationCollectionStatus');
-        end
         function calibrationDiscardData(this,coordinates,eye)
             if nargin>2 && ~isempty(eye)
                 this.cppmethod('calibrationDiscardData',coordinates,ensureStringIsChar(eye));
@@ -106,8 +100,11 @@ classdef TobiiBuffer < handle
         function calibrationComputeAndApply(this)
             this.cppmethod('calibrationComputeAndApply');
         end
-        function result = calibrationRetrieveComputeAndApplyResult(this)
-            result = this.cppmethod('calibrationRetrieveComputeAndApplyResult');
+        function status = calibrationGetStatus(this)
+            status = this.cppmethod('calibrationGetStatus');
+        end
+        function result = calibrationRetrieveResult(this)
+            result = this.cppmethod('calibrationRetrieveResult');
         end
         
         function supported = hasStream(this,stream)

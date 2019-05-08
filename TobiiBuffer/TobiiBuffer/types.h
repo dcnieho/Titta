@@ -1,7 +1,10 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <array>
 #include <tobii_research_streams.h>
+#include <tobii_research_calibration.h>
+#include <readerwriterqueue/readerwriterqueue.h>
 
 namespace TobiiTypes
 {
@@ -131,22 +134,40 @@ namespace TobiiTypes
         std::string            message;
     };
 
+
     enum class CalibrationState
     {
         NotYetEntered,
         AwaitingCalPoint,
         CollectingData,
+		DiscardingData,
         Computing,
-        Computed,
         Left
     };
 
     enum class CalibrationAction
     {
         Nothing,
+        Enter,
         CollectData,
         DiscardData,
         Compute,
         Exit
     };
+
+	struct CalibrationWorkItem
+	{
+		CalibrationAction	action = CalibrationAction::Nothing;
+		// some actions need one or both of the below
+		std::vector<double> coordinates;
+		std::string         eye;
+	};
+
+	struct CalibrationWorkResult
+	{
+		CalibrationWorkItem                             workItem;
+		TobiiResearchStatus                             status;
+        std::string                                     statusString;
+        std::shared_ptr<TobiiResearchCalibrationResult> calibrationResult;
+	};
 }

@@ -1109,7 +1109,7 @@ classdef Titta < handle
                 % and data is missing. But only do so after 200 ms of data
                 % missing, so that these elements don't flicker all the
                 % time when unstable track
-                qHideSetup = qShowEyeImage && isempty(headPos) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
+                qHideSetup = qShowEyeImage && isempty(headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
                 % draw distance info
                 if ~qHideSetup
                     DrawFormattedText(wpnt,sprintf(obj.settings.UI.setup.instruct.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
@@ -1414,6 +1414,8 @@ classdef Titta < handle
             
             % do validation
             if qDoCal
+                % if we just did a cal, add message that now we're entering
+                % validation mode
                 valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
                 obj.ClearAllBuffers(calStartT);    % clean up data from calibration
             end
@@ -1500,16 +1502,40 @@ classdef Titta < handle
             else
                 drawFunction = obj.settings.cal.drawFunction;
             end
+            % anchor timing, get ready for displaying calibration points
+            if qFirst
+                flipT   = [];
+            else
+                flipT   = lastFlip;
+            end
+            qStartOfSequence = tick==-1;
+            if qCal
+                % make sure we start with a clean slate:
+                % discard data from all points, if any
+                for p=1:size(points,1)
+                    % queue up all the discard actions quickly
+                    obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
+                end
+                % now we expect size(points,1) completed DiscardData
+                % reports as well
+                nRep = 0;
+                while true
+                    tick    = tick+1;
+                    drawFunction(wpnt,1,points(1,3:4),tick);
+                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                    result  = obj.buffer.calibrationRetrieveResult();
+                    nRep    = nRep + (~isempty(result) && strcmp(result.workItem.action,'DiscardData'));
+                    if nRep==size(points,1)
+                        break;
+                    end
+                end
+            end
             
             % prepare output
             status = 1; % calibration went ok, unless otherwise stated
             
             % clear screen, anchor timing, get ready for displaying calibration points
-            if qFirst
-                out.flips = Screen('Flip',wpnt);
-            else
-                out.flips = lastFlip;
-            end
+            out.flips    = flipT;
             out.pointPos = [];
             
             % Refresh internal key-/mouseState to make sure we don't
@@ -1517,7 +1543,7 @@ classdef Titta < handle
             obj.getNewMouseKeyPress();
             
             currentPoint    = 0;
-            needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && tick==-1 && cp==1);
+            needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && qStartOfSequence && cp==1);
             advancePoint    = true;
             pointOff        = 0;
             nCollecting     = 0;
@@ -1589,14 +1615,14 @@ classdef Titta < handle
                             nCollecting = 1;
                         else
                             % check status
-                            calStatus = obj.buffer.calibrationCollectionStatus();
-                            switch calStatus
-                                case 'collecting'
-                                    % carry on
-                                case 'success'
-                                    % next point
+                            result  = obj.buffer.calibrationRetrieveResult();
+                            if ~isempty(result)
+                                result
+                                if strcmp(result.workItem.action,'CollectData') && result.status==0     % TOBII_RESEARCH_STATUS_OK
+                                    % success, next point
                                     advancePoint = true;
-                                case 'failure'
+                                else
+                                    % failed
                                     if nCollecting==1
                                         % if failed first time, immediately try again
                                         obj.buffer.calibrationCollectData(points(currentPoint,1:2),extraInp{:});
@@ -1612,11 +1638,10 @@ classdef Titta < handle
                                         % next point
                                         advancePoint = true;
                                     end
-                                otherwise
-                                    error('calibrationCollectionStatus returned status ''%s'', don''t know what to do with that',calStatus);
+                                end
                             end
                             if advancePoint
-                                out.status{currentPoint} = calStatus;
+                                out.status{currentPoint} = result;
                             end
                         end
                     else
@@ -1639,31 +1664,24 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            currentPoint = currentPoint-pointOff;
-            obj.sendMessage(sprintf('POINT OFF %d',currentPoint),out.flips(end));
+            lastPoint = currentPoint-pointOff;
+            obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
-            if qCal && size(points,1)>0
-                if status==1
-                    % compute calibration
-                    obj.buffer.calibrationComputeAndApply();
-                    result  = [];
-                    flipT   = out.flips(end);
-                    while isempty(result)
-                        tick    = tick+1;
-                        drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick);
-                        flipT   = Screen('Flip',wpnt,flipT+1/1000);
-                        
-                        result  = obj.buffer.calibrationRetrieveComputeAndApplyResult();
-                    end
-                    out.result = fixupTobiiCalResult(result,obj.calibrateLeftEye,obj.calibrateRightEye);
-                elseif currentPoint>0
-                    % discard data from completed points, if any
-                    for p=1:currentPoint
-                        obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
-                    end
+            if qCal && size(points,1)>0 && status==1
+                % compute calibration
+                obj.buffer.calibrationComputeAndApply();
+                result  = [];
+                flipT   = out.flips(end);
+                while isempty(result) || ~strcmp(result.workItem.action,'Compute')
+                    tick    = tick+1;
+                    drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick);
+                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                    
+                    result  = obj.buffer.calibrationRetrieveResult();
                 end
+                out.result = fixupTobiiCalResult(result.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
             end
         end
         

@@ -17,3 +17,6 @@ Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license
 functionality.
 
 *Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
+
+
+`vcpkg install readerwriterqueue readerwriterqueue:x64-windows`
