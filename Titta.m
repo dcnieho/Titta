@@ -465,8 +465,6 @@ classdef Titta < handle
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
                     end
-                    % TODO: if cancelled a calibration and already have a
-                    % known good one, apply last known good one
                     
                     % store information about last calibration as message
                     if out.attempt{kCal}.calStatus==1
