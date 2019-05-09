@@ -1473,6 +1473,10 @@ classdef Titta < handle
             % -5: Exit completely (control+escape)
             qFirst = nargin<5;
             
+            % Refresh internal key-/mouseState to make sure we don't
+            % trigger on already pressed buttons
+            obj.getNewMouseKeyPress();
+            
             % setup
             if qCal
                 points          = obj.settings.cal.pointPos;
@@ -1537,10 +1541,6 @@ classdef Titta < handle
             % clear screen, anchor timing, get ready for displaying calibration points
             out.flips    = flipT;
             out.pointPos = [];
-            
-            % Refresh internal key-/mouseState to make sure we don't
-            % trigger on already pressed buttons
-            obj.getNewMouseKeyPress();
             
             currentPoint    = 0;
             needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && qStartOfSequence && cp==1);
