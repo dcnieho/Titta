@@ -683,13 +683,11 @@ classdef Titta < handle
             
             % some default colors to be used below
             eyeColors           = {[255 127   0],[ 0  95 191]};
-            toggleButColors     = {[ 37  97 163],[11 122 244]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
-            continueButtonColor = [0 120 0];                        % continue calibration, start recording
-            backButtonColor     = [150 0 0];                        % redo cal, val, go back to set up
-            optionButtonColor   = [150 150 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
+            toggleButColors     = {[  9  84 205],[50 143 246]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
+            continueButtonColor = [0 150 0];                        % continue calibration, start recording
+            backButtonColor     = [200 0 0];                        % redo cal, val, go back to set up
+            optionButtonColor   = [210 210 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
             
-            % TODO: change button colors to something brighter with more
-            % contrast with the background
             % TODO: common file format
             % TODO: teaching perspective of showing all the data quality
             % measures, write about that in the paper.
