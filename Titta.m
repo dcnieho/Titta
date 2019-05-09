@@ -949,6 +949,8 @@ classdef Titta < handle
                     end
                 end
             end
+            % setup colors
+            but = makeButtonColors(but,obj.settings.UI.setup.bgColor);
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
@@ -1329,11 +1331,30 @@ classdef Titta < handle
                 idx = 1;
             end
             if iscell(but.buttonColor)
-                clr = but.buttonColor{min(idx,end)};
+                clr      = but.buttonColor  {min(idx,end)};
+                lColHigh = but.lineColorHigh{min(idx,end)};
+                lColLow1 = but.lineColorLow1{min(idx,end)};
+                lColLow2 = but.lineColorLow2{min(idx,end)};
             else
-                clr = but.buttonColor;
+                clr      = but.buttonColor;
+                lColHigh = but.lineColorHigh;
+                lColLow1 = but.lineColorLow1;
+                lColLow2 = but.lineColorLow2;
             end
+            % draw background
             Screen('FillRect',wpnt,obj.getColorForWindow(clr),but.rect);
+            % draw edges
+            width = 1;
+            if idx==1
+                % button is up
+                xy = [but.rect([1 1 1 3]) but.rect([1 3 3 3]) but.rect([1 3 3 3])+[1 -1 -1 -1]*width;  but.rect([4 2 2 2]) but.rect([4 4 4 2]) but.rect([4 4 4 2])+[-1 -1 -1 1]*width];
+            else
+                % button is depressed
+                xy = [but.rect([1 3 3 3]) but.rect([1 1 1 3]) but.rect([1 1 1 3])+[1  1  1 -1]*width;  but.rect([4 4 4 2]) but.rect([4 2 2 2]) but.rect([4 2 2 2])+[-1  1  1 1]*width];
+            end
+            colors = [repmat(obj.getColorForWindow(lColHigh),4,1); repmat(obj.getColorForWindow(lColLow1),4,1); repmat(obj.getColorForWindow(lColLow2),4,1)].';
+            Screen('DrawLines',wpnt,xy,width,colors);
+            % draw text
             obj.drawCachedText(but.cache(min(idx,end)));
         end
         
@@ -1881,6 +1902,8 @@ classdef Titta < handle
                 but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
                 but(7).cache    = obj.positionButtonText(but(7).cache, but(7).rect);
             end
+            % setup colors
+            but = makeButtonColors(but,obj.settings.UI.val.bgColor);
             
             
             % setup menu, if any
@@ -2477,6 +2500,26 @@ end
 % fliplr to make eye image look like coming from a mirror
 % instead of simply being from camera's perspective
 tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
+end
+
+function but = makeButtonColors(but,bgColor) %#ok<INUSD>
+qCell = iscell(but.buttonColor);
+if ~qCell
+    but.buttonColor = {but.buttonColor};
+end
+for p=length(but.buttonColor):-1:1
+    colHSL = rgb2hsl(but.buttonColor{p});
+    % make highlight color, and two lowlight colors
+    but.lineColorHigh{p} = hsl2rgb([colHSL(1:2) (colHSL(3)+1)/2]);
+    but.lineColorLow1{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*1/3 ]);
+    but.lineColorLow2{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*2/3 ]);
+end
+if ~qCell
+    but.buttonColor   = but.buttonColor{1};
+    but.lineColorHigh = but.lineColorHigh{1};
+    but.lineColorLow1 = but.lineColorLow1{1};
+    but.lineColorLow2 = but.lineColorLow2{1};
+end
 end
 
 function drawCircle(wpnt,clr,center,sz,lineWidth,fillClr)
