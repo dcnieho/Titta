@@ -1286,10 +1286,11 @@ classdef Titta < handle
                     [~,~,~,cache(p)] = DrawFormattedText2(cache(p),'cacheOnly',true,'sx',sx,'sy',sy,'xalign','center','yalign','center');
                 end
             else
-                % TODO offset the below somehow
+                % offset the text to sx,sy (assumes it was centered on 0,0,
+                % which is ok for current code
                 for p=1:length(cache)
-                    cache.px
-                    cache.py
+                    cache.px = cache.px+sx;
+                    cache.py = cache.py+sy;
                 end
             end
         end
