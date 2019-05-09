@@ -1,0 +1,3 @@
+[submodule "talkToProLab/MatlabWebSocket"]
+	path = talkToProLab/MatlabWebSocket
+	url = ../../jebej/MatlabWebSocket.git
