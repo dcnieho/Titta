@@ -23,6 +23,37 @@ classdef TalkToProLab < handle
             this.clientProject  = SimpleWSClient('ws://localhost:8080/project?client_id=TittaMATLAB');
             this.clientEP       = SimpleWSClient('ws://localhost:8080/record/externalpresenter?client_id=TittaMATLAB');
             
+            % for each, check API semver major version
+            % TODO: put current version numbers in the below warnings, 1.0
+            % is placeholder
+            % 1. clock service
+            this.clientClock.send(struct('operation','GetApiVersion'));
+            resp    = waitForResponse(this.clientClock,'GetApiVersion');
+            fprintf('TalkToProLab: using clock API version %s\n',resp.version);
+            vers    = sscanf(resp.version,'%d.%d').';
+            expected= 1;
+            if vers(1)~=expected
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s clock API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+            end
+            % 2. project service
+            this.clientProject.send(struct('operation','GetApiVersion'));
+            resp    = waitForResponse(this.clientProject,'GetApiVersion');
+            fprintf('TalkToProLab: using project API version %s\n',resp.version);
+            vers    = sscanf(resp.version,'%d.%d').';
+            expected= 1;
+            if vers(1)~=expected
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s project API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+            end
+            % 3. external presenter service
+            this.clientEP.send(struct('operation','GetApiVersion'));
+            resp    = waitForResponse(this.clientEP,'GetApiVersion');
+            fprintf('TalkToProLab: using external presenter API version %s\n',resp.version);
+            vers    = sscanf(resp.version,'%d.%d').';
+            expected= 1;
+            if vers(1)~=expected
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s external presenter API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+            end
+            
             % check our local clock is the same as the ProLabClock. for now
             % we do not support it when they aren't (e.g. running lab on a
             % different machine than the stimulus presentation machine)
