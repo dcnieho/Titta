@@ -1350,7 +1350,7 @@ classdef Titta < handle
                 xy = [but.rect([1 1 1 3]) but.rect([1 3 3 3]) but.rect([1 3 3 3])+[1 -1 -1 -1]*width;  but.rect([4 2 2 2]) but.rect([4 4 4 2]) but.rect([4 4 4 2])+[-1 -1 -1 1]*width];
             else
                 % button is depressed
-                xy = [but.rect([1 3 3 3]) but.rect([1 1 1 3]) but.rect([1 1 1 3])+[1  1  1 -1]*width;  but.rect([4 4 4 2]) but.rect([4 2 2 2]) but.rect([4 2 2 2])+[-1  1  1 1]*width];
+                xy = [but.rect([1 3 3 3]) but.rect([1 1 1 3])+[1  1  1 -1]*width but.rect([1 1 1 3]);  but.rect([4 4 4 2]) but.rect([4 2 2 2])+[-1  1  1 1]*width but.rect([4 2 2 2])];
             end
             colors = [repmat(obj.getColorForWindow(lColHigh),4,1); repmat(obj.getColorForWindow(lColLow1),4,1); repmat(obj.getColorForWindow(lColLow2),4,1)].';
             Screen('DrawLines',wpnt,xy,width,colors);
