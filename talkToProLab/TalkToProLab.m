@@ -112,27 +112,61 @@ classdef TalkToProLab < handle
             this.participantID = participantID;
         end
         
-        function ID = uploadStimulus(this,fileNameOrArray,name)
+        function stimID = uploadMedia(this,fileNameOrArray,name)
         end
         
-        function ID = findStimulus(this,name)
+        function stimID = findMedia(this,name)
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
             names = {resp.media_list.media_name};
             qPart = strcmp(names,name);
+        end
+        
+        function numAOI = attachAOI(this,stimID)
+            % for complicated messages, perhaps provide users with an empty template.
+            % like AOI:
+            % fid=fopen('C:\Users\Administrator\Desktop\json.txt','rt');
+            % str=fread(fid,inf,'*char').'
+            % fclose(fid);
+            % matlab.internal.webservices.fromJSON(str)
+            resp            = waitForResponse(this.clientProject,'AddAois');
+        end
+        
+        function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency)
+            request = struct('operation','StartRecording',...
+                'recording_name',name,...
+                'participant_id',this.participantID,...
+                'screen_width',scrWidth,...
+                'screen_height',scrHeight);
+            if nargin>5 && ~isempty(scrLatency)
+                request.screen_latency = scrLatency;
+            end
+            this.clientEP.send(request);
+            resp            = waitForResponse(this.clientEP,'StartRecording');
+            recordingID     = resp.recording_id;
+            this.recordingID= recordingID;
+        end
+        
+        function stopRecording(this)
+            this.clientProject.send(struct('operation','StopRecording'));
+            waitForResponse(this.clientProject,'StopRecording');
+        end
+        
+        function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background)
+            % mediaPosition, endTimeStamp, background are optional
+            if isnumeric(background)
+                assert(numel(background)==3)
+                reshape(dec2hex(background).',1,[])
+            end
+        end
+        
+        function sendCustomEvent(this,timestamp,eventType,value)
         end
     end
     
     methods (Access=private, Hidden=true)
     end
 end
-
-% for complicated messages, perhaps provide users with an empty template.
-% like AOI:
-% fid=fopen('C:\Users\Administrator\Desktop\json.txt','rt');
-% str=fread(fid,inf,'*char').'
-% fclose(fid);
-% matlab.internal.webservices.fromJSON(str)
 
 
 %%% helpers
