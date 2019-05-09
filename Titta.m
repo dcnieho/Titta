@@ -1249,7 +1249,7 @@ classdef Titta < handle
                         inputs.(fs{p}) = varargin{find(qHasOpt)+1};
                     end
                 end
-                if ~isempty(rect)
+                if nargin>3 && ~isempty(rect)
                     inputs.sy = inputs.sy + obj.settings.UI.button.textVOff;
                 end
                 [~,~,txtbounds,cache] = DrawFormattedText2GDI(wpnt,text,inputs.sx,inputs.xalign,inputs.sy,inputs.yalign,inputs.xlayout,inputs.baseColor,[],inputs.vSpacing,[],[],true);
