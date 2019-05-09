@@ -142,6 +142,8 @@ namespace TobiiTypes
         CollectingData,
 		DiscardingData,
         Computing,
+        GettingCalibrationData,
+        ApplyingCalibrationData,
         Left
     };
 
@@ -152,6 +154,8 @@ namespace TobiiTypes
         CollectData,
         DiscardData,
         Compute,
+        GetCalibrationData,
+        ApplyCalibrationData,
         Exit
     };
 
@@ -161,6 +165,7 @@ namespace TobiiTypes
 		// some actions need one or both of the below
 		std::vector<double> coordinates;
 		std::string         eye;
+        std::vector<uint8_t>calData;
 	};
 
 	struct CalibrationWorkResult
@@ -169,5 +174,6 @@ namespace TobiiTypes
 		TobiiResearchStatus                             status;
         std::string                                     statusString;
         std::shared_ptr<TobiiResearchCalibrationResult> calibrationResult;
+        std::shared_ptr<TobiiResearchCalibrationData>   calibrationData;
 	};
 }

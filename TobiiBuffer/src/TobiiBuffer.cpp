@@ -251,7 +251,7 @@ void TobiiBuffer::calibrationThread()
         case TobiiTypes::CalibrationAction::Enter:
             // enter calibration mode
             result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker);
-            _calibrationWorkResultQueue.enqueue(TobiiTypes::CalibrationWorkResult{workItem, result});
+            _calibrationWorkResultQueue.enqueue({workItem, result});
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -271,7 +271,7 @@ void TobiiBuffer::calibrationThread()
             else
 				result = tobii_research_screen_based_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
-			_calibrationWorkResultQueue.enqueue(TobiiTypes::CalibrationWorkResult{workItem, result});
+			_calibrationWorkResultQueue.enqueue({workItem, result});
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -292,7 +292,7 @@ void TobiiBuffer::calibrationThread()
             else
 				result = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
-			_calibrationWorkResultQueue.enqueue(TobiiTypes::CalibrationWorkResult{workItem, result});
+			_calibrationWorkResultQueue.enqueue({workItem, result});
 
 			_calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -314,10 +314,45 @@ void TobiiBuffer::calibrationThread()
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
         }
+        case TobiiTypes::CalibrationAction::GetCalibrationData:
+        {
+            _calibrationState = TobiiTypes::CalibrationState::GettingCalibrationData;
+            TobiiResearchCalibrationData* calData;
+
+            result = tobii_research_retrieve_calibration_data(_eyetracker, &calData);
+
+            TobiiTypes::CalibrationWorkResult workResult{ workItem, result };
+            if (calData->size)
+                workResult.calibrationData = {calData,tobii_research_free_calibration_data};
+            _calibrationWorkResultQueue.enqueue(std::move(workResult));
+
+            _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+            break;
+        }
+        case TobiiTypes::CalibrationAction::ApplyCalibrationData:
+        {
+            _calibrationState = TobiiTypes::CalibrationState::ApplyingCalibrationData;
+            if (!workItem.calData.empty())
+            {
+                TobiiResearchCalibrationData calData;
+                // copy calibration data into array
+                auto nItem = workItem.calData.size();
+                calData.data = malloc(nItem);
+                calData.size = nItem;
+                memcpy(calData.data, workItem.calData.data(), nItem);
+
+                result = tobii_research_apply_calibration_data(_eyetracker, &calData);
+                free(calData.data);
+
+                _calibrationWorkResultQueue.enqueue({workItem, result});
+            }
+            _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+            break;
+        }
         case TobiiTypes::CalibrationAction::Exit:
             // leave calibration mode and exit
 			result = tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
-			_calibrationWorkResultQueue.enqueue(TobiiTypes::CalibrationWorkResult{workItem, result});
+			_calibrationWorkResultQueue.enqueue({workItem, result});
             keepRunning = false;
             break;
         }
@@ -336,7 +371,7 @@ void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
 
     // start new calibration worker
     // this calls tobii_research_screen_based_calibration_enter_calibration_mode() in the thread function
-    _calibrationWorkQueue.enqueue(TobiiTypes::CalibrationWorkItem{TobiiTypes::CalibrationAction::Enter});
+    _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Enter});
     _calibrationState   = TobiiTypes::CalibrationState::NotYetEntered;
     _calibrationThread  = std::thread(&TobiiBuffer::calibrationThread, this);
 }
@@ -354,7 +389,7 @@ void TobiiBuffer::leaveCalibrationMode(bool force_)
     {
         // tell thread to quit and wait until it quits
         // this calls tobii_research_screen_based_calibration_leave_calibration_mode() in the thread function before exiting
-        _calibrationWorkQueue.enqueue(TobiiTypes::CalibrationWorkItem{TobiiTypes::CalibrationAction::Exit});
+        _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Exit});
         if (_calibrationThread.joinable())
             _calibrationThread.join();
     }
@@ -404,7 +439,27 @@ void TobiiBuffer::calibrationComputeAndApply()
         DoExitWithMsg("calibrationComputeAndApply: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
-    _calibrationWorkQueue.enqueue(TobiiTypes::CalibrationWorkItem{TobiiTypes::CalibrationAction::Compute});
+    _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Compute});
+}
+void TobiiBuffer::calibrationGetData()
+{
+    if (!_calibrationThread.joinable())
+    {
+        DoExitWithMsg("calibrationGetData: you have not entered calibration mode, call enterCalibrationMode first");
+    }
+
+    _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
+}
+void TobiiBuffer::calibrationApplyData(std::vector<uint8_t> calData_)
+{
+    if (!_calibrationThread.joinable())
+    {
+        DoExitWithMsg("calibrationApplyData: you have not entered calibration mode, call enterCalibrationMode first");
+    }
+
+    TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
+    workItem.calData = calData_;
+    _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 TobiiTypes::CalibrationState TobiiBuffer::calibrationGetStatus()
 {

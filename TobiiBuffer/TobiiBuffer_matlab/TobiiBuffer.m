@@ -100,6 +100,12 @@ classdef TobiiBuffer < handle
         function calibrationComputeAndApply(this)
             this.cppmethod('calibrationComputeAndApply');
         end
+        function calibrationGetData(this)
+            this.cppmethod('calibrationGetData');
+        end
+        function calibrationApplyData(this,cal)
+            this.cppmethod('calibrationApplyData',cal);
+        end
         function status = calibrationGetStatus(this)
             status = this.cppmethod('calibrationGetStatus');
         end

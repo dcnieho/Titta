@@ -57,6 +57,8 @@ public:
     void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationComputeAndApply();
+    void calibrationGetData();
+    void calibrationApplyData(std::vector<uint8_t> calData_);
     TobiiTypes::CalibrationState calibrationGetStatus();
     std::optional<TobiiTypes::CalibrationWorkResult> calibrationRetrieveResult(bool makeString = false);
 

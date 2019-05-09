@@ -1370,9 +1370,7 @@ classdef Titta < handle
                 if status==1
                     if ~isempty(obj.settings.cal.pointPos)
                         % if valid calibration retrieve data, so user can select different ones
-                        if strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
-                            out.cal.computedCal = obj.eyetracker.retrieve_calibration_data();
-                        else
+                        if ~strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                             % calibration failed, back to setup screen
                             status = -3;
                             Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
@@ -1532,8 +1530,8 @@ classdef Titta < handle
                     tick    = tick+1;
                     drawFunction(wpnt,1,points(1,3:4),tick);
                     flipT   = Screen('Flip',wpnt,flipT+1/1000);
-                    result  = obj.buffer.calibrationRetrieveResult();
-                    nRep    = nRep + (~isempty(result) && strcmp(result.workItem.action,'DiscardData'));
+                    computeResult  = obj.buffer.calibrationRetrieveResult();
+                    nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
                     if nRep==size(points,1)
                         break;
                     end
@@ -1620,9 +1618,9 @@ classdef Titta < handle
                             nCollecting = 1;
                         else
                             % check status
-                            result  = obj.buffer.calibrationRetrieveResult();
-                            if ~isempty(result)
-                                if strcmp(result.workItem.action,'CollectData') && result.status==0     % TOBII_RESEARCH_STATUS_OK
+                            computeResult  = obj.buffer.calibrationRetrieveResult();
+                            if ~isempty(computeResult)
+                                if strcmp(computeResult.workItem.action,'CollectData') && computeResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
                                 else
@@ -1645,7 +1643,7 @@ classdef Titta < handle
                                 end
                             end
                             if advancePoint
-                                out.status{currentPoint} = result;
+                                out.status{currentPoint} = computeResult;
                             end
                         end
                     else
@@ -1676,16 +1674,46 @@ classdef Titta < handle
             if qCal && size(points,1)>0 && status==1
                 % compute calibration
                 obj.buffer.calibrationComputeAndApply();
-                result  = [];
-                flipT   = out.flips(end);
-                while isempty(result) || ~strcmp(result.workItem.action,'Compute')
+                computeResult   = [];
+                calData         = [];
+                flipT           = out.flips(end);
+                while true
                     tick    = tick+1;
                     drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick);
                     flipT   = Screen('Flip',wpnt,flipT+1/1000);
                     
-                    result  = obj.buffer.calibrationRetrieveResult();
+                    % first get computeAndApply result, then get 
+                    if isempty(computeResult)
+                        computeResult = obj.buffer.calibrationRetrieveResult();
+                        if ~isempty(computeResult)
+                            if ~strcmp(computeResult.workItem.action,'Compute')
+                                % not what we were waiting for, skip
+                                computeResult = [];
+                            elseif ~strcmpi(computeResult.calibrationResult.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                                % calibration unsuccessful, we bail now
+                                break;
+                            else
+                                % issue command to get calibration data
+                                obj.buffer.calibrationGetData();
+                            end
+                        end
+                    else
+                        calData = obj.buffer.calibrationRetrieveResult();
+                        if ~isempty(calData)
+                            if ~strcmp(calData.workItem.action,'GetCalibrationData')
+                                % not what we were waiting for, skip
+                                calData = [];
+                            else
+                                % done
+                                break;
+                            end
+                        end
+                    end
                 end
-                out.result = fixupTobiiCalResult(result.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                out.result = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                if ~isempty(calData)
+                    out.computedCal = calData.calibrationData;
+                end
             end
         end
         
@@ -1906,6 +1934,7 @@ classdef Titta < handle
             qShowGaze           = false;
             qUpdateCalDisplay   = true;
             qSelectedCalChanged = false;
+            qAwaitingCalChange  = false;
             qShowCal            = false;
             fixPointRectSz      = 100;
             openInfoForPoint    = nan;
@@ -1931,85 +1960,103 @@ classdef Titta < handle
                 end
                 
                 % setup fixation point positions for cal or val
-                if qUpdateCalDisplay || qSelectedCalChanged
+                if qUpdateCalDisplay || qSelectedCalChanged || qAwaitingCalChange
+                    qUpdateNow = false;
                     if qSelectedCalChanged
                         % load requested cal
-                        DrawFormattedText(wpnt,'Loading calibration...','center','center',0);
-                        Screen('Flip',wpnt);
-                        obj.loadOtherCal(cal{selection});
+                        obj.loadOtherCal(cal{newSelection});
                         qSelectedCalChanged = false;
-                        qHasCal = ~isempty(cal{selection}.cal.result);
-                        if ~qHasCal && qShowCal
-                            qShowCal            = false;
-                            % toggle selection menu to trigger updating of
-                            % cursors, but make sure menu doesn't actually
-                            % open by temporarily changing its state
-                            qToggleSelectMenu   = true;
-                            qSelectMenuOpen     = ~qSelectMenuOpen;
-                        end
-                        if ~qHasCal
-                            but(7).qShow    = false;
-                            but(7).rect     = offScreen;
-                        elseif obj.settings.UI.button.val.toggCal.qShow
-                            but(7).qShow    = true;
-                            but(7).rect     = but7Pos;
-                        end
-                    end
-                    % update info text
-                    % acc field is [lx rx; ly ry]
-                    % text only changes when calibration selection changes,
-                    % but putting these lines in the above if makes logic
-                    % more complicated. Now we regenerate the same text
-                    % when switching between viewing calibration and
-                    % validation output, thats an unimportant price to pay
-                    % for simpler logic
-                    Screen('TextFont', wpnt, obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
-                    Screen('TextSize', wpnt, obj.settings.UI.val.avg.text.size);
-                    [strl,strr,strsep] = deal('');
-                    if obj.calibrateLeftEye
-                        strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
-                    end
-                    if obj.calibrateRightEye
-                        idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
-                    end
-                    if obj.calibrateLeftEye && obj.calibrateRightEye
-                        strsep = '\n';
-                    end
-                    valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                    valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
-                    
-                    % get info about where points were on screen
-                    if qShowCal
-                        lbl      = 'calibration';
-                        nPoints  = length(cal{selection}.cal.result.points);
+                        qAwaitingCalChange = true;
                     else
-                        lbl      = 'validation';
-                        nPoints  = size(cal{selection}.val.pointPos,1);
+                        qUpdateNow = true;
                     end
-                    calValPos   = zeros(nPoints,2);
-                    if qShowCal
-                        for p=1:nPoints
-                            calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution;
+                    if qAwaitingCalChange || qUpdateNow
+                        if qAwaitingCalChange
+                            result = obj.buffer.calibrationRetrieveResult();
                         end
-                    else
-                        for p=1:nPoints
-                            calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3);
+                        if qUpdateNow || (~isempty(result) && strcmp(result.workItem.action,'ApplyCalibrationData'))
+                            if ~qUpdateNow && result.status~=0      % TOBII_RESEARCH_STATUS_OK
+                                error('%s',result.statusString)
+                            end
+                            if qAwaitingCalChange
+                                % calibration change has come through, make
+                                % needed updates
+                                selection = newSelection;
+                                qAwaitingCalChange = false;
+                                qHasCal = ~isempty(cal{selection}.cal.result);
+                                if ~qHasCal && qShowCal
+                                    qShowCal            = false;
+                                    % toggle selection menu to trigger updating of
+                                    % cursors, but make sure menu doesn't actually
+                                    % open by temporarily changing its state
+                                    qToggleSelectMenu   = true;
+                                    qSelectMenuOpen     = ~qSelectMenuOpen;
+                                end
+                                if ~qHasCal
+                                    but(7).qShow    = false;
+                                    but(7).rect     = offScreen;
+                                elseif obj.settings.UI.button.val.toggCal.qShow
+                                    but(7).qShow    = true;
+                                    but(7).rect     = but7Pos;
+                                end
+                            end
+                            % update info text
+                            % acc field is [lx rx; ly ry]
+                            % text only changes when calibration selection changes,
+                            % but putting these lines in the above if makes logic
+                            % more complicated. Now we regenerate the same text
+                            % when switching between viewing calibration and
+                            % validation output, thats an unimportant price to pay
+                            % for simpler logic
+                            Screen('TextFont', wpnt, obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
+                            Screen('TextSize', wpnt, obj.settings.UI.val.avg.text.size);
+                            [strl,strr,strsep] = deal('');
+                            if obj.calibrateLeftEye
+                                strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
+                            end
+                            if obj.calibrateRightEye
+                                idx = 1+obj.calibrateLeftEye;
+                                strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
+                            end
+                            if obj.calibrateLeftEye && obj.calibrateRightEye
+                                strsep = '\n';
+                            end
+                            valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                            valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
+                            
+                            % get info about where points were on screen
+                            if qShowCal
+                                lbl      = 'calibration';
+                                nPoints  = length(cal{selection}.cal.result.points);
+                            else
+                                lbl      = 'validation';
+                                nPoints  = size(cal{selection}.val.pointPos,1);
+                            end
+                            calValPos   = zeros(nPoints,2);
+                            if qShowCal
+                                for p=1:nPoints
+                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution;
+                                end
+                            else
+                                for p=1:nPoints
+                                    calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3);
+                                end
+                            end
+                            % get rects around validation points
+                            if qShowCal
+                                calValRects         = [];
+                            else
+                                calValRects = zeros(size(cal{selection}.val.pointPos,1),4);
+                                for p=1:size(cal{selection}.val.pointPos,1)
+                                    calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
+                                end
+                            end
+                            qUpdateCalDisplay   = false;
+                            pointToShowInfoFor  = nan;      % close info display, if any
+                            if qHasCal && obj.settings.UI.button.val.toggCal.qShow
+                                calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
+                            end
                         end
-                    end
-                    % get rects around validation points
-                    if qShowCal
-                        calValRects         = [];
-                    else
-                        calValRects = zeros(size(cal{selection}.val.pointPos,1),4);
-                        for p=1:size(cal{selection}.val.pointPos,1)
-                            calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
-                        end
-                    end
-                    qUpdateCalDisplay   = false;
-                    pointToShowInfoFor  = nan;      % close info display, if any
-                    if qHasCal && obj.settings.UI.button.val.toggCal.qShow
-                        calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
                     end
                 end
                 
@@ -2168,6 +2215,10 @@ classdef Titta < handle
                     end
                     % drawing done, show
                     Screen('Flip',wpnt);
+                    if qAwaitingCalChange
+                        % break out of draw loop
+                        break;
+                    end
                     
                     % get user response
                     [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
@@ -2179,9 +2230,8 @@ classdef Titta < handle
                         if qSelectMenuOpen
                             iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                             if ~isempty(iIn) && iIn<=length(iValid)
-                                idx                 = iValid(iIn);
-                                qSelectedCalChanged = selection~=idx;
-                                selection           = idx;
+                                newSelection        = iValid(iIn);
+                                qSelectedCalChanged = selection~=newSelection;
                                 qToggleSelectMenu   = true;
                                 break;
                             else
@@ -2222,15 +2272,13 @@ classdef Titta < handle
                                 qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                idx                 = iValid(str2double(keys(1)));
-                                qSelectedCalChanged = selection~=idx;
-                                selection           = idx;
+                                newSelection        = iValid(str2double(keys(1)));
+                                qSelectedCalChanged = selection~=newSelection;
                                 qToggleSelectMenu   = true;
                                 break;
                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
-                                idx                 = iValid(currentMenuSel);
-                                qSelectedCalChanged = selection~=idx;
-                                selection           = idx;
+                                newSelection        = iValid(currentMenuSel);
+                                qSelectedCalChanged = selection~=newSelection;
                                 qToggleSelectMenu   = true;
                                 break;
                             else
@@ -2328,7 +2376,7 @@ classdef Titta < handle
         end
         
         function loadOtherCal(obj,cal)
-            obj.eyetracker.apply_calibration_data(cal.cal.computedCal);
+            obj.buffer.calibrationApplyData(cal.cal.computedCal);
         end
         
         function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj)

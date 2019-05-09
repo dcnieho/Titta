@@ -86,6 +86,8 @@ namespace {
         CalibrationCollectData,
         CalibrationDiscardData,
         CalibrationComputeAndApply,
+        CalibrationGetData,
+        CalibrationApplyData,
         CalibrationGetStatus,
         CalibrationRetrieveResult,
 
@@ -117,6 +119,8 @@ namespace {
         { "calibrationCollectData",		    Action::CalibrationCollectData },
         { "calibrationDiscardData",			Action::CalibrationDiscardData },
         { "calibrationComputeAndApply",		Action::CalibrationComputeAndApply },
+        { "calibrationGetData",		        Action::CalibrationGetData },
+        { "calibrationApplyData",		    Action::CalibrationApplyData },
         { "calibrationGetStatus",			Action::CalibrationGetStatus },
         { "calibrationRetrieveResult",      Action::CalibrationRetrieveResult },
 
@@ -188,6 +192,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>		data_);
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -311,6 +316,21 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::CalibrationComputeAndApply:
         {
             instance->calibrationComputeAndApply();
+            break;
+        }
+        case Action::CalibrationGetData:
+        {
+            instance->calibrationGetData();
+            break;
+        }
+        case Action::CalibrationApplyData:
+        {
+            if (nrhs < 3 || !mxIsUint8(prhs[2]) || mxIsComplex(prhs[2]) || mxIsEmpty(prhs[2]))
+                mexErrMsgTxt("calibrationApplyData: First argument must be a n-element uint8 array, as returned from calibrationGetData.");
+            uint8_t* in = static_cast<uint8_t*>(mxGetData(prhs[2]));
+            std::vector<uint8_t> calData{in, in+ mxGetNumberOfElements(prhs[2])};
+
+            instance->calibrationApplyData(calData);
             break;
         }
         case Action::CalibrationGetStatus:
@@ -884,6 +904,12 @@ namespace mxTypes
         case TobiiTypes::CalibrationState::Computing:
             str = "Computing";
             break;
+        case TobiiTypes::CalibrationState::GettingCalibrationData:
+            str = "GettingCalibrationData";
+            break;
+        case TobiiTypes::CalibrationState::ApplyingCalibrationData:
+            str = "ApplyingCalibrationData";
+            break;
         case TobiiTypes::CalibrationState::Left:
             str = "Left";
             break;
@@ -895,24 +921,26 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult data_)
     {
-        const char* fieldNames[] = { "workItem","status","statusString","calibrationResult" };
+        const char* fieldNames[] = { "workItem","status","statusString","calibrationResult","calibrationData" };
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.workItem));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.status));
         mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.statusString));
         mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationResult));
+        mxSetFieldByNumber(out, 0, 4, ToMatlab(data_.calibrationData));
 
         return out;
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem data_)
     {
-        const char* fieldNames[] = { "action","coordinates","eye" };
+        const char* fieldNames[] = { "action","coordinates","eye","calData" };
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.action));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.coordinates));
         mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.eye));
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calData));
 
         return out;
     }
@@ -939,6 +967,12 @@ namespace mxTypes
             break;
         case TobiiTypes::CalibrationAction::Compute:
             str = "Compute";
+            break;
+        case TobiiTypes::CalibrationAction::GetCalibrationData:
+            str = "GetCalibrationData";
+            break;
+        case TobiiTypes::CalibrationAction::ApplyCalibrationData:
+            str = "ApplyCalibrationData";
             break;
         case TobiiTypes::CalibrationAction::Exit:
             str = "Exit";
@@ -1048,6 +1082,11 @@ namespace mxTypes
             break;
         }
         return mxCreateString(str.c_str());
+    }
+
+    mxArray* ToMatlab(TobiiResearchCalibrationData data_)
+    {
+        return ToMatlab(std::vector(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
     }
 }
 
