@@ -219,7 +219,7 @@ namespace mxTypes
             else
                 static_assert(false);   // not implemented
         else
-            mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(static_cast<OutOrFun>(item_.*std::get<0>(expr))));
+            mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(static_cast<OutOrFun>(item_.*std::get<1>(expr))));
         if constexpr (!sizeof...(fields))
             return;
         else
