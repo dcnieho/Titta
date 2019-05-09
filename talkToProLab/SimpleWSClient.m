@@ -1,7 +1,7 @@
 classdef SimpleWSClient < WebSocketClient
     properties (SetAccess = protected)
-        lastRespText = '';
-        lastRespBinary = [];
+        lastRespText    = '';
+        lastRespBinary  = [];
     end
     
     methods
@@ -29,6 +29,12 @@ classdef SimpleWSClient < WebSocketClient
     end
     
     methods (Access = protected)
+        function send(this,message)
+            if isstruct(message)
+                message = matlab.internal.webservices.toJSON(message);
+            end
+            send@WebSocketClient(this,message);
+        end
         function onOpen(this,message)
             % This function simply displays the message received
             fprintf('%s\n',message);

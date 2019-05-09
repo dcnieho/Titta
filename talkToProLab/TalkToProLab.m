@@ -28,7 +28,7 @@ classdef TalkToProLab < handle
             % different machine than the stimulus presentation machine)
             nTimeStamp = 40;
             [timesPTB,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
-            request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));
+            request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
             % ensure response is cleared
             [~] = this.clientClock.lastRespText;
             for p=1:nTimeStamp
@@ -51,7 +51,7 @@ classdef TalkToProLab < handle
             assert(mean(timesLab-timesPTB)<2500,'clock offset between PsychToolbox and Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Pro Lab on different computers (also unsupported)')
             
             % get info about opened project
-            this.clientProject.send(matlab.internal.webservices.toJSON(struct('operation','GetProjectInfo')));
+            this.clientProject.send(struct('operation','GetProjectInfo'));
             resp = waitForResponse(this.clientProject,'GetProjectInfo');
             this.projectID = resp.project_id;
             fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
@@ -63,7 +63,7 @@ classdef TalkToProLab < handle
             end
             % get list of existing participants, see if one with name
             % already exists
-            this.clientProject.send(matlab.internal.webservices.toJSON(struct('operation','ListParticipants')));
+            this.clientProject.send(struct('operation','ListParticipants'));
             resp = waitForResponse(this.clientProject,'ListParticipants');
             names = {resp.participant_list.participant_name};
             qPart = strcmp(names,name);
@@ -74,7 +74,7 @@ classdef TalkToProLab < handle
                 participantID = resp.participant_list(qPart).participant_id;
             else
                 % make new
-                this.clientProject.send(matlab.internal.webservices.toJSON(struct('operation','AddParticipant','participant_name',name)));
+                this.clientProject.send(struct('operation','AddParticipant','participant_name',name));
                 resp = waitForResponse(this.clientProject,'AddParticipant');
                 participantID = resp.participant_id;
             end
