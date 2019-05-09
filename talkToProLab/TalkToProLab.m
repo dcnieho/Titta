@@ -84,7 +84,11 @@ classdef TalkToProLab < handle
         function ID = uploadStimulus(this,fileNameOrArray,name)
         end
         
-        function findStimulus(this,name)
+        function ID = findStimulus(this,name)
+            this.clientProject.send(struct('operation','ListMedia'));
+            resp = waitForResponse(this.clientProject,'ListMedia');
+            names = {resp.media_list.media_name};
+            qPart = strcmp(names,name);
         end
     end
     
