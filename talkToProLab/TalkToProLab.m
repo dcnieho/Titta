@@ -127,7 +127,25 @@ classdef TalkToProLab < handle
             this.participantID = participantID;
         end
         
-        function mediaID = uploadMedia(this,fileNameOrArray,name)
+        function mediaID = findMedia(this,name)
+            mediaID = '';   % empty means no media with that name was found
+            this.clientProject.send(struct('operation','ListMedia'));
+            resp = waitForResponse(this.clientProject,'ListMedia');
+            if ~isempty(resp.media_list)
+                names   = {resp.media_list.media_name};
+                qMedia  = strcmp(names,name);
+                mediaID = resp.media_list(qMedia).media_id;
+            end
+        end
+        
+        function [mediaID,wasUploaded] = uploadMedia(this,fileNameOrArray,name)
+            % name must be unique, check, and return ID if already exists
+            mediaID = this.findMedia(name);
+            if ~isempty(mediaID)
+                wasUploaded = false;
+                return
+            end
+            
             assert(ischar(fileNameOrArray),'uploadMedia: currently it is only supported to provide the filename (full path) to media to be uploaded, cannot upload raw image data');
             assert(exist(fileNameOrArray,'file')==2,'uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
             
@@ -181,17 +199,9 @@ classdef TalkToProLab < handle
             end
             
             % wait for successfully received message
-            resp = waitForResponse(this.clientProject,'UploadMedia');
-            mediaID = resp.media_id;
-        end
-        
-        function mediaID = findMedia(this,name)
-            this.clientProject.send(struct('operation','ListMedia'));
-            resp = waitForResponse(this.clientProject,'ListMedia');
-            if ~isempty(resp.media_list)
-                names   = {resp.media_list.media_name};
-                qMedia  = strcmp(names,name);
-            end
+            resp        = waitForResponse(this.clientProject,'UploadMedia');
+            mediaID     = resp.media_id;
+            wasUploaded = true;
         end
         
         function numAOI = attachAOI(this,stimID)
