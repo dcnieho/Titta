@@ -35,9 +35,9 @@ classdef SimpleWSClient < WebSocketClient
     end
     
     methods (Access = protected)
-        function onOpen(this,message)
+        function onOpen(~,message) %#ok<INUSD>
             % This function simply displays the message received
-            fprintf('%s\n',message);
+            %fprintf('%s\n',message);
         end
         
         function onTextMessage(this,message)
@@ -55,9 +55,9 @@ classdef SimpleWSClient < WebSocketClient
             error('%s (%s)',message,this.URI);
         end
         
-        function onClose(this,message)
+        function onClose(~,message) %#ok<INUSD>
             % This function simply displays the message received
-            fprintf('%s\n',message);
+            %fprintf('%s\n',message);
         end
     end
 end
