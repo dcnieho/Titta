@@ -90,6 +90,19 @@ classdef TalkToProLab < handle
             fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
         end
         
+        function delete(this)
+            % clean up connections
+            if ~isempty(this.clientClock) && this.clientClock.Status
+                this.clientClock.close();
+            end
+            if ~isempty(this.clientProject) && this.clientProject.Status
+                this.clientProject.close();
+            end
+            if ~isempty(this.clientEP) && this.clientEP.Status
+                this.clientEP.close();
+            end
+        end
+        
         function participantID = createParticipant(this,name,allowExisting)
             if nargin<3 || isempty(allowExisting)
                 allowExisting = false;
