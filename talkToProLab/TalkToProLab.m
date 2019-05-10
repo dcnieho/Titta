@@ -27,8 +27,6 @@ classdef TalkToProLab < handle
             assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Pro Lab and open a project?');
             
             % for each, check API semver major version
-            % TODO: put current version numbers in the below warnings, 1.0
-            % is placeholder
             % 1. clock service
             this.clientClock.send(struct('operation','GetApiVersion'));
             resp    = waitForResponse(this.clientClock,'GetApiVersion');
@@ -121,8 +119,10 @@ classdef TalkToProLab < handle
         function stimID = findMedia(this,name)
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
-            names = {resp.media_list.media_name};
-            qPart = strcmp(names,name);
+            if ~isempty(resp.media_list)
+                names   = {resp.media_list.media_name};
+                qMedia  = strcmp(names,name);
+            end
         end
         
         function numAOI = attachAOI(this,stimID)
@@ -132,7 +132,7 @@ classdef TalkToProLab < handle
             % str=fread(fid,inf,'*char').'
             % fclose(fid);
             % matlab.internal.webservices.fromJSON(str)
-            resp            = waitForResponse(this.clientProject,'AddAois');
+            resp = waitForResponse(this.clientProject,'AddAois');
         end
         
         function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency)
@@ -159,7 +159,7 @@ classdef TalkToProLab < handle
             % mediaPosition, endTimeStamp, background are optional
             if isnumeric(background)
                 assert(numel(background)==3)
-                reshape(dec2hex(background).',1,[])
+                background = reshape(dec2hex(background).',1,[]);
             end
         end
         
