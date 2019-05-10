@@ -149,6 +149,12 @@ classdef TalkToProLab < handle
             resp = waitForResponse(this.clientProject,'AddAois');
         end
         
+        function EPState = getExternalPresenterState(this)
+            this.clientEP.send(struct('operation','GetState'));
+            resp = waitForResponse(this.clientEP,'GetState');
+            EPState = resp.state;
+        end
+        
         function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency)
             request = struct('operation','StartRecording',...
                 'recording_name',name,...
@@ -165,8 +171,20 @@ classdef TalkToProLab < handle
         end
         
         function stopRecording(this)
-            this.clientProject.send(struct('operation','StopRecording'));
-            waitForResponse(this.clientProject,'StopRecording');
+            this.clientEP.send(struct('operation','StopRecording'));
+            waitForResponse(this.clientEP,'StopRecording');
+        end
+        
+        function finalizeRecording(this)
+            this.clientEP.send(struct('operation','FinalizeRecording'));
+            waitForResponse(this.clientEP,'FinalizeRecording');
+            this.recordingID= '';
+        end
+        
+        function discardRecording(this)
+            this.clientEP.send(struct('operation','DiscardRecording'));
+            waitForResponse(this.clientEP,'DiscardRecording');
+            this.recordingID= '';
         end
         
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background)
