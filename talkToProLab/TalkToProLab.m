@@ -117,21 +117,21 @@ classdef TalkToProLab < handle
             % get list of existing participants, see if one with name
             % already exists
             this.clientProject.send(struct('operation','ListParticipants'));
-            resp = waitForResponse(this.clientProject,'ListParticipants');
-            names = {resp.participant_list.participant_name};
-            qPart = strcmp(names,name);
+            resp    = waitForResponse(this.clientProject,'ListParticipants');
+            names   = {resp.participant_list.participant_name};
+            qPart   = strcmp(names,name);
             assert(~any(qPart)||allowExisting,'Participant with name ''%s'' already exists',name)
             
             if any(qPart)
                 % use existing
-                participantID = resp.participant_list(qPart).participant_id;
+                participantID   = resp.participant_list(qPart).participant_id;
             else
                 % make new
                 this.clientProject.send(struct('operation','AddParticipant','participant_name',name));
-                resp = waitForResponse(this.clientProject,'AddParticipant');
-                participantID = resp.participant_id;
+                resp            = waitForResponse(this.clientProject,'AddParticipant');
+                participantID   = resp.participant_id;
             end
-            this.participantID = participantID;
+            this.participantID  = participantID;
         end
         
         function mediaID = findMedia(this,name)
@@ -157,7 +157,7 @@ classdef TalkToProLab < handle
             
             qIsRawImage = ~ischar(fileNameOrArray);
             if qIsRawImage
-                data = fileNameOrArray;
+                data            = fileNameOrArray;
                 fileNameOrArray = [tempname() '.png'];
                 imwrite(data,fileNameOrArray);
             else
@@ -190,7 +190,7 @@ classdef TalkToProLab < handle
             sz = ftell(fid);
             % inform pro lab of what we're up to
             request = struct('operation','UploadMedia',...
-                'mime_type', mimeType,...
+                'mime_type' , mimeType,...
                 'media_name', name,...
                 'media_size', sz...
                 );
@@ -240,11 +240,12 @@ classdef TalkToProLab < handle
         end
         
         function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency)
+            % scrLatency is optional
             request = struct('operation','StartRecording',...
                 'recording_name',name,...
                 'participant_id',this.participantID,...
-                'screen_width',scrWidth,...
-                'screen_height',scrHeight);
+                'screen_width'  ,scrWidth,...
+                'screen_height' ,scrHeight);
             if nargin>5 && ~isempty(scrLatency)
                 request.screen_latency = scrLatency;
             end
@@ -280,6 +281,7 @@ classdef TalkToProLab < handle
             
             % process input arguments
             if ~isempty(mediaPosition)
+                % coordinate system is same as PTB, with (0,0) in top-left
                 request.media_position = struct(...
                     'left'  , mediaPosition(1),...
                     'top'   , mediaPosition(2),...
