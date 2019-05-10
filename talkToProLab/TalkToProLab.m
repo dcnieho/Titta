@@ -134,7 +134,9 @@ classdef TalkToProLab < handle
             if ~isempty(resp.media_list)
                 names   = {resp.media_list.media_name};
                 qMedia  = strcmp(names,name);
-                mediaID = resp.media_list(qMedia).media_id;
+                if qMedia
+                    mediaID = resp.media_list(qMedia).media_id;
+                end
             end
         end
         
