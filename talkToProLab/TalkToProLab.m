@@ -17,7 +17,7 @@ classdef TalkToProLab < handle
     end
     
     methods
-        function this = TalkToProLab()
+        function this = TalkToProLab(expectedProject)
             % connect to needed Pro Lab Services
             this.clientClock    = SimpleWSClient('ws://localhost:8080/clock?client_id=TittaMATLAB');
             assert(this.clientClock.Status==1,'Could not connect to clock service, did you start Pro Lab and open a project?');
@@ -85,6 +85,7 @@ classdef TalkToProLab < handle
             % get info about opened project
             this.clientProject.send(struct('operation','GetProjectInfo'));
             resp = waitForResponse(this.clientProject,'GetProjectInfo');
+            assert(strcmp(resp.project_name,expectedProject),'You indicated that project ''%s'' should be open in Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
             this.projectID = resp.project_id;
             fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
         end
