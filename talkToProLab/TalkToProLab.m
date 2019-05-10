@@ -206,7 +206,8 @@ classdef TalkToProLab < handle
                 i = i+chunkSz;
             end
             
-            % wait for successfully received message
+            % done sending all data, wait for message that media was
+            % successfully received
             resp        = waitForResponse(this.clientProject,'UploadMedia');
             mediaID     = resp.media_id;
             wasUploaded = true;
@@ -227,7 +228,7 @@ classdef TalkToProLab < handle
         
         function EPState = getExternalPresenterState(this)
             this.clientEP.send(struct('operation','GetState'));
-            resp = waitForResponse(this.clientEP,'GetState');
+            resp    = waitForResponse(this.clientEP,'GetState');
             EPState = resp.state;
         end
         
