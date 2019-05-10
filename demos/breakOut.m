@@ -12,6 +12,7 @@ blockEdgeClr        = [ 81 121 176];
 paddleFillClr       = [208   0   0];
 
 % setup eye tracker
+qUseDummyMode       = true;
 settings = Titta.getDefaults('Tobii Pro Spectrum');
 settings.cal.bgColor    = bgclr;
 % custom calibration drawer
@@ -94,7 +95,9 @@ addpath(genpath(fullfile(cd,'theToolbox')));
 try 
     % init
     EThndl          = Titta(settings);
-    % EThndl          = EThndl.setDummyMode();
+    if qUseDummyMode
+        EThndl          = EThndl.setDummyMode();
+    end
     EThndl.init();
     
     
