@@ -215,7 +215,7 @@ classdef TalkToProLab < handle
             end
         end
         
-        function numAOI = attachAOI(this,stimID)
+        function numAOI = attachAOI(this,mediaID)
             % for complicated messages, perhaps provide users with an empty template.
             % like AOI:
             % fid=fopen('C:\Users\Administrator\Desktop\json.txt','rt');

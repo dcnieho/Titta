@@ -1,4 +1,11 @@
 classdef TalkToProLabDummyMode < handle
+    
+    properties (SetAccess=protected)
+        projectID       = '';
+        participantID   = '';
+        recordingID     = '';
+    end
+    
     methods
         function obj = TalkToProLabDummyMode()
             % no-op, just check we have the same public interface as non
@@ -68,10 +75,13 @@ classdef TalkToProLabDummyMode < handle
             participantID = 'fake_participant_id';
         end
         
-        function stimID = uploadMedia(~,~,~)
+        function mediaID = findMedia(~,~)
+            mediaID = '';
         end
         
-        function stimID = findMedia(~,~)
+        function [mediaID,wasUploaded] = uploadMedia(~,~,~)
+            mediaID = '';
+            wasUploaded = false;
         end
         
         function numAOI = attachAOI(~,~)
