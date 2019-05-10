@@ -14,6 +14,8 @@ imageTime               = 2;
 scr                     = max(Screen('Screens'));
 
 TobiiProLabProject      = 'EPtest'; % to use external presenter functionality, provide the name of the external presenter project here
+TobiiProLabParticipant  = 'tester';
+TobiiProLabRecordingName= 'recording1';
 
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
@@ -88,10 +90,13 @@ try
     
     % get class for integration with Tobii Pro Lab
     if isempty(TobiiProLabProject)
-        TalkToProLabInstance = TalkToProLabDummy();
+        TalkToProLabInstance = TalkToProLabDummyMode();
     else
         TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
     end
+    % create participant (setting second parameter to true means that if a
+    % participant by that name already exists, 
+    TalkToProLabInstance.createParticipant(TobiiProLabParticipant,true);
     
     if qDEBUG>1
         % make screen partially transparent on OSX and windows vista or
@@ -131,12 +136,22 @@ try
     else
         tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
-    % TODO for TobiiProLabInstance, something like
-    % TobiiProLabInstance.sendTittaCalibration(tobii.calVal{1})
+    
     
     % later:
     EThndl.buffer.start('gaze');
-    % TobiiProLabInstance.startRecording('gaze');
+    % also start Pro Lab recording
+    state = TalkToProLabInstance.getExternalPresenterState();
+    assert(strcmpi(state,'ready'),'Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state)
+    TalkToProLabInstance.startRecording(TobiiProLabRecordingName,RectWidth(winRect),RectHeight(winRect));
+    % send info about validation quality to Pro Lab
+    % if you have information about your participant, its a good idea to
+    % send it here too using similar calls
+    for c=1:length(tobii.calVal)
+        if isfield(tobii.calVal{c}.attempt{end},'valReviewStatus') && tobii.calVal{c}.attempt{end}.valReviewStatus==1
+            TalkToProLabInstance.sendCustomEvent([],'validationResult',EThndl.getValidationQualityMessage(tobii.calVal{c}));
+        end
+    end
      
     % send message into ET data file
     EThndl.sendMessage('test');
@@ -149,11 +164,18 @@ try
     % PsychToolbox, so startT as returned by Screen('Flip') can be used
     % directly to segment eye tracking data
     EThndl.sendMessage('FIX ON',startT);
+    % take screenshot to be uploaded to pro lab if this image doesn't exist
+    % yet
+    fixMediaID = TalkToProLabInstance.findMedia('fixationPoint');
+    if isempty(fixMediaID)
+        screenShotFixPoint = Screen('GetImage', wpnt);
+    end
     
     % read in konijntjes image (may want to preload this before the trial
     % to ensure good timing)
     stimFName = 'konijntjes1024x768.jpg';
-    im = imread(fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName));
+    stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
+    im = imread(stimFName);
     tex = Screen('MakeTexture',wpnt,im);
     
     % show on screen and log when it was shown in eye-tracker time.
@@ -171,8 +193,22 @@ try
     EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
     Screen('Close',tex);
     
+    % upload screens for this trial to Pro Lab
+    if isempty(fixMediaID)
+        fixMediaID = TalkToProLabInstance.uploadMedia(screenShotFixPoint,'fixationPoint');
+    end
+    konijnMediaID = TalkToProLabInstance.findMedia('konijntjes_nonblur');
+    if isempty(konijnMediaID)
+        konijnMediaID = TalkToProLabInstance.uploadMedia(stimFName,'konijntjes_nonblur');
+    end
+    % send stimulus events to Pro Lab, delinianating what happened when in
+    % time
+    TalkToProLabInstance.sendStimulusEvent(fixMediaID,[],startT);
+    pos = CenterRect(Screen('Rect',tex),winRect);  % if texture drawn without rect inputs, texture is centered on screen
+    TalkToProLabInstance.sendStimulusEvent(konijnMediaID,pos,imgT,endT,bgClr);
+    
     % slightly less precise ISI is fine..., about 1s give or take a frame
-    WaitSecs(1);
+    WaitSecs(1-(GetSecs-endT));
     
     % repeat the above but show a different image. lets also record some
     % eye images, if supported on connected eye tracker
@@ -184,27 +220,46 @@ try
     startT = Screen('Flip',wpnt);
     EThndl.sendMessage('FIX ON',startT);
     % 2. image
-    stimFName = 'konijntjes1024x768blur.jpg';
-    im = imread(fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName));
-    tex = Screen('MakeTexture',wpnt,im);
+    stimFNameBlur = 'konijntjes1024x768blur.jpg';
+    stimFNameBlur = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFNameBlur);
+    im = imread(stimFNameBlur);
+    [tex,texRect] = Screen('MakeTexture',wpnt,im);
     Screen('DrawTexture',wpnt,tex);
     imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
-    EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
+    EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     
     % 4. end recording after x seconds of data again, clear screen.
     Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
-    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFNameBlur),endT);
     Screen('Close',tex);
     
-    % stopping and saving
+    % stop recording
     if EThndl.buffer.hasStream('eyeImage')
         EThndl.buffer.stop('eyeImage');
     end
     EThndl.buffer.stop('gaze');
+    TalkToProLabInstance.stopRecording();
+    
+    % upload media and send stimulus events for second trial
+    % NB: fixation point we have already uploaded, so no need to do it again
+    konijnBlurMediaID = TalkToProLabInstance.findMedia('konijntjes_blur');
+    if isempty(konijnBlurMediaID)
+        konijnBlurMediaID = TalkToProLabInstance.uploadMedia(stimFNameBlur,'konijntjes_blur');
+    end
+    % send events
+    TalkToProLabInstance.sendStimulusEvent(fixMediaID,[],startT);
+    pos = CenterRect(texRect,winRect);  % if texture drawn without rect inputs, texture is centered on screen
+    TalkToProLabInstance.sendStimulusEvent(konijnBlurMediaID,pos,imgT,endT,bgClr);
+    
+    % save data to mat file
     EThndl.saveData(fullfile(cd,'t'), true);
+    
+    % finalize recording in Pro Lab (NB: must go into lab and confirm)
+    TalkToProLabInstance.finalizeRecording();
     
     % shut down
     EThndl.deInit();
+    TalkToProLabInstance.disconnect();
 catch me
     sca
     rethrow(me)
