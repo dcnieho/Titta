@@ -18,7 +18,7 @@ classdef AnimatedCalibrationDisplay < handle
         doShrink            = true;
         shrinkTime          = 0.5;
         doMove              = true;
-        moveTime            = 1;    % for whole screen distance, duration will be proportionally shorter when dot moves less than whole screen distance
+        moveTime            = .8;       % for whole screen distance, duration will be proportionally shorter when dot moves less than whole screen distance
         moveWithAcceleration= true;
         doOscillate         = true;
         oscillatePeriod     = 1.5;
