@@ -134,15 +134,17 @@ classdef TalkToProLab < handle
             this.participantID  = participantID;
         end
         
-        function mediaID = findMedia(this,name)
-            mediaID = '';   % empty means no media with that name was found
+        function [mediaID,mediaInfo] = findMedia(this,name)
+            mediaID     = '';   % empty means no media with that name was found
+            mediaInfo   = [];
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
             if ~isempty(resp.media_list)
                 names   = {resp.media_list.media_name};
                 qMedia  = strcmp(names,name);
                 if qMedia
-                    mediaID = resp.media_list(qMedia).media_id;
+                    mediaID     = resp.media_list(qMedia).media_id; % for convenience, provide direct mediaID output
+                    mediaInfo   = resp.media_list(qMedia);
                 end
             end
         end
