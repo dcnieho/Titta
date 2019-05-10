@@ -212,6 +212,8 @@ try
     TalkToProLabInstance.sendStimulusEvent(konijnMediaID,pos,imgT,endT,bgClr);
     
     % slightly less precise ISI is fine..., about 1s give or take a frame
+    % or continue immediately if the above upload actions took longer than
+    % a second.
     WaitSecs(1-(GetSecs-endT));
     
     % repeat the above but show a different image. lets also record some
