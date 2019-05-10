@@ -683,7 +683,7 @@ classdef Titta < handle
             
             % some default colors to be used below
             eyeColors           = {[255 127   0],[ 0  95 191]};
-            toggleButColors     = {[  9  84 205],[50 143 246]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
+            toggleButColors     = {[  0  90 245],[26 136 255]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
             continueButtonColor = [0 150 0];                        % continue calibration, start recording
             backButtonColor     = [200 0 0];                        % redo cal, val, go back to set up
             optionButtonColor   = [210 210 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
@@ -722,7 +722,7 @@ classdef Titta < handle
             settings.UI.button.setup.text.style = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
             settings.UI.button.setup.eyeIm.qShow        = true;
-            settings.UI.button.setup.eyeIm.string       = {'eye images (<i>e<i>)','no eye images (<i>e<i>)'};
+            settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
             settings.UI.button.setup.eyeIm.buttonColor  = toggleButColors;
             settings.UI.button.setup.eyeIm.textColor    = 0;
             settings.UI.button.setup.cal.accelerator    = 'space';
@@ -770,8 +770,8 @@ classdef Titta < handle
             settings.UI.button.val.toggGaze.textColor   = 0;
             settings.UI.button.val.toggCal.accelerator  = 't';
             settings.UI.button.val.toggCal.qShow        = false;
-            settings.UI.button.val.toggCal.string       = {'show cal (<i>t<i>)','show val (<i>t<i>)'};
-            settings.UI.button.val.toggCal.buttonColor  = toggleButColors{1};
+            settings.UI.button.val.toggCal.string       = 'show cal (<i>t<i>)';
+            settings.UI.button.val.toggCal.buttonColor  = toggleButColors;
             settings.UI.button.val.toggCal.textColor    = 0;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
             settings.UI.cal.errMsg.font         = 'Consolas';
@@ -2070,9 +2070,6 @@ classdef Titta < handle
                             end
                             qUpdateCalDisplay   = false;
                             pointToShowInfoFor  = nan;      % close info display, if any
-                            if qHasCal && obj.settings.UI.button.val.toggCal.qShow
-                                calValLblCache      = obj.getTextCache(wpnt,sprintf('showing %s',lbl),[],'sx',.02*obj.scrInfo.resolution(1),'sy',.97*obj.scrInfo.resolution(2),'xalign','left','yalign','bottom');
-                            end
                         end
                     end
                 end
@@ -2173,16 +2170,11 @@ classdef Titta < handle
                     
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
-                    if qHasCal && obj.settings.UI.button.val.toggCal.qShow
-                        % draw text indicating whether calibration or
-                        % validation is currently shown
-                        obj.drawCachedText(calValLblCache);
-                    end
                     % draw buttons
                     obj.drawButton(wpnt,but(1));
                     obj.drawButton(wpnt,but(2));
                     obj.drawButton(wpnt,but(3));
-                    obj.drawButton(wpnt,but(4));
+                    obj.drawButton(wpnt,but(4),qSelectMenuOpen+1);
                     obj.drawButton(wpnt,but(5));
                     obj.drawButton(wpnt,but(6),qShowGaze+1);
                     obj.drawButton(wpnt,but(7),qShowCal+1);
@@ -2503,22 +2495,24 @@ tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
 end
 
 function but = makeButtonColors(but,bgColor) %#ok<INUSD>
-qCell = iscell(but.buttonColor);
-if ~qCell
-    but.buttonColor = {but.buttonColor};
-end
-for p=length(but.buttonColor):-1:1
-    colHSL = rgb2hsl(but.buttonColor{p});
-    % make highlight color, and two lowlight colors
-    but.lineColorHigh{p} = hsl2rgb([colHSL(1:2) (colHSL(3)+1)/2]);
-    but.lineColorLow1{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*1/3 ]);
-    but.lineColorLow2{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*2/3 ]);
-end
-if ~qCell
-    but.buttonColor   = but.buttonColor{1};
-    but.lineColorHigh = but.lineColorHigh{1};
-    but.lineColorLow1 = but.lineColorLow1{1};
-    but.lineColorLow2 = but.lineColorLow2{1};
+for b=1:length(but)
+    qCell = iscell(but(b).buttonColor);
+    if ~qCell
+        but(b).buttonColor = {but(b).buttonColor};
+    end
+    for p=length(but(b).buttonColor):-1:1
+        colHSL = rgb2hsl(but(b).buttonColor{p});
+        % make highlight color, and two lowlight colors
+        but(b).lineColorHigh{p} = hsl2rgb([colHSL(1:2) (colHSL(3)+1)/2]);
+        but(b).lineColorLow1{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*1/3 ]);
+        but(b).lineColorLow2{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*2/3 ]);
+    end
+    if ~qCell
+        but(b).buttonColor   = but(b).buttonColor{1};
+        but(b).lineColorHigh = but(b).lineColorHigh{1};
+        but(b).lineColorLow1 = but(b).lineColorLow1{1};
+        but(b).lineColorLow2 = but(b).lineColorLow2{1};
+    end
 end
 end
 
