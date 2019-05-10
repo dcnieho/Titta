@@ -199,7 +199,7 @@ try
         % add AOI around fixation point location
         fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*2),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point
         vertices= fixRect([1 3 3 1; 2 2 4 4]);
-        TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices);
+        TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,makeTag('fixPoint','points'));
     end
     konijnMediaID = TalkToProLabInstance.findMedia('konijntjes_nonblur');
     if isempty(konijnMediaID)
