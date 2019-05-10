@@ -10,6 +10,8 @@ classdef AnimatedCalibrationDisplay < handle
         shrinkStartT;
         oscillStartT;
         moveDuration;
+        moveVec;
+        accel;
         scrSize;
     end
     properties
@@ -17,6 +19,7 @@ classdef AnimatedCalibrationDisplay < handle
         shrinkTime          = 0.5;
         doMove              = true;
         moveTime            = 1;    % for whole screen distance, duration will be proportionally shorter when dot moves less than whole screen distance
+        moveWithAcceleration= true;
         doOscillate         = true;
         oscillatePeriod     = 1.5;
         fixBackSizeMax      = 50;
@@ -72,6 +75,10 @@ classdef AnimatedCalibrationDisplay < handle
                     % of screen width covered by current move
                     dist = hypot(obj.currentPoint(2)-pos(1),obj.currentPoint(3)-pos(2));
                     obj.moveDuration = obj.moveTime*dist/obj.scrSize(1);
+                    if obj.moveWithAcceleration
+                        obj.accel   = dist/(obj.moveDuration/2)^2;  % solve x=.5*a*t^2 for a, use dist/2 for x
+                        obj.moveVec = (pos(1:2)-obj.currentPoint(2:3))/dist;
+                    end
                 elseif obj.doShrink
                     obj.calState = obj.calStateEnum.shrinking;
                     obj.shrinkStartT = curT;
@@ -101,7 +108,15 @@ classdef AnimatedCalibrationDisplay < handle
             % determine current point position
             if obj.calState==obj.calStateEnum.moving
                 frac = (curT-obj.moveStartT)/obj.moveDuration;
-                curPos = obj.lastPoint(2:3).*(1-frac) + obj.currentPoint(2:3).*frac;
+                if obj.moveWithAcceleration
+                    if frac<.5
+                        curPos = obj.lastPoint(2:3)    + obj.moveVec*.5*obj.accel*(                 curT-obj.moveStartT)^2;
+                    else
+                        curPos = obj.currentPoint(2:3) - obj.moveVec*.5*obj.accel*(obj.moveDuration-curT+obj.moveStartT)^2;
+                    end
+                else
+                    curPos = obj.lastPoint(2:3).*(1-frac) + obj.currentPoint(2:3).*frac;
+                end
             else
                 curPos = obj.currentPoint(2:3);
             end
