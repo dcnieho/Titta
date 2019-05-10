@@ -35,10 +35,6 @@ classdef AnimatedCalibrationDisplay < handle
     methods
         function obj = AnimatedCalibrationDisplay()
             obj.setCleanState();
-            % get size of screen. NB: i'm assuming only one screen is
-            % attached (more than one is usually a bad idea for timing on
-            % Windows!)
-            obj.scrSize = Screen('Rect',0); obj.scrSize(1:2) = [];
         end
         
         function setCleanState(obj)
@@ -56,7 +52,10 @@ classdef AnimatedCalibrationDisplay < handle
                 return;
             end
             
-            
+            % now that we have a wpnt, get some needed variables
+            if isempty(obj.scrSize)
+                obj.scrSize = Screen('Rect',wpnt); obj.scrSize(1:2) = [];
+            end
             if isempty(obj.qFloatColorRange)
                 obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
             end
@@ -70,7 +69,7 @@ classdef AnimatedCalibrationDisplay < handle
                     % dot should move at constant speed regardless of
                     % distance to cover, moveTime contains time to move
                     % over width of whole screen. Adjust time to proportion
-                    % of screen covered by current move
+                    % of screen width covered by current move
                     dist = hypot(obj.currentPoint(2)-pos(1),obj.currentPoint(3)-pos(2));
                     obj.moveDuration = obj.moveTime*dist/obj.scrSize(1);
                 elseif obj.doShrink
