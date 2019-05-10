@@ -127,10 +127,65 @@ classdef TalkToProLab < handle
             this.participantID = participantID;
         end
         
-        function stimID = uploadMedia(this,fileNameOrArray,name)
+        function mediaID = uploadMedia(this,fileNameOrArray,name)
+            assert(ischar(fileNameOrArray),'uploadMedia: currently it is only supported to provide the filename (full path) to media to be uploaded, cannot upload raw image data');
+            assert(exist(fileNameOrArray,'file')==2,'uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
+            
+            % get mime type based on extension
+            [~,~,ext] = fileparts(fileNameOrArray); if ext(1)=='.', ext(1) = []; end
+            assert(~isempty(ext),'uploadMedia: file ''%s'' does not have extension, cannot deduce mime type',fileNameOrArray);
+            switch lower(ext)
+                case 'bmp'
+                    mimeType = 'image/bmp';
+                case {'jpg','jpeg'}
+                    mimeType = 'image/jpeg';
+                case 'png'
+                    mimeType = 'image/png';
+                case 'gif'
+                    mimeType = 'image/gif';
+                case 'mp4'
+                    mimeType = 'video/mp4';
+                case 'avi'
+                    mimeType = 'video/x-msvideo';
+                otherwise
+                    error('uploadMedia: cannot deduce mime type from unknown extension ''%s''',ext);
+            end
+            
+            % open file and get filesize
+            fid = fopen(fileNameOrArray, 'rb');
+            fseek(fid,0,'eof');
+            sz = ftell(fid);
+            % inform pro lab of what we're up to
+            request = struct('operation','UploadMedia',...
+                'mime_type', mimeType,...
+                'media_name', name,...
+                'media_size', sz...
+                );
+            this.clientProject.send(request);
+            
+            % now rewind and read in file
+            fseek(fid,0,'bof');
+            media = fread(fid,inf,'*uint8');
+            fclose(fid);
+            assert(sz==length(media));
+            
+            % wait till ready for upload to start
+            waitForResponse(this.clientProject,'UploadMedia');
+            
+            % upload file in chunks
+            chunkSz = 2^16;
+            i = 1;
+            while i<sz
+                this.clientProject.send(media(i:min(i+chunkSz-1,end)));
+                i = i+chunkSz;
+            end
+            
+            % wait for successfully received message
+            resp = waitForResponse(this.clientProject,'UploadMedia');
+            mediaID = resp.media_id;
         end
         
-        function stimID = findMedia(this,name)
+        function mediaID = findMedia(this,name)
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
             if ~isempty(resp.media_list)
