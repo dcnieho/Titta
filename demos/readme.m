@@ -1,17 +1,19 @@
 sca
 qDEBUG                  = 0;
-useDarkMode             = false;
+useDarkModeCalibration  = false;
+setupScreenAlsoDark     = true;
+validationResultAlsoDark= true;
 fixClrs                 = [0 255];
 fixClrsDark             = [255 100];
 bgClr                   = 255/2;
 bgClrDark               = 0;
-setupScreenAlsoDark     = true;
-validationResultAlsoDark= true;
 useAnimatedCalibration  = true;
 % task parameters
 fixTime                 = .5;
 imageTime               = 2;
 scr                     = max(Screen('Screens'));
+
+TobiiProLabProject      = 'EPtest'; % to use external presenter functionality, provide the name of the external presenter project here
 
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
@@ -22,7 +24,7 @@ try
     % customize colors of setup and calibration interface (yes, colors of
     % everything can be set, so there is a lot here).
     % 1. setup screen
-    if useDarkMode && setupScreenAlsoDark
+    if useDarkModeCalibration && setupScreenAlsoDark
         settings.UI.setup.bgColor       = bgClrDark;
         settings.UI.setup.instruct.color= fixClrsDark(1);
         settings.UI.setup.fixBackColor  = fixClrsDark(1);
@@ -34,7 +36,7 @@ try
         settings.UI.setup.fixFrontColor = fixClrs(2);
     end
     % 2. validation result screen
-    if useDarkMode && validationResultAlsoDark
+    if useDarkModeCalibration && validationResultAlsoDark
         settings.UI.val.bgColor                 = bgClrDark;
         settings.UI.val.avg.text.color          = fixClrsDark(1);
         settings.UI.val.fixBackColor            = fixClrsDark(1);
@@ -57,7 +59,7 @@ try
         calViz.fixBackColor         = fixClrs(1);
         calViz.fixFrontColor        = fixClrs(2);
         settings.cal.drawFunction   = @(a,b,c,d) calViz.doDraw(a,b,c,d);
-        if useDarkMode
+        if useDarkModeCalibration
             calViz.bgColor              = bgClrDark;
             calViz.fixBackColor         = fixClrsDark(1);
             calViz.fixFrontColor        = fixClrsDark(2);
@@ -68,7 +70,7 @@ try
         end
     else
         % set color of built-in fixation points
-        if useDarkMode
+        if useDarkModeCalibration
             settings.cal.bgColor        = bgClrDark;
             settings.cal.fixBackColor   = fixClrsDark(1);
             settings.cal.fixFrontColor  = fixClrsDark(2);
@@ -81,12 +83,15 @@ try
     
     % init
     EThndl          = Titta(settings);
-%     EThndl         = ETFhndl.setDummyMode();
+%     EThndl         = ETFhndl.setDummyMode();  % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
     
-    % TODO: also implement lab interface. Keep it separate from Titta as
-    % they do not _need to_ interact
-    %TobiiProLabInstance = [];
+    % get class for integration with Tobii Pro Lab
+    if isempty(TobiiProLabProject)
+        TalkToProLabInstance = TalkToProLabDummy();
+    else
+        TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
+    end
     
     if qDEBUG>1
         % make screen partially transparent on OSX and windows vista or
