@@ -148,8 +148,14 @@ classdef TalkToProLab < handle
                 return
             end
             
-            assert(ischar(fileNameOrArray),'uploadMedia: currently it is only supported to provide the filename (full path) to media to be uploaded, cannot upload raw image data');
-            assert(exist(fileNameOrArray,'file')==2,'uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
+            qIsRawImage = ~ischar(fileNameOrArray);
+            if qIsRawImage
+                data = fileNameOrArray;
+                fileNameOrArray = [tempname() '.png'];
+                imwrite(data,fileNameOrArray);
+            else
+                assert(exist(fileNameOrArray,'file')==2,'uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
+            end
             
             % get mime type based on extension
             [~,~,ext] = fileparts(fileNameOrArray); if ext(1)=='.', ext(1) = []; end
@@ -204,6 +210,9 @@ classdef TalkToProLab < handle
             resp        = waitForResponse(this.clientProject,'UploadMedia');
             mediaID     = resp.media_id;
             wasUploaded = true;
+            if qIsRawImage
+                delete(fileNameOrArray);
+            end
         end
         
         function numAOI = attachAOI(this,stimID)
