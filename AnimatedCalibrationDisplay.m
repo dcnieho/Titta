@@ -112,6 +112,8 @@ classdef AnimatedCalibrationDisplay < handle
                     if frac<.5
                         curPos = obj.lastPoint(2:3)    + obj.moveVec*.5*obj.accel*(                 curT-obj.moveStartT)^2;
                     else
+                        % implement deceleration by accelerating from the
+                        % other side
                         curPos = obj.currentPoint(2:3) - obj.moveVec*.5*obj.accel*(obj.moveDuration-curT+obj.moveStartT)^2;
                     end
                 else
