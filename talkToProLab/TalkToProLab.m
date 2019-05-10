@@ -275,6 +275,25 @@ classdef TalkToProLab < handle
             success = resp.imported_aoi_count==1;
         end
         
+        function numAOI = attachAOIToVideo(this,mediaName,request)
+            % This function gives the user little help, and assumes that
+            % they read the Tobii Pro Lab API and deliver a properly
+            % formatted request. Request is the full struct to be converted
+            % to json, except for the 'media_id', and 'operation', which
+            % are added below
+            [mediaID,mediaInfo] = this.findMedia(name);
+            assert(~isempty(mediaID),'attachAOIToVideo: no media with provided name, ''%s'' is known',mediaName)
+            assert(~isempty(strfind(mediaInfo.mime_type,'video')),'attachAOIToVideo: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
+            
+            request.operation = 'AddAois';
+            request.media_id  = mediaID;
+            
+            % send
+            this.clientProject.send(request);
+            resp    = waitForResponse(this.clientProject,'AddAois');
+            numAOI  = resp.imported_aoi_count;
+        end
+        
         function EPState = getExternalPresenterState(this)
             this.clientEP.send(struct('operation','GetState'));
             resp    = waitForResponse(this.clientEP,'GetState');
