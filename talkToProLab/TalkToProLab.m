@@ -225,14 +225,54 @@ classdef TalkToProLab < handle
             end
         end
         
-        function numAOI = attachAOI(this,mediaID)
-            % for complicated messages, perhaps provide users with an empty template.
-            % like AOI:
-            % fid=fopen('C:\Users\Administrator\Desktop\json.txt','rt');
-            % str=fread(fid,inf,'*char').'
-            % fclose(fid);
-            % matlab.internal.webservices.fromJSON(str)
-            resp = waitForResponse(this.clientProject,'AddAois');
+        function success = attachAOIToImage(this,mediaName,aoiName,aoiColor,vertices,tags)
+            % vertices should be 2xN
+            [mediaID,mediaInfo] = this.findMedia(name);
+            assert(~isempty(mediaID),'attachAOIToImage: no media with provided name, ''%s'' is known',mediaName)
+            assert(~isempty(strfind(mediaInfo.mime_type,'image')),'attachAOIToImage: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
+            
+            request = struct('operation','AddAois',...
+                'media_id',mediaID,...
+                'merge_mode','replace_aois');
+            % build up AOI object
+            AOI = struct('name',aoiName);
+            % color
+            if isnumeric(aoiColor)    % else we assume its a hexadecimal string already
+                % turn into RGBA so that user can provide also single gray
+                % value, etc
+                aoiColor = round(color2RGBA(aoiColor));
+                aoiColor = reshape(dec2hex(aoiColor(1:3)).',1,[]);
+            end
+            AOI.color = aoiColor;
+            % vertices
+            assert(size(vertices,1)==2,'attachAOIToImage: AOI vertices should be a 2xN array')
+            nVert = size(vertices,2);
+            AOI.keyframes{1}.is_active = true;
+            AOI.keyframes{1}.seconds   = 0;
+            AOI.keyframes{1}.vertices  = repmat(struct('x',0,'y',0),1,nVert);
+            vertices = num2cell(vertices);
+            [AOI.keyframes{1}.vertices.x] = vertices{1,:};
+            [AOI.keyframes{1}.vertices.y] = vertices{2,:};
+            % tags
+            if nargin>5 && ~isempty(tags)
+                if ~iscell(tags)
+                    tags = num2cell(tags);
+                end
+                for t=1:length(tags)
+                    if isempty(tags{t}.group_name)
+                        tags{t} = rmfield(tags{t},'group_name');
+                    end
+                end
+                AOI.tags = tags;
+            else
+                AOI.tags = {};
+            end
+            request.aois = {AOI};       % enclose in cell so it becomes a json array
+            
+            % send
+            this.clientProject.send(request);
+            resp    = waitForResponse(this.clientProject,'AddAois');
+            success = resp.imported_aoi_count==1;
         end
         
         function EPState = getExternalPresenterState(this)
@@ -330,7 +370,14 @@ classdef TalkToProLab < handle
         end
     end
     
-    methods (Access=private, Hidden=true)
+    methods (Static)
+        function tag = makeTag(tagName,groupName)
+            tag.tag_name    = tagName;
+            tag.group_name  = '';
+            if nargin>1 && ~isempty(groupName)
+                tag.group_name  = groupName;
+            end
+        end
     end
 end
 
