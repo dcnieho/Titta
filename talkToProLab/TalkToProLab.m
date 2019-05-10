@@ -257,13 +257,13 @@ classdef TalkToProLab < handle
         end
         
         function finalizeRecording(this)
-            this.clientEP.send(struct('operation','FinalizeRecording'));
+            this.clientEP.send(struct('operation','FinalizeRecording','recording_id',this.recordingID));
             waitForResponse(this.clientEP,'FinalizeRecording');
             this.recordingID= '';
         end
         
         function discardRecording(this)
-            this.clientEP.send(struct('operation','DiscardRecording'));
+            this.clientEP.send(struct('operation','DiscardRecording','recording_id',this.recordingID));
             waitForResponse(this.clientEP,'DiscardRecording');
             this.recordingID= '';
         end
