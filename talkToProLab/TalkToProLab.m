@@ -92,6 +92,10 @@ classdef TalkToProLab < handle
         
         function delete(this)
             % clean up connections
+            this.disconnect();
+        end
+        
+        function disconnect(this)
             if ~isempty(this.clientClock) && this.clientClock.Status
                 this.clientClock.close();
             end
@@ -265,14 +269,57 @@ classdef TalkToProLab < handle
         end
         
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background)
-            % mediaPosition, endTimeStamp, background are optional
-            if isnumeric(background)
-                assert(numel(background)==3)
-                background = reshape(dec2hex(background).',1,[]);
+            % mediaPosition, endTimeStamp, background are optional, can be
+            % left empty or not provided in call
+            request = struct('operation','SendStimulusEvent',...
+                'recording_id',this.recordingID,...
+                'media_id',mediaID);
+            
+            % process input arguments
+            if ~isempty(mediaPosition)
+                request.media_position = struct(...
+                    'left'  , mediaPosition(1),...
+                    'top'   , mediaPosition(2),...
+                    'right' , mediaPosition(3),...
+                    'bottom', mediaPosition(4)...
+                    );
             end
+            if isempty(startTimeStamp)
+                startTimeStamp = GetSecs();
+            end
+            request.start_timestamp = int64(startTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
+            if nargin>4 && ~isempty(endTimeStamp)
+                request.end_timestamp = int64(endTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
+            end
+            if nargin>5 && ~isempty(background)
+                if isnumeric(background)    % else we assume its a hexadecimal string already
+                    % turn into RGBA so that user can provide also single gray
+                    % value, etc
+                    background = round(color2RGBA(background));
+                    background = reshape(dec2hex(background(1:3)).',1,[]);
+                end
+                request.background = background;
+            end
+            
+            % send
+            this.clientEP.send(request);
+            waitForResponse(this.clientEP,'SendStimulusEvent');
         end
         
         function sendCustomEvent(this,timestamp,eventType,value)
+            request = struct('operation','SendCustomEvent',...
+                'recording_id',this.recordingID);
+            
+            % proces inputs
+            request.timestamp = int64(timestamp*1000*1000);
+            request.event_type= eventType;
+            if nargin>3 && ~isempty(value)
+                request.value = value;
+            end
+            
+            % send
+            this.clientEP.send(request);
+            waitForResponse(this.clientEP,'SendCustomEvent');
         end
     end
     
