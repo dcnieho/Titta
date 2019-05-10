@@ -93,6 +93,9 @@ classdef TalkToProLab < handle
         function delete(this)
             % clean up connections
             this.disconnect();
+            this.projectID = '';
+            this.participantID = '';
+            this.recordingID = '';
         end
         
         function disconnect(this)
