@@ -678,7 +678,7 @@ classdef Titta < handle
             % the rest here are good defaults for all
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber               = '';
-            settings.licenseFile                = '';
+            settings.licenseFile                = '';                           % should be single string or cell array of strings, with each string being the path to a license file to apply
             settings.nTryConnect                = 1;                            % How many times to try to connect before giving up
             settings.connectRetryWait           = 4;                            % seconds
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
