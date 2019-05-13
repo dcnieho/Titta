@@ -665,11 +665,11 @@ classdef Titta < handle
             end
             
             % some default colors to be used below
-            eyeColors           = {[255 127   0],[ 0  95 191]};
-            toggleButColors     = {[  0  90 245],[26 136 255]};     % for buttons that toggle (e.g. show eye movements, show online gaze)
-            continueButtonColor = [0 150 0];                        % continue calibration, start recording
-            backButtonColor     = [200 0 0];                        % redo cal, val, go back to set up
-            optionButtonColor   = [210 210 0];                      % "sideways" actions: view previous calibrations, open menu and select different calibration
+            eyeColors           = {[255 127   0],[  0  95 191]};
+            toggleButColors     = {[  0  90 245],[ 26 110 255],[ 26 136 255]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
+            continueButtonColor = {[  0 150   0],[  0 194   0],[  0 150   0]};  % continue calibration, start recording
+            backButtonColor     = {[200   0   0],[250   0   0],[200   0   0]};  % redo cal, val, go back to set up
+            optionButtonColor   = {[219 102   0],[255 119   0],[219 102   0]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
             
             % TODO: common file format
             % TODO: teaching perspective of showing all the data quality
@@ -704,17 +704,17 @@ classdef Titta < handle
             settings.UI.button.setup.text.size  = 24*textFac;
             settings.UI.button.setup.text.style = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
-            settings.UI.button.setup.eyeIm.qShow        = true;
+            settings.UI.button.setup.eyeIm.visible      = true;
             settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
             settings.UI.button.setup.eyeIm.buttonColor  = toggleButColors;
             settings.UI.button.setup.eyeIm.textColor    = 0;
             settings.UI.button.setup.cal.accelerator    = 'space';
-            settings.UI.button.setup.cal.qShow          = true;
+            settings.UI.button.setup.cal.visible        = true;
             settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
             settings.UI.button.setup.cal.buttonColor    = continueButtonColor;
             settings.UI.button.setup.cal.textColor      = 0;
             settings.UI.button.setup.prevcal.accelerator= 'p';
-            settings.UI.button.setup.prevcal.qShow      = true;
+            settings.UI.button.setup.prevcal.visible    = true;
             settings.UI.button.setup.prevcal.string     = 'previous calibrations (<i>p<i>)';
             settings.UI.button.setup.prevcal.buttonColor= optionButtonColor;
             settings.UI.button.setup.prevcal.textColor  = 0;
@@ -722,37 +722,37 @@ classdef Titta < handle
             settings.UI.button.val.text.size    = 24*textFac;
             settings.UI.button.val.text.style   = 0;
             settings.UI.button.val.recal.accelerator    = 'escape';
-            settings.UI.button.val.recal.qShow          = true;
+            settings.UI.button.val.recal.visible        = true;
             settings.UI.button.val.recal.string         = 'recalibrate (<i>esc<i>)';
             settings.UI.button.val.recal.buttonColor    = backButtonColor;
             settings.UI.button.val.recal.textColor      = 0;
             settings.UI.button.val.reval.accelerator    = 'v';
-            settings.UI.button.val.reval.qShow          = true;
+            settings.UI.button.val.reval.visible        = true;
             settings.UI.button.val.reval.string         = 'revalidate (<i>v<i>)';
             settings.UI.button.val.reval.buttonColor    = backButtonColor;
             settings.UI.button.val.reval.textColor      = 0;
             settings.UI.button.val.continue.accelerator = 'space';
-            settings.UI.button.val.continue.qShow       = true;
+            settings.UI.button.val.continue.visible     = true;
             settings.UI.button.val.continue.string      = 'continue (<i>spacebar<i>)';
             settings.UI.button.val.continue.buttonColor = continueButtonColor;
             settings.UI.button.val.continue.textColor   = 0;
             settings.UI.button.val.selcal.accelerator   = 'c';
-            settings.UI.button.val.selcal.qShow         = true;
+            settings.UI.button.val.selcal.visible       = true;
             settings.UI.button.val.selcal.string        = 'select other cal (<i>c<i>)';
             settings.UI.button.val.selcal.buttonColor   = optionButtonColor;
             settings.UI.button.val.selcal.textColor     = 0;
             settings.UI.button.val.setup.accelerator    = 's';
-            settings.UI.button.val.setup.qShow          = true;
+            settings.UI.button.val.setup.visible        = true;
             settings.UI.button.val.setup.string         = 'setup (<i>s<i>)';
             settings.UI.button.val.setup.buttonColor    = backButtonColor;
             settings.UI.button.val.setup.textColor      = 0;
             settings.UI.button.val.toggGaze.accelerator = 'g';
-            settings.UI.button.val.toggGaze.qShow       = true;
+            settings.UI.button.val.toggGaze.visible     = true;
             settings.UI.button.val.toggGaze.string      = 'show gaze (<i>g<i>)';
             settings.UI.button.val.toggGaze.buttonColor = toggleButColors;
             settings.UI.button.val.toggGaze.textColor   = 0;
             settings.UI.button.val.toggCal.accelerator  = 't';
-            settings.UI.button.val.toggCal.qShow        = false;
+            settings.UI.button.val.toggCal.visible      = false;
             settings.UI.button.val.toggCal.string       = 'show cal (<i>t<i>)';
             settings.UI.button.val.toggCal.buttonColor  = toggleButColors;
             settings.UI.button.val.toggCal.textColor    = 0;
@@ -922,22 +922,12 @@ classdef Titta < handle
             pupilSzGain = 1.5;
 
             % setup buttons
-            % which to show
-            but(1)  = obj.settings.UI.button.setup.eyeIm;
-            but(2)  = obj.settings.UI.button.setup.cal;
-            but(3)  = obj.settings.UI.button.setup.prevcal;
-            but(1).qShow = but(1).qShow && qHasEyeIm;
-            but(3).qShow = but(3).qShow && qHaveValidCalibrations;
-            % where and get text
-            offScreen   = [-100 -90 -100 -90];
-            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
-            for p=1:length(but)
-                if but(p).qShow
-                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
-                end
-            end
+            funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
+            but(1)  = PTBButton(obj.settings.UI.button.setup.eyeIm  ,       qHasEyeIm       , wpnt, funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.setup.cal    ,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.setup.prevcal, qHaveValidCalibrations, wpnt, funs, obj.settings.UI.button.margins);
             % arrange them 
-            butRectsBase= cat(1,but([but.qShow]).rect);
+            butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
                 yposBase    = round(obj.scrInfo.resolution(2)*.95);
@@ -950,16 +940,8 @@ classdef Titta < handle
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
                 butRects          = num2cell(butRects,2);
-                [but([but.qShow]).rect] = butRects{:};
-                % now position text correctly
-                for p=1:length(but)
-                    if but(p).qShow
-                        but(p).cache = obj.positionButtonText(but(p).cache, but(p).rect);
-                    end
-                end
+                [but([but.visible]).rect] = butRects{:};
             end
-            % setup colors
-            but = makeButtonColors(but,obj.settings.UI.setup.bgColor);
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
@@ -1018,11 +1000,11 @@ classdef Titta < handle
                         % update eye image locations if size of returned eye image changed
                         if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
                             margin = 20;
-                            qShow = [but.qShow];
-                            if ~any(qShow)
+                            visible = [but.visible];
+                            if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution(2)*.95);
                             else
-                                basePos = min(butRects(2,[but.qShow]));
+                                basePos = min(butRects(2,[but.visible]));
                             end
                             eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
                             eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center(1)         +margin/2,basePos-margin-szs(2,2));
@@ -1166,9 +1148,10 @@ classdef Titta < handle
                 end
                 
                 % draw buttons
-                obj.drawButton(wpnt,but(1),qShowEyeImage+1);
-                obj.drawButton(wpnt,but(2));
-                obj.drawButton(wpnt,but(3));
+                [mousePos(1), mousePos(2)] = GetMouse();
+                but(1).draw(mousePos,qShowEyeImage);
+                but(2).draw(mousePos);
+                but(3).draw(mousePos);
                 
                 % draw fixation points
                 obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
@@ -1261,30 +1244,7 @@ classdef Titta < handle
             end
         end
         
-        function [rect,cache] = getButton(obj, wpnt, string, color, buttonMargins)
-            if ~iscell(string)
-                string = {string};
-            end
-            assert(ismember(numel(string),[1 2]),'number of strings for button ''%s'' should be 1 or 2',string{1});
-            if ~iscell(color)
-                color = {color};
-            end
-            assert(ismember(numel(color),[1 2]),'number of textColors for button ''%s'' should be 1 or 2',string{1});
-            if length(color)<length(string)
-                color = [color color];
-            elseif length(string)<length(color)
-                string = [string string];
-            end
-            
-            % get strings
-            for p=length(string):-1:1
-                [cache(p),rect(p,:)]    = obj.getTextCache(wpnt,sprintf('<color=%s>%s',clr2hex(color{p}),string{p}));
-            end
-            % get rect around largest
-            rect = [0 0 max(rect(:,3)-rect(:,1)) max(rect(:,4)-rect(:,2))] + 2*[0 0 buttonMargins];
-        end
-        
-        function cache = positionButtonText(obj, cache, rect)
+        function cache = positionButtonText(obj, cache, rect, previousOff)
             [sx,sy] = RectCenterd(rect);
             if obj.usingFTGLTextRenderer
                 for p=1:length(cache)
@@ -1294,8 +1254,8 @@ classdef Titta < handle
                 % offset the text to sx,sy (assumes it was centered on 0,0,
                 % which is ok for current code)
                 for p=1:length(cache)
-                    cache.px = cache.px+sx;
-                    cache.py = cache.py+sy;
+                    cache.px = cache.px-previousOff(1)+sx;
+                    cache.py = cache.py-previousOff(2)+sy;
                 end
             end
         end
@@ -1330,41 +1290,6 @@ classdef Titta < handle
                 Screen('FillRect',wpnt,obj.getColorForWindow(fixFrontColor), rectV);
                 Screen('gluDisk', wpnt,obj.getColorForWindow( fixBackColor), pos(p,1), pos(p,2), sz(2)/2);
             end
-        end
-        
-        function drawButton(obj,wpnt,but,idx)
-            if ~but.qShow
-                return;
-            end
-            if nargin<4
-                idx = 1;
-            end
-            if iscell(but.buttonColor)
-                clr      = but.buttonColor  {min(idx,end)};
-                lColHigh = but.lineColorHigh{min(idx,end)};
-                lColLow1 = but.lineColorLow1{min(idx,end)};
-                lColLow2 = but.lineColorLow2{min(idx,end)};
-            else
-                clr      = but.buttonColor;
-                lColHigh = but.lineColorHigh;
-                lColLow1 = but.lineColorLow1;
-                lColLow2 = but.lineColorLow2;
-            end
-            % draw background
-            Screen('FillRect',wpnt,obj.getColorForWindow(clr),but.rect);
-            % draw edges
-            width = 1;
-            if idx==1
-                % button is up
-                xy = [but.rect([1 1 1 3]) but.rect([1 3 3 3]) but.rect([1 3 3 3])+[1 -1 -1 -1]*width;  but.rect([4 2 2 2]) but.rect([4 4 4 2]) but.rect([4 4 4 2])+[-1 -1 -1 1]*width];
-            else
-                % button is depressed
-                xy = [but.rect([1 3 3 3]) but.rect([1 1 1 3])+[1  1  1 -1]*width but.rect([1 1 1 3]);  but.rect([4 4 4 2]) but.rect([4 2 2 2])+[-1  1  1 1]*width but.rect([4 2 2 2])];
-            end
-            colors = [repmat(obj.getColorForWindow(lColHigh),4,1); repmat(obj.getColorForWindow(lColLow1),4,1); repmat(obj.getColorForWindow(lColLow2),4,1)].';
-            Screen('DrawLines',wpnt,xy,width,colors);
-            % draw text
-            obj.drawCachedText(but.cache(min(idx,end)));
         end
         
         function [status,out] = DoCalAndVal(obj,wpnt,kCal,qDoCal)
@@ -1843,27 +1768,17 @@ classdef Titta < handle
             Screen('TextSize',  wpnt, obj.settings.UI.button.val.text.size);
             
             % set up buttons
-            % which to show
-            but(1)  = obj.settings.UI.button.val.recal;
-            but(2)  = obj.settings.UI.button.val.reval;
-            but(3)  = obj.settings.UI.button.val.continue;
-            but(4)  = obj.settings.UI.button.val.selcal;
-            but(4).qShow = but(4).qShow && qHaveMultipleValidCals;
-            but(5)  = obj.settings.UI.button.val.setup;
-            but(6)  = obj.settings.UI.button.val.toggGaze;
-            but(7)  = obj.settings.UI.button.val.toggCal;
-            but(7).qShow = but(7).qShow && qHasCal;
-            offScreen   = [-100 -90 -100 -90];
-            [but.rect]  = deal(offScreen); % offscreen so mouse handler doesn't fuck up because of it
+            funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
+            but(1)  = PTBButton(obj.settings.UI.button.val.recal   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.val.reval   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.val.continue,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt, funs, obj.settings.UI.button.margins);
+            but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt, funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt, funs, obj.settings.UI.button.margins);
             % 1. below screen
-            % size and get text
-            for p=1:4
-                if but(p).qShow
-                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
-                end
-            end
             % position them
-            butRectsBase= cat(1,but([but(1:4).qShow]).rect);
+            butRectsBase= cat(1,but([but(1:4).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
                 yposBase    = round(obj.scrInfo.resolution(2)*.97);
@@ -1875,44 +1790,25 @@ classdef Titta < handle
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
                 butRects          = num2cell(butRects,2);
-                [but([1:length(but)]<=4&[but.qShow]).rect] = butRects{:};
-                % now position text correctly
-                for p=1:4
-                    if but(p).qShow
-                        but(p).cache = obj.positionButtonText(but(p).cache, but(p).rect);
-                    end
-                end
+                [but([1:length(but)]<=4&[but.visible]).rect] = butRects{:};
             end
             
             % 2. atop screen
-            % size and get text
-            for p=5:6
-                if but(p).qShow
-                    [but(p).rect,but(p).cache] = obj.getButton(wpnt, but(p).string, but(p).textColor, obj.settings.UI.button.margins);
-                end
-            end
             % position them
             yPosTop             = .02*obj.scrInfo.resolution(2);
             buttonOff           = 900;
-            if but(5).qShow
+            if but(5).visible
                 but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center(1)-buttonOff/2-but(5).rect(3),yPosTop);
-                but(5).cache    = obj.positionButtonText(but(5).cache, but(5).rect);
             end
-            if but(6).qShow
+            if but(6).visible
                 but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center(1)+buttonOff/2,yPosTop);
-                but(6).cache    = obj.positionButtonText(but(6).cache, but(6).rect);
             end
             
             % 3. left side
-            if but(7).qShow
-                % size and get text
-                [but(7).rect,but(7).cache] = obj.getButton(wpnt, but(7).string, but(7).textColor, obj.settings.UI.button.margins);
-                % position them
+            if but(7).visible
+                % position it
                 but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
-                but(7).cache    = obj.positionButtonText(but(7).cache, but(7).rect);
             end
-            % setup colors
-            but = makeButtonColors(but,obj.settings.UI.val.bgColor);
             
             
             % setup menu, if any
@@ -2019,11 +1915,9 @@ classdef Titta < handle
                                     qSelectMenuOpen     = ~qSelectMenuOpen;
                                 end
                                 if ~qHasCal
-                                    but(7).qShow    = false;
-                                    but(7).rect     = offScreen;
-                                elseif obj.settings.UI.button.val.toggCal.qShow
-                                    but(7).qShow    = true;
-                                    but(7).rect     = but7Pos;
+                                    but(7).visible    = false;
+                                elseif obj.settings.UI.button.val.toggCal.visible
+                                    but(7).visible    = true;
                                 end
                             end
                             % update info text
@@ -2180,13 +2074,14 @@ classdef Titta < handle
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
                     % draw buttons
-                    obj.drawButton(wpnt,but(1));
-                    obj.drawButton(wpnt,but(2));
-                    obj.drawButton(wpnt,but(3));
-                    obj.drawButton(wpnt,but(4),qSelectMenuOpen+1);
-                    obj.drawButton(wpnt,but(5));
-                    obj.drawButton(wpnt,but(6),qShowGaze+1);
-                    obj.drawButton(wpnt,but(7),qShowCal+1);
+                    [mousePos(1), mousePos(2)] = GetMouse();
+                    but(1).draw(mousePos);
+                    but(2).draw(mousePos);
+                    but(3).draw(mousePos);
+                    but(4).draw(mousePos,qSelectMenuOpen);
+                    but(5).draw(mousePos);
+                    but(6).draw(mousePos,qShowGaze);
+                    but(7).draw(mousePos,qShowCal);
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
@@ -2501,28 +2396,6 @@ end
 % fliplr to make eye image look like coming from a mirror
 % instead of simply being from camera's perspective
 tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
-end
-
-function but = makeButtonColors(but,bgColor) %#ok<INUSD>
-for b=1:length(but)
-    qCell = iscell(but(b).buttonColor);
-    if ~qCell
-        but(b).buttonColor = {but(b).buttonColor};
-    end
-    for p=length(but(b).buttonColor):-1:1
-        colHSL = rgb2hsl(but(b).buttonColor{p});
-        % make highlight color, and two lowlight colors
-        but(b).lineColorHigh{p} = hsl2rgb([colHSL(1:2) (colHSL(3)+1)/2]);
-        but(b).lineColorLow1{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*1/3 ]);
-        but(b).lineColorLow2{p} = hsl2rgb([colHSL(1:2)  colHSL(3)*2/3 ]);
-    end
-    if ~qCell
-        but(b).buttonColor   = but(b).buttonColor{1};
-        but(b).lineColorHigh = but(b).lineColorHigh{1};
-        but(b).lineColorLow1 = but(b).lineColorLow1{1};
-        but(b).lineColorLow2 = but(b).lineColorLow2{1};
-    end
-end
 end
 
 function drawCircle(wpnt,clr,center,sz,lineWidth,fillClr)
