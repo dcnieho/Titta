@@ -140,11 +140,11 @@ classdef TalkToProLab < handle
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
             if ~isempty(resp.media_list)
-                names   = {resp.media_list.media_name};
+                names   = cellfun(@(x) x.media_name,resp.media_list,'uni',false);
                 qMedia  = strcmp(names,name);
-                if qMedia
-                    mediaID     = resp.media_list(qMedia).media_id; % for convenience, provide direct mediaID output
-                    mediaInfo   = resp.media_list(qMedia);
+                if any(qMedia)
+                    mediaID     = resp.media_list{qMedia}.media_id; % for convenience, provide direct mediaID output
+                    mediaInfo   = resp.media_list{qMedia};
                 end
             end
         end
@@ -227,7 +227,7 @@ classdef TalkToProLab < handle
         
         function success = attachAOIToImage(this,mediaName,aoiName,aoiColor,vertices,tags)
             % vertices should be 2xN
-            [mediaID,mediaInfo] = this.findMedia(name);
+            [mediaID,mediaInfo] = this.findMedia(mediaName);
             assert(~isempty(mediaID),'attachAOIToImage: no media with provided name, ''%s'' is known',mediaName)
             assert(~isempty(strfind(mediaInfo.mime_type,'image')),'attachAOIToImage: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
             
