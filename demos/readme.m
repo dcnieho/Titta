@@ -1,4 +1,4 @@
-sca
+clear all
 qDEBUG                  = 0;
 useDarkModeCalibration  = false;
 setupScreenAlsoDark     = true;
