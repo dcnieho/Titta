@@ -12,9 +12,9 @@ blockEdgeClr        = [ 81 121 176];
 paddleFillClr       = [208   0   0];
 
 % setup eye tracker
-qUseDummyMode       = true;
+qUseDummyMode       = false;
 settings = Titta.getDefaults('Tobii Pro Spectrum');
-settings.cal.bgColor    = bgclr;
+settings.cal.bgColor= bgclr;
 % custom calibration drawer
 calViz = AnimatedCalibrationDisplay();
 settings.cal.drawFunction = @calViz.doDraw;
