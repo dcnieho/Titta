@@ -29,13 +29,14 @@ classdef TittaDummyMode < Titta
             
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            if 0
+            if 1
                 thisInfo = metaclass(obj);
                 superMethods = thisInfo.SuperclassList.MethodList;
-                superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static])) = [];
                 thisMethods = thisInfo.MethodList;
-                % delete, getOptions, setOptions, sendMessage and getMessages still work in dummy mode
-                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | ismember({thisMethods.Name},{'TittaDummyMode','delete','getOptions','setOptions','sendMessage','getMessages'})) = [];
+                % for both, remove their constructors from list and limit
+                % to only public methods
+                superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'Titta'})) = [];
+                thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TittaDummyMode'})) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
@@ -46,18 +47,18 @@ classdef TittaDummyMode < Titta
                 end
                 
                 % 2. methods from superclas that are not overridden.
-                qNotOverridden = arrayfun(@(x) strcmp(x.DefiningClass.Name,thisInfo.SuperclassList.Name), thisMethods);
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',thisInfo.SuperclassList.Name,thisInfo.Name);
-                    fprintf('  %s\n',thisMethods(qNotOverridden).Name);
+                    fprintf('  %s\n',superMethods(qNotOverridden).Name);
                 end
                 
                 % 3. right number of input arguments?
-                qMatchingInput = false(size(qNotOverridden));
+                qMatchingInput = false(size(thisMethods));
                 for p=1:length(thisMethods)
                     superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
                     if isscalar(superMethod)
-                        qMatchingInput(p) = (length(superMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(superMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(superMethod.InputNames{end},'varargin'));
+                        qMatchingInput(p) = (length(superMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(superMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(superMethod.InputNames{end},'varargin')) || (length(thisMethods(p).InputNames) < length(superMethod.InputNames) && strcmp(thisMethods(p).InputNames{end},'varargin'));
                     else
                         qMatchingInput(p) = true;
                     end
@@ -68,7 +69,7 @@ classdef TittaDummyMode < Titta
                 end
                 
                 % 4. right number of output arguments?
-                qMatchingOutput = false(size(qNotOverridden));
+                qMatchingOutput = false(size(thisMethods));
                 for p=1:length(thisMethods)
                     superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
                     if isscalar(superMethod)

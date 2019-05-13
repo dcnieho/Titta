@@ -16,10 +16,11 @@ classdef TalkToProLabDummyMode < handle
                 thisInfo = ?TalkToProLabDummyMode;
                 realInfo = ?TalkToProLab;
                 realMethods = realInfo.MethodList;
-                realMethods(~strcmp({realMethods.Access},'public') | (~~[realMethods.Static])) = [];
                 thisMethods = thisInfo.MethodList;
-                % remove constructor from list TalkToProLabDummyMode
-                thisMethods(~strcmp({thisMethods.Access},'public') | (~~[thisMethods.Static]) | ismember({thisMethods.Name},{'TalkToProLabDummyMode'})) = [];
+                % for both, remove their constructors from list and limit
+                % to only public methods
+                realMethods(~strcmp({realMethods.Access},'public') | ismember({realMethods.Name},{'TalkToProLab'})) = [];
+                thisMethods(~strcmp({thisMethods.Access},'public') | ismember({thisMethods.Name},{'TalkToProLabDummyMode'})) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
@@ -30,18 +31,18 @@ classdef TalkToProLabDummyMode < handle
                 end
                 
                 % 2. methods from superclas that are not overridden.
-                qNotOverridden = arrayfun(@(x) strcmp(x.DefiningClass.Name,realInfo.Name), thisMethods);
+                qNotOverridden = ~ismember({realMethods.Name},{thisMethods.Name});
                 if any(qNotOverridden)
-                    fprintf('methods from %s not overridden in %s:\n',realInfo.Name,thisInfo.Name);
-                    fprintf('  %s\n',thisMethods(qNotOverridden).Name);
+                    fprintf('methods that are in %s but not in %s:\n',realInfo.Name,thisInfo.Name);
+                    fprintf('  %s\n',realMethods(qNotOverridden).Name);
                 end
                 
                 % 3. right number of input arguments?
-                qMatchingInput = false(size(qNotOverridden));
+                qMatchingInput = false(size(thisMethods));
                 for p=1:length(thisMethods)
-                    superMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
-                    if isscalar(superMethod)
-                        qMatchingInput(p) = (length(superMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(superMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(superMethod.InputNames{end},'varargin'));
+                    realMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
+                    if isscalar(realMethod)
+                        qMatchingInput(p) = (length(realMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(realMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(realMethod.InputNames{end},'varargin')) || (length(thisMethods(p).InputNames) < length(realMethod.InputNames) && strcmp(thisMethods(p).InputNames{end},'varargin'));
                     else
                         qMatchingInput(p) = true;
                     end
@@ -52,11 +53,11 @@ classdef TalkToProLabDummyMode < handle
                 end
                 
                 % 4. right number of output arguments?
-                qMatchingOutput = false(size(qNotOverridden));
+                qMatchingOutput = false(size(thisMethods));
                 for p=1:length(thisMethods)
-                    superMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
-                    if isscalar(superMethod)
-                        qMatchingOutput(p) = length(superMethod.OutputNames) == length(thisMethods(p).OutputNames);
+                    realMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
+                    if isscalar(realMethod)
+                        qMatchingOutput(p) = length(realMethod.OutputNames) == length(thisMethods(p).OutputNames);
                     else
                         qMatchingOutput(p) = true;
                     end
