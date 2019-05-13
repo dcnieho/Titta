@@ -140,6 +140,9 @@ classdef TalkToProLab < handle
             this.clientProject.send(struct('operation','ListMedia'));
             resp = waitForResponse(this.clientProject,'ListMedia');
             if ~isempty(resp.media_list)
+                if ~iscell(resp.media_list)
+                    resp.media_list = num2cell(resp.media_list);
+                end
                 names   = cellfun(@(x) x.media_name,resp.media_list,'uni',false);
                 qMedia  = strcmp(names,name);
                 if any(qMedia)
