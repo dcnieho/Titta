@@ -350,9 +350,6 @@ classdef TalkToProLab < handle
                     'bottom', mediaPosition(4)...
                     );
             end
-            if isempty(startTimeStamp)
-                startTimeStamp = GetSecs();
-            end
             request.start_timestamp = int64(startTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
             if nargin>4 && ~isempty(endTimeStamp)
                 request.end_timestamp = int64(endTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
@@ -377,6 +374,9 @@ classdef TalkToProLab < handle
                 'recording_id',this.recordingID);
             
             % proces inputs
+            if isempty(timestamp)
+                timestamp = GetSecs();
+            end
             request.timestamp = int64(timestamp*1000*1000);
             request.event_type= eventType;
             if nargin>3 && ~isempty(value)
