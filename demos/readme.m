@@ -13,7 +13,7 @@ fixTime                 = .5;
 imageTime               = 2;
 scr                     = max(Screen('Screens'));
 
-TobiiProLabProject      = 'EPtest'; % to use external presenter functionality, provide the name of the external presenter project here
+TobiiProLabProject      = 'EPTest'; % to use external presenter functionality, provide the name of the external presenter project here
 TobiiProLabParticipant  = 'tester';
 TobiiProLabRecordingName= 'recording1';
 
@@ -176,7 +176,8 @@ try
     stimFName = 'konijntjes1024x768.jpg';
     stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
     im = imread(stimFName);
-    tex = Screen('MakeTexture',wpnt,im);
+    tex     = Screen('MakeTexture',wpnt,im);
+    texRect = Screen('Rect',tex);
     
     % show on screen and log when it was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous
@@ -208,7 +209,7 @@ try
     % send stimulus events to Pro Lab, delinianating what happened when in
     % time
     TalkToProLabInstance.sendStimulusEvent(fixMediaID,[],startT);
-    pos = CenterRect(Screen('Rect',tex),winRect);  % if texture drawn without rect inputs, texture is centered on screen
+    pos = CenterRect(texRect,winRect);  % if texture drawn without rect inputs, texture is centered on screen
     TalkToProLabInstance.sendStimulusEvent(konijnMediaID,pos,imgT,endT,bgClr);
     
     % slightly less precise ISI is fine..., about 1s give or take a frame
@@ -229,13 +230,14 @@ try
     stimFNameBlur = 'konijntjes1024x768blur.jpg';
     stimFNameBlur = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFNameBlur);
     im = imread(stimFNameBlur);
-    [tex,texRect] = Screen('MakeTexture',wpnt,im);
+    tex     = Screen('MakeTexture',wpnt,im);
+    texRect = Screen('Rect',tex);
     Screen('DrawTexture',wpnt,tex);
     imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     
     % 4. end recording after x seconds of data again, clear screen.
-    Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
+    endT = Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
     EThndl.sendMessage(sprintf('STIM OFF: %s',stimFNameBlur),endT);
     Screen('Close',tex);
     
