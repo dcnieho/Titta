@@ -72,12 +72,16 @@ classdef TalkToProLabDummyMode < handle
         function delete(~)
         end
         
+        function disconnect(~)
+        end
+        
         function participantID = createParticipant(~,~,~)
             participantID = 'fake_participant_id';
         end
         
-        function mediaID = findMedia(~,~)
-            mediaID = '';
+        function [mediaID,mediaInfo] = findMedia(~,~)
+            mediaID     = '';
+            mediaInfo   = struct();
         end
         
         function [mediaID,wasUploaded] = uploadMedia(~,~,~)
@@ -85,7 +89,11 @@ classdef TalkToProLabDummyMode < handle
             wasUploaded = false;
         end
         
-        function numAOI = attachAOI(~,~)
+        function numAOI = attachAOIToImage(~,~,~,~,~,~)
+            numAOI = 0;
+        end
+        
+        function numAOI = attachAOIToVideo(~,~,~)
             numAOI = 0;
         end
         
@@ -110,6 +118,12 @@ classdef TalkToProLabDummyMode < handle
         end
         
         function sendCustomEvent(~,~,~,~)
+        end
+    end
+    
+    methods (Static)
+        function tag = makeTag(varargin)
+            tag = TalkToProLab.makeTag(varargin{:});
         end
     end
 end
