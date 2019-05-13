@@ -380,6 +380,8 @@ classdef TalkToProLab < handle
             request.timestamp = int64(timestamp*1000*1000);
             request.event_type= eventType;
             if nargin>3 && ~isempty(value)
+                value = regexprep(value,'[\n\r]','||'); % can't contain newlines/linefeeds
+                value = regexprep(value,'\t','    ');   % can't contain tabs
                 request.value = value;
             end
             
