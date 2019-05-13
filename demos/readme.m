@@ -111,7 +111,7 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    [wpnt,winRect] = PsychImaging('OpenWindow', scr, bgClr);
+    [wpnt,winRect] = PsychImaging('OpenWindow', scr, bgClr, [], [], [], [], 4);
     hz=Screen('NominalFrameRate', wpnt);
     Priority(1);
     Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
