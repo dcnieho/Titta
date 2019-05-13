@@ -18,7 +18,7 @@ classdef AnimatedCalibrationDisplay < handle
         doShrink            = true;
         shrinkTime          = 0.5;
         doMove              = true;
-        moveTime            = .8;       % for whole screen distance, duration will be proportionally shorter when dot moves less than whole screen distance
+        moveTime            = 1;        % for whole screen distance, duration will be proportionally shorter when dot moves less than whole screen distance
         moveWithAcceleration= true;
         doOscillate         = true;
         oscillatePeriod     = 1.5;
@@ -113,7 +113,7 @@ classdef AnimatedCalibrationDisplay < handle
                         curPos = obj.lastPoint(2:3)    + obj.moveVec*.5*obj.accel*(                 curT-obj.moveStartT)^2;
                     else
                         % implement deceleration by accelerating from the
-                        % other side
+                        % other side in backward time
                         curPos = obj.currentPoint(2:3) - obj.moveVec*.5*obj.accel*(obj.moveDuration-curT+obj.moveStartT)^2;
                     end
                 else
