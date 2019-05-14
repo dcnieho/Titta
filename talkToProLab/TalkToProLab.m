@@ -4,16 +4,14 @@ classdef TalkToProLab < handle
         clientClock;
         clientProject;
         clientEP;
+        
+        stimTimeStamps;
     end
     
     properties (SetAccess=protected)
         projectID;
         participantID;
         recordingID;
-    end
-    
-    % computed properties (so not actual properties)
-    properties (Dependent, SetAccess = private)
     end
     
     methods
@@ -88,14 +86,18 @@ classdef TalkToProLab < handle
             assert(strcmp(resp.project_name,expectedProject),'You indicated that project ''%s'' should be open in Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
             this.projectID = resp.project_id;
             fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
+            
+            % prep list of timestamps sent through stimulus messages
+            this.stimTimeStamps = simpleVec(int64([0 0]),1024);     % (re)initialize with space for 1024 stimulus intervals
         end
         
         function delete(this)
             % clean up connections
             this.disconnect();
-            this.projectID = '';
-            this.participantID = '';
-            this.recordingID = '';
+            this.projectID      = '';
+            this.participantID  = '';
+            this.recordingID    = '';
+            this.stimTimeStamps = simpleVec(int64([0 0]),1024);     % (re)initialize with space for 1024 stimulus intervals
         end
         
         function disconnect(this)
@@ -325,6 +327,29 @@ classdef TalkToProLab < handle
         end
         
         function finalizeRecording(this)
+            % Tobii Pro Lab requires there to be no gaps in the timeline
+            % resolve gaps first based on record of timeStamps sent to
+            % Tobii Pro Lab
+            fillerName  = '!!emptyIntervalFiller!!';
+            ts          = sortrows(this.stimTimeStamps.data,1);                     % events can be sent in any order, will be assembled by Tobii Pro Lab into correct order. Fix that up here
+            iGap        = find(ts(2:end,1)-ts(1:end-1,2) > 0 & ts(1:end-1,2)~=-1);  % end time can also be -1, in which case its automatically set to start time of next event. Ignore those
+            if ~isempty(iGap)
+                mediaID = this.findMedia(fillerName);
+                % see if we already have our fake filler media in this
+                % Lab project.
+                if isempty(mediaID)
+                    % nope, upload one
+                    mediaID = this.uploadMedia(zeros(10,10,'uint8'),fillerName);
+                end
+                % now plug the gaps
+                for g=1:length(iGap)
+                    st = ts(iGap(g)  ,2);   % start time of gap filler is end time of previous
+                    et = ts(iGap(g)+1,1);   % end time of gap filler is start time of next
+                    this.sendStimulusEvent(mediaID,[],st,et,[],false);
+                end
+            end
+            
+            % now send finalize
             this.clientEP.send(struct('operation','FinalizeRecording','recording_id',this.recordingID));
             waitForResponse(this.clientEP,'FinalizeRecording');
             this.recordingID= '';
@@ -336,14 +361,18 @@ classdef TalkToProLab < handle
             this.recordingID= '';
         end
         
-        function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background)
+        function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background,qDoTimeConversion)
             % mediaPosition, endTimeStamp, background are optional, can be
             % left empty or not provided in call
+            if nargin<7 || qDoTimeConversion
+                qDoTimeConversion = true;
+            end
             request = struct('operation','SendStimulusEvent',...
                 'recording_id',this.recordingID,...
                 'media_id',mediaID);
             
             % process input arguments
+            % 1. media position
             if ~isempty(mediaPosition)
                 % coordinate system is same as PTB, with (0,0) in top-left
                 request.media_position = struct(...
@@ -353,9 +382,21 @@ classdef TalkToProLab < handle
                     'bottom', mediaPosition(4)...
                     );
             end
-            request.start_timestamp = int64(startTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
+            % 2. start time
+            st = startTimeStamp;
+            if qDoTimeConversion
+                st = int64(st*1000*1000);
+            end
+            request.start_timestamp = st;           % convert timeStamps from PTB time to Tobii Pro Lab time
+            % 3. end time
             if nargin>4 && ~isempty(endTimeStamp)
-                request.end_timestamp = int64(endTimeStamp*1000*1000);      % convert timeStamps from PTB time to Pro Lab time
+                et = endTimeStamp;
+                if qDoTimeConversion
+                    et = int64(et*1000*1000);
+                end
+                request.end_timestamp = et;         % convert timeStamps from PTB time to Tobii Pro Lab time
+            else
+                et = int64(-1);
             end
             if nargin>5 && ~isempty(background)
                 if isnumeric(background)    % else we assume its a hexadecimal string already
@@ -370,6 +411,9 @@ classdef TalkToProLab < handle
             % send
             this.clientEP.send(request);
             waitForResponse(this.clientEP,'SendStimulusEvent');
+            
+            % store sent timestamps
+            this.stimTimeStamps.append([st et]);
         end
         
         function sendCustomEvent(this,timestamp,eventType,value)
