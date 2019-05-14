@@ -198,9 +198,10 @@ try
     if isempty(fixMediaID)
         fixMediaID = TalkToProLabInstance.uploadMedia(screenShotFixPoint,'fixationPoint');
         % add AOI around fixation point location
-        fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*2),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point
+        fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*4),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point (*2 because radius->diameter, *2 to double size)
         vertices= fixRect([1 3 3 1; 2 2 4 4]);
-        TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,TalkToProLabInstance.makeTag('fixPoint','points'));
+        wasSuccessful = TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,TalkToProLabInstance.makeTag('fixPoint','points'));
+        assert(wasSuccessful,'AOI was not added successfully');
     end
     konijnMediaID = TalkToProLabInstance.findMedia('konijntjes_nonblur');
     if isempty(konijnMediaID)
