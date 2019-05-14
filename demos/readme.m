@@ -1,5 +1,5 @@
 clear all
-DEBUGlevel              = 2;
+DEBUGlevel              = 0;
 useDarkModeCalibration  = false;
 setupScreenAlsoDark     = true;
 validationResultAlsoDark= true;
