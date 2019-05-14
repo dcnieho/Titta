@@ -253,12 +253,12 @@ classdef TalkToProLab < handle
             % vertices
             assert(size(vertices,1)==2,'attachAOIToImage: AOI vertices should be a 2xN array')
             nVert = size(vertices,2);
-            AOI.keyframes{1}.is_active = true;
-            AOI.keyframes{1}.seconds   = 0;
-            AOI.keyframes{1}.vertices  = repmat(struct('x',0,'y',0),1,nVert);
+            AOI.key_frames{1}.is_active = true;
+            AOI.key_frames{1}.seconds   = 0;
+            AOI.key_frames{1}.vertices  = repmat(struct('x',0,'y',0),1,nVert);
             vertices = num2cell(vertices);
-            [AOI.keyframes{1}.vertices.x] = vertices{1,:};
-            [AOI.keyframes{1}.vertices.y] = vertices{2,:};
+            [AOI.key_frames{1}.vertices.x] = vertices{1,:};
+            [AOI.key_frames{1}.vertices.y] = vertices{2,:};
             % tags
             if nargin>5 && ~isempty(tags)
                 if ~iscell(tags)
