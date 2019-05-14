@@ -20,10 +20,9 @@ classdef TalkToProLab < handle
             this.clientClock    = SimpleWSClient('ws://localhost:8080/clock?client_id=TittaMATLAB');
             assert(this.clientClock.Status==1,'Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
             this.clientProject  = SimpleWSClient('ws://localhost:8080/project?client_id=TittaMATLAB');
-            % TODO, wrong error messages?
             assert(this.clientProject.Status==1,'Could not connect to project service, did you start Tobii Pro Lab and open an external presenter project?');
             this.clientEP       = SimpleWSClient('ws://localhost:8080/record/externalpresenter?client_id=TittaMATLAB');
-            assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Tobii Pro Lab and open a project?');
+            assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Tobii Pro Lab and open an external presenter project?');
             
             % for each, check API semver major version
             % 1. clock service
