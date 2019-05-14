@@ -16,13 +16,14 @@ classdef TalkToProLab < handle
     
     methods
         function this = TalkToProLab(expectedProject)
-            % connect to needed Pro Lab Services
+            % connect to needed Lab services
             this.clientClock    = SimpleWSClient('ws://localhost:8080/clock?client_id=TittaMATLAB');
-            assert(this.clientClock.Status==1,'Could not connect to clock service, did you start Pro Lab and open a project?');
+            assert(this.clientClock.Status==1,'Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
             this.clientProject  = SimpleWSClient('ws://localhost:8080/project?client_id=TittaMATLAB');
-            assert(this.clientProject.Status==1,'Could not connect to project service, did you start Pro Lab and open an external presenter project?');
+            % TODO, wrong error messages?
+            assert(this.clientProject.Status==1,'Could not connect to project service, did you start Tobii Pro Lab and open an external presenter project?');
             this.clientEP       = SimpleWSClient('ws://localhost:8080/record/externalpresenter?client_id=TittaMATLAB');
-            assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Pro Lab and open a project?');
+            assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Tobii Pro Lab and open a project?');
             
             % for each, check API semver major version
             % 1. clock service
@@ -32,7 +33,7 @@ classdef TalkToProLab < handle
             vers    = sscanf(resp.version,'%d.%d').';
             expected= 1;
             if vers(1)~=expected
-                warning('TalkToProLab is compatible with Tobii Pro Lab''s clock API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s clock API version 1.0, your Lab software provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
             end
             % 2. project service
             this.clientProject.send(struct('operation','GetApiVersion'));
@@ -41,7 +42,7 @@ classdef TalkToProLab < handle
             vers    = sscanf(resp.version,'%d.%d').';
             expected= 1;
             if vers(1)~=expected
-                warning('TalkToProLab is compatible with Tobii Pro Lab''s project API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s project API version 1.0, your Lab software provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
             end
             % 3. external presenter service
             this.clientEP.send(struct('operation','GetApiVersion'));
@@ -50,7 +51,7 @@ classdef TalkToProLab < handle
             vers    = sscanf(resp.version,'%d.%d').';
             expected= 1;
             if vers(1)~=expected
-                warning('TalkToProLab is compatible with Tobii Pro Lab''s external presenter API version 1.0, your Pro Lab provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
+                warning('TalkToProLab is compatible with Tobii Pro Lab''s external presenter API version 1.0, your Lab software provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
             end
             
             % check our local clock is the same as the ProLabClock. for now
@@ -78,12 +79,12 @@ classdef TalkToProLab < handle
             % get rough estimate of clock offset (note this is includes
             % half RTT which is not taken into account, thats ok for our
             % purposes)
-            assert(mean(timesLab-timesPTB)<2500,'clock offset between PsychToolbox and Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Pro Lab on different computers (also unsupported)')
+            assert(mean(timesLab-timesPTB)<2500,'clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
             
             % get info about opened project
             this.clientProject.send(struct('operation','GetProjectInfo'));
             resp = waitForResponse(this.clientProject,'GetProjectInfo');
-            assert(strcmp(resp.project_name,expectedProject),'You indicated that project ''%s'' should be open in Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
+            assert(strcmp(resp.project_name,expectedProject),'You indicated that project ''%s'' should be open in Tobii Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
             this.projectID = resp.project_id;
             fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
             
