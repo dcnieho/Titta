@@ -1,7 +1,11 @@
+% shut up all warnings about accessing other class properties in a class's
+% setter or getter
+%#ok<*MCSUP>
 classdef PTBButton < handle
     properties
         visible;
         rect;
+        drawDropShadow = true;
     end
     
     properties (SetAccess=private)
@@ -16,8 +20,8 @@ classdef PTBButton < handle
         unfinishedSetup;
         wpnt;
         funs;
-        textRect;   % base rect of text
-        textOffset = [0 0]; % offset currently applied to it to position text
+        textRect;           % base rect of text
+        offset = [0 0];     % offset currently applied to it to position rect and text
     end
     
     methods
@@ -27,13 +31,13 @@ classdef PTBButton < handle
             this.funs           = funs; % textCacheGetter, textCacheDrawer, cacheOffSetter, colorGetter
             this.margins        = margins;
             
-            this.normalState    = struct('buttonColor',[],'string','','textColor',[],'tCache',[]);
+            this.normalState    = struct('fillColor',[],'edgeColor',[],'string','','textColor',[],'tCache',[]);
             this.hoverState     = this.normalState;
             this.activeState    = this.normalState;
             
             % check inputs
-            fields = {'string','textColor','buttonColor'};
-            for f=fields(1:3)
+            fields = {'string','textColor','fillColor','edgeColor'};
+            for f=fields
                 if ~iscell(setup.(f{1}))
                     setup.(f{1}) = {setup.(f{1})};
                 end
@@ -53,7 +57,8 @@ classdef PTBButton < handle
             else
                 this.unfinishedSetup.string     = setup.string;
                 this.unfinishedSetup.textColor  = setup.textColor;
-                this.unfinishedSetup.buttonColor= setup.buttonColor;
+                this.unfinishedSetup.fillColor  = setup.fillColor;
+                this.unfinishedSetup.edgeColor  = setup.edgeColor;
             end
         end
         
@@ -67,20 +72,20 @@ classdef PTBButton < handle
         
         function set.rect(this,val)
             this.rect = val;
-            if ~isempty(this.normalState.tCache)                                                %#ok<MCSUP>
+            if ~isempty(this.normalState.tCache)
                 fields = {'normalState', 'hoverState', 'activeState'};
                 for f=1:length(fields)
-                    this.(fields{f}).tCache = this.funs.cacheOffSetter(this.(fields{f}).tCache, this.rect, this.textOffset); %#ok<MCSUP>
+                    this.(fields{f}).tCache = this.funs.cacheOffSetter(this.(fields{f}).tCache, this.rect, this.offset);
                 end
-                [this.textOffset(1),this.textOffset(2)] = RectCenterd(this.rect);               %#ok<MCSUP>
+            [this.offset(1),this.offset(2)] = RectCenterd(this.rect);
             end
         end
         
         function set.visible(this,val)
             this.visible = ~~val;
-            if this.visible && isempty(this.normalState) && ~isempty(this.unfinishedSetup)      %#ok<MCSUP>
+            if this.visible && isempty(this.normalState) && ~isempty(this.unfinishedSetup)
                 % first time becomes visible, do setup
-                this.setupButton(this.wpnt,this.unfinishedSetup);                               %#ok<MCSUP>
+                this.setupButton(this.wpnt,this.unfinishedSetup);
             end
         end
         
@@ -100,26 +105,31 @@ classdef PTBButton < handle
                 state = 1;
             end
             
-            clr      = this.(states{state}).buttonColor;
-            lColHigh = this.(states{state}).lineColorHigh;
-            lColLow1 = this.(states{state}).lineColorLow1;
-            lColLow2 = this.(states{state}).lineColorLow2;
+            clr      = this.(states{state}).fillColor;
+            eclr     = this.(states{state}).edgeColor;
+            
+            drawRect = this.rect;
+            extraIn = {};
+            if this.drawDropShadow
+                % draw drop shadow
+                dropOffset = 6;
+                off = [cosd(45) sind(45)];
+                r = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
+                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 255]),r);
+                if state==3
+                    % depressed, move button to be draw right on top of
+                    % drop shadow
+                    drawRect = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
+                    extraIn = {drawRect};
+                end
+            end
             
             % draw background
-            Screen('FillRect',this.wpnt,this.funs.colorGetter(clr),this.rect);
-            % draw edges
-            width = 1;
-            if state==3
-                % button is depressed
-                xy = [this.rect([1 3 3 3]) this.rect([1 1 1 3])+[1  1  1 -1]*width this.rect([1 1 1 3]);  this.rect([4 4 4 2]) this.rect([4 2 2 2])+[-1  1  1 1]*width this.rect([4 2 2 2])];
-            else
-                % button is up
-                xy = [this.rect([1 1 1 3]) this.rect([1 3 3 3]) this.rect([1 3 3 3])+[1 -1 -1 -1]*width;  this.rect([4 2 2 2]) this.rect([4 4 4 2]) this.rect([4 4 4 2])+[-1 -1 -1 1]*width];
-            end
-            colors = [repmat(this.funs.colorGetter(lColHigh),4,1); repmat(this.funs.colorGetter(lColLow1),4,1); repmat(this.funs.colorGetter(lColLow2),4,1)].';
-            Screen('DrawLines',this.wpnt,xy,width,colors);
+            Screen('FillRect',this.wpnt,this.funs.colorGetter(clr),drawRect);
+            % draw edge
+            Screen('FrameRect',this.wpnt,this.funs.colorGetter(eclr),drawRect,3);
             % draw text
-            this.funs.textCacheDrawer(this.(states{state}).tCache);
+            this.funs.textCacheDrawer(this.(states{state}).tCache,extraIn{:});
         end
     end
     
@@ -130,10 +140,10 @@ classdef PTBButton < handle
             end
             % get rect around largest
             this.textRect   = [0 0 max(tRect(:,3)-tRect(:,1)) max(tRect(:,4)-tRect(:,2))];
-            this.rect       = this.textRect + 2*[0 0 this.margins];
+            this.rect       = this.textRect + [-this.margins this.margins];
             
             % now get final button setup
-            fields = {'string','textColor','buttonColor','tCache'};
+            fields = {'string','textColor','fillColor','edgeColor','tCache'};
             for f=fields
                 setup.(f{1})    = distributeInputs(setup.(f{1}),3);
             end
@@ -144,20 +154,6 @@ classdef PTBButton < handle
                 for f1=fields
                     this.(fields2{f2}).(f1{1}) = setup.(f1{1}){f2};
                 end
-            end
-            
-            % per state, make button colors
-            this.setupButtonColors();
-        end
-        
-        function setupButtonColors(this)
-            fields = {'normalState', 'hoverState', 'activeState'};
-            for f=1:length(fields)
-                colHSL = rgb2hsl(this.(fields{f}).buttonColor);
-                % make highlight color, and two lowlight colors
-                this.(fields{f}).lineColorHigh = hsl2rgb([colHSL(1:2) (colHSL(3)+1)/2]);
-                this.(fields{f}).lineColorLow1 = hsl2rgb([colHSL(1:2)  colHSL(3)*1/3 ]);
-                this.(fields{f}).lineColorLow2 = hsl2rgb([colHSL(1:2)  colHSL(3)*2/3 ]);
             end
         end
     end
@@ -184,4 +180,24 @@ elseif nWanted==3
         input = input([1 1 2]);
     end
 end
+end
+
+function verts = getRoundedPoly(rect,radius)
+% for if we want rounded edges. Screen('FramePoly') looks horrible with
+% this as input however, due to lack of antialiasing it seems
+[rw,rh] = deal(RectWidth(rect),RectHeight(rect));
+nStep  = 15;
+verts = zeros(nStep*4,2);
+% top left
+angs = linspace(-180,-90,nStep).';
+verts(1:nStep,:) = [cosd(angs) sind(angs)]*radius+radius;
+% top right
+angs = linspace( -90,  0,nStep).';
+verts(nStep+1:2*nStep,:) = bsxfun(@plus,[cosd(angs) sind(angs)]*radius,[rw-radius +radius]);
+% bottom right
+angs = linspace( 0,  90,nStep).';
+verts(2*nStep+1:3*nStep,:) = bsxfun(@plus,[cosd(angs) sind(angs)]*radius,[rw-radius rh-radius]);
+% bottom left
+angs = linspace( 90, 180,nStep).';
+verts(3*nStep+1:4*nStep,:) = bsxfun(@plus,[cosd(angs) sind(angs)]*radius,[radius rh-radius]);
 end
