@@ -115,7 +115,7 @@ classdef PTBButton < handle
                 dropOffset = 6;
                 off = [cosd(45) sind(45)];
                 r = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
-                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 255]),r);
+                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 180]),r);
                 if state==3
                     % depressed, move button to be draw right on top of
                     % drop shadow
