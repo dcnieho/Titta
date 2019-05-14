@@ -114,8 +114,8 @@ classdef PTBButton < handle
                 % draw drop shadow
                 dropOffset = 6;
                 off = [cosd(45) sind(45)];
-                r = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
-                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 180]),r);
+                shadowRect = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
+                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 127]),shadowRect);
                 if state==3
                     % depressed, move button to be draw right on top of
                     % drop shadow
@@ -123,11 +123,16 @@ classdef PTBButton < handle
                     extraIn = {drawRect};
                 end
             end
+            if state==2
+                edgeWidth = 3;
+            else
+                edgeWidth = 2;
+            end
             
             % draw background
             Screen('FillRect',this.wpnt,this.funs.colorGetter(clr),drawRect);
             % draw edge
-            Screen('FrameRect',this.wpnt,this.funs.colorGetter(eclr),drawRect,3);
+            Screen('FrameRect',this.wpnt,this.funs.colorGetter(eclr),drawRect,edgeWidth);
             % draw text
             this.funs.textCacheDrawer(this.(states{state}).tCache,extraIn{:});
         end

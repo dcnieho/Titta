@@ -667,16 +667,16 @@ classdef Titta < handle
             % some default colors to be used below
             eyeColors           = {[255 127   0],[  0  95 191]};
             toggleButClr.fill   = {[220 220 220],[240 240 240],[  0  90 245]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
-            toggleButClr.edge   = {[ 70  70  70],[  0  90 245],[255 255 255]};
+            toggleButClr.edge   = {[  0   0   0],[  0  90 245],[255 255 255]};
             toggleButClr.text   = {[  0  90 245],[  0  90 245],[255 255 255]};
             continueButClr.fill = {[ 70 189   0],[ 76 206   0],[ 88 239   0]};  % continue calibration, start recording
-            continueButClr.edge = {[235 235 235],[255 255 255],[255 255 255]};
+            continueButClr.edge = {[  0   0   0],[255 255 255],[255 255 255]};
             continueButClr.text = {[235 235 235],[255 255 255],[255 255 255]};
             backButClr.fill     = {[220 220 220],[240 240 240],[255  46  14]};  % redo cal, val, go back to set up
-            backButClr.edge     = {[ 70  70  70],[236  54  27],[255 255 255]};
+            backButClr.edge     = {[  0   0   0],[236  54  27],[255 255 255]};
             backButClr.text     = {[236  54  27],[236  54  27],[255 255 255]};
             optionButClr.fill   = {[220 220 220],[240 240 240],[255 162   0]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
-            optionButClr.edge   = {[ 70  70  70],[255 162   0],[255 255 255]};
+            optionButClr.edge   = {[  0   0   0],[255 162   0],[255 255 255]};
             optionButClr.text   = {[237 151   0],[255 162   0],[255 255 255]};
             
             % TODO: common file format
