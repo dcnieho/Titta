@@ -238,8 +238,7 @@ classdef TalkToProLab < handle
             assert(~isempty(strfind(mediaInfo.mime_type,'image')),'attachAOIToImage: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
             
             request = struct('operation','AddAois',...
-                'media_id',mediaID,...
-                'merge_mode','replace_aois');
+                'media_id',mediaID);
             % build up AOI object
             AOI = struct('name',aoiName);
             % color
@@ -274,6 +273,7 @@ classdef TalkToProLab < handle
                 AOI.tags = {};
             end
             request.aois = {AOI};       % enclose in cell so it becomes a json array
+            request.merge_mode = 'replace_aois';
             
             % send
             this.clientProject.send(request);
