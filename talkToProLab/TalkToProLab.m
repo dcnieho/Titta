@@ -460,7 +460,7 @@ end
 resp = connection.lastRespText;
 while isempty(resp) || ~(resp.status_code~=0 || strcmp(resp.operation,operation))
     resp = connection.lastRespText;
-    pause(pauseDur);
+    pause(pauseDur);    % gotta pause to allow other events to be processed in MATLAB
 end
 
 if resp.status_code
