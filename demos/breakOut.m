@@ -3,7 +3,7 @@ clear variables
 
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
-qDEBUG = 0;
+DEBUGlevel          = 0;
 
 % look
 bgclr               = 255/2;
@@ -101,7 +101,7 @@ try
     EThndl.init();
     
     
-    if qDEBUG>1
+    if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
         % higher, so we can debug.
         PsychDebugWindowConfiguration;

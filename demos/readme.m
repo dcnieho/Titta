@@ -1,5 +1,5 @@
 clear all
-qDEBUG                  = 0;
+DEBUGlevel              = 2;
 useDarkModeCalibration  = false;
 setupScreenAlsoDark     = true;
 validationResultAlsoDark= true;
@@ -98,12 +98,12 @@ try
     % participant by that name already exists, 
     TalkToProLabInstance.createParticipant(TobiiProLabParticipant,true);
     
-    if qDEBUG>1
+    if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
         % higher, so we can debug.
         PsychDebugWindowConfiguration;
     end
-    if qDEBUG
+    if DEBUGlevel
         % Be pretty verbose abDout information and hints to optimize your code and system.
         Screen('Preference', 'Verbosity', 4);
     else
