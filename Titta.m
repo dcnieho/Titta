@@ -666,18 +666,18 @@ classdef Titta < handle
             
             % some default colors to be used below
             eyeColors           = {[255 127   0],[  0  95 191]};
-            toggleButClr.fill   = {[220 220 220],[240 240 240],[  0  90 245]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
-            toggleButClr.edge   = {[  0   0   0],[  0  90 245],[255 255 255]};
-            toggleButClr.text   = {[  0  90 245],[  0  90 245],[255 255 255]};
-            continueButClr.fill = {[ 70 189   0],[ 76 206   0],[ 88 239   0]};  % continue calibration, start recording
+            toggleButClr.fill   = {[240 240 240],[255 255 255],[ 17 108 248]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
+            toggleButClr.edge   = {[  0   0   0],[  5  75 181],[255 255 255]};
+            toggleButClr.text   = {[  5  75 181],[  5  75 181],[255 255 255]};
+            continueButClr.fill = {[ 84 185  72],[ 84 185  72],[ 92 201  79]};  % continue calibration, start recording
             continueButClr.edge = {[  0   0   0],[255 255 255],[255 255 255]};
-            continueButClr.text = {[235 235 235],[255 255 255],[255 255 255]};
-            backButClr.fill     = {[220 220 220],[240 240 240],[255  46  14]};  % redo cal, val, go back to set up
-            backButClr.edge     = {[  0   0   0],[236  54  27],[255 255 255]};
-            backButClr.text     = {[236  54  27],[236  54  27],[255 255 255]};
-            optionButClr.fill   = {[220 220 220],[240 240 240],[255 162   0]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
-            optionButClr.edge   = {[  0   0   0],[255 162   0],[255 255 255]};
-            optionButClr.text   = {[237 151   0],[255 162   0],[255 255 255]};
+            continueButClr.text = {[240 240 240],[255 255 255],[255 255 255]};
+            backButClr.fill     = {[240 240 240],[255 255 255],[255  60  48]};  % redo cal, val, go back to set up
+            backButClr.edge     = {[  0   0   0],[238  62  52],[255 255 255]};
+            backButClr.text     = {[238  62  52],[238  62  52],[255 255 255]};
+            optionButClr.fill   = {[240 240 240],[255 255 255],[250 141  50]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
+            optionButClr.edge   = {[  0   0   0],[240 146  67],[255 255 255]};
+            optionButClr.text   = {[240 146  67],[240 146  67],[255 255 255]};
             
             % TODO: common file format
             % TODO: teaching perspective of showing all the data quality
@@ -708,7 +708,7 @@ classdef Titta < handle
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font  = 'Consolas';
+            settings.UI.button.setup.text.font  = 'Segeo UI';
             settings.UI.button.setup.text.size  = 24*textFac;
             settings.UI.button.setup.text.style = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
@@ -729,7 +729,7 @@ classdef Titta < handle
             settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
             settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
             settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
-            settings.UI.button.val.text.font    = 'Consolas';
+            settings.UI.button.val.text.font    = 'Segeo UI';
             settings.UI.button.val.text.size    = 24*textFac;
             settings.UI.button.val.text.style   = 0;
             settings.UI.button.val.recal.accelerator    = 'escape';
@@ -806,7 +806,7 @@ classdef Titta < handle
             settings.UI.val.menu.bgColor        = 110;
             settings.UI.val.menu.itemColor      = 140;
             settings.UI.val.menu.itemColorActive= 180;
-            settings.UI.val.menu.text.font      = 'Consolas';
+            settings.UI.val.menu.text.font      = 'Segeo UI';
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility

@@ -119,7 +119,7 @@ classdef PTBButton < handle
                 if state==3
                     % depressed, move button to be draw right on top of
                     % drop shadow
-                    drawRect = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
+                    drawRect = OffsetRect(this.rect(:).',off(1)*dropOffset*.5,off(2)*dropOffset*.5);
                     extraIn = {drawRect};
                 end
             end
