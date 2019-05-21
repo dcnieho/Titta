@@ -676,18 +676,18 @@ classdef Titta < handle
             
             % some default colors to be used below
             eyeColors           = {[255 127   0],[  0  95 191]};
-            toggleButClr.fill   = {[240 240 240],[255 255 255],[ 17 108 248]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
-            toggleButClr.edge   = {[  0   0   0],[  5  75 181],[255 255 255]};
-            toggleButClr.text   = {[  5  75 181],[  5  75 181],[255 255 255]};
-            continueButClr.fill = {[ 84 185  72],[ 84 185  72],[ 92 201  79]};  % continue calibration, start recording
-            continueButClr.edge = {[  0   0   0],[255 255 255],[255 255 255]};
-            continueButClr.text = {[240 240 240],[255 255 255],[255 255 255]};
-            backButClr.fill     = {[240 240 240],[255 255 255],[255  60  48]};  % redo cal, val, go back to set up
-            backButClr.edge     = {[  0   0   0],[238  62  52],[255 255 255]};
-            backButClr.text     = {[238  62  52],[238  62  52],[255 255 255]};
-            optionButClr.fill   = {[240 240 240],[255 255 255],[250 141  50]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
-            optionButClr.edge   = {[  0   0   0],[240 146  67],[255 255 255]};
-            optionButClr.text   = {[240 146  67],[240 146  67],[255 255 255]};
+            toggleButClr.fill   = {[199 221 255],[219 233 255],[ 17 108 248]};  % for buttons that toggle (e.g. show eye movements, show online gaze)
+            toggleButClr.edge   = {[  0   0   0],[  5  75 181],[219 233 255]};
+            toggleButClr.text   = {[  5  75 181],[  5  75 181],[219 233 255]};
+            continueButClr.fill = {[ 84 185  72],[ 91 194  78],[ 92 201  79]};  % continue calibration, start recording
+            continueButClr.edge = {[  0   0   0],[237 255 235],[237 255 235]};
+            continueButClr.text = {[214 255 209],[237 255 235],[237 255 235]};
+            backButClr.fill     = {[255 209 207],[255 231 229],[255  60  48]};  % redo cal, val, go back to set up
+            backButClr.edge     = {[  0   0   0],[238  62  52],[255 231 229]};
+            backButClr.text     = {[238  62  52],[238  62  52],[255 231 229]};
+            optionButClr.fill   = {[255 225 199],[255 236 219],[255 147  56]};  % "sideways" actions: view previous calibrations, open menu and select different calibration
+            optionButClr.edge   = {[  0   0   0],[255 116   0],[255 236 219]};
+            optionButClr.text   = {[255 116   0],[255 116   0],[255 236 219]};
             
             % TODO: common file format
             % TODO: teaching perspective of showing all the data quality
