@@ -364,6 +364,8 @@ classdef TalkToProLab < handle
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background,qDoTimeConversion)
             % mediaPosition, endTimeStamp, background are optional, can be
             % left empty or not provided in call
+            % qDoTimeConversion is for internal use, do not set it unless
+            % you know what you are doing.
             if nargin<7 || qDoTimeConversion
                 qDoTimeConversion = true;
             end

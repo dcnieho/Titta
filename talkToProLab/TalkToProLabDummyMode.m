@@ -114,7 +114,7 @@ classdef TalkToProLabDummyMode < handle
         function discardRecording(~)
         end
         
-        function sendStimulusEvent(~,~,~,~,~,~)
+        function sendStimulusEvent(~,~,~,~,~,~,~)
         end
         
         function sendCustomEvent(~,~,~,~)
