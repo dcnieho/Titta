@@ -141,25 +141,35 @@ classdef Titta < handle
             obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor              = color2RGBA(obj.settings.cal.fixFrontColor);
             
-            obj.settings.UI.button.setup.eyeIm.buttonColor  = color2RGBA(obj.settings.UI.button.setup.eyeIm.buttonColor);
+            obj.settings.UI.button.setup.eyeIm.fillColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.fillColor);
+            obj.settings.UI.button.setup.eyeIm.edgeColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.edgeColor);
             obj.settings.UI.button.setup.eyeIm.textColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.textColor);
-            obj.settings.UI.button.setup.cal.buttonColor    = color2RGBA(obj.settings.UI.button.setup.cal.buttonColor);
+            obj.settings.UI.button.setup.cal.fillColor      = color2RGBA(obj.settings.UI.button.setup.cal.fillColor);
+            obj.settings.UI.button.setup.cal.edgeColor      = color2RGBA(obj.settings.UI.button.setup.cal.edgeColor);
             obj.settings.UI.button.setup.cal.textColor      = color2RGBA(obj.settings.UI.button.setup.cal.textColor);
-            obj.settings.UI.button.setup.prevcal.buttonColor= color2RGBA(obj.settings.UI.button.setup.prevcal.buttonColor);
+            obj.settings.UI.button.setup.prevcal.fillColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.fillColor);
+            obj.settings.UI.button.setup.prevcal.edgeColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.edgeColor);
             obj.settings.UI.button.setup.prevcal.textColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.textColor);
-            obj.settings.UI.button.val.recal.buttonColor    = color2RGBA(obj.settings.UI.button.val.recal.buttonColor);
+            obj.settings.UI.button.val.recal.fillColor      = color2RGBA(obj.settings.UI.button.val.recal.fillColor);
+            obj.settings.UI.button.val.recal.edgeColor      = color2RGBA(obj.settings.UI.button.val.recal.edgeColor);
             obj.settings.UI.button.val.recal.textColor      = color2RGBA(obj.settings.UI.button.val.recal.textColor);
-            obj.settings.UI.button.val.reval.buttonColor    = color2RGBA(obj.settings.UI.button.val.reval.buttonColor);
+            obj.settings.UI.button.val.reval.fillColor      = color2RGBA(obj.settings.UI.button.val.reval.fillColor);
+            obj.settings.UI.button.val.reval.edgeColor      = color2RGBA(obj.settings.UI.button.val.reval.edgeColor);
             obj.settings.UI.button.val.reval.textColor      = color2RGBA(obj.settings.UI.button.val.reval.textColor);
-            obj.settings.UI.button.val.continue.buttonColor = color2RGBA(obj.settings.UI.button.val.continue.buttonColor);
+            obj.settings.UI.button.val.continue.fillColor   = color2RGBA(obj.settings.UI.button.val.continue.fillColor);
+            obj.settings.UI.button.val.continue.edgeColor   = color2RGBA(obj.settings.UI.button.val.continue.edgeColor);
             obj.settings.UI.button.val.continue.textColor   = color2RGBA(obj.settings.UI.button.val.continue.textColor);
-            obj.settings.UI.button.val.selcal.buttonColor   = color2RGBA(obj.settings.UI.button.val.selcal.buttonColor);
+            obj.settings.UI.button.val.selcal.fillColor     = color2RGBA(obj.settings.UI.button.val.selcal.fillColor);
+            obj.settings.UI.button.val.selcal.edgeColor     = color2RGBA(obj.settings.UI.button.val.selcal.edgeColor);
             obj.settings.UI.button.val.selcal.textColor     = color2RGBA(obj.settings.UI.button.val.selcal.textColor);
-            obj.settings.UI.button.val.setup.buttonColor    = color2RGBA(obj.settings.UI.button.val.setup.buttonColor);
+            obj.settings.UI.button.val.setup.fillColor      = color2RGBA(obj.settings.UI.button.val.setup.fillColor);
+            obj.settings.UI.button.val.setup.edgeColor      = color2RGBA(obj.settings.UI.button.val.setup.edgeColor);
             obj.settings.UI.button.val.setup.textColor      = color2RGBA(obj.settings.UI.button.val.setup.textColor);
-            obj.settings.UI.button.val.toggGaze.buttonColor = color2RGBA(obj.settings.UI.button.val.toggGaze.buttonColor);
+            obj.settings.UI.button.val.toggGaze.fillColor   = color2RGBA(obj.settings.UI.button.val.toggGaze.fillColor);
+            obj.settings.UI.button.val.toggGaze.edgeColor   = color2RGBA(obj.settings.UI.button.val.toggGaze.edgeColor);
             obj.settings.UI.button.val.toggGaze.textColor   = color2RGBA(obj.settings.UI.button.val.toggGaze.textColor);
-            obj.settings.UI.button.val.toggCal.buttonColor  = color2RGBA(obj.settings.UI.button.val.toggCal.buttonColor);
+            obj.settings.UI.button.val.toggCal.fillColor    = color2RGBA(obj.settings.UI.button.val.toggCal.fillColor);
+            obj.settings.UI.button.val.toggCal.edgeColor    = color2RGBA(obj.settings.UI.button.val.toggCal.edgeColor);
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
             
             % check requested eye calibration mode
@@ -748,7 +758,7 @@ classdef Titta < handle
             settings.UI.button.val.continue.visible     = true;
             settings.UI.button.val.continue.string      = 'continue (<i>spacebar<i>)';
             settings.UI.button.val.continue.fillColor   = continueButClr.fill;
-            settings.UI.button.val.continue.egdeColor   = continueButClr.edge;
+            settings.UI.button.val.continue.edgeColor   = continueButClr.edge;
             settings.UI.button.val.continue.textColor   = continueButClr.text;
             settings.UI.button.val.selcal.accelerator   = 'c';
             settings.UI.button.val.selcal.visible       = true;
