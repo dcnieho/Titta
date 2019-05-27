@@ -104,7 +104,7 @@ try
         PsychDebugWindowConfiguration;
     end
     if DEBUGlevel
-        % Be pretty verbose abDout information and hints to optimize your code and system.
+        % Be pretty verbose about information and hints to optimize your code and system.
         Screen('Preference', 'Verbosity', 4);
     else
         % Only output critical errors and warnings.
