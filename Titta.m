@@ -121,6 +121,12 @@ classdef Titta < handle
             obj.settings.UI.val.menu.text.eyeColors     = color2RGBA(obj.settings.UI.val.menu.text.eyeColors);
             
             obj.settings.UI.setup.bgColor               = color2RGBA(obj.settings.UI.setup.bgColor);
+            obj.settings.UI.setup.refCircleClr          = color2RGBA(obj.settings.UI.setup.refCircleClr);
+            obj.settings.UI.setup.headCircleClr         = color2RGBA(obj.settings.UI.setup.headCircleClr);
+            obj.settings.UI.setup.headCircleFillClr     = color2RGBA(obj.settings.UI.setup.headCircleFillClr);
+            obj.settings.UI.setup.eyeClr                = color2RGBA(obj.settings.UI.setup.eyeClr);
+            obj.settings.UI.setup.pupilClr              = color2RGBA(obj.settings.UI.setup.pupilClr);
+            obj.settings.UI.setup.crossClr              = color2RGBA(obj.settings.UI.setup.crossClr);
             obj.settings.UI.setup.fixBackColor          = color2RGBA(obj.settings.UI.setup.fixBackColor);
             obj.settings.UI.setup.fixFrontColor         = color2RGBA(obj.settings.UI.setup.fixFrontColor);
             obj.settings.UI.setup.instruct.color        = color2RGBA(obj.settings.UI.setup.instruct.color);
@@ -704,6 +710,12 @@ classdef Titta < handle
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox
             settings.UI.setup.bgColor           = 127;
+            settings.UI.setup.refCircleClr      = [0 0 255];
+            settings.UI.setup.headCircleClr     = [255 255 0];
+            settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
+            settings.UI.setup.eyeClr            = 255;
+            settings.UI.setup.pupilClr          = 0;
+            settings.UI.setup.crossClr          = [255 0 0];
             settings.UI.setup.fixBackSize       = 20;
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
@@ -937,13 +949,9 @@ classdef Titta < handle
             % setup ovals
             ovalVSz     = .15;
             refSz       = ovalVSz*obj.scrInfo.resolution(2);
-            refClr      = [0 0 255];        % TODO: don't hardcode
-            headClr     = [255 255 0];
-            headFillClr = [headClr .3*255];
             % setup head position visualization
             distGain    = 1.5;
             dDistGain   = 8;
-            eyeClr      = [255 255 255];
             eyeSzFac    = .25;
             eyeMarginFac= .25;
             pupilRefSz  = .50;
@@ -1150,11 +1158,11 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawCircle(wpnt,obj.getColorForWindow(refClr),refPos,refSz,5);
+                    drawCircle(wpnt,obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),refPos,refSz,5);
                 end
                 % stylized head
                 if ~isempty(headPos)
-                    drawCircle(wpnt,obj.getColorForWindow(headClr),headPos,headSz,5,obj.getColorForWindow(headFillClr));
+                    drawCircle(wpnt,obj.getColorForWindow(obj.settings.UI.setup.headCircleClr),headPos,headSz,5,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr));
                     if obj.settings.UI.setup.showEyes
                         for p=1:2
                             % left eye
@@ -1170,19 +1178,19 @@ classdef Titta < handle
                                 % draw cross indicating not calibrated
                                 base = eyeSz(p)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
                                 R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                                Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                                Screen('FillPoly', wpnt, obj.getColorForWindow([255 0 0]), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
+                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.crossClr), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
+                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.crossClr), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
                             elseif (p==1 && qHaveLeft) || (p==2 && qHaveRight)
                                 % draw eye with optional pupil
-                                drawCircle(wpnt,[],pos,eyeSz(p),0,obj.getColorForWindow(eyeClr));
+                                drawCircle(wpnt,[],pos,eyeSz(p),0,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
                                 if obj.settings.UI.setup.showPupils
                                     pupSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
-                                    drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow([0 0 0]));
+                                    drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow(obj.settings.UI.setup.pupilClr));
                                 end
                             else
                                 % draw line indicating closed/missing eye
                                 base = eyeSz(p)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                                Screen('FillPoly', wpnt, obj.getColorForWindow(eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
+                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
                             end
                         end
                     end
