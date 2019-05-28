@@ -702,14 +702,14 @@ classdef Titta < handle
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
-            settings.UI.setup.viewingDist       = 65;
+            settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.fixBackSize       = 20;
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            %settings.UI.setup.instruct.strFun   = @(x,y,z) sprintf('Position yourself such that the two circles overlap.\nX: %.1f cm,  Y: %.1f cm,  Distance: %.0f cm',x,y,z);
-            settings.UI.setup.instruct.strFun   = @(x,y,z) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
+            % settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
+            settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.font     = 'Consolas';
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -937,7 +937,7 @@ classdef Titta < handle
             % setup ovals
             ovalVSz     = .15;
             refSz       = ovalVSz*obj.scrInfo.resolution(2);
-            refClr      = [0 0 255];
+            refClr      = [0 0 255];        % TODO: don't hardcode
             headClr     = [255 255 0];
             headFillClr = [headClr .3*255];
             % setup head position visualization
@@ -949,6 +949,17 @@ classdef Titta < handle
             pupilRefSz  = .50;
             pupilRefDiam= 5;    % mm
             pupilSzGain = 1.5;
+            
+            % get reference position
+            if isempty(obj.settings.UI.setup.referencePos)
+                obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
+            end
+            % position reference circle on screen
+            tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (obj.settings.UI.setup.referencePos(3));
+            refX    =    obj.settings.UI.setup.referencePos(1)/tbWidth /2+.5;
+            tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(obj.settings.UI.setup.referencePos(3));
+            refY    = 1-(obj.settings.UI.setup.referencePos(2)/tbHeight/2+.5);      % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
+            refPos  = [refX refY].*obj.scrInfo.resolution;
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
@@ -1099,9 +1110,9 @@ classdef Titta < handle
                 % scale up size of oval. define size/rect at standard distance, have a
                 % gain for how much to scale as distance changes
                 if ~isnan(avgDist)
-                    pos     = [avgXtb 1-avgYtb];    %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
+                    pos     = [avgXtb 1-avgYtb];    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                     % determine size of oval, based on distance from reference distance
-                    fac     = avgDist/obj.settings.UI.setup.viewingDist;
+                    fac     = avgDist/obj.settings.UI.setup.referencePos(3);
                     headSz  = refSz - refSz*(fac-1)*distGain;
                     eyeSz   = eyeSzFac*headSz*((avgDist./dists-1)*dDistGain+1);
                     eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
@@ -1132,13 +1143,14 @@ classdef Titta < handle
                 qHideSetup = qShowEyeImage && isempty(headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
                 % draw distance info
                 if ~qHideSetup
-                    DrawFormattedText(wpnt,obj.settings.UI.setup.instruct.strFun(avgX,avgY,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    str = obj.settings.UI.setup.instruct.strFun(avgX,avgY,avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    DrawFormattedText(wpnt,str,'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw ovals
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawCircle(wpnt,obj.getColorForWindow(refClr),obj.scrInfo.center,refSz,5);
+                    drawCircle(wpnt,obj.getColorForWindow(refClr),refPos,refSz,5);
                 end
                 % stylized head
                 if ~isempty(headPos)
