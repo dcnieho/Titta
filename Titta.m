@@ -454,9 +454,12 @@ classdef Titta < handle
                     if ~qDoCal
                         out.attempt{kCal}.cal = out.attempt{activeCal}.cal;
                         out.attempt{kCal}.calIsCopiedFrom = activeCal;
-                        % reset
-                        qDoCal    = true;
-                        activeCal = nan;
+                        % reset, if not requesting restart validation
+                        % sequence from beginning
+                        if out.attempt{kCal}.calStatus~=-1
+                            qDoCal    = true;
+                            activeCal = nan;
+                        end
                     end
                     % check returned action state
                     switch out.attempt{kCal}.calStatus
