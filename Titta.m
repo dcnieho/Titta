@@ -708,7 +708,8 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.instruct.string   = 'Position yourself such that the two circles overlap.\nDistance: %.0f cm';
+            %settings.UI.setup.instruct.strFun   = @(x,y,z) sprintf('Position yourself such that the two circles overlap.\nX: %.1f cm,  Y: %.1f cm,  Distance: %.0f cm',x,y,z);
+            settings.UI.setup.instruct.strFun   = @(x,y,z) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.font     = 'Consolas';
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -1091,14 +1092,14 @@ classdef Titta < handle
                 avgDist = mean(dists(~isnan(Xs)));
                 % convert from UCS to trackBox coordinates
                 tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (avgDist);
-                avgX    = avgX/tbWidth /2+.5;
+                avgXtb  = avgX/tbWidth /2+.5;
                 tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(avgDist);
-                avgY    = avgY/tbHeight/2+.5;
+                avgYtb  = avgY/tbHeight/2+.5;
                 
                 % scale up size of oval. define size/rect at standard distance, have a
                 % gain for how much to scale as distance changes
                 if ~isnan(avgDist)
-                    pos     = [avgX 1-avgY];  %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
+                    pos     = [avgXtb 1-avgYtb];    %1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                     % determine size of oval, based on distance from reference distance
                     fac     = avgDist/obj.settings.UI.setup.viewingDist;
                     headSz  = refSz - refSz*(fac-1)*distGain;
@@ -1131,7 +1132,7 @@ classdef Titta < handle
                 qHideSetup = qShowEyeImage && isempty(headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
                 % draw distance info
                 if ~qHideSetup
-                    DrawFormattedText(wpnt,sprintf(obj.settings.UI.setup.instruct.string,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt,obj.settings.UI.setup.instruct.strFun(avgX,avgY,avgDist),'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw ovals
                 % reference circle--don't draw if showing eye images and no
