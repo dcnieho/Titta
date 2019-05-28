@@ -416,12 +416,19 @@ classdef Titta < handle
             % 1. start with simple head positioning interface
             % 2. start with advanced head positioning interface
             startScreen = obj.settings.UI.startScreen;
-            qDoCal      = true;
             kCal        = 0;
-            activeCal   = nan;
+            out         = struct();
+            qNewCal     = true;
             while true
                 qGoToValidationViewer = false;
-                kCal = kCal+1;
+                if qNewCal
+                    if ~kCal
+                        kCal = 1;
+                    else
+                        kCal    = length(out.attempt)+1;
+                    end
+                    qNewCal = false;
+                end
                 out.attempt{kCal}.eye  = obj.settings.calibrateEye;
                 if startScreen>0
                     %%% 2a: show head positioning screen
@@ -446,23 +453,9 @@ classdef Titta < handle
                 
                 %%% 2b: calibrate and validate
                 if ~qGoToValidationViewer
-                    [out.attempt{kCal}.calStatus,temp] = obj.DoCalAndVal(wpnt,kCal,qDoCal);
-                    oldwarn = warning('off','catstruct:DuplicatesFound');   % field already exists but is empty, will be overwritten with the output from the function here
-                    out.attempt{kCal} = catstruct(out.attempt{kCal},temp);
-                    warning(oldwarn);
-                    % if only validating, copy info of active calibration
-                    if ~qDoCal
-                        out.attempt{kCal}.cal = out.attempt{activeCal}.cal;
-                        out.attempt{kCal}.calIsCopiedFrom = activeCal;
-                        % reset, if not requesting restart validation
-                        % sequence from beginning
-                        if out.attempt{kCal}.calStatus~=-1
-                            qDoCal    = true;
-                            activeCal = nan;
-                        end
-                    end
+                    out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
                     % check returned action state
-                    switch out.attempt{kCal}.calStatus
+                    switch out.attempt{kCal}.status
                         case 1
                             % all good, continue
                         case 2
@@ -471,21 +464,23 @@ classdef Titta < handle
                         case -1
                             % restart calibration
                             startScreen = 0;
+                            qNewCal     = ~(isfield(out.attempt{kCal},'cal') && out.attempt{kCal}.cal.status==1);   % new calibration unless we have a successful calibration already, then we're restarting a validation
                             continue;
                         case -3
                             % go to setup
                             startScreen = 1;
+                            qNewCal     = true;
                             continue;
                         case -5
                             % full stop
                             obj.buffer.leaveCalibrationMode();
                             error('Titta: run ended from calibration routine')
                         otherwise
-                            error('Titta: status %d not implemented',out.attempt{kCal}.calStatus);
+                            error('Titta: status %d not implemented',out.attempt{kCal}.status);
                     end
                     
                     % store information about last calibration as message
-                    if out.attempt{kCal}.calStatus==1
+                    if out.attempt{kCal}.val{end}.status==1
                         message = obj.getValidationQualityMessage(out.attempt{kCal},kCal);
                         obj.sendMessage(message);
                     end
@@ -493,10 +488,11 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt{kCal}.valReviewStatus,out.attempt{kCal}.calSelection,activeCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
+                [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
+                        out.selectedCal = kCal;
                         break;
                     case 2
                         % skip setup
@@ -504,15 +500,18 @@ classdef Titta < handle
                     case -1
                         % restart calibration
                         startScreen = 0;
+                        qNewCal     = true;
                         continue;
                     case -2
                         % redo validation only
                         startScreen = 0;
-                        qDoCal      = false;
+                        % NB: not a new cal, we're adding a validation to
+                        % the current cal
                         continue;
                     case -3
                         % go to setup
                         startScreen = 1;
+                        qNewCal     = true;
                         continue;
                     case -5
                         % full stop
@@ -535,8 +534,8 @@ classdef Titta < handle
                 obj.buffer.leaveCalibrationMode();
             end
             % log to messages which calibration was selected
-            if isfield(out,'attempt') && isfield(out.attempt{kCal},'calSelection')
-                obj.sendMessage(sprintf('Selected calibration (%s) %d',obj.settings.calibrateEye,out.attempt{kCal}.calSelection));
+            if isfield(out,'selectedCal')
+                obj.sendMessage(sprintf('CALIBRATION (%s) SELECTED %d',obj.settings.calibrateEye,out.selectedCal));
             end
             
             % store calibration info in calibration history, for later
@@ -864,21 +863,26 @@ classdef Titta < handle
             if isfield(cal,'attempt')
                 % find selected calibration, make sure we output quality
                 % info for that
-                kCal    = cal.attempt{end}.calSelection;
+                if nargin<2 || isempty(kCal)
+                    assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
+                    kCal    = cal.selectedCal;
+                end
                 cal     = cal.attempt{kCal};
             end
+            % find last valid validation
+            iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
+            val     = cal.val{iVal};
             % get data to put in message, output per eye separately.
-            eyes    = fieldnames(cal.val.quality);
-            nPoint  = length(cal.val.quality);
+            eyes    = fieldnames(val.quality);
+            nPoint  = length(val.quality);
             msg     = cell(1,length(eyes));
             for e=1:length(eyes)
                 dat = cell(7,nPoint+1);
                 for k=1:nPoint
-                    val = cal.val.quality(k).(eyes{e});
-                    dat(:,k) = {sprintf('%d @ (%.0f,%.0f)',k,cal.val.pointPos(k,2:3)),val.acc2D,val.acc(1),val.acc(2),val.STD2D,val.RMS2D,val.dataLoss*100};
+                    valq = val.quality(k).(eyes{e});
+                    dat(:,k) = {sprintf('%d @ (%.0f,%.0f)',k,val.pointPos(k,2:3)),valq.acc2D,valq.acc(1),valq.acc(2),valq.STD2D,valq.RMS2D,valq.dataLoss*100};
                 end
                 % also get average
-                val = cal.val;
                 dat(:,end) = {'average',val.acc2D(e),val.acc(1,e),val.acc(2,e),val.STD2D(e),val.RMS2D(e),val.dataLoss(e)*100};
                 msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.1f%%\n',dat{:}));
             end
@@ -939,7 +943,7 @@ classdef Titta < handle
             % of head box vertically and horizontally, two circles will
             % overlap indicating correct positioning
             
-            startT                  = obj.sendMessage(sprintf('SETUP START %s',obj.settings.calibrateEye));
+            startT                  = obj.sendMessage(sprintf('START SETUP %s',obj.settings.calibrateEye));
             obj.buffer.start('gaze');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
@@ -1252,7 +1256,7 @@ classdef Titta < handle
             % clean up
             HideCursor;
             obj.buffer.stop('gaze');
-            obj.sendMessage(sprintf('SETUP END %s',obj.settings.calibrateEye));
+            obj.sendMessage(sprintf('STOP SETUP %s',obj.settings.calibrateEye));
             obj.buffer.clearTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
             if qHasEyeIm
                 obj.buffer.stop('eyeImage');
@@ -1344,14 +1348,23 @@ classdef Titta < handle
             end
         end
         
-        function [status,out] = DoCalAndVal(obj,wpnt,kCal,qDoCal)
+        function out = DoCalAndVal(obj,wpnt,kCal,out)
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+            
+            % determine if calibrating or revalidating
+            qDoCal = ~isfield(out,'cal');
             
             % get data streams started
             if qDoCal
-                calStartT = obj.sendMessage(sprintf('CALIBRATION START %s %d',obj.settings.calibrateEye,kCal));
+                calStartT   = obj.sendMessage(sprintf('START CALIBRATION %s %d',obj.settings.calibrateEye,kCal));
+                iVal        = 1;
             else
-                valStartT = obj.sendMessage(sprintf( 'VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
+                if isfield(out,'val')
+                    iVal = length(out.val)+1;
+                else
+                    iVal = 1;
+                end
+                valStartT = obj.sendMessage(sprintf('START VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
             end
             obj.buffer.start('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
@@ -1365,15 +1378,15 @@ classdef Titta < handle
             % do calibration
             if qDoCal
                 % show display
-                [status,out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1);
-                obj.sendMessage(sprintf('CALIBRATION END %s %d',obj.settings.calibrateEye,kCal));
+                [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1);
+                obj.sendMessage(sprintf('STOP CALIBRATION %s %d',obj.settings.calibrateEye,kCal));
                 out.cal.data = obj.ConsumeAllData(calStartT);
-                if status==1
+                if out.cal.status==1
                     if ~isempty(obj.settings.cal.pointPos)
                         % if valid calibration retrieve data, so user can select different ones
                         if ~strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                             % calibration failed, back to setup screen
-                            status = -3;
+                            out.cal.status = -3;
                             Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
                             Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
                             DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
@@ -1394,10 +1407,10 @@ classdef Titta < handle
                 end
                 calLastFlip = {tick,out.cal.flips(end)};
                 
-                if status~=1
+                if out.cal.status~=1
                     obj.StopRecordAll();
                     obj.ClearAllBuffers(calStartT);    % clean up data
-                    if status~=-1
+                    if out.cal.status~=-1
                         % -1 means restart calibration from start. if we do not
                         % clean up here, we e.g. get a nice animation of the
                         % point back to the center of the screen, or however
@@ -1410,6 +1423,7 @@ classdef Titta < handle
                         end
                         Screen('Flip',wpnt);
                     end
+                    out.status = out.cal.status;
                     return;
                 end
             else
@@ -1420,26 +1434,27 @@ classdef Titta < handle
             if qDoCal
                 % if we just did a cal, add message that now we're entering
                 % validation mode
-                valStartT = obj.sendMessage(sprintf('VALIDATION START %s %d',obj.settings.calibrateEye,kCal));
+                valStartT = obj.sendMessage(sprintf('START VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
                 obj.ClearAllBuffers(calStartT);    % clean up data from calibration
             end
             % show display
-            [status,out.val] = obj.DoCalPointDisplay(wpnt,false,calLastFlip{:});
-            obj.sendMessage(sprintf('VALIDATION END %s %d',obj.settings.calibrateEye,kCal));
-            out.val.allData = obj.ConsumeAllData(valStartT);
+            out.val{iVal} = obj.DoCalPointDisplay(wpnt,false,calLastFlip{:});
+            obj.sendMessage(sprintf('STOP VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
+            out.val{iVal}.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
             obj.ClearAllBuffers(valStartT);    % clean up data
             % compute accuracy etc
-            if status==1
-                out.val = obj.ProcessValData(out.val);
+            if out.val{iVal}.status==1
+                out.val{iVal} = obj.ProcessValData(out.val{iVal});
             end
             
-            if status~=-1   % see comment above about why not when -1
+            if out.val{iVal}.status~=-1   % see comment above about why not when -1
                 % cleanup message to user function (if any)
                 if isa(obj.settings.cal.drawFunction,'function_handle')
                     obj.settings.cal.drawFunction(nan,nan,nan,nan);
                 end
             end
+            out.status = out.val{iVal}.status;
             
             % clear flip
             Screen('Flip',wpnt);
@@ -1467,8 +1482,8 @@ classdef Titta < handle
             obj.buffer.stop('timeSync');
         end
         
-        function [status,out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)
-            % status output:
+        function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)
+            % status output (in out.status):
             %  1: finished succesfully (you should query Tobii SDK whether
             %     they agree that calibration was succesful though)
             %  2: skip calibration and continue with task (shift+s)
@@ -1485,7 +1500,7 @@ classdef Titta < handle
             if qCal
                 points          = obj.settings.cal.pointPos;
                 paceInterval    = ceil(obj.settings.cal.paceDuration   *Screen('NominalFrameRate',wpnt));
-                out.status      = {};
+                out.pointStatus = {};
                 extraInp        = {obj.settings.calibrateEye};
                 if strcmp(obj.settings.calibrateEye,'both')
                     extraInp    = {};
@@ -1540,7 +1555,7 @@ classdef Titta < handle
             end
             
             % prepare output
-            status = 1; % calibration went ok, unless otherwise stated
+            out.status = 1; % calibration went ok, unless otherwise stated
             
             % clear screen, anchor timing, get ready for displaying calibration points
             out.flips    = flipT;
@@ -1592,20 +1607,20 @@ classdef Titta < handle
                         % accepting calibration point
                         haveAccepted    = true;
                     elseif any(strcmpi(keys,'r'))
-                        status = -1;
+                        out.status = -1;
                         break;
                     elseif any(strcmpi(keys,'escape'))
                         % NB: no need to cancel calibration here,
                         % leaving calibration mode is done by caller
                         if shiftIsDown
-                            status = -5;
+                            out.status = -5;
                         else
-                            status = -3;
+                            out.status = -3;
                         end
                         break;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
-                        status = 2;
+                        out.status = 2;
                         break;
                     end
                 end
@@ -1644,7 +1659,7 @@ classdef Titta < handle
                                 end
                             end
                             if advancePoint
-                                out.status{currentPoint} = computeResult;
+                                out.pointStatus{currentPoint} = computeResult;
                             end
                         end
                     else
@@ -1672,7 +1687,7 @@ classdef Titta < handle
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
-            if qCal && size(points,1)>0 && status==1
+            if qCal && size(points,1)>0 && out.status==1
                 % compute calibration
                 obj.buffer.calibrationComputeAndApply();
                 computeResult   = [];
@@ -1789,7 +1804,7 @@ classdef Titta < handle
             out  = bsxfun(@plus,obj.geom.displayArea.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
         end
         
-        function [status,selection,activeCal] = showCalValResult(obj,wpnt,cal,selection)
+        function [cal,selection] = showCalValResult(obj,wpnt,cal,selection)
             % status output:
             %  1: calibration/validation accepted, continue (a)
             %  2: just continue with task (shift+s)
@@ -1812,8 +1827,9 @@ classdef Titta < handle
                 % viewer
                 selection = iValid(end);
             end
-            qHasCal                = ~isempty(cal{selection}.cal.result);
-            qHaveMultipleValidCals = ~isempty(iValid) && ~isscalar(iValid);
+            qHasCal                 = ~isempty(cal{selection}.cal.result);
+            qHaveMultipleValidCals  = ~isempty(iValid) && ~isscalar(iValid);
+            iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
             
             % setup text for buttons
             Screen('TextFont',  wpnt, obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
@@ -1913,7 +1929,6 @@ classdef Titta < handle
             fixPointRectSz      = 100;
             openInfoForPoint    = nan;
             pointToShowInfoFor  = nan;
-            but7Pos             = but(7).rect;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress();
@@ -1958,6 +1973,7 @@ classdef Titta < handle
                                 selection = newSelection;
                                 qAwaitingCalChange = false;
                                 qHasCal = ~isempty(cal{selection}.cal.result);
+                                iVal    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
                                 if ~qHasCal && qShowCal
                                     qShowCal            = false;
                                     % toggle selection menu to trigger updating of
@@ -1984,11 +2000,11 @@ classdef Titta < handle
                             Screen('TextSize', wpnt, obj.settings.UI.val.avg.text.size);
                             [strl,strr,strsep] = deal('');
                             if obj.calibrateLeftEye
-                                strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val.acc2D( 1 ),cal{selection}.val.acc(:, 1 ),cal{selection}.val.STD2D( 1 ),cal{selection}.val.RMS2D( 1 ),cal{selection}.val.dataLoss( 1 )*100);
+                                strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(:, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100);
                             end
                             if obj.calibrateRightEye
                                 idx = 1+obj.calibrateLeftEye;
-                                strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val.acc2D(idx),cal{selection}.val.acc(:,idx),cal{selection}.val.STD2D(idx),cal{selection}.val.RMS2D(idx),cal{selection}.val.dataLoss(idx)*100);
+                                strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(:,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100);
                             end
                             if obj.calibrateLeftEye && obj.calibrateRightEye
                                 strsep = '\n';
@@ -1998,11 +2014,9 @@ classdef Titta < handle
                             
                             % get info about where points were on screen
                             if qShowCal
-                                lbl      = 'calibration';
                                 nPoints  = length(cal{selection}.cal.result.points);
                             else
-                                lbl      = 'validation';
-                                nPoints  = size(cal{selection}.val.pointPos,1);
+                                nPoints  = size(cal{selection}.val{iVal}.pointPos,1);
                             end
                             calValPos   = zeros(nPoints,2);
                             if qShowCal
@@ -2011,15 +2025,15 @@ classdef Titta < handle
                                 end
                             else
                                 for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.val.pointPos(p,2:3);
+                                    calValPos(p,:)  = cal{selection}.val{iVal}.pointPos(p,2:3);
                                 end
                             end
                             % get rects around validation points
                             if qShowCal
                                 calValRects         = [];
                             else
-                                calValRects = zeros(size(cal{selection}.val.pointPos,1),4);
-                                for p=1:size(cal{selection}.val.pointPos,1)
+                                calValRects = zeros(size(cal{selection}.val{iVal}.pointPos,1),4);
+                                for p=1:size(cal{selection}.val{iVal}.pointPos,1)
                                     calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
                                 end
                             end
@@ -2065,14 +2079,14 @@ classdef Titta < handle
                     Screen('TextFont', wpnt, obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt, obj.settings.UI.val.hover.text.size);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
-                        lE = cal{selection}.val.quality(pointToShowInfoFor).left;
-                        rE = cal{selection}.val.quality(pointToShowInfoFor).right;
+                        lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
+                        rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     elseif obj.calibrateLeftEye
-                        lE = cal{selection}.val.quality(pointToShowInfoFor).left;
+                        lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
                         str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
                     elseif obj.calibrateRightEye
-                        rE = cal{selection}.val.quality(pointToShowInfoFor).right;
+                        rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
@@ -2102,7 +2116,7 @@ classdef Titta < handle
                                 rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution.');
                             end
                         else
-                            myVal = cal{selection}.val;
+                            myVal = cal{selection}.val{iVal};
                             bpos = calValPos(p,:).';
                             % left eye
                             if obj.calibrateLeftEye
@@ -2328,10 +2342,7 @@ classdef Titta < handle
             end
             % done, clean up
             cursor.reset();
-            activeCal = selection;
-            if status~=1
-                selection = NaN;
-            end
+            cal{selection}.valReviewStatus = status;
             if qShowGaze
                 % if showing gaze, switch off gaze data stream
                 obj.buffer.stop('gaze');
@@ -2381,7 +2392,7 @@ angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
 function iValid = getValidCalibrations(cal)
-iValid = find(cellfun(@(x) isfield(x,'calStatus') && x.calStatus==1 && ~isempty(x.cal.result) && strcmpi(x.cal.result.status(1:7),'success'),cal));
+iValid = find(cellfun(@(x) isfield(x,'cal') && isfield(x.cal,'status') && x.cal.status==1 && ~isempty(x.cal.result) && strcmpi(x.cal.result.status(1:7),'success'),cal));
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
