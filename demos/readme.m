@@ -31,6 +31,7 @@ try
         settings.UI.setup.instruct.color= fixClrsDark(1);
         settings.UI.setup.fixBackColor  = fixClrsDark(1);
         settings.UI.setup.fixFrontColor = fixClrsDark(2);
+        settings.UI.setup.refCircleClr  = [255 0 0];
     else
         settings.UI.setup.bgColor       = bgClr;
         settings.UI.setup.instruct.color= fixClrs(1);
