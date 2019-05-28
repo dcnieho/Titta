@@ -1894,14 +1894,17 @@ classdef Titta < handle
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
                 for c=length(iValid):-1:1
+                    % find the active/last valid validation for this
+                    % calibration
+                    aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val.acc2D( 1 ),cal{iValid(c)}.val.acc(:, 1 ));
+                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(:, 1 ));
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val.acc2D(idx),cal{iValid(c)}.val.acc(:,idx));
+                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(:,idx));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
