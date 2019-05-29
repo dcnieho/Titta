@@ -89,8 +89,8 @@ classdef TalkToProLabDummyMode < handle
             wasUploaded = false;
         end
         
-        function numAOI = attachAOIToImage(~,~,~,~,~,~)
-            numAOI = 0;
+        function success = attachAOIToImage(~,~,~,~,~,~)
+            success = true;
         end
         
         function numAOI = attachAOIToVideo(~,~,~)
@@ -98,7 +98,7 @@ classdef TalkToProLabDummyMode < handle
         end
         
         function EPState = getExternalPresenterState(~)
-            EPState = 'unmet';
+            EPState = 'ready';
         end
         
         function recordingID = startRecording(~,~,~,~,~)
