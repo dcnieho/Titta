@@ -404,8 +404,6 @@ classdef Titta < handle
                 end
                 obj.buffer.enterCalibrationMode(qDoMonocular);
             end
-            % log eye that we are calibrating
-            obj.sendMessage(sprintf('Setting up %s eye',obj.settings.calibrateEye));
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -535,7 +533,7 @@ classdef Titta < handle
             end
             % log to messages which calibration was selected
             if isfield(out,'selectedCal')
-                obj.sendMessage(sprintf('CALIBRATION (%s) SELECTED %d',obj.settings.calibrateEye,out.selectedCal));
+                obj.sendMessage(sprintf('CALIBRATION (%s) SELECTED no. %d',getEyeLbl(obj.settings.calibrateEye),out.selectedCal));
             end
             
             % store calibration info in calibration history, for later
@@ -887,7 +885,7 @@ classdef Titta < handle
                 msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.4f°\t%.1f%%\n',dat{:}));
             end
             msg = [msg{:}]; msg(end) = [];
-            message = sprintf('VALIDATION %d Data Quality:\npoint\tacc2D\taccX\taccY\tSTD2D\tRMS2D\tdata loss\n%s',kCal,msg);
+            message = sprintf('CALIBRATION %d Data Quality (computed from validation %d):\npoint\tacc2D\taccX\taccY\tSTD2D\tRMS2D\tdata loss\n%s',kCal,iVal,msg);
         end
     end
     
@@ -943,7 +941,7 @@ classdef Titta < handle
             % of head box vertically and horizontally, two circles will
             % overlap indicating correct positioning
             
-            startT                  = obj.sendMessage(sprintf('START SETUP %s',obj.settings.calibrateEye));
+            startT                  = obj.sendMessage(sprintf('START SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.start('gaze');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
@@ -1256,7 +1254,7 @@ classdef Titta < handle
             % clean up
             HideCursor;
             obj.buffer.stop('gaze');
-            obj.sendMessage(sprintf('STOP SETUP %s',obj.settings.calibrateEye));
+            obj.sendMessage(sprintf('STOP SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.clearTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
             if qHasEyeIm
                 obj.buffer.stop('eyeImage');
@@ -1355,8 +1353,9 @@ classdef Titta < handle
             qDoCal = ~isfield(out,'cal');
             
             % get data streams started
+            eyeLbl = getEyeLbl(obj.settings.calibrateEye);
             if qDoCal
-                calStartT   = obj.sendMessage(sprintf('START CALIBRATION %s %d',obj.settings.calibrateEye,kCal));
+                calStartT   = obj.sendMessage(sprintf('START CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
                 iVal        = 1;
             else
                 if isfield(out,'val')
@@ -1364,7 +1363,7 @@ classdef Titta < handle
                 else
                     iVal = 1;
                 end
-                valStartT = obj.sendMessage(sprintf('START VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
+                valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             end
             obj.buffer.start('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
@@ -1379,7 +1378,7 @@ classdef Titta < handle
             if qDoCal
                 % show display
                 [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1);
-                obj.sendMessage(sprintf('STOP CALIBRATION %s %d',obj.settings.calibrateEye,kCal));
+                obj.sendMessage(sprintf('STOP CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
                 out.cal.data = obj.ConsumeAllData(calStartT);
                 if out.cal.status==1
                     if ~isempty(obj.settings.cal.pointPos)
@@ -1434,12 +1433,12 @@ classdef Titta < handle
             if qDoCal
                 % if we just did a cal, add message that now we're entering
                 % validation mode
-                valStartT = obj.sendMessage(sprintf('START VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
+                valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
                 obj.ClearAllBuffers(calStartT);    % clean up data from calibration
             end
             % show display
             out.val{iVal} = obj.DoCalPointDisplay(wpnt,false,calLastFlip{:});
-            obj.sendMessage(sprintf('STOP VALIDATION %s for cal %d, attempt %d',obj.settings.calibrateEye,kCal,iVal));
+            obj.sendMessage(sprintf('STOP VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             out.val{iVal}.allData = obj.ConsumeAllData(valStartT);
             obj.StopRecordAll();
             obj.ClearAllBuffers(valStartT);    % clean up data
@@ -2390,6 +2389,12 @@ end
 
 
 %%% helpers
+function eyeLbl = getEyeLbl(eye)
+eyeLbl = sprintf('%s eye',eye);
+if strcmp(eye,'both')
+    eyeLbl = [eyeLbl 's'];
+end
+end
 function angle = AngleBetweenVectors(a,b)
 angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
