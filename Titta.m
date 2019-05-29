@@ -1483,11 +1483,13 @@ classdef Titta < handle
         
         function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)
             % status output (in out.status):
-            %  1: finished succesfully (you should query Tobii SDK whether
-            %     they agree that calibration was succesful though)
+            %  1: finished succesfully (you should out.result.status though
+            %     to verify that the eye tracker agrees that the
+            %     calibration was successful)
             %  2: skip calibration and continue with task (shift+s)
-            % -1: restart calibration (r)
-            % -3: abort calibration and go back to setup (escape key)
+            % -1: restart calibration/validation (r)
+            % -3: abort calibration/validation and go back to setup (escape
+            %     key)
             % -5: Exit completely (control+escape)
             qFirst = nargin<5;
             
