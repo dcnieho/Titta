@@ -207,7 +207,7 @@ classdef Titta < handle
             % Connect to eyetracker
             iTry = 1;
             while true
-                if iTry<obj.settings.nTryConnect
+                if iTry<obj.settings.nTryReConnect+1
                     func = @warning;
                 else
                     func = @error;
@@ -217,15 +217,15 @@ classdef Titta < handle
                 % find macthing eye-tracker, first by model
                 if isempty(trackers) || ~any(strcmp({trackers.Model},obj.settings.tracker))
                     extra = '';
-                    if iTry==obj.settings.nTryConnect
+                    if iTry==obj.settings.nTryReConnect+1
                         if ~isempty(trackers)
                             extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.Model));
                         else
-                            extra = sprintf('\nNo trackers connected.');
+                            extra = sprintf('\nNo eye trackers connected.');
                         end
                     end
-                    func('Titta: No trackers of model ''%s'' connected%s',obj.settings.tracker,extra);
-                    WaitSecs(obj.settings.connectRetryWait);
+                    func('Titta: No eye trackers of model ''%s'' connected%s',obj.settings.tracker,extra);
+                    pause(obj.settings.connectRetryWait);
                     iTry = iTry+1;
                     continue;
                 end
@@ -234,7 +234,7 @@ classdef Titta < handle
                 % a serial number preceeded by '*' denotes the serial number is
                 % optional. That means that if only a single other tracker of
                 % the same type is found, that one will be used.
-                assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye-tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
+                assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
                 if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
                     % more than one tracker found or non-optional serial
                     serial = obj.settings.serialNumber;
@@ -245,11 +245,11 @@ classdef Titta < handle
                     
                     if ~any(qTracker)
                         extra = '';
-                        if iTry==obj.settings.nTryConnect
-                            extra = sprintf('\nI did find trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.SerialNumber));
+                        if iTry==obj.settings.nTryReConnect+1
+                            extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.SerialNumber));
                         end
-                        func('Titta: No trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
-                        WaitSecs(obj.settings.connectRetryWait);
+                        func('Titta: No eye trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
+                        pause(obj.settings.connectRetryWait);
                         iTry = iTry+1;
                         continue;
                     else
@@ -703,8 +703,8 @@ classdef Titta < handle
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber               = '';
             settings.licenseFile                = '';                           % should be single string or cell array of strings, with each string being the path to a license file to apply
-            settings.nTryConnect                = 1;                            % How many times to try to connect before giving up
-            settings.connectRetryWait           = 4;                            % seconds
+            settings.nTryReConnect              = 2;                            % How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found
+            settings.connectRetryWait           = 1;                            % seconds
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
