@@ -937,9 +937,9 @@ classdef Titta < handle
             % -5: Exit completely (control+escape)
             % (NB: no -1 for this function)
             
-            % logic: if user is at reference viewing distance and at center
-            % of head box vertically and horizontally, two circles will
-            % overlap indicating correct positioning
+            % logic: if user is at reference viewing distance and at
+            % desired position in head box vertically and horizontally, two
+            % circles will overlap indicating correct positioning
             
             startT                  = obj.sendMessage(sprintf('START SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.start('gaze');
@@ -1248,6 +1248,9 @@ classdef Titta < handle
                         % skip calibration
                         status = 2;
                         break;
+                    elseif any(strcmpi(keys,'d')) && shiftIsDown
+                        % take screenshot
+                        takeScreenshot(wpnt);
                     end
                 end
             end
@@ -1491,7 +1494,7 @@ classdef Titta < handle
             % -1: restart calibration/validation (r)
             % -3: abort calibration/validation and go back to setup (escape
             %     key)
-            % -5: Exit completely (control+escape)
+            % -5: Exit completely (shift+escape)
             qFirst = nargin<5;
             
             % Refresh internal key-/mouseState to make sure we don't
@@ -1624,6 +1627,9 @@ classdef Titta < handle
                         % skip calibration
                         out.status = 2;
                         break;
+                    elseif any(strcmpi(keys,'d')) && shiftIsDown
+                        % take screenshot
+                        takeScreenshot(wpnt);
                     end
                 end
                 
@@ -1813,13 +1819,14 @@ classdef Titta < handle
             % -1: restart calibration (escape key)
             % -2: redo validation only (v)
             % -3: go back to setup (s)
-            % -5: exit completely (control+escape)
+            % -5: exit completely (shift+escape)
             %
             % additional buttons
             % c: chose other calibration (if have more than one valid)
             % g: show gaze (and fixation points)
             % t: toggle between seeing validation results and calibration
             %    result
+            % shift-d: take screenshot
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.val.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
             
             % find how many valid calibrations we have:
@@ -2316,7 +2323,7 @@ classdef Titta < handle
                             end
                         end
                         
-                        % these two key combinations should always be available
+                        % these key combinations should always be available
                         if any(strcmpi(keys,'escape')) && shiftIsDown
                             status = -5;
                             qDoneCalibSelection = true;
@@ -2326,6 +2333,9 @@ classdef Titta < handle
                             status = 2;
                             qDoneCalibSelection = true;
                             break;
+                        elseif any(strcmpi(keys,'d')) && shiftIsDown
+                            % take screenshot
+                            takeScreenshot(wpnt);
                         end
                     end
                     % check if hovering over point for which we have info
@@ -2517,4 +2527,14 @@ if any(qSubStruct)
         fieldInfo = [fieldInfo(1:idx(p)-1,:); add; fieldInfo(idx(p)+1:end,:)];
     end
 end
+end
+
+function takeScreenshot(wpnt,dir)
+if nargin<2 || isempty(dir)
+    dir = cd;
+end
+
+fname   = fullfile(dir,[datestr(now,'yyyy-mm-dd HH.MM.SS.FFF') '.png']);
+scrShot = Screen('GetImage',wpnt);
+imwrite(scrShot,fname);
 end
