@@ -956,10 +956,9 @@ classdef Titta < handle
             refSz       = ovalVSz*obj.scrInfo.resolution(2);
             % setup head position visualization
             distGain    = 1.5;
-            dDistGain   = 8;
             eyeSzFac    = .25;
             eyeMarginFac= .25;
-            pupilRefSz  = .50;
+            pupilSzFac  = .50;
             pupilRefDiam= 5;    % mm
             pupilSzGain = 1.5;
             
@@ -1017,12 +1016,14 @@ classdef Titta < handle
             eyeDist             = 6.2;
             qEyeDistMeasured    = false;
             Rori                = [1 0; 0 1];
+            yaw                 = 0;
             dZ                  = 0;
             qToggleEyeImage     = false;
             qShowEyeImage       = false;
             texs                = [0 0];
             szs                 = [];
             eyeImageRect        = repmat({zeros(1,4)},1,2);
+            circVerts           = genCircle(200);
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -1087,11 +1088,12 @@ classdef Titta < handle
                 Ys      = [lEye(2) rEye(2)]./10;
                 if all(qHave)
                     % get orientation of eyes in X-Y plane
-                    dX          = diff(Xs);
-                    dY          = diff(Ys);
-                    dZ          = diff(dists);
-                    orientation = atan2(dY,dX);
-                    Rori = [cos(orientation) sin(orientation); -sin(orientation) cos(orientation)];
+                    dX      = diff(Xs);
+                    dY      = diff(Ys);
+                    dZ      = diff(dists);
+                    roll    = atan2(dY,dX);
+                    yaw     = atan2(dZ,dX);
+                    Rori    = [cos(roll) sin(roll); -sin(roll) cos(roll)];
                     if ~qEyeDistMeasured
                         % get distance between eyes
                         eyeDist          = hypot(dX,diff(dists));
@@ -1124,11 +1126,9 @@ classdef Titta < handle
                 % gain for how much to scale as distance changes
                 if ~isnan(avgDist)
                     pos     = [avgXtb 1-avgYtb];    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
-                    % determine size of oval, based on distance from reference distance
+                    % determine size of head, based on distance from reference distance
                     fac     = avgDist/obj.settings.UI.setup.referencePos(3);
                     headSz  = refSz - refSz*(fac-1)*distGain;
-                    eyeSz   = eyeSzFac*headSz*((avgDist./dists-1)*dDistGain+1);
-                    eyeMargin = eyeMarginFac*headSz*2;  %*2 because all sizes are radii
                     % move
                     headPos = pos.*obj.scrInfo.resolution;
                     headPostLastT = eyeData.systemTimeStamp;
@@ -1159,7 +1159,7 @@ classdef Titta < handle
                     str = obj.settings.UI.setup.instruct.strFun(avgX,avgY,avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     DrawFormattedText(wpnt,str,'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
-                % draw ovals
+                % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
@@ -1167,35 +1167,37 @@ classdef Titta < handle
                 end
                 % stylized head
                 if ~isempty(headPos)
-                    drawCircle(wpnt,obj.getColorForWindow(obj.settings.UI.setup.headCircleClr),headPos,headSz,5,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr));
+                    % draw head
+                    drawPoly(wpnt,circVerts,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr),1,obj.getColorForWindow(obj.settings.UI.setup.headCircleClr),5);
                     if obj.settings.UI.setup.showEyes
                         for p=1:2
-                            % left eye
-                            off = Rori*[eyeMargin; 0];
+                            eyeOff = [eyeMarginFac*2;0];                % *2 because all sizes are radii
                             if p==1
-                                pos = headPos-off.';
+                                % left eye
+                                eyeOff = -eyeOff;
                                 pup = lPup;
                             else
-                                pos = headPos+off.';
+                                % right eye
                                 pup = rPup;
                             end
                             if (p==1 && ~obj.calibrateLeftEye) || (p==2 && ~obj.calibrateRightEye)
                                 % draw cross indicating not calibrated
-                                base = eyeSz(p)*[-1 1 1 -1; -1/4 -1/4 1/4 1/4];
-                                R    = [cosd(45) sind(45); -sind(45) cosd(45)];
-                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.crossClr), bsxfun(@plus,R  *Rori*base,pos(:)).', 1);
-                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.crossClr), bsxfun(@plus,R.'*Rori*base,pos(:)).', 1);
+                                obj = [cosd(45) sind(45); -sind(45) cosd(45)]*[1 1 4 4 1 1 -1 -1 -4 -4 -1 -1; 4 1 1 -1 -1 -4 -4 -1 -1 1 1 4]/4*eyeSzFac + eyeOff;
+                                drawPoly(wpnt,obj,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.crossClr),0);
                             elseif (p==1 && qHaveLeft) || (p==2 && qHaveRight)
-                                % draw eye with optional pupil
-                                drawCircle(wpnt,[],pos,eyeSz(p),0,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
+                                % draw eye
+                                eye = eyeSzFac*circVerts-eyeOff;
+                                drawPoly(wpnt,eye,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr),1);
+                                % if wanted, draw pupil
                                 if obj.settings.UI.setup.showPupils
-                                    pupSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilRefSz*eyeSz(1);
-                                    drawCircle(wpnt,[],pos,pupSz,0,obj.getColorForWindow(obj.settings.UI.setup.pupilClr));
+                                    pupilSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilSzFac*eyeSzFac;
+                                    pup     = pupilSz*circVerts-eyeOff;
+                                    drawPoly(wpnt,pup,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.pupilClr),1);
                                 end
                             else
                                 % draw line indicating closed/missing eye
-                                base = eyeSz(p)*[-1 1 1 -1; -1/5 -1/5 1/5 1/5];
-                                Screen('FillPoly', wpnt, obj.getColorForWindow(obj.settings.UI.setup.eyeClr), bsxfun(@plus,Rori*base,pos(:)).', 1);
+                                obj = [-1 1 1 -1; -1/5 -1/5 1/5 1/5]*eyeSzFac + eyeOff;
+                                drawPoly(wpnt,obj,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr),1);
                             end
                         end
                     end
@@ -2482,16 +2484,32 @@ end
 tex = Screen('MakeTexture',wpnt,fliplr(image),[],8);
 end
 
-function drawCircle(wpnt,clr,center,sz,lineWidth,fillClr)
-nStep = 200;
+function verts = genCircle(nStep)
 alpha = linspace(0,2*pi,nStep);
-alpha = [alpha(1:end-1); alpha(2:end)]; alpha = alpha(:).';
-xy    = sz.*[cos(alpha); sin(alpha)];
-if nargin>=6
-    Screen('FillPoly', wpnt, fillClr, xy.'+repmat(center(:).',size(alpha,2),1), 1);
+verts = [cos(alpha); sin(alpha)];
 end
-if lineWidth && ~isempty(clr)
-    Screen('DrawLines', wpnt, xy, lineWidth ,clr ,center,2);
+
+function drawPoly(wpnt,verts,depthOri,rotMat,scaleFac,pos,fillClr,isConvex,edgeClr,edgeWidth)
+if isempty(verts)
+    return;
+end
+% project (looks nice when z=5)
+z=5;
+proj = [verts(1,:)*cos(depthOri); verts(2,:)]./(z+verts(1,:)*sin(depthOri))*z; % depth is defined by x coord as circle is rotated around yaw axis
+% rotate in projection plane
+proj = rotMat*proj;
+% scale and move to right place
+proj = proj*scaleFac + pos(:);
+
+% draw fill if any
+if ~isempty(fillClr)
+    Screen('FillPoly', wpnt, fillClr, proj.', isConvex);
+end
+% draw edge, if any
+if nargin>=10
+    len = size(proj,2);
+    idxs = reshape([1:len-1;2:len],1,[]);
+    Screen('DrawLines', wpnt, proj(:,idxs), edgeWidth, edgeClr, [],2);
 end
 end
 
