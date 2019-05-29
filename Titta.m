@@ -1386,6 +1386,7 @@ classdef Titta < handle
                         if ~strcmpi(out.cal.result.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                             % calibration failed, back to setup screen
                             out.cal.status = -3;
+                            obj.sendMessage(sprintf('CALIBRATION FAILED (%s), calibration no. %d',eyeLbl,kCal));
                             Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
                             Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
                             DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
