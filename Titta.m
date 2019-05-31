@@ -1544,7 +1544,7 @@ classdef Titta < handle
                 flipT   = lastFlip;
             end
             qStartOfSequence = tick==-1;
-            if qCal
+            if qCal && size(points,1)>0
                 % make sure we start with a clean slate:
                 % discard data from all points, if any
                 for p=1:size(points,1)
@@ -1697,8 +1697,10 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            lastPoint = currentPoint-pointOff;
-            obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
+            if size(points,1)>0
+                lastPoint = currentPoint-pointOff;
+                obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
+            end
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
