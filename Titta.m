@@ -2030,7 +2030,7 @@ classdef Titta < handle
                             if obj.calibrateLeftEye && obj.calibrateRightEye
                                 strsep = '\n';
                             end
-                            valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD   RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                            valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
                             valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                             
                             % get info about where points were on screen
