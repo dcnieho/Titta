@@ -967,11 +967,7 @@ classdef Titta < handle
                 obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
             end
             % position reference circle on screen
-            tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (obj.settings.UI.setup.referencePos(3));
-            refX    =    obj.settings.UI.setup.referencePos(1)/tbWidth /2+.5;
-            tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(obj.settings.UI.setup.referencePos(3));
-            refY    = 1-(obj.settings.UI.setup.referencePos(2)/tbHeight/2+.5);      % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
-            refPos  = [refX refY].*obj.scrInfo.resolution;
+            refPos  = obj.scrInfo.resolution/2;
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
@@ -1119,9 +1115,9 @@ classdef Titta < handle
                 avgDist = mean(dists(~isnan(Xs)));
                 % convert from UCS to trackBox coordinates
                 tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (avgDist);
-                avgXtb  = avgX/tbWidth /2+.5;
+                avgXtb  = (avgX-obj.settings.UI.setup.referencePos(1))/tbWidth /2+.5;
                 tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(avgDist);
-                avgYtb  = avgY/tbHeight/2+.5;
+                avgYtb  = (avgY-obj.settings.UI.setup.referencePos(2))/tbHeight/2+.5;
                 
                 % scale up size of oval. define size/rect at standard distance, have a
                 % gain for how much to scale as distance changes
