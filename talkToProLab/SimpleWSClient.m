@@ -8,10 +8,9 @@ classdef SimpleWSClient < WebSocketClient
         function this = SimpleWSClient(varargin)
             % add jar to static class path if needed, so the websocket java
             % library can be found
-            jarPath     = which('matlab-websocket-1.4.jar');
-            mustRestart = setupJavaStaticClassPath(jarPath);
+            mustRestart = setupJavaStaticClassPath('matlab-websocket-1.4.jar');
             if mustRestart
-                error('restart matlab now')
+                error('You need to <a href="matlab:quit;">restart matlab now</a> to finish installing WebSocket''s java backing library')
             end
             
             % Constructor
@@ -63,19 +62,12 @@ classdef SimpleWSClient < WebSocketClient
 end
 
 
-function mustRestart = setupJavaStaticClassPath(jarPath)
+function mustRestart = setupJavaStaticClassPath(jarName)
+
+jarPath = which(jarName);
+assert(~isempty(jarPath),'file ''%s'' could not be found. When cloning the Titta repository, make sure you initialize the git submodules as well. That should pull in this file',jarName);
 
 mustRestart = false;
-try
-    qDoInstall = isempty(which('io.github.jebej.matlabwebsocket.MatlabWebSocketClient'));
-catch
-    % can't import, try and fix up path
-    qDoInstall = true;
-end
-
-if ~qDoInstall
-    return;
-end
 
 % this setup code is taken from PsychJavaTrouble.m
 try
@@ -114,8 +106,8 @@ try
     newFileContents = {};
     pathInserted = 0;
     for i = 1:length(fileContents)
-        % Look for the first instance of PsychJava in the classpath and
-        % replace it with the new one.  All other instances will be
+        % Look for the first instance of matlab-websocket in the classpath
+        % and replace it with the new one.  All other instances will be
         % removed.
         if isempty(strfind(fileContents{i}, 'matlab-websocket'))
             newFileContents{j, 1} = fileContents{i}; %#ok<AGROW>
@@ -131,7 +123,7 @@ try
         end
     end
     
-    % If the PsychJava path wasn't inserted, then this must be a new
+    % If the matlab-websocket path wasn't inserted, then this must be a new
     % installation, so we append it to the classpath.
     if ~pathInserted
         newFileContents{end + 1, 1} = jarPath;
@@ -171,6 +163,9 @@ try
         disp('*** Matlab''s Static Java classpath definition file modified. You will have to restart Matlab to enable use of the new Java components. ***');
         fprintf('\nPress RETURN or ENTER to confirm you read and understood the above message.\n');
         pause;
+        mustRestart = true;
+    else
+        mustRestart = isempty(which('io.github.jebej.matlabwebsocket.MatlabWebSocketClient'));
     end
 catch %#ok<CTCH>
     lerr = psychlasterror;
@@ -193,5 +188,4 @@ catch %#ok<CTCH>
         [s, w] = copyfile(bakclasspathFile, classpathFile, 'f'); %#ok<ASGLU>
     end
 end
-mustRestart = true;
 end
