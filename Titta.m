@@ -1014,7 +1014,7 @@ classdef Titta < handle
             
             % get tracking status and visualize
             eyeDist             = 6.2;
-            qEyeDistMeasured    = false;
+            nEyeDistMeasures    = 0;
             Rori                = [1 0; 0 1];
             yaw                 = 0;
             dZ                  = 0;
@@ -1094,11 +1094,12 @@ classdef Titta < handle
                     roll    = atan2(dY,dX);
                     yaw     = atan2(dZ,dX);
                     Rori    = [cos(roll) sin(roll); -sin(roll) cos(roll)];
-                    if ~qEyeDistMeasured
-                        % get distance between eyes
-                        eyeDist          = hypot(dX,diff(dists));
-                        qEyeDistMeasured = true;
-                    end
+                    
+                    % update eye distance measure (maintain running
+                    % average)
+                    nEyeDistMeasures = nEyeDistMeasures+1;
+                    eyeDist = (eyeDist*(nEyeDistMeasures-1)+hypot(dX,dZ))/nEyeDistMeasures;
+                    fprintf('%.5f\n',eyeDist);
                 end
                 % if we have only one eye, make fake second eye
                 % position so drawn head position doesn't jump so much.
