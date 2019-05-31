@@ -122,7 +122,7 @@ classdef Titta < handle
             
             obj.settings.UI.setup.bgColor               = color2RGBA(obj.settings.UI.setup.bgColor);
             obj.settings.UI.setup.refCircleClr          = color2RGBA(obj.settings.UI.setup.refCircleClr);
-            obj.settings.UI.setup.headCircleClr         = color2RGBA(obj.settings.UI.setup.headCircleClr);
+            obj.settings.UI.setup.headCircleEdgeClr     = color2RGBA(obj.settings.UI.setup.headCircleEdgeClr);
             obj.settings.UI.setup.headCircleFillClr     = color2RGBA(obj.settings.UI.setup.headCircleFillClr);
             obj.settings.UI.setup.eyeClr                = color2RGBA(obj.settings.UI.setup.eyeClr);
             obj.settings.UI.setup.pupilClr              = color2RGBA(obj.settings.UI.setup.pupilClr);
@@ -711,7 +711,7 @@ classdef Titta < handle
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
-            settings.UI.setup.headCircleClr     = [255 255 0];
+            settings.UI.setup.headCircleEdgeClr = [255 255 0];
             settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
             settings.UI.setup.eyeClr            = 255;
             settings.UI.setup.pupilClr          = 0;
@@ -722,7 +722,7 @@ classdef Titta < handle
             settings.UI.setup.fixFrontColor     = 255;
             % settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
-            settings.UI.setup.instruct.font     = 'Consolas';
+            settings.UI.setup.instruct.font     = 'Segeo UI';
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -798,7 +798,7 @@ classdef Titta < handle
             settings.UI.button.val.toggCal.edgeColor    = toggleButClr.fill;
             settings.UI.button.val.toggCal.textColor    = toggleButClr.text;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
-            settings.UI.cal.errMsg.font         = 'Consolas';
+            settings.UI.cal.errMsg.font         = 'Segeo UI';
             settings.UI.cal.errMsg.size         = 36*textFac;
             settings.UI.cal.errMsg.color        = [150 0 0];                    % only for messages on the screen, doesn't affect buttons
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -1163,41 +1163,41 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawCircle(wpnt,obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),refPos,refSz,5);
+                    drawPoly(wpnt,circVerts,1,0,[0 1; 1 0],refSz,refPos,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
                 end
                 % stylized head
                 if ~isempty(headPos)
                     % draw head
-                    drawPoly(wpnt,circVerts,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr),1,obj.getColorForWindow(obj.settings.UI.setup.headCircleClr),5);
+                    drawPoly(wpnt,circVerts,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr),obj.getColorForWindow(obj.settings.UI.setup.headCircleEdgeClr),5);
                     if obj.settings.UI.setup.showEyes
                         for p=1:2
                             eyeOff = [eyeMarginFac*2;0];                % *2 because all sizes are radii
                             if p==1
                                 % left eye
-                                eyeOff = -eyeOff;
-                                pup = lPup;
+                                pup     = lPup;
+                                eyeOff  = -eyeOff;
                             else
                                 % right eye
                                 pup = rPup;
                             end
                             if (p==1 && ~obj.calibrateLeftEye) || (p==2 && ~obj.calibrateRightEye)
                                 % draw cross indicating not calibrated
-                                obj = [cosd(45) sind(45); -sind(45) cosd(45)]*[1 1 4 4 1 1 -1 -1 -4 -4 -1 -1; 4 1 1 -1 -1 -4 -4 -1 -1 1 1 4]/4*eyeSzFac + eyeOff;
-                                drawPoly(wpnt,obj,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.crossClr),0);
+                                cross = [cosd(45) sind(45); -sind(45) cosd(45)]*[1 1 4 4 1 1 -1 -1 -4 -4 -1 -1; 4 1 1 -1 -1 -4 -4 -1 -1 1 1 4]/4*eyeSzFac + eyeOff;
+                                drawPoly(wpnt,cross,0,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.crossClr));
                             elseif (p==1 && qHaveLeft) || (p==2 && qHaveRight)
                                 % draw eye
-                                eye = eyeSzFac*circVerts-eyeOff;
-                                drawPoly(wpnt,eye,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr),1);
+                                eye = eyeSzFac*circVerts+eyeOff;
+                                drawPoly(wpnt,eye,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
                                 % if wanted, draw pupil
                                 if obj.settings.UI.setup.showPupils
                                     pupilSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilSzFac*eyeSzFac;
-                                    pup     = pupilSz*circVerts-eyeOff;
-                                    drawPoly(wpnt,pup,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.pupilClr),1);
+                                    pup     = pupilSz*circVerts+eyeOff;
+                                    drawPoly(wpnt,pup,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.pupilClr));
                                 end
                             else
                                 % draw line indicating closed/missing eye
-                                obj = [-1 1 1 -1; -1/5 -1/5 1/5 1/5]*eyeSzFac + eyeOff;
-                                drawPoly(wpnt,obj,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr),1);
+                                line = [-1 1 1 -1; -1/5 -1/5 1/5 1/5]*eyeSzFac + eyeOff;
+                                drawPoly(wpnt,line,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
                             end
                         end
                     end
@@ -1869,7 +1869,7 @@ classdef Titta < handle
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
                 butRects          = num2cell(butRects,2);
-                [but([1:length(but)]<=4&[but.visible]).rect] = butRects{:};
+                [but((1:length(but))<=4&[but.visible]).rect] = butRects{:};
             end
             
             % 2. atop screen
@@ -2489,14 +2489,18 @@ alpha = linspace(0,2*pi,nStep);
 verts = [cos(alpha); sin(alpha)];
 end
 
-function drawPoly(wpnt,verts,depthOri,rotMat,scaleFac,pos,fillClr,isConvex,edgeClr,edgeWidth)
+function drawPoly(wpnt,verts,isConvex,depthOri,rotMat,scaleFac,pos,fillClr,edgeClr,edgeWidth)
 if isempty(verts)
     return;
 end
-% project (looks nice when z=5)
+% project. Drop whole denominator to do pure orthographic, but it think it
+% looks a bit nicer with some perspective mixed in there. Too much sucks,
+% the higher the simulated z, the more pure orthographic is approached. z=5
+% looks nice to me
 z=5;
+depthOri = depthOri*1.25;   % exaggerate head depth rotation a bit, looks more like the eye images and simply makes it more visible
 proj = [verts(1,:)*cos(depthOri); verts(2,:)]./(z+verts(1,:)*sin(depthOri))*z; % depth is defined by x coord as circle is rotated around yaw axis
-% rotate in projection plane
+% rotate image on projection plane for head roll
 proj = rotMat*proj;
 % scale and move to right place
 proj = proj*scaleFac + pos(:);
