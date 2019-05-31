@@ -1095,7 +1095,6 @@ classdef Titta < handle
                     % average)
                     nEyeDistMeasures = nEyeDistMeasures+1;
                     eyeDist = (eyeDist*(nEyeDistMeasures-1)+hypot(dX,dZ))/nEyeDistMeasures;
-                    fprintf('%.5f\n',eyeDist);
                 end
                 % if we have only one eye, make fake second eye
                 % position so drawn head position doesn't jump so much.
