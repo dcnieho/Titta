@@ -846,7 +846,7 @@ classdef Titta < handle
             settings.cal.drawFunction           = [];
             settings.cal.doRecordEyeImages      = false;
             settings.cal.doRecordExtSignal      = false;
-            settings.val.pointPos               = [[0.25 0.25]; [0.25 0.75]; [0.75 0.75]; [0.75 0.25]];
+            settings.val.pointPos               = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.val.paceDuration           = 1.5;
             settings.val.collectDuration        = 0.5;
             settings.val.qRandPoints            = true;
