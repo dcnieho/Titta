@@ -709,6 +709,7 @@ classdef Titta < handle
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox
+            settings.UI.setup.doCenterRefPos    = false;                        % if true, reference circle is always at center of screen, regardless of x- and y-components of referencePos. If false, circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
@@ -968,6 +969,14 @@ classdef Titta < handle
             end
             % position reference circle on screen
             refPos  = obj.scrInfo.resolution/2;
+            allPosOff = [0 0];
+            if ~obj.settings.UI.setup.doCenterRefPos
+                scrWidth  = obj.geom.displayArea.width/10;
+                scrHeight = obj.geom.displayArea.height/10;
+                pixPerCm  = mean(obj.scrInfo.resolution./[scrWidth scrHeight])*[1 -1];      % flip Y because positive UCS is upward, should be downward for drawing on screen
+                allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
+            end
+            refPos = refPos+allPosOff;
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
@@ -1126,7 +1135,7 @@ classdef Titta < handle
                     fac     = avgDist/obj.settings.UI.setup.referencePos(3);
                     headSz  = refSz - refSz*(fac-1)*distGain;
                     % move
-                    headPos = pos.*obj.scrInfo.resolution;
+                    headPos = pos.*obj.scrInfo.resolution + allPosOff;
                     headPostLastT = eyeData.systemTimeStamp;
                 else
                     headPos = [];
