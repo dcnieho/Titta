@@ -13,7 +13,7 @@ fixTime                 = .5;
 imageTime               = 2;
 scr                     = max(Screen('Screens'));
 
-TobiiProLabProject      = 'EPTest'; % to use external presenter functionality, provide the name of the external presenter project here
+TobiiProLabProject      = ''; % to use external presenter functionality, provide the name of the external presenter project here
 TobiiProLabParticipant  = 'tester';
 TobiiProLabRecordingName= 'recording1';
 
@@ -129,11 +129,18 @@ try
     if 0    % to do sequential monocular calibrations for the two eyes
         settings                = EThndl.getOptions();
         settings.calibrateEye   = 'left';
+        settings.UI.button.setup.cal.string = 'calibrate left eye (<i>spacebar<i>)';
+        str = settings.UI.button.val.continue.string;
+        settings.UI.button.val.continue.string = 'calibrate other eye (<i>spacebar<i>)';
         EThndl.setOptions(settings);
         tobii.calVal{1}         = EThndl.calibrate(wpnt,1);
-        settings.calibrateEye   = 'right';
-        EThndl.setOptions(settings);
-        tobii.calVal{2}         = EThndl.calibrate(wpnt,2);
+        if ~tobii.calVal{1}.wasSkipped
+            settings.calibrateEye   = 'right';
+            settings.UI.button.setup.cal.string = 'calibrate right eye (<i>spacebar<i>)';
+            settings.UI.button.val.continue.string = str;
+            EThndl.setOptions(settings);
+            tobii.calVal{2}         = EThndl.calibrate(wpnt,2);
+        end
     else
         tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
