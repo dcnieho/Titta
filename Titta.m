@@ -397,13 +397,6 @@ classdef Titta < handle
                 obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
             end
             obj.StopRecordAll();
-            if bitand(flag,1)
-                qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
-                if qDoMonocular
-                    assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
-                end
-                obj.buffer.enterCalibrationMode(qDoMonocular);
-            end
             
             %%% 2. enter the setup/calibration screens
             % The below is a big loop that will run possibly multiple
@@ -413,10 +406,11 @@ classdef Titta < handle
             % 0. skip head positioning, go straight to calibration
             % 1. start with simple head positioning interface
             % 2. start with advanced head positioning interface
-            startScreen = obj.settings.UI.startScreen;
-            kCal        = 0;
-            out         = struct();
-            qNewCal     = true;
+            startScreen         = obj.settings.UI.startScreen;
+            kCal                = 0;
+            out                 = struct();
+            qNewCal             = true;
+            qHasEnteredCalMode  = false;
             while true
                 qGoToValidationViewer = false;
                 if qNewCal
@@ -451,6 +445,17 @@ classdef Titta < handle
                 
                 %%% 2b: calibrate and validate
                 if ~qGoToValidationViewer
+                    % enter calibration mode if we should and if we haven't
+                    % yet. Only do this now, so previous calibration
+                    % survives a "skip calibration" during the setup screen
+                    if bitand(flag,1) && ~qHasEnteredCalMode
+                        qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
+                        if qDoMonocular
+                            assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                        end
+                        obj.buffer.enterCalibrationMode(qDoMonocular);
+                        qHasEnteredCalMode = true;
+                    end
                     out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
                     % check returned action state
                     switch out.attempt{kCal}.status
