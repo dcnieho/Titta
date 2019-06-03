@@ -536,11 +536,11 @@ classdef Titta < handle
             Screen('TextSize',wpnt,text.size);
             Screen('Flip',wpnt);                        % clear screen
             
-            if bitand(flag,2)
+            if bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode)
                 obj.buffer.leaveCalibrationMode();
             end
             % log to messages which calibration was selected
-            if isfield(out,'selectedCal')
+            if ~isnan(out.selectedCal)
                 obj.sendMessage(sprintf('CALIBRATION (%s) SELECTED no. %d',getEyeLbl(obj.settings.calibrateEye),out.selectedCal));
             end
             
