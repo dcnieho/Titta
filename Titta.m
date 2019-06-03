@@ -408,7 +408,7 @@ classdef Titta < handle
             % 2. start with advanced head positioning interface
             startScreen         = obj.settings.UI.startScreen;
             kCal                = 0;
-            out                 = struct();
+            out                 = struct('selectedCal', nan, 'wasSkipped', false);
             qNewCal             = true;
             qHasEnteredCalMode  = false;
             while true
@@ -430,6 +430,7 @@ classdef Titta < handle
                             % all good, continue
                         case 2
                             % skip setup
+                            out.wasSkipped = true;
                             break;
                         case -4
                             % go to validation viewer screen
@@ -463,6 +464,7 @@ classdef Titta < handle
                             % all good, continue
                         case 2
                             % skip setup
+                            out.wasSkipped = true;
                             break;
                         case -1
                             % restart calibration
@@ -499,6 +501,7 @@ classdef Titta < handle
                         break;
                     case 2
                         % skip setup
+                        out.wasSkipped = true;
                         break;
                     case -1
                         % restart calibration
