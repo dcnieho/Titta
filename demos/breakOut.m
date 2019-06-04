@@ -15,6 +15,7 @@ paddleFillClr       = [208   0   0];
 qUseDummyMode       = false;
 settings = Titta.getDefaults('Tobii Pro Spectrum');
 settings.cal.bgColor= bgclr;
+settings.UI.button.val.continue.string = 'start game (<i>spacebar<i>)';
 % custom calibration drawer
 calViz = AnimatedCalibrationDisplay();
 settings.cal.drawFunction = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
