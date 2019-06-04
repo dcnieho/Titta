@@ -124,7 +124,7 @@ try
             TalkToProLabInstance.sendCustomEvent([],'validationResult',EThndl.getValidationQualityMessage(tobii.calVal{c}));
         end
     end
-     
+    
     % send message into ET data file
     EThndl.sendMessage('test');
     
