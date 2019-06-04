@@ -230,7 +230,7 @@ classdef TalkToProLab < handle
             end
         end
         
-        function success = attachAOIToImage(this,mediaName,aoiName,aoiColor,vertices,tags)
+        function attachAOIToImage(this,mediaName,aoiName,aoiColor,vertices,tags)
             % vertices should be 2xN
             [mediaID,mediaInfo] = this.findMedia(mediaName);
             assert(~isempty(mediaID),'attachAOIToImage: no media with provided name, ''%s'' is known',mediaName)
@@ -276,8 +276,7 @@ classdef TalkToProLab < handle
             
             % send
             this.clientProject.send(request);
-            resp    = waitForResponse(this.clientProject,'AddAois');
-            success = resp.imported_aoi_count==1;
+            waitForResponse(this.clientProject,'AddAois');
         end
         
         function numAOI = attachAOIToVideo(this,mediaName,request)
@@ -305,14 +304,20 @@ classdef TalkToProLab < handle
             EPState = resp.state;
         end
         
-        function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency)
+        function recordingID = startRecording(this,name,scrWidth,scrHeight,scrLatency,skipStateCheck)
+            % first check if we're in the right state, unless requested
+            % that we skip that
+            if nargin<6 || isempty(skipStateCheck) || ~skipStateCheck
+                state = this.getExternalPresenterState();
+                assert(strcmpi(state,'ready'),'Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state);
+            end
             % scrLatency is optional
             request = struct('operation','StartRecording',...
                 'recording_name',name,...
                 'participant_id',this.participantID,...
                 'screen_width'  ,scrWidth,...
                 'screen_height' ,scrHeight);
-            if nargin>5 && ~isempty(scrLatency)
+            if nargin>=5 && ~isempty(scrLatency)
                 request.screen_latency = scrLatency;
             end
             this.clientEP.send(request);

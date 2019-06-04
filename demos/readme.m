@@ -13,7 +13,7 @@ fixTime                 = .5;
 imageTime               = 2;
 scr                     = max(Screen('Screens'));
 
-TobiiProLabProject      = ''; % to use external presenter functionality, provide the name of the external presenter project here
+TobiiProLabProject      = 'EPTest'; % to use external presenter functionality, provide the name of the external presenter project here
 TobiiProLabParticipant  = 'tester';
 TobiiProLabRecordingName= 'recording1';
 
@@ -126,7 +126,8 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration
-    if 0    % to do sequential monocular calibrations for the two eyes
+    if 0
+        % do sequential monocular calibrations for the two eyes
         settings                = EThndl.getOptions();
         settings.calibrateEye   = 'left';
         settings.UI.button.setup.cal.string = 'calibrate left eye (<i>spacebar<i>)';
@@ -142,6 +143,7 @@ try
             tobii.calVal{2}         = EThndl.calibrate(wpnt,2);
         end
     else
+        % do binocular calibration
         tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
     
@@ -149,8 +151,7 @@ try
     % later:
     EThndl.buffer.start('gaze');
     % also start Pro Lab recording
-    state = TalkToProLabInstance.getExternalPresenterState();
-    assert(strcmpi(state,'ready'),'Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state)
+    fprintf('Current Pro Lab state: %s\n',TalkToProLabInstance.getExternalPresenterState()); % just to show this function in the API as well, startRecording() by default checks state first
     TalkToProLabInstance.startRecording(TobiiProLabRecordingName,RectWidth(winRect),RectHeight(winRect));
     % send info about validation quality to Pro Lab
     % if you have information about your participant, its a good idea to
@@ -208,8 +209,7 @@ try
         % add AOI around fixation point location
         fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*4),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point (*2 because radius->diameter, *2 to double size)
         vertices= fixRect([1 3 3 1; 2 2 4 4]);
-        wasSuccessful = TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,TalkToProLabInstance.makeTag('fixPoint','points'));
-        assert(wasSuccessful,'AOI was not added successfully');
+        TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,TalkToProLabInstance.makeTag('fixPoint','points'));
     end
     konijnMediaID = TalkToProLabInstance.findMedia('konijntjes_nonblur');
     if isempty(konijnMediaID)
