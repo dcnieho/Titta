@@ -1191,7 +1191,7 @@ classdef Titta < handle
                                 eyeOff  = -eyeOff;
                             else
                                 % right eye
-                                pup = rPup;
+                                pup     = rPup;
                             end
                             if (p==1 && ~obj.calibrateLeftEye) || (p==2 && ~obj.calibrateRightEye)
                                 % draw cross indicating not calibrated
