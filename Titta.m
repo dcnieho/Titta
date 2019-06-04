@@ -1437,7 +1437,7 @@ classdef Titta < handle
                         % accross setup screens and such.
                         % So, send cleanup message to user function (if any)
                         if isa(obj.settings.cal.drawFunction,'function_handle')
-                            obj.settings.cal.drawFunction(nan,nan,nan,nan);
+                            obj.settings.cal.drawFunction(nan,nan,nan,nan,nan);
                         end
                         Screen('Flip',wpnt);
                     end
@@ -1469,7 +1469,7 @@ classdef Titta < handle
             if out.val{iVal}.status~=-1   % see comment above about why not when -1
                 % cleanup message to user function (if any)
                 if isa(obj.settings.cal.drawFunction,'function_handle')
-                    obj.settings.cal.drawFunction(nan,nan,nan,nan);
+                    obj.settings.cal.drawFunction(nan,nan,nan,nan,nan);
                 end
             end
             out.status = out.val{iVal}.status;
@@ -1525,6 +1525,7 @@ classdef Titta < handle
                 if strcmp(obj.settings.calibrateEye,'both')
                     extraInp    = {};
                 end
+                stage           = 'cal';
             else
                 points          = obj.settings.val.pointPos;
                 paceInterval    = ceil(obj.settings.val.paceDuration   *Screen('NominalFrameRate',wpnt));
@@ -1532,6 +1533,7 @@ classdef Titta < handle
                 nDataPoint      = ceil(obj.settings.val.collectDuration*obj.eyetracker.get_gaze_output_frequency());
                 tick0v          = nan;
                 out.gazeData    = [];
+                stage           = 'val';
             end
             nPoint = size(points,1);
             if nPoint>0
@@ -1564,7 +1566,7 @@ classdef Titta < handle
                 nRep = 0;
                 while true
                     tick    = tick+1;
-                    drawFunction(wpnt,1,points(1,3:4),tick);
+                    drawFunction(wpnt,1,points(1,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt,flipT+1/1000);
                     computeResult  = obj.buffer.calibrationRetrieveResult();
                     nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
@@ -1608,7 +1610,7 @@ classdef Titta < handle
                 end
                 
                 % call drawer function
-                qAllowAcceptKey     = drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick);
+                qAllowAcceptKey     = drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick,stage);
                 
                 out.flips(end+1)    = Screen('Flip',wpnt,nextFlipT);
                 if qNewPoint
@@ -1720,7 +1722,7 @@ classdef Titta < handle
                 flipT           = out.flips(end);
                 while true
                     tick    = tick+1;
-                    drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick);
+                    drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt,flipT+1/1000);
                     
                     % first get computeAndApply result, then get 
@@ -1758,7 +1760,7 @@ classdef Titta < handle
             end
         end
         
-        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~)
+        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~,~)
             obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
             qAllowAcceptKey = true;
         end

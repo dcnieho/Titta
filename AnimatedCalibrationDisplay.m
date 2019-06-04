@@ -46,10 +46,12 @@ classdef AnimatedCalibrationDisplay < handle
             obj.lastPoint= nan(1,3);
         end
         
-        function qAllowAcceptKey = doDraw(obj,wpnt,currentPoint,pos,~)
+        function qAllowAcceptKey = doDraw(obj,wpnt,currentPoint,pos,~,~)
             % if called with nan as first input, this is a signal that
             % calibration/validation is done, and cleanup can occur if
             % wanted
+            % last two inputs, tick (monotonously increasing integer and
+            % stage ("cal" or "val") are not used in this code
             if isnan(wpnt)
                 obj.setCleanState();
                 return;

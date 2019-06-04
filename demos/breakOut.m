@@ -17,7 +17,7 @@ settings = Titta.getDefaults('Tobii Pro Spectrum');
 settings.cal.bgColor= bgclr;
 % custom calibration drawer
 calViz = AnimatedCalibrationDisplay();
-settings.cal.drawFunction = @calViz.doDraw;
+settings.cal.drawFunction = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
 
 % setup world
 scr                 = max(Screen('Screens'));
