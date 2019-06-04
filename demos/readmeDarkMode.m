@@ -1,7 +1,5 @@
 clear all
 DEBUGlevel              = 0;
-setupScreenAlsoDark     = true;
-validationResultAlsoDark= true;
 fixClrs                 = [255 100];
 bgClr                   = 0;
 useAnimatedCalibration  = true;
