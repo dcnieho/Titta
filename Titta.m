@@ -1423,7 +1423,11 @@ classdef Titta < handle
                         out.cal.computedCal = [];
                     end
                 end
-                calLastFlip = {tick,out.cal.flips(end)};
+                if isfield(out.cal,'flips')
+                    calLastFlip = {tick,out.cal.flips(end)};
+                else
+                    calLastFlip = {-1};
+                end
                 
                 if out.cal.status~=1
                     obj.StopRecordAll();
@@ -1536,11 +1540,14 @@ classdef Titta < handle
                 stage           = 'val';
             end
             nPoint = size(points,1);
-            if nPoint>0
-                points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
-                if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
-                    points = points(randperm(nPoint),:);
-                end
+            if nPoint==0
+                out.status = 1;
+                return;
+            end
+            
+            points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
+            if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
+                points = points(randperm(nPoint),:);
             end
             if isempty(obj.settings.cal.drawFunction)
                 drawFunction = @obj.drawFixationPointDefault;
@@ -1554,7 +1561,7 @@ classdef Titta < handle
                 flipT   = lastFlip;
             end
             qStartOfSequence = tick==-1;
-            if qCal && size(points,1)>0
+            if qCal
                 % make sure we start with a clean slate:
                 % discard data from all points, if any
                 for p=1:size(points,1)
@@ -1707,14 +1714,12 @@ classdef Titta < handle
             end
             
             % calibration/validation finished
-            if size(points,1)>0
-                lastPoint = currentPoint-pointOff;
-                obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
-            end
+            lastPoint = currentPoint-pointOff;
+            obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
-            if qCal && size(points,1)>0 && out.status==1
+            if qCal && out.status==1
                 % compute calibration
                 obj.buffer.calibrationComputeAndApply();
                 computeResult   = [];
@@ -1725,7 +1730,7 @@ classdef Titta < handle
                     drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt,flipT+1/1000);
                     
-                    % first get computeAndApply result, then get 
+                    % first get computeAndApply result, then get
                     if isempty(computeResult)
                         computeResult = obj.buffer.calibrationRetrieveResult();
                         if ~isempty(computeResult)
