@@ -1,7 +1,8 @@
 sca
 clear variables
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
+% add Titta folder to path
+addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..','..')));
 
 DEBUGlevel          = 0;
 
