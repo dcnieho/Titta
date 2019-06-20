@@ -88,9 +88,6 @@ ball.drag   = -ballAccel;
 
 
 %% run
-% TODO this must be wrong
-addpath(genpath(fullfile(cd,'theToolbox')));
-
 % TODO: known issue: ball can get stuck in paddle. check order of update
 % operations each frame
 
