@@ -1,6 +1,6 @@
 function data = drawInstruction(text,textSetup,wpnt,keys,ETSendMessageFun,flipWhen)
 
-if nargin<8 || isempty(flipWhen)
+if nargin<6 || isempty(flipWhen)
     % default, flip at next possible moment
     flipWhen = 0;
 end
@@ -11,7 +11,7 @@ data.Tonset  = [];
 data.Toffset = [];
 
 data.Tonset  = drawtext(text,textSetup,wpnt,flipWhen);
-ETSendMessageFun('Instruction ON');
+ETSendMessageFun('Instruction ON',data.Tonset);
 
 while true
     [~,keyCode] = KbStrokeWait();
@@ -20,5 +20,5 @@ while true
     end
 end
 data.Toffset = Screen('Flip',wpnt);
-ETSendMessageFun('Instruction OFF');
+ETSendMessageFun('Instruction OFF',data.Toffset);
 

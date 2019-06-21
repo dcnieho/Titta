@@ -11,8 +11,8 @@ while duration>0
     else
         when = swaptime+1;
     end
-    swaptime = drawtext(text,textSetup,w,when);
-    ETSendMessageFun(sprintf('BREAK ON %d',duration));
+    swaptime = drawtext(text,textSetup,w,when,true);
+    ETSendMessageFun(sprintf('BREAK ON %d',duration),swaptime);
 
     duration = duration-1;
 end
@@ -23,8 +23,8 @@ if strcmp(key,'space')
 else
     keyName = key;
 end
-drawtext(sprintf('Press %s to continue...',keyName),textSetup,w,swaptime+1);
-ETSendMessageFun('BREAK ON 0');
+swaptime = drawtext(sprintf('Press %s to continue...',keyName),textSetup,w,swaptime+1);
+ETSendMessageFun('BREAK ON 0',swaptime);
 while true
     [~,keyCode] = KbPressWait();
     if any(ismember(lower(KbName(keyCode)),lower(key)))
