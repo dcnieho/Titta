@@ -122,8 +122,8 @@ classdef TalkToProLabDummyMode < handle
     end
     
     methods (Static)
-        function tag = makeTag(varargin)
-            tag = TalkToProLab.makeTag(varargin{:});
+        function tag = makeAOITag(varargin)
+            tag = TalkToProLab.makeAOITag(varargin{:});
         end
     end
 end

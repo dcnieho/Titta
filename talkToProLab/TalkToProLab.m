@@ -446,7 +446,7 @@ classdef TalkToProLab < handle
     end
     
     methods (Static)
-        function tag = makeTag(tagName,groupName)
+        function tag = makeAOITag(tagName,groupName)
             tag.tag_name    = tagName;
             tag.group_name  = '';
             if nargin>1 && ~isempty(groupName)
