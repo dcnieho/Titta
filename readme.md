@@ -39,7 +39,7 @@ the following interface:
 Titta.getDefaults('trackerName');` Supported tracker model names are `Tobii Pro Spectrum`,
 `Tobii TX300`, `X2-60_Compact`, `Tobii Pro Nano`, and `IS4_Large_Peripheral` (the Tobii 4C eye tracker). (TODO: this list is currently incomplete, I have not yet tested other systems).
 2. Change settings from their defaults if wanted (see [supported options](#supported-options) section below)
-3. Create a SMITE instance using this settings struct: `EThndl = Titta(settings);`
+3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
 
 ## API
 ### `Titta` class
