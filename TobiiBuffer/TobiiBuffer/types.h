@@ -140,7 +140,7 @@ namespace TobiiTypes
         NotYetEntered,
         AwaitingCalPoint,
         CollectingData,
-		DiscardingData,
+        DiscardingData,
         Computing,
         GettingCalibrationData,
         ApplyingCalibrationData,
@@ -159,21 +159,21 @@ namespace TobiiTypes
         Exit
     };
 
-	struct CalibrationWorkItem
-	{
-		CalibrationAction	action = CalibrationAction::Nothing;
-		// some actions need one or both of the below
-		std::vector<double> coordinates;
-		std::string         eye;
+    struct CalibrationWorkItem
+    {
+        CalibrationAction	action = CalibrationAction::Nothing;
+        // some actions need one or both of the below
+        std::vector<double> coordinates;
+        std::string         eye;
         std::vector<uint8_t>calData;
-	};
+    };
 
-	struct CalibrationWorkResult
-	{
-		CalibrationWorkItem                             workItem;
-		TobiiResearchStatus                             status;
+    struct CalibrationWorkResult
+    {
+        CalibrationWorkItem                             workItem;
+        TobiiResearchStatus                             status;
         std::string                                     statusString;
         std::shared_ptr<TobiiResearchCalibrationResult> calibrationResult;
         std::shared_ptr<TobiiResearchCalibrationData>   calibrationData;
-	};
+    };
 }

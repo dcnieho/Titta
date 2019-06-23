@@ -148,7 +148,7 @@ private:
     // calibration
     bool                                        _calibrationIsMonocular;
     std::thread                                 _calibrationThread;
-	moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkItem>   _calibrationWorkQueue;
-	moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkResult> _calibrationWorkResultQueue;
+    moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkItem>   _calibrationWorkQueue;
+    moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkResult> _calibrationWorkResultQueue;
     std::atomic<TobiiTypes::CalibrationState>   _calibrationState;
 };

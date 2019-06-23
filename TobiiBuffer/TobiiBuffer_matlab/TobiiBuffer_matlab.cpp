@@ -895,12 +895,12 @@ namespace mxTypes
         case TobiiTypes::CalibrationState::AwaitingCalPoint:
             str = "AwaitingCalPoint";
             break;
-		case TobiiTypes::CalibrationState::CollectingData:
-			str = "CollectingData";
-			break;
-		case TobiiTypes::CalibrationState::DiscardingData:
-			str = "DiscardingData";
-			break;
+        case TobiiTypes::CalibrationState::CollectingData:
+            str = "CollectingData";
+            break;
+        case TobiiTypes::CalibrationState::DiscardingData:
+            str = "DiscardingData";
+            break;
         case TobiiTypes::CalibrationState::Computing:
             str = "Computing";
             break;

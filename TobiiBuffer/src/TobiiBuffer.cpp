@@ -238,11 +238,11 @@ TobiiBuffer::~TobiiBuffer()
 void TobiiBuffer::calibrationThread()
 {
     bool keepRunning            = true;
-	TobiiResearchStatus result;
+    TobiiResearchStatus result;
     while (keepRunning)
     {
-		TobiiTypes::CalibrationWorkItem workItem;
-		_calibrationWorkQueue.wait_dequeue(workItem);
+        TobiiTypes::CalibrationWorkItem workItem;
+        _calibrationWorkQueue.wait_dequeue(workItem);
         switch (workItem.action)
         {
         case TobiiTypes::CalibrationAction::Nothing:
@@ -269,9 +269,9 @@ void TobiiBuffer::calibrationThread()
                 result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), collectEye, &ignore);
             }
             else
-				result = tobii_research_screen_based_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
-			_calibrationWorkResultQueue.enqueue({workItem, result});
+            _calibrationWorkResultQueue.enqueue({workItem, result});
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -279,7 +279,7 @@ void TobiiBuffer::calibrationThread()
         case TobiiTypes::CalibrationAction::DiscardData:
         {
             // discard calibration data for a specific point
-			_calibrationState = TobiiTypes::CalibrationState::DiscardingData;
+            _calibrationState = TobiiTypes::CalibrationState::DiscardingData;
             if (_calibrationIsMonocular)
             {
                 TobiiResearchSelectedEye discardEye;
@@ -287,14 +287,14 @@ void TobiiBuffer::calibrationThread()
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
                 else if (workItem.eye == "right")
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-				result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
+                result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
             }
             else
-				result = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
-			_calibrationWorkResultQueue.enqueue({workItem, result});
+            _calibrationWorkResultQueue.enqueue({workItem, result});
 
-			_calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
+            _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
         }
         case TobiiTypes::CalibrationAction::Compute:
@@ -309,7 +309,7 @@ void TobiiBuffer::calibrationThread()
             TobiiTypes::CalibrationWorkResult workResult{workItem, result};
             if (computeResult)
                 workResult.calibrationResult = {computeResult,tobii_research_free_screen_based_calibration_result};
-			_calibrationWorkResultQueue.enqueue(std::move(workResult));
+            _calibrationWorkResultQueue.enqueue(std::move(workResult));
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -351,8 +351,8 @@ void TobiiBuffer::calibrationThread()
         }
         case TobiiTypes::CalibrationAction::Exit:
             // leave calibration mode and exit
-			result = tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
-			_calibrationWorkResultQueue.enqueue({workItem, result});
+            result = tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
+            _calibrationWorkResultQueue.enqueue({workItem, result});
             keepRunning = false;
             break;
         }
