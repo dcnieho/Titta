@@ -46,7 +46,7 @@ Titta.getDefaults('trackerName');` Supported tracker model names are `Tobii Pro 
 #### Static methods
 The below method can be called on a Titta instance or on the Titta class directly.
 
-|Call|inputs|outputs|description|
+|Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`getDefaults`|<ol><li>`tracker`: one of the supported eye tracker model names</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
 |`getSystemTime`||<ol><li>`time`: An int64 scalar denoting Tobii and Psychtoolbox system time in microseconds</li></ol>|Gets the current system time using the PsychToolbox function `GetSecs()`, but provided in microseconds to match the system time provided by the Tobii Pro SDK.|
@@ -58,7 +58,7 @@ An instance of Titta is constructed by calling `Titta()` with either the name of
 #### Methods
 The following method calls are available on a Titta instance
 
-|Call|inputs|outputs|description|
+|Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`setDummyMode()`||<ol><li>`obj`: `TittaDummyMode` instance (output cannot be ignored)</li></ol>|Turn the current `Titta` instance into a dummy mode class.|
 |`getOptions()`||<ol><li>`settings`: struct with current settings</li></ol>|Get active settings, returns only those that can be changed in the current state (which is a subset of all settings once `init()` has been called)|
@@ -75,7 +75,7 @@ The following method calls are available on a Titta instance
 #### Properties
 The following read-only properties are available for a Titta instance
 
-|Property|description|
+|Property|Description|
 | --- | --- |
 |`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to, such as serial number.|
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
@@ -232,7 +232,7 @@ An instance of TobiiBuffer is constructed by calling `TobiiBuffer()`. Before it 
 #### Methods
 The following method calls are available on a TobiiBuffer instance
 
-|Call|inputs|outputs|description|
+|Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |||||
 
@@ -241,7 +241,7 @@ The following method calls are available on a TobiiBuffer instance
 #### Static methods
 The below method can be called on a TalkToProLab instance or on the TalkToProLab class directly.
 
-|Call|inputs|outputs|description|
+|Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`makeAOITag`|<ol><li>`tagName`: The name of the tag</li><li>`groupName`: (optional) the name of the tag group the tag belongs to.</li></ol>|<ol><li>`tag`: The AOI tag.</li></ol>|Generates an AOI tag in the format expected by `TalkToProLab.attachAOIToImage()`.|
 
@@ -251,7 +251,7 @@ An instance of TalkToProLab is constructed by calling `TalkToProLab()` and provi
 #### Methods
 The following method calls are available on a TalkToProLab instance
 
-|Call|inputs|outputs|description|
+|Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |||||
 
