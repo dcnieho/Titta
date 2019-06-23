@@ -846,7 +846,7 @@ classdef Titta < handle
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace               = 1;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration           = 1.5;                          % minimum duration (s) that each point is shown
-            settings.cal.qRandPoints            = true;
+            settings.cal.doRandomPointOrder     = true;
             settings.cal.bgColor                = 127;
             settings.cal.fixBackSize            = 20;
             settings.cal.fixFrontSize           = 5;
@@ -858,7 +858,7 @@ classdef Titta < handle
             settings.val.pointPos               = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.val.paceDuration           = 1.5;
             settings.val.collectDuration        = 0.5;
-            settings.val.qRandPoints            = true;
+            settings.val.doRandomPointOrder     = true;
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -912,7 +912,7 @@ classdef Titta < handle
                 'cal','pointPos'
                 'cal','autoPace'
                 'cal','paceDuration'
-                'cal','qRandPoints'
+                'cal','doRandomPointOrder'
                 'cal','bgColor'
                 'cal','fixBackSize'
                 'cal','fixFrontSize'
@@ -924,7 +924,7 @@ classdef Titta < handle
                 'val','pointPos'
                 'val','paceDuration'
                 'val','collectDuration'
-                'val','qRandPoints'
+                'val','doRandomPointOrder'
                 };
             for p=size(allowed,1):-1:1
                 if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
@@ -1546,7 +1546,7 @@ classdef Titta < handle
             end
             
             points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
-            if (qCal && obj.settings.cal.qRandPoints) || (~qCal && obj.settings.val.qRandPoints)
+            if (qCal && obj.settings.cal.doRandomPointOrder) || (~qCal && obj.settings.val.doRandomPointOrder)
                 points = points(randperm(nPoint),:);
             end
             if isempty(obj.settings.cal.drawFunction)
