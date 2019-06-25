@@ -89,19 +89,17 @@ classdef TalkToProLabDummyMode < handle
             wasUploaded = false;
         end
         
-        function success = attachAOIToImage(~,~,~,~,~,~)
-            success = true;
+        function attachAOIToImage(~,~,~,~,~,~)
         end
         
-        function numAOI = attachAOIToVideo(~,~,~)
-            numAOI = 0;
+        function attachAOIToVideo(~,~,~)
         end
         
         function EPState = getExternalPresenterState(~)
             EPState = 'ready';
         end
         
-        function recordingID = startRecording(~,~,~,~,~)
+        function recordingID = startRecording(~,~,~,~,~,~)
             recordingID     = 'fake_recording_id';
         end
         

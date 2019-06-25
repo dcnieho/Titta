@@ -279,7 +279,7 @@ classdef TalkToProLab < handle
             waitForResponse(this.clientProject,'AddAois');
         end
         
-        function numAOI = attachAOIToVideo(this,mediaName,request)
+        function attachAOIToVideo(this,mediaName,request)
             % This function gives the user little help, and assumes that
             % they read the Tobii Pro Lab API and deliver a properly
             % formatted request. Request is the full struct to be converted
@@ -294,8 +294,7 @@ classdef TalkToProLab < handle
             
             % send
             this.clientProject.send(request);
-            resp    = waitForResponse(this.clientProject,'AddAois');
-            numAOI  = resp.imported_aoi_count;
+            waitForResponse(this.clientProject,'AddAois');
         end
         
         function EPState = getExternalPresenterState(this)
