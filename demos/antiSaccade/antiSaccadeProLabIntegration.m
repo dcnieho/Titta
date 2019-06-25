@@ -8,7 +8,18 @@ clear variables
 myDir = fileparts(mfilename('fullpath'));
 addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
 
-DEBUGlevel          = 0;
+DEBUGlevel          = 2;
+
+% provide info about the external presenter project that should be open in pro lab
+TobiiProLabProject      = 'antiSaccade';    % to use external presenter functionality, provide the name of the external presenter project here
+TobiiProLabParticipant  = 'tester';
+TobiiProLabRecordingName= 'recording1';
+qDryRun                 = true;             % if true, do a dry run that just uploads the needed media to Pro Lab
+maxFixDist              = 2;                % maximum distance gaze may stray from fixation point (not part of standard protocol, adjust to your needs)
+minSacAmp               = 2;                % minimum amplitude of saccade (not part of standard protocol, adjust to your needs)
+maxSacDir               = 70;               % maximum angle off from correct direction (not part of standard protocol, adjust to your needs)
+AOInVertices            = 20;               % number of vertices for cirle AOI
+
 
 % provide info about your screen (set to defaults for screen of Spectrum)
 sv.scr.num             = 0;
@@ -108,14 +119,19 @@ sv.targetEccentricityPix= AngleToScreenPos(sv.targetEccentricity,sv.scr.FOVx)/2*
 sv.targetDiameterPix    = AngleToScreenPos(sv.targetDiameter    ,sv.scr.FOVx)/2*sv.scr.rect(1);
 sv.fixBackSizePix       = AngleToScreenPos(sv.fixBackSize       ,sv.scr.FOVx)/2*sv.scr.rect(1);
 sv.fixFrontSizePix      = AngleToScreenPos(sv.fixFrontSize      ,sv.scr.FOVx)/2*sv.scr.rect(1);
+maxFixDistPix           = AngleToScreenPos(maxFixDist           ,sv.scr.FOVx)/2*sv.scr.rect(1);
+minSacAmpPix            = AngleToScreenPos(minSacAmp            ,sv.scr.FOVx)/2*sv.scr.rect(1);
 
 % generate trials
+dealFun = @(x)x{:};                     % like deal, but no shit that we first have to create a cell variable that we then feed it with {:}
+if qDryRun
+    sv.blockSetup = {'TP',1;'P',1;'TA',1;'A',1};
+end
 nTrials = [0 sv.blockSetup{:,2}];
 data.trials = struct('tNr',num2cell(1:sum(nTrials)));
 [data.trials.qFirstOfBlock] = deal(false);
 [data.trials.qLastOfBlock]  = deal(false);
 [data.trials.instruct]      = deal(struct('text',''));
-dealFun = @(x)x{:};                     % like deal, but no shit that we first have to create a cell variable that we then feed it with {:}
 rafz    = @(x)ceil(abs(x)).*sign(x);    % round away from zero
 delayTs = [sv.delayTLimits(1) : 1000/sv.scr.framerate : sv.delayTLimits(2)];    % possible delay times, discretized to frames in the interval
 for p=1:size(sv.blockSetup,1)
@@ -143,16 +159,42 @@ for p=1:size(sv.blockSetup,1)
         end
     end
 end
+if qDryRun
+    [data.trials.dir]           = dealFun(num2cell([-1 1 -1 1]));
+    [data.trials.delayT]        = deal(500);
+end
 
 %% run
 try 
     % init
     EThndl          = Titta(settings);
-    if qUseDummyMode
+    if qUseDummyMode || qDryRun
         EThndl          = EThndl.setDummyMode();
     end
     EThndl.init();
-    
+    % get class for integration with Tobii Pro Lab
+    if qUseDummyMode
+        TalkToProLabInstance = TalkToProLabDummyMode();
+    else
+        TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
+    end
+    % create participant (setting second parameter to true means that if a
+    % participant by that name already exists
+    if ~qDryRun
+        TalkToProLabInstance.createParticipant(TobiiProLabParticipant,true);
+    end
+    % get media information from Pro Lab
+    if ~qDryRun
+        breakID         = TalkToProLabInstance.findMedia('break');
+        blankID         = TalkToProLabInstance.findMedia('blank');
+        fixID           = TalkToProLabInstance.findMedia('fixationPoint');
+        leftID          = TalkToProLabInstance.findMedia('leftTarget');
+        rightID         = TalkToProLabInstance.findMedia('rightTarget');
+        proTrainInsID   = TalkToProLabInstance.findMedia('ProSacTrainInstruction');
+        proInsID        = TalkToProLabInstance.findMedia('ProSacInstruction');
+        antiTrainInsID  = TalkToProLabInstance.findMedia('AntiSacTrainInstruction');
+        antiInsID       = TalkToProLabInstance.findMedia('AntiSacInstruction');
+    end
     
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
@@ -175,6 +217,9 @@ try
     % do calibration, start recording
     calValInfo = EThndl.calibrate(wpnt);
     EThndl.buffer.start('gaze');
+    if ~qDryRun
+        TalkToProLabInstance.startRecording(TobiiProLabRecordingName,sv.scr.rect(1),sv.scr.rect(2));
+    end
     
     % clear flip
     clearTime = Screen('Flip',wpnt);
@@ -184,16 +229,54 @@ try
             EThndl.sendMessage(sprintf('BLOCK START %d: %s',data.trials(p).bNr,sv.blockSetup{data.trials(p).bNr,1}));
         end
         if ~isempty(data.trials(p).instruct.text)
-            insText                     = data.trials(p).instruct.text;
-            data.trials(p).instruct     = drawInstruction(insText,addToStruct(text,'color',[0 0 0 255]),wpnt,{'space'},@EThndl.sendMessage);
-            data.trials(p).instruct.text= insText;
-            clearTime                   = data.trials(p).instruct.Toffset;
+            insText                             = data.trials(p).instruct.text;
+            keys = {};
+            if ~qDryRun
+                keys = {'space'};
+            end
+            [data.trials(p).instruct,scrShot]   = drawInstruction(insText,addToStruct(text,'color',[0 0 0 255]),wpnt,keys,@EThndl.sendMessage,[],qDryRun);
+            data.trials(p).instruct.text        = insText;
+            clearTime                           = data.trials(p).instruct.Toffset;
+            % construct name
+            if data.trials(p).blockType=='P'
+                instrName = 'Pro';
+            else
+                instrName = 'Anti';
+            end
+            if data.trials(p).qTraining
+                instrName = [instrName 'Train'];
+            end
+            instrName = [instrName 'Instruction'];
+            if qDryRun
+                instrID = TalkToProLabInstance.findMedia(instrName);
+                if isempty(instrID)
+                    instrID = TalkToProLabInstance.uploadMedia(scrShot,instrName);
+                end
+            else
+                % notify pro lab of stimulus onset
+                
+            end
         end
         
         % draw fixation target after sv.restT
         drawfixpoints(wpnt,sv.scr.center,{'.','.'},{sv.fixBackSizePix sv.fixFrontSizePix},{sv.fixBackColor sv.fixFrontColor},1);
         data.trials(p).fixOnsetT  = Screen('Flip',wpnt,clearTime+sv.restT/1000-sv.scr.flipWaitT+1/1000);
         EThndl.sendMessage(sprintf('FIX ON %d (%d %d)',p,sv.scr.center),data.trials(p).fixOnsetT);
+        if qDryRun && p==1
+            % screenshot and upload fixation point, if not already done
+            fixID = TalkToProLabInstance.findMedia('fixationPoint');
+            if isempty(fixID)
+                screenShot = Screen('GetImage', wpnt);
+                fixID = TalkToProLabInstance.uploadMedia(screenShot,'fixationPoint');
+                % set AOI
+                angs = linspace(0,2*pi,AOInVertices+1); angs(end) = [];
+                AOIverts = bsxfun(@plus,maxFixDistPix*[cos(angs); sin(angs)],sv.scr.center(:));
+                TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],AOIverts);
+            end
+        else
+            % notify pro lab of stimulus onset
+            
+        end
         
         % draw saccade (anti-)target after delayT
         pos = sv.scr.center;
@@ -201,18 +284,78 @@ try
         drawfixpoints(wpnt,pos,{'.'},{sv.targetDiameterPix},{sv.targetColor},1);
         data.trials(p).targetOnsetT  = Screen('Flip',wpnt,data.trials(p).fixOnsetT+data.trials(p).delayT/1000-sv.scr.flipWaitT+1/1000);
         EThndl.sendMessage(sprintf('TARGET ON %d (%d %d)',p,round(pos)),data.trials(p).targetOnsetT);
+        if data.trials(p).dir==-1
+            target = 'left';
+        else
+            target = 'right';
+        end
+        tarLbl = [target 'Target'];
+        if qDryRun
+            % screenshot and upload fixation point, if not already done
+            targetID = TalkToProLabInstance.findMedia(tarLbl);
+            if isempty(targetID)
+                screenShot = Screen('GetImage', wpnt);
+                targetID = TalkToProLabInstance.uploadMedia(screenShot,tarLbl);
+                % set AOI
+                if data.trials(p).dir==-1
+                    angs = linspace(-maxSacDir,maxSacDir,AOInVertices)+180;
+                    AOIverts = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
+                    hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
+                    if hOff>sv.scr.rect(1)/2
+                        vOff = sv.scr.rect(1)/2*tand(maxSacDir);
+                        AOIverts = [AOIverts [0 0; sv.scr.center(2)-vOff sv.scr.center(2)+vOff]];
+                    else
+                        hOff = sv.scr.rect(1)/2-hOff;
+                        AOIverts = [AOIverts [hOff 0 0 hOff; 0 0 sv.scr.rect(2) sv.scr.rect(2)]];
+                    end
+                else
+                    angs = linspace(-maxSacDir,maxSacDir,AOInVertices);
+                    AOIverts = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
+                    hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
+                    if hOff>sv.scr.rect(1)/2
+                        vOff = sv.scr.rect(1)/2*tand(maxSacDir);
+                        AOIverts = [AOIverts [sv.scr.rect(1) sv.scr.rect(1); sv.scr.center(2)+vOff sv.scr.center(2)-vOff]];
+                    else
+                        hOff = hOff + sv.scr.rect(1)/2;
+                        AOIverts = [AOIverts [hOff sv.scr.rect(1) sv.scr.rect(1) hOff; sv.scr.rect(2) sv.scr.rect(2) 0 0]];
+                    end
+                end
+                TalkToProLabInstance.attachAOIToImage(tarLbl,tarLbl,[255 0 0],AOIverts);
+            end
+        else
+            % notify pro lab of stimulus onset
+            
+        end
         
         % clear after sv.targetDuration
         data.trials(p).targetOffsetT = Screen('Flip',wpnt,data.trials(p).targetOnsetT+sv.targetDuration/1000-sv.scr.flipWaitT+1/1000);
         clearTime = data.trials(p).targetOffsetT;
         EThndl.sendMessage(sprintf('TARGET OFF %d (%d %d)',p,round(pos)),clearTime);
+        if qDryRun && p==1
+            blankID = TalkToProLabInstance.findMedia('blank');
+            if isempty(blankID)
+                screenShot = Screen('GetImage', wpnt);
+                blankID = TalkToProLabInstance.uploadMedia(screenShot,'blank');
+            end
+        else
+            % notify pro lab of stimulus onset
+            
+        end
         
         % break if after last of block and not training.
-        if data.trials(p).qLastOfBlock && ~data.trials(p).qTraining && p~=length(data.trials)
+        if data.trials(p).qLastOfBlock && ~data.trials(p).qTraining && p~=length(data.trials) && ~qDryRun
             EThndl.sendMessage('BREAK START');
             displaybreak(sv.breakT/1000,wpnt,addToStruct(text,'color',[200 0 0 255]),'space',@EThndl.sendMessage);
             clearTime = Screen('Flip',wpnt);
             EThndl.sendMessage('BREAK OFF',clearTime);
+        end
+        if qDryRun && p==1
+            breakID = TalkToProLabInstance.findMedia('break');
+            if isempty(breakID)
+                drawtext('BREAK',addToStruct(text,'color',[200 0 0 255]),wpnt,0);
+                screenShot = Screen('GetImage', wpnt);
+                breakID = TalkToProLabInstance.uploadMedia(screenShot,'break');
+            end
         end
         if p==length(data.trials) || data.trials(p+1).bTNr==1
             EThndl.sendMessage(sprintf('BLOCK END %d: %s',data.trials(p).bNr,sv.blockSetup{data.trials(p).bNr,1}));
@@ -223,9 +366,11 @@ try
     EThndl.buffer.stop('gaze');
     
     % save data to mat file
-    data.setup  = sv;
-    data.ETdata = EThndl.collectSessionData();
-    save('antiSac.mat','-struct','data')
+    if ~qDryRun
+        data.setup  = sv;
+        data.ETdata = EThndl.collectSessionData();
+        save('antiSac.mat','-struct','data')
+    end
     
     % shut down
     EThndl.deInit();
