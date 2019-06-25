@@ -13,7 +13,7 @@ DEBUGlevel          = 0;
 % provide info about your screen (set to defaults for screen of Spectrum)
 sv.scr.num             = 0;
 sv.scr.rect            = [1920 1080];                       % expected screen resolution   (px)
-sv.scr.framerate       = 240;                                % expected screen refresh rate (hz)
+sv.scr.framerate       = 60;                                % expected screen refresh rate (hz)
 sv.scr.viewdist        = 65;                                % viewing    distance      (cm)
 sv.scr.sizey           = 29.69997;                          % vertical   screen   size (cm)
 sv.scr.multiSample     = 8;

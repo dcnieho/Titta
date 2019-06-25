@@ -8,13 +8,14 @@ clear variables
 myDir = fileparts(mfilename('fullpath'));
 addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
 
-DEBUGlevel          = 2;
+DEBUGlevel          = 0;
 
 % provide info about the external presenter project that should be open in pro lab
+qDryRun                 = false;            % if true, do a dry run that just uploads the needed media to Pro Lab
+qUseProLabDummyMode     = false;
 TobiiProLabProject      = 'antiSaccade';    % to use external presenter functionality, provide the name of the external presenter project here
 TobiiProLabParticipant  = 'tester';
 TobiiProLabRecordingName= 'recording1';
-qDryRun                 = true;             % if true, do a dry run that just uploads the needed media to Pro Lab
 maxFixDist              = 2;                % maximum distance gaze may stray from fixation point (not part of standard protocol, adjust to your needs)
 minSacAmp               = 2;                % minimum amplitude of saccade (not part of standard protocol, adjust to your needs)
 maxSacDir               = 70;               % maximum angle off from correct direction (not part of standard protocol, adjust to your needs)
@@ -24,7 +25,7 @@ AOInVertices            = 20;               % number of vertices for cirle AOI
 % provide info about your screen (set to defaults for screen of Spectrum)
 sv.scr.num             = 0;
 sv.scr.rect            = [1920 1080];                       % expected screen resolution   (px)
-sv.scr.framerate       = 240;                                % expected screen refresh rate (hz)
+sv.scr.framerate       = 60;                                % expected screen refresh rate (hz)
 sv.scr.viewdist        = 65;                                % viewing    distance      (cm)
 sv.scr.sizey           = 29.69997;                          % vertical   screen   size (cm)
 sv.scr.multiSample     = 8;
@@ -173,7 +174,7 @@ try
     end
     EThndl.init();
     % get class for integration with Tobii Pro Lab
-    if qUseDummyMode
+    if qUseProLabDummyMode
         TalkToProLabInstance = TalkToProLabDummyMode();
     else
         TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
@@ -247,14 +248,15 @@ try
                 instrName = [instrName 'Train'];
             end
             instrName = [instrName 'Instruction'];
+            instrID = TalkToProLabInstance.findMedia(instrName);
             if qDryRun
-                instrID = TalkToProLabInstance.findMedia(instrName);
                 if isempty(instrID)
                     instrID = TalkToProLabInstance.uploadMedia(scrShot,instrName);
                 end
             else
                 % notify pro lab of stimulus onset
-                
+                TalkToProLabInstance.sendStimulusEvent(instrID,[0 0 sv.scr.rect],data.trials(p).instruct.Tonset,[]);
+                TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).instruct.Toffset,[]);
             end
         end
         
@@ -275,7 +277,7 @@ try
             end
         else
             % notify pro lab of stimulus onset
-            
+            TalkToProLabInstance.sendStimulusEvent(fixID,[0 0 sv.scr.rect],data.trials(p).fixOnsetT,[]);
         end
         
         % draw saccade (anti-)target after delayT
@@ -323,8 +325,13 @@ try
                 TalkToProLabInstance.attachAOIToImage(tarLbl,tarLbl,[255 0 0],AOIverts);
             end
         else
+            if data.trials(p).dir==-1
+                tarID = leftID;
+            else
+                tarID = rightID;
+            end
             % notify pro lab of stimulus onset
-            
+            TalkToProLabInstance.sendStimulusEvent(tarID,[0 0 sv.scr.rect],data.trials(p).targetOnsetT,[]);
         end
         
         % clear after sv.targetDuration
@@ -337,9 +344,9 @@ try
                 screenShot = Screen('GetImage', wpnt);
                 blankID = TalkToProLabInstance.uploadMedia(screenShot,'blank');
             end
-        else
+        elseif p~=length(data.trials)
             % notify pro lab of stimulus onset
-            
+            TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT,[]);
         end
         
         % break if after last of block and not training.
@@ -348,6 +355,9 @@ try
             displaybreak(sv.breakT/1000,wpnt,addToStruct(text,'color',[200 0 0 255]),'space',@EThndl.sendMessage);
             clearTime = Screen('Flip',wpnt);
             EThndl.sendMessage('BREAK OFF',clearTime);
+            % notify pro lab of stimulus onset
+            TalkToProLabInstance.sendStimulusEvent(breakID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT+1/sv.scr.framerate,[]);
+            TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],clearTime,[]);
         end
         if qDryRun && p==1
             breakID = TalkToProLabInstance.findMedia('break');
@@ -364,6 +374,8 @@ try
     
     % stopping
     EThndl.buffer.stop('gaze');
+    TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT,GetSecs);  % last event must have an end time
+    TalkToProLabInstance.stopRecording();
     
     % save data to mat file
     if ~qDryRun
@@ -371,9 +383,12 @@ try
         data.ETdata = EThndl.collectSessionData();
         save('antiSac.mat','-struct','data')
     end
+    % finalize recording in Pro Lab (NB: must go into lab and confirm)
+    TalkToProLabInstance.finalizeRecording();
     
     % shut down
     EThndl.deInit();
+    TalkToProLabInstance.disconnect();
 catch me
     sca
     rethrow(me)
