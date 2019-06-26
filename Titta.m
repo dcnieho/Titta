@@ -362,23 +362,25 @@ classdef Titta < handle
             end
             
             % get info about screen
-            obj.scrInfo.resolution  = Screen('Rect',wpnt); obj.scrInfo.resolution(1:2) = [];
-            obj.scrInfo.center      = obj.scrInfo.resolution/2;
-            obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
-            % get current PTB state so we can restore when returning
-            % 1. alpha blending
-            [osf,odf,ocm]           = Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            % 2. screen clear color so we can reset that too. There is only
-            % one way to do that annoyingly:
-            % 2.1. clear back buffer by flipping
-            Screen('Flip',wpnt);
-            % 2.2. read a pixel, this gets us the background color
-            bgClr = double(reshape(Screen('GetImage',wpnt,[1 1 2 2],'backBuffer',obj.qFloatColorRange,4),1,4));
-            % 3. text
-            text.style  = Screen('TextStyle', wpnt);
-            text.size   = Screen('TextSize' , wpnt);
-            text.font   = Screen('TextFont' , wpnt);
-            text.color  = Screen('TextColor', wpnt);
+            for w=length(wpnt):-1:1
+                obj.scrInfo.resolution{w}  = Screen('Rect',wpnt(w)); obj.scrInfo.resolution{w}(1:2) = [];
+                obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
+                obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
+                % get current PTB state so we can restore when returning
+                % 1. alpha blending
+                [osf{w},odf{w},ocm{w}]     = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                % 2. screen clear color so we can reset that too. There is only
+                % one way to do that annoyingly:
+                % 2.1. clear back buffer by flipping
+                Screen('Flip',wpnt(w));
+                % 2.2. read a pixel, this gets us the background color
+                bgClr{w} = double(reshape(Screen('GetImage',wpnt(w),[1 1 2 2],'backBuffer',obj.qFloatColorRange(w),4),1,4));
+                % 3. text
+                text.style(w)  = Screen('TextStyle', wpnt(w));
+                text.size(w)   = Screen('TextSize' , wpnt(w));
+                text.font{w}   = Screen('TextFont' , wpnt(w));
+                text.color{w}  = Screen('TextColor', wpnt(w));
+            end
             
             % see what text renderer to use
             obj.usingFTGLTextRenderer = ~~exist('libptbdrawtext_ftgl64.dll','file') && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
@@ -457,7 +459,7 @@ classdef Titta < handle
                         obj.buffer.enterCalibrationMode(qDoMonocular);
                         qHasEnteredCalMode = true;
                     end
-                    out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
+                    out.attempt{kCal} = obj.DoCalAndVal(wpnt(1),kCal,out.attempt{kCal});
                     % check returned action state
                     switch out.attempt{kCal}.status
                         case 1
@@ -493,7 +495,7 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
+                [out.attempt,kCal] = obj.showCalValResult(wpnt(1),out.attempt,kCal);
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
@@ -529,12 +531,14 @@ classdef Titta < handle
             end
             
             % clean up and reset PTB state
-            Screen('FillRect',wpnt,bgClr);              % reset background color
-            Screen('BlendFunction', wpnt, osf,odf,ocm); % reset blend function
-            Screen('TextFont',wpnt,text.font,text.style);
-            Screen('TextColor',wpnt,text.color);
-            Screen('TextSize',wpnt,text.size);
-            Screen('Flip',wpnt);                        % clear screen
+            for w=length(wpnt):-1:1
+                Screen('FillRect',wpnt(w),bgClr{w});              % reset background color
+                Screen('BlendFunction', wpnt(w), osf{w},odf{w},ocm{w}); % reset blend function
+                Screen('TextFont',wpnt(w),text.font{w},text.style(w));
+                Screen('TextColor',wpnt(w),text.color{w});
+                Screen('TextSize',wpnt(w),text.size(w));
+                Screen('Flip',wpnt(w));                        % clear screen
+            end
             
             if bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode)
                 obj.buffer.leaveCalibrationMode();
@@ -729,7 +733,7 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            % settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
+            settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.font     = 'Segeo UI';
             settings.UI.setup.instruct.size     = 24*textFac;
@@ -955,18 +959,21 @@ classdef Titta < handle
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
+            qHaveOperatorScreen     = ~isscalar(wpnt);
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.button.setup.text.size);
+            for w=1:length(wpnt)
+            Screen('TextFont',  wpnt(w), obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
+            Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
+            end
             
             % setup ovals
             ovalVSz     = .15;
-            refSz       = ovalVSz*obj.scrInfo.resolution(2);
+            refSz       = ovalVSz*obj.scrInfo.resolution{1}(2);
             % setup head position visualization
-            head        = ETHead(wpnt,obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
+            head                    = ETHead(wpnt(1),obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
             head.refSz              = refSz;
-            head.rectWH             = obj.scrInfo.resolution;
+            head.rectWH             = obj.scrInfo.resolution{1};
             head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
             head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
             head.showEyes           = obj.settings.UI.setup.showEyes;
@@ -975,39 +982,57 @@ classdef Titta < handle
             head.eyeClr             = obj.settings.UI.setup.eyeClr;
             head.pupilClr           = obj.settings.UI.setup.pupilClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+            if qHaveOperatorScreen
+                headO                    = ETHead(wpnt(2),obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
+                headO.refSz              = head.refSz;
+                headO.rectWH             = head.rectWH;
+                headO.headCircleFillClr  = head.headCircleFillClr;
+                headO.headCircleEdgeClr  = head.headCircleEdgeClr;
+                headO.showEyes           = head.showEyes;
+                headO.showPupils         = head.showPupils;
+                headO.crossClr           = head.crossClr;
+                headO.eyeClr             = head.eyeClr;
+                headO.pupilClr           = head.pupilClr;
+                headO.crossEye           = head.crossEye;
+            end
             
             % get reference position
             if isempty(obj.settings.UI.setup.referencePos)
                 obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
             end
-            head.referencePos       = obj.settings.UI.setup.referencePos;
             % position reference circle on screen
-            refPos  = obj.scrInfo.resolution/2;
+            refPos = obj.scrInfo.resolution{1}/2;
             allPosOff = [0 0];
             if ~obj.settings.UI.setup.doCenterRefPos
                 scrWidth  = obj.geom.displayArea.width/10;
                 scrHeight = obj.geom.displayArea.height/10;
-                pixPerCm  = mean(obj.scrInfo.resolution./[scrWidth scrHeight])*[1 -1];      % flip Y because positive UCS is upward, should be downward for drawing on screen
+                pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
                 allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
             end
-            refPos = refPos+allPosOff;
-            head.allPosOff = allPosOff;
+            refPosP = refPos+allPosOff;
+            
+            head.referencePos   = obj.settings.UI.setup.referencePos;
+            head.allPosOff      = allPosOff;
+            if qHaveOperatorScreen
+                headO.referencePos  = head.referencePos;
+                % NB: no offset on screen for head on operator screen
+            end
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
-            but(1)  = PTBButton(obj.settings.UI.button.setup.eyeIm  ,       qHasEyeIm       , wpnt, funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.setup.cal    ,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(3)  = PTBButton(obj.settings.UI.button.setup.prevcal, qHaveValidCalibrations, wpnt, funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.setup.eyeIm  ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.setup.cal    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.setup.prevcal, qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
             % arrange them 
             butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution(2)*.95);
+                yposBase    = round(obj.scrInfo.resolution{end}(2)*.95);
                 % place buttons for go to advanced interface, or calibrate
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
-                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{w}(1)/2;
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
@@ -1016,10 +1041,14 @@ classdef Titta < handle
             end
             
             % setup fixation points in the corners of the screen
-            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{w},4,1);
             
             % setup cursors
             butRects        = cat(1,but.rect).';
+            % for cursor, need to correct rect position based on global
+            % rect of window
+            rect     = Screen('GlobalRect',wpnt(end));
+            butRects = bsxfun(@plus,butRects,rect([1 2 1 2]).');
             cursors.rect    = num2cell(butRects,1);
             cursors.cursor  = repmat(2,size(cursors.rect)); % Hand
             cursors.other   = 0;                            % Arrow
@@ -1029,8 +1058,8 @@ classdef Titta < handle
             cursor  = cursorUpdater(cursors);
             
             % setup text for positioning message
-            Screen('TextFont',  wpnt, obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.setup.instruct.size);
+            Screen('TextFont',  wpnt(1), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
+            Screen('TextSize',  wpnt(1), obj.settings.UI.setup.instruct.size);
             
             % get tracking status and visualize
             qToggleEyeImage     = false;
@@ -1042,7 +1071,7 @@ classdef Titta < handle
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
-            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
+            Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
             headPosLastT       = 0;
             while true
                 if qHasEyeIm
@@ -1064,19 +1093,19 @@ classdef Titta < handle
                     if qShowEyeImage
                         % get eye image
                         eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
-                        [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
+                        [texs,szs]  = UploadImages(texs,szs,wpnt(end),eyeIm);
                         
                         % update eye image locations if size of returned eye image changed
                         if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
                             margin = 20;
                             visible = [but.visible];
                             if ~any(visible)
-                                basePos = round(obj.scrInfo.resolution(2)*.95);
+                                basePos = round(obj.scrInfo.resolution{1}(2)*.95);
                             else
                                 basePos = min(butRects(2,[but.visible]));
                             end
-                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center(1)         +margin/2,basePos-margin-szs(2,2));
+                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{2}(1)         +margin/2,basePos-margin-szs(2,2));
                         end
                     end
                 end
@@ -1085,10 +1114,18 @@ classdef Titta < handle
                 eyeData = obj.buffer.peekN('gaze',1);
                 if isempty(eyeData.systemTimeStamp)
                     head.update([],[],[],[],[],[]);
+                    if qHaveOperatorScreen
+                        headO.update([],[],[],[],[],[]);
+                    end
                 else
                     head.update(...
                         eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, eyeData. left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, eyeData.right.pupil.diameter);
+                    if qHaveOperatorScreen
+                        headO.update(...
+                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, eyeData. left.pupil.diameter,...
+                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, eyeData.right.pupil.diameter);
+                    end
                 end
                 
                 if ~isnan(head.avgDist)
@@ -1098,14 +1135,14 @@ classdef Titta < handle
                 % draw eye images, if any
                 if qShowEyeImage
                     if texs(1)
-                        Screen('DrawTexture', wpnt, texs(1),[],eyeImageRect{1});
+                        Screen('DrawTexture', wpnt(end), texs(1),[],eyeImageRect{1});
                     else
-                        Screen('FillRect', wpnt, 0, eyeImageRect{1});
+                        Screen('FillRect', wpnt(end), 0, eyeImageRect{1});
                     end
                     if texs(2)
-                        Screen('DrawTexture', wpnt, texs(2),[],eyeImageRect{2});
+                        Screen('DrawTexture', wpnt(end), texs(2),[],eyeImageRect{2});
                     else
-                        Screen('FillRect', wpnt, 0, eyeImageRect{2});
+                        Screen('FillRect', wpnt(end), 0, eyeImageRect{2});
                     end
                 end
                 % for distance info and ovals: hide when eye image is shown
@@ -1116,16 +1153,26 @@ classdef Titta < handle
                 % draw distance info
                 if ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt,str,'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt(1),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                end
+                if qHaveOperatorScreen
+                    str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    DrawFormattedText(wpnt(2),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawOrientedPoly(wpnt,circVerts,1,0,[0 1; 1 0],refSz,refPos,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
+                    drawOrientedPoly(wpnt(1),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
+                end
+                if qHaveOperatorScreen
+                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
                 end
                 % stylized head
                 head.draw();
+                if qHaveOperatorScreen
+                    headO.draw();
+                end
                 
                 % draw buttons
                 [mousePos(1), mousePos(2)] = GetMouse();
@@ -1134,10 +1181,13 @@ classdef Titta < handle
                 but(3).draw(mousePos);
                 
                 % draw fixation points
-                obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
+                obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
                 
                 % drawing done, show
-                Screen('Flip',wpnt);
+                Screen('Flip',wpnt(1));
+                if qHaveOperatorScreen
+                    Screen('Flip',wpnt(2));
+                end
                 
                 
                 % get user response
@@ -1176,7 +1226,7 @@ classdef Titta < handle
                         break;
                     elseif any(strcmpi(keys,'d')) && shiftIsDown
                         % take screenshot
-                        takeScreenshot(wpnt);
+                        takeScreenshot(wpnt(1));
                     end
                 end
             end
@@ -1456,7 +1506,7 @@ classdef Titta < handle
                 return;
             end
             
-            points = [points bsxfun(@times,points,obj.scrInfo.resolution) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
+            points = [points bsxfun(@times,points,obj.scrInfo.resolution{1}) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
             if (qCal && obj.settings.cal.doRandomPointOrder) || (~qCal && obj.settings.val.doRandomPointOrder)
                 points = points(randperm(nPoint),:);
             end
@@ -1715,7 +1765,7 @@ classdef Titta < handle
         
         function out = getDataQuality(obj,gazeData,valPointPos)
             % 1. accuracy
-            pointOnScreenDA  = (valPointPos./obj.scrInfo.resolution).';
+            pointOnScreenDA  = (valPointPos./obj.scrInfo.resolution{1}).';
             pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
             offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA);
             offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.displayArea.width,obj.geom.displayArea.height].');
@@ -1793,11 +1843,11 @@ classdef Titta < handle
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution(2)*.97);
+                yposBase    = round(obj.scrInfo.resolution{1}(2)*.97);
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
-                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution(1)/2;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{1}(1)/2;
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
@@ -1807,13 +1857,13 @@ classdef Titta < handle
             
             % 2. atop screen
             % position them
-            yPosTop             = .02*obj.scrInfo.resolution(2);
+            yPosTop             = .02*obj.scrInfo.resolution{1}(2);
             buttonOff           = 900;
             if but(5).visible
-                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center(1)-buttonOff/2-but(5).rect(3),yPosTop);
+                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{1}(1)-buttonOff/2-but(5).rect(3),yPosTop);
             end
             if but(6).visible
-                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center(1)+buttonOff/2,yPosTop);
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{1}(1)+buttonOff/2,yPosTop);
             end
             
             % 3. left side
@@ -1832,9 +1882,9 @@ classdef Titta < handle
                 totHeight       = nElem*(height+pad)-pad;
                 width           = 900;
                 % menu background
-                menuBackRect    = [-.5*width+obj.scrInfo.center(1)-margin -.5*totHeight+obj.scrInfo.center(2)-margin .5*width+obj.scrInfo.center(1)+margin .5*totHeight+obj.scrInfo.center(2)+margin];
+                menuBackRect    = [-.5*width+obj.scrInfo.center{1}(1)-margin -.5*totHeight+obj.scrInfo.center{1}(2)-margin .5*width+obj.scrInfo.center{1}(1)+margin .5*totHeight+obj.scrInfo.center{1}(2)+margin];
                 % menuRects
-                menuRects       = repmat([-.5*width+obj.scrInfo.center(1) -height/2+obj.scrInfo.center(2) .5*width+obj.scrInfo.center(1) height/2+obj.scrInfo.center(2)],length(iValid),1);
+                menuRects       = repmat([-.5*width+obj.scrInfo.center{1}(1) -height/2+obj.scrInfo.center{1}(2) .5*width+obj.scrInfo.center{1}(1) height/2+obj.scrInfo.center{1}(2)],length(iValid),1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
                 for c=length(iValid):-1:1
@@ -1861,7 +1911,7 @@ classdef Titta < handle
             end
             
             % setup fixation points in the corners of the screen
-            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution,4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
             qDoneCalibSelection = false;
             qToggleSelectMenu   = true;
@@ -1957,7 +2007,7 @@ classdef Titta < handle
                                 strsep = '\n';
                             end
                             valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                            valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution(1)/2,.02*obj.scrInfo.resolution(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
+                            valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{1}(1)/2,.02*obj.scrInfo.resolution{1}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                             
                             % get info about where points were on screen
                             if qShowCal
@@ -1968,7 +2018,7 @@ classdef Titta < handle
                             calValPos   = zeros(nPoints,2);
                             if qShowCal
                                 for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution;
+                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution{1};
                                 end
                             else
                                 for p=1:nPoints
@@ -2055,12 +2105,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = strcmp(myCal.points(p).samples. left.validity,'validAndUsed');
-                                lEpos= bsxfun(@times,myCal.points(p).samples. left.position(:,qVal),obj.scrInfo.resolution.');
+                                lEpos= bsxfun(@times,myCal.points(p).samples. left.position(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
-                                rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution.');
+                                rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                         else
                             myVal = cal{selection}.val{iVal};
@@ -2068,12 +2118,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution.');
+                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = myVal.gazeData(p).right.gazePoint.valid;
-                                rEpos= bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution.');
+                                rEpos= bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
@@ -2113,11 +2163,11 @@ classdef Titta < handle
                     if ~isnan(pointToShowInfoFor)
                         rect = OffsetRect(infoBoxRect,mx,my);
                         % mak sure does not go offscreen
-                        if rect(3)>obj.scrInfo.resolution(1)
-                            rect = OffsetRect(rect,obj.scrInfo.resolution(1)-rect(3),0);
+                        if rect(3)>obj.scrInfo.resolution{1}(1)
+                            rect = OffsetRect(rect,obj.scrInfo.resolution{1}(1)-rect(3),0);
                         end
-                        if rect(4)>obj.scrInfo.resolution(2)
-                            rect = OffsetRect(rect,0,obj.scrInfo.resolution(2)-rect(4));
+                        if rect(4)>obj.scrInfo.resolution{1}(2)
+                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{1}(2)-rect(4));
                         end
                         Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.hover.bgColor),rect);
                         obj.drawCachedText(pointTextCache,rect);
@@ -2129,8 +2179,8 @@ classdef Titta < handle
                         % draw gaze data
                         eyeData = obj.buffer.consumeN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
-                            lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
-                            rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution.';
+                            lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1}), lE(1), lE(2), 10);
                             end
@@ -2326,8 +2376,11 @@ classdef Titta < handle
             obj.mouseState  = buttons;
         end
         
-        function clr = getColorForWindow(obj,clr)
-            if obj.qFloatColorRange
+        function clr = getColorForWindow(obj,clr,idx)
+            if nargin<3 || isempty(idx)
+                idx = 1;
+            end
+            if obj.qFloatColorRange(idx)
                 clr = double(clr)/255;
             end
         end
