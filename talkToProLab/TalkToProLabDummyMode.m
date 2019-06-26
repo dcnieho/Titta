@@ -79,7 +79,7 @@ classdef TalkToProLabDummyMode < handle
             participantID = 'fake_participant_id';
         end
         
-        function [mediaID,mediaInfo] = findMedia(~,~)
+        function [mediaID,mediaInfo] = findMedia(~,~,~)
             mediaID     = '';
             mediaInfo   = struct();
         end

@@ -136,7 +136,10 @@ classdef TalkToProLab < handle
             this.participantID  = participantID;
         end
         
-        function [mediaID,mediaInfo] = findMedia(this,name)
+        function [mediaID,mediaInfo] = findMedia(this,name,throwWhenNotFound)
+            if nargin<3 || isempty(throwWhenNotFound)
+                throwWhenNotFound = false;
+            end
             mediaID     = '';   % empty means no media with that name was found
             mediaInfo   = [];
             this.clientProject.send(struct('operation','ListMedia'));
@@ -150,6 +153,8 @@ classdef TalkToProLab < handle
                 if any(qMedia)
                     mediaID     = resp.media_list{qMedia}.media_id; % for convenience, provide direct mediaID output
                     mediaInfo   = resp.media_list{qMedia};
+                elseif throwWhenNotFound
+                    error('TalkToProLab: Media with the name ''%s'' was not found in the project that is open in Pro Lab.',name)
                 end
             end
         end
