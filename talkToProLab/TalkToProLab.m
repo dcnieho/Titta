@@ -18,11 +18,11 @@ classdef TalkToProLab < handle
         function this = TalkToProLab(expectedProject)
             % connect to needed Lab services
             this.clientClock    = SimpleWSClient('ws://localhost:8080/clock?client_id=TittaMATLAB');
-            assert(this.clientClock.Status==1,'Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
+            assert(this.clientClock.Status==1,'TalkToProLab: Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
             this.clientProject  = SimpleWSClient('ws://localhost:8080/project?client_id=TittaMATLAB');
-            assert(this.clientProject.Status==1,'Could not connect to project service, did you start Tobii Pro Lab and open an external presenter project?');
+            assert(this.clientProject.Status==1,'TalkToProLab: Could not connect to project service, did you start Tobii Pro Lab and open an external presenter project?');
             this.clientEP       = SimpleWSClient('ws://localhost:8080/record/externalpresenter?client_id=TittaMATLAB');
-            assert(this.clientEP.Status==1,'Could not connect to external presenter service, did you start Tobii Pro Lab and open an external presenter project?');
+            assert(this.clientEP.Status==1,'TalkToProLab: Could not connect to external presenter service, did you start Tobii Pro Lab and open an external presenter project?');
             
             % for each, check API semver major version
             % 1. clock service
@@ -78,14 +78,14 @@ classdef TalkToProLab < handle
             % get rough estimate of clock offset (note this is includes
             % half RTT which is not taken into account, thats ok for our
             % purposes)
-            assert(mean(timesLab-timesPTB)<2500,'clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
+            assert(mean(timesLab-timesPTB)<2500,'TalkToProLab: Clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
             
             % get info about opened project
             this.clientProject.send(struct('operation','GetProjectInfo'));
             resp = waitForResponse(this.clientProject,'GetProjectInfo');
-            assert(strcmp(resp.project_name,expectedProject),'You indicated that project ''%s'' should be open in Tobii Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
+            assert(strcmp(resp.project_name,expectedProject),'TalkToProLab: You indicated that project ''%s'' should be open in Tobii Pro Lab, but instead project ''%s'' seems to be open',expectedProject,resp.project_name)
             this.projectID = resp.project_id;
-            fprintf('Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
+            fprintf('TalkToProLab: Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
             
             % prep list of timestamps sent through stimulus messages
             this.stimTimeStamps = simpleVec(int64([0 0]),1024);     % (re)initialize with space for 1024 stimulus intervals
@@ -122,7 +122,7 @@ classdef TalkToProLab < handle
             resp    = waitForResponse(this.clientProject,'ListParticipants');
             names   = {resp.participant_list.participant_name};
             qPart   = strcmp(names,name);
-            assert(~any(qPart)||allowExisting,'Participant with name ''%s'' already exists',name)
+            assert(~any(qPart)||allowExisting,'TalkToProLab: Participant with name ''%s'' already exists',name)
             
             if any(qPart)
                 % use existing
@@ -173,12 +173,12 @@ classdef TalkToProLab < handle
                 fileNameOrArray = [tempname() '.png'];
                 imwrite(data,fileNameOrArray);
             else
-                assert(exist(fileNameOrArray,'file')==2,'uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
+                assert(exist(fileNameOrArray,'file')==2,'TalkToProLab: uploadMedia: provided file ''%s'' cannot be found. If you did not provide a full path, consider doing that',fileNameOrArray);
             end
             
             % get mime type based on extension
             [~,~,ext] = fileparts(fileNameOrArray); if ext(1)=='.', ext(1) = []; end
-            assert(~isempty(ext),'uploadMedia: file ''%s'' does not have extension, cannot deduce mime type',fileNameOrArray);
+            assert(~isempty(ext),'TalkToProLab: uploadMedia: file ''%s'' does not have extension, cannot deduce mime type',fileNameOrArray);
             switch lower(ext)
                 case 'bmp'
                     mimeType = 'image/bmp';
@@ -193,7 +193,7 @@ classdef TalkToProLab < handle
                 case 'avi'
                     mimeType = 'video/x-msvideo';
                 otherwise
-                    error('uploadMedia: cannot deduce mime type from unknown extension ''%s''',ext);
+                    error('TalkToProLab: uploadMedia: cannot deduce mime type from unknown extension ''%s''',ext);
             end
             
             % open file and get filesize
@@ -238,8 +238,8 @@ classdef TalkToProLab < handle
         function attachAOIToImage(this,mediaName,aoiName,aoiColor,vertices,tags)
             % vertices should be 2xN
             [mediaID,mediaInfo] = this.findMedia(mediaName);
-            assert(~isempty(mediaID),'attachAOIToImage: no media with provided name, ''%s'' is known',mediaName)
-            assert(~isempty(strfind(mediaInfo.mime_type,'image')),'attachAOIToImage: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
+            assert(~isempty(mediaID),'TalkToProLab: attachAOIToImage: no media with provided name, ''%s'' is known',mediaName)
+            assert(~isempty(strfind(mediaInfo.mime_type,'image')),'TalkToProLab: attachAOIToImage: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
             
             request = struct('operation','AddAois',...
                 'media_id',mediaID);
@@ -254,7 +254,7 @@ classdef TalkToProLab < handle
             end
             AOI.color = aoiColor;
             % vertices
-            assert(size(vertices,1)==2,'attachAOIToImage: AOI vertices should be a 2xN array')
+            assert(size(vertices,1)==2,'TalkToProLab: attachAOIToImage: AOI vertices should be a 2xN array')
             nVert = size(vertices,2);
             AOI.key_frames{1}.is_active = true;
             AOI.key_frames{1}.seconds   = 0;
@@ -291,8 +291,8 @@ classdef TalkToProLab < handle
             % to json, except for the 'media_id', and 'operation', which
             % are added below
             [mediaID,mediaInfo] = this.findMedia(name);
-            assert(~isempty(mediaID),'attachAOIToVideo: no media with provided name, ''%s'' is known',mediaName)
-            assert(~isempty(strfind(mediaInfo.mime_type,'video')),'attachAOIToVideo: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
+            assert(~isempty(mediaID),'TalkToProLab: attachAOIToVideo: no media with provided name, ''%s'' is known',mediaName)
+            assert(~isempty(strfind(mediaInfo.mime_type,'video')),'TalkToProLab: attachAOIToVideo: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
             
             request.operation = 'AddAois';
             request.media_id  = mediaID;
@@ -313,7 +313,7 @@ classdef TalkToProLab < handle
             % that we skip that
             if nargin<6 || isempty(skipStateCheck) || ~skipStateCheck
                 state = this.getExternalPresenterState();
-                assert(strcmpi(state,'ready'),'Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state);
+                assert(strcmpi(state,'ready'),'TalkToProLab: Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state);
             end
             % scrLatency is optional
             request = struct('operation','StartRecording',...
@@ -478,7 +478,7 @@ if resp.status_code
     if isfield(resp,'reason')
         reason = sprintf(': %s',resp.reason);
     end
-    error('Command ''%s'' returned an error: %d (%s)%s',operation,resp.status_code,statusToText(resp.status_code),reason);
+    error('TalkToProLab: Command ''%s'' returned an error: %d (%s)%s',operation,resp.status_code,statusToText(resp.status_code),reason);
 end
 end
 
