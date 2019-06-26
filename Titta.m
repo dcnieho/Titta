@@ -964,17 +964,23 @@ classdef Titta < handle
             ovalVSz     = .15;
             refSz       = ovalVSz*obj.scrInfo.resolution(2);
             % setup head position visualization
-            distGain    = 1.5;
-            eyeSzFac    = .25;
-            eyeMarginFac= .25;
-            pupilSzFac  = .50;
-            pupilRefDiam= 5;    % mm
-            pupilSzGain = 1.5;
+            head        = ETHead(wpnt,obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
+            head.refSz              = refSz;
+            head.rectWH             = obj.scrInfo.resolution;
+            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
+            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
+            head.showEyes           = obj.settings.UI.setup.showEyes;
+            head.showPupils         = obj.settings.UI.setup.showPupils;
+            head.crossClr           = obj.settings.UI.setup.crossClr;
+            head.eyeClr             = obj.settings.UI.setup.eyeClr;
+            head.pupilClr           = obj.settings.UI.setup.pupilClr;
+            head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             
             % get reference position
             if isempty(obj.settings.UI.setup.referencePos)
                 obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
             end
+            head.referencePos       = obj.settings.UI.setup.referencePos;
             % position reference circle on screen
             refPos  = obj.scrInfo.resolution/2;
             allPosOff = [0 0];
@@ -985,6 +991,7 @@ classdef Titta < handle
                 allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
             end
             refPos = refPos+allPosOff;
+            head.allPosOff = allPosOff;
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
@@ -1026,11 +1033,6 @@ classdef Titta < handle
             Screen('TextSize',  wpnt, obj.settings.UI.setup.instruct.size);
             
             % get tracking status and visualize
-            eyeDist             = 6.2;
-            nEyeDistMeasures    = 0;
-            Rori                = [1 0; 0 1];
-            yaw                 = 0;
-            dZ                  = 0;
             qToggleEyeImage     = false;
             qShowEyeImage       = false;
             texs                = [0 0];
@@ -1041,7 +1043,7 @@ classdef Titta < handle
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
-            headPostLastT       = 0;
+            headPosLastT       = 0;
             while true
                 if qHasEyeIm
                     % toggle eye images on or off if requested
@@ -1081,72 +1083,16 @@ classdef Titta < handle
                 
                 % get latest data from eye-tracker
                 eyeData = obj.buffer.peekN('gaze',1);
-                [lEye,rEye] = deal(nan(3,1));
-                if ~isempty(eyeData.systemTimeStamp)
-                    lEye = eyeData. left.gazeOrigin.inUserCoords;
-                    lPup = eyeData. left.pupil.diameter;
-                end
-                qHaveLeft   = ~isempty(eyeData.systemTimeStamp) && eyeData. left.gazeOrigin.valid;
-                if ~isempty(eyeData.systemTimeStamp)
-                    rEye = eyeData.right.gazeOrigin.inUserCoords;
-                    rPup = eyeData.right.pupil.diameter;
-                end
-                qHaveRight  = ~isempty(eyeData.systemTimeStamp) && eyeData.right.gazeOrigin.valid;
-                qHave       = [qHaveLeft qHaveRight];
-                
-                % get average eye distance. use distance from one eye if only one eye
-                % available
-                dists   = [lEye(3) rEye(3)]./10;
-                Xs      = [lEye(1) rEye(1)]./10;
-                Ys      = [lEye(2) rEye(2)]./10;
-                if all(qHave)
-                    % get orientation of eyes in X-Y plane
-                    dX      = diff(Xs);
-                    dY      = diff(Ys);
-                    dZ      = diff(dists);
-                    roll    = atan2(dY,dX);
-                    yaw     = atan2(dZ,dX);
-                    Rori    = [cos(roll) sin(roll); -sin(roll) cos(roll)];
-                    
-                    % update eye distance measure (maintain running
-                    % average)
-                    nEyeDistMeasures = nEyeDistMeasures+1;
-                    eyeDist = (eyeDist*(nEyeDistMeasures-1)+hypot(dX,dZ))/nEyeDistMeasures;
-                end
-                % if we have only one eye, make fake second eye
-                % position so drawn head position doesn't jump so much.
-                off   = Rori*[eyeDist; 0];
-                if ~qHaveLeft
-                    Xs(1)   = Xs(2)   -off(1);
-                    Ys(1)   = Ys(2)   +off(2);
-                    dists(1)= dists(2)-dZ;
-                elseif ~qHaveRight
-                    Xs(2)   = Xs(1)   +off(1);
-                    Ys(2)   = Ys(1)   -off(2);
-                    dists(2)= dists(1)+dZ;
-                end
-                % determine head position in user coordinate system
-                avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs and Ys above
-                avgY    = mean(Ys(~isnan(Xs)));
-                avgDist = mean(dists(~isnan(Xs)));
-                % convert from UCS to trackBox coordinates
-                tbWidth = obj.geom.UCS2TB.trackBoxHalfWidth (avgDist);
-                avgXtb  = (avgX-obj.settings.UI.setup.referencePos(1))/tbWidth /2+.5;
-                tbHeight= obj.geom.UCS2TB.trackBoxHalfHeight(avgDist);
-                avgYtb  = (avgY-obj.settings.UI.setup.referencePos(2))/tbHeight/2+.5;
-                
-                % scale up size of oval. define size/rect at standard distance, have a
-                % gain for how much to scale as distance changes
-                if ~isnan(avgDist)
-                    pos     = [avgXtb 1-avgYtb];    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
-                    % determine size of head, based on distance from reference distance
-                    fac     = avgDist/obj.settings.UI.setup.referencePos(3);
-                    headSz  = refSz - refSz*(fac-1)*distGain;
-                    % move
-                    headPos = pos.*obj.scrInfo.resolution + allPosOff;
-                    headPostLastT = eyeData.systemTimeStamp;
+                if isempty(eyeData.systemTimeStamp)
+                    head.update([],[],[],[],[],[]);
                 else
-                    headPos = [];
+                    head.update(...
+                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, eyeData. left.pupil.diameter,...
+                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, eyeData.right.pupil.diameter);
+                end
+                
+                if ~isnan(head.avgDist)
+                    headPosLastT = eyeData.systemTimeStamp;
                 end
                 
                 % draw eye images, if any
@@ -1166,55 +1112,20 @@ classdef Titta < handle
                 % and data is missing. But only do so after 200 ms of data
                 % missing, so that these elements don't flicker all the
                 % time when unstable track
-                qHideSetup = qShowEyeImage && isempty(headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPostLastT)/1000>200;
+                qHideSetup = qShowEyeImage && isempty(head.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
                 % draw distance info
                 if ~qHideSetup
-                    str = obj.settings.UI.setup.instruct.strFun(avgX,avgY,avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     DrawFormattedText(wpnt,str,'center',fixPos(1,2)-.03*obj.scrInfo.resolution(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawPoly(wpnt,circVerts,1,0,[0 1; 1 0],refSz,refPos,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
+                    drawOrientedPoly(wpnt,circVerts,1,0,[0 1; 1 0],refSz,refPos,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr),5);
                 end
                 % stylized head
-                if ~isempty(headPos)
-                    % draw head
-                    drawPoly(wpnt,circVerts,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.headCircleFillClr),obj.getColorForWindow(obj.settings.UI.setup.headCircleEdgeClr),5);
-                    if obj.settings.UI.setup.showEyes
-                        for p=1:2
-                            eyeOff = [eyeMarginFac*2;0];                % *2 because all sizes are radii
-                            if p==1
-                                % left eye
-                                pup     = lPup;
-                                eyeOff  = -eyeOff;
-                            else
-                                % right eye
-                                pup     = rPup;
-                            end
-                            if (p==1 && ~obj.calibrateLeftEye) || (p==2 && ~obj.calibrateRightEye)
-                                % draw cross indicating not calibrated
-                                cross = [cosd(45) sind(45); -sind(45) cosd(45)]*[1 1 4 4 1 1 -1 -1 -4 -4 -1 -1; 4 1 1 -1 -1 -4 -4 -1 -1 1 1 4]/4*eyeSzFac + eyeOff;
-                                drawPoly(wpnt,cross,0,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.crossClr));
-                            elseif (p==1 && qHaveLeft) || (p==2 && qHaveRight)
-                                % draw eye
-                                eye = eyeSzFac*circVerts+eyeOff;
-                                drawPoly(wpnt,eye,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
-                                % if wanted, draw pupil
-                                if obj.settings.UI.setup.showPupils
-                                    pupilSz = (1+(pup/pupilRefDiam-1)*pupilSzGain)*pupilSzFac*eyeSzFac;
-                                    pup     = pupilSz*circVerts+eyeOff;
-                                    drawPoly(wpnt,pup,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.pupilClr));
-                                end
-                            else
-                                % draw line indicating closed/missing eye
-                                line = [-1 1 1 -1; -1/5 -1/5 1/5 1/5]*eyeSzFac + eyeOff;
-                                drawPoly(wpnt,line,1,yaw,Rori,headSz,headPos,obj.getColorForWindow(obj.settings.UI.setup.eyeClr));
-                            end
-                        end
-                    end
-                end
+                head.draw();
                 
                 % draw buttons
                 [mousePos(1), mousePos(2)] = GetMouse();
@@ -2509,34 +2420,6 @@ end
 function verts = genCircle(nStep)
 alpha = linspace(0,2*pi,nStep);
 verts = [cos(alpha); sin(alpha)];
-end
-
-function drawPoly(wpnt,verts,isConvex,depthOri,rotMat,scaleFac,pos,fillClr,edgeClr,edgeWidth)
-if isempty(verts)
-    return;
-end
-% project. Drop whole denominator to do pure orthographic, but it think it
-% looks a bit nicer with some perspective mixed in there. Too much sucks,
-% the higher the simulated z, the more pure orthographic is approached. z=5
-% looks nice to me
-z=5;
-depthOri = depthOri*1.25;   % exaggerate head depth rotation a bit, looks more like the eye images and simply makes it more visible
-proj = [verts(1,:)*cos(depthOri); verts(2,:)]./(z+verts(1,:)*sin(depthOri))*z; % depth is defined by x coord as circle is rotated around yaw axis
-% rotate image on projection plane for head roll
-proj = rotMat*proj;
-% scale and move to right place
-proj = proj*scaleFac + pos(:);
-
-% draw fill if any
-if ~isempty(fillClr)
-    Screen('FillPoly', wpnt, fillClr, proj.', isConvex);
-end
-% draw edge, if any
-if nargin>=10
-    len = size(proj,2);
-    idxs = reshape([1:len-1;2:len],1,[]);
-    Screen('DrawLines', wpnt, proj(:,idxs), edgeWidth, edgeClr, [],2);
-end
 end
 
 function fieldString = getStructFieldsString(str)
