@@ -184,17 +184,17 @@ try
     if ~qDryRun
         TalkToProLabInstance.createParticipant(TobiiProLabParticipant,true);
     end
-    % get media information from Pro Lab
     if ~qDryRun
-        breakID         = TalkToProLabInstance.findMedia('break');
-        blankID         = TalkToProLabInstance.findMedia('blank');
-        fixID           = TalkToProLabInstance.findMedia('fixationPoint');
-        leftID          = TalkToProLabInstance.findMedia('leftTarget');
-        rightID         = TalkToProLabInstance.findMedia('rightTarget');
-        proTrainInsID   = TalkToProLabInstance.findMedia('ProSacTrainInstruction');
-        proInsID        = TalkToProLabInstance.findMedia('ProSacInstruction');
-        antiTrainInsID  = TalkToProLabInstance.findMedia('AntiSacTrainInstruction');
-        antiInsID       = TalkToProLabInstance.findMedia('AntiSacInstruction');
+        % get media information from Pro Lab, will produce error if not found
+        breakID         = TalkToProLabInstance.findMedia('break',true);
+        blankID         = TalkToProLabInstance.findMedia('blank',true);
+        fixID           = TalkToProLabInstance.findMedia('fixationPoint',true);
+        leftID          = TalkToProLabInstance.findMedia('leftTarget',true);
+        rightID         = TalkToProLabInstance.findMedia('rightTarget',true);
+        proTrainInsID   = TalkToProLabInstance.findMedia('ProSacTrainInstruction',true);
+        proInsID        = TalkToProLabInstance.findMedia('ProSacInstruction',true);
+        antiTrainInsID  = TalkToProLabInstance.findMedia('AntiSacTrainInstruction',true);
+        antiInsID       = TalkToProLabInstance.findMedia('AntiSacInstruction',true);
     end
     
     if DEBUGlevel>1
@@ -240,9 +240,9 @@ try
             clearTime                           = data.trials(p).instruct.Toffset;
             % construct name
             if data.trials(p).blockType=='P'
-                instrName = 'Pro';
+                instrName = 'ProSac';
             else
-                instrName = 'Anti';
+                instrName = 'AntiSac';
             end
             if data.trials(p).qTraining
                 instrName = [instrName 'Train'];
@@ -254,7 +254,8 @@ try
                     instrID = TalkToProLabInstance.uploadMedia(scrShot,instrName);
                 end
             else
-                % notify pro lab of stimulus onset
+                % notify pro lab of instruction text onset, and following
+                % blank onset
                 TalkToProLabInstance.sendStimulusEvent(instrID,[0 0 sv.scr.rect],data.trials(p).instruct.Tonset,[]);
                 TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).instruct.Toffset,[]);
             end
@@ -264,7 +265,7 @@ try
         drawfixpoints(wpnt,sv.scr.center,{'.','.'},{sv.fixBackSizePix sv.fixFrontSizePix},{sv.fixBackColor sv.fixFrontColor},1);
         data.trials(p).fixOnsetT  = Screen('Flip',wpnt,clearTime+sv.restT/1000-sv.scr.flipWaitT+1/1000);
         EThndl.sendMessage(sprintf('FIX ON %d (%d %d)',p,sv.scr.center),data.trials(p).fixOnsetT);
-        if qDryRun && p==1
+        if qDryRun
             % screenshot and upload fixation point, if not already done
             fixID = TalkToProLabInstance.findMedia('fixationPoint');
             if isempty(fixID)
@@ -272,8 +273,8 @@ try
                 fixID = TalkToProLabInstance.uploadMedia(screenShot,'fixationPoint');
                 % set AOI
                 angs = linspace(0,2*pi,AOInVertices+1); angs(end) = [];
-                AOIverts = bsxfun(@plus,maxFixDistPix*[cos(angs); sin(angs)],sv.scr.center(:));
-                TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],AOIverts);
+                AOIvertsR = bsxfun(@plus,maxFixDistPix*[cos(angs); sin(angs)],sv.scr.center(:));
+                TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],AOIvertsR);
             end
         else
             % notify pro lab of stimulus onset
@@ -299,30 +300,31 @@ try
                 screenShot = Screen('GetImage', wpnt);
                 targetID = TalkToProLabInstance.uploadMedia(screenShot,tarLbl);
                 % set AOI
-                if data.trials(p).dir==-1
-                    angs = linspace(-maxSacDir,maxSacDir,AOInVertices)+180;
-                    AOIverts = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
-                    hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
-                    if hOff>sv.scr.rect(1)/2
-                        vOff = sv.scr.rect(1)/2*tand(maxSacDir);
-                        AOIverts = [AOIverts [0 0; sv.scr.center(2)-vOff sv.scr.center(2)+vOff]];
-                    else
-                        hOff = sv.scr.rect(1)/2-hOff;
-                        AOIverts = [AOIverts [hOff 0 0 hOff; 0 0 sv.scr.rect(2) sv.scr.rect(2)]];
-                    end
+                angs = linspace(-maxSacDir,maxSacDir,AOInVertices);
+                AOIvertsR = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
+                hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
+                if hOff>sv.scr.rect(1)/2
+                    vOff = sv.scr.rect(1)/2*tand(maxSacDir);
+                    AOIvertsR = [AOIvertsR [sv.scr.rect(1) sv.scr.rect(1); sv.scr.center(2)+vOff sv.scr.center(2)-vOff]];
                 else
-                    angs = linspace(-maxSacDir,maxSacDir,AOInVertices);
-                    AOIverts = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
-                    hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
-                    if hOff>sv.scr.rect(1)/2
-                        vOff = sv.scr.rect(1)/2*tand(maxSacDir);
-                        AOIverts = [AOIverts [sv.scr.rect(1) sv.scr.rect(1); sv.scr.center(2)+vOff sv.scr.center(2)-vOff]];
-                    else
-                        hOff = hOff + sv.scr.rect(1)/2;
-                        AOIverts = [AOIverts [hOff sv.scr.rect(1) sv.scr.rect(1) hOff; sv.scr.rect(2) sv.scr.rect(2) 0 0]];
-                    end
+                    hOff = hOff + sv.scr.rect(1)/2;
+                    AOIvertsR = [AOIvertsR [hOff sv.scr.rect(1) sv.scr.rect(1) hOff; sv.scr.rect(2) sv.scr.rect(2) 0 0]];
                 end
-                TalkToProLabInstance.attachAOIToImage(tarLbl,tarLbl,[255 0 0],AOIverts);
+                if data.trials(p).dir==-1
+                    AOIvertsL = AOIvertsR;
+                    AOIvertsL(1,:) = sv.scr.rect(1)-AOIvertsL(1,:);
+                end
+                if data.trials(p).dir==-1
+                    % target on left, denote left as pro response, right as
+                    % anti response
+                    TalkToProLabInstance.attachAOIToImage(tarLbl,'targetSide',[0 255 0],AOIvertsL);
+                    TalkToProLabInstance.attachAOIToImage(tarLbl,'otherSide' ,[255 0 0],AOIvertsR);
+                else
+                    % target on right, denote right as pro response, left
+                    % as anti response
+                    TalkToProLabInstance.attachAOIToImage(tarLbl,'targetSide',[0 255 0],AOIvertsR);
+                    TalkToProLabInstance.attachAOIToImage(tarLbl,'otherSide' ,[255 0 0],AOIvertsL);
+                end
             end
         else
             if data.trials(p).dir==-1
@@ -338,7 +340,7 @@ try
         data.trials(p).targetOffsetT = Screen('Flip',wpnt,data.trials(p).targetOnsetT+sv.targetDuration/1000-sv.scr.flipWaitT+1/1000);
         clearTime = data.trials(p).targetOffsetT;
         EThndl.sendMessage(sprintf('TARGET OFF %d (%d %d)',p,round(pos)),clearTime);
-        if qDryRun && p==1
+        if qDryRun
             blankID = TalkToProLabInstance.findMedia('blank');
             if isempty(blankID)
                 screenShot = Screen('GetImage', wpnt);
@@ -359,7 +361,7 @@ try
             TalkToProLabInstance.sendStimulusEvent(breakID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT+1/sv.scr.framerate,[]);
             TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],clearTime,[]);
         end
-        if qDryRun && p==1
+        if qDryRun
             breakID = TalkToProLabInstance.findMedia('break');
             if isempty(breakID)
                 drawtext('BREAK',addToStruct(text,'color',[200 0 0 255]),wpnt,0);
@@ -374,8 +376,10 @@ try
     
     % stopping
     EThndl.buffer.stop('gaze');
-    TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT,GetSecs);  % last event must have an end time
-    TalkToProLabInstance.stopRecording();
+    if ~qDryRun
+        TalkToProLabInstance.sendStimulusEvent(blankID,[0 0 sv.scr.rect],data.trials(p).targetOffsetT,GetSecs);  % last event must have an end time
+        TalkToProLabInstance.stopRecording();
+    end
     
     % save data to mat file
     if ~qDryRun
@@ -384,11 +388,15 @@ try
         save('antiSac.mat','-struct','data')
     end
     % finalize recording in Pro Lab (NB: must go into lab and confirm)
-    TalkToProLabInstance.finalizeRecording();
+    if ~qDryRun
+        TalkToProLabInstance.finalizeRecording();
+    end
     
     % shut down
     EThndl.deInit();
-    TalkToProLabInstance.disconnect();
+    if ~qDryRun
+        TalkToProLabInstance.disconnect();
+    end
 catch me
     sca
     rethrow(me)
