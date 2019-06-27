@@ -25,6 +25,9 @@ try
     settings.UI.setup.instruct.color= fixClrs(1);
     settings.UI.setup.fixBackColor  = fixClrs(1);
     settings.UI.setup.fixFrontColor = fixClrs(2);
+    % override the instruction shown on the setup screen, don't need that
+    % much detail when you have a separate operator screen
+    settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) 'Position yourself such that the two circles overlap.';
     % 2. validation result screen
     settings.UI.val.bgColor                 = bgClr;
     settings.UI.val.avg.text.color          = fixClrs(1);
