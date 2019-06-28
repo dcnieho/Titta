@@ -460,7 +460,7 @@ classdef Titta < handle
                         obj.buffer.enterCalibrationMode(qDoMonocular);
                         qHasEnteredCalMode = true;
                     end
-                    out.attempt{kCal} = obj.DoCalAndVal(wpnt(1),kCal,out.attempt{kCal});
+                    out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
                     % check returned action state
                     switch out.attempt{kCal}.status
                         case 1
@@ -969,8 +969,8 @@ classdef Titta < handle
             
             % setup text for buttons
             for w=1:length(wpnt)
-            Screen('TextFont',  wpnt(w), obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
-            Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
+                Screen('TextFont',  wpnt(w), obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
+                Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
             end
             
             % setup ovals
@@ -1233,6 +1233,9 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'d')) && shiftIsDown
                         % take screenshot
                         takeScreenshot(wpnt(1));
+                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                        % take screenshot of operator screen
+                        takeScreenshot(wpnt(2));
                     end
                 end
             end
@@ -1332,8 +1335,6 @@ classdef Titta < handle
         end
         
         function out = DoCalAndVal(obj,wpnt,kCal,out)
-            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
-            
             % determine if calibrating or revalidating
             qDoCal = ~isfield(out,'cal');
             
@@ -1372,10 +1373,13 @@ classdef Titta < handle
                             % calibration failed, back to setup screen
                             out.cal.status = -3;
                             obj.sendMessage(sprintf('CALIBRATION FAILED (%s), calibration no. %d',eyeLbl,kCal));
-                            Screen('TextFont', wpnt, obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
-                            Screen('TextSize', wpnt, obj.settings.UI.cal.errMsg.size);
-                            DrawFormattedText(wpnt,obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
-                            Screen('Flip',wpnt);
+                            Screen('TextFont', wpnt(end), obj.settings.UI.cal.errMsg.font, obj.settings.UI.cal.errMsg.style);
+                            Screen('TextSize', wpnt(end), obj.settings.UI.cal.errMsg.size);
+                            for w=wpnt
+                                Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+                            end
+                            DrawFormattedText(wpnt(end),obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color));
+                            Screen('Flip',wpnt(1),[],0,0,1);
                             obj.getNewMouseKeyPress();
                             keyCode = false;
                             while ~any(keyCode)
@@ -1410,7 +1414,10 @@ classdef Titta < handle
                         if isa(obj.settings.cal.drawFunction,'function_handle')
                             obj.settings.cal.drawFunction(nan,nan,nan,nan,nan);
                         end
-                        Screen('Flip',wpnt);
+                        for w=wpnt
+                            Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+                        end
+                        Screen('Flip',wpnt(1),[],0,0,1);
                     end
                     out.status = out.cal.status;
                     return;
@@ -1446,7 +1453,10 @@ classdef Titta < handle
             out.status = out.val{iVal}.status;
             
             % clear flip
-            Screen('Flip',wpnt);
+            for w=wpnt
+                Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+            end
+            Screen('Flip',wpnt(1),[],0,0,1);
         end
         
         function data = ConsumeAllData(obj,varargin)
@@ -1481,16 +1491,37 @@ classdef Titta < handle
             % -3: abort calibration/validation and go back to setup (escape
             %     key)
             % -5: Exit completely (shift+escape)
-            qFirst = nargin<5;
+            qFirst              = nargin<5;
+            qHaveOperatorScreen = ~isscalar(wpnt);
+            qShowEyeImage       = qHaveOperatorScreen && obj.buffer.hasStream('eyeImage');
             
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             
+            % timing is done in ticks (display refreshes) instead of time.
+            % If multiple screens, get lowest fs as that will determine
+            % tick rate
+            for w=length(wpnt):-1:1
+                fs(w) = Screen('NominalFrameRate',wpnt(w));
+            end
+            
+            % start recording eye images if not already started
+            eyeStartTime    = [];
+            texs            = [0 0];
+            szs             = [];
+            eyeImageRect    = repmat({zeros(1,4)},1,2);
+            if qShowEyeImage
+                if ~obj.settings.cal.doRecordEyeImages
+                    eyeStartTime    = obj.getSystemTime();
+                    obj.buffer.start('eyeImage');
+                end
+            end
+            
             % setup
             if qCal
                 points          = obj.settings.cal.pointPos;
-                paceInterval    = ceil(obj.settings.cal.paceDuration   *Screen('NominalFrameRate',wpnt));
+                paceInterval    = ceil(obj.settings.cal.paceDuration   *min(fs));
                 out.pointStatus = {};
                 extraInp        = {obj.settings.calibrateEye};
                 if strcmp(obj.settings.calibrateEye,'both')
@@ -1499,9 +1530,9 @@ classdef Titta < handle
                 stage           = 'cal';
             else
                 points          = obj.settings.val.pointPos;
-                paceInterval    = ceil(obj.settings.val.paceDuration   *Screen('NominalFrameRate',wpnt));
-                collectInterval = ceil(obj.settings.val.collectDuration*Screen('NominalFrameRate',wpnt));
-                nDataPoint      = ceil(obj.settings.val.collectDuration*obj.eyetracker.get_gaze_output_frequency());
+                paceInterval    = ceil(obj.settings.val.paceDuration   *min(fs));
+                collectInterval = ceil(obj.settings.val.collectDuration*min(fs));
+                nDataPoint      = ceil(obj.settings.val.collectDuration*obj.settings.freq);
                 tick0v          = nan;
                 out.gazeData    = [];
                 stage           = 'val';
@@ -1510,6 +1541,10 @@ classdef Titta < handle
             if nPoint==0
                 out.status = 1;
                 return;
+            end
+            if qHaveOperatorScreen
+                oPoints = bsxfun(@times,points,obj.scrInfo.resolution{2});
+                drawOperatorScreenFun = @(idx,eS,t,s,eI) obj.drawOperatorScreen(wpnt(2),oPoints,idx,eS,t,s,eI);
             end
             
             points = [points bsxfun(@times,points,obj.scrInfo.resolution{1}) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
@@ -1540,8 +1575,11 @@ classdef Titta < handle
                 nRep = 0;
                 while true
                     tick    = tick+1;
-                    drawFunction(wpnt,1,points(1,3:4),tick,stage);
-                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                    for w=wpnt
+                        Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor));
+                    end
+                    drawFunction(wpnt(1),1,points(1,3:4),tick,stage);
+                    flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     computeResult  = obj.buffer.calibrationRetrieveResult();
                     nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
                     if nRep==size(points,1)
@@ -1584,9 +1622,15 @@ classdef Titta < handle
                 end
                 
                 % call drawer function
-                qAllowAcceptKey     = drawFunction(wpnt,currentPoint,points(currentPoint,3:4),tick,stage);
+                for w=wpnt
+                    Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor));
+                end
+                if qHaveOperatorScreen
+                    [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
+                end
+                qAllowAcceptKey     = drawFunction(wpnt(1),currentPoint,points(currentPoint,3:4),tick,stage);
                 
-                out.flips(end+1)    = Screen('Flip',wpnt,nextFlipT);
+                out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
                 if qNewPoint
                     obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
                     nCollecting     = 0;
@@ -1619,8 +1663,11 @@ classdef Titta < handle
                         out.status = 2;
                         break;
                     elseif any(strcmpi(keys,'d')) && shiftIsDown
-                        % take screenshot
-                        takeScreenshot(wpnt);
+                        % take screenshot of participant screen
+                        takeScreenshot(wpnt(1));
+                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                        % take screenshot of operator screen
+                        takeScreenshot(wpnt(2));
                     end
                 end
                 
@@ -1694,8 +1741,14 @@ classdef Titta < handle
                 flipT           = out.flips(end);
                 while true
                     tick    = tick+1;
-                    drawFunction(wpnt,lastPoint,points(lastPoint,3:4),tick,stage);
-                    flipT   = Screen('Flip',wpnt,flipT+1/1000);
+                    for w=wpnt
+                        Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor));
+                    end
+                    if qHaveOperatorScreen
+                        [texs,szs,eyeImageRect] = drawOperatorScreenFun([],eyeStartTime,texs,szs,eyeImageRect);
+                    end
+                    drawFunction(wpnt(1),lastPoint,points(lastPoint,3:4),tick,stage);
+                    flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     
                     % first get computeAndApply result, then get
                     if isempty(computeResult)
@@ -1728,6 +1781,75 @@ classdef Titta < handle
                 out.result = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
                 if ~isempty(calData)
                     out.computedCal = calData.calibrationData;
+                end
+            end
+            
+            if qShowEyeImage && ~obj.settings.cal.doRecordEyeImages
+                obj.buffer.stop('eyeImage');
+                obj.buffer.clearTimeRange('eyeImage',eyeStartTime);     % clear buffer from start time until now (now=default third argument)
+                if any(texs)
+                    Screen('Close',texs(texs>0));
+                end
+            end
+        end
+        
+        function [texs,szs,eyeImageRect] = drawOperatorScreen(obj,wpnt,pos,highlight,eyeStartTime,texs,szs,eyeImageRect)
+            % draw eye image
+            if nargin>4
+                % get eye image
+                eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
+                
+                % update eye image locations if size of returned eye image changed
+                if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
+                    margin = 20;
+                    eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-margin/2,obj.scrInfo.center{2}(2)-szs(2,1)/2);
+                    eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{2}(1)         +margin/2,obj.scrInfo.center{2}(2)-szs(2,2)/2);
+                end
+                if texs(1)
+                    Screen('DrawTexture', wpnt(end), texs(1),[],eyeImageRect{1});
+                end
+                if texs(2)
+                    Screen('DrawTexture', wpnt(end), texs(2),[],eyeImageRect{2});
+                end
+            else
+                [texs,szs,eyeImageRect] = deal([]);
+            end
+            % draw indicator which point is being shown
+            if ~isempty(highlight)
+                Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0]), pos(highlight,1), pos(highlight,2), obj.settings.cal.fixBackSize*1.5/2);
+            end
+            % draw all points
+            obj.drawFixationPointDefault(wpnt,[],pos);
+            % draw live data
+            clr         = obj.getColorForWindow(obj.settings.UI.val.eyeColors{1},2);
+            clrsL       = [clr; [clr(1:3) clr(4)/3]];
+            clr         = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},2);
+            clrsR       = [clr; [clr(1:3) clr(4)/3]];
+            datMs       = 500;
+            nDataPoint  = ceil(datMs/1000*obj.settings.freq);
+            eyeData     = obj.buffer.peekN('gaze',nDataPoint);
+            pointSz     = 4;
+            point       = pointSz.*[0 0 1 1];
+            if ~isempty(eyeData.systemTimeStamp)
+                age= double(abs(eyeData.systemTimeStamp-eyeData.systemTimeStamp(end)))/1000;
+                if obj.calibrateLeftEye
+                    qValid = eyeData. left.gazePoint.valid;
+                    lE = bsxfun(@times,eyeData. left.gazePoint.onDisplayArea(:,qValid),obj.scrInfo.resolution{2}.');
+                    if ~isempty(lE)
+                        clrs = interp1([0;500],clrsL,age(qValid)).';
+                        lE = CenterRectOnPointd(point,lE(1,:).',lE(2,:).');
+                        Screen('FillOval', wpnt, clrs, lE.', 2*pi*pointSz);
+                    end
+                end
+                if obj.calibrateRightEye
+                    qValid = eyeData.right.gazePoint.valid;
+                    rE = bsxfun(@times,eyeData.right.gazePoint.onDisplayArea(:,qValid),obj.scrInfo.resolution{2}.');
+                    if ~isempty(rE)
+                        clrs = interp1([0;500],clrsR,age(qValid)).';
+                        rE = CenterRectOnPointd(point,rE(1,:).',rE(2,:).');
+                        Screen('FillOval', wpnt, clrs, rE.', 2*pi*pointSz);
+                    end
                 end
             end
         end
@@ -1817,7 +1939,8 @@ classdef Titta < handle
             % g: show gaze (and fixation points)
             % t: toggle between seeing validation results and calibration
             %    result
-            % shift-d: take screenshot
+            % shift-d: take screenshot of participant screen
+            % shift-o: take screenshot of operator screen
             qHaveOperatorScreen     = ~isscalar(wpnt);
             
             % for cursor interaction, need to correct rect position
@@ -2361,7 +2484,10 @@ classdef Titta < handle
                             break;
                         elseif any(strcmpi(keys,'d')) && shiftIsDown
                             % take screenshot
-                            takeScreenshot(wpnt);
+                            takeScreenshot(wpnt(1));
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                            % take screenshot of operator screen
+                            takeScreenshot(wpnt(2));
                         end
                     end
                     % check if hovering over point for which we have info
