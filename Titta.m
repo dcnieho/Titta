@@ -1824,36 +1824,14 @@ classdef Titta < handle
             % draw all points
             obj.drawFixationPointDefault(wpnt,[],pos);
             % draw live data
-            clr         = obj.getColorForWindow(obj.settings.UI.val.eyeColors{1},wpnt);
-            clrsL       = [clr; [clr(1:3) clr(4)/3]];
-            clr         = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt);
-            clrsR       = [clr; [clr(1:3) clr(4)/3]];
-            datMs       = 500;
-            nDataPoint  = ceil(datMs/1000*obj.settings.freq);
-            eyeData     = obj.buffer.peekN('gaze',nDataPoint);
-            pointSz     = 4;
-            point       = pointSz.*[0 0 1 1];
-            if ~isempty(eyeData.systemTimeStamp)
-                age= double(abs(eyeData.systemTimeStamp-eyeData.systemTimeStamp(end)))/1000;
-                if obj.calibrateLeftEye
-                    qValid = eyeData. left.gazePoint.valid;
-                    lE = bsxfun(@times,eyeData. left.gazePoint.onDisplayArea(:,qValid),obj.scrInfo.resolution{2}.');
-                    if ~isempty(lE)
-                        clrs = interp1([0;500],clrsL,age(qValid)).';
-                        lE = CenterRectOnPointd(point,lE(1,:).',lE(2,:).');
-                        Screen('FillOval', wpnt, clrs, lE.', 2*pi*pointSz);
-                    end
-                end
-                if obj.calibrateRightEye
-                    qValid = eyeData.right.gazePoint.valid;
-                    rE = bsxfun(@times,eyeData.right.gazePoint.onDisplayArea(:,qValid),obj.scrInfo.resolution{2}.');
-                    if ~isempty(rE)
-                        clrs = interp1([0;500],clrsR,age(qValid)).';
-                        rE = CenterRectOnPointd(point,rE(1,:).',rE(2,:).');
-                        Screen('FillOval', wpnt, clrs, rE.', 2*pi*pointSz);
-                    end
-                end
+            clrs = {[],[]};
+            if obj.calibrateLeftEye
+                clrs{1} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{1},wpnt);
             end
+            if obj.calibrateRightEye
+                clrs{2} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt);
+            end
+            drawLiveData(wpnt,obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{2});
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~,~)
