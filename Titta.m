@@ -137,6 +137,7 @@ classdef Titta < handle
             obj.settings.UI.val.onlineGaze.fixBackColor = color2RGBA(obj.settings.UI.val.onlineGaze.fixBackColor);
             obj.settings.UI.val.onlineGaze.fixFrontColor= color2RGBA(obj.settings.UI.val.onlineGaze.fixFrontColor);
             obj.settings.UI.val.avg.text.color          = color2RGBA(obj.settings.UI.val.avg.text.color);
+            obj.settings.UI.val.waitMsg.color           = color2RGBA(obj.settings.UI.val.waitMsg.color);
             obj.settings.UI.val.hover.bgColor           = color2RGBA(obj.settings.UI.val.hover.bgColor);
             obj.settings.UI.val.hover.text.color        = color2RGBA(obj.settings.UI.val.hover.text.color);
             obj.settings.UI.val.menu.bgColor            = color2RGBA(obj.settings.UI.val.menu.bgColor);
@@ -495,7 +496,7 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt,kCal] = obj.showCalValResult(wpnt(1),out.attempt,kCal);
+                [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
@@ -813,7 +814,7 @@ classdef Titta < handle
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
             settings.UI.cal.errMsg.font         = 'Segeo UI';
             settings.UI.cal.errMsg.size         = 36*textFac;
-            settings.UI.cal.errMsg.color        = [150 0 0];                    % only for messages on the screen, doesn't affect buttons
+            settings.UI.cal.errMsg.color        = [150 0 0];
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.cal.errMsg.wrapAt       = 62;
             settings.UI.val.eyeColors           = eyeColors;                    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
@@ -829,14 +830,19 @@ classdef Titta < handle
             settings.UI.val.onlineGaze.fixFrontColor= 255;
             settings.UI.val.avg.text.font       = 'Consolas';
             settings.UI.val.avg.text.size       = 24*textFac;
-            settings.UI.val.avg.text.color      = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.avg.text.color      = 0;
             settings.UI.val.avg.text.eyeColors  = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
+            settings.UI.val.waitMsg.string      = 'Please wait...';
+            settings.UI.val.waitMsg.font        = 'Segeo UI';
+            settings.UI.val.waitMsg.size        = 28*textFac;
+            settings.UI.val.waitMsg.color       = 0;
+            settings.UI.val.waitMsg.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.hover.bgColor       = 110;
             settings.UI.val.hover.text.font     = 'Consolas';
             settings.UI.val.hover.text.size     = 20*textFac;
-            settings.UI.val.hover.text.color    = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.hover.text.color    = 0;
             settings.UI.val.hover.text.eyeColors= eyeColors;                    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.hover.text.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.menu.bgColor        = 110;
@@ -844,7 +850,7 @@ classdef Titta < handle
             settings.UI.val.menu.itemColorActive= 180;
             settings.UI.val.menu.text.font      = 'Segeo UI';
             settings.UI.val.menu.text.size      = 24*textFac;
-            settings.UI.val.menu.text.color     = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.val.menu.text.color     = 0;
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
@@ -1071,9 +1077,12 @@ classdef Titta < handle
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
-            Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
             headPosLastT       = 0;
             while true
+                Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
+                if qHaveOperatorScreen
+                    Screen('FillRect', wpnt(w), obj.getColorForWindow(obj.settings.UI.setup.bgColor)); % Set the background color
+                end
                 if qHasEyeIm
                     % toggle eye images on or off if requested
                     if qToggleEyeImage
@@ -1184,10 +1193,7 @@ classdef Titta < handle
                 obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
                 
                 % drawing done, show
-                Screen('Flip',wpnt(1));
-                if qHaveOperatorScreen
-                    Screen('Flip',wpnt(2));
-                end
+                Screen('Flip',wpnt(1),[],0,0,1);
                 
                 
                 % get user response
@@ -1812,7 +1818,12 @@ classdef Titta < handle
             % t: toggle between seeing validation results and calibration
             %    result
             % shift-d: take screenshot
-            Screen('FillRect', wpnt, obj.getColorForWindow(obj.settings.UI.val.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+            qHaveOperatorScreen     = ~isscalar(wpnt);
+            
+            % for cursor interaction, need to correct rect position
+            % based on global rect of window
+            gRectOff                = Screen('GlobalRect',wpnt(end));
+            gRectOff                = gRectOff([1 2 1 2]);
             
             % find how many valid calibrations we have:
             iValid = getValidCalibrations(cal);
@@ -1826,18 +1837,18 @@ classdef Titta < handle
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
             
             % setup text for buttons
-            Screen('TextFont',  wpnt, obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
-            Screen('TextSize',  wpnt, obj.settings.UI.button.val.text.size);
+            Screen('TextFont',  wpnt(end), obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
+            Screen('TextSize',  wpnt(end), obj.settings.UI.button.val.text.size);
             
             % set up buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @obj.getColorForWindow);
-            but(1)  = PTBButton(obj.settings.UI.button.val.recal   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.val.reval   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(3)  = PTBButton(obj.settings.UI.button.val.continue,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt, funs, obj.settings.UI.button.margins);
-            but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt, funs, obj.settings.UI.button.margins);
-            but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt, funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.val.recal   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.val.reval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.val.continue,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
             % 1. below screen
             % position them
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
@@ -1883,9 +1894,11 @@ classdef Titta < handle
                 width           = 900;
                 % menu background
                 menuBackRect    = [-.5*width+obj.scrInfo.center{1}(1)-margin -.5*totHeight+obj.scrInfo.center{1}(2)-margin .5*width+obj.scrInfo.center{1}(1)+margin .5*totHeight+obj.scrInfo.center{1}(2)+margin];
+                menuBackRectGlobal  = menuBackRect+gRectOff;
                 % menuRects
                 menuRects       = repmat([-.5*width+obj.scrInfo.center{1}(1) -height/2+obj.scrInfo.center{1}(2) .5*width+obj.scrInfo.center{1}(1) height/2+obj.scrInfo.center{1}(2)],length(iValid),1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                menuRectsGlobal = bsxfun(@plus,menuRects,gRectOff);
                 % text in each rect
                 for c=length(iValid):-1:1
                     % find the active/last valid validation for this
@@ -1904,10 +1917,17 @@ classdef Titta < handle
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                    Screen('TextFont',  wpnt, obj.settings.UI.val.menu.text.font, obj.settings.UI.val.menu.text.style);
-                    Screen('TextSize',  wpnt, obj.settings.UI.val.menu.text.size);
-                    menuTextCache(c) = obj.getTextCache(wpnt,str,menuRects(c,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                    Screen('TextFont',  wpnt(end), obj.settings.UI.val.menu.text.font, obj.settings.UI.val.menu.text.style);
+                    Screen('TextSize',  wpnt(end), obj.settings.UI.val.menu.text.size);
+                    menuTextCache(c) = obj.getTextCache(wpnt(end),str,menuRects(c,:),'baseColor',obj.settings.UI.val.menu.text.color);
                 end
+            end
+            
+            % setup message for participant if we have an operator screen
+            if qHaveOperatorScreen
+                Screen('TextFont',  wpnt(end), obj.settings.UI.val.waitMsg.font, obj.settings.UI.val.waitMsg.style);
+                Screen('TextSize',  wpnt(end), obj.settings.UI.val.waitMsg.size);
+                waitTextCache = obj.getTextCache(wpnt(1),obj.settings.UI.val.waitMsg.string,[0 0 obj.scrInfo.resolution{1}],'baseColor',obj.settings.UI.val.waitMsg.color);
             end
             
             % setup fixation points in the corners of the screen
@@ -1918,6 +1938,7 @@ classdef Titta < handle
             qSelectMenuOpen     = true;     % gets set to false on first draw as toggle above is true (hack to make sure we're set up on first entrance of draw loop)
             qChangeMenuArrow    = false;
             qToggleGaze         = false;
+            qShowGazeToAll      = false;
             qShowGaze           = false;
             qUpdateCalDisplay   = true;
             qSelectedCalChanged = false;
@@ -1993,8 +2014,8 @@ classdef Titta < handle
                             % when switching between viewing calibration and
                             % validation output, thats an unimportant price to pay
                             % for simpler logic
-                            Screen('TextFont', wpnt, obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
-                            Screen('TextSize', wpnt, obj.settings.UI.val.avg.text.size);
+                            Screen('TextFont', wpnt(end), obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
+                            Screen('TextSize', wpnt(end), obj.settings.UI.val.avg.text.size);
                             [strl,strr,strsep] = deal('');
                             if obj.calibrateLeftEye
                                 strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(:, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100);
@@ -2007,7 +2028,7 @@ classdef Titta < handle
                                 strsep = '\n';
                             end
                             valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                            valInfoTopTextCache = obj.getTextCache(wpnt,valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{1}(1)/2,.02*obj.scrInfo.resolution{1}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
+                            valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{1}(1)/2,.02*obj.scrInfo.resolution{1}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                             
                             % get info about where points were on screen
                             if qShowCal
@@ -2028,11 +2049,13 @@ classdef Titta < handle
                             % get rects around validation points
                             if qShowCal
                                 calValRects         = [];
+                                calValRectsGlobal   = [];
                             else
                                 calValRects = zeros(size(cal{selection}.val{iVal}.pointPos,1),4);
                                 for p=1:size(cal{selection}.val{iVal}.pointPos,1)
                                     calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
                                 end
+                                calValRectsGlobal = bsxfun(@plus,calValRects,gRectOff);
                             end
                             qUpdateCalDisplay   = false;
                             pointToShowInfoFor  = nan;      % close info display, if any
@@ -2042,16 +2065,17 @@ classdef Titta < handle
                 
                 % setup cursors
                 if qToggleSelectMenu
-                    butRects            = cat(1,but.rect).';
+                    butRects            = cat(1,but.rect);
+                    butRectsGlobal      = bsxfun(@plus,butRects,gRectOff);
                     currentMenuSel      = find(selection==iValid);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = [{menuRects.'} num2cell(butRects(:,1:3),1)];
-                        cursors.cursor  = repmat(2,1,size(menuRects,1)+3);    % 2: Hand
+                        cursors.rect    = [{menuRectsGlobal.'} num2cell(butRectsGlobal(:,1:3).',1)];
+                        cursors.cursor  = repmat(2,1,size(menuRectsGlobal,1)+3);    % 2: Hand
                     else
-                        cursors.rect    = num2cell(butRects,1);
+                        cursors.rect    = num2cell(butRectsGlobal.',1);
                         cursors.cursor  = repmat(2,1,7);  % 2: Hand
                     end
                     cursors.other   = 0;    % 0: Arrow
@@ -2064,7 +2088,7 @@ classdef Titta < handle
                     % setup arrow that can be moved with arrow keys
                     rect = menuRects(currentMenuSel,:);
                     rect(3) = rect(1)+RectWidth(rect)*.07;
-                    menuActiveCache = obj.getTextCache(wpnt,' <color=ff0000>-><color>',rect);
+                    menuActiveCache = obj.getTextCache(wpnt(end),' <color=ff0000>-><color>',rect);
                     qChangeMenuArrow = false;
                 end
                 
@@ -2073,8 +2097,8 @@ classdef Titta < handle
                     pointToShowInfoFor = openInfoForPoint;
                     openInfoForPoint   = nan;
                     % 1. prepare text
-                    Screen('TextFont', wpnt, obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
-                    Screen('TextSize', wpnt, obj.settings.UI.val.hover.text.size);
+                    Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
@@ -2086,7 +2110,7 @@ classdef Titta < handle
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt,str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
+                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
                     % get box around text
                     margin = 10;
                     infoBoxRect = GrowRect(txtbounds,margin,margin);
@@ -2094,9 +2118,13 @@ classdef Titta < handle
                 end
                 
                 while true % draw loop
+                    Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.val.bgColor)); % NB: this sets the background color, because fullscreen fillrect sets new clear color in PTB
+                    if qHaveOperatorScreen
+                        Screen('FillRect', wpnt(2), obj.getColorForWindow(obj.settings.UI.val.bgColor));
+                    end
                     % draw validation screen image
-                    % draw calibration points
-                    obj.drawFixPoints(wpnt,calValPos,obj.settings.UI.val.fixBackSize,obj.settings.UI.val.fixFrontSize,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
+                    % draw calibration/validation points
+                    obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI.val.fixBackSize,obj.settings.UI.val.fixFrontSize,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
                     % draw captured data in characteristic tobii plot
                     for p=1:nPoints
                         if qShowCal
@@ -2127,10 +2155,10 @@ classdef Titta < handle
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{1}),[],2);
+                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{1}),[],2);
                         end
                         if obj.calibrateRightEye && ~isempty(rEpos)
-                            Screen('DrawLines',wpnt,reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{2}),[],2);
+                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{2}),[],2);
                         end
                     end
                     
@@ -2148,11 +2176,11 @@ classdef Titta < handle
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
-                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.bgColor),menuBackRect);
+                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.bgColor),menuBackRect);
                         % menuRects, inactive and currentlyactive
                         qActive = iValid==selection;
-                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ),menuRects(~qActive,:).');
-                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive),menuRects( qActive,:).');
+                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ),menuRects(~qActive,:).');
+                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive),menuRects( qActive,:).');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -2161,7 +2189,7 @@ classdef Titta < handle
                     end
                     % if hovering over validation point, show info
                     if ~isnan(pointToShowInfoFor)
-                        rect = OffsetRect(infoBoxRect,mx,my);
+                        rect = OffsetRect(infoBoxRect,mx-gRectOff(1),my-gRectOff(2));
                         % mak sure does not go offscreen
                         if rect(3)>obj.scrInfo.resolution{1}(1)
                             rect = OffsetRect(rect,obj.scrInfo.resolution{1}(1)-rect(3),0);
@@ -2169,28 +2197,39 @@ classdef Titta < handle
                         if rect(4)>obj.scrInfo.resolution{1}(2)
                             rect = OffsetRect(rect,0,obj.scrInfo.resolution{1}(2)-rect(4));
                         end
-                        Screen('FillRect',wpnt,obj.getColorForWindow(obj.settings.UI.val.hover.bgColor),rect);
+                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.hover.bgColor),rect);
                         obj.drawCachedText(pointTextCache,rect);
+                    end
+                    % if have operator screen, show message to wait to
+                    % participant
+                    if qHaveOperatorScreen && ~qShowGaze
+                        obj.drawCachedText(waitTextCache);
                     end
                     % if showing gaze, draw
                     if qShowGaze
                         % draw fixation points
-                        obj.drawFixPoints(wpnt,fixPos,obj.settings.UI.val.onlineGaze.fixBackSize,obj.settings.UI.val.onlineGaze.fixFrontSize,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
+                        obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.val.onlineGaze.fixBackSize,obj.settings.UI.val.onlineGaze.fixFrontSize,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
                         % draw gaze data
                         eyeData = obj.buffer.consumeN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1}), lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt(end),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1}), lE(1), lE(2), 10);
+                                if qHaveOperatorScreen && qShowGazeToAll
+                                    Screen('gluDisk', wpnt(1),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1}), lE(1), lE(2), 10);
+                                end
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt,obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2}), rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt(end),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2}), rE(1), rE(2), 10);
+                                if qHaveOperatorScreen && qShowGazeToAll
+                                    Screen('gluDisk', wpnt(1),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2}), rE(1), rE(2), 10);
+                                end
                             end
                         end
                     end
                     % drawing done, show
-                    Screen('Flip',wpnt);
+                    Screen('Flip',wpnt(1),[],0,0,1);
                     if qAwaitingCalChange
                         % break out of draw loop
                         break;
@@ -2204,7 +2243,7 @@ classdef Titta < handle
                         % don't care which button for now. determine if clicked on either
                         % of the buttons
                         if qSelectMenuOpen
-                            iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
+                            iIn = find(inRect([mx my],[menuRectsGlobal.' menuBackRectGlobal.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                             if ~isempty(iIn) && iIn<=length(iValid)
                                 newSelection        = iValid(iIn);
                                 qSelectedCalChanged = selection~=newSelection;
@@ -2216,7 +2255,7 @@ classdef Titta < handle
                             end
                         end
                         if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qIn = inRect([mx my],butRects);
+                            qIn = inRect([mx my],butRectsGlobal.');
                             if any(qIn)
                                 if qIn(1)
                                     status = -1;
@@ -2234,6 +2273,7 @@ classdef Titta < handle
                                     qDoneCalibSelection = true;
                                 elseif qIn(6)
                                     qToggleGaze         = true;
+                                    qShowGazeToAll      = shiftIsDown;
                                 elseif qIn(7)
                                     qUpdateCalDisplay   = true;
                                     qShowCal            = ~qShowCal;
@@ -2300,6 +2340,7 @@ classdef Titta < handle
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
+                                qShowGazeToAll      = shiftIsDown;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && qHasCal
                                 qUpdateCalDisplay   = true;
@@ -2325,7 +2366,7 @@ classdef Titta < handle
                     end
                     % check if hovering over point for which we have info
                     if ~isempty(calValRects)
-                        iIn = find(inRect([mx my],calValRects.'));
+                        iIn = find(inRect([mx my],calValRectsGlobal.'));
                         if ~isempty(iIn)
                             % see if new point
                             if pointToShowInfoFor~=iIn

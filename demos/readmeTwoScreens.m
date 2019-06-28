@@ -9,8 +9,8 @@ useAnimatedCalibration  = true;
 % task parameters
 fixTime                 = .5;
 imageTime               = 2;
-scrPresenter            = 2;
-scrOperator             = 1;
+scrPresenter            = 1;
+scrOperator             = 2;
 
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
