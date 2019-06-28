@@ -118,7 +118,6 @@ try
     stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
     im = imread(stimFName);
     tex     = Screen('MakeTexture',wpnt,im);
-    texRect = Screen('Rect',tex);
     
     % show on screen and log when it was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous

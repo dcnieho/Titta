@@ -1,10 +1,16 @@
 % version of readme.m that demonstrates operation with separate
 % presentation and operator screens
+% NB: some care is taken to not update operator screen during timing
+% critical bits of main script
+% NB: this code assumes main and secondary screen have the same resolution.
+% If not, either adjust the code, or look into solutions e.g. with
+% PsychImaging()'s 'UsePanelFitter'
 
 clear all
 DEBUGlevel              = 0;
 fixClrs                 = [0 255];
 bgClr                   = 127;
+eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
 useAnimatedCalibration  = true;
 % task parameters
 fixTime                 = .5;
@@ -15,6 +21,8 @@ scrOperator             = 2;
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
 
 try
+    eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
+    
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
     settings.debugMode      = true;
@@ -124,9 +132,18 @@ try
     % to ensure good timing)
     stimFName = 'konijntjes1024x768.jpg';
     stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
-    im = imread(stimFName);
+    im      = imread(stimFName);
     tex     = Screen('MakeTexture',wpntP,im);
-    texRect = Screen('Rect',tex);
+    nextFlipT = startT+fixTime-1/hz/2;
+    
+    % now update also operator screen, once timing critical bit is done
+    % if we still have enough time till next flipT, update operator display
+    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+        Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
+        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        Screen('Flip',wpntO);
+    end
+        
     
     % show on screen and log when it was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous
@@ -134,19 +151,31 @@ try
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
     Screen('DrawTexture',wpntP,tex);
-    imgT = Screen('Flip',wpntP,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
+    imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
+    nextFlipT = imgT+imageTime-1/hz/2;
+    
+    % now update also operator screen, once timing critical bit is done
+    % if we still have enough time till next flipT, update operator display
+    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+        Screen('DrawTexture',wpntO,tex);
+        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        Screen('Flip',wpntO);
+    end
     
     % record x seconds of data, then clear screen. Indicate stimulus
     % removed, clean up
-    endT = Screen('Flip',wpntP,imgT+imageTime-1/hz/2);
+    endT = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
     Screen('Close',tex);
+    nextFlipT = endT+1; % lees precise, about 1s give or take a frame, is fine
     
-    % slightly less precise ISI is fine..., about 1s give or take a frame
-    % or continue immediately if the above upload actions took longer than
-    % a second.
-    WaitSecs(1-(GetSecs-endT));
+    % now update also operator screen, once timing critical bit is done
+    % if we still have enough time till next flipT, update operator display
+    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        Screen('Flip',wpntO);
+    end
     
     % repeat the above but show a different image. lets also record some
     % eye images, if supported on connected eye tracker
@@ -155,8 +184,14 @@ try
     end
     % 1. fixation point
     Screen('gluDisk',wpntP,fixClrs(1),winRectP(3)/2,winRectP(4)/2,round(winRectP(3)/100));
-    startT = Screen('Flip',wpntP);
+    startT      = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage('FIX ON',startT);
+    nextFlipT   = startT+fixTime-1/hz/2;
+    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+        Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
+        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        Screen('Flip',wpntO);
+    end
     % 2. image
     stimFNameBlur = 'konijntjes1024x768blur.jpg';
     stimFNameBlur = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFNameBlur);
@@ -164,13 +199,20 @@ try
     tex     = Screen('MakeTexture',wpntP,im);
     texRect = Screen('Rect',tex);
     Screen('DrawTexture',wpntP,tex);
-    imgT = Screen('Flip',wpntP,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
+    imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
+    nextFlipT = imgT+imageTime-1/hz/2;
+    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+        Screen('DrawTexture',wpntO,tex);
+        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        Screen('Flip',wpntO);
+    end
     
-    % 4. end recording after x seconds of data again, clear screen.
-    endT = Screen('Flip',wpntP,imgT+imageTime-1/hz/2);
+    % 3. end recording after x seconds of data again, clear screen.
+    endT = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage(sprintf('STIM OFF: %s',stimFNameBlur),endT);
     Screen('Close',tex);
+    Screen('Flip',wpntO);
     
     % stop recording
     if EThndl.buffer.hasStream('eyeImage')

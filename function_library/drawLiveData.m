@@ -2,11 +2,11 @@ function drawLiveData(wpnt,bufferObj,dataDur,fs,clrL,clrR,pointSz,scrRes)
 
 qShowLeft   = ~isempty(clrL);
 if qShowLeft
-    clrsL       = [clrL; [clrL(1:3) clrL(4)/3]];
+    clrsL   = [clrL; [clrL(1:3) clrL(4)/3]];
 end
 qShowRight  = ~isempty(clrR);
 if qShowRight
-    clrsR       = [clrR; [clrR(1:3) clrR(4)/3]];
+    clrsR   = [clrR; [clrR(1:3) clrR(4)/3]];
 end
 nDataPoint  = ceil(dataDur/1000*fs);
 eyeData     = bufferObj.peekN('gaze',nDataPoint);
