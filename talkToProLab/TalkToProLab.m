@@ -279,7 +279,7 @@ classdef TalkToProLab < handle
             request.aois = {AOI};       % enclose in cell so it becomes a json array
             request.merge_mode = 'replace_aois';
             
-            % send
+            % send and wait till successfully processed
             this.clientProject.send(request);
             waitForResponse(this.clientProject,'AddAois');
         end
@@ -297,7 +297,7 @@ classdef TalkToProLab < handle
             request.operation = 'AddAois';
             request.media_id  = mediaID;
             
-            % send
+            % send and wait till successfully processed
             this.clientProject.send(request);
             waitForResponse(this.clientProject,'AddAois');
         end
