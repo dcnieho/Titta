@@ -19,6 +19,7 @@
 #else
 #   pragma comment(lib, "TobiiBuffer_d.lib")
 #endif
+#include <readerwriterqueue/readerwriterqueue.h>
 
 #include "types.h"
 

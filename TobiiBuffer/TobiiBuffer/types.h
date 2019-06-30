@@ -4,7 +4,6 @@
 #include <array>
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
-#include <readerwriterqueue/readerwriterqueue.h>
 
 namespace TobiiTypes
 {

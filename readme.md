@@ -294,6 +294,3 @@ The following method calls are available on a TalkToProLab instance
 |||||
 |`sendStimulusEvent()`|<ol><li>`mediaID`: unique identifier by which shown media stimulus is identified in Pro Lab</li><li>`mediaPosition`: location of the stimulus on screen in pixels, format: `[left top right bottom]`</li><li>`startTimeStamp`: timestamp (in seconds or microseconds) at which stimulus presentation started</li><li>`endTimeStamp`: (optional) timestamp (in seconds or microseconds) of when presentation of this stimulus ended. If empty, it is assumed stimulus reamined on screen until start of the next stimulus</li><li>`background`: color of background (RGB: 0-255) on top of which stimulus was shown</li><li>`qDoTimeConversion`: boolean (optional) if true, will convert provided timestamps from seconds to microseconds</li></ol>||Inform Pro Lab when and where a media (stimulus) was shown.|
 |`sendCustomEvent()`|<ol><li>`timeStamp`: (optional) timestamp (in s) at which event occured. If empty, current time is taken as event time</li><li>`eventType`: string: event type name</li><li>`value`: (optional) string, the value of the event</li></ol>||Add an event to Pro Lab's timeline.|
-
-# Scratch space
-`vcpkg install readerwriterqueue readerwriterqueue:x64-windows`
