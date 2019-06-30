@@ -747,9 +747,9 @@ classdef Titta < handle
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font  = 'Segeo UI';
-            settings.UI.button.setup.text.size  = 24*textFac;
-            settings.UI.button.setup.text.style = 0;
+            settings.UI.button.setup.text.font          = 'Segeo UI';
+            settings.UI.button.setup.text.size          = 24*textFac;
+            settings.UI.button.setup.text.style         = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
             settings.UI.button.setup.eyeIm.visible      = true;
             settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
@@ -768,9 +768,9 @@ classdef Titta < handle
             settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
             settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
             settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
-            settings.UI.button.val.text.font    = 'Segeo UI';
-            settings.UI.button.val.text.size    = 24*textFac;
-            settings.UI.button.val.text.style   = 0;
+            settings.UI.button.val.text.font            = 'Segeo UI';
+            settings.UI.button.val.text.size            = 24*textFac;
+            settings.UI.button.val.text.style           = 0;
             settings.UI.button.val.recal.accelerator    = 'escape';
             settings.UI.button.val.recal.visible        = true;
             settings.UI.button.val.recal.string         = 'recalibrate (<i>esc<i>)';
