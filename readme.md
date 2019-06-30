@@ -145,19 +145,19 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.button.setup.text.font`|Setting for all buttons on the setup screen. See [Text options](#text-options).|
 |`settings.UI.button.setup.text.size`|Setting for all buttons on the setup screen. See [Text options](#text-options).|
 |`settings.UI.button.setup.text.style`|Setting for all buttons on the setup screen. See [Text options](#text-options).|
-|`settings.UI.button.setup.eyeIm`|Toggle button for showing or hiding eye image (if eye tracker provides them). See [Button options](#button-options).|
-|`settings.UI.button.setup.cal`|Button for starting a calibration. See [Button options](#button-options).|
-|`settings.UI.button.setup.prevcal`|Button for going to the validation result screen, only available if there are previous successful calibrations. See [Button options](#button-options).|
+|`settings.UI.button.setup.eyeIm`|Toggle button for showing or hiding eye image (if eye tracker provides them). See [Button options](#button-options). Default hotkey: `e`.|
+|`settings.UI.button.setup.cal`|Button for starting a calibration. See [Button options](#button-options). Default hotkey: `spacebar`.|
+|`settings.UI.button.setup.prevcal`|Button for going to the validation result screen, only available if there are previous successful calibrations. See [Button options](#button-options). Default hotkey: `p`.|
 |`settings.UI.button.val.text.font`|Setting for all buttons on the validation result screen. See [Text options](#text-options).|
 |`settings.UI.button.val.text.size`|Setting for all buttons on the validation result screen. See [Text options](#text-options).|
 |`settings.UI.button.val.text.style`|Setting for all buttons on the validation result screen. See [Text options](#text-options).|
-|`settings.UI.button.val.recal`|Button for starting a new calibration. See [Button options](#button-options).|
-|`settings.UI.button.val.reval`|Button for revalidating the currently selected calibration. See [Button options](#button-options).|
-|`settings.UI.button.val.continue`|Button for confirming selection of calibration and returning from the calibration interface to user code. See [Button options](#button-options).|
-|`settings.UI.button.val.selcal`|Toggle button to bring up or close a calibration selection menu. Only available if there multiple successful calibration are available. See [Button options](#button-options).|
-|`settings.UI.button.val.setup`|Button for returning to the setup screen. See [Button options](#button-options).|
-|`settings.UI.button.val.toggGaze`|Toggle button switching on/off an online visualization of current gaze location. See [Button options](#button-options).|
-|`settings.UI.button.val.toggCal`|Toggle button for switching between showing the validation output and the calibration output on the validation result screen. See [Button options](#button-options).|
+|`settings.UI.button.val.recal`|Button for starting a new calibration. See [Button options](#button-options). Default hotkey: `escape`.|
+|`settings.UI.button.val.reval`|Button for revalidating the currently selected calibration. See [Button options](#button-options). Default hotkey: `v`.|
+|`settings.UI.button.val.continue`|Button for confirming selection of calibration and returning from the calibration interface to user code. See [Button options](#button-options). Default hotkey: `spacebar`.|
+|`settings.UI.button.val.selcal`|Toggle button to bring up or close a calibration selection menu. Only available if there multiple successful calibration are available. See [Button options](#button-options). Default hotkey: `c`.|
+|`settings.UI.button.val.setup`|Button for returning to the setup screen. See [Button options](#button-options). Default hotkey: `s`.|
+|`settings.UI.button.val.toggGaze`|Toggle button switching on/off an online visualization of current gaze location. See [Button options](#button-options). Default hotkey: `g`. When in dual screen mode, by default the online gaze visualization is only shown on the operator screen. To also show it on the participant screen, hold down the `shift` key while pressing this hotkey.|
+|`settings.UI.button.val.toggCal`|Toggle button for switching between showing the validation output and the calibration output on the validation result screen. See [Button options](#button-options). Default hotkey: `t`.|
 |||
 |`settings.UI.cal.errMsg.string`|String to display when the Tobii calibration functions inform that calibration was unsuccessful.|
 |`settings.UI.cal.errMsg.font`|See [Text options](#text-options).|
