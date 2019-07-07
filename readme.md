@@ -24,22 +24,26 @@ Currently the toolbox is only supported on Windows (tested on Windows 10 and Win
 *Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
 
 ## How to acquire
-The recommended way to acquire Titta is to use the `git` tool to download it.
-  Do as follows:
-  1) install git from https://git-scm.org if you don't already have it. If you do not
-     like using the command line/terminal, consider using a graphical git tool such as
-     SmartGit, which is available free for non-commercial use
-
-  2a) Download Titta and its dependencies in one go using the following command:
-      `git clone --recurse-submodules -j8 git://github.com/dcnieho/Titta.git`
-  2b) Should this not work due to your git version being too old, try executing the
-      following commands:
-      `git clone git://github.com/dcnieho/Titta.git`
-      `cd Titta`
-      `git submodule update --init --recursive`
-  2c) If you prefer to download the parts separately, first Titta and then
-      MatlabWebSocket (available from https://github.com/jebej/MatlabWebSocket). Then
-      put the MatlabWebSocket directory inside Titta at the right location:
+The recommended way to acquire Titta is to use the `git` tool to download it. Alternatively you can download the components separately and place them in the right locations. Here are instructions for these two routes:
+1. Using Git
+    1. install git from https://git-scm.org if you don't already have it. If you do not
+       like using the command line/terminal, consider using a graphical git tool such as
+       SmartGit, which is available free for non-commercial use
+    1. Download Titta and its dependencies in one go using the following command:
+       `git clone --recurse-submodules -j8 git://github.com/dcnieho/Titta.git`
+    1. Should this not work due to your git version being too old, try executing the
+       following commands:
+       ```
+       git clone git://github.com/dcnieho/Titta.git`
+       cd Titta
+       git submodule update --init --recursive
+       ```
+       If you have already cloned Titta but do not have the MatlabWebSocket submodule populated yet,
+       issuing the `git submodule update --init --recursive` command will take care of that.
+1. Manual download:
+    1. First download Titta and place it, unzipped if necessary, in your preferred folder.
+    1. Then download MatlabWebSocket (available from https://github.com/jebej/MatlabWebSocket).
+    1. Put the MatlabWebSocket directory inside Titta at the right location:
       `<tittaRootDir>/talkToProLab/MatlabWebSocket`).
 
 ## Contents
