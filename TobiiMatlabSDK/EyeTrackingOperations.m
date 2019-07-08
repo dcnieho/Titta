@@ -36,13 +36,13 @@ classdef EyeTrackingOperations
 
             if isOctave
                 if ispc
-                    arch = 'win';
+                    Tobii.MexFileName = sprintf('tobiiresearch_win%d',Tobii.BITNESS);
                 elseif ismac
-                    arch = 'mac';
+                    Tobii.MexFileName = 'tobiiresearch_mac';
                 elseif isunix
-                    arch = 'linux';
+                    Tobii.MexFileName = 'tobiiresearch_linux';
                 end
-                library_path = fullfile('lib',Tobii.BITNESS,arch);
+                library_path = fullfile('lib',Tobii.BITNESS,'Octave');
             else
                 library_path = fullfile('lib',Tobii.BITNESS);
             end
