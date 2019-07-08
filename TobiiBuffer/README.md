@@ -1,4 +1,6 @@
-setup:
+Usage instructions for using the TobiiBuffer class are found in [the Titta documentation](../readme.md).
+
+setup for if you want to compile this yourself:
 ```
 git clone https://github.com/Microsoft/vcpkg.git
 
