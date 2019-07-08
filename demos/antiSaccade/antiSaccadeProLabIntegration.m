@@ -1,6 +1,24 @@
 % This implements:
 % Antoniades et al. (2013). An internationally standardised antisaccade
 % protocol. Vision Research 84, 1--5.
+%
+% To run
+% 1) In Pro Lab, make a new External Presenter project with the name
+%    'antiSaccade'. Open this project and select the recording tab.
+% 2) In this code, make sure the size of the screen (sv.scr.rect below),
+%    its framerate (sv.scr.framerate) and other settings match your setup.
+% 3) First, the stimuli need to be uploaded to Pro Lab. Below, set qDryRun
+%    to true and run this code.
+% 4) Once finished, set qDryRun back to false. You are now ready to run the
+%    demo. Check that the correct eye tracker is set with the command
+%    Titta.getDefaults('Tobii Pro Spectrum') below.
+% 5) By default, this code runs a brief demo instead of the protocol
+%    recommended by Antoniades et al. The full protocol would take over 15
+%    minutes. To run the full protocol, set qDemo below to false.
+% 6) Once the recording has completed, switch to Pro Lab to view the data
+%    in its analysis view.
+
+
 sca
 clear variables
 
@@ -8,7 +26,8 @@ clear variables
 myDir = fileparts(mfilename('fullpath'));
 addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
 
-DEBUGlevel          = 0;
+DEBUGlevel              = 0;
+qDemo                   = true;             % if true, do a short run of pro- and antisaccades for demo purposes. If false, run recommended Antoniades et al. protocol
 
 % provide info about the external presenter project that should be open in pro lab
 qDryRun                 = false;            % if true, do a dry run that just uploads the needed media to Pro Lab
@@ -23,14 +42,14 @@ AOInVertices            = 20;               % number of vertices for cirle AOI
 
 
 % provide info about your screen (set to defaults for screen of Spectrum)
-sv.scr.num             = 0;
-sv.scr.rect            = [1920 1080];                       % expected screen resolution   (px)
-sv.scr.framerate       = 60;                                % expected screen refresh rate (hz)
-sv.scr.viewdist        = 65;                                % viewing    distance      (cm)
-sv.scr.sizey           = 29.69997;                          % vertical   screen   size (cm)
-sv.scr.multiSample     = 8;
+sv.scr.num              = 0;
+sv.scr.rect             = [1920 1080];                      % expected screen resolution   (px)
+sv.scr.framerate        = 60;                               % expected screen refresh rate (hz)
+sv.scr.viewdist         = 65;                               % viewing    distance      (cm)
+sv.scr.sizey            = 29.69997;                         % vertical   screen   size (cm)
+sv.scr.multiSample      = 8;
 
-sv.bgclr               = 127;                               % screen background color (L, or RGB): here midgray
+sv.bgclr                = 127;                              % screen background color (L, or RGB): here midgray
 
 % setup eye tracker
 qUseDummyMode           = false;
@@ -41,14 +60,22 @@ calViz                  = AnimatedCalibrationDisplay();
 calViz.bgColor          = sv.bgclr;
 settings.cal.drawFunction = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
 
-% task parameters, all defaults are per Antoniades et al. (2013)
-% block and timing setup
-sv.blockSetup      = {'P',60;'A',40;'A',40;'A',40;'P',60};  % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
-sv.nTrainTrial     = [10 4];                                % number of training trials for [pro-, anti-saccades]
-sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
-sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+% task parameters, either in brief demo mode or with all defaults as per
+% the protocol recommended by Antoniades et al. (2013)
+if qDemo
+    sv.blockSetup      = {'P',10;'A',10};                       % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
+    sv.nTrainTrial     = [4 4];                                 % number of training trials for [pro-, anti-saccades]
+    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
+    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+    sv.breakT          = 5000;                                  % the minimum resting time between blocks (ms)
+else
+    sv.blockSetup      = {'P',60;'A',40;'A',40;'A',40;'P',60};  % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
+    sv.nTrainTrial     = [10 4];                                % number of training trials for [pro-, anti-saccades]
+    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
+    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+    sv.breakT          = 60000;                                 % the minimum resting time between blocks (ms)
+end
 sv.targetDuration  = 1000;                                  % the duration for which the target is shown
-sv.breakT          = 60000;                                 % the minimum resting time between blocks (ms)
 sv.restT           = 1000;                                  % the blank time between trials
 % fixation point
 sv.fixBackSize     = 0.25;                                  % degrees
@@ -189,8 +216,10 @@ try
         breakID         = TalkToProLabInstance.findMedia('break',true);
         blankID         = TalkToProLabInstance.findMedia('blank',true);
         fixID           = TalkToProLabInstance.findMedia('fixationPoint',true);
-        leftID          = TalkToProLabInstance.findMedia('leftTarget',true);
-        rightID         = TalkToProLabInstance.findMedia('rightTarget',true);
+        leftAID         = TalkToProLabInstance.findMedia('leftTarget_AntiSac',true);
+        leftPID         = TalkToProLabInstance.findMedia('leftTarget_ProSac',true);
+        rightAID        = TalkToProLabInstance.findMedia('rightTarget_AntiSac',true);
+        rightPID        = TalkToProLabInstance.findMedia('rightTarget_ProSac',true);
         proTrainInsID   = TalkToProLabInstance.findMedia('ProSacTrainInstruction',true);
         proInsID        = TalkToProLabInstance.findMedia('ProSacInstruction',true);
         antiTrainInsID  = TalkToProLabInstance.findMedia('AntiSacTrainInstruction',true);
@@ -295,42 +324,62 @@ try
         tarLbl = [target 'Target'];
         if qDryRun
             % screenshot and upload fixation point, if not already done
-            targetID = TalkToProLabInstance.findMedia(tarLbl);
-            if isempty(targetID)
-                screenShot = Screen('GetImage', wpnt);
-                targetID = TalkToProLabInstance.uploadMedia(screenShot,tarLbl);
-                % set AOI
-                angs = linspace(-maxSacDir,maxSacDir,AOInVertices);
-                AOIvertsR = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
-                hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
-                if hOff>sv.scr.rect(1)/2
-                    vOff = sv.scr.rect(1)/2*tand(maxSacDir);
-                    AOIvertsR = [AOIvertsR [sv.scr.rect(1) sv.scr.rect(1); sv.scr.center(2)+vOff sv.scr.center(2)-vOff]];
-                else
-                    hOff = hOff + sv.scr.rect(1)/2;
-                    AOIvertsR = [AOIvertsR [hOff sv.scr.rect(1) sv.scr.rect(1) hOff; sv.scr.rect(2) sv.scr.rect(2) 0 0]];
+            % do one for pro- and one for antisaccade
+            for t=1:2
+                fullTarLbl = [tarLbl '_ProSac'];
+                if t==2
+                    fullTarLbl = [tarLbl '_AntiSac'];
                 end
-                if data.trials(p).dir==-1
-                    AOIvertsL = AOIvertsR;
-                    AOIvertsL(1,:) = sv.scr.rect(1)-AOIvertsL(1,:);
-                end
-                if data.trials(p).dir==-1
-                    % target on left, denote left as pro response, right as
-                    % anti response
-                    TalkToProLabInstance.attachAOIToImage(tarLbl,'targetSide',[0 255 0],AOIvertsL);
-                    TalkToProLabInstance.attachAOIToImage(tarLbl,'otherSide' ,[255 0 0],AOIvertsR);
-                else
-                    % target on right, denote right as pro response, left
-                    % as anti response
-                    TalkToProLabInstance.attachAOIToImage(tarLbl,'targetSide',[0 255 0],AOIvertsR);
-                    TalkToProLabInstance.attachAOIToImage(tarLbl,'otherSide' ,[255 0 0],AOIvertsL);
+                targetID = TalkToProLabInstance.findMedia(fullTarLbl);
+                if isempty(targetID)
+                    screenShot = Screen('GetImage', wpnt);
+                    targetID = TalkToProLabInstance.uploadMedia(screenShot,fullTarLbl);
+                    % set AOI
+                    angs = linspace(-maxSacDir,maxSacDir,AOInVertices);
+                    AOIvertsR = bsxfun(@plus,minSacAmpPix*[cosd(angs); sind(angs)],sv.scr.center(:));
+                    hOff = sv.scr.rect(2)/2*tand(90-maxSacDir);
+                    if hOff>sv.scr.rect(1)/2
+                        vOff = sv.scr.rect(1)/2*tand(maxSacDir);
+                        AOIvertsR = [AOIvertsR [sv.scr.rect(1) sv.scr.rect(1); sv.scr.center(2)+vOff sv.scr.center(2)-vOff]];
+                    else
+                        hOff = hOff + sv.scr.rect(1)/2;
+                        AOIvertsR = [AOIvertsR [hOff sv.scr.rect(1) sv.scr.rect(1) hOff; sv.scr.rect(2) sv.scr.rect(2) 0 0]];
+                    end
+                    if data.trials(p).dir==-1
+                        AOIvertsL = AOIvertsR;
+                        AOIvertsL(1,:) = sv.scr.rect(1)-AOIvertsL(1,:);
+                    end
+                    lbl1 = 'correct';
+                    lbl2 = 'wrong';
+                    if t==2
+                        [lbl1,lbl2] = deal(lbl2,lbl1);
+                    end
+                    if data.trials(p).dir==-1
+                        % target on left, denote left as pro response,
+                        % right as anti response
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsL);
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsR);
+                    else
+                        % target on right, denote right as pro response, left
+                        % as anti response
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsR);
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsL);
+                    end
                 end
             end
         else
-            if data.trials(p).dir==-1
-                tarID = leftID;
+            if strcmpi(data.trials(p).blockType,'a')
+                if data.trials(p).dir==-1
+                    tarID = leftAID;
+                else
+                    tarID = rightAID;
+                end
             else
-                tarID = rightID;
+                if data.trials(p).dir==-1
+                    tarID = leftPID;
+                else
+                    tarID = rightPID;
+                end
             end
             % notify pro lab of stimulus onset
             TalkToProLabInstance.sendStimulusEvent(tarID,[0 0 sv.scr.rect],data.trials(p).targetOnsetT,[]);

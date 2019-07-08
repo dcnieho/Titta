@@ -1,6 +1,13 @@
 % This implements:
 % Antoniades et al. (2013). An internationally standardised antisaccade
 % protocol. Vision Research 84, 1--5.
+% 
+% Before running, make sure the size of the screen (sv.scr.rect below), its
+% framerate (sv.scr.framerate) and other settings match your setup.
+%
+% Note that by default, this code runs a brief demo instead of the protocol
+% recommended by Antoniades et al. The full protocol would take over 15
+% minutes. To run the full protocol, set qDemo below to false.
 sca
 clear variables
 
@@ -8,17 +15,18 @@ clear variables
 myDir = fileparts(mfilename('fullpath'));
 addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
 
-DEBUGlevel          = 0;
+DEBUGlevel              = 0;
+qDemo                   = true;                             % if true, do a short run of pro- and antisaccades for demo purposes. If false, run recommended Antoniades et al. protocol
 
 % provide info about your screen (set to defaults for screen of Spectrum)
-sv.scr.num             = 0;
-sv.scr.rect            = [1920 1080];                       % expected screen resolution   (px)
-sv.scr.framerate       = 60;                                % expected screen refresh rate (hz)
-sv.scr.viewdist        = 65;                                % viewing    distance      (cm)
-sv.scr.sizey           = 29.69997;                          % vertical   screen   size (cm)
-sv.scr.multiSample     = 8;
+sv.scr.num              = 0;
+sv.scr.rect             = [1920 1080];                      % expected screen resolution   (px)
+sv.scr.framerate        = 60;                               % expected screen refresh rate (hz)
+sv.scr.viewdist         = 65;                               % viewing    distance      (cm)
+sv.scr.sizey            = 29.69997;                         % vertical   screen   size (cm)
+sv.scr.multiSample      = 8;
 
-sv.bgclr               = 127;                               % screen background color (L, or RGB): here midgray
+sv.bgclr                = 127;                              % screen background color (L, or RGB): here midgray
 
 % setup eye tracker
 qUseDummyMode           = false;
@@ -29,14 +37,22 @@ calViz                  = AnimatedCalibrationDisplay();
 calViz.bgColor          = sv.bgclr;
 settings.cal.drawFunction = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
 
-% task parameters, all defaults are per Antoniades et al. (2013)
-% block and timing setup
-sv.blockSetup      = {'P',60;'A',40;'A',40;'A',40;'P',60};  % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
-sv.nTrainTrial     = [10 4];                                % number of training trials for [pro-, anti-saccades]
-sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
-sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+% task parameters, either in brief demo mode or with all defaults as per
+% the protocol recommended by Antoniades et al. (2013)
+if qDemo
+    sv.blockSetup      = {'P',10;'A',10};                       % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
+    sv.nTrainTrial     = [4 4];                                 % number of training trials for [pro-, anti-saccades]
+    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
+    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+    sv.breakT          = 5000;                                  % the minimum resting time between blocks (ms)
+else
+    sv.blockSetup      = {'P',60;'A',40;'A',40;'A',40;'P',60};  % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
+    sv.nTrainTrial     = [10 4];                                % number of training trials for [pro-, anti-saccades]
+    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
+    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
+    sv.breakT          = 60000;                                 % the minimum resting time between blocks (ms)
+end
 sv.targetDuration  = 1000;                                  % the duration for which the target is shown
-sv.breakT          = 60000;                                 % the minimum resting time between blocks (ms)
 sv.restT           = 1000;                                  % the blank time between trials
 % fixation point
 sv.fixBackSize     = 0.25;                                  % degrees
