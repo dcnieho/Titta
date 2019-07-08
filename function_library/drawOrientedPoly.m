@@ -8,7 +8,7 @@ end
 % looks nice to me
 z=5;
 depthOri = depthOri*1.25;   % exaggerate head depth rotation a bit, looks more like the eye images and simply makes it more visible
-proj = [verts(1,:)*cos(depthOri); verts(2,:)]./(z+verts(1,:)*sin(depthOri))*z; % depth is defined by x coord as circle is rotated around yaw axis
+proj = bsxfun(@rdivide,[verts(1,:)*cos(depthOri); verts(2,:)],(z+verts(1,:)*sin(depthOri)))*z; % depth is defined by x coord as circle is rotated around yaw axis
 % rotate image on projection plane for head roll
 proj = rotMat*proj;
 % scale and move to right place
