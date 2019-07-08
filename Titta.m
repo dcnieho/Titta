@@ -2175,11 +2175,11 @@ classdef Titta < handle
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = [{menuRectsGlobal.'} num2cell(butRectsGlobal(:,1:3).',1)];
+                        cursors.rect    = [num2cell(menuRectsGlobal.',1) num2cell(butRectsGlobal(1:3,:).',1)];
                         cursors.cursor  = repmat(2,1,size(menuRectsGlobal,1)+3);    % 2: Hand
                     else
                         cursors.rect    = num2cell(butRectsGlobal.',1);
-                        cursors.cursor  = repmat(2,1,7);  % 2: Hand
+                        cursors.cursor  = repmat(2,1,length(cursors.rect));  % 2: Hand
                     end
                     cursors.other   = 0;    % 0: Arrow
                     cursors.qReset  = false;

@@ -155,17 +155,17 @@ classdef ETHead < handle
                             drawOrientedPoly(this.wpnt,cross,0,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.crossClr));
                         elseif (e==1 && this.qHaveLeft) || (e==2 && this.qHaveRight)
                             % draw eye
-                            eye = this.eyeSzFac*this.circVerts+eyeOff;
+                            eye = bsxfun(@plus,this.eyeSzFac*this.circVerts,eyeOff);
                             drawOrientedPoly(this.wpnt,eye,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
                             % if wanted, draw pupil
                             if this.showPupils
                                 pupilSz = (1+(pup/this.pupilRefDiam-1)*this.pupilSzGain)*this.pupilSzFac*this.eyeSzFac;
-                                pup     = pupilSz*this.circVerts+eyeOff;
+                                pup     = bsxfun(@plus,pupilSz*this.circVerts,eyeOff);
                                 drawOrientedPoly(this.wpnt,pup,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.pupilClr));
                             end
                         else
                             % draw line indicating closed/missing eye
-                            line = [-1 1 1 -1; -1/5 -1/5 1/5 1/5]*this.eyeSzFac + eyeOff;
+                            line = bsxfun(@plus,[-1 1 1 -1; -1/5 -1/5 1/5 1/5]*this.eyeSzFac,eyeOff);
                             drawOrientedPoly(this.wpnt,line,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
                         end
                     end

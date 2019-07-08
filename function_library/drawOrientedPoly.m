@@ -12,7 +12,7 @@ proj = bsxfun(@rdivide,[verts(1,:)*cos(depthOri); verts(2,:)],(z+verts(1,:)*sin(
 % rotate image on projection plane for head roll
 proj = rotMat*proj;
 % scale and move to right place
-proj = proj*scaleFac + pos(:);
+proj = bsxfun(@plus,proj*scaleFac,pos(:));
 
 % draw fill if any
 if ~isempty(fillClr)
