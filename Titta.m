@@ -333,17 +333,17 @@ classdef Titta < handle
             warnState = warning('query','MATLAB:structOnObject');
             warning('off',warnState.identifier);    % turn off warning for converting object to struct
             obj.geom.displayArea    = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
-            obj.geom.trackBox       = structfun(@double,struct(obj.eyetracker.get_track_box())   ,'uni',false);
+            try
+                obj.geom.trackBox       = structfun(@double,struct(obj.eyetracker.get_track_box())   ,'uni',false);
+                % get width and height of trackbox at middle depth
+                obj.geom.trackBox.halfWidth   = mean([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/10;
+                obj.geom.trackBox.halfHeight  = mean([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/10;
+            catch
+                % tracker does not support trackbox
+                obj.geom.trackBox.halfWidth     = [];
+                obj.geom.trackBox.halfHeight    = [];
+            end
             warning(warnState.state,warnState.identifier);  % reset warning
-            % extract some info for conversion between UCS and trackbox
-            % coordinates
-            obj.geom.UCS2TB.trackBoxDepths      = [obj.geom.trackBox.FrontUpperRight(3) obj.geom.trackBox.BackUpperRight(3)]./10;
-            obj.geom.UCS2TB.trackBoxMinX        = obj.geom.trackBox.FrontUpperRight(1)/10;
-            obj.geom.UCS2TB.trackBoxXSlope      = diff([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/diff(obj.geom.UCS2TB.trackBoxDepths*10); % slope: grows wider by x cm if depth increases by y cm
-            obj.geom.UCS2TB.trackBoxHalfWidth   = @(x) obj.geom.UCS2TB.trackBoxMinX+obj.geom.UCS2TB.trackBoxXSlope*(x-obj.geom.UCS2TB.trackBoxDepths(1));
-            obj.geom.UCS2TB.trackBoxMinY        = obj.geom.trackBox.FrontUpperRight(2)/10;
-            obj.geom.UCS2TB.trackBoxYSlope      = diff([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/diff(obj.geom.UCS2TB.trackBoxDepths*10); % slope: grows taller by x cm if depth increases by y cm
-            obj.geom.UCS2TB.trackBoxHalfHeight  = @(x) obj.geom.UCS2TB.trackBoxMinY+obj.geom.UCS2TB.trackBoxYSlope*(x-obj.geom.UCS2TB.trackBoxDepths(1));
             out.geom                = obj.geom;
             
             % mark as inited
@@ -723,8 +723,7 @@ classdef Titta < handle
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
-            settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox
-            settings.UI.setup.doCenterRefPos    = false;                        % if true, reference circle is always at center of screen, regardless of x- and y-components of referencePos. If false, circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
+            settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
@@ -736,8 +735,10 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
+            % functions for drawing instruction and positioning information on user and operator screen. Note that rx, ry and rz may be
+            % NaN (unknown) if reference position is not set by user, and eye tracker does not inform us about its trackbox
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
+            settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.setup.instruct.font     = 'Segeo UI';
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -964,6 +965,7 @@ classdef Titta < handle
             
             startT                  = obj.sendMessage(sprintf('START SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.start('gaze');
+            obj.buffer.start('positioning');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
@@ -979,7 +981,7 @@ classdef Titta < handle
             ovalVSz     = .15;
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2);
             % setup head position visualization
-            head                    = ETHead(wpnt(1),obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
+            head                    = ETHead(wpnt(1),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
             head.rectWH             = obj.scrInfo.resolution{1};
             head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
@@ -991,7 +993,7 @@ classdef Titta < handle
             head.pupilClr           = obj.settings.UI.setup.pupilClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             if qHaveOperatorScreen
-                headO                    = ETHead(wpnt(2),obj.geom.UCS2TB.trackBoxHalfWidth,obj.geom.UCS2TB.trackBoxHalfHeight);
+                headO                    = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
                 headO.refSz              = head.refSz;
                 headO.rectWH             = head.rectWH;
                 headO.headCircleFillClr  = head.headCircleFillClr;
@@ -1006,24 +1008,31 @@ classdef Titta < handle
             
             % get reference position
             if isempty(obj.settings.UI.setup.referencePos)
-                obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
+                if isfield(obj.geom.trackBox,'BackLowerLeft')
+                    obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
+                else
+                    % tracker does not provide trackbox, and thus we can't
+                    % determine the center of it.
+                    obj.settings.UI.setup.referencePos = [NaN NaN NaN];
+                end
             end
             % position reference circle on screen
-            refPos = obj.scrInfo.resolution{1}/2;
+            refPosO = obj.scrInfo.resolution{1}/2;
             allPosOff = [0 0];
-            if ~obj.settings.UI.setup.doCenterRefPos
+            if ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
                 scrWidth  = obj.geom.displayArea.width/10;
                 scrHeight = obj.geom.displayArea.height/10;
                 pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
                 allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
             end
-            refPosP = refPos+allPosOff;
+            refPosP = refPosO+allPosOff;
             
             head.referencePos   = obj.settings.UI.setup.referencePos;
             head.allPosOff      = allPosOff;
             if qHaveOperatorScreen
                 headO.referencePos  = head.referencePos;
-                % NB: no offset on screen for head on operator screen
+                % NB: no offset on screen for head on operator screen, so
+                % don't use allPosOff
             end
 
             % setup buttons
@@ -1122,20 +1131,21 @@ classdef Titta < handle
                 end
                 
                 % get latest data from eye-tracker
-                eyeData = obj.buffer.peekN('gaze',1);
+                eyeData     = obj.buffer.peekN('gaze',1);
+                posGuide    = obj.buffer.peekN('positioning',1);
                 if isempty(eyeData.systemTimeStamp)
-                    head.update([],[],[],[],[],[]);
+                    head.update([],[],[],[], [],[],[],[]);
                     if qHaveOperatorScreen
-                        headO.update([],[],[],[],[],[]);
+                        headO.update([],[],[],[], [],[],[],[]);
                     end
                 else
                     head.update(...
-                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, eyeData. left.pupil.diameter,...
-                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, eyeData.right.pupil.diameter);
+                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     if qHaveOperatorScreen
                         headO.update(...
-                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, eyeData. left.pupil.diameter,...
-                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, eyeData.right.pupil.diameter);
+                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     end
                 end
                 
@@ -1177,7 +1187,8 @@ classdef Titta < handle
                     drawOrientedPoly(wpnt(1),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1)),5);
                 end
                 if qHaveOperatorScreen
-                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2)),5);
+                    % no vertical/horizontal offset on operator screen
+                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosO,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2)),5);
                 end
                 % stylized head
                 head.draw();
@@ -1244,8 +1255,10 @@ classdef Titta < handle
             % clean up
             HideCursor;
             obj.buffer.stop('gaze');
+            obj.buffer.stop('positioning');
             obj.sendMessage(sprintf('STOP SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
-            obj.buffer.clearTimeRange('gaze',startT);    % clear buffer from start time until now (now=default third argument)
+            obj.buffer.clearTimeRange('gaze',startT);       % clear buffer from start time until now (now=default third argument)
+            obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
             if qHasEyeIm
                 obj.buffer.stop('eyeImage');
                 obj.buffer.clearTimeRange('eyeImage',startT);    % clear buffer from start time until now (now=default third argument)
@@ -1466,6 +1479,9 @@ classdef Titta < handle
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
             data.externalSignals= obj.buffer.consumeTimeRange('externalSignal',varargin{:});
             data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
+            % ND: positioning stream is not consumed as it will be useless
+            % for later analysis (it doesn't have timestamps, and is meant
+            % for visualization only).
         end
         
         function ClearAllBuffers(obj,varargin)
@@ -1481,6 +1497,7 @@ classdef Titta < handle
             obj.buffer.stop('eyeImage');
             obj.buffer.stop('externalSignal');
             obj.buffer.stop('timeSync');
+            obj.buffer.stop('positioning');
         end
         
         function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)

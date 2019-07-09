@@ -45,8 +45,8 @@ classdef ETHead < handle
     
     properties (Access=private, Hidden=true)
         qFloatColorRange
-        trackBoxHalfWidthFun
-        trackBoxHalfHeightFun
+        trackBoxHalfWidth
+        trackBoxHalfHeight
         qHaveLeft
         qHaveRight
         lPup
@@ -56,24 +56,29 @@ classdef ETHead < handle
     end
     
     methods
-        function this = ETHead(wpnt,trackBoxHalfWidthFun,trackBoxHalfHeightFun)
+        function this = ETHead(wpnt,trackBoxHalfWidth,trackBoxHalfHeight)
             this.wpnt                   = wpnt;
             this.qFloatColorRange       = Screen('ColorRange',this.wpnt)==1;
-            this.trackBoxHalfWidthFun   = trackBoxHalfWidthFun;
-            this.trackBoxHalfHeightFun  = trackBoxHalfHeightFun;
+            this.trackBoxHalfWidth      = trackBoxHalfWidth;
+            this.trackBoxHalfHeight     = trackBoxHalfHeight;
             
             this.circVerts              = genCircle(200);
         end
         
-        function update(this,leftValid,leftGazeOriginUCS,leftPupilDiameter,rightValid,rightGazeOriginUCS,rightPupilDiameter)
+        function update(this,...
+                 leftOriginValid, leftGazeOriginUCS, leftGuidePos, leftPupilDiameter,...
+                rightOriginValid,rightGazeOriginUCS,rightGuidePos, rightPupilDiameter)
             
             [lEye,rEye] = deal(nan(3,1));
-            this.qHaveLeft   = ~isempty(leftValid) && ~~leftValid;
+            if isempty(leftGuidePos)
+                [leftGuidePos,rightGuidePos] = deal(nan(3,1));
+            end
+            this.qHaveLeft   = ~isempty(leftOriginValid) && ~~leftOriginValid;
             if this.qHaveLeft
                 lEye        = leftGazeOriginUCS;
                 this.lPup   = leftPupilDiameter;
             end
-            this.qHaveRight  = ~isempty(rightValid) && ~~rightValid;
+            this.qHaveRight  = ~isempty(rightOriginValid) && ~~rightOriginValid;
             if this.qHaveRight
                 rEye        = rightGazeOriginUCS;
                 this.rPup   = rightPupilDiameter;
@@ -114,23 +119,45 @@ classdef ETHead < handle
             this.avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs and Ys above
             this.avgY    = mean(Ys(~isnan(Xs)));
             this.avgDist = mean(dists(~isnan(Xs)));
-            % convert from UCS to trackBox coordinates
-            tbWidth = this.trackBoxHalfWidthFun (this.avgDist);
-            avgXtb  = (this.avgX-this.referencePos(1))/tbWidth /2+.5;
-            tbHeight= this.trackBoxHalfHeightFun(this.avgDist);
-            avgYtb  = (this.avgY-this.referencePos(2))/tbHeight/2+.5;
+            % determine visualized head position based on this
+            % if reference position given, use it
+            if ~any(isnan(this.referencePos))
+                if isempty(this.trackBoxHalfWidth)
+                    % We don't know size of the trackBox. Use trackbox
+                    % dimension of Spectrum. Although probably not
+                    % appropriate for the connected eye tracker, it doesn't
+                    % matter: we just need to scale horizontal and vertical
+                    % offset from reference position for illustration
+                    % purposes. As long as offsets are clearly seen, we're
+                    % ok.
+                    avgXtb  = (this.avgX-this.referencePos(1))/14   /2+.5;
+                    avgYtb  = (this.avgY-this.referencePos(2))/11.25/2+.5;
+                else
+                    avgXtb  = (this.avgX-this.referencePos(1))/this.trackBoxHalfWidth /2+.5;
+                    avgYtb  = (this.avgY-this.referencePos(2))/this.trackBoxHalfHeight/2+.5;
+                end
+                avgYtb  = 1-avgYtb;    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
+                fac     = this.avgDist/this.referencePos(3);
+            else
+                % if we don't have a reference position, that means we only
+                % have the position guide to go on
+                % this is not jump-proof when one eye is lost. So be it
+                avgXtb  = 1-mean([leftGuidePos(1) rightGuidePos(1)],'omitnan');
+                avgYtb  =   mean([leftGuidePos(2) rightGuidePos(2)],'omitnan');
+                avgZtb  =   mean([leftGuidePos(3) rightGuidePos(3)],'omitnan');
+                fac     = avgZtb+.5;    % make 1 the ideal position, less than 1 too close, more too far
+            end
             
             % scale up size of oval. define size/rect at standard distance, have a
             % gain for how much to scale as distance changes
             if ~isnan(this.avgDist)
-                pos     = [avgXtb 1-avgYtb];    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
+                pos             = [avgXtb avgYtb];
                 % determine size of head, based on distance from reference distance
-                fac     = this.avgDist/this.referencePos(3);
-                this.headSz  = this.refSz - this.refSz*(fac-1)*this.distGain;
+                this.headSz     = this.refSz - this.refSz*(fac-1)*this.distGain;
                 % move
-                this.headPos = pos.*this.rectWH + this.allPosOff;
+                this.headPos    = pos.*this.rectWH + this.allPosOff;
             else
-                this.headPos = [];
+                this.headPos    = [];
             end
         end
         
