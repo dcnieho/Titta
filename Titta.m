@@ -1115,8 +1115,8 @@ classdef Titta < handle
                             else
                                 basePos = min(butRects(2,[but.visible]));
                             end
-                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{2}(1)         +margin/2,basePos-margin-szs(2,2));
+                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{end}(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{end}(1)         +margin/2,basePos-margin-szs(2,2));
                         end
                     end
                 end
