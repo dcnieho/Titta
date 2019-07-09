@@ -224,6 +224,7 @@ classdef TobiiBuffer < handle
             else
                 data = this.cppmethodGlobal('getLog');
             end
+            data = [data{:}];
         end
         function stopLogging(this)
             this.cppmethodGlobal('stopLogging');

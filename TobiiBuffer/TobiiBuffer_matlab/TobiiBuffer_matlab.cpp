@@ -180,7 +180,8 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiBuffer::extSignal              > data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::timeSync               > data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::positioning            > data_);
-    mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage             > data_);
+    mxArray* ToMatlab(TobiiBuffer::logMessage                           data_);
+    mxArray* ToMatlab(TobiiBuffer::streamError                          data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
@@ -895,30 +896,44 @@ namespace mxTypes
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage> data_)
+    mxArray* ToMatlab(TobiiBuffer::logMessage data_)
     {
-        const char* fieldNames[] = {"systemTimeStamp","source","level","message"};
+        const char* fieldNames[] = {"type","machineSerialNumber","systemTimeStamp","source","levelOrError","message"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
-        mxArray* temp;
-        mwIndex i = 0;
 
-        // 1. system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiBuffer::logMessage::system_time_stamp));
-        // 2. log source
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
-        i = 0;
-        for (auto &msg : data_)
-            mxSetCell(temp, i++, mxCreateString(TobiiResearchLogSourceToString(msg.source).c_str()));
-        // 3. log level
-        mxSetFieldByNumber(out, 0, 2, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
-        i = 0;
-        for (auto &msg : data_)
-            mxSetCell(temp, i++, mxCreateString(TobiiResearchLogLevelToString(msg.level).c_str()));
-        // 4. log messages
-        mxSetFieldByNumber(out, 0, 3, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
-        i = 0;
-        for (auto &msg : data_)
-            mxSetCell(temp, i++, mxCreateString(msg.message.c_str()));
+        // 1. type
+        mxSetFieldByNumber(out, 0, 0, ToMatlab(std::string("log message")));
+        // 2. machine serial number (none)
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(std::string("")));
+        // 3. system timestamps
+        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.system_time_stamp));
+        // 4. log source
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(TobiiResearchLogSourceToString(data_.source)));
+        // 5. log level
+        mxSetFieldByNumber(out, 0, 4, ToMatlab(TobiiResearchLogLevelToString(data_.level)));
+        // 6. log messages
+        mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.message));
+
+        return out;
+    }
+
+    mxArray* ToMatlab(TobiiBuffer::streamError data_)
+    {
+        const char* fieldNames[] = {"type","machineSerialNumber","systemTimeStamp","source","levelOrError","message"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. type
+        mxSetFieldByNumber(out, 0, 0, ToMatlab(std::string("stream error")));
+        // 2. machine serial number
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.machineSerial));
+        // 3. system timestamps
+        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.system_time_stamp));
+        // 4. stream error source
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(TobiiResearchStreamErrorSourceToString(data_.source)));
+        // 5. stream error
+        mxSetFieldByNumber(out, 0, 4, ToMatlab(TobiiResearchStreamErrorToString(data_.error)));
+        // 6. log messages
+        mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.message));
 
         return out;
     }

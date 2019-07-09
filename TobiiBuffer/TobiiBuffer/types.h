@@ -129,8 +129,30 @@ namespace TobiiTypes
     public:
         int64_t                system_time_stamp = 0;
         TobiiResearchLogSource source = TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE;
-        TobiiResearchLogLevel  level = TOBII_RESEARCH_LOG_LEVEL_ERROR;
+        TobiiResearchLogLevel  level  = TOBII_RESEARCH_LOG_LEVEL_ERROR;
         std::string            message;
+    };
+
+    // My own almost POD class for Tobii stream error messages, for safe resource management
+    // of the message heap array member
+    class streamErrorMessage
+    {
+    public:
+        streamErrorMessage() {}
+        streamErrorMessage(std::string serial_, int64_t system_time_stamp_, TobiiResearchStreamError error_, TobiiResearchStreamErrorSource source_, std::string message_) :
+            machineSerial(serial_),
+            system_time_stamp(system_time_stamp_),
+            error(error_),
+            source(source_),
+            message(message_)
+        {}
+
+    public:
+        std::string                     machineSerial;
+        int64_t                         system_time_stamp = 0;
+        TobiiResearchStreamError        error  = TOBII_RESEARCH_STREAM_ERROR_CONNECTION_LOST;
+        TobiiResearchStreamErrorSource  source = TOBII_RESEARCH_STREAM_ERROR_SOURCE_USER;
+        std::string                     message;
     };
 
 

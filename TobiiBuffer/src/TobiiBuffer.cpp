@@ -14,7 +14,7 @@ namespace
     using read_lock  = std::shared_lock<mutex_type>;
     using write_lock = std::unique_lock<mutex_type>;
 
-    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLog;
+    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLogs;
 
     template <typename T>
     read_lock  lockForReading() { return  read_lock(getMutex<T>()); }
@@ -35,7 +35,9 @@ namespace
         if constexpr (std::is_same_v<T, TobiiBuffer::positioning>)
             return g_mPositioning;
         if constexpr (std::is_same_v<T, TobiiBuffer::logMessage>)
-            return g_mLog;
+            return g_mLogs;
+        if constexpr (std::is_same_v<T, TobiiBuffer::streamError>)
+            return g_mLogs;
     }
 
     // deal with error messages
@@ -86,6 +88,8 @@ namespace
         { "timeSync",       TobiiBuffer::DataStream::TimeSync },
         { "positioning",    TobiiBuffer::DataStream::Positioning }
     };
+
+    std::unique_ptr<std::vector<TobiiBuffer*>> g_allInstances = std::make_unique<std::vector<TobiiBuffer*>>();
 }
 
 TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
@@ -107,11 +111,12 @@ std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
 }
 
 // logging static functions and member
-std::unique_ptr<std::vector<TobiiBuffer::logMessage>> TobiiBuffer::_logMessages;
+std::unique_ptr<std::vector<TobiiBuffer::allLogTypes>> TobiiBuffer::_logMessages;
+bool TobiiBuffer::_isLogging = false;
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 {
     if (!_logMessages)
-        _logMessages = std::make_unique<std::vector<logMessage>>();
+        _logMessages = std::make_unique<std::vector<allLogTypes>>();
 
     // deal with default arguments
     if (!initialBufferSize_)
@@ -119,9 +124,18 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 
     auto l = lockForWriting<logMessage>();
     _logMessages->reserve(*initialBufferSize_);
-    return tobii_research_logging_subscribe(TobiiLogCallback) == TOBII_RESEARCH_STATUS_OK;
+    auto result = tobii_research_logging_subscribe(TobiiLogCallback);
+
+    if (g_allInstances)
+    {
+        // also start stream error logging on all instances
+        for (auto inst : *g_allInstances)
+            tobii_research_subscribe_to_stream_errors(inst->_eyetracker, TobiiStreamErrorCallback, inst->_eyetracker);
+    }
+
+    return _isLogging = result == TOBII_RESEARCH_STATUS_OK;
 }
-std::vector<TobiiBuffer::logMessage> TobiiBuffer::getLog(std::optional<bool> clearLog_)
+std::vector<TobiiBuffer::allLogTypes> TobiiBuffer::getLog(std::optional<bool> clearLog_)
 {
     if (!_logMessages)
         return {};
@@ -132,14 +146,26 @@ std::vector<TobiiBuffer::logMessage> TobiiBuffer::getLog(std::optional<bool> cle
 
     auto l = lockForWriting<logMessage>();
     if (*clearLog_)
-        return std::vector<logMessage>(std::move(*_logMessages));
+        return std::vector<allLogTypes>(std::move(*_logMessages));
     else
         // provide a copy
-        return std::vector<logMessage>(*_logMessages);
+        return std::vector<allLogTypes>(*_logMessages);
 }
 bool TobiiBuffer::stopLogging()
 {
-    return tobii_research_logging_unsubscribe() == TOBII_RESEARCH_STATUS_OK;
+    auto result = tobii_research_logging_unsubscribe();
+    auto success = result == TOBII_RESEARCH_STATUS_OK;
+    if (success)
+        _isLogging = false;
+
+    if (g_allInstances)
+    {
+        // also stop stream error logging on all instances
+        for (auto inst: *g_allInstances)
+            tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker, TobiiStreamErrorCallback);
+    }
+
+    return success;
 }
 
 
@@ -196,7 +222,23 @@ void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_
     if (TobiiBuffer::_logMessages)
     {
         auto l = lockForWriting<TobiiBuffer::logMessage>();
-        TobiiBuffer::_logMessages->emplace_back(system_time_stamp_, source_, level_, message_);
+        TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::logMessage(system_time_stamp_, source_, level_, message_));
+    }
+}
+void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
+{
+    if (TobiiBuffer::_logMessages && errorData_)
+    {
+        std::string serial;
+        if (user_data)
+        {
+            char* serial_number;
+            tobii_research_get_serial_number(static_cast<TobiiResearchEyeTracker*>(user_data), &serial_number);
+            serial = serial_number;
+            tobii_research_free_string(serial_number);
+        }
+        auto l = lockForWriting<TobiiBuffer::streamError>();
+        TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
     }
 }
 
@@ -231,10 +273,12 @@ TobiiBuffer::TobiiBuffer(std::string address_)
         os << "Cannot get eye tracker \"" << address_ << "\"";
         ErrorExit(os.str(), status);
     }
+    Init();
 }
 TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
 {
     _eyetracker = et_;
+    Init();
 }
 TobiiBuffer::~TobiiBuffer()
 {
@@ -243,8 +287,34 @@ TobiiBuffer::~TobiiBuffer()
     stop(DataStream::ExtSignal,   true);
     stop(DataStream::TimeSync,    true);
     stop(DataStream::Positioning, true);
+
+    tobii_research_unsubscribe_from_stream_errors(_eyetracker, TobiiStreamErrorCallback);
     stopLogging();
+
     leaveCalibrationMode(false);
+
+    g_allInstances->erase(std::remove(g_allInstances->begin(), g_allInstances->end(), this), g_allInstances->end());
+}
+void TobiiBuffer::Init()
+{
+    if (_isLogging)
+    {
+        // log version of SDK dll that is being used
+        if (TobiiBuffer::_logMessages)
+        {
+            TobiiResearchSDKVersion version;
+            tobii_research_get_sdk_version(&version);
+            std::stringstream os;
+            os << "Using C SDK version: " << version.major << "." << version.minor << "." << version.revision << "." << version.build;
+            auto l = lockForWriting<TobiiBuffer::logMessage>();
+            TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::logMessage(0, TOBII_RESEARCH_LOG_SOURCE_SDK, TOBII_RESEARCH_LOG_LEVEL_INFORMATION, os.str()));
+        }
+
+        // start stream error logging
+        tobii_research_subscribe_to_stream_errors(_eyetracker, TobiiStreamErrorCallback, _eyetracker);
+    }
+    if (g_allInstances)
+        g_allInstances->push_back(this);
 }
 
 

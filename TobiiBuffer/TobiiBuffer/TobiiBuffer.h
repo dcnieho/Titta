@@ -9,6 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <variant>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
@@ -34,6 +35,8 @@ public:
     using timeSync   = TobiiResearchTimeSynchronizationData;
     using positioning= TobiiResearchUserPositionGuide;
     using logMessage = TobiiTypes::logMessage;
+    using streamError= TobiiTypes::streamErrorMessage;
+    using allLogTypes= std::variant<logMessage, streamError>;
 
     // data stream type (NB: not log, as that isn't a class member)
     enum class DataStream
@@ -106,10 +109,11 @@ public:
 
     // logging
     static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
-    static std::vector<TobiiBuffer::logMessage> getLog(std::optional<bool> clearLog_ = std::nullopt);
+    static std::vector<TobiiBuffer::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
     static bool stopLogging();	// always clears buffer
 
 private:
+    void Init();
     // Tobii callbacks needs to be friends
     friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
     friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
@@ -118,6 +122,7 @@ private:
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
     friend void TobiiPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
     friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
+    friend void TobiiStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data);
     // calibration
     void calibrationThread();
     //// generic functions for internal use
@@ -149,8 +154,9 @@ private:
     bool                        _recordingPositioning   = false;
     std::vector<positioning>    _positioning;
 
+    static bool                 _isLogging;
     static std::unique_ptr<
-        std::vector<logMessage>>_logMessages;
+        std::vector<allLogTypes>>_logMessages;
 
     // calibration
     bool                                        _calibrationIsMonocular = false;

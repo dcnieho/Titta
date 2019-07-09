@@ -1,6 +1,6 @@
 function TobiiResearchEnumLister
 
-file = 'C:\utils\vcpkg.git\installed\x64-windows\include\tobii_research.h';
+file = 'C:\utils\vcpkg\installed\x64-windows\include\tobii_research.h';
 impl(file,'Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo');
 fprintf('#####\n');
 impl(file,sprintf('\nSource of log message.'),'TOBII_RESEARCH_LOG_SOURCE_','TobiiResearchLogSourceInfo');
@@ -8,7 +8,11 @@ fprintf('#####\n');
 impl(file,sprintf('\nLog level.'),'TOBII_RESEARCH_LOG_LEVEL_','TobiiResearchLogLevelInfo');
 fprintf('#####\n');
 
-file = 'C:\utils\vcpkg.git\installed\x64-windows\include\tobii_research_eyetracker.h';
+file = 'C:\utils\vcpkg\installed\x64-windows\include\tobii_research_streams.h';
+impl(file,'Defines error types','TOBII_RESEARCH_STREAM_ERROR_','TobiiResearchStreamErrorInfo');
+impl(file,'Defines error sources','TOBII_RESEARCH_STREAM_ERROR_SOURCE_','TobiiResearchStreamErrorSourceInfo');
+
+file = 'C:\utils\vcpkg\installed\x64-windows\include\tobii_research_eyetracker.h';
 impl(file,'Specifies license validation result.','TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_','TobiiResearchLicenseValidationResultInfo');
 
 end
