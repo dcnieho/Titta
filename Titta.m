@@ -319,7 +319,7 @@ classdef Titta < handle
             end
             
             % get info about the system
-            fields = {'Name','SerialNumber','Model','FirmwareVersion','Address'};
+            fields = {'Name','SerialNumber','Model','FirmwareVersion','RuntimeVersion','Address'};
             for f=1:length(fields)
                 obj.systemInfo.(fields{f}) = obj.eyetracker.(fields{f});
             end
