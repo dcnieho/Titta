@@ -1137,5 +1137,5 @@ void DoExitWithMsg(std::string errMsg_)
 }
 void RelayMsg(std::string errMsg_)
 {
-    mexPrintf("%s",errMsg_.c_str());
+    mexPrintf("%s\n",errMsg_.c_str());
 }
