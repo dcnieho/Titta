@@ -32,6 +32,7 @@ public:
     using eyeImage   = TobiiTypes::eyeImage;
     using extSignal  = TobiiResearchExternalSignalData;
     using timeSync   = TobiiResearchTimeSynchronizationData;
+    using positioning= TobiiResearchUserPositionGuide;
     using logMessage = TobiiTypes::logMessage;
 
     // data stream type (NB: not log, as that isn't a class member)
@@ -41,7 +42,8 @@ public:
         Gaze,
         EyeImage,
         ExtSignal,
-        TimeSync
+        TimeSync,
+        Positioning
     };
     // "gaze", "eyeImage", "externalSignal", or "timeSync"
     static TobiiBuffer::DataStream stringToDataStream(std::string stream_);
@@ -114,6 +116,7 @@ private:
     friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
     friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
+    friend void TobiiPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
     friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
     // calibration
     void calibrationThread();
@@ -143,11 +146,14 @@ private:
     bool                        _recordingTimeSync      = false;
     std::vector<timeSync>       _timeSync;
 
+    bool                        _recordingPositioning   = false;
+    std::vector<positioning>    _positioning;
+
     static std::unique_ptr<
         std::vector<logMessage>>_logMessages;
 
     // calibration
-    bool                                        _calibrationIsMonocular;
+    bool                                        _calibrationIsMonocular = false;
     std::thread                                 _calibrationThread;
     moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkItem>   _calibrationWorkQueue;
     moodycamel::BlockingReaderWriterQueue<TobiiTypes::CalibrationWorkResult> _calibrationWorkResultQueue;

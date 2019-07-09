@@ -14,7 +14,7 @@ namespace
     using read_lock  = std::shared_lock<mutex_type>;
     using write_lock = std::unique_lock<mutex_type>;
 
-    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mLog;
+    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLog;
 
     template <typename T>
     read_lock  lockForReading() { return  read_lock(getMutex<T>()); }
@@ -32,6 +32,8 @@ namespace
             return g_mExtSignal;
         if constexpr (std::is_same_v<T, TobiiBuffer::timeSync>)
             return g_mTimeSync;
+        if constexpr (std::is_same_v<T, TobiiBuffer::positioning>)
+            return g_mPositioning;
         if constexpr (std::is_same_v<T, TobiiBuffer::logMessage>)
             return g_mLog;
     }
@@ -58,6 +60,8 @@ namespace
 
         constexpr size_t  timeSyncBufSize       = 2<<9;
 
+        constexpr size_t  positioningBufSize    = 2<<11;
+
         constexpr int64_t clearTimeRangeStart   = 0;
         constexpr int64_t clearTimeRangeEnd     = std::numeric_limits<int64_t>::max();
 
@@ -79,7 +83,8 @@ namespace
         { "gaze",           TobiiBuffer::DataStream::Gaze },
         { "eyeImage",       TobiiBuffer::DataStream::EyeImage },
         { "externalSignal", TobiiBuffer::DataStream::ExtSignal },
-        { "timeSync",       TobiiBuffer::DataStream::TimeSync }
+        { "timeSync",       TobiiBuffer::DataStream::TimeSync },
+        { "positioning",    TobiiBuffer::DataStream::Positioning }
     };
 }
 
@@ -89,7 +94,7 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << "Titta: Requested stream \"" << stream_ << "\" is not recognized. Supported streams are: \"gaze\", \"eyeImage\", \"externalSignal\" and \"timeSync\"";
+        os << "Titta: Requested stream \"" << stream_ << "\" is not recognized. Supported streams are: \"gaze\", \"eyeImage\", \"externalSignal\", \"timeSync\" and \"positioning\"";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -178,6 +183,14 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
         static_cast<TobiiBuffer*>(user_data)->_timeSync.push_back(*time_sync_data_);
     }
 }
+void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiBuffer::positioning>();
+        static_cast<TobiiBuffer*>(user_data)->_positioning.push_back(*position_data_);
+    }
+}
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
     if (TobiiBuffer::_logMessages)
@@ -225,10 +238,11 @@ TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
 }
 TobiiBuffer::~TobiiBuffer()
 {
-    stop(DataStream::Gaze,      true);
-    stop(DataStream::EyeImage,  true);
-    stop(DataStream::ExtSignal, true);
-    stop(DataStream::TimeSync,  true);
+    stop(DataStream::Gaze,        true);
+    stop(DataStream::EyeImage,    true);
+    stop(DataStream::ExtSignal,   true);
+    stop(DataStream::TimeSync,    true);
+    stop(DataStream::Positioning, true);
     stopLogging();
     leaveCalibrationMode(false);
 }
@@ -261,10 +275,8 @@ void TobiiBuffer::calibrationThread()
             _calibrationState = TobiiTypes::CalibrationState::CollectingData;
             if (_calibrationIsMonocular)
             {
-                TobiiResearchSelectedEye collectEye, ignore;
-                if (workItem.eye == "left")
-                    collectEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
-                else if (workItem.eye == "right")
+                TobiiResearchSelectedEye collectEye=TOBII_RESEARCH_SELECTED_EYE_LEFT, ignore;
+                if (workItem.eye == "right")
                     collectEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
                 result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), collectEye, &ignore);
             }
@@ -282,10 +294,8 @@ void TobiiBuffer::calibrationThread()
             _calibrationState = TobiiTypes::CalibrationState::DiscardingData;
             if (_calibrationIsMonocular)
             {
-                TobiiResearchSelectedEye discardEye;
-                if (workItem.eye == "left")
-                    discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
-                else if (workItem.eye == "right")
+                TobiiResearchSelectedEye discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
+                if (workItem.eye == "right")
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
                 result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
             }
@@ -495,6 +505,8 @@ std::vector<T>& TobiiBuffer::getBuffer()
         return _extSignal;
     if constexpr (std::is_same_v<T, timeSync>)
         return _timeSync;
+    if constexpr (std::is_same_v<T, positioning>)
+        return _positioning;
 }
 template <typename T>
 std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator, bool>
@@ -551,6 +563,8 @@ bool TobiiBuffer::hasStream(DataStream  stream_) const
             return caps & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL;
         case DataStream::TimeSync:
             return true;    // no capability that can be checked for this one
+        case DataStream::Positioning:
+            return true;    // no capability that can be checked for this one
     }
 
     return supported;
@@ -562,7 +576,7 @@ bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBuffer
 }
 bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
-    TobiiResearchStatus result;
+    TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
     switch (stream_)
     {
@@ -650,6 +664,23 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
             }
             break;
         }
+        case DataStream::Positioning:
+        {
+            if (_recordingPositioning)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                if (!initialBufferSize_)
+                    initialBufferSize_ = defaults::positioningBufSize;
+                // prepare and start buffer
+                auto l = lockForWriting<positioning>();
+                _positioning.reserve(*initialBufferSize_);
+                result = tobii_research_subscribe_to_user_position_guide(_eyetracker, TobiiPositioningCallback, this);
+                stateVar = &_recordingPositioning;
+            }
+            break;
+        }
     }
 
     if (stateVar)
@@ -682,6 +713,8 @@ bool TobiiBuffer::isBuffering(DataStream  stream_) const
             return _recordingExtSignal;
         case DataStream::TimeSync:
             return _recordingTimeSync;
+        case DataStream::Positioning:
+            return _recordingPositioning;
     }
 
     return success;
@@ -799,7 +832,16 @@ void TobiiBuffer::clear(std::string stream_)
 }
 void TobiiBuffer::clear(DataStream stream_)
 {
-    clearTimeRange(stream_);
+    if (stream_ == DataStream::Positioning)
+    {
+        auto l = lockForWriting<positioning>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+        auto& buf = getBuffer<positioning>();
+        if (std::empty(buf))
+            return;
+        buf.clear();
+    }
+    else
+        clearTimeRange(stream_);
 }
 void TobiiBuffer::clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
@@ -818,14 +860,17 @@ void TobiiBuffer::clearTimeRange(DataStream stream_, std::optional<int64_t> time
         case DataStream::Gaze:
             clearImpl<gaze>(*timeStart_, *timeEnd_);
             break;
-        case TobiiBuffer::DataStream::EyeImage:
+        case DataStream::EyeImage:
             clearImpl<eyeImage>(*timeStart_, *timeEnd_);
             break;
-        case TobiiBuffer::DataStream::ExtSignal:
+        case DataStream::ExtSignal:
             clearImpl<extSignal>(*timeStart_, *timeEnd_);
             break;
-        case TobiiBuffer::DataStream::TimeSync:
+        case DataStream::TimeSync:
             clearImpl<timeSync>(*timeStart_, *timeEnd_);
+            break;
+        case DataStream::Positioning:
+            DoExitWithMsg("clearTimeRange: not supported for the position stream.");
             break;
     }
 }
@@ -841,7 +886,7 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
     if (!emptyBuffer_)
         emptyBuffer_ = defaults::stopBufferEmpties;
 
-    TobiiResearchStatus result;
+    TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
     switch (stream_)
     {
@@ -860,6 +905,10 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
         case DataStream::TimeSync:
             result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback);
             stateVar = &_recordingTimeSync;
+            break;
+        case DataStream::Positioning:
+            result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker, TobiiPositioningCallback);
+            stateVar = &_recordingPositioning;
             break;
     }
 
@@ -896,3 +945,9 @@ template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeN(std::optional<
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<size_t> lastN_);
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+
+// positioning data, instantiate templated functions
+template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
+//template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiBuffer::positioning> TobiiBuffer::peekN(std::optional<size_t> lastN_);
+//template std::vector<TobiiBuffer::positioning> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);

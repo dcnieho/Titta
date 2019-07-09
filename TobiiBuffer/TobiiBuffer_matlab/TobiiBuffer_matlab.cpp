@@ -175,10 +175,11 @@ namespace mxTypes
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
         FieldToMatlab(const Cont& data_, Fs... fields);
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
-    mxArray* ToMatlab(std::vector<TobiiResearchGazeData               > data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::gaze                   > data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::eyeImage               > data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchExternalSignalData     > data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::extSignal              > data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::timeSync               > data_);
+    mxArray* ToMatlab(std::vector<TobiiBuffer::positioning            > data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::logMessage             > data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
@@ -347,7 +348,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::HasStream:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string, call hasStream() on instance
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -358,7 +359,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get optional input arguments
             std::optional<uint64_t> bufSize;
@@ -385,7 +386,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::IsBuffering:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("isBuffering: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("isBuffering: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string, call isBuffering() on instance
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -396,7 +397,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::Clear:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string, clear buffer
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -434,7 +435,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::Stop:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get optional input argument
             std::optional<bool> deleteBuffer;
@@ -454,7 +455,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::ConsumeN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -483,6 +484,9 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
                     plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::timeSync>(nSamp));
+                    return;
+                case TobiiBuffer::DataStream::Positioning:
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiBuffer::positioning>(nSamp));
                     return;
             }
         }
@@ -526,12 +530,15 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                 case TobiiBuffer::DataStream::TimeSync:
                     plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
                     return;
+                case TobiiBuffer::DataStream::Positioning:
+                    DoExitWithMsg("consumeTimeRange: not supported for positioning stream.");
+                    return;
             }
         }
         case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -560,6 +567,9 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
                     plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::timeSync>(nSamp));
+                    return;
+                case TobiiBuffer::DataStream::Positioning:
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiBuffer::positioning>(nSamp));
                     return;
             }
         }
@@ -603,6 +613,9 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
                     return;
                 case TobiiBuffer::DataStream::TimeSync:
                     plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiBuffer::timeSync>(timeStart, timeEnd));
+                    return;
+                case TobiiBuffer::DataStream::Positioning:
+                    DoExitWithMsg("peekTimeRange: not supported for positioning stream.");
                     return;
             }
         }
@@ -672,7 +685,7 @@ namespace
             mexErrMsgTxt("eyeImagesToMatlab: non-8bit images not yet implemented");
         if (same)
         {
-            auto storage = static_cast<uint8_t*>(mxGetData(out = mxCreateUninitNumericMatrix(data_[0].width*data_[0].height, data_.size(), mxUINT8_CLASS, mxREAL)));
+            auto storage = static_cast<uint8_t*>(mxGetData(out = mxCreateUninitNumericMatrix(static_cast<size_t>(data_[0].width)*data_[0].height, data_.size(), mxUINT8_CLASS, mxREAL)));
             size_t i = 0;
             for (auto &frame : data_)
                 memcpy(storage + (i++)*sz, frame.data(), frame.data_size);
@@ -684,7 +697,7 @@ namespace
             for (auto &frame : data_)
             {
                 mxArray* temp;
-                auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, frame.width*frame.height, mxUINT8_CLASS, mxREAL)));
+                auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, static_cast<size_t>(frame.width)*frame.height, mxUINT8_CLASS, mxREAL)));
                 memcpy(storage, frame.data(), frame.data_size);
                 mxSetCell(out, i++, temp);
             }
@@ -770,7 +783,7 @@ namespace mxTypes
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TobiiResearchGazeData> data_)
+    mxArray* ToMatlab(std::vector<TobiiBuffer::gaze> data_)
     {
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -824,8 +837,7 @@ namespace mxTypes
         return out;
     }
 
-
-    mxArray* ToMatlab(std::vector<TobiiResearchExternalSignalData     > data_)
+    mxArray* ToMatlab(std::vector<TobiiBuffer::extSignal> data_)
     {
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -841,7 +853,8 @@ namespace mxTypes
 
         return out;
     }
-    mxArray* ToMatlab(std::vector<TobiiResearchTimeSynchronizationData> data_)
+
+    mxArray* ToMatlab(std::vector<TobiiBuffer::timeSync> data_)
     {
         const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
@@ -852,6 +865,32 @@ namespace mxTypes
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::device_time_stamp));
         // 3. system response timestamps
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
+
+        return out;
+    }
+
+    mxArray* FieldToMatlab(const std::vector<TobiiResearchUserPositionGuide>& data_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
+    {
+        const char* fieldNames[] = {"user_position","valid"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1 user_position
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));				// 0. causes values to be stored as double
+        // 2 validity
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
+
+        return out;
+    }
+
+    mxArray* ToMatlab(std::vector<TobiiBuffer::positioning> data_)
+    {
+        const char* fieldNames[] = {"left","right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. left  eye data
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchUserPositionGuide::left_eye));
+        // 2. right eye data
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchUserPositionGuide::right_eye));
 
         return out;
     }

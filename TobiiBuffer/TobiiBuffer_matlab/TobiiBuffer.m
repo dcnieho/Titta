@@ -114,13 +114,13 @@ classdef TobiiBuffer < handle
         end
         
         function supported = hasStream(this,stream)
-            assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
-            assert(nargin>1,'Titta::buffer::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
@@ -133,7 +133,7 @@ classdef TobiiBuffer < handle
         function success = stop(this,stream,doClearBuffer)
             % optional boolean input indicating whether buffer should be
             % cleared out
-            assert(nargin>1,'Titta::buffer::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(doClearBuffer)
                 success = this.cppmethod('stop',stream,logical(doClearBuffer));
@@ -142,11 +142,11 @@ classdef TobiiBuffer < handle
             end
         end
         function status = isRecording(this,stream)
-            assert(nargin>1,'Titta::buffer::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             status = this.cppmethod('isBuffering',ensureStringIsChar(stream));
         end
         function clear(this,stream)
-            assert(nargin>1,'Titta::buffer::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
@@ -164,7 +164,7 @@ classdef TobiiBuffer < handle
         function data = consumeN(this,stream,firstN)
             % optional input argument firstN: how many samples to consume
             % from start. Default: all
-            assert(nargin>1,'Titta::buffer::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(firstN)
                 data = this.cppmethod('consumeN',stream,uint64(firstN));
@@ -187,7 +187,7 @@ classdef TobiiBuffer < handle
         function data = peekN(this,stream,lastN)
             % optional input argument lastN: how many samples to peek from
             % end. Default: 1. To get all, ask for -1 samples
-            assert(nargin>1,'Titta::buffer::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'Titta::buffer::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(lastN)
                 data = this.cppmethod('peekN',stream,uint64(lastN));
