@@ -327,8 +327,10 @@ try
             % do one for pro- and one for antisaccade
             for t=1:2
                 fullTarLbl = [tarLbl '_ProSac'];
+                condLbl = 'prosaccade';
                 if t==2
                     fullTarLbl = [tarLbl '_AntiSac'];
+                    condLbl = 'antisaccade';
                 end
                 targetID = TalkToProLabInstance.findMedia(fullTarLbl);
                 if isempty(targetID)
@@ -352,18 +354,19 @@ try
                     lbl1 = 'correct';
                     lbl2 = 'wrong';
                     if t==2
+                        % swap correct and wrong for antisaccades
                         [lbl1,lbl2] = deal(lbl2,lbl1);
                     end
                     if data.trials(p).dir==-1
                         % target on left, denote left as pro response,
                         % right as anti response
-                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsL);
-                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsR);
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsL,TalkToProLab.makeAOITag(lbl1,condLbl));
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsR,TalkToProLab.makeAOITag(lbl2,condLbl));
                     else
                         % target on right, denote right as pro response, left
                         % as anti response
-                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsR);
-                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsL);
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl1,[0 255 0],AOIvertsR,TalkToProLab.makeAOITag(lbl1,condLbl));
+                        TalkToProLabInstance.attachAOIToImage(fullTarLbl,lbl2,[255 0 0],AOIvertsL,TalkToProLab.makeAOITag(lbl2,condLbl));
                     end
                 end
             end
