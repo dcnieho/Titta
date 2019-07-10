@@ -1,10 +1,12 @@
 classdef TalkToProLab < handle
-    properties (Access = protected, Hidden = true)
+    properties (SetAccess = protected)
         % websocket connections we need
         clientClock;
         clientProject;
         clientEP;
-        
+    end
+    
+    properties (Access = protected, Hidden = true)
         stimTimeStamps;
     end
     
@@ -15,13 +17,35 @@ classdef TalkToProLab < handle
     end
     
     methods
-        function this = TalkToProLab(expectedProject)
+        function this = TalkToProLab(expectedProject,doCheckSync,IPorFQDN)
+            % doCheckSync: set to false to skip checking sync between Pro
+            % Lab clock and system clock. The sync routine is the only part
+            % of this toolbox that uses PsychToolbox functionality
+            % (GetSecs), so you may wish to skip it if using without
+            % PsychToolbox. The sync routine also checks that Pro Lab and
+            % TalkToProLab are running on the same machine. That is not a
+            % strict requirement for running this code, but if you use it
+            % with Pro Lab running on another machine, you are responsible
+            % yourself for presenting TalkToProLab with timestamps in Pro
+            % Lab's time, not that of the local machine. If you want to use
+            % this class with Pro Lab running elsewhere, use the third
+            % input argument to provide the IP or FQDN where Pro Lab can be
+            % contacted. After running this constructor, you can use
+            % TalkToProLab.clientClock to directly talk to the clock
+            % service and figure out (and monitor every now and then!) the
+            % clock offset between the two systems.
+            if nargin<2
+                doCheckSync = true;
+            end
+            if nargin<3
+                IPorFQDN = 'localhost';
+            end
             % connect to needed Lab services
-            this.clientClock    = SimpleWSClient('ws://localhost:8080/clock?client_id=TittaMATLAB');
+            this.clientClock    = SimpleWSClient(['ws://' IPorFQDN ':8080/clock?client_id=TittaMATLAB']);
             assert(this.clientClock.Status==1,'TalkToProLab: Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
-            this.clientProject  = SimpleWSClient('ws://localhost:8080/project?client_id=TittaMATLAB');
+            this.clientProject  = SimpleWSClient(['ws://' IPorFQDN ':8080/project?client_id=TittaMATLAB']);
             assert(this.clientProject.Status==1,'TalkToProLab: Could not connect to project service, did you start Tobii Pro Lab and open an external presenter project?');
-            this.clientEP       = SimpleWSClient('ws://localhost:8080/record/externalpresenter?client_id=TittaMATLAB');
+            this.clientEP       = SimpleWSClient(['ws://' IPorFQDN ':8080/record/externalpresenter?client_id=TittaMATLAB']);
             assert(this.clientEP.Status==1,'TalkToProLab: Could not connect to external presenter service, did you start Tobii Pro Lab and open an external presenter project?');
             
             % for each, check API semver major version
@@ -56,29 +80,31 @@ classdef TalkToProLab < handle
             % check our local clock is the same as the ProLabClock. for now
             % we do not support it when they aren't (e.g. running lab on a
             % different machine than the stimulus presentation machine)
-            nTimeStamp = 40;
-            [timesPTB,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
-            request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
-            % ensure response is cleared
-            [~] = this.clientClock.lastRespText;
-            for p=1:nTimeStamp
-                if mod(p-1,10)<5
-                    PTBtime = GetSecs;
-                    this.clientClock.send(request);
-                else
-                    this.clientClock.send(request);
-                    PTBtime = GetSecs;
+            if doCheckSync
+                nTimeStamp = 40;
+                [timesPTB,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
+                request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
+                % ensure response is cleared
+                [~] = this.clientClock.lastRespText;
+                for p=1:nTimeStamp
+                    if mod(p-1,10)<5
+                        PTBtime = GetSecs;
+                        this.clientClock.send(request);
+                    else
+                        this.clientClock.send(request);
+                        PTBtime = GetSecs;
+                    end
+                    % prep PTB timestamp
+                    timesPTB(p) = int64(PTBtime*1000*1000);
+                    % wait for response
+                    resp = waitForResponse(this.clientClock,'GetTimestamp');
+                    timesLab(p) = sscanf(resp.timestamp,'%ld');
                 end
-                % prep PTB timestamp
-                timesPTB(p) = int64(PTBtime*1000*1000);
-                % wait for response
-                resp = waitForResponse(this.clientClock,'GetTimestamp');
-                timesLab(p) = sscanf(resp.timestamp,'%ld');
+                % get rough estimate of clock offset (note this is includes
+                % half RTT which is not taken into account, thats ok for our
+                % purposes)
+                assert(mean(timesLab-timesPTB)<2500,'TalkToProLab: Clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
             end
-            % get rough estimate of clock offset (note this is includes
-            % half RTT which is not taken into account, thats ok for our
-            % purposes)
-            assert(mean(timesLab-timesPTB)<2500,'TalkToProLab: Clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
             
             % get info about opened project
             this.clientProject.send(struct('operation','GetProjectInfo'));
@@ -373,8 +399,11 @@ classdef TalkToProLab < handle
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background,qDoTimeConversion)
             % mediaPosition, endTimeStamp, background are optional, can be
             % left empty or not provided in call
-            % qDoTimeConversion is for internal use, do not set it unless
-            % you know what you are doing.
+            % NB: startTimeStamp and endTimeStamp are in Pro Lab time,
+            % which is different from local/caller time when running a
+            % two-computer setup. See notes in TalkToProLab constructor
+            % qDoTimeConversion (from s to ms) is for internal use, do not
+            % set it unless you know what you are doing.
             if nargin<7 || qDoTimeConversion
                 qDoTimeConversion = true;
             end
@@ -428,6 +457,9 @@ classdef TalkToProLab < handle
         end
         
         function sendCustomEvent(this,timestamp,eventType,value)
+            % NB: timeStamp are in Pro Lab time, which is different from
+            % local/caller time when running a two-computer setup. See
+            % notes in TalkToProLab constructor
             request = struct('operation','SendCustomEvent',...
                 'recording_id',this.recordingID);
             
