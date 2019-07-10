@@ -79,7 +79,7 @@ namespace
         constexpr bool    logBufClear           = true;
     }
 
-    // Map string to an Data Stream
+    // Map string to a Data Stream
     const std::map<std::string, TobiiBuffer::DataStream> dataStreamMap =
     {
         { "gaze",           TobiiBuffer::DataStream::Gaze },
@@ -293,7 +293,8 @@ TobiiBuffer::~TobiiBuffer()
 
     leaveCalibrationMode(false);
 
-    g_allInstances->erase(std::remove(g_allInstances->begin(), g_allInstances->end(), this), g_allInstances->end());
+    if (g_allInstances)
+        g_allInstances->erase(std::remove(g_allInstances->begin(), g_allInstances->end(), this), g_allInstances->end());
 }
 void TobiiBuffer::Init()
 {
