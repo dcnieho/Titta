@@ -16,7 +16,9 @@ Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license
 `demos/readme.m` shows a minimal example of using the toolbox's
 functionality.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be installed. While older versions may work, the current version of Titta is tested against version 1.7 of the Tobii Pro SDK. An up-to-date version of PsychToolbox is recommended. Make sure PsychToolbox's GStreamer dependency is installed.
+To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK, so you do not have to install it separately. An up-to-date version of PsychToolbox is recommended. Make sure PsychToolbox's GStreamer dependency is installed.
+
+Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
 
 Tested on MATLAB R2015b & R2019a. Octave is currently not supported, but planned.
 Currently the toolbox is only supported on Windows (tested on Windows 10 and Windows 7), Linux support is planned, and OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
@@ -49,11 +51,11 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
 ## Contents
 The toolbox consists of multiple parts:
 ### The `Titta` class
-The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiBuffer class described below, and a convenient GUI interface (rendered through PsychToolbox) for participant setup, calibration and validation.
+The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiBuffer class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
 ### The `TobiiBuffer` class
 The `TobiiBuffer` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). It has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive.
 ### The `TalkToProLab` class
-The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB+PsychToolbox, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
+The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
 ## Usage
 As demonstrated in the demo scripts, the toolbox is configured through
@@ -81,7 +83,7 @@ The below method can be called on a Titta instance or on the Titta class directl
 An instance of Titta is constructed by calling `Titta()` with either the name of a specific supported eye tracker model (in which case default settings for this model will be used) or with a settings struct retrieved from `Titta.getDefaults()`, possibly with changed settings (passing the settings struct unchanged is equivalent to using the eye tracker model name as input argument).
 
 #### Methods
-The following method calls are available on a Titta instance
+The following method calls are available on a Titta instance:
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
@@ -98,7 +100,7 @@ The following method calls are available on a Titta instance
 
 
 #### Properties
-The following read-only properties are available for a Titta instance
+The following read-only properties are available for a Titta instance:
 
 |Property|Description|
 | --- | --- |
@@ -222,7 +224,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.val.menu.text.style`|See [Text options](#text-options).|
 
 ##### Text options
-Texts take all or some of the below options
+Texts take all or some of the below options:
 
 | Option name | Explanation |
 | --- | --- |
@@ -234,7 +236,7 @@ Texts take all or some of the below options
 |`wrapAt`|Vertical space between lines. 1 is normal spacing.|
 
 ##### Button options
-Each button takes the below options
+Each button takes the below options:
 
 | Option name | Explanation |
 | --- | --- |
@@ -255,22 +257,22 @@ The TobiiBuffer class does not have static methods.
 An instance of TobiiBuffer is constructed by calling `TobiiBuffer()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to.
 
 #### Methods
-The following method calls are available on a TobiiBuffer instance
+The following method calls are available on a TobiiBuffer instance:
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiBuffer class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
-|`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer.|
-|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
-|`isRecording()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li></ol>|<ol><li>`status`: a boolean indicating whether data of the indicated type is currently being streamed to buffer</li></ol>|Check if data of a specified type is being streamed to buffer.|
-|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li></ol>||Clear the buffer for data of the specified type.|
-|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
-|`consumeN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`firstN`: (optional) number of samples to consume from the start of the buffer. Defaults to all.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
-|`consumeTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
-|`peekN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`lastN`: (optional) number of samples to peek from the end of the buffer. Defaults to 1.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
-|`peekTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
+|`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
+|`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer.|
+|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
+|`isRecording()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`status`: a boolean indicating whether data of the indicated type is currently being streamed to buffer</li></ol>|Check if data of a specified type is being streamed to buffer.|
+|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>||Clear the buffer for data of the specified type.|
+|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
+|`consumeN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`firstN`: (optional) number of samples to consume from the start of the buffer. Defaults to all.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
+|`consumeTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
+|`peekN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`lastN`: (optional) number of samples to peek from the end of the buffer. Defaults to 1.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
+|`peekTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
 |||||
 |`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
 |`stop()`|<ol><li>`getLog`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
@@ -295,7 +297,11 @@ The below method can be called on a TalkToProLab instance or on the TalkToProLab
 |`makeAOITag`|<ol><li>`tagName`: The name of the tag</li><li>`groupName`: (optional) the name of the tag group the tag belongs to.</li></ol>|<ol><li>`tag`: The AOI tag.</li></ol>|Generates an AOI tag in the format expected by `TalkToProLab.attachAOIToImage()`.|
 
 #### Construction
-An instance of TalkToProLab is constructed by calling `TalkToProLab()` and provided the constructor with the name of the External Presenter project that should be opened in Pro Lab.
+An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. Two additional constructor arguments are provided.
+
+`doCheckSync`: (default `true`) determines whether clock sync between PsychToolbox and Pro Lab endpoint should be checked. Set to false if you want to use `TalkToProLab` without PsychToolbox (no other part of the `TalkToProLab` class uses PsychToolbox functionality), or if you want to use `TalkToProLab` with a two-computer setup, where Pro Lab runs on a different machine than MATLAB. Note that in this case, you are responsible for figuring out the sync between Pro Lab your local machine yourself. This is important because `TalkToProLab.sendStimulusEvent()` and `TalkToProLab.sendCustomEvent()` take timestamps in Pro Lab time, not local time. You can use the `TalkToProLab.clientClock` to talk directly to Pro Lab's clock websocket service.
+
+`IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `localhost` for a one-computer setup.
 
 #### Methods
 The following method calls are available on a TalkToProLab instance
@@ -315,5 +321,17 @@ The following method calls are available on a TalkToProLab instance
 |`finalizeRecording()`|||Finalize the stopped recording in Tobii Pro Lab. Note: after this call, you must still click ok in the Pro Lab user interface.|
 |`discardRecording()`|||Discard (remove) the stopped recording in Tobii Pro Lab.|
 |||||
-|`sendStimulusEvent()`|<ol><li>`mediaID`: unique identifier by which shown media stimulus is identified in Pro Lab</li><li>`mediaPosition`: location of the stimulus on screen in pixels, format: `[left top right bottom]`</li><li>`startTimeStamp`: timestamp (in seconds or microseconds) at which stimulus presentation started</li><li>`endTimeStamp`: (optional) timestamp (in seconds or microseconds) of when presentation of this stimulus ended. If empty, it is assumed stimulus reamined on screen until start of the next stimulus</li><li>`background`: color of background (RGB: 0-255) on top of which stimulus was shown</li><li>`qDoTimeConversion`: boolean (optional) if true, will convert provided timestamps from seconds to microseconds</li></ol>||Inform Pro Lab when and where a media (stimulus) was shown.|
-|`sendCustomEvent()`|<ol><li>`timeStamp`: (optional) timestamp (in s) at which event occured. If empty, current time is taken as event time</li><li>`eventType`: string: event type name</li><li>`value`: (optional) string, the value of the event</li></ol>||Add an event to Pro Lab's timeline.|
+|`sendStimulusEvent()`|<ol><li>`mediaID`: unique identifier by which shown media stimulus is identified in Pro Lab</li><li>`mediaPosition`: location of the stimulus on screen in pixels, format: `[left top right bottom]`</li><li>`startTimeStamp`: timestamp (in seconds or microseconds) at which stimulus presentation started (in Pro Lab time, which is equal to PsychToolbox time when using a single-machine setup).</li><li>`endTimeStamp`: (optional) timestamp (in seconds or microseconds) of when presentation of this stimulus ended (in Pro Lab time). If empty, it is assumed stimulus reamined on screen until start of the next stimulus</li><li>`background`: color of background (RGB: 0-255) on top of which stimulus was shown</li><li>`qDoTimeConversion`: boolean (optional) if true, will convert provided timestamps from seconds to microseconds</li></ol>||Inform Pro Lab when and where a media (stimulus) was shown.|
+|`sendCustomEvent()`|<ol><li>`timeStamp`: (optional) timestamp (in s) at which event occured (in Pro Lab time, which is equal to PsychToolbox time when using a single-machine setup). If empty, current time is taken as event time</li><li>`eventType`: string: event type name</li><li>`value`: (optional) string, the value of the event</li></ol>||Add an event to Pro Lab's timeline.|
+
+#### Properties
+The following read-only properties are available for a TalkToProLab instance:
+
+|Property|Description|
+| --- | --- |
+|`projectID`|The GUID indentifying the project opened in Pro Lab.|
+|`participantID `|Filled by `TalkToProLab.createParticipant()`. The GUID indentifying the participant for which a recording will be created in Pro Lab.|
+|`recordingID`|Filled by `TalkToProLab.startRecording()`. The GUID indentifying the current recording in Pro Lab.|
+|`clientClock`|Websocket interface to the clock API of Tobii Pro Lab.|
+|`clientProject`|Websocket interface to the project API of Tobii Pro Lab.|
+|`clientEP`|Websocket interface to the external presenter API of Tobii Pro Lab.|
