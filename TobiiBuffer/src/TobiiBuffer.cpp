@@ -941,7 +941,7 @@ void TobiiBuffer::clearTimeRange(DataStream stream_, std::optional<int64_t> time
             clearImpl<timeSync>(*timeStart_, *timeEnd_);
             break;
         case DataStream::Positioning:
-            DoExitWithMsg("clearTimeRange: not supported for the position stream.");
+            DoExitWithMsg("clearTimeRange: not supported for the positioning stream.");
             break;
     }
 }
@@ -1018,6 +1018,7 @@ template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<siz
 template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // positioning data, instantiate templated functions
+// NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
 template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
 //template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<TobiiBuffer::positioning> TobiiBuffer::peekN(std::optional<size_t> lastN_);
