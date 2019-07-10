@@ -1,16 +1,14 @@
 classdef TalkToProLab < handle
-    properties (SetAccess = protected)
-        % websocket connections we need
-        clientClock;
-        clientProject;
-        clientEP;
-    end
-    
     properties (Access = protected, Hidden = true)
         stimTimeStamps;
     end
     
     properties (SetAccess=protected)
+        % websocket connections we need
+        clientClock;
+        clientProject;
+        clientEP;
+        
         projectID;
         participantID;
         recordingID;
