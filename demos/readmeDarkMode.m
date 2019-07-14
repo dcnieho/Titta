@@ -3,6 +3,7 @@ DEBUGlevel              = 0;
 fixClrs                 = [255 100];
 bgClr                   = 0;
 useAnimatedCalibration  = true;
+doBimonocularCalibration= false;
 % task parameters
 fixTime                 = .5;
 imageTime               = 2;
@@ -76,7 +77,7 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration
-    if 0
+    if doBimonocularCalibration
         % do sequential monocular calibrations for the two eyes
         settings                = EThndl.getOptions();
         settings.calibrateEye   = 'left';
