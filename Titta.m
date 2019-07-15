@@ -711,8 +711,6 @@ classdef Titta < handle
             optionButClr.text   = {[255 116   0],[255 116   0],[255 236 219]};
             
             % TODO: common file format
-            % TODO: teaching perspective of showing all the data quality
-            % measures, write about that in the paper.
             
             % the rest here are good defaults for all
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
