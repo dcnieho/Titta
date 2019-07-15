@@ -1,4 +1,14 @@
-% version of readme.m that demonstrates operation with separate
+% this demo code is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta, please cite the following paper:
+% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers.
+
+% This version of readme.m demonstrates operation with separate
 % presentation and operator screens
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
@@ -7,6 +17,8 @@
 % PsychImaging()'s 'UsePanelFitter'
 
 clear all
+sca
+
 DEBUGlevel              = 0;
 fixClrs                 = [0 255];
 bgClr                   = 127;

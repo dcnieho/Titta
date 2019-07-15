@@ -1,3 +1,13 @@
+% TobiiBuffer is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers 
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta, please cite the following paper:
+% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers.
+
 classdef TobiiBuffer < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function

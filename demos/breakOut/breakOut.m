@@ -1,3 +1,13 @@
+% this demo code is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta, please cite the following paper:
+% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers.
+
 sca
 clear variables
 
