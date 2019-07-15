@@ -30,26 +30,36 @@ classdef TittaDummyMode < Titta
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
             if 1
-                thisInfo = metaclass(obj);
-                superMethods = thisInfo.SuperclassList.MethodList;
+                thisInfo    = ?TittaDummyMode;
                 thisMethods = thisInfo.MethodList;
+                superInfo   = ?Titta;
+                superMethods= superInfo.MethodList;
                 % for both, remove their constructors from list and limit
                 % to only public methods
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'Titta'})) = [];
                 thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TittaDummyMode'})) = [];
+                % for methods of this dummy mode class, also remove methods
+                % defined by superclass. and for both remove all those from
+                % handle class
+                definingClass = [thisMethods.DefiningClass];
+                thisMethods(~strcmp({definingClass.Name},thisInfo.Name)) = [];
+                definingClass = [superMethods.DefiningClass];
+                superMethods(~strcmp({definingClass.Name},superInfo.Name)) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
                 notInSuper = ~ismember({thisMethods.Name},{superMethods.Name});
                 if any(notInSuper)
-                    fprintf('methods that are in %s but not in %s:\n',thisInfo.Name,thisInfo.SuperclassList.Name);
+                    fprintf('methods that are in %s but not in %s:\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(notInSuper).Name);
                 end
                 
                 % 2. methods from superclas that are not overridden.
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name});
+                % filter out those methods that we on purpose do not define
+                % in this subclass, as the superclass methods work fine
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'getMessages','sendMessage','setOptions','getOptions','delete'});
                 if any(qNotOverridden)
-                    fprintf('methods from %s not overridden in %s:\n',thisInfo.SuperclassList.Name,thisInfo.Name);
+                    fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
                 end
                 
@@ -64,7 +74,7 @@ classdef TittaDummyMode < Titta
                     end
                 end
                 if any(~qMatchingInput)
-                    fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,thisInfo.SuperclassList.Name);
+                    fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingInput).Name);
                 end
                 
@@ -79,7 +89,7 @@ classdef TittaDummyMode < Titta
                     end
                 end
                 if any(~qMatchingOutput)
-                    fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,thisInfo.SuperclassList.Name);
+                    fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingOutput).Name);
                 end
             end

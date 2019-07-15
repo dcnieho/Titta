@@ -13,34 +13,41 @@ classdef TalkToProLabDummyMode < handle
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
             if 1
-                thisInfo = ?TalkToProLabDummyMode;
-                realInfo = ?TalkToProLab;
-                realMethods = realInfo.MethodList;
+                thisInfo    = ?TalkToProLabDummyMode;
                 thisMethods = thisInfo.MethodList;
+                superInfo   = ?TalkToProLab;
+                superMethods= superInfo.MethodList;
                 % for both, remove their constructors from list and limit
                 % to only public methods
-                realMethods(~strcmp({realMethods.Access},'public') | ismember({realMethods.Name},{'TalkToProLab'})) = [];
-                thisMethods(~strcmp({thisMethods.Access},'public') | ismember({thisMethods.Name},{'TalkToProLabDummyMode'})) = [];
+                superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'TalkToProLab'})) = [];
+                thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TalkToProLabDummyMode'})) = [];
+                % for methods of this dummy mode class, also remove methods
+                % defined by superclass. and for both remove all those from
+                % handle class
+                definingClass = [thisMethods.DefiningClass];
+                thisMethods(~strcmp({definingClass.Name},thisInfo.Name)) = [];
+                definingClass = [superMethods.DefiningClass];
+                superMethods(~strcmp({definingClass.Name},superInfo.Name)) = [];
                 
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
-                notInSuper = ~ismember({thisMethods.Name},{realMethods.Name});
+                notInSuper = ~ismember({thisMethods.Name},{superMethods.Name});
                 if any(notInSuper)
-                    fprintf('methods that are in %s but not in %s:\n',thisInfo.Name,realInfo.Name);
+                    fprintf('methods that are in %s but not in %s:\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(notInSuper).Name);
                 end
                 
                 % 2. methods from superclas that are not overridden.
-                qNotOverridden = ~ismember({realMethods.Name},{thisMethods.Name});
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name});
                 if any(qNotOverridden)
-                    fprintf('methods that are in %s but not in %s:\n',realInfo.Name,thisInfo.Name);
-                    fprintf('  %s\n',realMethods(qNotOverridden).Name);
+                    fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
+                    fprintf('  %s\n',superMethods(qNotOverridden).Name);
                 end
                 
                 % 3. right number of input arguments?
                 qMatchingInput = false(size(thisMethods));
                 for p=1:length(thisMethods)
-                    realMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
+                    realMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
                     if isscalar(realMethod)
                         qMatchingInput(p) = (length(realMethod.InputNames) == length(thisMethods(p).InputNames)) || (length(realMethod.InputNames) < length(thisMethods(p).InputNames) && strcmp(realMethod.InputNames{end},'varargin')) || (length(thisMethods(p).InputNames) < length(realMethod.InputNames) && strcmp(thisMethods(p).InputNames{end},'varargin'));
                     else
@@ -48,22 +55,22 @@ classdef TalkToProLabDummyMode < handle
                     end
                 end
                 if any(~qMatchingInput)
-                    fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,realInfo.Name);
+                    fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingInput).Name);
                 end
                 
                 % 4. right number of output arguments?
                 qMatchingOutput = false(size(thisMethods));
                 for p=1:length(thisMethods)
-                    realMethod = realMethods(strcmp({realMethods.Name},thisMethods(p).Name));
-                    if isscalar(realMethod)
-                        qMatchingOutput(p) = length(realMethod.OutputNames) == length(thisMethods(p).OutputNames);
+                    superMethod = superMethods(strcmp({superMethods.Name},thisMethods(p).Name));
+                    if isscalar(superMethod)
+                        qMatchingOutput(p) = length(superMethod.OutputNames) == length(thisMethods(p).OutputNames);
                     else
                         qMatchingOutput(p) = true;
                     end
                 end
                 if any(~qMatchingOutput)
-                    fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,realInfo.Name);
+                    fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingOutput).Name);
                 end
             end
