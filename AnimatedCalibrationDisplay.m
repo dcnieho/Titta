@@ -1,5 +1,5 @@
-% Titta is a toolbox providing convenient access to eye tracking
-% functionality using Tobii eye trackers 
+% This class is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
