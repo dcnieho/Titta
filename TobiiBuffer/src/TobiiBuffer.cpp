@@ -111,8 +111,6 @@ std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
 }
 
 // logging static functions and member
-std::unique_ptr<std::vector<TobiiBuffer::allLogTypes>> TobiiBuffer::_logMessages;
-bool TobiiBuffer::_isLogging = false;
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 {
     if (!_logMessages)

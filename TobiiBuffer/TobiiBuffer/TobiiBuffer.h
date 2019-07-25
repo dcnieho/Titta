@@ -154,9 +154,9 @@ private:
     bool                        _recordingPositioning   = false;
     std::vector<positioning>    _positioning;
 
-    static bool                 _isLogging;
-    static std::unique_ptr<
-        std::vector<allLogTypes>>_logMessages;
+    static inline bool          _isLogging              = false;
+    static inline std::unique_ptr<
+        std::vector<allLogTypes>> _logMessages          = nullptr;
 
     // calibration
     bool                                        _calibrationIsMonocular = false;
