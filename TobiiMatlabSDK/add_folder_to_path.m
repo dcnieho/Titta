@@ -1,4 +1,6 @@
 function add_folder_to_path(folder)
+    mypath = fileparts(mfilename('fullpath'));
+    folder = fullfile(mypath,folder);
     if ispc
         NotinPath = isempty(strfind(lower(path),lower(folder)));
     else
