@@ -110,6 +110,14 @@ std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
     return v.first;
 }
 
+// info getters
+TobiiResearchSDKVersion TobiiBuffer::getSDKVersion()
+{
+    TobiiResearchSDKVersion a;
+    tobii_research_get_sdk_version(&a);
+    return a;
+}
+
 // logging static functions and member
 bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 {

@@ -72,6 +72,10 @@ classdef TobiiBuffer < handle
             this.cppmethodGlobal('touch');
         end
         
+        function SDKVersion = getSDKVersion(this)
+            SDKVersion = this.cppmethod('getSDKVersion');
+        end
+        
         function delete(this)
             if ~isempty(this.instanceHandle)
                 this.cppmethod('delete');

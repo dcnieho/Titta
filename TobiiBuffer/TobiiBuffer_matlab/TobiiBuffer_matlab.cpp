@@ -80,6 +80,7 @@ namespace {
         Touch,
         New,
         Delete,
+        GetSDKVersion,
 
         EnterCalibrationMode,
         LeaveCalibrationMode,
@@ -113,6 +114,7 @@ namespace {
         { "touch",				Action::Touch },
         { "new",				Action::New },
         { "delete",				Action::Delete },
+        { "getSDKVersion",		Action::GetSDKVersion },
 
         { "enterCalibrationMode",			Action::EnterCalibrationMode },
         { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
@@ -195,6 +197,7 @@ namespace mxTypes
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
     mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
+    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -216,7 +219,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
     // If action is not "new" or others that don't require a handle, try to locate an existing instance based on input handle
     InstanceMapType::const_iterator instIt;
     InstancePtrType instance;
-    if (action != Action::Touch && action != Action::New && action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
+    if (action != Action::Touch && action != Action::New && action != Action::GetSDKVersion && action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
     {
         instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
         instance = instIt->second;
@@ -238,7 +241,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             mxFree(address);
 
             if (!insResult.second) // sanity check
-                mexPrintf("Oh, bad news. Tried to add an existing handle."); // shouldn't ever happen
+                mexErrMsgTxt("Oh, bad news. Tried to add an existing handle."); // shouldn't ever happen
             else
                 mexLock(); // add to the lock count
 
@@ -252,6 +255,11 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             instanceTab.erase(instIt);
             mexUnlock();
             plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
+            break;
+        }
+        case Action::GetSDKVersion:
+        {
+            plhs[0] = mxTypes::ToMatlab(TobiiBuffer::getSDKVersion());
             break;
         }
 
@@ -1141,6 +1149,13 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchCalibrationData data_)
     {
         return ToMatlab(std::vector(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
+    }
+
+    mxArray* ToMatlab(TobiiResearchSDKVersion data_)
+    {
+        std::stringstream ss;
+        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build << ".";
+        return mxCreateString(ss.str().c_str());
     }
 }
 

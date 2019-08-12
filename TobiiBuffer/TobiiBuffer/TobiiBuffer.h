@@ -57,6 +57,9 @@ public:
     TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
 
+    // info
+    static TobiiResearchSDKVersion getSDKVersion();
+
     // calibration
     void enterCalibrationMode(bool doMonocular_);
     void leaveCalibrationMode(bool force_);
