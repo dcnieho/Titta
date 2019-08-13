@@ -748,7 +748,7 @@ classdef Titta < handle
             % NaN (unknown) if reference position is not set by user, and eye tracker does not inform us about its trackbox
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
-            settings.UI.setup.instruct.font     = 'Segeo UI';
+            settings.UI.setup.instruct.font     = 'Segoe UI';
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -757,7 +757,7 @@ classdef Titta < handle
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font          = 'Segeo UI';
+            settings.UI.button.setup.text.font          = 'Segoe UI';
             settings.UI.button.setup.text.size          = 24*textFac;
             settings.UI.button.setup.text.style         = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
@@ -778,7 +778,7 @@ classdef Titta < handle
             settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
             settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
             settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
-            settings.UI.button.val.text.font            = 'Segeo UI';
+            settings.UI.button.val.text.font            = 'Segoe UI';
             settings.UI.button.val.text.size            = 24*textFac;
             settings.UI.button.val.text.style           = 0;
             settings.UI.button.val.recal.accelerator    = 'escape';
@@ -824,7 +824,7 @@ classdef Titta < handle
             settings.UI.button.val.toggCal.edgeColor    = toggleButClr.fill;
             settings.UI.button.val.toggCal.textColor    = toggleButClr.text;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
-            settings.UI.cal.errMsg.font         = 'Segeo UI';
+            settings.UI.cal.errMsg.font         = 'Segoe UI';
             settings.UI.cal.errMsg.size         = 36*textFac;
             settings.UI.cal.errMsg.color        = [150 0 0];
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -847,7 +847,7 @@ classdef Titta < handle
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
             settings.UI.val.waitMsg.string      = 'Please wait...';
-            settings.UI.val.waitMsg.font        = 'Segeo UI';
+            settings.UI.val.waitMsg.font        = 'Segoe UI';
             settings.UI.val.waitMsg.size        = 28*textFac;
             settings.UI.val.waitMsg.color       = 0;
             settings.UI.val.waitMsg.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -860,7 +860,7 @@ classdef Titta < handle
             settings.UI.val.menu.bgColor        = 110;
             settings.UI.val.menu.itemColor      = 140;
             settings.UI.val.menu.itemColorActive= 180;
-            settings.UI.val.menu.text.font      = 'Segeo UI';
+            settings.UI.val.menu.text.font      = 'Segoe UI';
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
