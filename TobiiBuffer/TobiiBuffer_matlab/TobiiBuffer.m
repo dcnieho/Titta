@@ -50,8 +50,8 @@ classdef TobiiBuffer < handle
     methods
         % Use the name of your MEX file here
         function this = TobiiBuffer(debugMode)
-            % debugmode is for developer of SMIbuffer only, no use for end
-            % users
+            % debugmode is for developer of TobiiBuffer only, no use for
+            % end users
             if nargin<1 || isempty(debugMode)
                 debugMode = false;
             else
@@ -75,17 +75,23 @@ classdef TobiiBuffer < handle
         function SDKVersion = getSDKVersion(this)
             SDKVersion = this.cppmethod('getSDKVersion');
         end
+        function systemTimestamp = getSystemTimestamp(this)
+            systemTimestamp = this.cppmethod('getSystemTimestamp');
+        end
+        function eyeTrackerList = findAllEyeTrackers(this)
+            eyeTrackerList = this.cppmethod('findAllEyeTrackers');
+        end
         
+        
+        function init(this,address)
+            address = ensureStringIsChar(address);
+            this.instanceHandle = this.cppmethodGlobal('new',address);
+        end
         function delete(this)
             if ~isempty(this.instanceHandle)
                 this.cppmethod('delete');
                 this.instanceHandle     = [];
             end
-        end
-        
-        function init(this,address)
-            address = ensureStringIsChar(address);
-            this.instanceHandle = this.cppmethodGlobal('new',address);
         end
         
         function enterCalibrationMode(this,doMonocular)

@@ -59,6 +59,8 @@ public:
 
     // info
     static TobiiResearchSDKVersion getSDKVersion();
+    static int64_t getSystemTimestamp();
+    static std::vector<TobiiTypes::eyeTracker> findAllEyeTrackers();
 
     // calibration
     void enterCalibrationMode(bool doMonocular_);

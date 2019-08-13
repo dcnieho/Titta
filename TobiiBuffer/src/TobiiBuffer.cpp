@@ -113,9 +113,32 @@ std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
 // info getters
 TobiiResearchSDKVersion TobiiBuffer::getSDKVersion()
 {
-    TobiiResearchSDKVersion a;
-    tobii_research_get_sdk_version(&a);
-    return a;
+    TobiiResearchSDKVersion sdk_version;
+    TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get Tobii SDK version", status);
+    return sdk_version;
+}
+int64_t getSystemTimestamp()
+{
+    int64_t system_time_stamp;
+    TobiiResearchStatus status = tobii_research_get_system_time_stamp(&system_time_stamp);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get Tobii SDK system time", status);
+    return system_time_stamp;
+}
+std::vector<TobiiTypes::eyeTracker> findAllEyeTrackers()
+{
+    TobiiResearchEyeTrackers* tobiiTrackers = nullptr;
+    TobiiResearchStatus status = tobii_research_find_all_eyetrackers(&tobiiTrackers);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye trackers", status);
+    std::vector<TobiiTypes::eyeTracker> eyeTrackers;
+
+    eyeTrackers.emplace(eyeTrackers.end(), &tobiiTrackers->eyetrackers[0], &tobiiTrackers->eyetrackers[tobiiTrackers->count]);   // yes, pointer to one past last element
+    tobii_research_free_eyetrackers(tobiiTrackers);
+
+    return eyeTrackers;
 }
 
 // logging static functions and member

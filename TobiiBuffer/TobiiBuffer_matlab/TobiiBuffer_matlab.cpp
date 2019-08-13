@@ -77,10 +77,18 @@ namespace {
     // List actions
     enum class Action
     {
+        GetSDKVersion,
+        GetSystemTimestamp,
+        FindAllEyeTrackers,
+
+        StartLogging,
+        GetLog,
+        StopLogging,
+
+
         Touch,
         New,
         Delete,
-        GetSDKVersion,
 
         EnterCalibrationMode,
         LeaveCalibrationMode,
@@ -101,20 +109,24 @@ namespace {
         ConsumeN,
         ConsumeTimeRange,
         PeekN,
-        PeekTimeRange,
-
-        StartLogging,
-        GetLog,
-        StopLogging
+        PeekTimeRange
     };
 
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
+        { "getSDKVersion",		Action::GetSDKVersion },
+        { "getSystemTimestamp",	Action::GetSystemTimestamp },
+        { "findAllEyeTrackers",	Action::FindAllEyeTrackers },
+
+        { "startLogging",		Action::StartLogging },
+        { "getLog",				Action::GetLog },
+        { "stopLogging",		Action::StopLogging },
+
+
         { "touch",				Action::Touch },
         { "new",				Action::New },
         { "delete",				Action::Delete },
-        { "getSDKVersion",		Action::GetSDKVersion },
 
         { "enterCalibrationMode",			Action::EnterCalibrationMode },
         { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
@@ -136,10 +148,6 @@ namespace {
         { "consumeTimeRange",   Action::ConsumeTimeRange },
         { "peekN",				Action::PeekN },
         { "peekTimeRange",		Action::PeekTimeRange },
-
-        { "startLogging",		Action::StartLogging },
-        { "getLog",				Action::GetLog },
-        { "stopLogging",		Action::StopLogging },
     };
 
 
@@ -176,6 +184,10 @@ namespace mxTypes
     template<typename Cont, typename... Fs>
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
         FieldToMatlab(const Cont& data_, Fs... fields);
+
+    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
+    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
+
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::gaze                   > data_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::eyeImage               > data_);
@@ -197,7 +209,6 @@ namespace mxTypes
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
     mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
-    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -219,7 +230,9 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
     // If action is not "new" or others that don't require a handle, try to locate an existing instance based on input handle
     InstanceMapType::const_iterator instIt;
     InstancePtrType instance;
-    if (action != Action::Touch && action != Action::New && action != Action::GetSDKVersion && action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
+    if (action != Action::Touch && action != Action::New &&
+        action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
+        action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
     {
         instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
         instance = instIt->second;
@@ -257,9 +270,20 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
             break;
         }
+
         case Action::GetSDKVersion:
         {
             plhs[0] = mxTypes::ToMatlab(TobiiBuffer::getSDKVersion());
+            break;
+        }
+        case Action::GetSystemTimestamp:
+        {
+            plhs[0] = mxTypes::ToMatlab(TobiiBuffer::getSystemTimestamp());
+            break;
+        }
+        case Action::FindAllEyeTrackers:
+        {
+            plhs[0] = mxTypes::ToMatlab(TobiiBuffer::findAllEyeTrackers());
             break;
         }
 
@@ -755,6 +779,17 @@ namespace mxTypes
         return temp;
     }
 
+    mxArray* ToMatlab(TobiiResearchSDKVersion data_)
+    {
+        std::stringstream ss;
+        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build << ".";
+        return mxCreateString(ss.str().c_str());
+    }
+    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
+    {
+
+    }
+
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
@@ -1149,13 +1184,6 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchCalibrationData data_)
     {
         return ToMatlab(std::vector(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
-    }
-
-    mxArray* ToMatlab(TobiiResearchSDKVersion data_)
-    {
-        std::stringstream ss;
-        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build << ".";
-        return mxCreateString(ss.str().c_str());
     }
 }
 
