@@ -336,9 +336,9 @@ classdef Titta < handle
             obj.systemInfo.samplerate   = obj.eyetracker.get_gaze_output_frequency();
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
             obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
+            obj.systemInfo.SDKversion.matlab        = obj.tobii.get_sdk_version();
+            obj.systemInfo.SDKversion.tobiiBuffer_C = obj.buffer.getSDKVersion();
             out.systemInfo              = obj.systemInfo;
-            out.systemInfo.SDKversion.matlab        = obj.tobii.get_sdk_version();
-            out.systemInfo.SDKversion.tobiiBuffer_C = obj.buffer.getSDKVersion();
             
             % get information about display geometry and trackbox
             warnState = warning('query','MATLAB:structOnObject');
