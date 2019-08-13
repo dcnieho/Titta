@@ -787,7 +787,7 @@ namespace mxTypes
     }
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
     {
-
+        return mxCreateString("test");
     }
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
