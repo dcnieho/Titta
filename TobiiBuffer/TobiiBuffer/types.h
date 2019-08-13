@@ -14,6 +14,8 @@ namespace TobiiTypes
         eyeTracker() {}
         eyeTracker(TobiiResearchEyeTracker* et_);
 
+        void refreshInfo();
+
     public:
         TobiiResearchEyeTracker*    et = nullptr;
         std::string                 deviceName, serialNumber, model, firmwareVersion, runtimeVersion, address;

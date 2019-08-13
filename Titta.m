@@ -266,17 +266,27 @@ classdef Titta < handle
                 
                 % load license files
                 nLicenses   = length(obj.settings.licenseFile);
-                licenses    = LicenseKey.empty(nLicenses,0);
+                licenses    = cell(1,nLicenses);
                 for l = 1:nLicenses
                     fid = fopen(obj.settings.licenseFile{l},'r');   % users should provide fully qualified paths or paths that are valid w.r.t. pwd
-                    licenses(l) = LicenseKey(fread(fid));
+                    licenses{l} = fread(fid,inf,'*uint8');
                     fclose(fid);
                 end
                 
                 % apply to selected eye tracker.
-                % Should return empty if all the licenses were correctly applied.
-                failed_licenses = obj.buffer.applyLicenses(licenses);
-                assert(isempty(failed_licenses),'Titta: provided license(s) couldn''t be applied')
+                applyResults = obj.buffer.applyLicenses(licenses);
+                qFailed = ~strcmp(applyResults,'TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK');
+                if any(qFailed)
+                    info = cell(sum(2,qFailed));
+                    info(1,:) = applyResults(qFailed);
+                    info(2,:) = obj.settings.licenseFile(qFailed);
+                    info = sprintf('  %s (%s)\n',info{:}); info(end) = [];
+                    error('Titta: the following provided license(s) couldn''t be applied:\n%s',info);
+                end
+                
+                % applying license may have changed eye tracker's
+                % capabilities or other info. get a fresh copy
+                theTracker = obj.buffer.getConnectedEyeTracker();
             end
             
             % set tracker to operate at requested tracking frequency

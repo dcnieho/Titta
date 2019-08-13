@@ -386,6 +386,34 @@ void TobiiBuffer::setTrackingMode(std::string trackingMode_)
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker tracking mode", status);
 }
+std::vector<TobiiResearchLicenseValidationResult> TobiiBuffer::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
+{
+    std::vector<uint8_t*> licenseKeyRing;
+    std::vector<size_t>   licenseLengths;
+    for (auto& license : licenses_)
+    {
+        licenseKeyRing.push_back(static_cast<char*>(license.data()));
+        licenseLengths.push_back(license.size());
+    }
+    std::vector<TobiiResearchLicenseValidationResult> validationResults(licenses_.size(), TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN);
+    TobiiResearchStatus status = tobii_research_apply_licenses(_eyetracker.et, static_cast<const void**>(licenseKeyRing.data()), licenseLengths.data(), validationResults.data(), licenses_.size());
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot apply eye tracker license(s)", status);
+
+    // refresh eye tracker info, e.g. capabilities may have changed after license applied
+    _eyetracker.refreshInfo();
+
+    return validationResults;
+}
+void TobiiBuffer::clearLicenses()
+{
+    TobiiResearchStatus status = tobii_research_clear_applied_licenses(_eyetracker.et);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot clear eye tracker license(s)", status);
+
+    // refresh eye tracker info, e.g. capabilities may have changed after licenses removed
+    _eyetracker.refreshInfo();
+}
 
 //// calibration
 void TobiiBuffer::calibrationThread()

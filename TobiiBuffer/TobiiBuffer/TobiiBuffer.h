@@ -76,8 +76,8 @@ public:
     // setters
     void setGazeFrequency(float frequency_);
     void setTrackingMode(std::string trackingMode_);
-    // applyLicense (should probably refresh the eye tracker info after doing this? better safe than sorry)
-    // clearLicenses (should probably refresh the eye tracker info after doing this? better safe than sorry)
+    std::vector<TobiiResearchLicenseValidationResult> applyLicenses(std::vector<std::vector<uint8_t>> licenses_); // this refreshes eye tracker info
+    void clearLicenses(); // this refreshes eye tracker info
 
     //// calibration
     void enterCalibrationMode(bool doMonocular_);

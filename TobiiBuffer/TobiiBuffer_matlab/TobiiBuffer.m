@@ -143,6 +143,21 @@ classdef TobiiBuffer < handle
             trackingMode = ensureStringIsChar(trackingMode);
             this.cppmethod('setTrackingMode',trackingMode);
         end
+        function applyLicenses(this,licenses)
+            assert(nargin>1,'Titta::buffer::applyLicenses: provide licenses argument.');
+            if ~iscell(licenses)
+                licenses = {licenses};
+            end
+            classes = cellfun(@class,licenses,'uni',false);
+            assert(all(ismember(classes,{'char','uint8'})),'Titta::buffer::applyLicenses: the provided licenses should have ''char'' or ''uint8'' type')
+            % convert all to uint8 to make C++-side simpler (not sure if
+            % absolutely safe to just use uint8 there in all cases)
+            licenses = cellfun(@uint8,licenses,'uni',false);
+            this.cppmethod('applyLicenses',licenses);
+        end
+        function clearLicenses(this)
+            this.cppmethod('clearLicenses');
+        end
         
         %% calibration
         function enterCalibrationMode(this,doMonocular)

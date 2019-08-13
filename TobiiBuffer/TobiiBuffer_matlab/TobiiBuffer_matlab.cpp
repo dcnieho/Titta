@@ -101,6 +101,8 @@ namespace {
         // setters
         SetGazeFrequency,
         SetTrackingMode,
+        ApplyLicenses,
+        ClearLicenses,
 
         //// calibration
         EnterCalibrationMode,
@@ -153,6 +155,8 @@ namespace {
         // setters
         { "setGazeFrequency",			    Action::SetGazeFrequency },
         { "setTrackingMode",			    Action::SetTrackingMode },
+        { "applyLicenses",		    	    Action::ApplyLicenses },
+        { "clearLicenses",		    	    Action::ClearLicenses },
 
         //// calibration
         { "enterCalibrationMode",			Action::EnterCalibrationMode },
@@ -220,6 +224,7 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
     mxArray* ToMatlab(TobiiResearchDisplayArea                          data_);
     mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
+    mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::gaze                   > data_);
@@ -360,12 +365,42 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         }
         case Action::SetTrackingMode:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsChar(prhs[2]))
                 mexErrMsgTxt("setTrackingMode: Expected second argument to be a string.");
 
             char* bufferCstr = mxArrayToString(prhs[2]);
             instance->setTrackingMode(bufferCstr);
             mxFree(bufferCstr);
+            break;
+        }
+        case Action::ApplyLicenses:
+        {
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsCell(prhs[2]))
+                mexErrMsgTxt("applyLicenses: Expected second argument to be a cell.");
+
+            std::vector<std::vector<uint8_t>> licenses;
+
+            // get how many elements the cell has, iterate over them (don't care about shape)
+            const mwSize nElem = mxGetNumberOfElements(prhs[2]);
+            for (mwIndex i = 0; i < nElem; i++)
+            {
+                mxArray* cellElement = mxGetCell(prhs[2], i);
+                if (!cellElement)
+                    mexErrMsgTxt("applyLicenses: All cell elements should be non-empty.");
+                // we've got some kind of cell content, lets check it, and then access it
+                if (mxIsEmpty(cellElement) || !mxIsUint8(cellElement) || mxIsComplex(cellElement))
+                    mexErrMsgTxt("applyLicenses: All cells should contain arrays of uint8.");
+                // now get content, copy over
+                uint8_t* in = static_cast<uint8_t*>(mxGetData(cellElement));
+                licenses.emplace_back(in, in + mxGetNumberOfElements(cellElement));
+            }
+
+            plhs[0] = mxTypes::ToMatlab(instance->applyLicenses(licenses));
+            break;
+        }
+        case Action::ClearLicenses:
+        {
+            instance->clearLicenses();
             break;
         }
 
@@ -884,7 +919,7 @@ namespace mxTypes
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 7, ToMatlab(data_[i].supportedFrequencies));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 8, ToMatlab(data_[i].supportedModes));
         }
-        
+
         return out;
     }
 
@@ -952,6 +987,10 @@ namespace mxTypes
         storage[1] = static_cast<double>(data_.y);
         storage[2] = static_cast<double>(data_.z);
         return out;
+    }
+    mxArray* ToMatlab(TobiiResearchLicenseValidationResult data_)
+    {
+        return mxCreateString(TobiiResearchLicenseValidationResultToString(data_).c_str());
     }
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
