@@ -782,7 +782,7 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchSDKVersion data_)
     {
         std::stringstream ss;
-        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build << ".";
+        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build;
         return mxCreateString(ss.str().c_str());
     }
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
