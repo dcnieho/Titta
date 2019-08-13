@@ -27,3 +27,6 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 void DoExitWithMsg(std::string errMsg_);
 // this function is used to simply relay a message
 void RelayMsg(std::string errMsg_);
+
+// wrapper around DoExitWithMsg() that nicely formats the Tobii SDK error code
+void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_);

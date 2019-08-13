@@ -366,3 +366,13 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 {
     return lookupTobiiResearchLicenseValidationResult(in_)._cErrorTxt;
 }
+
+// deal with error messages
+void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
+{
+    std::stringstream os;
+    os << "TobiiBuffer Error: " << errMsg_ << std::endl;
+    os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << " (" << TobiiResearchStatusToExplanation(errCode_) << ")" << std::endl;
+
+    DoExitWithMsg(os.str());
+}
