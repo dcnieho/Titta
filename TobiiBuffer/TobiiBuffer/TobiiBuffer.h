@@ -57,12 +57,29 @@ public:
     TobiiBuffer(TobiiResearchEyeTracker* et_);
     ~TobiiBuffer();
 
-    // info
+    //// global SDK functions
     static TobiiResearchSDKVersion getSDKVersion();
     static int64_t getSystemTimestamp();
     static std::vector<TobiiTypes::eyeTracker> findAllEyeTrackers();
+    // logging
+    static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
+    static std::vector<TobiiBuffer::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
+    static bool stopLogging();	// always clears buffer
 
-    // calibration
+    //// eye-tracker specific getters and setters
+    // getters
+    const TobiiTypes::eyeTracker getConnectedEyeTracker() const { return _eyetracker; }
+    const float getCurrentFrequency() const;
+    const std::string getCurrentTrackingMode() const;
+    const TobiiResearchTrackBox getTrackBox() const;
+    const TobiiResearchDisplayArea getDisplayArea() const;
+    // setters
+    void setGazeFrequency(float frequency_);
+    void setTrackingMode(std::string trackingMode_);
+    // applyLicense (should probably refresh the eye tracker info after doing this? better safe than sorry)
+    // clearLicenses (should probably refresh the eye tracker info after doing this? better safe than sorry)
+
+    //// calibration
     void enterCalibrationMode(bool doMonocular_);
     void leaveCalibrationMode(bool force_);
     void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
@@ -73,7 +90,7 @@ public:
     TobiiTypes::CalibrationState calibrationGetStatus();
     std::optional<TobiiTypes::CalibrationWorkResult> calibrationRetrieveResult(bool makeString = false);
 
-
+    //// data streams
     // query if stream is supported
     bool hasStream(std::string stream_) const;
     bool hasStream(DataStream  stream_) const;
@@ -85,7 +102,6 @@ public:
     // request stream state
     bool isBuffering(std::string stream_) const;
     bool isBuffering(DataStream  stream_) const;
-
 
     // consume samples (by default all)
     template <typename T>
@@ -112,11 +128,6 @@ public:
     bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
     bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
 
-    // logging
-    static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
-    static std::vector<TobiiBuffer::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
-    static bool stopLogging();	// always clears buffer
-
 private:
     void Init();
     // Tobii callbacks needs to be friends
@@ -140,7 +151,7 @@ private:
     template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
 
 private:
-    TobiiResearchEyeTracker*    _eyetracker             = nullptr;
+    TobiiTypes::eyeTracker      _eyetracker;
 
     bool                        _recordingGaze          = false;
     std::vector<gaze>           _gaze;

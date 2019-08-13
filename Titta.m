@@ -10,10 +10,6 @@
 
 classdef Titta < handle
     properties (Access = protected, Hidden = true)
-        % dll and mex files
-        tobii;
-        eyetracker;
-        
         % message buffer
         msgs;
         
@@ -40,12 +36,6 @@ classdef Titta < handle
         buffer;
     end
     
-    % computed properties (so not actual properties)
-    properties (Dependent, SetAccess = private)
-        rawSDK;         % get naked Tobii SDK instance
-        rawET;          % get naked Tobii SDK handle to eyetracker
-    end
-    
     methods
         function obj = Titta(settingsOrETName)
             % deal with inputs
@@ -67,14 +57,6 @@ classdef Titta < handle
         function out = setDummyMode(obj)
             assert(nargout==1,'Titta: you must use the output argument of setDummyMode, like: TobiiHandle = TobiiHandle.setDummyMode(), or TobiiHandle = setDummyMode(TobiiHandle)')
             out = TittaDummyMode(obj);
-        end
-        
-        function out = get.rawSDK(obj)
-            out = obj.tobii;
-        end
-        
-        function out = get.rawET(obj)
-            out = obj.eyetracker;
         end
         
         function out = getOptions(obj)
@@ -193,7 +175,7 @@ classdef Titta < handle
             % check requested eye calibration mode
             assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
             if ismember(obj.settings.calibrateEye,{'left','right'}) && obj.isInitialized
-                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             switch obj.settings.calibrateEye
                 case 'both'
@@ -209,9 +191,6 @@ classdef Titta < handle
         end
         
         function out = init(obj)
-            % Load in Tobii SDK
-            obj.tobii = EyeTrackingOperations();
-            
             % Load in our callback buffer mex
             obj.buffer = TobiiBuffer();
             obj.buffer.startLogging();
@@ -225,13 +204,13 @@ classdef Titta < handle
                     func = @error;
                 end
                 % see which eye trackers are available
-                trackers = obj.tobii.find_all_eyetrackers();
+                trackers = obj.buffer.findAllEyeTrackers();
                 % find macthing eye-tracker, first by model
-                if isempty(trackers) || ~any(strcmp({trackers.Model},obj.settings.tracker))
+                if isempty(trackers) || ~any(strcmp({trackers.model},obj.settings.tracker))
                     extra = '';
                     if iTry==obj.settings.nTryReConnect+1
                         if ~isempty(trackers)
-                            extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.Model));
+                            extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.model));
                         else
                             extra = sprintf('\nNo eye trackers connected.');
                         end
@@ -241,7 +220,7 @@ classdef Titta < handle
                     iTry = iTry+1;
                     continue;
                 end
-                qModel = strcmp({trackers.Model},obj.settings.tracker);
+                qModel = strcmp({trackers.model},obj.settings.tracker);
                 % if obligatory serial also given, check on that
                 % a serial number preceeded by '*' denotes the serial number is
                 % optional. That means that if only a single other tracker of
@@ -253,12 +232,12 @@ classdef Titta < handle
                     if serial(1)=='*'
                         serial(1) = [];
                     end
-                    qTracker = qModel & strcmp({trackers.SerialNumber},serial);
+                    qTracker = qModel & strcmp({trackers.serialNumber},serial);
                     
                     if ~any(qTracker)
                         extra = '';
                         if iTry==obj.settings.nTryReConnect+1
-                            extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.SerialNumber));
+                            extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.serialNumber));
                         end
                         func('Titta: No eye trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
                         pause(obj.settings.connectRetryWait(min(iTry,end)));
@@ -274,10 +253,10 @@ classdef Titta < handle
                 end
             end
             % get our instance
-            obj.eyetracker = trackers(qTracker);
+            theTracker = trackers(qTracker);
             
             % provide callback buffer mex with eye tracker
-            obj.buffer.init(obj.eyetracker.Address);
+            obj.buffer.init(theTracker.address);
             
             % apply license(s) if needed
             if ~isempty(obj.settings.licenseFile)
@@ -296,28 +275,26 @@ classdef Titta < handle
                 
                 % apply to selected eye tracker.
                 % Should return empty if all the licenses were correctly applied.
-                failed_licenses = obj.eyetracker.apply_licenses(licenses);
+                failed_licenses = obj.buffer.applyLicenses(licenses);
                 assert(isempty(failed_licenses),'Titta: provided license(s) couldn''t be applied')
             end
             
             % set tracker to operate at requested tracking frequency
             try
-                obj.eyetracker.set_gaze_output_frequency(obj.settings.freq);
+                obj.buffer.setGazeFrequency(obj.settings.freq);
             catch ME
                 % provide nice error message
-                allFs = obj.eyetracker.get_all_gaze_output_frequencies();
-                allFs = ['[' sprintf('%d, ',allFs) ']']; allFs(end-2:end-1) = [];
+                allFs = ['[' sprintf('%d, ',theTracker.supportedFrequencies) ']']; allFs(end-2:end-1) = [];
                 error('Titta: Error setting tracker sampling frequency to %d. Possible tracking frequencies for this %s are %s.\nRaw error info:\n%s',obj.settings.freq,obj.settings.tracker,allFs,ME.getReport('extended'))
             end
             
             % set eye tracking mode.
             if ~isempty(obj.settings.trackingMode)
                 try
-                    obj.eyetracker.set_eye_tracking_mode(obj.settings.trackingMode);
+                    obj.buffer.setTrackingMode(obj.settings.trackingMode);
                 catch ME
                     % add info about possible tracking modes.
-                    allModes = obj.eyetracker.get_all_eye_tracking_modes();
-                    allModes = ['[' sprintf('''%s'', ',allModes{:}) ']']; allModes(end-2:end-1) = [];
+                    allModes = ['[' sprintf('''%s'', ',theTracker.supportedModes{:}) ']']; allModes(end-2:end-1) = [];
                     error('Titta: Error setting tracker mode to ''%s''. Possible tracking modes for this %s are %s. If a mode you expect is missing, check whether the eye tracker firmware is up to date.\nRaw error info:\n%s',obj.settings.trackingMode,obj.settings.tracker,allModes,ME.getReport('extended'))
                 end
             end
@@ -325,27 +302,21 @@ classdef Titta < handle
             % if monocular tracking is requested, check that it is
             % supported
             if ismember(obj.settings.calibrateEye,{'left','right'})
-                assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
             end
             
             % get info about the system
-            fields = {'Name','SerialNumber','Model','FirmwareVersion','RuntimeVersion','Address'};
-            for f=1:length(fields)
-                obj.systemInfo.(fields{f}) = obj.eyetracker.(fields{f});
-            end
-            obj.systemInfo.samplerate   = obj.eyetracker.get_gaze_output_frequency();
+            obj.systemInfo                  = obj.buffer.getConnectedEyeTracker();
+            obj.systemInfo.samplerate       = obj.buffer.getCurrentFrequency();
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
-            obj.systemInfo.trackingMode = obj.eyetracker.get_eye_tracking_mode();
-            obj.systemInfo.SDKversion.matlab        = obj.tobii.get_sdk_version();
-            obj.systemInfo.SDKversion.tobiiBuffer_C = obj.buffer.getSDKVersion();
-            out.systemInfo              = obj.systemInfo;
+            obj.systemInfo.trackingMode     = obj.buffer.getCurrentTrackingMode();
+            obj.systemInfo.tobiiBuffer_C    = obj.buffer.getSDKVersion();
+            out.systemInfo                  = obj.systemInfo;
             
             % get information about display geometry and trackbox
-            warnState = warning('query','MATLAB:structOnObject');
-            warning('off',warnState.identifier);    % turn off warning for converting object to struct
-            obj.geom.displayArea    = structfun(@double,struct(obj.eyetracker.get_display_area()),'uni',false);
+            obj.geom.displayArea    = obj.buffer.getDisplayArea();
             try
-                obj.geom.trackBox       = structfun(@double,struct(obj.eyetracker.get_track_box())   ,'uni',false);
+                obj.geom.trackBox       = obj.buffer.getTrackBox();
                 % get width and height of trackbox at middle depth
                 obj.geom.trackBox.halfWidth   = mean([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/10;
                 obj.geom.trackBox.halfHeight  = mean([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/10;
@@ -354,7 +325,6 @@ classdef Titta < handle
                 obj.geom.trackBox.halfWidth     = [];
                 obj.geom.trackBox.halfHeight    = [];
             end
-            warning(warnState.state,warnState.identifier);  % reset warning
             out.geom                = obj.geom;
             
             % mark as inited
@@ -468,7 +438,7 @@ classdef Titta < handle
                     if bitand(flag,1) && ~qHasEnteredCalMode
                         qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
                         if qDoMonocular
-                            assert(obj.hasCap(EyeTrackerCapabilities.CanDoMonocularCalibration),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+                            assert(obj.hasCap('CanDoMonocularCalibration'),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
                         end
                         obj.buffer.enterCalibrationMode(qDoMonocular);
                         qHasEnteredCalMode = true;

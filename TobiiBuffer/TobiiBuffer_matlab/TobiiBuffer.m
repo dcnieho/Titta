@@ -72,17 +72,7 @@ classdef TobiiBuffer < handle
             this.cppmethodGlobal('touch');
         end
         
-        function SDKVersion = getSDKVersion(this)
-            SDKVersion = this.cppmethodGlobal('getSDKVersion');
-        end
-        function systemTimestamp = getSystemTimestamp(this)
-            systemTimestamp = this.cppmethodGlobal('getSystemTimestamp');
-        end
-        function eyeTrackerList = findAllEyeTrackers(this)
-            eyeTrackerList = this.cppmethodGlobal('findAllEyeTrackers');
-        end
-        
-        
+        %% Matlab interface
         function init(this,address)
             address = ensureStringIsChar(address);
             this.instanceHandle = this.cppmethodGlobal('new',address);
@@ -94,6 +84,67 @@ classdef TobiiBuffer < handle
             end
         end
         
+        %% global SDK functions
+        function SDKVersion = getSDKVersion(this)
+            SDKVersion = this.cppmethodGlobal('getSDKVersion');
+        end
+        function systemTimestamp = getSystemTimestamp(this)
+            systemTimestamp = this.cppmethodGlobal('getSystemTimestamp');
+        end
+        function eyeTrackerList = findAllEyeTrackers(this)
+            eyeTrackerList = this.cppmethodGlobal('findAllEyeTrackers');
+        end
+        % logging
+        function success = startLogging(this,initialBufferSize)
+            % optional buffer size input
+            if nargin>1 && ~isempty(initialBufferSize)
+                success = this.cppmethodGlobal('startLogging',uint64(initialBufferSize));
+            else
+                success = this.cppmethodGlobal('startLogging');
+            end
+        end
+        function data = getLog(this,clearLogBuffer)
+            % optional clear buffer input
+            if nargin>1 && ~isempty(clearLogBuffer)
+                data = this.cppmethodGlobal('getLog',clearLogBuffer);
+            else
+                data = this.cppmethodGlobal('getLog');
+            end
+            data = [data{:}];
+        end
+        function stopLogging(this)
+            this.cppmethodGlobal('stopLogging');
+        end
+        
+        %% eye-tracker specific getters and setters
+        % getters
+        function eyeTracker = getConnectedEyeTracker(this)
+            eyeTracker = this.cppmethod('getConnectedEyeTracker');
+        end
+        function frequency = getCurrentFrequency(this)
+            frequency = this.cppmethod('getCurrentFrequency');
+        end
+        function trackingMode = getCurrentTrackingMode(this)
+            trackingMode = this.cppmethod('getCurrentTrackingMode');
+        end
+        function trackBox = getTrackBox(this)
+            trackBox = this.cppmethod('getTrackBox');
+        end
+        function displayArea = getDisplayArea(this)
+            displayArea = this.cppmethod('getDisplayArea');
+        end
+        % setters
+        function setGazeFrequency(this,freq)
+            assert(nargin>1,'Titta::buffer::setGazeFrequency: provide frequency argument.');
+            this.cppmethod('setGazeFrequency',single(freq));
+        end
+        function setTrackingMode(this,trackingMode)
+            assert(nargin>1,'Titta::buffer::setTrackingMode: provide tracking mode argument.');
+            trackingMode = ensureStringIsChar(trackingMode);
+            this.cppmethod('setTrackingMode',trackingMode);
+        end
+        
+        %% calibration
         function enterCalibrationMode(this,doMonocular)
             this.cppmethod('enterCalibrationMode',doMonocular);
         end
@@ -133,6 +184,7 @@ classdef TobiiBuffer < handle
             result = this.cppmethod('calibrationRetrieveResult');
         end
         
+        %% data streams
         function supported = hasStream(this,stream)
             assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
@@ -229,26 +281,6 @@ classdef TobiiBuffer < handle
         end
         
         
-        function success = startLogging(this,initialBufferSize)
-            % optional buffer size input
-            if nargin>1 && ~isempty(initialBufferSize)
-                success = this.cppmethodGlobal('startLogging',uint64(initialBufferSize));
-            else
-                success = this.cppmethodGlobal('startLogging');
-            end
-        end
-        function data = getLog(this,clearLogBuffer)
-            % optional clear buffer input
-            if nargin>1 && ~isempty(clearLogBuffer)
-                data = this.cppmethodGlobal('getLog',clearLogBuffer);
-            else
-                data = this.cppmethodGlobal('getLog');
-            end
-            data = [data{:}];
-        end
-        function stopLogging(this)
-            this.cppmethodGlobal('stopLogging');
-        end
     end
 end
 

@@ -77,19 +77,32 @@ namespace {
     // List actions
     enum class Action
     {
-        GetSDKVersion,
-        GetSystemTimestamp,
-        FindAllEyeTrackers,
-
-        StartLogging,
-        GetLog,
-        StopLogging,
-
-
+        // MATLAB interface
         Touch,
         New,
         Delete,
 
+        //// global SDK functions
+        GetSDKVersion,
+        GetSystemTimestamp,
+        FindAllEyeTrackers,
+        // logging
+        StartLogging,
+        GetLog,
+        StopLogging,
+
+        //// eye-tracker specific getters and setters
+        // getters
+        GetConnectedEyeTracker,
+        GetCurrentFrequency,
+        GetCurrentTrackingMode,
+        GetTrackBox,
+        GetDisplayArea,
+        // setters
+        SetGazeFrequency,
+        SetTrackingMode,
+
+        //// calibration
         EnterCalibrationMode,
         LeaveCalibrationMode,
         CalibrationCollectData,
@@ -100,6 +113,7 @@ namespace {
         CalibrationGetStatus,
         CalibrationRetrieveResult,
 
+        //// data streams
         HasStream,
         Start,
         IsBuffering,
@@ -115,19 +129,32 @@ namespace {
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
-        { "getSDKVersion",		Action::GetSDKVersion },
-        { "getSystemTimestamp",	Action::GetSystemTimestamp },
-        { "findAllEyeTrackers",	Action::FindAllEyeTrackers },
-
-        { "startLogging",		Action::StartLogging },
-        { "getLog",				Action::GetLog },
-        { "stopLogging",		Action::StopLogging },
-
-
+        // MATLAB interface
         { "touch",				Action::Touch },
         { "new",				Action::New },
         { "delete",				Action::Delete },
 
+        //// global SDK functions
+        { "getSDKVersion",		Action::GetSDKVersion },
+        { "getSystemTimestamp",	Action::GetSystemTimestamp },
+        { "findAllEyeTrackers",	Action::FindAllEyeTrackers },
+        // logging
+        { "startLogging",		Action::StartLogging },
+        { "getLog",				Action::GetLog },
+        { "stopLogging",		Action::StopLogging },
+
+        //// eye-tracker specific getters and setters
+        // getters
+        { "getConnectedEyeTracker",			Action::GetConnectedEyeTracker },
+        { "getCurrentFrequency",			Action::GetCurrentFrequency },
+        { "getCurrentTrackingMode",			Action::GetCurrentTrackingMode },
+        { "getTrackBox",			        Action::GetTrackBox },
+        { "getDisplayArea",			        Action::GetDisplayArea },
+        // setters
+        { "setGazeFrequency",			    Action::SetGazeFrequency },
+        { "setTrackingMode",			    Action::SetTrackingMode },
+
+        //// calibration
         { "enterCalibrationMode",			Action::EnterCalibrationMode },
         { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
         { "calibrationCollectData",		    Action::CalibrationCollectData },
@@ -138,6 +165,7 @@ namespace {
         { "calibrationGetStatus",			Action::CalibrationGetStatus },
         { "calibrationRetrieveResult",      Action::CalibrationRetrieveResult },
 
+        //// data streams
         { "hasStream",          Action::HasStream },
         { "start",		        Action::Start },
         { "isBuffering",        Action::IsBuffering },
@@ -187,6 +215,11 @@ namespace mxTypes
 
     mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
+    mxArray* ToMatlab(TobiiResearchCapabilities                         data_);
+
+    mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
+    mxArray* ToMatlab(TobiiResearchDisplayArea                          data_);
+    mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
     mxArray* ToMatlab(std::vector<TobiiBuffer::gaze                   > data_);
@@ -284,6 +317,55 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
         case Action::FindAllEyeTrackers:
         {
             plhs[0] = mxTypes::ToMatlab(TobiiBuffer::findAllEyeTrackers());
+            break;
+        }
+
+        case Action::GetConnectedEyeTracker:
+        {
+            // vector so we don't have write another ToMatlab
+            std::vector<TobiiTypes::eyeTracker> temp;
+            temp.push_back(instance->getConnectedEyeTracker());
+            plhs[0] = mxTypes::ToMatlab(temp);
+            break;
+        }
+        case Action::GetCurrentFrequency:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getCurrentFrequency());
+            break;
+        }
+        case Action::GetCurrentTrackingMode:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getCurrentTrackingMode());
+            break;
+        }
+        case Action::GetTrackBox:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getTrackBox());
+            break;
+        }
+        case Action::GetDisplayArea:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getDisplayArea());
+            break;
+        }
+        case Action::SetGazeFrequency:
+        {
+            float freq = 0.f;
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsSingle(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+                mexErrMsgTxt("setGazeFrequency: Expected second argument to be a float scalar.");
+            freq = *static_cast<float*>(mxGetData(prhs[2]));
+
+            instance->setGazeFrequency(freq);
+            break;
+        }
+        case Action::SetTrackingMode:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("setTrackingMode: Expected second argument to be a string.");
+
+            char* bufferCstr = mxArrayToString(prhs[2]);
+            instance->setTrackingMode(bufferCstr);
+            mxFree(bufferCstr);
             break;
         }
 
@@ -787,7 +869,89 @@ namespace mxTypes
     }
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
     {
-        return mxCreateString("test");
+        const char* fieldNames[] = {"deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","capabilities","supportedFrequencies","supportedModes"};
+        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        for (size_t i = 0; i!=data_.size(); i++)
+        {
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 0, mxCreateString(data_[i].deviceName.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 1, mxCreateString(data_[i].serialNumber.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 2, mxCreateString(data_[i].model.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 3, mxCreateString(data_[i].firmwareVersion.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 4, mxCreateString(data_[i].runtimeVersion.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 5, mxCreateString(data_[i].address.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 6, ToMatlab(data_[i].capabilities));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 7, ToMatlab(data_[i].supportedFrequencies));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 8, ToMatlab(data_[i].supportedModes));
+        }
+        
+        return out;
+    }
+
+    mxArray* ToMatlab(TobiiResearchCapabilities data_)
+    {
+        std::vector<std::string> out;
+
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+            out.emplace_back("CanSetDisplayArea");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+            out.emplace_back("HasExternalSignal");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+            out.emplace_back("HasEyeImages");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+            out.emplace_back("HasGazeData");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+            out.emplace_back("HasHMDGazeData");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+            out.emplace_back("CanDoScreenBasedCalibration");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+            out.emplace_back("CanDoHMDBasedCalibration");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+            out.emplace_back("HasHMDLensConfig");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+            out.emplace_back("CanDoMonocularCalibration");
+
+        return ToMatlab(out);
+    }
+
+    mxArray* ToMatlab(TobiiResearchTrackBox data_)
+    {
+        const char* fieldNames[] = {"back_lower_left","back_lower_right","back_upper_left","back_upper_right","front_lower_left","front_lower_right","front_upper_left","front_upper_right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.back_lower_left));
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.back_lower_right));
+        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.back_upper_left));
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.back_upper_right));
+        mxSetFieldByNumber(out, 0, 4, ToMatlab(data_.front_lower_left));
+        mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.front_lower_right));
+        mxSetFieldByNumber(out, 0, 6, ToMatlab(data_.front_upper_left));
+        mxSetFieldByNumber(out, 0, 7, ToMatlab(data_.front_upper_right));
+
+        return out;
+    }
+    mxArray* ToMatlab(TobiiResearchDisplayArea data_)
+    {
+        const char* fieldNames[] = {"height","width","bottom_left","bottom_right","top_left","top_right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        mxSetFieldByNumber(out, 0, 0, ToMatlab(static_cast<double>(data_.height)));
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(static_cast<double>(data_.width)));
+        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.bottom_left));
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.bottom_right));
+        mxSetFieldByNumber(out, 0, 4, ToMatlab(data_.top_left));
+        mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.top_right));
+
+        return out;
+    }
+    mxArray* ToMatlab(TobiiResearchPoint3D data_)
+    {
+        mxArray* out = mxCreateUninitDoubleMatrix(mxREAL, 3, 1);
+        auto storage = static_cast<double*>(mxGetData(out));
+        storage[0] = static_cast<double>(data_.x);
+        storage[1] = static_cast<double>(data_.y);
+        storage[2] = static_cast<double>(data_.z);
+        return out;
     }
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)

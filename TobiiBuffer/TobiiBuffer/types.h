@@ -11,14 +11,15 @@ namespace TobiiTypes
     class eyeTracker
     {
     public:
+        eyeTracker() {}
         eyeTracker(TobiiResearchEyeTracker* et_);
 
     public:
-        TobiiResearchEyeTracker*    _eyetracker = nullptr;
-        std::string                 _deviceName, _serialNumber, _model, _firmwareVersion, _runtimeVersion, _address;
-        TobiiResearchCapabilities   _capabilities;
-        std::vector<float>          _frequencies;
-        std::vector<std::string>    _modes;
+        TobiiResearchEyeTracker*    et = nullptr;
+        std::string                 deviceName, serialNumber, model, firmwareVersion, runtimeVersion, address;
+        TobiiResearchCapabilities   capabilities = TOBII_RESEARCH_CAPABILITIES_NONE;
+        std::vector<float>          supportedFrequencies;
+        std::vector<std::string>    supportedModes;
     };
 
     // My own almost POD class for Tobii eye images, for safe resource management

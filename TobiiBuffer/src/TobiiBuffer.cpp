@@ -148,7 +148,7 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
     {
         // also start stream error logging on all instances
         for (auto inst : *g_allInstances)
-            tobii_research_subscribe_to_stream_errors(inst->_eyetracker, TobiiStreamErrorCallback, inst->_eyetracker);
+            tobii_research_subscribe_to_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback, inst->_eyetracker.et);
     }
 
     return _isLogging = result == TOBII_RESEARCH_STATUS_OK;
@@ -179,7 +179,7 @@ bool TobiiBuffer::stopLogging()
     {
         // also stop stream error logging on all instances
         for (auto inst: *g_allInstances)
-            tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker, TobiiStreamErrorCallback);
+            tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback);
     }
 
     return success;
@@ -283,18 +283,20 @@ namespace
 
 TobiiBuffer::TobiiBuffer(std::string address_)
 {
-    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&_eyetracker);
+    TobiiResearchEyeTracker* et;
+    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&et);
     if (status != TOBII_RESEARCH_STATUS_OK)
     {
         std::stringstream os;
         os << "Cannot get eye tracker \"" << address_ << "\"";
         ErrorExit(os.str(), status);
     }
+    _eyetracker = TobiiTypes::eyeTracker(et);
     Init();
 }
 TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
 {
-    _eyetracker = et_;
+    _eyetracker = TobiiTypes::eyeTracker(et_);
     Init();
 }
 TobiiBuffer::~TobiiBuffer()
@@ -305,7 +307,7 @@ TobiiBuffer::~TobiiBuffer()
     stop(DataStream::TimeSync,    true);
     stop(DataStream::Positioning, true);
 
-    tobii_research_unsubscribe_from_stream_errors(_eyetracker, TobiiStreamErrorCallback);
+    tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TobiiStreamErrorCallback);
     stopLogging();
 
     leaveCalibrationMode(false);
@@ -329,14 +331,63 @@ void TobiiBuffer::Init()
         }
 
         // start stream error logging
-        tobii_research_subscribe_to_stream_errors(_eyetracker, TobiiStreamErrorCallback, _eyetracker);
+        tobii_research_subscribe_to_stream_errors(_eyetracker.et, TobiiStreamErrorCallback, _eyetracker.et);
     }
     if (g_allInstances)
         g_allInstances->push_back(this);
 }
 
+// getters and setters
+const float TobiiBuffer::getCurrentFrequency() const
+{
+    float gaze_output_frequency;
+    TobiiResearchStatus status = tobii_research_get_gaze_output_frequency(_eyetracker.et, &gaze_output_frequency);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye tracker current frequency", status);
+    return gaze_output_frequency;
+}
+const std::string TobiiBuffer::getCurrentTrackingMode() const
+{
+    char* eye_tracking_mode;
+    TobiiResearchStatus status = tobii_research_get_eye_tracking_mode(_eyetracker.et, &eye_tracking_mode);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye tracker current tracking mode", status);
 
-// calibration
+    std::string etMode(eye_tracking_mode);
+    tobii_research_free_string(eye_tracking_mode);
+    return etMode;
+}
+const TobiiResearchTrackBox TobiiBuffer::getTrackBox() const
+{
+    TobiiResearchTrackBox track_box;
+    TobiiResearchStatus status = tobii_research_get_track_box(_eyetracker.et, &track_box);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye tracker track box", status);
+    return track_box;
+}
+const TobiiResearchDisplayArea TobiiBuffer::getDisplayArea() const
+{
+    TobiiResearchDisplayArea display_area;
+    TobiiResearchStatus status = tobii_research_get_display_area(_eyetracker.et, &display_area);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot get eye tracker display area", status);
+    return display_area;
+}
+// setters
+void TobiiBuffer::setGazeFrequency(float frequency_)
+{
+    TobiiResearchStatus status = tobii_research_set_gaze_output_frequency(_eyetracker.et, frequency_);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot set eye tracker frequency", status);
+}
+void TobiiBuffer::setTrackingMode(std::string trackingMode_)
+{
+    TobiiResearchStatus status = tobii_research_set_eye_tracking_mode(_eyetracker.et, trackingMode_.c_str());
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot set eye tracker tracking mode", status);
+}
+
+//// calibration
 void TobiiBuffer::calibrationThread()
 {
     bool keepRunning            = true;
@@ -352,7 +403,7 @@ void TobiiBuffer::calibrationThread()
             break;
         case TobiiTypes::CalibrationAction::Enter:
             // enter calibration mode
-            result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker);
+            result = tobii_research_screen_based_calibration_enter_calibration_mode(_eyetracker.et);
             _calibrationWorkResultQueue.enqueue({workItem, result});
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
@@ -366,10 +417,10 @@ void TobiiBuffer::calibrationThread()
                 TobiiResearchSelectedEye collectEye=TOBII_RESEARCH_SELECTED_EYE_LEFT, ignore;
                 if (workItem.eye == "right")
                     collectEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-                result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), collectEye, &ignore);
+                result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), collectEye, &ignore);
             }
             else
-                result = tobii_research_screen_based_calibration_collect_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_collect_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
             _calibrationWorkResultQueue.enqueue({workItem, result});
 
@@ -385,10 +436,10 @@ void TobiiBuffer::calibrationThread()
                 TobiiResearchSelectedEye discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
                 if (workItem.eye == "right")
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-                result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
+                result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
             }
             else
-                result = tobii_research_screen_based_calibration_discard_data(_eyetracker, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_discard_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
 
             _calibrationWorkResultQueue.enqueue({workItem, result});
 
@@ -400,9 +451,9 @@ void TobiiBuffer::calibrationThread()
             _calibrationState = TobiiTypes::CalibrationState::Computing;
             TobiiResearchCalibrationResult* computeResult;
             if (_calibrationIsMonocular)
-                result = tobii_research_screen_based_monocular_calibration_compute_and_apply(_eyetracker, &computeResult);
+                result = tobii_research_screen_based_monocular_calibration_compute_and_apply(_eyetracker.et, &computeResult);
             else
-                result = tobii_research_screen_based_calibration_compute_and_apply(_eyetracker, &computeResult);
+                result = tobii_research_screen_based_calibration_compute_and_apply(_eyetracker.et, &computeResult);
 
             TobiiTypes::CalibrationWorkResult workResult{workItem, result};
             if (computeResult)
@@ -417,7 +468,7 @@ void TobiiBuffer::calibrationThread()
             _calibrationState = TobiiTypes::CalibrationState::GettingCalibrationData;
             TobiiResearchCalibrationData* calData;
 
-            result = tobii_research_retrieve_calibration_data(_eyetracker, &calData);
+            result = tobii_research_retrieve_calibration_data(_eyetracker.et, &calData);
 
             TobiiTypes::CalibrationWorkResult workResult{ workItem, result };
             if (calData->size)
@@ -439,7 +490,7 @@ void TobiiBuffer::calibrationThread()
                 calData.size = nItem;
                 memcpy(calData.data, workItem.calData.data(), nItem);
 
-                result = tobii_research_apply_calibration_data(_eyetracker, &calData);
+                result = tobii_research_apply_calibration_data(_eyetracker.et, &calData);
                 free(calData.data);
 
                 _calibrationWorkResultQueue.enqueue({workItem, result});
@@ -449,7 +500,7 @@ void TobiiBuffer::calibrationThread()
         }
         case TobiiTypes::CalibrationAction::Exit:
             // leave calibration mode and exit
-            result = tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
+            result = tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker.et);
             _calibrationWorkResultQueue.enqueue({workItem, result});
             keepRunning = false;
             break;
@@ -480,7 +531,7 @@ void TobiiBuffer::leaveCalibrationMode(bool force_)
         // call leave calibration mode on Tobii SDK, ignore error
         // this is provided as user code may need to ensure we're not in
         // calibration mode, e.g. after a previous crash
-        tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker);
+        tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker.et);
     }
 
     if (_calibrationThread.joinable())
@@ -639,16 +690,14 @@ bool TobiiBuffer::hasStream(std::string stream_) const
 bool TobiiBuffer::hasStream(DataStream  stream_) const
 {
     bool supported = false;
-    TobiiResearchCapabilities caps;
-    tobii_research_get_capabilities(_eyetracker, &caps);
     switch (stream_)
     {
         case DataStream::Gaze:
-            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA;
+            return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA;
         case DataStream::EyeImage:
-            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES;
+            return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES;
         case DataStream::ExtSignal:
-            return caps & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL;
+            return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL;
         case DataStream::TimeSync:
             return true;    // no capability that can be checked for this one
         case DataStream::Positioning:
@@ -679,7 +728,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // prepare and start buffer
                 auto l = lockForWriting<gaze>();
                 _gaze.reserve(initialBufferSize);
-                result = tobii_research_subscribe_to_gaze_data(_eyetracker, TobiiGazeCallback, this);
+                result = tobii_research_subscribe_to_gaze_data(_eyetracker.et, TobiiGazeCallback, this);
                 stateVar = &_recordingGaze;
             }
             break;
@@ -701,13 +750,13 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // if already recording and switching from gif to normal or other way, first stop old stream
                 if (_recordingEyeImages)
                     if (asGif != _eyeImIsGif)
-                        doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+                        doUnsubscribeEyeImage(_eyetracker.et, _eyeImIsGif);
                     else
                         // nothing to do
                         return true;
 
                 // subscribe to new stream
-                result = doSubscribeEyeImage(_eyetracker, this, asGif);
+                result = doSubscribeEyeImage(_eyetracker.et, this, asGif);
                 stateVar = &_recordingEyeImages;
                 if (result==TOBII_RESEARCH_STATUS_OK)
                     // update type being recorded if subscription to stream was successful
@@ -726,7 +775,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // prepare and start buffer
                 auto l = lockForWriting<extSignal>();
                 _extSignal.reserve(initialBufferSize);
-                result = tobii_research_subscribe_to_external_signal_data(_eyetracker, TobiiExtSignalCallback, this);
+                result = tobii_research_subscribe_to_external_signal_data(_eyetracker.et, TobiiExtSignalCallback, this);
                 stateVar = &_recordingExtSignal;
             }
             break;
@@ -742,7 +791,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // prepare and start buffer
                 auto l = lockForWriting<timeSync>();
                 _timeSync.reserve(initialBufferSize);
-                result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback, this);
+                result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker.et, TobiiTimeSyncCallback, this);
                 stateVar = &_recordingTimeSync;
             }
             break;
@@ -758,7 +807,7 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
                 // prepare and start buffer
                 auto l = lockForWriting<positioning>();
                 _positioning.reserve(initialBufferSize);
-                result = tobii_research_subscribe_to_user_position_guide(_eyetracker, TobiiPositioningCallback, this);
+                result = tobii_research_subscribe_to_user_position_guide(_eyetracker.et, TobiiPositioningCallback, this);
                 stateVar = &_recordingPositioning;
             }
             break;
@@ -964,23 +1013,23 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
     switch (stream_)
     {
         case DataStream::Gaze:
-            result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker, TobiiGazeCallback);
+            result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker.et, TobiiGazeCallback);
             stateVar = &_recordingGaze;
             break;
         case DataStream::EyeImage:
-            result = !_recordingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_eyetracker, _eyeImIsGif);
+            result = !_recordingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_eyetracker.et, _eyeImIsGif);
             stateVar = &_recordingEyeImages;
             break;
         case DataStream::ExtSignal:
-            result = !_recordingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_eyetracker, TobiiExtSignalCallback);
+            result = !_recordingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_eyetracker.et, TobiiExtSignalCallback);
             stateVar = &_recordingExtSignal;
             break;
         case DataStream::TimeSync:
-            result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker, TobiiTimeSyncCallback);
+            result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker.et, TobiiTimeSyncCallback);
             stateVar = &_recordingTimeSync;
             break;
         case DataStream::Positioning:
-            result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker, TobiiPositioningCallback);
+            result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker.et, TobiiPositioningCallback);
             stateVar = &_recordingPositioning;
             break;
     }
