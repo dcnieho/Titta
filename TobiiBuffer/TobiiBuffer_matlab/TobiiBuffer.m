@@ -73,13 +73,13 @@ classdef TobiiBuffer < handle
         end
         
         function SDKVersion = getSDKVersion(this)
-            SDKVersion = this.cppmethod('getSDKVersion');
+            SDKVersion = this.cppmethodGlobal('getSDKVersion');
         end
         function systemTimestamp = getSystemTimestamp(this)
-            systemTimestamp = this.cppmethod('getSystemTimestamp');
+            systemTimestamp = this.cppmethodGlobal('getSystemTimestamp');
         end
         function eyeTrackerList = findAllEyeTrackers(this)
-            eyeTrackerList = this.cppmethod('findAllEyeTrackers');
+            eyeTrackerList = this.cppmethodGlobal('findAllEyeTrackers');
         end
         
         
