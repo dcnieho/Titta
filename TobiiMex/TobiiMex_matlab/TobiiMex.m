@@ -294,8 +294,6 @@ classdef TobiiMex < handle
                 data = this.cppmethod('peekTimeRange',stream);
             end
         end
-        
-        
     end
 end
 

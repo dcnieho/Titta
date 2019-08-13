@@ -11,12 +11,12 @@ trackers.
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
 
-Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license, except the code and compiled libraries in the `./TobiiMatlabSDK` subfolder of this repository. Those files are copyright Tobii, please refer to the included EULA for their conditions.
+Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license.
 
 `demos/readme.m` shows a minimal example of using the toolbox's
 functionality.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK, so you do not have to install it separately. An up-to-date version of PsychToolbox is recommended. Make sure PsychToolbox's GStreamer dependency is installed.
+To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of PsychToolbox is recommended, at least 3.0.16 "Burnout".
 
 Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
 
@@ -53,7 +53,7 @@ The toolbox consists of multiple parts:
 ### The `Titta` class
 The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
 ### The `TobiiMex` class
-The `TobiiMex` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). It has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive.
+The `TobiiMex` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). Besides providing access to the same tracker functionality as the Tobii Pro MATLAB SDK, it has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive. For the rest, other function implemented in `TobiiMex` provide return values that are a bit friendlier to use in MATLAB, in the author's opinion (e.g. `double`s instead of `single`s) and no use of MATLAB classes to just hold plain data.
 ### The `TalkToProLab` class
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
@@ -107,21 +107,19 @@ The following read-only properties are available for a Titta instance:
 |`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to, such as serial number.|
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
-|`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiibuffer-class) instance for interaction with the eye tracker's data streams.|
-|`rawSDK`|Returns handle to Tobii SDK instance used by Titta (as constructed by calling `EyeTrackingOperations()` from the Tobii SDK)|
-|`rawET`|Initialized by call to `init()`. Returns Tobii SDK handle to the connected eye tracker|
+|`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiimex-class) instance for interaction with the eye tracker's data streams, or for directly interacting with the eye tracker through the Tobii Pro SDK. Note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
 
 #### Supported options
 Which of the below options are available depends on the eye tracker model. The `getDefaults()` and `getOptions()` method calls return the appropriate set of options for the indicated eye tracker.
 
 | Option name | Explanation |
 | --- | --- |
-|`settings.trackingMode`|Some trackers, like the Spectrum with firmware version >=1.7.6, have multiple tracking modes, select tracking mode by providing its name.|
+|`settings.trackingMode`|Some trackers, like the Spectrum with firmware version>=1.7.6, have multiple tracking modes, select tracking mode by providing its name.|
 |`settings.freq`|Sampling frequency|
 |`settings.calibrateEye`|Which eye to calibrate: 'both', also possible if supported by eye tracker: 'left' and 'right'.|
 |`settings.serialNumber`|If looking to connect to a specific eye tracker when multiple are available on the network, provide its serial number here.|
 |`settings.licenseFile`|If you tracker needs a license file applied (e.g. Tobii 4C), provide the full path to the license file here, or a cell array of full paths if there are multiple licenses to apply.|
-|`settings.nTryReConnect`|How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found.|
+|`settings.nTryReConnect`|How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to `TobiiMex.findAllEyeTrackers()` for network eye trackers to be found.|
 |`settings.connectRetryWait`|Seconds: time to wait between connection retries.|
 |`settings.debugMode`|Only for Titta developer use.|
 |  |  |
@@ -251,10 +249,18 @@ The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entr
 
 ### `TobiiMex` class
 #### Static methods
-The TobiiMex class does not have static methods.
+|Call|Inputs|Outputs|Description|
+| --- | --- | --- | --- |
+|`getSDKVersion`||<ol><li>`SDKVersion`: SDK version string.</li></ol>|Returns the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
+|`getSystemTimestamp`||<ol><li>`systemTimestamp`: An int64 scalar denoting Tobii system time in microseconds</li></ol>|Gets the current system time through the Tobii Pro SDK.|
+|`findAllEyeTrackers`||<ol><li>`eyeTrackerList`: An array of structs with information about the connected eye trackers.</li></ol>|Gets the eye trackers that are connected to the system, as listed by the Tobii Pro SDK.|
+|||||
+|`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
+|`stop()`|<ol><li>`getLog`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
+|`stopLogging()`|||Stop listening to the eye tracker's log stream.|
 
 #### Construction and initialization
-An instance of TobiiMex is constructed by calling `TobiiMex()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to.
+An instance of TobiiMex is constructed by calling `TobiiMex()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to. A list of connected eye trackers is provided by calling the static function `TobiiMex.findAllEyeTrackers()`.
 
 #### Methods
 The following method calls are available on a TobiiMex instance:
@@ -262,6 +268,16 @@ The following method calls are available on a TobiiMex instance:
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
+|||||
+|`getConnectedEyeTracker()`||||
+|`getCurrentFrequency()`||||
+|`getCurrentTrackingMode()`||||
+|`getTrackBox()`||||
+|`getDisplayArea()`||||
+|`setGazeFrequency()`||||
+|`setTrackingMode()`||||
+|`applyLicenses()`||||
+|`clearLicenses()`||||
 |||||
 |`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
 |`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer.|
@@ -273,10 +289,6 @@ The following method calls are available on a TobiiMex instance:
 |`consumeTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
 |`peekN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`lastN`: (optional) number of samples to peek from the end of the buffer. Defaults to 1.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
 |`peekTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
-|||||
-|`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
-|`stop()`|<ol><li>`getLog`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
-|`stopLogging()`|||Stop listening to the eye tracker's log stream.|
 |||||
 |`enterCalibrationMode()`|<ol><li>`doMonocular`: boolean indicating whether the calibration is monocular or binocular</li></ol>||Queue request for the tracker to enter into calibration mode.|
 |`leaveCalibrationMode()`|<ol><li>`force`: set to true if you want to be completely sure that the tracker is not in calibration mode after this call: this also ensures calibration mode is left if code other than this interface put the eye tracker into calibration mode</li></ol>||Queue request for the tracker to leave the calibration mode.|
