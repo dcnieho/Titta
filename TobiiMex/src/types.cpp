@@ -1,6 +1,6 @@
-#include "TobiiBuffer/types.h"
+#include "TobiiMex/types.h"
 
-#include "TobiiBuffer/utils.h"
+#include "TobiiMex/utils.h"
 
 namespace TobiiTypes
 {

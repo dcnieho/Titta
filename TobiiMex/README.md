@@ -1,4 +1,4 @@
-Usage instructions for using the TobiiBuffer class are found in [the Titta documentation](../readme.md).
+Usage instructions for using the TobiiMex class are found in [the Titta documentation](../readme.md).
 
 setup for if you want to compile this yourself:
 ```
@@ -10,7 +10,7 @@ cd vcpkg
 
 .\vcpkg.exe install readerwriterqueue readerwriterqueue:x64-windows
 ```
-readerwriterqueue is required for compiling TobiiBuffer.
+readerwriterqueue is required for compiling TobiiMex.
 
 You furthermore need to manually put the right files of the Tobii Pro C SDK in the right place of the vcpkg directory:
 ```

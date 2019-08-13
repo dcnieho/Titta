@@ -16,16 +16,16 @@
 #include <tobii_research_calibration.h>
 #pragma comment(lib, "tobii_research.lib")
 #ifndef _DEBUG
-#   pragma comment(lib, "TobiiBuffer.lib")
+#   pragma comment(lib, "TobiiMex.lib")
 #else
-#   pragma comment(lib, "TobiiBuffer_d.lib")
+#   pragma comment(lib, "TobiiMex_d.lib")
 #endif
 #include <readerwriterqueue/readerwriterqueue.h>
 
 #include "types.h"
 
 
-class TobiiBuffer
+class TobiiMex
 {
 public:
     // short names for very long Tobii data types
@@ -49,13 +49,13 @@ public:
         Positioning
     };
     // "gaze", "eyeImage", "externalSignal", or "timeSync"
-    static TobiiBuffer::DataStream stringToDataStream(std::string stream_);
-    static std::string dataStreamToString(TobiiBuffer::DataStream stream_);
+    static TobiiMex::DataStream stringToDataStream(std::string stream_);
+    static std::string dataStreamToString(TobiiMex::DataStream stream_);
 
 public:
-    TobiiBuffer(std::string address_);
-    TobiiBuffer(TobiiResearchEyeTracker* et_);
-    ~TobiiBuffer();
+    TobiiMex(std::string address_);
+    TobiiMex(TobiiResearchEyeTracker* et_);
+    ~TobiiMex();
 
     //// global SDK functions
     static TobiiResearchSDKVersion getSDKVersion();
@@ -63,7 +63,7 @@ public:
     static std::vector<TobiiTypes::eyeTracker> findAllEyeTrackers();
     // logging
     static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
-    static std::vector<TobiiBuffer::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
+    static std::vector<TobiiMex::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
     static bool stopLogging();	// always clears buffer
 
     //// eye-tracker specific getters and setters

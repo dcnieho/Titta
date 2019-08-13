@@ -1,4 +1,4 @@
-#include "TobiiBuffer/utils.h"
+#include "TobiiMex/utils.h"
 
 #include <sstream>
 
@@ -371,7 +371,7 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
 {
     std::stringstream os;
-    os << "TobiiBuffer Error: " << errMsg_ << std::endl;
+    os << "TobiiMex Error: " << errMsg_ << std::endl;
     os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << " (" << TobiiResearchStatusToExplanation(errCode_) << ")" << std::endl;
 
     DoExitWithMsg(os.str());

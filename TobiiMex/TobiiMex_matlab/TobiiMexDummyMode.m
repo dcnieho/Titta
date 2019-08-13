@@ -1,4 +1,4 @@
-% TobiiBuffer is part of Titta, a toolbox providing convenient access to
+% TobiiMex is part of Titta, a toolbox providing convenient access to
 % eye tracking functionality using Tobii eye trackers 
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
@@ -8,29 +8,29 @@
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
-classdef TobiiBufferDummyMode < TobiiBuffer
+classdef TobiiMexDummyMode < TobiiMex
     properties (Access = protected, Hidden = true)
         isRecordingGaze = false;
     end
     
     methods
         % Use the name of your MEX file here
-        function this = TobiiBufferDummyMode(~)
+        function this = TobiiMexDummyMode(~)
             % construct default base class, none of its properties are
             % relevant when in dummy mode
-            this = this@TobiiBuffer();
+            this = this@TobiiMex();
             
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
             if 1
-                thisInfo    = ?TobiiBufferDummyMode;
+                thisInfo    = ?TobiiMexDummyMode;
                 thisMethods = thisInfo.MethodList;
-                superInfo   = ?TobiiBuffer;
+                superInfo   = ?TobiiMex;
                 superMethods= superInfo.MethodList;
                 % for both, remove their constructors from list and limit
                 % to only public methods
-                superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'TobiiBuffer'})) = [];
-                thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TobiiBufferDummyMode'})) = [];
+                superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'TobiiMex'})) = [];
+                thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TobiiMexDummyMode'})) = [];
                 % for methods of this dummy mode class, also remove methods
                 % defined by superclass. and for both remove all those from
                 % handle class

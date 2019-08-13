@@ -15,24 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TobiiBuffer\TobiiBuffer.h">
+    <ClInclude Include="TobiiMex\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TobiiBuffer\utils.h">
+    <ClInclude Include="TobiiMex\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TobiiBuffer\types.h">
+    <ClInclude Include="TobiiMex\TobiiMex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\TobiiBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\types.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TobiiMex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

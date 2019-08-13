@@ -1,4 +1,4 @@
-% TobiiBuffer is part of Titta, a toolbox providing convenient access to
+% TobiiMex is part of Titta, a toolbox providing convenient access to
 % eye tracking functionality using Tobii eye trackers 
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
@@ -8,7 +8,7 @@
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
-classdef TobiiBuffer < handle
+classdef TobiiMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
@@ -29,7 +29,7 @@ classdef TobiiBuffer < handle
             % http://stackoverflow.com/a/19307825/2778484
             funInfo = functions(mexFnc);
             if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
-                error('TobiiBuffer:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
+                error('TobiiMex:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
             end
         end
     end
@@ -37,7 +37,7 @@ classdef TobiiBuffer < handle
     methods (Access = protected, Sealed = true)
         function varargout = cppmethod(this, methodName, varargin)
             if isempty(this.instanceHandle)
-                error('TobiiBuffer:invalidHandle','No class handle. Did you call init yet?');
+                error('TobiiMex:invalidHandle','No class handle. Did you call init yet?');
             end
             [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, this.instanceHandle, varargin{:});
         end
@@ -49,8 +49,8 @@ classdef TobiiBuffer < handle
     
     methods
         % Use the name of your MEX file here
-        function this = TobiiBuffer(debugMode)
-            % debugmode is for developer of TobiiBuffer only, no use for
+        function this = TobiiMex(debugMode)
+            % debugmode is for developer of TobiiMex only, no use for
             % end users
             if nargin<1 || isempty(debugMode)
                 debugMode = false;
@@ -59,9 +59,9 @@ classdef TobiiBuffer < handle
             end
             % determine what mex file to call
             if debugMode
-                mexFnc = 'TobiiBuffer_matlab_d';
+                mexFnc = 'TobiiMex_matlab_d';
             else
-                mexFnc = 'TobiiBuffer_matlab';
+                mexFnc = 'TobiiMex_matlab';
             end
             
             % construct C++ class instance
@@ -135,21 +135,21 @@ classdef TobiiBuffer < handle
         end
         % setters
         function setGazeFrequency(this,freq)
-            assert(nargin>1,'Titta::buffer::setGazeFrequency: provide frequency argument.');
+            assert(nargin>1,'TobiiMex::setGazeFrequency: provide frequency argument.');
             this.cppmethod('setGazeFrequency',single(freq));
         end
         function setTrackingMode(this,trackingMode)
-            assert(nargin>1,'Titta::buffer::setTrackingMode: provide tracking mode argument.');
+            assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');
             trackingMode = ensureStringIsChar(trackingMode);
             this.cppmethod('setTrackingMode',trackingMode);
         end
         function applyLicenses(this,licenses)
-            assert(nargin>1,'Titta::buffer::applyLicenses: provide licenses argument.');
+            assert(nargin>1,'TobiiMex::applyLicenses: provide licenses argument.');
             if ~iscell(licenses)
                 licenses = {licenses};
             end
             classes = cellfun(@class,licenses,'uni',false);
-            assert(all(ismember(classes,{'char','uint8'})),'Titta::buffer::applyLicenses: the provided licenses should have ''char'' or ''uint8'' type')
+            assert(all(ismember(classes,{'char','uint8'})),'TobiiMex::applyLicenses: the provided licenses should have ''char'' or ''uint8'' type')
             % convert all to uint8 to make C++-side simpler (not sure if
             % absolutely safe to just use uint8 there in all cases)
             licenses = cellfun(@uint8,licenses,'uni',false);
@@ -201,13 +201,13 @@ classdef TobiiBuffer < handle
         
         %% data streams
         function supported = hasStream(this,stream)
-            assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
-            assert(nargin>1,'Titta::buffer::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
@@ -220,7 +220,7 @@ classdef TobiiBuffer < handle
         function success = stop(this,stream,doClearBuffer)
             % optional boolean input indicating whether buffer should be
             % cleared out
-            assert(nargin>1,'Titta::buffer::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(doClearBuffer)
                 success = this.cppmethod('stop',stream,logical(doClearBuffer));
@@ -229,16 +229,16 @@ classdef TobiiBuffer < handle
             end
         end
         function status = isRecording(this,stream)
-            assert(nargin>1,'Titta::buffer::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             status = this.cppmethod('isBuffering',ensureStringIsChar(stream));
         end
         function clear(this,stream)
-            assert(nargin>1,'Titta::buffer::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole buffer
-            assert(nargin>1,'Titta::buffer::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
@@ -251,7 +251,7 @@ classdef TobiiBuffer < handle
         function data = consumeN(this,stream,firstN)
             % optional input argument firstN: how many samples to consume
             % from start. Default: all
-            assert(nargin>1,'Titta::buffer::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(firstN)
                 data = this.cppmethod('consumeN',stream,uint64(firstN));
@@ -261,7 +261,7 @@ classdef TobiiBuffer < handle
         end
         function data = consumeTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'Titta::buffer::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
@@ -274,7 +274,7 @@ classdef TobiiBuffer < handle
         function data = peekN(this,stream,lastN)
             % optional input argument lastN: how many samples to peek from
             % end. Default: 1. To get all, ask for -1 samples
-            assert(nargin>1,'Titta::buffer::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(lastN)
                 data = this.cppmethod('peekN',stream,uint64(lastN));
@@ -284,7 +284,7 @@ classdef TobiiBuffer < handle
         end
         function data = peekTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'Titta::buffer::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));

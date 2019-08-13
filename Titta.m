@@ -192,7 +192,7 @@ classdef Titta < handle
         
         function out = init(obj)
             % Load in our callback buffer mex
-            obj.buffer = TobiiBuffer();
+            obj.buffer = TobiiMex();
             obj.buffer.startLogging();
             
             % Connect to eyetracker
@@ -320,7 +320,7 @@ classdef Titta < handle
             obj.systemInfo.samplerate       = obj.buffer.getCurrentFrequency();
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
             obj.systemInfo.trackingMode     = obj.buffer.getCurrentTrackingMode();
-            obj.systemInfo.tobiiBuffer_C    = obj.buffer.getSDKVersion();
+            obj.systemInfo.SDKVersion       = obj.buffer.getSDKVersion();   % SDK version consumed by MEX file
             out.systemInfo                  = obj.systemInfo;
             
             % get information about display geometry and trackbox

@@ -13,8 +13,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-#include "TobiiBuffer/TobiiBuffer.h"
-#include "TobiiBuffer/utils.h"
+#include "TobiiMex/TobiiMex.h"
+#include "TobiiMex/utils.h"
 #include "function_traits.h"
 
 
@@ -126,7 +126,7 @@ namespace {
 int main()
 {
     // global Tobii Buffer instance
-    std::unique_ptr<TobiiBuffer> TobiiBufferInstance;
+    std::unique_ptr<TobiiMex> TobiiMexInstance;
     TobiiResearchEyeTracker* eyeTracker = nullptr;
 
     uWS::Hub h;
@@ -156,7 +156,7 @@ int main()
         nClients++;
     });
 
-    h.onMessage([&h, &TobiiBufferInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac, &baseSampleFreq, &needSetSampleStreamFreq](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
+    h.onMessage([&h, &TobiiMexInstance, &eyeTracker, &tobiiBroadcastCallback, &downSampFac, &baseSampleFreq, &needSetSampleStreamFreq](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode)
     {
         auto jsonInput = json::parse(std::string(message, length),nullptr,false);
         if (jsonInput.is_discarded() || jsonInput.is_null())
@@ -372,9 +372,9 @@ int main()
             }
             case Action::StartSampleBuffer:
             {
-                if (!TobiiBufferInstance.get())
+                if (!TobiiMexInstance.get())
                     if (eyeTracker)
-                        TobiiBufferInstance = std::make_unique<TobiiBuffer>(eyeTracker);
+                        TobiiMexInstance = std::make_unique<TobiiMex>(eyeTracker);
                     else
                     {
                         sendJson(ws, {{"error", "startSampleBuffer"},{"reason","you need to do the \"connect\" action first"}});
@@ -382,29 +382,29 @@ int main()
                     }
 
                 bool status = false;
-                if (TobiiBufferInstance.get())
-                    status = TobiiBufferInstance.get()->start("sample");
+                if (TobiiMexInstance.get())
+                    status = TobiiMexInstance.get()->start("sample");
 
                 sendJson(ws, {{"action", "startSampleBuffer"}, {"status", status}});
                 break;
             }
             case Action::ClearSampleBuffer:
-                if (TobiiBufferInstance.get())
-                    TobiiBufferInstance.get()->clear("sample");
+                if (TobiiMexInstance.get())
+                    TobiiMexInstance.get()->clear("sample");
                 sendJson(ws, {{"action", "clearSampleBuffer"}, {"status", true}});  // nothing to clear or cleared, both success status
                 break;
             case Action::PeekSamples:
             {
                 // get sample
                 auto jsonOutput = json::array();   // empty array if no samples
-                if (TobiiBufferInstance.get())
+                if (TobiiMexInstance.get())
                 {
-                    using argType = function_traits<decltype(&TobiiBuffer::peekN<TobiiBuffer::gaze>)>::argument<1>::type::value_type;
+                    using argType = function_traits<decltype(&TobiiMex::peekN<TobiiMex::gaze>)>::argument<1>::type::value_type;
                     std::optional<argType> nSamples;
                     if (jsonInput.count("nSamples"))
                         nSamples = jsonInput.at("nSamples").get<argType>();
 
-                    auto samples = TobiiBufferInstance.get()->peekN<TobiiBuffer::gaze>(nSamples);
+                    auto samples = TobiiMexInstance.get()->peekN<TobiiMex::gaze>(nSamples);
                     if (!samples.empty())
                     {
                         for (auto sample: samples)
@@ -419,17 +419,17 @@ int main()
             case Action::StopSampleBuffer:
             {
                 bool status = false;
-                if (TobiiBufferInstance.get())
-                    status = TobiiBufferInstance.get()->stop("sample");
+                if (TobiiMexInstance.get())
+                    status = TobiiMexInstance.get()->stop("sample");
 
                 sendJson(ws, {{"action", "stopSampleBuffer"}, {"status", status}});
                 break;
             }
             case Action::SaveData:
             {
-                if (TobiiBufferInstance.get())
+                if (TobiiMexInstance.get())
                 {
-                    auto samples = TobiiBufferInstance.get()->consumeN<TobiiBuffer::gaze>();
+                    auto samples = TobiiMexInstance.get()->consumeN<TobiiMex::gaze>();
                     // TODO: store all to file somehow
                 }
                 break;
@@ -445,15 +445,15 @@ int main()
         }
     });
 
-    h.onDisconnection([&h,&nClients,&eyeTracker,&TobiiBufferInstance](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
+    h.onDisconnection([&h,&nClients,&eyeTracker,&TobiiMexInstance](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length)
     {
         std::cout << "Client disconnected, code " << code << std::endl;
         if (--nClients == 0)
         {
             std::cout << "No clients left, stopping buffering and streaming, if active..." << std::endl;
             tobii_research_unsubscribe_from_gaze_data(eyeTracker, &invoke_function);
-            if (TobiiBufferInstance.get())
-                TobiiBufferInstance.get()->stop("sample");
+            if (TobiiMexInstance.get())
+                TobiiMexInstance.get()->stop("sample");
         }
     });
 

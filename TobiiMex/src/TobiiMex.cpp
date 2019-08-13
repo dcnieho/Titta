@@ -1,4 +1,4 @@
-#include "TobiiBuffer/TobiiBuffer.h"
+#include "TobiiMex/TobiiMex.h"
 #include <vector>
 #include <shared_mutex>
 #include <algorithm>
@@ -6,7 +6,7 @@
 #include <sstream>
 #include <map>
 
-#include "TobiiBuffer/utils.h"
+#include "TobiiMex/utils.h"
 
 namespace
 {
@@ -24,19 +24,19 @@ namespace
     template <typename T>
     mutex_type& getMutex()
     {
-        if constexpr (std::is_same_v<T, TobiiBuffer::gaze>)
+        if constexpr (std::is_same_v<T, TobiiMex::gaze>)
             return g_mSamp;
-        if constexpr (std::is_same_v<T, TobiiBuffer::eyeImage>)
+        if constexpr (std::is_same_v<T, TobiiMex::eyeImage>)
             return g_mEyeImage;
-        if constexpr (std::is_same_v<T, TobiiBuffer::extSignal>)
+        if constexpr (std::is_same_v<T, TobiiMex::extSignal>)
             return g_mExtSignal;
-        if constexpr (std::is_same_v<T, TobiiBuffer::timeSync>)
+        if constexpr (std::is_same_v<T, TobiiMex::timeSync>)
             return g_mTimeSync;
-        if constexpr (std::is_same_v<T, TobiiBuffer::positioning>)
+        if constexpr (std::is_same_v<T, TobiiMex::positioning>)
             return g_mPositioning;
-        if constexpr (std::is_same_v<T, TobiiBuffer::logMessage>)
+        if constexpr (std::is_same_v<T, TobiiMex::logMessage>)
             return g_mLogs;
-        if constexpr (std::is_same_v<T, TobiiBuffer::streamError>)
+        if constexpr (std::is_same_v<T, TobiiMex::streamError>)
             return g_mLogs;
     }
 
@@ -70,19 +70,19 @@ namespace
     }
 
     // Map string to a Data Stream
-    const std::map<std::string, TobiiBuffer::DataStream> dataStreamMap =
+    const std::map<std::string, TobiiMex::DataStream> dataStreamMap =
     {
-        { "gaze",           TobiiBuffer::DataStream::Gaze },
-        { "eyeImage",       TobiiBuffer::DataStream::EyeImage },
-        { "externalSignal", TobiiBuffer::DataStream::ExtSignal },
-        { "timeSync",       TobiiBuffer::DataStream::TimeSync },
-        { "positioning",    TobiiBuffer::DataStream::Positioning }
+        { "gaze",           TobiiMex::DataStream::Gaze },
+        { "eyeImage",       TobiiMex::DataStream::EyeImage },
+        { "externalSignal", TobiiMex::DataStream::ExtSignal },
+        { "timeSync",       TobiiMex::DataStream::TimeSync },
+        { "positioning",    TobiiMex::DataStream::Positioning }
     };
 
-    std::unique_ptr<std::vector<TobiiBuffer*>> g_allInstances = std::make_unique<std::vector<TobiiBuffer*>>();
+    std::unique_ptr<std::vector<TobiiMex*>> g_allInstances = std::make_unique<std::vector<TobiiMex*>>();
 }
 
-TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
+TobiiMex::DataStream TobiiMex::stringToDataStream(std::string stream_)
 {
     auto it = dataStreamMap.find(stream_);
     if (it == dataStreamMap.end())
@@ -94,14 +94,14 @@ TobiiBuffer::DataStream TobiiBuffer::stringToDataStream(std::string stream_)
     return it->second;
 }
 
-std::string TobiiBuffer::dataStreamToString(TobiiBuffer::DataStream stream_)
+std::string TobiiMex::dataStreamToString(TobiiMex::DataStream stream_)
 {
     auto v = *find_if(dataStreamMap.begin(), dataStreamMap.end(), [&stream_](auto p) {return p.second == stream_;});
     return v.first;
 }
 
 // info getters
-TobiiResearchSDKVersion TobiiBuffer::getSDKVersion()
+TobiiResearchSDKVersion TobiiMex::getSDKVersion()
 {
     TobiiResearchSDKVersion sdk_version;
     TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
@@ -109,7 +109,7 @@ TobiiResearchSDKVersion TobiiBuffer::getSDKVersion()
         ErrorExit("Cannot get Tobii SDK version", status);
     return sdk_version;
 }
-int64_t TobiiBuffer::getSystemTimestamp()
+int64_t TobiiMex::getSystemTimestamp()
 {
     int64_t system_time_stamp;
     TobiiResearchStatus status = tobii_research_get_system_time_stamp(&system_time_stamp);
@@ -117,7 +117,7 @@ int64_t TobiiBuffer::getSystemTimestamp()
         ErrorExit("Cannot get Tobii SDK system time", status);
     return system_time_stamp;
 }
-std::vector<TobiiTypes::eyeTracker> TobiiBuffer::findAllEyeTrackers()
+std::vector<TobiiTypes::eyeTracker> TobiiMex::findAllEyeTrackers()
 {
     TobiiResearchEyeTrackers* tobiiTrackers = nullptr;
     TobiiResearchStatus status = tobii_research_find_all_eyetrackers(&tobiiTrackers);
@@ -132,7 +132,7 @@ std::vector<TobiiTypes::eyeTracker> TobiiBuffer::findAllEyeTrackers()
 }
 
 // logging static functions and member
-bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
+bool TobiiMex::startLogging(std::optional<size_t> initialBufferSize_)
 {
     if (!_logMessages)
         _logMessages = std::make_unique<std::vector<allLogTypes>>();
@@ -153,7 +153,7 @@ bool TobiiBuffer::startLogging(std::optional<size_t> initialBufferSize_)
 
     return _isLogging = result == TOBII_RESEARCH_STATUS_OK;
 }
-std::vector<TobiiBuffer::allLogTypes> TobiiBuffer::getLog(std::optional<bool> clearLog_)
+std::vector<TobiiMex::allLogTypes> TobiiMex::getLog(std::optional<bool> clearLog_)
 {
     if (!_logMessages)
         return {};
@@ -168,7 +168,7 @@ std::vector<TobiiBuffer::allLogTypes> TobiiBuffer::getLog(std::optional<bool> cl
         // provide a copy
         return std::vector<allLogTypes>(*_logMessages);
 }
-bool TobiiBuffer::stopLogging()
+bool TobiiMex::stopLogging()
 {
     auto result = tobii_research_logging_unsubscribe();
     auto success = result == TOBII_RESEARCH_STATUS_OK;
@@ -190,61 +190,61 @@ void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::gaze>();
-        static_cast<TobiiBuffer*>(user_data)->_gaze.push_back(*gaze_data_);
+        auto l = lockForWriting<TobiiMex::gaze>();
+        static_cast<TobiiMex*>(user_data)->_gaze.push_back(*gaze_data_);
     }
 }
 void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::eyeImage>();
-        static_cast<TobiiBuffer*>(user_data)->_eyeImages.emplace_back(eye_image_);
+        auto l = lockForWriting<TobiiMex::eyeImage>();
+        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
     }
 }
 void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::eyeImage>();
-        static_cast<TobiiBuffer*>(user_data)->_eyeImages.emplace_back(eye_image_);
+        auto l = lockForWriting<TobiiMex::eyeImage>();
+        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
     }
 }
 void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::extSignal>();
-        static_cast<TobiiBuffer*>(user_data)->_extSignal.push_back(*ext_signal_);
+        auto l = lockForWriting<TobiiMex::extSignal>();
+        static_cast<TobiiMex*>(user_data)->_extSignal.push_back(*ext_signal_);
     }
 }
 void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::timeSync>();
-        static_cast<TobiiBuffer*>(user_data)->_timeSync.push_back(*time_sync_data_);
+        auto l = lockForWriting<TobiiMex::timeSync>();
+        static_cast<TobiiMex*>(user_data)->_timeSync.push_back(*time_sync_data_);
     }
 }
 void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiBuffer::positioning>();
-        static_cast<TobiiBuffer*>(user_data)->_positioning.push_back(*position_data_);
+        auto l = lockForWriting<TobiiMex::positioning>();
+        static_cast<TobiiMex*>(user_data)->_positioning.push_back(*position_data_);
     }
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
-    if (TobiiBuffer::_logMessages)
+    if (TobiiMex::_logMessages)
     {
-        auto l = lockForWriting<TobiiBuffer::logMessage>();
-        TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::logMessage(system_time_stamp_, source_, level_, message_));
+        auto l = lockForWriting<TobiiMex::logMessage>();
+        TobiiMex::_logMessages->emplace_back(TobiiMex::logMessage(system_time_stamp_, source_, level_, message_));
     }
 }
 void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
 {
-    if (TobiiBuffer::_logMessages && errorData_)
+    if (TobiiMex::_logMessages && errorData_)
     {
         std::string serial;
         if (user_data)
@@ -254,15 +254,15 @@ void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* us
             serial = serial_number;
             tobii_research_free_string(serial_number);
         }
-        auto l = lockForWriting<TobiiBuffer::streamError>();
-        TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
+        auto l = lockForWriting<TobiiMex::streamError>();
+        TobiiMex::_logMessages->emplace_back(TobiiMex::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
     }
 }
 
 namespace
 {
     // eye image helpers
-    TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiBuffer* instance_, bool asGif_)
+    TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, TobiiMex* instance_, bool asGif_)
     {
         if (asGif_)
             return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_);
@@ -281,7 +281,7 @@ namespace
 
 
 
-TobiiBuffer::TobiiBuffer(std::string address_)
+TobiiMex::TobiiMex(std::string address_)
 {
     TobiiResearchEyeTracker* et;
     TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&et);
@@ -294,12 +294,12 @@ TobiiBuffer::TobiiBuffer(std::string address_)
     _eyetracker = TobiiTypes::eyeTracker(et);
     Init();
 }
-TobiiBuffer::TobiiBuffer(TobiiResearchEyeTracker* et_)
+TobiiMex::TobiiMex(TobiiResearchEyeTracker* et_)
 {
     _eyetracker = TobiiTypes::eyeTracker(et_);
     Init();
 }
-TobiiBuffer::~TobiiBuffer()
+TobiiMex::~TobiiMex()
 {
     stop(DataStream::Gaze,        true);
     stop(DataStream::EyeImage,    true);
@@ -315,19 +315,19 @@ TobiiBuffer::~TobiiBuffer()
     if (g_allInstances)
         g_allInstances->erase(std::remove(g_allInstances->begin(), g_allInstances->end(), this), g_allInstances->end());
 }
-void TobiiBuffer::Init()
+void TobiiMex::Init()
 {
     if (_isLogging)
     {
         // log version of SDK dll that is being used
-        if (TobiiBuffer::_logMessages)
+        if (TobiiMex::_logMessages)
         {
             TobiiResearchSDKVersion version;
             tobii_research_get_sdk_version(&version);
             std::stringstream os;
             os << "Using C SDK version: " << version.major << "." << version.minor << "." << version.revision << "." << version.build;
-            auto l = lockForWriting<TobiiBuffer::logMessage>();
-            TobiiBuffer::_logMessages->emplace_back(TobiiBuffer::logMessage(0, TOBII_RESEARCH_LOG_SOURCE_SDK, TOBII_RESEARCH_LOG_LEVEL_INFORMATION, os.str()));
+            auto l = lockForWriting<TobiiMex::logMessage>();
+            TobiiMex::_logMessages->emplace_back(TobiiMex::logMessage(0, TOBII_RESEARCH_LOG_SOURCE_SDK, TOBII_RESEARCH_LOG_LEVEL_INFORMATION, os.str()));
         }
 
         // start stream error logging
@@ -338,7 +338,7 @@ void TobiiBuffer::Init()
 }
 
 // getters and setters
-const float TobiiBuffer::getCurrentFrequency() const
+const float TobiiMex::getCurrentFrequency() const
 {
     float gaze_output_frequency;
     TobiiResearchStatus status = tobii_research_get_gaze_output_frequency(_eyetracker.et, &gaze_output_frequency);
@@ -346,7 +346,7 @@ const float TobiiBuffer::getCurrentFrequency() const
         ErrorExit("Cannot get eye tracker current frequency", status);
     return gaze_output_frequency;
 }
-const std::string TobiiBuffer::getCurrentTrackingMode() const
+const std::string TobiiMex::getCurrentTrackingMode() const
 {
     char* eye_tracking_mode;
     TobiiResearchStatus status = tobii_research_get_eye_tracking_mode(_eyetracker.et, &eye_tracking_mode);
@@ -357,7 +357,7 @@ const std::string TobiiBuffer::getCurrentTrackingMode() const
     tobii_research_free_string(eye_tracking_mode);
     return etMode;
 }
-const TobiiResearchTrackBox TobiiBuffer::getTrackBox() const
+const TobiiResearchTrackBox TobiiMex::getTrackBox() const
 {
     TobiiResearchTrackBox track_box;
     TobiiResearchStatus status = tobii_research_get_track_box(_eyetracker.et, &track_box);
@@ -365,7 +365,7 @@ const TobiiResearchTrackBox TobiiBuffer::getTrackBox() const
         ErrorExit("Cannot get eye tracker track box", status);
     return track_box;
 }
-const TobiiResearchDisplayArea TobiiBuffer::getDisplayArea() const
+const TobiiResearchDisplayArea TobiiMex::getDisplayArea() const
 {
     TobiiResearchDisplayArea display_area;
     TobiiResearchStatus status = tobii_research_get_display_area(_eyetracker.et, &display_area);
@@ -374,19 +374,19 @@ const TobiiResearchDisplayArea TobiiBuffer::getDisplayArea() const
     return display_area;
 }
 // setters
-void TobiiBuffer::setGazeFrequency(float frequency_)
+void TobiiMex::setGazeFrequency(float frequency_)
 {
     TobiiResearchStatus status = tobii_research_set_gaze_output_frequency(_eyetracker.et, frequency_);
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker frequency", status);
 }
-void TobiiBuffer::setTrackingMode(std::string trackingMode_)
+void TobiiMex::setTrackingMode(std::string trackingMode_)
 {
     TobiiResearchStatus status = tobii_research_set_eye_tracking_mode(_eyetracker.et, trackingMode_.c_str());
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker tracking mode", status);
 }
-std::vector<TobiiResearchLicenseValidationResult> TobiiBuffer::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
+std::vector<TobiiResearchLicenseValidationResult> TobiiMex::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
 {
     std::vector<uint8_t*> licenseKeyRing;
     std::vector<size_t>   licenseLengths;
@@ -405,7 +405,7 @@ std::vector<TobiiResearchLicenseValidationResult> TobiiBuffer::applyLicenses(std
 
     return validationResults;
 }
-void TobiiBuffer::clearLicenses()
+void TobiiMex::clearLicenses()
 {
     TobiiResearchStatus status = tobii_research_clear_applied_licenses(_eyetracker.et);
     if (status != TOBII_RESEARCH_STATUS_OK)
@@ -416,7 +416,7 @@ void TobiiBuffer::clearLicenses()
 }
 
 //// calibration
-void TobiiBuffer::calibrationThread()
+void TobiiMex::calibrationThread()
 {
     bool keepRunning            = true;
     TobiiResearchStatus result;
@@ -537,7 +537,7 @@ void TobiiBuffer::calibrationThread()
 
     _calibrationState = TobiiTypes::CalibrationState::Left;
 }
-void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
+void TobiiMex::enterCalibrationMode(bool doMonocular_)
 {
     if (_calibrationThread.joinable())
     {
@@ -550,9 +550,9 @@ void TobiiBuffer::enterCalibrationMode(bool doMonocular_)
     // this calls tobii_research_screen_based_calibration_enter_calibration_mode() in the thread function
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Enter});
     _calibrationState   = TobiiTypes::CalibrationState::NotYetEntered;
-    _calibrationThread  = std::thread(&TobiiBuffer::calibrationThread, this);
+    _calibrationThread  = std::thread(&TobiiMex::calibrationThread, this);
 }
-void TobiiBuffer::leaveCalibrationMode(bool force_)
+void TobiiMex::leaveCalibrationMode(bool force_)
 {
     if (force_)
     {
@@ -587,7 +587,7 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
         }
     }
 }
-void TobiiBuffer::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+void TobiiMex::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
     if (!_calibrationThread.joinable())
     {
@@ -598,7 +598,7 @@ void TobiiBuffer::calibrationCollectData(std::array<double, 2> coordinates_, std
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
-void TobiiBuffer::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+void TobiiMex::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
     if (!_calibrationThread.joinable())
     {
@@ -609,7 +609,7 @@ void TobiiBuffer::calibrationDiscardData(std::array<double, 2> coordinates_, std
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
-void TobiiBuffer::calibrationComputeAndApply()
+void TobiiMex::calibrationComputeAndApply()
 {
     if (!_calibrationThread.joinable())
     {
@@ -618,7 +618,7 @@ void TobiiBuffer::calibrationComputeAndApply()
 
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Compute});
 }
-void TobiiBuffer::calibrationGetData()
+void TobiiMex::calibrationGetData()
 {
     if (!_calibrationThread.joinable())
     {
@@ -627,7 +627,7 @@ void TobiiBuffer::calibrationGetData()
 
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
 }
-void TobiiBuffer::calibrationApplyData(std::vector<uint8_t> calData_)
+void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
 {
     if (!_calibrationThread.joinable())
     {
@@ -638,11 +638,11 @@ void TobiiBuffer::calibrationApplyData(std::vector<uint8_t> calData_)
     workItem.calData = calData_;
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
-TobiiTypes::CalibrationState TobiiBuffer::calibrationGetStatus()
+TobiiTypes::CalibrationState TobiiMex::calibrationGetStatus()
 {
     return _calibrationState;
 }
-std::optional<TobiiTypes::CalibrationWorkResult> TobiiBuffer::calibrationRetrieveResult(bool makeString /*= false*/)
+std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveResult(bool makeString /*= false*/)
 {
     TobiiTypes::CalibrationWorkResult out;
     if (_calibrationWorkResultQueue.try_dequeue(out))
@@ -662,7 +662,7 @@ std::optional<TobiiTypes::CalibrationWorkResult> TobiiBuffer::calibrationRetriev
 
 // helpers to make the below generic
 template <typename T>
-std::vector<T>& TobiiBuffer::getBuffer()
+std::vector<T>& TobiiMex::getBuffer()
 {
     if constexpr (std::is_same_v<T, gaze>)
         return _gaze;
@@ -677,7 +677,7 @@ std::vector<T>& TobiiBuffer::getBuffer()
 }
 template <typename T>
 std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator, bool>
-TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
+TobiiMex::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 {
     // !NB: appropriate locking is responsibility of caller!
     // find elements within given range of time stamps, both sides inclusive.
@@ -711,11 +711,11 @@ TobiiBuffer::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 }
 
 
-bool TobiiBuffer::hasStream(std::string stream_) const
+bool TobiiMex::hasStream(std::string stream_) const
 {
     return hasStream(stringToDataStream(stream_));
 }
-bool TobiiBuffer::hasStream(DataStream  stream_) const
+bool TobiiMex::hasStream(DataStream  stream_) const
 {
     bool supported = false;
     switch (stream_)
@@ -735,11 +735,11 @@ bool TobiiBuffer::hasStream(DataStream  stream_) const
     return supported;
 }
 
-bool TobiiBuffer::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
+bool TobiiMex::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
     return start(stringToDataStream(stream_), initialBufferSize_, asGif_);
 }
-bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
+bool TobiiMex::start(DataStream  stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -855,11 +855,11 @@ bool TobiiBuffer::start(DataStream  stream_, std::optional<size_t> initialBuffer
     return result == TOBII_RESEARCH_STATUS_OK;
 }
 
-bool TobiiBuffer::isBuffering(std::string stream_) const
+bool TobiiMex::isBuffering(std::string stream_) const
 {
     return isBuffering(stringToDataStream(stream_));
 }
-bool TobiiBuffer::isBuffering(DataStream  stream_) const
+bool TobiiMex::isBuffering(DataStream  stream_) const
 {
     bool success = false;
     switch (stream_)
@@ -899,7 +899,7 @@ std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::ite
     }
 }
 template <typename T>
-std::vector<T> TobiiBuffer::consumeN(std::optional<size_t> firstN_)
+std::vector<T> TobiiMex::consumeN(std::optional<size_t> firstN_)
 {
     // deal with default arguments
     auto firstN = firstN_.value_or(defaults::consumeAmount);
@@ -913,7 +913,7 @@ std::vector<T> TobiiBuffer::consumeN(std::optional<size_t> firstN_)
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename T>
-std::vector<T> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+std::vector<T> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     // deal with default arguments
     auto timeStart = timeStart_.value_or(defaults::consumeTimeRangeStart);
@@ -936,7 +936,7 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vecto
     return std::vector<T>(startIt_, endIt_);
 }
 template <typename T>
-std::vector<T> TobiiBuffer::peekN(std::optional<size_t> lastN_)
+std::vector<T> TobiiMex::peekN(std::optional<size_t> lastN_)
 {
     // deal with default arguments
     auto lastN = lastN_.value_or(defaults::peekAmount);
@@ -950,7 +950,7 @@ std::vector<T> TobiiBuffer::peekN(std::optional<size_t> lastN_)
     return peekFromVec(buf, startIt,endIt);
 }
 template <typename T>
-std::vector<T> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+std::vector<T> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     // deal with default arguments
     auto timeStart = timeStart_.value_or(defaults::peekTimeRangeStart);
@@ -964,7 +964,7 @@ std::vector<T> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std
 }
 
 template <typename T>
-void TobiiBuffer::clearImpl(int64_t timeStart_, int64_t timeEnd_)
+void TobiiMex::clearImpl(int64_t timeStart_, int64_t timeEnd_)
 {
     auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer<T>();
@@ -979,11 +979,11 @@ void TobiiBuffer::clearImpl(int64_t timeStart_, int64_t timeEnd_)
     else
         buf.erase(start, end);
 }
-void TobiiBuffer::clear(std::string stream_)
+void TobiiMex::clear(std::string stream_)
 {
     clear(stringToDataStream(stream_));
 }
-void TobiiBuffer::clear(DataStream stream_)
+void TobiiMex::clear(DataStream stream_)
 {
     if (stream_ == DataStream::Positioning)
     {
@@ -996,11 +996,11 @@ void TobiiBuffer::clear(DataStream stream_)
     else
         clearTimeRange(stream_);
 }
-void TobiiBuffer::clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+void TobiiMex::clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     clearTimeRange(stringToDataStream(stream_), timeStart_, timeEnd_);
 }
-void TobiiBuffer::clearTimeRange(DataStream stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+void TobiiMex::clearTimeRange(DataStream stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     // deal with default arguments
     auto timeStart = timeStart_.value_or(defaults::clearTimeRangeStart);
@@ -1026,12 +1026,12 @@ void TobiiBuffer::clearTimeRange(DataStream stream_, std::optional<int64_t> time
     }
 }
 
-bool TobiiBuffer::stop(std::string stream_, std::optional<bool> emptyBuffer_)
+bool TobiiMex::stop(std::string stream_, std::optional<bool> emptyBuffer_)
 {
     return stop(stringToDataStream(stream_), emptyBuffer_);
 }
 
-bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
+bool TobiiMex::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 {
     // deal with default arguments
     auto emptyBuffer = emptyBuffer_.value_or(defaults::stopBufferEmpties);
@@ -1073,32 +1073,32 @@ bool TobiiBuffer::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 }
 
 // gaze data, instantiate templated functions
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::gaze> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::gaze> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::gaze> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::gaze> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::gaze> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // eye images, instantiate templated functions
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::eyeImage> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // external signals, instantiate templated functions
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::extSignal> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::extSignal> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::extSignal> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::extSignal> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::extSignal> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // time sync data, instantiate templated functions
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-template std::vector<TobiiBuffer::timeSync> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::timeSync> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::timeSync> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::timeSync> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::timeSync> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
-template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeN(std::optional<size_t> lastN_);
-//template std::vector<TobiiBuffer::positioning> TobiiBuffer::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiBuffer::positioning> TobiiBuffer::peekN(std::optional<size_t> lastN_);
-//template std::vector<TobiiBuffer::positioning> TobiiBuffer::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::positioning> TobiiMex::consumeN(std::optional<size_t> lastN_);
+//template std::vector<TobiiMex::positioning> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::positioning> TobiiMex::peekN(std::optional<size_t> lastN_);
+//template std::vector<TobiiMex::positioning> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);

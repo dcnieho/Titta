@@ -51,9 +51,9 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
 ## Contents
 The toolbox consists of multiple parts:
 ### The `Titta` class
-The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiBuffer class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
-### The `TobiiBuffer` class
-The `TobiiBuffer` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). It has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive.
+The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
+### The `TobiiMex` class
+The `TobiiMex` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). It has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive.
 ### The `TalkToProLab` class
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
@@ -107,7 +107,7 @@ The following read-only properties are available for a Titta instance:
 |`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to, such as serial number.|
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
-|`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiBuffer`](#tobiibuffer-class) instance for interaction with the eye tracker's data streams.|
+|`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiibuffer-class) instance for interaction with the eye tracker's data streams.|
 |`rawSDK`|Returns handle to Tobii SDK instance used by Titta (as constructed by calling `EyeTrackingOperations()` from the Tobii SDK)|
 |`rawET`|Initialized by call to `init()`. Returns Tobii SDK handle to the connected eye tracker|
 
@@ -249,19 +249,19 @@ Each button takes the below options:
 
 The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entries, 2-element cell array or 3-element cell arrays. This is used to specify different looks for the button when in inactive state, hovered state, and activated state. If a single text or color is provided, this text/look applies to all three button states. If two are provided, the first text/color applies to both the inactive and hovered button states and the second to the activated state. If three are provided, they apply to the inactive, hovered and activated states, respectively. The `string`, `fillColor`, `edgeColor` and `textColor` can have these properties set independently from each other (you could thus provide different strings for the three states, while keeping colors constant over them).
 
-### `TobiiBuffer` class
+### `TobiiMex` class
 #### Static methods
-The TobiiBuffer class does not have static methods.
+The TobiiMex class does not have static methods.
 
 #### Construction and initialization
-An instance of TobiiBuffer is constructed by calling `TobiiBuffer()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to.
+An instance of TobiiMex is constructed by calling `TobiiMex()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to.
 
 #### Methods
-The following method calls are available on a TobiiBuffer instance:
+The following method calls are available on a TobiiMex instance:
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiBuffer class instance to the Tobii eye tracker and prepare it for use.|
+|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
 |||||
 |`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
 |`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer.|
@@ -285,8 +285,8 @@ The following method calls are available on a TobiiBuffer instance:
 |`calibrationComputeAndApply()`|||Queue request for the tracker to compute the calibration function and start using it.|
 |`calibrationGetData()`|||Request retrieval of the computed calibration as an (uninterpretable) binary stream.|
 |`calibrationApplyData()`|<ol><li>`cal`: a binary stream as gotten through `calibrationGetData()`</li></ol>||Apply the provided calibration data.|
-|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TobiiBuffer's calibration mechanism.|
-|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TobiiBuffer's calibration mechanism.|
+|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TobiiMex's calibration mechanism.|
+|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TobiiMex's calibration mechanism.|
 
 ### `TalkToProLab` class
 #### Static methods
