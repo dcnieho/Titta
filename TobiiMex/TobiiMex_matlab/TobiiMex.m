@@ -134,9 +134,9 @@ classdef TobiiMex < handle
             displayArea = this.cppmethod('getDisplayArea');
         end
         % setters
-        function setGazeFrequency(this,freq)
+        function setGazeFrequency(this,frequency)
             assert(nargin>1,'TobiiMex::setGazeFrequency: provide frequency argument.');
-            this.cppmethod('setGazeFrequency',single(freq));
+            this.cppmethod('setGazeFrequency',single(frequency));
         end
         function setTrackingMode(this,trackingMode)
             assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');

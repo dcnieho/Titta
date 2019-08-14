@@ -269,15 +269,15 @@ The following method calls are available on a TobiiMex instance:
 | --- | --- | --- | --- |
 |`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`getConnectedEyeTracker()`||||
-|`getCurrentFrequency()`||||
-|`getCurrentTrackingMode()`||||
-|`getTrackBox()`||||
-|`getDisplayArea()`||||
-|`setGazeFrequency()`||||
-|`setTrackingMode()`||||
-|`applyLicenses()`||||
-|`clearLicenses()`||||
+|`getConnectedEyeTracker()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
+|`getCurrentFrequency()`||<ol><li>`frequency`: current sampling frequency of the connected eye tracker.</li></ol>|Get the current sampling frequency of the connected eye tracker.|
+|`getCurrentTrackingMode()`||<ol><li>`trackingMode`: current tracking mode of the connected eye tracker.</li></ol>|Get the current tracking mode of the connected eye tracker.|
+|`getTrackBox()`||<ol><li>`trackBox`: track box of the connected eye tracker.</li></ol>|Get the track box of the connected eye tracker.|
+|`getDisplayArea()`||<ol><li>`displayArea`: display area of the connected eye tracker.</li></ol>|Get the display area of the connected eye tracker.|
+|`setGazeFrequency()`|<ol><li>`frequency`: requested sampling frequency for the connected eye tracker.</li></ol>||Set the sampling frequency of the connected eye tracker.|
+|`setTrackingMode()`|<ol><li>`trackingMode`: requested tracking mode for the connected eye tracker.</li></ol>||Set the tracking mode of the connected eye tracker.|
+|`applyLicenses()`|<ol><li>`licenses`: a cell array of licenses (`char` of `uint8` representations of the license file read in binary mode).</li></ol>||Apply license(s) to the connected eye tracker.|
+|`clearLicenses()`|||Clear all licenses that may have been applied to the connected eye tracker. Refreshes the eye tracker's info, so use `getConnectedEyeTracker()` to check for any updated capabilities.|
 |||||
 |`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
 |`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer.|
