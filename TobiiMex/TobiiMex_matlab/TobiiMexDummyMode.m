@@ -86,12 +86,60 @@ classdef TobiiMexDummyMode < TobiiMex
             end
         end
         
+        %% Matlab interface
+        function init(~,~)
+        end
         function delete(~)
         end
         
-        function init(~,~)
+        %% global SDK functions
+        function SDKVersion = getSDKVersion(~)
+            SDKVersion = '';
+        end
+        function systemTimestamp = getSystemTimestamp(~)
+            systemTimestamp = [];
+        end
+        function eyeTrackerList = findAllEyeTrackers(~)
+            eyeTrackerList = [];
+        end
+        % logging
+        function success = startLogging(~,~)
+            success = true;
+        end
+        function data = getLog(~,~)
+            data = [];
+        end
+        function stopLogging(~)
         end
         
+        %% eye-tracker specific getters and setters
+        % getters
+        function eyeTracker = getConnectedEyeTracker(~)
+            eyeTracker = [];
+        end
+        function frequency = getCurrentFrequency(~)
+            frequency = [];
+        end
+        function trackingMode = getCurrentTrackingMode(~)
+            trackingMode = '';
+        end
+        function trackBox = getTrackBox(~)
+            trackBox = [];
+        end
+        function displayArea = getDisplayArea(~)
+            displayArea = [];
+        end
+        % setters
+        function setGazeFrequency(~,~)
+        end
+        function setTrackingMode(~,~)
+        end
+        function applyLicenses(~,~)
+        end
+        function clearLicenses(~)
+        end
+        
+        %% calibration
         function enterCalibrationMode(~,~)
         end
         function leaveCalibrationMode(~,~)
@@ -107,12 +155,13 @@ classdef TobiiMexDummyMode < TobiiMex
         function calibrationApplyData(~,~)
         end
         function status = calibrationGetStatus(~)
-            status = [];
+            status = '';
         end
         function result = calibrationRetrieveResult(~)
             result = [];
         end
         
+        %% data streams
         function supported = hasStream(~,stream)
             assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             supported   = checkValidStream(ensureStringIsChar(stream));
@@ -176,16 +225,6 @@ classdef TobiiMexDummyMode < TobiiMex
                 data = getMouseSample(this.isRecordingGaze);
             end
         end
-        
-        
-        function success = startLogging(~,~)
-            success = true;
-        end
-        function data = getLog(~,~)
-            data = [];
-        end
-        function stopLogging(~)
-        end
     end
 end
 
@@ -198,7 +237,7 @@ end
 end
 
 function isValid = checkValidStream(stream)
-isValid = ismember(stream,{'gaze','eyeImage', 'externalSignal','timeSync'});
+isValid = ismember(stream,{'gaze','eyeImage','externalSignal','timeSync','positioning'});
 end
 
 function sample = getMouseSample(isRecording)
