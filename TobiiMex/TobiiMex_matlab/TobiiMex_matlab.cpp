@@ -951,7 +951,7 @@ namespace mxTypes
 
     mxArray* ToMatlab(TobiiResearchTrackBox data_)
     {
-        const char* fieldNames[] = {"back_lower_left","back_lower_right","back_upper_left","back_upper_right","front_lower_left","front_lower_right","front_upper_left","front_upper_right"};
+        const char* fieldNames[] = {"backLowerLeft","backLowerRight","backUpperLeft","backUpperRight","frontLowerLeft","frontLowerRight","frontUpperLeft","frontUpperRight"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.back_lower_left));
@@ -967,7 +967,7 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiResearchDisplayArea data_)
     {
-        const char* fieldNames[] = {"height","width","bottom_left","bottom_right","top_left","top_right"};
+        const char* fieldNames[] = {"height","width","bottomLeft","bottomRight","topLeft","topRight"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(static_cast<double>(data_.height)));

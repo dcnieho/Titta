@@ -328,8 +328,8 @@ classdef Titta < handle
             try
                 obj.geom.trackBox       = obj.buffer.getTrackBox();
                 % get width and height of trackbox at middle depth
-                obj.geom.trackBox.halfWidth   = mean([obj.geom.trackBox.FrontUpperRight(1) obj.geom.trackBox.BackUpperRight(1)])/10;
-                obj.geom.trackBox.halfHeight  = mean([obj.geom.trackBox.FrontUpperRight(2) obj.geom.trackBox.BackUpperRight(2)])/10;
+                obj.geom.trackBox.halfWidth   = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
+                obj.geom.trackBox.halfHeight  = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
             catch
                 % tracker does not support trackbox
                 obj.geom.trackBox.halfWidth     = [];
@@ -1001,8 +1001,8 @@ classdef Titta < handle
             
             % get reference position
             if isempty(obj.settings.UI.setup.referencePos)
-                if isfield(obj.geom.trackBox,'BackLowerLeft')
-                    obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.BackLowerLeft(1) obj.geom.trackBox.BackLowerRight(1)]) mean([obj.geom.trackBox.BackLowerLeft(2) obj.geom.trackBox.BackUpperLeft(2)]) mean([obj.geom.trackBox.FrontLowerLeft(3) obj.geom.trackBox.BackLowerLeft(3)])]./10;
+                if isfield(obj.geom.trackBox,'backLowerLeft')
+                    obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.backLowerLeft(1) obj.geom.trackBox.backLowerRight(1)]) mean([obj.geom.trackBox.backLowerLeft(2) obj.geom.trackBox.backUpperLeft(2)]) mean([obj.geom.trackBox.frontLowerLeft(3) obj.geom.trackBox.backLowerLeft(3)])]./10;
                 else
                     % tracker does not provide trackbox, and thus we can't
                     % determine the center of it.
@@ -1915,9 +1915,9 @@ classdef Titta < handle
         
         function out = ADCSToUCS(obj,data)
             % data is a 2xN matrix of normalized coordinates
-            xVec = obj.geom.displayArea.top_right-obj.geom.displayArea.top_left;
-            yVec = obj.geom.displayArea.bottom_right-obj.geom.displayArea.top_right;
-            out  = bsxfun(@plus,obj.geom.displayArea.top_left,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
+            xVec = obj.geom.displayArea.topRight-obj.geom.displayArea.topLeft;
+            yVec = obj.geom.displayArea.bottomRight-obj.geom.displayArea.topRight;
+            out  = bsxfun(@plus,obj.geom.displayArea.topLeft,bsxfun(@times,data(1,:),xVec)+bsxfun(@times,data(2,:),yVec));
         end
         
         function [cal,selection] = showCalValResult(obj,wpnt,cal,selection)
