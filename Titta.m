@@ -1683,7 +1683,7 @@ classdef Titta < handle
                 if any(keyCode)
                     keys = KbName(keyCode);
                     if any(strcmpi(keys,'space')) && waitForKeyAccept && qAllowAcceptKey
-                        % if in semi-automatic and first point, or if
+                        % if in semi-automatic mode and first point, or if
                         % manual and any point, space bars triggers
                         % accepting calibration point
                         haveAccepted    = true;
