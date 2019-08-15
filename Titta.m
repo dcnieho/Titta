@@ -1072,7 +1072,7 @@ classdef Titta < handle
             Screen('TextSize',  wpnt(1), obj.settings.UI.setup.instruct.size);
             
             % get tracking status and visualize
-            qToggleEyeImage     = false;
+            qToggleEyeImage     = qHaveOperatorScreen;  % eye images default off if single screen, default on if have operator screen
             qShowEyeImage       = false;
             texs                = [0 0];
             szs                 = [];
