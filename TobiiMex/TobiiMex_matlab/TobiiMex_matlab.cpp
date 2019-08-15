@@ -916,7 +916,7 @@ namespace mxTypes
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 4, mxCreateString(data_[i].runtimeVersion.c_str()));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 5, mxCreateString(data_[i].address.c_str()));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 6, ToMatlab(data_[i].capabilities));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 7, ToMatlab(data_[i].supportedFrequencies));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 7, ToMatlab(std::vector<double>(data_[i].supportedFrequencies.begin(), data_[i].supportedFrequencies.end()))); // return frequencies as double, not single, precision
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 8, ToMatlab(data_[i].supportedModes));
         }
 
