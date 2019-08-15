@@ -22,6 +22,7 @@ classdef PTBButton < handle
         funs;
         textRect;           % base rect of text
         offset = [0 0];     % offset currently applied to it to position rect and text
+        dropShadowClr;
     end
     
     methods
@@ -60,6 +61,8 @@ classdef PTBButton < handle
                 this.unfinishedSetup.fillColor  = setup.fillColor;
                 this.unfinishedSetup.edgeColor  = setup.edgeColor;
             end
+            
+            this.dropShadowClr = this.funs.colorGetter([0 0 0 127]);
         end
         
         function rect = get.rect(this)
@@ -115,7 +118,7 @@ classdef PTBButton < handle
                 dropOffset = 6;
                 off = [cosd(45) sind(45)];
                 shadowRect = OffsetRect(this.rect(:).',off(1)*dropOffset,off(2)*dropOffset);
-                Screen('FillRect',this.wpnt,this.funs.colorGetter([0 0 0 127]),shadowRect);
+                Screen('FillRect',this.wpnt,this.dropShadowClr,shadowRect);
                 if state==3
                     % depressed, move button to be draw right on top of
                     % drop shadow
@@ -130,9 +133,9 @@ classdef PTBButton < handle
             end
             
             % draw background
-            Screen('FillRect',this.wpnt,this.funs.colorGetter(clr),drawRect);
+            Screen('FillRect',this.wpnt,clr,drawRect);
             % draw edge
-            Screen('FrameRect',this.wpnt,this.funs.colorGetter(eclr),drawRect,edgeWidth);
+            Screen('FrameRect',this.wpnt,eclr,drawRect,edgeWidth);
             % draw text
             this.funs.textCacheDrawer(this.(states{state}).tCache,extraIn{:});
         end
@@ -146,6 +149,14 @@ classdef PTBButton < handle
             % get rect around largest
             this.textRect   = [0 0 max(tRect(:,3)-tRect(:,1)) max(tRect(:,4)-tRect(:,2))];
             this.rect       = this.textRect + [-this.margins this.margins];
+            
+            % get colors
+            fields = {'fillColor','edgeColor'}; % not textcolor, textCacheGetter takes it always as 8bit
+            for f=fields
+                for c=1:length(setup.(f{1}))
+                    setup.(f{1}){c} = this.funs.colorGetter(setup.(f{1}){c});
+                end
+            end
             
             % now get final button setup
             fields = {'string','textColor','fillColor','edgeColor','tCache'};

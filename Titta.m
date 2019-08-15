@@ -526,12 +526,12 @@ classdef Titta < handle
             
             % clean up and reset PTB state
             for w=length(wpnt):-1:1
-                Screen('FillRect',wpnt(w),bgClr{w});              % reset background color
-                Screen('BlendFunction', wpnt(w), osf{w},odf{w},ocm{w}); % reset blend function
-                Screen('TextFont',wpnt(w),text.font{w},text.style(w));
-                Screen('TextColor',wpnt(w),text.color{w});
-                Screen('TextSize',wpnt(w),text.size(w));
-                Screen('Flip',wpnt(w));                        % clear screen
+                Screen('FillRect',      wpnt(w),bgClr{w});                  % reset background color
+                Screen('BlendFunction', wpnt(w),osf{w},odf{w},ocm{w});      % reset blend function
+                Screen('TextFont',      wpnt(w),text.font{w},text.style(w));
+                Screen('TextColor',     wpnt(w),text.color{w});
+                Screen('TextSize',      wpnt(w),text.size(w));
+                Screen('Flip',          wpnt(w));                           % clear screen
             end
             
             if bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode)
@@ -969,6 +969,8 @@ classdef Titta < handle
             % setup ovals
             ovalVSz     = .15;
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2);
+            refClr      = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
+            bgClr       = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
             % setup head position visualization
             head                    = ETHead(wpnt(1),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
@@ -982,17 +984,19 @@ classdef Titta < handle
             head.pupilClr           = obj.settings.UI.setup.pupilClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             if qHaveOperatorScreen
-                headO                    = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
-                headO.refSz              = head.refSz;
-                headO.rectWH             = head.rectWH;
-                headO.headCircleFillClr  = head.headCircleFillClr;
-                headO.headCircleEdgeClr  = head.headCircleEdgeClr;
-                headO.showEyes           = head.showEyes;
-                headO.showPupils         = head.showPupils;
-                headO.crossClr           = head.crossClr;
-                headO.eyeClr             = head.eyeClr;
-                headO.pupilClr           = head.pupilClr;
-                headO.crossEye           = head.crossEye;
+                headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
+                headO.refSz             = head.refSz;
+                headO.rectWH            = head.rectWH;
+                headO.headCircleFillClr = head.headCircleFillClr;
+                headO.headCircleEdgeClr = head.headCircleEdgeClr;
+                headO.showEyes          = head.showEyes;
+                headO.showPupils        = head.showPupils;
+                headO.crossClr          = head.crossClr;
+                headO.eyeClr            = head.eyeClr;
+                headO.pupilClr          = head.pupilClr;
+                headO.crossEye          = head.crossEye;
+                refClrO                 = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+                bgClrO                  = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
             end
             
             % get reference position
@@ -1029,7 +1033,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.setup.eyeIm  ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.setup.cal    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.prevcal, qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
-            % arrange them 
+            % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
@@ -1079,9 +1083,9 @@ classdef Titta < handle
             obj.getNewMouseKeyPress();
             headPosLastT       = 0;
             while true
-                Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1)));
+                Screen('FillRect', wpnt(1), bgClr);
                 if qHaveOperatorScreen
-                    Screen('FillRect', wpnt(2), obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2)));
+                    Screen('FillRect', wpnt(2), bgClrO);
                 end
                 if qHasEyeIm
                     % toggle eye images on or off if requested
@@ -1173,11 +1177,11 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawOrientedPoly(wpnt(1),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1)),5);
+                    drawOrientedPoly(wpnt(1),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],refClr ,5);
                 end
                 if qHaveOperatorScreen
                     % no vertical/horizontal offset on operator screen
-                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosO,[],obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2)),5);
+                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosO,[],refClrO,5);
                 end
                 % stylized head
                 head.draw();
@@ -1507,6 +1511,11 @@ classdef Titta < handle
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             
+            % prep colors
+            for w=length(wpnt):-1:1
+                bgClr{w} = obj.getColorForWindow(obj.settings.cal.bgColor,wpnt(w));
+            end
+            
             % timing is done in ticks (display refreshes) instead of time.
             % If multiple screens, get lowest fs as that will determine
             % tick rate
@@ -1583,8 +1592,8 @@ classdef Titta < handle
                 nRep = 0;
                 while true
                     tick    = tick+1;
-                    for w=wpnt
-                        Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
+                    for w=1:length(wpnt)
+                        Screen('FillRect', wpnt(w), bgClr{w});
                     end
                     drawFunction(wpnt(1),1,points(1,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
@@ -1630,8 +1639,8 @@ classdef Titta < handle
                 end
                 
                 % call drawer function
-                for w=wpnt
-                    Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
+                for w=1:length(wpnt)
+                    Screen('FillRect', wpnt(w), bgClr{w});
                 end
                 if qHaveOperatorScreen
                     [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
@@ -1749,8 +1758,8 @@ classdef Titta < handle
                 flipT           = out.flips(end);
                 while true
                     tick    = tick+1;
-                    for w=wpnt
-                        Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
+                    for w=1:length(wpnt)
+                        Screen('FillRect', wpnt(w), bgClr{w});
                     end
                     if qHaveOperatorScreen
                         [texs,szs,eyeImageRect] = drawOperatorScreenFun([],eyeStartTime,texs,szs,eyeImageRect);
@@ -2033,7 +2042,7 @@ classdef Titta < handle
             end
             
             % setup message for participant if we have an operator screen
-            if qHaveOperatorScreen
+            if qHaveOperatorScreen && ~isempty(obj.settings.UI.val.waitMsg.string)
                 Screen('TextFont',  wpnt(end), obj.settings.UI.val.waitMsg.font, obj.settings.UI.val.waitMsg.style);
                 Screen('TextSize',  wpnt(end), obj.settings.UI.val.waitMsg.size);
                 waitTextCache = obj.getTextCache(wpnt(1),obj.settings.UI.val.waitMsg.string,[0 0 obj.scrInfo.resolution{1}],'baseColor',obj.settings.UI.val.waitMsg.color);
@@ -2041,6 +2050,20 @@ classdef Titta < handle
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
+            
+            % prep colors
+            bgClr               = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1));
+            eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.val.eyeColors,'uni',false);
+            menuBgClr           = obj.getColorForWindow(obj.settings.UI.val.menu.bgColor,wpnt(end));
+            menuItemClr         = obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ,wpnt(end));
+            menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive,wpnt(end));
+            hoverBgClr          = obj.getColorForWindow(obj.settings.UI.val.hover.bgColor,wpnt(end));
+            for w=length(wpnt):-1:1
+                onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
+            end
+            if qHaveOperatorScreen
+                bgClrO      = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(2));
+            end
             
             qDoneCalibSelection = false;
             qToggleSelectMenu   = true;
@@ -2227,9 +2250,9 @@ classdef Titta < handle
                 end
                 
                 while true % draw loop
-                    Screen('FillRect', wpnt(1), obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1)));
+                    Screen('FillRect', wpnt(1), bgClr);
                     if qHaveOperatorScreen
-                        Screen('FillRect', wpnt(2), obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(2)));
+                        Screen('FillRect', wpnt(2), bgClrO);
                     end
                     % draw validation screen image
                     % draw calibration/validation points
@@ -2264,10 +2287,10 @@ classdef Titta < handle
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
-                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{1},wpnt(end)),[],2);
+                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,eyeClrs{1},[],2);
                         end
                         if obj.calibrateRightEye && ~isempty(rEpos)
-                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt(end)),[],2);
+                            Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,eyeClrs{2},[],2);
                         end
                     end
                     
@@ -2285,11 +2308,11 @@ classdef Titta < handle
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
-                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.bgColor,wpnt(end)),menuBackRect);
-                        % menuRects, inactive and currentlyactive
+                        Screen('FillRect',wpnt(end),menuBgClr,menuBackRect);
+                        % menuRects, inactive and currently active
                         qActive = iValid==selection;
-                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ,wpnt(end)),menuRects(~qActive,:).');
-                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive,wpnt(end)),menuRects( qActive,:).');
+                        Screen('FillRect',wpnt(end),menuItemClr,menuRects(~qActive,:).');
+                        Screen('FillRect',wpnt(end),menuItemClrActive,menuRects( qActive,:).');
                         % text in each rect
                         for c=1:length(iValid)
                             obj.drawCachedText(menuTextCache(c));
@@ -2306,12 +2329,12 @@ classdef Titta < handle
                         if rect(4)>obj.scrInfo.resolution{1}(2)
                             rect = OffsetRect(rect,0,obj.scrInfo.resolution{1}(2)-rect(4));
                         end
-                        Screen('FillRect',wpnt(end),obj.getColorForWindow(obj.settings.UI.val.hover.bgColor,wpnt(end)),rect);
+                        Screen('FillRect',wpnt(end),hoverBgClr,rect);
                         obj.drawCachedText(pointTextCache,rect);
                     end
                     % if have operator screen, show message to wait to
                     % participant
-                    if qHaveOperatorScreen && ~qShowGaze
+                    if qHaveOperatorScreen && ~qShowGaze && ~isempty(obj.settings.UI.val.waitMsg.string)
                         obj.drawCachedText(waitTextCache);
                     end
                     % if showing gaze, draw
@@ -2324,15 +2347,15 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt(end),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1},wpnt(end)), lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1), lE(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
-                                    Screen('gluDisk', wpnt(1),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{1},wpnt(1)), lE(1), lE(2), 10);
+                                    Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
                                 end
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt(end),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2},wpnt(end)), rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt(end),onlineGazeClr{2,end}, rE(1), rE(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
-                                    Screen('gluDisk', wpnt(1),obj.getColorForWindow(obj.settings.UI.val.onlineGaze.eyeColors{2},wpnt(1)), rE(1), rE(2), 10);
+                                    Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, rE(1), rE(2), 10);
                                 end
                             end
                         end
@@ -2530,8 +2553,7 @@ classdef Titta < handle
         end
         
         function clr = getColorForWindow(obj,clr,wpnt)
-            q = obj.wpnts==wpnt;
-            if obj.qFloatColorRange(q)
+            if obj.qFloatColorRange(obj.wpnts==wpnt)
                 clr = double(clr)/255;
             end
         end
