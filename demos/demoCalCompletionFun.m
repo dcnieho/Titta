@@ -1,0 +1,11 @@
+function demoCalCompletionFun(titta_instance,currentPoint,posNorm,posPix,stage,calState)
+% NB: calState only provided if stage=='cal'
+if strcmp(stage,'cal')
+    % this demo function is no-op for validation mode
+    if calState.status==0
+        status = 'ok';
+    else
+        status = sprintf('failed (%s)',calState.statusString);
+    end
+    titta_instance.sendMessage(sprintf('Calibration data collection status result for point %d, positioned at (%.2f,%.2f): %s',currentPoint,posNorm,status));
+end

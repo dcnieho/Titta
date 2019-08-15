@@ -1631,15 +1631,17 @@ classdef Titta < handle
                 if advancePoint
                     % notify current point collected, if user defined a
                     % function for that
-                    if qCal
-                        fun = obj.settings.cal.pointNotifyFunction;
-                        extra = {out.pointStatus{currentPoint}};
-                    else
-                        fun = obj.settings.val.pointNotifyFunction;
-                        extra = {};
-                    end
-                    if isa(fun,'function_handle')
-                        fun(currentPoint,points(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
+                    if currentPoint
+                        if qCal
+                            fun = obj.settings.cal.pointNotifyFunction;
+                            extra = {out.pointStatus{currentPoint}}; %#ok<CCAT1>
+                        else
+                            fun = obj.settings.val.pointNotifyFunction;
+                            extra = {};
+                        end
+                        if isa(fun,'function_handle')
+                            fun(obj,currentPoint,points(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
+                        end
                     end
                     
                     % move to display next point
