@@ -583,6 +583,12 @@ classdef Titta < handle
             if isa(dat.settings.cal.drawFunction,'function_handle')
                 dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
             end
+            if isa(dat.settings.cal.pointNotifyFunction,'function_handle')
+                dat.settings.cal.pointNotifyFunction = func2str(dat.settings.cal.pointNotifyFunction);
+            end
+            if isa(dat.settings.val.pointNotifyFunction,'function_handle')
+                dat.settings.val.pointNotifyFunction = func2str(dat.settings.val.pointNotifyFunction);
+            end
             dat.TobiiLog    = obj.buffer.getLog(false);
             dat.data        = obj.ConsumeAllData();
         end
@@ -857,10 +863,12 @@ classdef Titta < handle
             settings.cal.drawFunction           = [];
             settings.cal.doRecordEyeImages      = false;
             settings.cal.doRecordExtSignal      = false;
+            settings.cal.pointNotifyFunction    = [];                           % function that is called upon each calibration point completing
             settings.val.pointPos               = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.val.paceDuration           = 1.5;
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
+            settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -1568,10 +1576,10 @@ classdef Titta < handle
             if (qCal && obj.settings.cal.doRandomPointOrder) || (~qCal && obj.settings.val.doRandomPointOrder)
                 points = points(randperm(nPoint),:);
             end
-            if isempty(obj.settings.cal.drawFunction)
-                drawFunction = @obj.drawFixationPointDefault;
-            else
+            if isa(obj.settings.cal.drawFunction,'function_handle')
                 drawFunction = obj.settings.cal.drawFunction;
+            else
+                drawFunction = @obj.drawFixationPointDefault;
             end
             % anchor timing, get ready for displaying calibration points
             if qFirst
@@ -1621,6 +1629,20 @@ classdef Titta < handle
                 tick        = tick+1;
                 nextFlipT   = out.flips(end)+1/1000;
                 if advancePoint
+                    % notify current point collected, if user defined a
+                    % function for that
+                    if qCal
+                        fun = obj.settings.cal.pointNotifyFunction;
+                        extra = {out.pointStatus{currentPoint}};
+                    else
+                        fun = obj.settings.val.pointNotifyFunction;
+                        extra = {};
+                    end
+                    if isa(fun,'function_handle')
+                        fun(currentPoint,points(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
+                    end
+                    
+                    % move to display next point
                     currentPoint = currentPoint+1;
                     % check any points left to do
                     if currentPoint>size(points,1)
