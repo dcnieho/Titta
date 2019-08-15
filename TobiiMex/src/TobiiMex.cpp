@@ -392,11 +392,11 @@ std::vector<TobiiResearchLicenseValidationResult> TobiiMex::applyLicenses(std::v
     std::vector<size_t>   licenseLengths;
     for (auto& license : licenses_)
     {
-        licenseKeyRing.push_back(static_cast<char*>(license.data()));
+        licenseKeyRing.push_back(license.data());
         licenseLengths.push_back(license.size());
     }
     std::vector<TobiiResearchLicenseValidationResult> validationResults(licenses_.size(), TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN);
-    TobiiResearchStatus status = tobii_research_apply_licenses(_eyetracker.et, static_cast<const void**>(licenseKeyRing.data()), licenseLengths.data(), validationResults.data(), licenses_.size());
+    TobiiResearchStatus status = tobii_research_apply_licenses(_eyetracker.et, const_cast<const void**>(reinterpret_cast<void**>(licenseKeyRing.data())), licenseLengths.data(), validationResults.data(), licenses_.size());
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot apply eye tracker license(s)", status);
 

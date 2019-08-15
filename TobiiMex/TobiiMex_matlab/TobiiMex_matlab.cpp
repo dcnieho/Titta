@@ -381,7 +381,7 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             std::vector<std::vector<uint8_t>> licenses;
 
             // get how many elements the cell has, iterate over them (don't care about shape)
-            const mwSize nElem = mxGetNumberOfElements(prhs[2]);
+            const size_t nElem = mxGetNumberOfElements(prhs[2]);
             for (mwIndex i = 0; i < nElem; i++)
             {
                 mxArray* cellElement = mxGetCell(prhs[2], i);
