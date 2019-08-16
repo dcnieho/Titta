@@ -3,6 +3,8 @@
 #include <memory>
 #include <array>
 #include <vector>
+#include <cstring>
+
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
 
@@ -55,7 +57,7 @@ namespace TobiiTypes
             data_size(e_->data_size),
             _eyeIm({malloc(e_->data_size),std::free})
         {
-            memcpy(_eyeIm.get(), e_->data, e_->data_size);
+            std::memcpy(_eyeIm.get(), e_->data, e_->data_size);
         }
         eyeImage(TobiiResearchEyeImageGif* e_) :
             isGif(true),
@@ -70,7 +72,7 @@ namespace TobiiTypes
             data_size(e_->image_size),
             _eyeIm({malloc(e_->image_size),std::free})
         {
-            memcpy(_eyeIm.get(), e_->image_data, e_->image_size);
+            std::memcpy(_eyeIm.get(), e_->image_data, e_->image_size);
         }
         eyeImage(eyeImage&&) noexcept = default;
         eyeImage(const eyeImage& other_) :
@@ -86,7 +88,7 @@ namespace TobiiTypes
             data_size(other_.data_size),
             _eyeIm({malloc(other_.data_size),std::free})
         {
-            memcpy(_eyeIm.get(), other_.data(), other_.data_size);
+            std::memcpy(_eyeIm.get(), other_.data(), other_.data_size);
         }
         eyeImage& operator= (eyeImage other_)
         {

@@ -5,6 +5,7 @@
 #include <string_view>
 #include <sstream>
 #include <map>
+#include <cstring>
 
 #include "TobiiMex/utils.h"
 
@@ -540,7 +541,7 @@ void TobiiMex::calibrationThread()
                 auto nItem = workItem.calData.size();
                 calData.data = malloc(nItem);
                 calData.size = nItem;
-                memcpy(calData.data, workItem.calData.data(), nItem);
+                std::memcpy(calData.data, workItem.calData.data(), nItem);
 
                 result = tobii_research_apply_calibration_data(_eyetracker.et, &calData);
                 free(calData.data);

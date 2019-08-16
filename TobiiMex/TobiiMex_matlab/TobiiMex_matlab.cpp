@@ -54,6 +54,7 @@
 #include <string>
 #include <sstream>
 #include <atomic>
+#include <cstring>
 
 #include "include_matlab.h"
 #include "mex_type_utils.h"
@@ -847,7 +848,7 @@ namespace
             auto storage = static_cast<uint8_t*>(mxGetData(out = mxCreateUninitNumericMatrix(static_cast<size_t>(data_[0].width)*data_[0].height, data_.size(), mxUINT8_CLASS, mxREAL)));
             size_t i = 0;
             for (auto &frame : data_)
-                memcpy(storage + (i++)*sz, frame.data(), frame.data_size);
+                std::memcpy(storage + (i++)*sz, frame.data(), frame.data_size);
         }
         else
         {
@@ -857,7 +858,7 @@ namespace
             {
                 mxArray* temp;
                 auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, static_cast<size_t>(frame.width)*frame.height, mxUINT8_CLASS, mxREAL)));
-                memcpy(storage, frame.data(), frame.data_size);
+                std::memcpy(storage, frame.data(), frame.data_size);
                 mxSetCell(out, i++, temp);
             }
         }
