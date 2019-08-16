@@ -944,7 +944,7 @@ classdef Titta < handle
         end
         
         function out = hasCap(obj,cap)
-            out = ismember(cap,obj.eyetracker.DeviceCapabilities);
+            out = ismember(cap,obj.systemInfo.capabilities);
         end
         
         function status = showHeadPositioning(obj,wpnt,out)            
