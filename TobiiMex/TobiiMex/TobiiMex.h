@@ -76,6 +76,8 @@ public:
     // setters
     void setGazeFrequency(float frequency_);
     void setTrackingMode(std::string trackingMode_);
+    void setDeviceName(std::string deviceName_);
+    // modifiers
     std::vector<TobiiResearchLicenseValidationResult> applyLicenses(std::vector<std::vector<uint8_t>> licenses_); // this refreshes eye tracker info
     void clearLicenses(); // this refreshes eye tracker info
 

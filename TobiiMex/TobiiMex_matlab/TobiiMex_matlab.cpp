@@ -101,6 +101,8 @@ namespace {
         // setters
         SetGazeFrequency,
         SetTrackingMode,
+        SetDeviceName,
+        // modifiers
         ApplyLicenses,
         ClearLicenses,
 
@@ -155,6 +157,8 @@ namespace {
         // setters
         { "setGazeFrequency",			    Action::SetGazeFrequency },
         { "setTrackingMode",			    Action::SetTrackingMode },
+        { "setDeviceName",			        Action::SetDeviceName },
+        // modifiers
         { "applyLicenses",		    	    Action::ApplyLicenses },
         { "clearLicenses",		    	    Action::ClearLicenses },
 
@@ -370,6 +374,16 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
 
             char* bufferCstr = mxArrayToString(prhs[2]);
             instance->setTrackingMode(bufferCstr);
+            mxFree(bufferCstr);
+            break;
+        }
+        case Action::SetDeviceName:
+        {
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("setDeviceName: Expected second argument to be a string.");
+
+            char* bufferCstr = mxArrayToString(prhs[2]);
+            instance->setDeviceName(bufferCstr);
             mxFree(bufferCstr);
             break;
         }

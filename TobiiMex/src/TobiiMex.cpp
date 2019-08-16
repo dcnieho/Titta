@@ -386,6 +386,16 @@ void TobiiMex::setTrackingMode(std::string trackingMode_)
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker tracking mode", status);
 }
+void TobiiMex::setDeviceName(std::string deviceName_)
+{
+    TobiiResearchStatus status = tobii_research_set_device_name(_eyetracker.et, deviceName_.c_str());
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot set eye tracker device name", status);
+
+    // refresh eye tracker info to get updated name
+    _eyetracker.refreshInfo();
+}
+// modifiers
 std::vector<TobiiResearchLicenseValidationResult> TobiiMex::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
 {
     std::vector<uint8_t*> licenseKeyRing;

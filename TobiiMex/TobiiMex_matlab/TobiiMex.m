@@ -143,6 +143,12 @@ classdef TobiiMex < handle
             trackingMode = ensureStringIsChar(trackingMode);
             this.cppmethod('setTrackingMode',trackingMode);
         end
+        function setDeviceName(this,deviceName)
+            assert(nargin>1,'TobiiMex::setDisplayName: provide device name argument.');
+            deviceName = ensureStringIsChar(deviceName);
+            this.cppmethod('setDeviceName',deviceName);
+        end
+        % modifiers
         function applyLicenses(this,licenses)
             assert(nargin>1,'TobiiMex::applyLicenses: provide licenses argument.');
             if ~iscell(licenses)
