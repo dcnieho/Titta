@@ -111,7 +111,7 @@ classdef AnimatedCalibrationDisplay < handle
             else % drawCmd == 'draw'
                 % regular draw: check state transition
                 if (obj.calState==obj.calStateEnum.moving && (curT-obj.moveStartT)>obj.moveDuration) || ...
-                        (obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2) || ...
+                        (obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2)
                     % move finished or blink finished
                     if obj.doShrink
                         obj.calState = obj.calStateEnum.shrinking;
@@ -182,6 +182,7 @@ classdef AnimatedCalibrationDisplay < handle
     methods (Access = private, Hidden)
         function drawAFixPoint(obj,wpnt,pos,sz)
             % draws Thaler et al. 2012's ABC fixation point
+				if length(sz)==1; sz = [sz sz]; end
             for p=1:size(pos,1)
                 rectH = CenterRectOnPointd([0 0        sz ], pos(p,1), pos(p,2));
                 rectV = CenterRectOnPointd([0 0 fliplr(sz)], pos(p,1), pos(p,2));

@@ -1603,7 +1603,7 @@ classdef Titta < handle
                     for w=1:length(wpnt)
                         Screen('FillRect', wpnt(w), bgClr{w});
                     end
-                    drawFunction(wpnt(1),1,points(1,3:4),tick,stage);
+                    drawFunction(wpnt(1),1,points(1,3:4),tick,stage,[]);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     computeResult  = obj.buffer.calibrationRetrieveResult();
                     nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
@@ -1670,7 +1670,7 @@ classdef Titta < handle
                 if qHaveOperatorScreen
                     [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
                 end
-                qAllowAcceptKey     = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
+                qAllowAcceptKey     = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage,[]);
                 drawCmd             = 'draw';   % clear any command other than 'draw'
                 
                 out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
@@ -1794,7 +1794,7 @@ classdef Titta < handle
                     if qHaveOperatorScreen
                         [texs,szs,eyeImageRect] = drawOperatorScreenFun([],eyeStartTime,texs,szs,eyeImageRect);
                     end
-                    drawFunction(wpnt(1),lastPoint,points(lastPoint,3:4),tick,stage);
+                    drawFunction(wpnt(1),lastPoint,points(lastPoint,3:4),tick,stage,[]);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     
                     % first get computeAndApply result, then get
