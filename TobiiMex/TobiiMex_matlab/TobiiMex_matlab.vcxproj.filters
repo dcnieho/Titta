@@ -27,6 +27,9 @@
     <ClInclude Include="tobii_to_matlab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include_matlab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="TobiiMex.m">

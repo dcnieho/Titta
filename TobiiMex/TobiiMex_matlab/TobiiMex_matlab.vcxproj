@@ -163,6 +163,7 @@
     <None Include="TobiiMexDummyMode.m" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include_matlab.h" />
     <ClInclude Include="mex_type_utils.h" />
     <ClInclude Include="pack_utils.h" />
     <ClInclude Include="tobii_to_matlab.h" />

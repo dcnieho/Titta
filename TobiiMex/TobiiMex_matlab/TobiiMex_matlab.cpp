@@ -55,10 +55,7 @@
 #include <sstream>
 #include <atomic>
 
-#define MATLAB_MEXCMD_RELEASE R2017b    // ensure using the 700 API, so mex file also works on the older matlab versions we support
-#define MW_NEEDS_VERSION_H	// looks like a bug in R2018b, don't know how to check if this is R2018b, define for now
-//#define DLL_EXPORT_SYM __declspec(dllexport) // this is what is needed for earlier matlab versions instead
-#include <mex.h>
+#include "include_matlab.h"
 #include "mex_type_utils.h"
 
 #include "pack_utils.h"
