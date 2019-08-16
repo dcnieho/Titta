@@ -131,7 +131,7 @@ std::vector<TobiiTypes::eyeTracker> TobiiMex::findAllEyeTrackers()
     return eyeTrackers;
 }
 
-// logging static functions and member
+// logging static functions
 bool TobiiMex::startLogging(std::optional<size_t> initialBufferSize_)
 {
     if (!_logMessages)
@@ -316,7 +316,11 @@ TobiiMex::~TobiiMex()
     leaveCalibrationMode(false);
 
     if (g_allInstances)
-        g_allInstances->erase(std::remove(g_allInstances->begin(), g_allInstances->end(), this), g_allInstances->end());
+    {
+        auto it = std::find(g_allInstances->begin(), g_allInstances->end(), this);
+        if (it != g_allInstances->end())
+            g_allInstances->erase(it, it + 1);
+    }
 }
 void TobiiMex::Init()
 {

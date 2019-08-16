@@ -78,6 +78,7 @@ classdef TobiiMex < handle
             this.instanceHandle = this.cppmethodGlobal('new',address);
         end
         function delete(this)
+            this.stopLogging();
             if ~isempty(this.instanceHandle)
                 this.cppmethod('delete');
                 this.instanceHandle = [];
