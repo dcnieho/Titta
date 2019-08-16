@@ -1718,6 +1718,8 @@ classdef Titta < handle
                         % because already accepted the point started data
                         % collection for it)
                         drawCmd             = 'redo';
+                        % wait again for at least paceInterval ticks before
+                        % will start data collection
                         tick0p              = nan;
                         qWaitForAllowAccept = true;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
