@@ -1,3 +1,6 @@
 [submodule "talkToProLab/MatlabWebSocket"]
 	path = talkToProLab/MatlabWebSocket
 	url = ../../jebej/MatlabWebSocket.git
+[submodule "TobiiMex/deps/include/readerwriterqueue"]
+	path = TobiiMex/deps/include/readerwriterqueue
+	url = ../../cameron314/readerwriterqueue.git

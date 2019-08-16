@@ -14,7 +14,11 @@
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
-#pragma comment(lib, "tobii_research.lib")
+#ifdef _WIN64
+#   pragma comment(lib, "tobii_research64.lib")
+#else
+#   pragma comment(lib, "tobii_research32.lib")
+#endif
 #ifndef _DEBUG
 #   pragma comment(lib, "TobiiMex.lib")
 #else
