@@ -11,50 +11,7 @@
 
 #include "pack_utils.h"
 #include "include_matlab.h"
-
-namespace
-{
-    template <typename T, typename = void>
-    struct is_container : std::false_type {};
-
-    template <typename T>
-    struct is_container<T, std::void_t<
-        typename T::value_type,
-        typename T::size_type,
-        typename T::iterator,
-        typename T::const_iterator,
-        decltype(std::declval<T>().size()),
-        decltype(std::declval<T>().begin()),
-        decltype(std::declval<T>().end()),
-        decltype(std::declval<T>().cbegin()),
-        decltype(std::declval<T>().cend())
-        >>
-        : std::true_type{};
-
-    template<class T>
-    static constexpr bool const is_container_v = is_container<std::decay_t<T>>::value;
-
-    template <typename T>
-    struct is_guaranteed_contiguous : std::false_type {};
-
-    template<class T, std::size_t N>
-    struct is_guaranteed_contiguous<std::array<T, N>>
-        : std::true_type
-    {};
-
-    template<typename... Args>
-    struct is_guaranteed_contiguous<std::vector<Args...>>
-        : std::true_type
-    {};
-
-    template<>
-    struct is_guaranteed_contiguous<std::string>
-        : std::true_type
-    {};
-
-    template<class T>
-    static constexpr bool const is_guaranteed_contiguous_v = is_guaranteed_contiguous<std::decay_t<T>>::value;
-}
+#include "is_container_trait.h"
 
 namespace mxTypes
 {
@@ -125,6 +82,21 @@ namespace mxTypes
 
 
     //// to simple variables
+    // forward declarations
+    mxArray* ToMatlab(std::string str_);
+
+    template<class T>
+    typename std::enable_if_t<!is_container_v<T>, mxArray*>
+        ToMatlab(T val_);
+
+    template<class Cont>
+    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
+        ToMatlab(Cont data_);
+    template <class... Types>  mxArray* ToMatlab(std::variant<Types...> val_);
+    template <class T>         mxArray* ToMatlab(std::optional<T> val_);
+    template <class T>         mxArray* ToMatlab(std::shared_ptr<T> val_);
+
+    // implementations
     mxArray* ToMatlab(std::string str_)
     {
         return mxCreateString(str_.c_str());

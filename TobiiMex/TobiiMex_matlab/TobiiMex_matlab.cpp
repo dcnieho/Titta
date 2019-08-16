@@ -57,13 +57,55 @@
 #include <cstring>
 
 #include "include_matlab.h"
-#include "mex_type_utils.h"
 
 #include "pack_utils.h"
 #include "tobii_to_matlab.h"
 
 #include "TobiiMex/TobiiMex.h"
 #include "TobiiMex/utils.h"
+
+// converting data to matlab. First here user extensions, then include with generic code driving this
+// extend set of function to convert C++ data to matlab
+#include "is_container_trait.h"
+namespace mxTypes
+{
+    // forward declarations
+    template<typename Cont, typename... Fs>
+    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
+        FieldToMatlab(const Cont& data_, Fs... fields);
+
+    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
+    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
+    mxArray* ToMatlab(TobiiResearchCapabilities                         data_);
+
+    mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
+    mxArray* ToMatlab(TobiiResearchDisplayArea                          data_);
+    mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
+    mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
+
+    mxArray* ToMatlab(std::vector<TobiiMex::gaze                   >    data_);
+    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
+    mxArray* ToMatlab(std::vector<TobiiMex::eyeImage               >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::extSignal              >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::timeSync               >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::positioning            >    data_);
+    mxArray* ToMatlab(TobiiMex::logMessage                              data_);
+    mxArray* ToMatlab(TobiiMex::streamError                             data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
+    mxArray* ToMatlab(TobiiResearchStatus                               data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationAction                     data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationResult                    data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint>        data_);
+    mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>		data_);
+    mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
+    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
+}
+#include "mex_type_utils.h"
 
 namespace {
     using ClassType         = TobiiMex;
@@ -208,46 +250,6 @@ namespace {
         }
         return it;
     }
-}
-
-// extend set of function to convert C++ data to matlab
-namespace mxTypes
-{
-    // forward declarations
-    template<typename Cont, typename... Fs>
-    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        FieldToMatlab(const Cont& data_, Fs... fields);
-
-    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
-    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
-    mxArray* ToMatlab(TobiiResearchCapabilities                         data_);
-
-    mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
-    mxArray* ToMatlab(TobiiResearchDisplayArea                          data_);
-    mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
-    mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
-
-    mxArray* ToMatlab(std::vector<TobiiMex::gaze                   >    data_);
-    mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
-    mxArray* ToMatlab(std::vector<TobiiMex::eyeImage               >    data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::extSignal              >    data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::timeSync               >    data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::positioning            >    data_);
-    mxArray* ToMatlab(TobiiMex::logMessage                              data_);
-    mxArray* ToMatlab(TobiiMex::streamError                             data_);
-    mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
-    mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
-    mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
-    mxArray* ToMatlab(TobiiResearchStatus                               data_);
-    mxArray* ToMatlab(TobiiTypes::CalibrationAction                     data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationResult                    data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint>        data_);
-    mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>		data_);
-    mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
-    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
 }
 
 MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
