@@ -148,7 +148,8 @@ bool TobiiMex::startLogging(std::optional<size_t> initialBufferSize_)
     {
         // also start stream error logging on all instances
         for (auto inst : *g_allInstances)
-            tobii_research_subscribe_to_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback, inst->_eyetracker.et);
+            if (inst->_eyetracker.et)
+                tobii_research_subscribe_to_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback, inst->_eyetracker.et);
     }
 
     return _isLogging = result == TOBII_RESEARCH_STATUS_OK;
@@ -179,7 +180,8 @@ bool TobiiMex::stopLogging()
     {
         // also stop stream error logging on all instances
         for (auto inst: *g_allInstances)
-            tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback);
+            if (inst->_eyetracker.et)
+                tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback);
     }
 
     return success;
@@ -307,7 +309,8 @@ TobiiMex::~TobiiMex()
     stop(DataStream::TimeSync,    true);
     stop(DataStream::Positioning, true);
 
-    tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TobiiStreamErrorCallback);
+    if (_eyetracker.et)
+        tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TobiiStreamErrorCallback);
     stopLogging();
 
     leaveCalibrationMode(false);
