@@ -1546,7 +1546,7 @@ classdef Titta < handle
             % setup
             if qCal
                 points          = obj.settings.cal.pointPos;
-                paceInterval    = ceil(obj.settings.cal.paceDuration   *min(fs));
+                paceIntervalTicks = ceil(obj.settings.cal.paceDuration   *min(fs));
                 out.pointStatus = {};
                 extraInp        = {obj.settings.calibrateEye};
                 if strcmp(obj.settings.calibrateEye,'both')
@@ -1555,7 +1555,7 @@ classdef Titta < handle
                 stage           = 'cal';
             else
                 points          = obj.settings.val.pointPos;
-                paceInterval    = ceil(obj.settings.val.paceDuration   *min(fs));
+                paceIntervalTicks = ceil(obj.settings.val.paceDuration   *min(fs));
                 collectInterval = ceil(obj.settings.val.collectDuration*min(fs));
                 nDataPoint      = ceil(obj.settings.val.collectDuration*obj.settings.freq);
                 tick0v          = nan;
@@ -1597,7 +1597,7 @@ classdef Titta < handle
                 end
                 % now we expect size(points,1) completed DiscardData
                 % reports as well
-                nRep = 0;
+                nReply = 0;
                 drawCmd = 'new';
                 while true
                     tick    = tick+1;
@@ -1608,8 +1608,8 @@ classdef Titta < handle
                     drawCmd = 'draw';
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     computeResult  = obj.buffer.calibrationRetrieveResult();
-                    nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
-                    if nRep==size(points,1)
+                    nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
+                    if nReply==size(points,1)
                         break;
                     end
                 end
@@ -1627,6 +1627,7 @@ classdef Titta < handle
             advancePoint    = true;
             pointOff        = 0;
             nCollecting     = 0;
+            tick0p          = nan;
             while true
                 tick        = tick+1;
                 nextFlipT   = out.flips(end)+1/1000;
@@ -1655,13 +1656,13 @@ classdef Titta < handle
                     end
                     out.pointPos(end+1,1:3) = points(currentPoint,[5 3 4]);
                     % check if manual acceptance needed for this point
-                    waitForKeyAccept = needManualAccept(currentPoint);
-                    haveAccepted     = ~waitForKeyAccept;   % if not needed, we already have it
+                    haveAccepted = ~needManualAccept(currentPoint);     % if not needed, we already have it
                     
                     % get ready for next point
-                    tick0p          = tick;
+                    qWaitForAllowAccept = true;
                     advancePoint    = false;
                     qNewPoint       = true;
+                    tick0p          = nan;
                     if currentPoint~=1 || ~qCal
                         % first point was already shown during delete above
                         % when in calibration phase
@@ -1676,8 +1677,12 @@ classdef Titta < handle
                 if qHaveOperatorScreen
                     [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
                 end
-                qAllowAcceptKey     = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
+                qAllowAccept        = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
                 drawCmd             = 'draw';   % clear any command other than 'draw'
+                if qWaitForAllowAccept && qAllowAccept
+                    tick0p              = tick;
+                    qWaitForAllowAccept = false;
+                end
                 
                 out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
                 if qNewPoint
@@ -1690,7 +1695,7 @@ classdef Titta < handle
                 [~,~,~,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
                 if any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,'space')) && waitForKeyAccept && qAllowAcceptKey
+                    if any(strcmpi(keys,'space')) && qAllowAccept
                         % if in semi-automatic mode and first point, or if
                         % manual and any point, space bars triggers
                         % accepting calibration point
@@ -1712,7 +1717,8 @@ classdef Titta < handle
                         % calibration/validation point, if not too late
                         % because already accepted the point started data
                         % collection for it)
-                        drawCmd = 'redo';
+                        drawCmd             = 'redo';
+                        qWaitForAllowAccept = true;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         out.status = 2;
@@ -1727,7 +1733,7 @@ classdef Titta < handle
                 end
                 
                 % accept point
-                if haveAccepted && tick>tick0p+paceInterval
+                if haveAccepted && tick>tick0p+paceIntervalTicks
                     if qCal
                         if ~nCollecting
                             % start collection
