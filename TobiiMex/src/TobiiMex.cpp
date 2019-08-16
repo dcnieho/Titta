@@ -338,6 +338,13 @@ void TobiiMex::Init()
 }
 
 // getters and setters
+const TobiiTypes::eyeTracker TobiiMex::getConnectedEyeTracker()
+{
+    // refresh ET info to make sure its up to date
+    _eyetracker.refreshInfo();
+
+    return _eyetracker;
+}
 const float TobiiMex::getCurrentFrequency() const
 {
     float gaze_output_frequency;

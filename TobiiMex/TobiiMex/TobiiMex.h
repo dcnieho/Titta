@@ -68,7 +68,7 @@ public:
 
     //// eye-tracker specific getters and setters
     // getters
-    const TobiiTypes::eyeTracker getConnectedEyeTracker() const { return _eyetracker; }
+    const TobiiTypes::eyeTracker getConnectedEyeTracker();
     const float getCurrentFrequency() const;
     const std::string getCurrentTrackingMode() const;
     const TobiiResearchTrackBox getTrackBox() const;
