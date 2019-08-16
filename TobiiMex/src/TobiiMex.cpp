@@ -18,11 +18,6 @@ namespace
     mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLogs;
 
     template <typename T>
-    read_lock  lockForReading() { return  read_lock(getMutex<T>()); }
-    template <typename T>
-    write_lock lockForWriting() { return write_lock(getMutex<T>()); }
-
-    template <typename T>
     mutex_type& getMutex()
     {
         if constexpr (std::is_same_v<T, TobiiMex::gaze>)
@@ -40,6 +35,11 @@ namespace
         if constexpr (std::is_same_v<T, TobiiMex::streamError>)
             return g_mLogs;
     }
+
+    template <typename T>
+    read_lock  lockForReading() { return  read_lock(getMutex<T>()); }
+    template <typename T>
+    write_lock lockForWriting() { return write_lock(getMutex<T>()); }
 
     // default argument values
     namespace defaults
@@ -101,7 +101,81 @@ std::string TobiiMex::dataStreamToString(TobiiMex::DataStream stream_)
     return v.first;
 }
 
-// info getters
+// callbacks
+void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::gaze>();
+        static_cast<TobiiMex*>(user_data)->_gaze.push_back(*gaze_data_);
+    }
+}
+void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::eyeImage>();
+        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
+    }
+}
+void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::eyeImage>();
+        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
+    }
+}
+void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::extSignal>();
+        static_cast<TobiiMex*>(user_data)->_extSignal.push_back(*ext_signal_);
+    }
+}
+void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::timeSync>();
+        static_cast<TobiiMex*>(user_data)->_timeSync.push_back(*time_sync_data_);
+    }
+}
+void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::positioning>();
+        static_cast<TobiiMex*>(user_data)->_positioning.push_back(*position_data_);
+    }
+}
+void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
+{
+    if (TobiiMex::_logMessages)
+    {
+        auto l = lockForWriting<TobiiMex::logMessage>();
+        TobiiMex::_logMessages->emplace_back(TobiiMex::logMessage(system_time_stamp_, source_, level_, message_));
+    }
+}
+void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
+{
+    if (TobiiMex::_logMessages && errorData_)
+    {
+        std::string serial;
+        if (user_data)
+        {
+            char* serial_number;
+            tobii_research_get_serial_number(static_cast<TobiiResearchEyeTracker*>(user_data), &serial_number);
+            serial = serial_number;
+            tobii_research_free_string(serial_number);
+        }
+        auto l = lockForWriting<TobiiMex::streamError>();
+        TobiiMex::_logMessages->emplace_back(TobiiMex::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
+    }
+}
+
+// info getter static functions
 TobiiResearchSDKVersion TobiiMex::getSDKVersion()
 {
     TobiiResearchSDKVersion sdk_version;
@@ -186,80 +260,6 @@ bool TobiiMex::stopLogging()
     }
 
     return success;
-}
-
-
-void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::gaze>();
-        static_cast<TobiiMex*>(user_data)->_gaze.push_back(*gaze_data_);
-    }
-}
-void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::eyeImage>();
-        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
-    }
-}
-void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::eyeImage>();
-        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
-    }
-}
-void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::extSignal>();
-        static_cast<TobiiMex*>(user_data)->_extSignal.push_back(*ext_signal_);
-    }
-}
-void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::timeSync>();
-        static_cast<TobiiMex*>(user_data)->_timeSync.push_back(*time_sync_data_);
-    }
-}
-void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
-{
-    if (user_data)
-    {
-        auto l = lockForWriting<TobiiMex::positioning>();
-        static_cast<TobiiMex*>(user_data)->_positioning.push_back(*position_data_);
-    }
-}
-void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
-{
-    if (TobiiMex::_logMessages)
-    {
-        auto l = lockForWriting<TobiiMex::logMessage>();
-        TobiiMex::_logMessages->emplace_back(TobiiMex::logMessage(system_time_stamp_, source_, level_, message_));
-    }
-}
-void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
-{
-    if (TobiiMex::_logMessages && errorData_)
-    {
-        std::string serial;
-        if (user_data)
-        {
-            char* serial_number;
-            tobii_research_get_serial_number(static_cast<TobiiResearchEyeTracker*>(user_data), &serial_number);
-            serial = serial_number;
-            tobii_research_free_string(serial_number);
-        }
-        auto l = lockForWriting<TobiiMex::streamError>();
-        TobiiMex::_logMessages->emplace_back(TobiiMex::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
-    }
 }
 
 namespace
