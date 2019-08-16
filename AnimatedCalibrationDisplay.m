@@ -35,6 +35,7 @@ classdef AnimatedCalibrationDisplay < handle
         oscillatePeriod     = 1.5;
         blinkInterval       = 0.3;
         blinkCount          = 3;
+        fixBackSizeBlink    = 35;
         fixBackSizeMax      = 50;
         fixBackSizeMaxOsc   = 35;
         fixBackSizeMin      = 15;
@@ -107,6 +108,7 @@ classdef AnimatedCalibrationDisplay < handle
                 obj.currentPoint    = [currentPoint pos];
             elseif strcmp(drawCmd,'redo')
                 % start blink, pause animation.
+                obj.calState = obj.calStateEnum.blinking;
                 obj.blinkStartT = curT;
             else % drawCmd == 'draw'
                 % regular draw: check state transition
@@ -151,6 +153,8 @@ classdef AnimatedCalibrationDisplay < handle
                 dSize = obj.fixBackSizeMax-obj.fixBackSizeMin;
                 frac = 1 - (curT-obj.shrinkStartT)/obj.shrinkTime;
                 sz   = [obj.fixBackSizeMin + frac.*dSize  obj.fixFrontSize];
+            elseif obj.calState==obj.calStateEnum.blinking
+                sz   = [obj.fixBackSizeBlink obj.fixFrontSize];
             else
                 if obj.doOscillate
                     dSize = obj.fixBackSizeMaxOsc-obj.fixBackSizeMin;

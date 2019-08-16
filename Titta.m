@@ -1598,12 +1598,14 @@ classdef Titta < handle
                 % now we expect size(points,1) completed DiscardData
                 % reports as well
                 nRep = 0;
+                drawCmd = 'new';
                 while true
                     tick    = tick+1;
                     for w=1:length(wpnt)
                         Screen('FillRect', wpnt(w), bgClr{w});
                     end
-                    drawFunction(wpnt(1),1,points(1,3:4),tick,stage);
+                    drawFunction(wpnt(1),drawCmd,1,points(1,3:4),tick,stage);
+                    drawCmd = 'draw';
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     computeResult  = obj.buffer.calibrationRetrieveResult();
                     nRep    = nRep + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
@@ -1660,7 +1662,10 @@ classdef Titta < handle
                     tick0p          = tick;
                     advancePoint    = false;
                     qNewPoint       = true;
-                    drawCmd         = 'new';
+                    if currentPoint~=1
+                        % first point was already shown during delete above
+                        drawCmd         = 'new';
+                    end
                 end
                 
                 % call drawer function
@@ -1794,7 +1799,7 @@ classdef Titta < handle
                     if qHaveOperatorScreen
                         [texs,szs,eyeImageRect] = drawOperatorScreenFun([],eyeStartTime,texs,szs,eyeImageRect);
                     end
-                    drawFunction(wpnt(1),lastPoint,points(lastPoint,3:4),tick,stage);
+                    drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     
                     % first get computeAndApply result, then get
