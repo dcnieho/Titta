@@ -853,7 +853,7 @@ classdef Titta < handle
             settings.UI.val.menu.text.style     = 0;
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.cal.autoPace               = 1;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
-            settings.cal.paceDuration           = 1.5;                          % minimum duration (s) that each point is shown
+            settings.cal.paceDuration           = 0.8;                          % minimum duration (s) that each point is shown
             settings.cal.doRandomPointOrder     = true;
             settings.cal.bgColor                = 127;
             settings.cal.fixBackSize            = 20;
@@ -1545,22 +1545,22 @@ classdef Titta < handle
             
             % setup
             if qCal
-                points          = obj.settings.cal.pointPos;
-                paceIntervalTicks = ceil(obj.settings.cal.paceDuration   *min(fs));
-                out.pointStatus = {};
-                extraInp        = {obj.settings.calibrateEye};
-                if strcmp(obj.settings.calibrateEye,'both')
-                    extraInp    = {};
+                points              = obj.settings.cal.pointPos;
+                paceIntervalTicks   = ceil(obj.settings.cal.paceDuration   *min(fs));
+                out.pointStatus     = {};
+                extraInp            = {};
+                if ~strcmp(obj.settings.calibrateEye,'both')
+                    extraInp            = {obj.settings.calibrateEye};
                 end
-                stage           = 'cal';
+                stage               = 'cal';
             else
-                points          = obj.settings.val.pointPos;
-                paceIntervalTicks = ceil(obj.settings.val.paceDuration   *min(fs));
-                collectInterval = ceil(obj.settings.val.collectDuration*min(fs));
-                nDataPoint      = ceil(obj.settings.val.collectDuration*obj.settings.freq);
-                tick0v          = nan;
-                out.gazeData    = [];
-                stage           = 'val';
+                points              = obj.settings.val.pointPos;
+                paceIntervalTicks   = ceil(obj.settings.val.paceDuration   *min(fs));
+                collectInterval     = ceil(obj.settings.val.collectDuration*min(fs));
+                nDataPoint          = ceil(obj.settings.val.collectDuration*obj.settings.freq);
+                tick0v              = nan;
+                out.gazeData        = [];
+                stage               = 'val';
             end
             nPoint = size(points,1);
             if nPoint==0
@@ -1718,6 +1718,7 @@ classdef Titta < handle
                         % because already accepted the point started data
                         % collection for it)
                         drawCmd             = 'redo';
+                        tick0p              = nan;
                         qWaitForAllowAccept = true;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
