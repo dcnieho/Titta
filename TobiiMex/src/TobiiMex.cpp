@@ -952,7 +952,7 @@ std::vector<T> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std
 }
 
 template <typename T>
-std::vector<T> peekFromVec(const std::vector<T>& buf_, typename const std::vector<T>::const_iterator startIt_, typename const std::vector<T>::const_iterator endIt_)
+std::vector<T> peekFromVec(const std::vector<T>& buf_, const typename std::vector<T>::const_iterator startIt_, const typename std::vector<T>::const_iterator endIt_)
 {
     if (std::empty(buf_))
         return std::vector<T>{};
