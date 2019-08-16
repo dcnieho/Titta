@@ -26,6 +26,3 @@ Tobii_C_SDK\32\lib\tobii_research.lib -> vcpkg\installed\x86-windows\lib
 Tobii_C_SDK\32\lib\tobii_research.lib -> vcpkg\installed\x86-windows\debug\lib
 Tobii_C_SDK\32\include\*              -> vcpkg\installed\x86-windows\include
 ```
-
-if you wish to compile the websocket server (beta and incomplete), further run:
-`vcpkg install uwebsockets uwebsockets:x64-windows nlohmann-json nlohmann-json:x64-windows`
