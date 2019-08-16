@@ -60,12 +60,13 @@ classdef AnimatedCalibrationDisplay < handle
         end
         
         function qAllowAcceptKey = doDraw(obj,wpnt,drawCmd,currentPoint,pos,~,~)
-            % if called with nan as first input, this is a signal that
+            % last two inputs, tick (monotonously increasing integer and stage
+            % ("cal" or "val") are not used in this code
+            
+            % if called with drawCmd == 'cleanUp', this is a signal that
             % calibration/validation is done, and cleanup can occur if
             % wanted
-            % last two , tick (monotonously increasing integer and stage
-            % ("cal" or "val") are not used in this code
-            if isnan(wpnt)
+            if strcmp(drawCmd,'cleanUp')
                 obj.setCleanState();
                 return;
             end

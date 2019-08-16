@@ -1428,7 +1428,7 @@ classdef Titta < handle
                         % accross setup screens and such.
                         % So, send cleanup message to user function (if any)
                         if isa(obj.settings.cal.drawFunction,'function_handle')
-                            obj.settings.cal.drawFunction(nan,nan,nan,nan,nan);
+                            obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                         end
                         for w=wpnt
                             Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
@@ -1463,7 +1463,7 @@ classdef Titta < handle
             if out.val{iVal}.status~=-1   % see comment above about why not when -1
                 % cleanup message to user function (if any)
                 if isa(obj.settings.cal.drawFunction,'function_handle')
-                    obj.settings.cal.drawFunction(nan,nan,nan,nan,nan);
+                    obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                 end
             end
             out.status = out.val{iVal}.status;
