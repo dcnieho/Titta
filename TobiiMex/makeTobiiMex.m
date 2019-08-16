@@ -9,11 +9,13 @@ if isWin
         % Octave...
     else
         is64Bit = ~isempty(strfind(computer, 'x86_64')) || streq(computer,'PCWIN64'); %#ok<STREMP>
-        bitLbl = '64';
-        if ~is64Bit
-            bitLbl = '32';
+        if is64Bit
+            bitLbl = '64';
+            extra = {'-R2017b'};    % needed on R2019a to make sure we build a lib that runs on MATLABs as old as R2015b
+        else
+            error('We must build with VS2019 or later, but last supported 32bit matlab version, R2015b, doesn''t support that compiler. Compile the mex file through the msvc project')
         end
-        mex('-R2017b', '-v', '-O', 'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /GY /Oi /GL"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp', 'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"');
+        mex(extra{:}, '-v', '-O', 'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /GY /Oi /GL"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp', 'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"');
     end
 else
     % Linux
