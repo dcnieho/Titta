@@ -1662,8 +1662,9 @@ classdef Titta < handle
                     tick0p          = tick;
                     advancePoint    = false;
                     qNewPoint       = true;
-                    if currentPoint~=1
+                    if currentPoint~=1 || ~qCal
                         % first point was already shown during delete above
+                        % when in calibration phase
                         drawCmd         = 'new';
                     end
                 end
