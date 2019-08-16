@@ -79,8 +79,10 @@ namespace mxTypes
             using type = int8_t;
     }
 
+    // needed helper to mark TODO constexpr if branches below
+    template <class...> constexpr std::false_type always_false{};
 
-
+    //// converters of generic data types to MATLAB variables
     //// to simple variables
     // forward declarations
     mxArray* ToMatlab(std::string str_);
@@ -145,7 +147,7 @@ namespace mxTypes
         }
         else
         {
-            static_assert(false, "TODO: implement");
+            static_assert(always_false<Cont>, "TODO: implement");
             // some range based for-loop, copy elements one at a time
         }
         return temp;
@@ -186,7 +188,7 @@ namespace mxTypes
             else if constexpr (sizeof...(Ts) == 1)
                 mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<0>(expr)(item_.*std::get<1>(expr))));
             else
-                static_assert(false);   // not implemented
+                static_assert(always_false<Ts...>,"Support for more than two input arguments has not been implemented. Make generic, or add your needed case above");
         else
             mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(static_cast<OutOrFun>(item_.*std::get<1>(expr))));
         if constexpr (!sizeof...(fields))
