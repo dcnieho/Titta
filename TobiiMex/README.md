@@ -8,3 +8,5 @@ To update the Tobii Pro C SDK used to build TobiiMEx against, you need to manual
 3. The \*.dll and \*.so files are placed in the respective output directories, `\TobiiMex\TobiiMex_matlab\64` and `\TobiiMex\TobiiMex_matlab\32` (the latter Windows only)
 
 For building the 32bit Windows mex file, a 32bit version of matlab must be installed. R2015b is the last version supporting 32bit.
+
+For building the Linux mex file, GCC 9.1.0 was used, the default 7.4.0 included with Ubuntu 18.04 is too old. See here https://linuxize.com/post/how-to-install-gcc-compiler-on-ubuntu-18-04/ for how to install newer gcc versions (scroll down).
