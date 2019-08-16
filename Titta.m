@@ -1660,16 +1660,18 @@ classdef Titta < handle
                     tick0p          = tick;
                     advancePoint    = false;
                     qNewPoint       = true;
+                    drawCmd         = 'new';
                 end
                 
                 % call drawer function
                 for w=1:length(wpnt)
-                    Screen('FillRect', wpnt(w), bgClr{w});
+                    Screen('FillRect', wpnt(w), bgClr{w});   % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
                 end
                 if qHaveOperatorScreen
                     [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
                 end
-                qAllowAcceptKey     = drawFunction(wpnt(1),currentPoint,points(currentPoint,3:4),tick,stage);
+                qAllowAcceptKey     = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
+                drawCmd             = 'draw';   % clear any command other than 'draw'
                 
                 out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
                 if qNewPoint
@@ -1699,6 +1701,10 @@ classdef Titta < handle
                             out.status = -3;
                         end
                         break;
+                    elseif any(strcmpi(keys,'backspace'))
+                        % motify user requested to redo the current
+                        % calibration point
+                        drawCmd = 'redo';
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         out.status = 2;
@@ -1873,7 +1879,7 @@ classdef Titta < handle
             drawLiveData(wpnt,obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{2});
         end
         
-        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,pos,~,~)
+        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
             obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
             qAllowAcceptKey = true;
         end

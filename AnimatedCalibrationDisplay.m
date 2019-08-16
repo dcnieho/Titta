@@ -10,7 +10,7 @@
 
 classdef AnimatedCalibrationDisplay < handle
     properties (Access=private, Constant)
-        calStateEnum = struct('undefined',0, 'moving',1, 'shrinking',2 ,'waiting',3);
+        calStateEnum = struct('undefined',0, 'moving',1, 'shrinking',2 ,'waiting',3 ,'blinking',4);
     end
     properties (Access=private)
         calState;
@@ -19,6 +19,7 @@ classdef AnimatedCalibrationDisplay < handle
         moveStartT;
         shrinkStartT;
         oscillStartT;
+        blinkStartT;
         moveDuration;
         moveVec;
         accel;
@@ -32,6 +33,8 @@ classdef AnimatedCalibrationDisplay < handle
         moveWithAcceleration= true;
         doOscillate         = true;
         oscillatePeriod     = 1.5;
+        blinkInterval       = 0.3;
+        blinkCount          = 3;
         fixBackSizeMax      = 50;
         fixBackSizeMaxOsc   = 35;
         fixBackSizeMin      = 15;
@@ -56,12 +59,12 @@ classdef AnimatedCalibrationDisplay < handle
             obj.lastPoint= nan(1,3);
         end
         
-        function qAllowAcceptKey = doDraw(obj,wpnt,currentPoint,pos,~,~)
+        function qAllowAcceptKey = doDraw(obj,wpnt,drawCmd,currentPoint,pos,~,~)
             % if called with nan as first input, this is a signal that
             % calibration/validation is done, and cleanup can occur if
             % wanted
-            % last two inputs, tick (monotonously increasing integer and
-            % stage ("cal" or "val") are not used in this code
+            % last two , tick (monotonously increasing integer and stage
+            % ("cal" or "val") are not used in this code
             if isnan(wpnt)
                 obj.setCleanState();
                 return;
@@ -76,8 +79,8 @@ classdef AnimatedCalibrationDisplay < handle
             end
             
             % check point changed
-            curT = GetSecs;     % instead of using time directly, you could use the last input to this function to animate based on call sequence number to this function
-            if any(obj.currentPoint(2:3)~=pos)
+            curT = GetSecs;     % instead of using time directly, you could use the 'tick' call sequence number input to this function to animate your display
+            if strcmp(drawCmd,'new')
                 if obj.doMove && ~isnan(obj.currentPoint(1))
                     obj.calState = obj.calStateEnum.moving;
                     obj.moveStartT = curT;
@@ -101,20 +104,25 @@ classdef AnimatedCalibrationDisplay < handle
                 
                 obj.lastPoint       = obj.currentPoint;
                 obj.currentPoint    = [currentPoint pos];
-            end
-            
-            % check state transition
-            if obj.calState==obj.calStateEnum.moving && (curT-obj.moveStartT)>obj.moveDuration
-                if obj.doShrink
-                    obj.calState = obj.calStateEnum.shrinking;
-                    obj.shrinkStartT = curT;
-                else
+            elseif strcmp(drawCmd,'redo')
+                % start blink, pause animation.
+                obj.blinkStartT = curT;
+            else % drawCmd == 'draw'
+                % regular draw: check state transition
+                if (obj.calState==obj.calStateEnum.moving && (curT-obj.moveStartT)>obj.moveDuration) || ...
+                        (obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2) || ...
+                    % move finished or blink finished
+                    if obj.doShrink
+                        obj.calState = obj.calStateEnum.shrinking;
+                        obj.shrinkStartT = curT;
+                    else
+                        obj.calState = obj.calStateEnum.waiting;
+                        obj.oscillStartT = curT;
+                    end
+                elseif obj.calState==obj.calStateEnum.shrinking && (curT-obj.shrinkStartT)>obj.shrinkTime
                     obj.calState = obj.calStateEnum.waiting;
                     obj.oscillStartT = curT;
                 end
-            elseif obj.calState==obj.calStateEnum.shrinking && (curT-obj.shrinkStartT)>obj.shrinkTime
-                obj.calState = obj.calStateEnum.waiting;
-                obj.oscillStartT = curT;
             end
             
             % determine current point position
@@ -160,11 +168,13 @@ classdef AnimatedCalibrationDisplay < handle
             % determine if we're ready to accept the user pressing the
             % accept calibration point button. User should not be able to
             % press it if point is not yet at the final position
-            qAllowAcceptKey = obj.calState~=obj.calStateEnum.moving;
+            qAllowAcceptKey = ismember(obj.calState,[obj.calStateEnum.shrinking obj.calStateEnum.waiting]);
             
             % draw
-            Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor));
-            obj.drawAFixPoint(wpnt,curPos,sz);
+            Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
+            if obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5
+                obj.drawAFixPoint(wpnt,curPos,sz);
+            end
         end
     end
     

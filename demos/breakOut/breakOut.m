@@ -29,7 +29,7 @@ settings.cal.bgColor= bgclr;
 settings.UI.button.val.continue.string = 'start game (<i>spacebar<i>)';
 % custom calibration drawer
 calViz = AnimatedCalibrationDisplay();
-settings.cal.drawFunction = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
+settings.cal.drawFunction = @(a,b,c,d,e,f) calViz.doDraw(a,b,c,d,e,f);
 
 % setup world
 scr                 = max(Screen('Screens'));

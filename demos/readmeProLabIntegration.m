@@ -49,7 +49,7 @@ try
     if useAnimatedCalibration
         % custom calibration drawer
         calViz                      = AnimatedCalibrationDisplay();
-        settings.cal.drawFunction   = @(a,b,c,d,e) calViz.doDraw(a,b,c,d,e);
+        settings.cal.drawFunction   = @(a,b,c,d,e,f) calViz.doDraw(a,b,c,d,e,f);
         calViz.bgColor              = bgClr;
         calViz.fixBackColor         = fixClrs(1);
         calViz.fixFrontColor        = fixClrs(2);
