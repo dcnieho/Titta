@@ -993,7 +993,7 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiResearchPoint3D data_)
     {
-        mxArray* out = mxCreateUninitDoubleMatrix(mxREAL, 3, 1);
+        mxArray* out = mxCreateDoubleMatrix(3, 1, mxREAL);
         auto storage = static_cast<double*>(mxGetData(out));
         storage[0] = static_cast<double>(data_.x);
         storage[1] = static_cast<double>(data_.y);
