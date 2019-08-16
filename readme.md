@@ -135,11 +135,13 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.cal.drawFunction`|Function to be called to draw calibration screen. See the `AnimatedCalibrationDisplay` class packaged with Titta for an example.|
 |`settings.cal.doRecordEyeImages`|If true, eye images are recorded during calibration and validation, if supported by the eye tracker.|
 |`settings.cal.doRecordExtSignal`|If true, external signals are recorded during calibration and validation, if supported by the eye tracker.|
+|`settings.cal.pointNotifyFunction`|If provided, this callback is called for each calibration point when collecting data for the point completes (either successfully or failed).|
 |  |  |
 |`settings.val.pointPos`|Nx2 matrix of screen positions ([0,1] range) of validation points.|
 |`settings.val.paceDuration`|Minimum duration (s) that each validation point is shown.|
-|`settings.val.collectDuration`|Amount of validation data (seconds) to collect for each validation point|
-|`settings.val.doRandomPointOrder`|If true, the calibration points are shown in random order. If false, each row in `settings.val.pointPos` is worked through in order|
+|`settings.val.collectDuration`|Amount of validation data (seconds) to collect for each validation point.|
+|`settings.val.doRandomPointOrder`|If true, the calibration points are shown in random order. If false, each row in `settings.val.pointPos` is worked through in order.|
+|`settings.val.pointNotifyFunction`|If provided, this callback is called for each validation point when collecting gaze data for the point completes.|
 |  |  |
 |`settings.UI.startScreen`|0: skip head positioning, go straight to calibration; 1: start with head positioning interface.|
 |`settings.UI.setup.showEyes`|Show eyes on disk representing head used for head position visualization?|
