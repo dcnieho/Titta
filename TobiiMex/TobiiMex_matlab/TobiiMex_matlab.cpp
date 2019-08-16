@@ -216,7 +216,7 @@ namespace {
 // extend set of function to convert C++ data to matlab
 namespace mxTypes
 {
-    // forward declare
+    // forward declarations
     template<typename Cont, typename... Fs>
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
         FieldToMatlab(const Cont& data_, Fs... fields);
@@ -230,14 +230,14 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
     mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
 
+    mxArray* ToMatlab(std::vector<TobiiMex::gaze                   >    data_);
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>&    data_, TobiiResearchEyeData TobiiResearchGazeData::* field_);
-    mxArray* ToMatlab(std::vector<TobiiMex::gaze                   > data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::eyeImage               > data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::extSignal              > data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::timeSync               > data_);
-    mxArray* ToMatlab(std::vector<TobiiMex::positioning            > data_);
-    mxArray* ToMatlab(TobiiMex::logMessage                           data_);
-    mxArray* ToMatlab(TobiiMex::streamError                          data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::eyeImage               >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::extSignal              >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::timeSync               >    data_);
+    mxArray* ToMatlab(std::vector<TobiiMex::positioning            >    data_);
+    mxArray* ToMatlab(TobiiMex::logMessage                              data_);
+    mxArray* ToMatlab(TobiiMex::streamError                             data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
@@ -328,6 +328,37 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             plhs[0] = mxTypes::ToMatlab(TobiiMex::findAllEyeTrackers());
             break;
         }
+        case Action::StartLogging:
+        {
+            // get optional input argument
+            std::optional<uint64_t> bufSize;
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            {
+                if (!mxIsUint64(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                    mexErrMsgTxt("startLogging: Expected first argument to be a uint64 scalar.");
+                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[1]));
+            }
+
+            plhs[0] = mxCreateLogicalScalar(TobiiMex::startLogging(bufSize));
+            return;
+        }
+        case Action::GetLog:
+        {
+            // get optional input argument
+            std::optional<bool> clearBuffer;
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            {
+                if (!(mxIsDouble(prhs[1]) && !mxIsComplex(prhs[1]) && mxIsScalar(prhs[1])) && !mxIsLogicalScalar(prhs[1]))
+                    mexErrMsgTxt("getLog: Expected first argument to be a logical scalar.");
+                clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
+            }
+
+            plhs[0] = mxTypes::ToMatlab(TobiiMex::getLog(clearBuffer));
+            return;
+        }
+        case Action::StopLogging:
+            plhs[0] = mxCreateLogicalScalar(TobiiMex::stopLogging());
+            return;
 
         case Action::GetConnectedEyeTracker:
         {
@@ -784,38 +815,6 @@ MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const 
             }
         }
 
-        case Action::StartLogging:
-        {
-            // get optional input argument
-            std::optional<uint64_t> bufSize;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
-            {
-                if (!mxIsUint64(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                    mexErrMsgTxt("startLogging: Expected first argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[1]));
-            }
-
-            plhs[0] = mxCreateLogicalScalar(TobiiMex::startLogging(bufSize));
-            return;
-        }
-        case Action::GetLog:
-        {
-            // get optional input argument
-            std::optional<bool> clearBuffer;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
-            {
-                if (!(mxIsDouble(prhs[1]) && !mxIsComplex(prhs[1]) && mxIsScalar(prhs[1])) && !mxIsLogicalScalar(prhs[1]))
-                    mexErrMsgTxt("getLog: Expected first argument to be a logical scalar.");
-                clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
-            }
-
-            plhs[0] = mxTypes::ToMatlab(TobiiMex::getLog(clearBuffer));
-            return;
-        }
-        case Action::StopLogging:
-            plhs[0] = mxCreateLogicalScalar(TobiiMex::stopLogging());
-            return;
-
         default:
             mexErrMsgTxt(("Unhandled action: " + actionStr).c_str());
             break;
@@ -1007,6 +1006,22 @@ namespace mxTypes
         return mxCreateString(TobiiResearchLicenseValidationResultToString(data_).c_str());
     }
 
+    mxArray* ToMatlab(std::vector<TobiiMex::gaze> data_)
+    {
+        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
+        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+
+        // 1. all device timestamps
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchGazeData::device_time_stamp));
+        // 2. all system timestamps
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchGazeData::system_time_stamp));
+        // 3. left  eye data
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchGazeData::left_eye));
+        // 4. right eye data
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchGazeData::right_eye));
+
+        return out;
+    }
     mxArray* FieldToMatlab(const std::vector<TobiiResearchGazeData>& data_, TobiiResearchEyeData TobiiResearchGazeData::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin"};
@@ -1040,23 +1055,6 @@ namespace mxTypes
         mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
-
-        return out;
-    }
-
-    mxArray* ToMatlab(std::vector<TobiiMex::gaze> data_)
-    {
-        const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
-
-        // 1. all device timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &TobiiResearchGazeData::device_time_stamp));
-        // 2. all system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &TobiiResearchGazeData::system_time_stamp));
-        // 3. left  eye data
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchGazeData::left_eye));
-        // 4. right eye data
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchGazeData::right_eye));
 
         return out;
     }

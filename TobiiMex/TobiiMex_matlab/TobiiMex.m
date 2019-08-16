@@ -80,7 +80,7 @@ classdef TobiiMex < handle
         function delete(this)
             if ~isempty(this.instanceHandle)
                 this.cppmethod('delete');
-                this.instanceHandle     = [];
+                this.instanceHandle = [];
             end
         end
         
