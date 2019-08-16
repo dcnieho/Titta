@@ -111,7 +111,7 @@ classdef AnimatedCalibrationDisplay < handle
             else % drawCmd == 'draw'
                 % regular draw: check state transition
                 if (obj.calState==obj.calStateEnum.moving && (curT-obj.moveStartT)>obj.moveDuration) || ...
-                        (obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2) || ...
+                   (obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2)
                     % move finished or blink finished
                     if obj.doShrink
                         obj.calState = obj.calStateEnum.shrinking;
