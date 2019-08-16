@@ -876,7 +876,7 @@ namespace mxTypes
         mxArray* temp;
         using V = typename Cont::value_type;
         // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
-        using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<V, Fs...>>, last<V, Fs...>, last<V, Fs..., 1>>>;
+        using retT = memVarType_t<std::conditional_t<std::is_member_object_pointer_v<last<0, V, Fs...>>, last<0, V, Fs...>, last<1, V, Fs...>>>;
         // based on type, get number of rows for output
         constexpr auto numRows = getNumRows<retT>();
 

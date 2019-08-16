@@ -263,7 +263,7 @@ namespace mxTypes
     template <typename Obj, typename OutOrFun, typename... Fs, typename... Ts>
     constexpr auto getField(const Obj& obj, OutOrFun o, Ts Fs::*...fields)
     {
-        if constexpr (std::is_invocable_v<OutOrFun, last<Obj, Ts...>>)
+        if constexpr (std::is_invocable_v<OutOrFun, last<0, Obj, Ts...>>)
             return o(getField(obj, fields...));
         else
             return static_cast<OutOrFun>(getField(obj, fields...));
@@ -273,18 +273,18 @@ namespace mxTypes
     constexpr auto getFieldWrapper(const Obj& obj, Fs... fields)
     {
         // if last is pointer-to-member-variable, but previous is not (this would be a type tag then), swap the last two to put the type tag last
-        if      constexpr (sizeof...(Fs) > 1 && std::is_member_object_pointer_v<last<Obj, Fs...>> && !std::is_member_object_pointer_v<last<Obj, Fs..., 1>>)
+        if      constexpr (sizeof...(Fs) > 1 && std::is_member_object_pointer_v<last<0, Obj, Fs...>> && !std::is_member_object_pointer_v<last<1, Obj, Fs...>>)
             return rotate_right_except_last(
             [&](auto... elems) constexpr
             {
                 return getField(obj, elems...);
             }, fields...);
         // if last is pointer-to-member-variable, no casting of return value requested through type tag, call getField
-        else if constexpr (std::is_member_object_pointer_v<last<Obj, Fs...>>)
+        else if constexpr (std::is_member_object_pointer_v<last<0, Obj, Fs...>>)
             return getField(obj, fields...);
         // if last is an enum, compare the value of the field to it
         // this turns enum fields into a boolean given reference enum value for which true should be returned
-        else if constexpr (std::is_enum_v<last<Obj, Fs...>>)
+        else if constexpr (std::is_enum_v<last<0, Obj, Fs...>>)
         {
             auto tuple = std::make_tuple(fields...);
             return drop_last(

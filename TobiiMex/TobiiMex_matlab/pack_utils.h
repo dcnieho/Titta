@@ -5,7 +5,7 @@
 namespace
 {
     // get last type in template parameter pack (or optionally 2nd last when N=1, 3rd last when N=2, etc)
-    template<class... Ts, size_t N = 0>
+    template<size_t N, class... Ts>
     using last = typename std::tuple_element_t< sizeof...(Ts) - N - 1, std::tuple<Ts...> >;
 
     // higher order function to forward an index sequence
