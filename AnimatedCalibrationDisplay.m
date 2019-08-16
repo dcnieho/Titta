@@ -34,7 +34,7 @@ classdef AnimatedCalibrationDisplay < handle
         doOscillate         = true;
         oscillatePeriod     = 1.5;
         blinkInterval       = 0.3;
-        blinkCount          = 3;
+        blinkCount          = 2;
         fixBackSizeBlink    = 35;
         fixBackSizeMax      = 50;
         fixBackSizeMaxOsc   = 35;

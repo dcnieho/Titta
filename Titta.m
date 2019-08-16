@@ -1707,9 +1707,11 @@ classdef Titta < handle
                             out.status = -3;
                         end
                         break;
-                    elseif any(strcmpi(keys,'backspace'))
+                    elseif any(strcmpi(keys,'backspace')) && (~haveAccepted || tick<=tick0p+paceIntervalTicks)
                         % motify user requested to redo the current
-                        % calibration point
+                        % calibration/validation point, if not too late
+                        % because already accepted the point started data
+                        % collection for it)
                         drawCmd = 'redo';
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
