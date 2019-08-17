@@ -912,6 +912,10 @@ classdef Titta < handle
         function allowed = getAllowedOptions(obj)
             % NB: while some settings are nested a few levels deeper than
             % this, the two level info below has sufficient granularity
+            % TODO: should use a blacklisting approach instead. Not sure
+            % if the below is up to date, and hard to maintain. My
+            % blacklist will much more likely be stable and thus fine if i
+            % forget to think about it.
             allowed = {...
                 'calibrateEye',''
                 'UI','startScreen'
@@ -931,10 +935,12 @@ classdef Titta < handle
                 'cal','drawFunction'
                 'cal','doRecordEyeImages'
                 'cal','doRecordExtSignal'
+                'cal','pointNotifyFunction'
                 'val','pointPos'
                 'val','paceDuration'
                 'val','collectDuration'
                 'val','doRandomPointOrder'
+                'val','pointNotifyFunction'
                 };
             for p=size(allowed,1):-1:1
                 if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
