@@ -12,7 +12,25 @@ is64Bit = ~isempty(strfind(computer, '64')); %#ok<STREMP>
 
 if isWin
     if isOctave
-        % Octave...
+        if is64Bit
+            bitLbl = '64';
+        else
+            error('32bit Octave not supported. You can try your luck. But then you''ll have to build PsychToolbox yourself as well for 32bit Octave');
+        end
+        inpArgs = {'-v', '-O', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(cd,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(cd,'src','*.cpp')};
+        
+        % i need to switch path to bindir or mex/mkoctfile fails because
+        % gcc not found. Find proper solution for that later. then use
+        % these inputs
+        %inpArgs = {'-v', '-O', 'CPPFLAGS="$CPPFLAGS /std:c++17"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp'};
+        myDir = cd;
+        tdir=eval('__octave_config_info__("bindir")');  % eval because invalid syntax for matlab, would cause whole file not to run
+        cd(tdir);
+        % get cppflags, add to it what we need
+        flags = mkoctfile('-p','CXXFLAGS');
+        setenv('CXXFLAGS',[flags ' -std=c++17']);
+        mex(inpArgs{:});
+        cd(myDir);
     else
         if is64Bit
             bitLbl = '64';
