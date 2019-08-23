@@ -12,24 +12,40 @@ classdef TobiiMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
-    properties (GetAccess = protected, SetAccess = immutable, Hidden = false)
+    properties (GetAccess = protected, SetAccess = private, Hidden = false)
+        % should be 'SetAccess = immutable', but Octave does not support it
         mexClassWrapperFnc;     % the MEX function owning the class instances
     end
     
     methods (Static = true)
         function mexFnc = checkMEXFnc(mexFnc)
             % Input function_handle or name, return valid handle or error
+            isOctave = ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5]);
             
-            % accept string or function_handle
-            if ischar(mexFnc)
-                mexFnc = str2func(mexFnc);
-            end
-            
-            % validate MEX-file function handle
-            % http://stackoverflow.com/a/19307825/2778484
-            funInfo = functions(mexFnc);
-            if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
-                error('TobiiMex:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
+            if isOctave
+                try
+                    % accept string or function_handle
+                    if ischar(mexFnc)
+                        mexFnc = str2func(mexFnc);
+                    end
+                    mexFnc('touch')
+                catch me
+                    if isa(mexFnc,'function_handle')
+                        mexFnc = func2str(mexFnc);
+                    end
+                    error('TobiiMex:invalidMEXFunction','Failed to load or call MEX file: "%s".',mexFnc)
+                end
+            else
+                % accept string or function_handle
+                if ischar(mexFnc)
+                    mexFnc = str2func(mexFnc);
+                end
+                % validate MEX-file function handle
+                % http://stackoverflow.com/a/19307825/2778484
+                funInfo = functions(mexFnc);
+                if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
+                    error('TobiiMex:invalidMEXFunction','Invalid MEX file: "%s".',funInfo.file);
+                end
             end
         end
     end
@@ -78,7 +94,9 @@ classdef TobiiMex < handle
             this.instanceHandle = this.cppmethodGlobal('new',address);
         end
         function delete(this)
-            this.stopLogging();
+            if ~isempty(this.mexClassWrapperFnc)
+                this.stopLogging();
+            end
             if ~isempty(this.instanceHandle)
                 this.cppmethod('delete');
                 this.instanceHandle = [];
