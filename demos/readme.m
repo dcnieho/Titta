@@ -4,7 +4,7 @@
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% Niehorster, D.C., Andersson, R. & Nystrï¿½m, M., (in prep). Titta: A
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
@@ -27,7 +27,7 @@ try
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
     settings.debugMode      = true;
-    % customize colors of setup and calibration interface (yes, colors of
+    % customize colors of setup and calibration interface (colors of
     % everything can be set, so there is a lot here).
     % 1. setup screen
     settings.UI.setup.bgColor       = bgClr;
