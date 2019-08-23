@@ -45,7 +45,7 @@ settings.cal.bgColor    = sv.bgclr;
 % custom calibration drawer
 calViz                  = AnimatedCalibrationDisplay();
 calViz.bgColor          = sv.bgclr;
-settings.cal.drawFunction = @(a,b,c,d,e,f) calViz.doDraw(a,b,c,d,e,f);
+settings.cal.drawFunction = @calViz.doDraw;
 
 % task parameters, either in brief demo mode or with all defaults as per
 % the protocol recommended by Antoniades et al. (2013)

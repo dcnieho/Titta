@@ -20,10 +20,12 @@ To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing
 
 Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
 
-Tested on MATLAB R2015b & R2019a. Octave is currently not supported, but planned.
+*Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
+
+## Supported platforms
 Currently the toolbox is only supported on Windows (tested on Windows 10 and Windows 7), Linux support is planned, and OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
 
-*Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
+Tested on MATLAB R2015b & R2019a. The mex file builds on Octave, but Octave can currently not be supported due to [this (now solved) bug](https://savannah.gnu.org/bugs/?45351), that has not yet been included in a release that is also supported by PsychToolbox.
 
 ## How to acquire
 The recommended way to acquire Titta is to use the `git` tool to download it. Alternatively you can download the components separately and place them in the right locations. Here are instructions for these two routes:
