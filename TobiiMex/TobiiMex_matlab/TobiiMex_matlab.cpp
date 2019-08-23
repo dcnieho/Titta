@@ -252,7 +252,7 @@ namespace {
     }
 }
 
-MEXFUNCTION_LINKAGE void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nrhs < 1 || !mxIsChar(prhs[0]))
         mexErrMsgTxt("First input must be an action string ('new', 'delete', or a method name).");
@@ -1296,7 +1296,7 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiResearchCalibrationResult data_)
     {
-        std::vector points(data_.calibration_points, data_.calibration_points+data_.calibration_point_count);
+        std::vector<TobiiResearchCalibrationPoint> points(data_.calibration_points, data_.calibration_points+data_.calibration_point_count);
         const char* fieldNames[] = {"status","points"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
@@ -1337,14 +1337,14 @@ namespace mxTypes
 
         ToStructArray(out, data_,
                       &TobiiResearchCalibrationPoint::position_on_display_area,
-                      std::make_tuple([](auto a, auto b) {return std::vector(a,a+b); }, &TobiiResearchCalibrationPoint::calibration_samples, &TobiiResearchCalibrationPoint::calibration_sample_count)
+                      std::make_tuple([](auto a, auto b) {return std::vector<TobiiResearchCalibrationSample>(a,a+b); }, &TobiiResearchCalibrationPoint::calibration_samples, &TobiiResearchCalibrationPoint::calibration_sample_count)
         );
 
         return out;
     }
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D data_)
     {
-        return ToMatlab(std::array{static_cast<double>(data_.x),static_cast<double>(data_.y)});
+        return ToMatlab(std::array<double,2>{static_cast<double>(data_.x),static_cast<double>(data_.y)});
     }
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample> data_)
     {
@@ -1397,7 +1397,7 @@ namespace mxTypes
 
     mxArray* ToMatlab(TobiiResearchCalibrationData data_)
     {
-        return ToMatlab(std::vector(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
+        return ToMatlab(std::vector<uint8_t>(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
     }
 }
 

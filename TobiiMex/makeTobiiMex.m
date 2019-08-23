@@ -17,18 +17,19 @@ if isWin
         else
             error('32bit Octave not supported. You can try your luck. But then you''ll have to build PsychToolbox yourself as well for 32bit Octave');
         end
-        inpArgs = {'-v', '-O', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(cd,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(cd,'src','*.cpp')};
+        inpArgs = {'-v', '-O', '--output', fullfile(myDir,'TobiiMex_matlab',bitLbl,sprintf('TobiiMex_matlab.%s',mexext)), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(myDir,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(myDir,'src','TobiiMex.cpp'), fullfile(myDir,'src','types.cpp'), fullfile(myDir,'src','utils.cpp'), sprintf('-ltobii_research%s',bitLbl)};
         
         % i need to switch path to bindir or mex/mkoctfile fails because
         % gcc not found. Find proper solution for that later. then use
         % these inputs
         %inpArgs = {'-v', '-O', 'CPPFLAGS="$CPPFLAGS /std:c++17"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp'};
-        myDir = cd;
         tdir=eval('__octave_config_info__("bindir")');  % eval because invalid syntax for matlab, would cause whole file not to run
         cd(tdir);
         % get cppflags, add to it what we need
-        flags = mkoctfile('-p','CXXFLAGS');
-        setenv('CXXFLAGS',[flags ' -std=c++17']);
+        flags = regexprep(mkoctfile('-p','CXXFLAGS'),'\r|\n','');   % strip newlines
+        if isempty(strfind(flags,'-std=c++17')) %#ok<STREMP>
+            setenv('CXXFLAGS',[flags ' -std=c++17']);
+        end
         mex(inpArgs{:});
         cd(myDir);
     else

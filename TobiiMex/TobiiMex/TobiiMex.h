@@ -20,10 +20,10 @@
 #   pragma comment(lib, "tobii_research32.lib")
 #endif
 #ifndef BUILD_FROM_MEX
-#   ifndef _DEBUG
-#       pragma comment(lib, "TobiiMex.lib")
-#   else
+#   ifdef _DEBUG
 #       pragma comment(lib, "TobiiMex_d.lib")
+#   else
+#       pragma comment(lib, "TobiiMex.lib")
 #   endif
 #endif
 #include <readerwriterqueue/readerwriterqueue.h>
