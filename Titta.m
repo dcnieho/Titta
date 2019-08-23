@@ -4,7 +4,7 @@
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% Niehorster, D.C., Andersson, R. & Nystrï¿½m, M., (in prep). Titta: A
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
@@ -17,7 +17,6 @@ classdef Titta < handle
         isInitialized       = false;
         usingFTGLTextRenderer;
         keyState;
-        shiftKey;
         mouseState;
         qFloatColorRange;
         calibrateLeftEye    = true;
@@ -384,7 +383,6 @@ classdef Titta < handle
             
             % init key, mouse state
             [~,~,obj.keyState] = KbCheck();
-            obj.shiftKey = KbName('shift');
             [~,~,obj.mouseState] = GetMouse();
             
             
@@ -904,7 +902,7 @@ classdef Titta < handle
                 msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
             end
             msg = [msg{:}]; msg(end) = [];
-            message = sprintf('CALIBRATION %d Data Quality (computed from validation %d):\npoint\tacc2D (°)\taccX (°)\taccY (°)\tSTD2D (°)\tRMS2D (°)\tdata loss (%%)\n%s',kCal,iVal,msg);
+            message = sprintf('CALIBRATION %d Data Quality (computed from validation %d):\npoint\tacc2D (ï¿½)\taccX (ï¿½)\taccY (ï¿½)\tSTD2D (ï¿½)\tRMS2D (ï¿½)\tdata loss (%%)\n%s',kCal,iVal,msg);
         end
     end
     
@@ -2078,11 +2076,11 @@ classdef Titta < handle
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
                     if obj.calibrateLeftEye
-                        strl = sprintf( '<color=%s>Left<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(:, 1 ));
+                        strl = sprintf( '<color=%s>Left<color>: %.2fï¿½, (%.2fï¿½,%.2fï¿½)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(:, 1 ));
                     end
                     if obj.calibrateRightEye
                         idx = 1+obj.calibrateLeftEye;
-                        strr = sprintf('<color=%s>Right<color>: %.2f°, (%.2f°,%.2f°)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(:,idx));
+                        strr = sprintf('<color=%s>Right<color>: %.2fï¿½, (%.2fï¿½,%.2fï¿½)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(:,idx));
                     end
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         strsep = ', ';
@@ -2203,11 +2201,11 @@ classdef Titta < handle
                             Screen('TextSize', wpnt(end), obj.settings.UI.val.avg.text.size);
                             [strl,strr,strsep] = deal('');
                             if obj.calibrateLeftEye
-                                strl = sprintf(' <color=%s>Left eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(:, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100);
+                                strl = sprintf(' <color=%s>Left eye<color>:  %.2fï¿½, (%.2fï¿½,%.2fï¿½)   %.2fï¿½   %.2fï¿½  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(:, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100);
                             end
                             if obj.calibrateRightEye
                                 idx = 1+obj.calibrateLeftEye;
-                                strr = sprintf('<color=%s>Right eye<color>:  %.2f°, (%.2f°,%.2f°)   %.2f°   %.2f°  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(:,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100);
+                                strr = sprintf('<color=%s>Right eye<color>:  %.2fï¿½, (%.2fï¿½,%.2fï¿½)   %.2fï¿½   %.2fï¿½  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(:,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100);
                             end
                             if obj.calibrateLeftEye && obj.calibrateRightEye
                                 strsep = '\n';
@@ -2287,13 +2285,13 @@ classdef Titta < handle
                     if obj.calibrateLeftEye && obj.calibrateRightEye
                         lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%1$s>%3$.2f°, (%4$.2f°,%5$.2f°)<color>, <color=%2$s>%9$.2f°, (%10$.2f°,%11$.2f°)<color>\nPrecision SD:        <color=%1$s>%6$.2f°<color>                 <color=%2$s>%12$.2f°<color>\nPrecision RMS:       <color=%1$s>%7$.2f°<color>                 <color=%2$s>%13$.2f°<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%3$.2fï¿½, (%4$.2fï¿½,%5$.2fï¿½)<color>, <color=%2$s>%9$.2fï¿½, (%10$.2fï¿½,%11$.2fï¿½)<color>\nPrecision SD:        <color=%1$s>%6$.2fï¿½<color>                 <color=%2$s>%12$.2fï¿½<color>\nPrecision RMS:       <color=%1$s>%7$.2fï¿½<color>                 <color=%2$s>%13$.2fï¿½<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     elseif obj.calibrateLeftEye
                         lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
-                        str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%2$.2fï¿½, (%3$.2fï¿½,%4$.2fï¿½)<color>\nPrecision SD:        <color=%1$s>%5$.2fï¿½<color>\nPrecision RMS:       <color=%1$s>%6$.2fï¿½<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100);
                     elseif obj.calibrateRightEye
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
-                        str = sprintf('Offset:       <color=%1$s>%2$.2f°, (%3$.2f°,%4$.2f°)<color>\nPrecision SD:        <color=%1$s>%5$.2f°<color>\nPrecision RMS:       <color=%1$s>%6$.2f°<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
+                        str = sprintf('Offset:       <color=%1$s>%2$.2fï¿½, (%3$.2fï¿½,%4$.2fï¿½)<color>\nPrecision SD:        <color=%1$s>%5$.2fï¿½<color>\nPrecision RMS:       <color=%1$s>%6$.2fï¿½<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100);
                     end
                     [pointTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
                     % get box around text
@@ -2598,7 +2596,11 @@ classdef Titta < handle
             mouse   = buttons & ~obj.mouseState;
             
             % get if shift key is currently down
-            shiftIsDown = ~~keyCode(obj.shiftKey);
+            if any(keyCode)
+                shiftIsDown = any(ismember(lower(KbName(keyCode)),{'shift','leftshift','rightshift'}));
+            else
+                shiftIsDown = false;
+            end
             
             % store to state
             obj.keyState    = keyCode;
