@@ -22,7 +22,6 @@ if isWin
         % i need to switch path to bindir or mex/mkoctfile fails because
         % gcc not found. Find proper solution for that later. then use
         % these inputs
-        %inpArgs = {'-v', '-O', 'CPPFLAGS="$CPPFLAGS /std:c++17"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp'};
         tdir=eval('__octave_config_info__("bindir")');  % eval because invalid syntax for matlab, would cause whole file not to run
         cd(tdir);
         % get cppflags, add to it what we need
