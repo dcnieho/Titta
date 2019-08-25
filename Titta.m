@@ -737,6 +737,13 @@ classdef Titta < handle
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
+            if IsWin
+                settings.UI.cursor.normal           = 0;                        % arrow
+                settings.UI.cursor.clickable        = 2;                        % hand
+            elseif IsLinux
+                settings.UI.cursor.normal           = 2;                        % arrow
+                settings.UI.cursor.clickable        = 58;                       % hand
+            end
             settings.UI.button.margins          = [14 16];
             if (IsWin && ~exist('libptbdrawtext_ftgl64.dll','file')) || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
@@ -1072,10 +1079,10 @@ classdef Titta < handle
             rect     = Screen('GlobalRect',wpnt(end));
             butRects = bsxfun(@plus,butRects,rect([1 2 1 2]).');
             cursors.rect    = num2cell(butRects,1);
-            cursors.cursor  = repmat(2,size(cursors.rect)); % Hand
-            cursors.other   = 0;                            % Arrow
-            if ~obj.settings.debugMode                      % for cleanup
-                cursors.reset = -1;                         % hide cursor (else will reset to cursor.other by default, so we're good with that default
+            cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,size(cursors.rect));  % clickable items
+            cursors.other   = obj.settings.UI.cursor.normal;                                % default
+            if ~obj.settings.debugMode                                                      % for cleanup
+                cursors.reset = -1;                                                         % hide cursor (else will reset to cursor.other by default, so we're good with that default
             end
             cursor  = cursorUpdater(cursors);
             
@@ -2256,12 +2263,13 @@ classdef Titta < handle
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
                         cursors.rect    = [num2cell(menuRectsGlobal.',1) num2cell(butRectsGlobal(1:3,:).',1)];
-                        cursors.cursor  = repmat(2,1,size(menuRectsGlobal,1)+3);    % 2: Hand
+                        cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRectsGlobal,1)+3); % clickable items
                     else
                         cursors.rect    = num2cell(butRectsGlobal.',1);
-                        cursors.cursor  = repmat(2,1,length(cursors.rect));  % 2: Hand
+                        cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));      % clickable items
                     end
-                    cursors.other   = 0;    % 0: Arrow
+                    
+                    cursors.other   = obj.settings.UI.cursor.normal;                                % default
                     cursors.qReset  = false;
                     % NB: don't reset cursor to invisible here as it will then flicker every
                     % time you click something. default behaviour is good here
