@@ -20,8 +20,7 @@ if isWin
         inpArgs = {'-v', '-O', '--output', fullfile(myDir,'TobiiMex_matlab',bitLbl,sprintf('TobiiMex_matlab.%s',mexext)), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(myDir,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(myDir,'src','TobiiMex.cpp'), fullfile(myDir,'src','types.cpp'), fullfile(myDir,'src','utils.cpp'), sprintf('-ltobii_research%s',bitLbl)};
         
         % i need to switch path to bindir or mex/mkoctfile fails because
-        % gcc not found. Find proper solution for that later. then use
-        % these inputs
+        % gcc not found. Find proper solution for that later.
         tdir=eval('__octave_config_info__("bindir")');  % eval because invalid syntax for matlab, would cause whole file not to run
         cd(tdir);
         % get cppflags, add to it what we need
