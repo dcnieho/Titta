@@ -1,6 +1,6 @@
 Usage instructions for using the TobiiMex class are found in [the Titta documentation](../readme.md).
 
-Run `makeTobiiMex.m` to build the mex files. To build the 32bit Windows version, use the Visual Studio project.
+Run `makeTobiiMex.m` to build the mex file. To build the 32bit Windows version, use the Visual Studio project.
 
 readerwriterqueue located at `deps/include/readerwriterqueue` is required for compiling TobiiMex. Make sure you clone the Titta repository including all submodules so that this dependency is available.
 
