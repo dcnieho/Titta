@@ -23,12 +23,12 @@ blockEdgeClr        = [ 81 121 176];
 paddleFillClr       = [208   0   0];
 
 % setup eye tracker
-qUseDummyMode       = false;
-settings = Titta.getDefaults('Tobii Pro Spectrum');
+qUseDummyMode       = false;    % if true, uses mouse instead of eye tracker
+settings            = Titta.getDefaults('Tobii Pro Spectrum');
 settings.cal.bgColor= bgclr;
 settings.UI.button.val.continue.string = 'start game (<i>spacebar<i>)';
 % custom calibration drawer
-calViz = AnimatedCalibrationDisplay();
+calViz              = AnimatedCalibrationDisplay();
 settings.cal.drawFunction = @calViz.doDraw;
 
 % setup world

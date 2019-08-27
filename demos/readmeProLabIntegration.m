@@ -62,7 +62,7 @@ try
     
     % init
     EThndl          = Titta(settings);
-    % EThndl          = ETFhndl.setDummyMode();  % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
+    % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
     
     % get class for integration with Tobii Pro Lab
