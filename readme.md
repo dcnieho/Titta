@@ -65,14 +65,24 @@ the following interface:
 1. Retrieve (default) settings for eye tracker of interest: `settings =
 Titta.getDefaults('trackerName');` Supported eye trackers and their corresponding model names in the Tobii Pro SDK/Titta are:
 
-  |Eye tracker|Model name|
-  |---|---|
-  |Tobii Pro Spectrum|`Tobii Pro Spectrum`|
-  |Tobii Pro TX300|`Tobii TX300`|
-  |Tobii Pro X2-60|`X2-60_Compact`|
-  |Tobii Pro Nano|`Tobii Pro Nano`|
-  |Tobii 4C|`IS4_Large_Peripheral`|
-  (TODO: this list is currently incomplete, I have not yet tested other systems)
+    |Eye tracker|Model name|
+    |---|---|
+    |Tobii Pro Spectrum|`Tobii Pro Spectrum`|
+    |Tobii Pro TX300|`Tobii TX300`|
+    |Tobii Pro X2-60|`X2-60_Compact`|
+    |Tobii Pro Nano|`Tobii Pro Nano`|
+    |Tobii 4C|`IS4_Large_Peripheral`|
+    |(TODO: I have not yet tested the below systems)||
+    |Tobii Pro T60 XL||
+    |Tobii Pro X2-30||
+    |Tobii Pro X3-120||
+    |Tobii Pro X60||
+    |Tobii Pro X120||
+    |Tobii Pro T60||
+    |Tobii Pro T120||
+  
+    Note that the VR eye trackers are not supported by Titta.
+  
 2. Change settings from their defaults if wanted (see [supported options](#supported-options) section below)
 3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
 4. Interact with the eye tracker using the below API.
