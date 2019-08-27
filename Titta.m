@@ -1895,7 +1895,7 @@ classdef Titta < handle
                 Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.cal.fixBackSize*1.5/2);
             end
             % draw all points
-            obj.drawFixationPointDefault(wpnt,[],pos);
+            obj.drawFixationPointDefault(wpnt,[],[],pos);
             % draw live data
             clrs = {[],[]};
             if obj.calibrateLeftEye
