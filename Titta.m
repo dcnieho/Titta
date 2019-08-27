@@ -870,7 +870,7 @@ classdef Titta < handle
             settings.cal.doRecordExtSignal      = false;
             settings.cal.pointNotifyFunction    = [];                           % function that is called upon each calibration point completing
             settings.val.pointPos               = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
-            settings.val.paceDuration           = 1.5;
+            settings.val.paceDuration           = 0.8;
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
             settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
