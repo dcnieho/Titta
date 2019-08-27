@@ -59,36 +59,30 @@ classdef Titta < handle
         end
         
         function out = getOptions(obj)
+            out = obj.settings;
             if ~obj.isInitialized
-                % return all settings
-                out = obj.settings;
+                % no-op, return all settings
             else
-                % only the subset that can be changed "live"
-                opts = obj.getAllowedOptions();
-                for p=1:size(opts,1)
-                    if isempty(opts{p,2})
-                        out.(opts{p,1})             = obj.settings.(opts{p,1});
-                    else
-                        out.(opts{p,1}).(opts{p,2}) = obj.settings.(opts{p,1}).(opts{p,2});
-                    end
+                % return only the subset that can be changed "live"
+                remOpts = obj.getDisAllowedOptions();
+                for p=1:numel(remOpts)
+                    out = rmfield(out,remOpts{p});
                 end
             end
         end
         
         function setOptions(obj,settings)
             if obj.isInitialized
-                % only a subset of settings is allowed. Hardcode here, and
-                % copy over if exist. Ignore all others silently
-                allowed = obj.getAllowedOptions();
-                for p=1:size(allowed,1)
-                    if isfield(settings,allowed{p,1}) && (isempty(allowed{p,2}) || isfield(settings.(allowed{p,1}),allowed{p,2}))
-                        if isempty(allowed{p,2})
-                            obj.settings.(allowed{p,1})                 = settings.(allowed{p,1});
-                        else
-                            obj.settings.(allowed{p,1}).(allowed{p,2})  = settings.(allowed{p,1}).(allowed{p,2});
-                        end
-                    end
+                % only a subset of settings is allowed. Overwrite those
+                % that are not allowed to be changed so that we are certain
+                % they do exist in the input and have not been tampered
+                % with
+                cantTouch = obj.getDisAllowedOptions();
+                for p=1:numel(cantTouch)
+                    settings.(cantTouch{p}) = obj.settings.(cantTouch{p});
                 end
+                
+                obj.settings = settings;
             else
                 defaults    = obj.getDefaults(settings.tracker);
                 expected    = getStructFieldsString(defaults);
@@ -661,6 +655,22 @@ classdef Titta < handle
     
     
     % helpers
+    methods (Static, Hidden)
+        function notAllowed = getDisAllowedOptions()
+            % blacklist of options that cannot be set once Titta.init() has
+            % run
+            notAllowed = {...
+                'tracker'
+                'trackingMode'
+                'freq'
+                'serialNumber'
+                'licenseFile'
+                'nTryReConnect'
+                'connectRetryWait'
+                'debugMode'
+                };
+        end
+    end
     methods (Static)
         function settings = getDefaults(tracker)
             assert(nargin>=1,'Titta: you must provide a tracker name when calling getDefaults')
@@ -914,46 +924,6 @@ classdef Titta < handle
     end
     
     methods (Access = private, Hidden)
-        function allowed = getAllowedOptions(obj)
-            % NB: while some settings are nested a few levels deeper than
-            % this, the two level info below has sufficient granularity
-            % TODO: should use a blacklisting approach instead. Not sure
-            % if the below is up to date, and hard to maintain. My
-            % blacklist will much more likely be stable and thus fine if i
-            % forget to think about it.
-            allowed = {...
-                'calibrateEye',''
-                'UI','startScreen'
-                'UI','setup'
-                'UI','cal'
-                'UI','val'
-                'UI','button'
-                'cal','pointPos'
-                'cal','autoPace'
-                'cal','paceDuration'
-                'cal','doRandomPointOrder'
-                'cal','bgColor'
-                'cal','fixBackSize'
-                'cal','fixFrontSize'
-                'cal','fixBackColor'
-                'cal','fixFrontColor'
-                'cal','drawFunction'
-                'cal','doRecordEyeImages'
-                'cal','doRecordExtSignal'
-                'cal','pointNotifyFunction'
-                'val','pointPos'
-                'val','paceDuration'
-                'val','collectDuration'
-                'val','doRandomPointOrder'
-                'val','pointNotifyFunction'
-                };
-            for p=size(allowed,1):-1:1
-                if ~isfield(obj.settings,allowed{p,1}) || (~isempty(allowed{p,2}) && ~isfield(obj.settings.(allowed{p,1}),allowed{p,2}))
-                    allowed(p,:) = [];
-                end
-            end
-        end
-        
         function out = hasCap(obj,cap)
             out = ismember(cap,obj.systemInfo.capabilities);
         end
