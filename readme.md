@@ -23,7 +23,7 @@ Only the `Titta.calibrate()` function and optionally the `TalkToProLab` construc
 *Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
 
 ## Supported platforms
-Currently the toolbox is only supported on Windows (tested on Windows 10 and Windows 7), Linux support is planned, and OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
+Currently the toolbox is only supported on Windows (tested on Windows 10 and Windows 7), Linux support is nearly completed, and OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
 
 Tested on MATLAB R2015b & R2019a. The mex file builds on Octave, but Octave can currently not be supported due to [this (now solved) bug](https://savannah.gnu.org/bugs/?45351), that has not yet been included in a release that is also supported by PsychToolbox.
 
