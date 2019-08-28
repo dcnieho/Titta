@@ -4,7 +4,7 @@
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% Niehorster, D.C., Andersson, R. & NystrÃ¶m, M., (in prep). Titta: A
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
@@ -12,6 +12,7 @@ classdef Titta < handle
     properties (Access = protected, Hidden = true)
         % message buffer
         msgs;
+        timeOff             = nan;      % on Linux, Tobii SDK and PTB use different clocks. Store offset for remapping
         
         % state
         isInitialized       = false;
@@ -330,6 +331,49 @@ classdef Titta < handle
             end
             out.geom                = obj.geom;
             
+            % if running with PTB on Linux, determine clock offset for
+            % remapping of PTB timestamps to Tobii system time
+            if exist('PsychtoolboxVersion','file') && IsLinux
+                % get both clocks 1000 times
+                N = 1000;
+                [PTBgs,PTBmono] = deal(zeros(1,N));
+                for p=1:N
+                    [PTBgs(p),~,~,PTBmono(p)] = GetSecs('AllClocks');
+                end
+
+                obj.timeOff = median(PTBgs-PTBmono);
+                
+                % check that when applying timeOff, we get timestamps very
+                % close to Tobii's time. Remove first 10% as can be more
+                % noisy, then take median as offset
+                % Required knowledge for understanding this whole
+                % procedure: Tobii SDK on Linux and mono clock on PTB
+                % internally both use CLOCK_MONOTONIC, whereas clock used
+                % for PTB's GetSecs, Flip timestamps, etc, uses
+                % CLOCK_REALTIME. GetSecs('AllClocks') enables getting
+                % both, so we can calculate the offset between the two
+                % clocks. For extra security, here now check that it lines
+                % up with Tobii's systemtimestamp
+                [PTB,tobii] = deal(zeros(1,N,'int64'));
+                for p=1:N
+                    if mod(p,10)<5
+                        PTBgs   = GetSecs('AllClocks');
+                        tobii(p)= obj.buffer.getSystemTimestamp;
+                        PTB(p)  = int64((PTBgs-obj.timeOff)*1000*1000);
+                    else
+                        tobii(p)= obj.buffer.getSystemTimestamp;
+                        PTBgs   = GetSecs('AllClocks');
+                        PTB(p)  = int64((PTBgs-obj.timeOff)*1000*1000);
+                    end
+                end
+                offs        = PTB-tobii;
+                offs(1:N/10)= [];   % remove 10%
+                assert(median(offs)<100,'Titta: error syncing PTB clock with Tobii system timestamp. Does PTB report warnings or error regarding your system''s clock? If so, address those and try again. If not, please report an issue on Github.')
+            else
+                % no offset required for other platforms
+                obj.timeOff = int64(0);
+            end
+            
             % mark as inited
             obj.isInitialized = true;
         end
@@ -548,17 +592,29 @@ classdef Titta < handle
             % we're good. If an event has a known time (e.g. a screen
             % flip), provide it as an input argument to this function. This
             % known time input should be in seconds (as provided by PTB's
-            % functions), and will be converted to microsec to match
+            % functions), and will be converted to microseconds to match
             % Tobii's timestamps
             if nargin<3
-                time = obj.getSystemTime();
+                time = obj.getTimeAsSystemTime();
             else
-                time = int64(round(time*1000*1000));
+                time = obj.getTimeAsSystemTime(time);
             end
             obj.msgs.append({time,str});
             if obj.settings.debugMode
                 fprintf('%d: %s\n',time,str);
             end
+        end
+        
+        function time = getTimeAsSystemTime(obj,PTBtime)
+            % maps either inputted PTB time (e.g. from GetSecs, audio or
+            % video timestamps, PsychHID timestamps, etc) or current
+            % GetSecs if no input argument was provided to Tobii system
+            % time. PTB time is in seconds, and may be using a different
+            % clock than Tobii time. Tobii time is in microseconds.
+            if nargin<2
+                PTBtime = GetSecs();
+            end
+            time = int64((PTBtime-obj.timeOff)*1000*1000);
         end
         
         function msgs = getMessages(obj)
@@ -645,6 +701,9 @@ classdef Titta < handle
             
             % clear msgs
             obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
+            
+            % indicate time sync not determined
+            obj.timeOff = nan;
             
             % mark as deinited
             obj.isInitialized = false;
@@ -887,10 +946,6 @@ classdef Titta < handle
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
-        function time = getSystemTime()
-            time = int64(round(GetSecs()*1000*1000));
-        end
-        
         function message = getValidationQualityMessage(cal,kCal)
             if isfield(cal,'attempt')
                 % find selected calibration, make sure we output quality
@@ -1085,7 +1140,7 @@ classdef Titta < handle
                             obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
                         else
                             % switch on
-                            eyeStartTime = obj.getSystemTime();
+                            eyeStartTime = obj.getTimeAsSystemTime();
                             obj.buffer.start('eyeImage');
                         end
                         qShowEyeImage   = ~qShowEyeImage;
@@ -1519,7 +1574,7 @@ classdef Titta < handle
             eyeImageRect    = repmat({zeros(1,4)},1,2);
             if qShowEyeImage
                 if ~obj.settings.cal.doRecordEyeImages
-                    eyeStartTime    = obj.getSystemTime();
+                    eyeStartTime    = obj.getTimeAsSystemTime();
                     obj.buffer.start('eyeImage');
                 end
             end
@@ -2119,7 +2174,7 @@ classdef Titta < handle
                         obj.buffer.clearTimeRange('gaze',gazeStartT);
                     else
                         % switch on
-                        gazeStartT = obj.getSystemTime();
+                        gazeStartT = obj.getTimeAsSystemTime();
                         obj.buffer.start('gaze');
                     end
                     qShowGaze   = ~qShowGaze;
