@@ -1516,7 +1516,7 @@ classdef Titta < handle
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
             data.externalSignals= obj.buffer.consumeTimeRange('externalSignal',varargin{:});
             data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
-            % ND: positioning stream is not consumed as it will be useless
+            % NB: positioning stream is not consumed as it will be useless
             % for later analysis (it doesn't have timestamps, and is meant
             % for visualization only).
         end
@@ -1527,6 +1527,11 @@ classdef Titta < handle
             obj.buffer.clearTimeRange('eyeImage',varargin{:});
             obj.buffer.clearTimeRange('externalSignal',varargin{:});
             obj.buffer.clearTimeRange('timeSync',varargin{:});
+            if nargin<2
+                % positioning stream doesn't have timestamps, and clear can
+                % thus only be called on it without a time range
+                obj.buffer.clear('positioning');
+            end
         end
         
         function StopRecordAll(obj)
