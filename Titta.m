@@ -12,7 +12,6 @@ classdef Titta < handle
     properties (Access = protected, Hidden = true)
         % message buffer
         msgs;
-        timeOff             = nan;      % on Linux, Tobii SDK and PTB use different clocks. Store offset for remapping
         
         % state
         isInitialized       = false;
@@ -331,49 +330,6 @@ classdef Titta < handle
             end
             out.geom                = obj.geom;
             
-            % if running with PTB on Linux, determine clock offset for
-            % remapping of PTB timestamps to Tobii system time
-            if exist('PsychtoolboxVersion','file') && IsLinux
-                % get both clocks 1000 times
-                N = 1000;
-                [PTBgs,PTBmono] = deal(zeros(1,N));
-                for p=1:N
-                    [PTBgs(p),~,~,PTBmono(p)] = GetSecs('AllClocks');
-                end
-
-                obj.timeOff = median(PTBgs-PTBmono);
-                
-                % check that when applying timeOff, we get timestamps very
-                % close to Tobii's time. Remove first 10% as can be more
-                % noisy, then take median as offset
-                % Required knowledge for understanding this whole
-                % procedure: Tobii SDK on Linux and mono clock on PTB
-                % internally both use CLOCK_MONOTONIC, whereas clock used
-                % for PTB's GetSecs, Flip timestamps, etc, uses
-                % CLOCK_REALTIME. GetSecs('AllClocks') enables getting
-                % both, so we can calculate the offset between the two
-                % clocks. For extra security, here now check that it lines
-                % up with Tobii's systemtimestamp
-                [PTB,tobii] = deal(zeros(1,N,'int64'));
-                for p=1:N
-                    if mod(p,10)<5
-                        PTBgs   = GetSecs('AllClocks');
-                        tobii(p)= obj.buffer.getSystemTimestamp;
-                        PTB(p)  = int64((PTBgs-obj.timeOff)*1000*1000);
-                    else
-                        tobii(p)= obj.buffer.getSystemTimestamp;
-                        PTBgs   = GetSecs('AllClocks');
-                        PTB(p)  = int64((PTBgs-obj.timeOff)*1000*1000);
-                    end
-                end
-                offs        = PTB-tobii;
-                offs(1:N/10)= [];   % remove 10%
-                assert(median(offs)<100,'Titta: error syncing PTB clock with Tobii system timestamp. Does PTB report warnings or error regarding your system''s clock? If so, address those and try again. If not, please report an issue on Github.')
-            else
-                % no offset required for other platforms
-                obj.timeOff = int64(0);
-            end
-            
             % mark as inited
             obj.isInitialized = true;
         end
@@ -605,18 +561,6 @@ classdef Titta < handle
             end
         end
         
-        function time = getTimeAsSystemTime(obj,PTBtime)
-            % maps either inputted PTB time (e.g. from GetSecs, audio or
-            % video timestamps, PsychHID timestamps, etc) or current
-            % GetSecs if no input argument was provided to Tobii system
-            % time. PTB time is in seconds, and may be using a different
-            % clock than Tobii time. Tobii time is in microseconds.
-            if nargin<2
-                PTBtime = GetSecs();
-            end
-            time = int64((PTBtime-obj.timeOff)*1000*1000);
-        end
-        
         function msgs = getMessages(obj)
             msgs = obj.msgs.data;
         end
@@ -701,9 +645,6 @@ classdef Titta < handle
             
             % clear msgs
             obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
-            
-            % indicate time sync not determined
-            obj.timeOff = nan;
             
             % mark as deinited
             obj.isInitialized = false;
@@ -944,6 +885,40 @@ classdef Titta < handle
             settings.val.doRandomPointOrder     = true;
             settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
+        end
+        
+        function time = getTimeAsSystemTime(PTBtime)
+            % maps either inputted PTB time (e.g. from GetSecs, audio or
+            % video timestamps, PsychHID timestamps, etc) or current
+            % GetSecs if no input argument was provided to Tobii system
+            % time. PTB time is in seconds, and may be using a different
+            % clock than Tobii time. Tobii time is in microseconds.
+            if IsLinux
+                % on Linux, Tobii SDK on Linux and mono clock on PTB
+                % internally both use CLOCK_MONOTONIC, whereas clock used
+                % for PTB's GetSecs, Flip timestamps, etc, uses
+                % CLOCK_REALTIME. GetSecs('AllClocks') enables getting time
+                % in both clocks, so we can calculate the offset between
+                % the two clocks and remap PTB time to
+                % CLOCK_MONOTONIC/Tobii Pro SDK system time. This is done
+                % using the AllClocks subfunction of GetSecs, allowing to
+                % remap with better (usually much better) accuracy than 20
+                % microseconds. We detemine the offset anew every time this
+                % function is called, as REALTIME_CLOCK/PTB time may be
+                % affected by NTP adjustments, and the two clocks may thus
+                % drift.
+                [PTBgs,~,~,PTBmono] = GetSecs('AllClocks');
+                if nargin<1
+                    PTBtime = PTBmono;                  % just get CLOCK_MONOTONIC timestamp
+                else
+                    PTBtime = PTBtime-PTBgs+PTBmono;    % PTBgs-PTBmono is offset required to remap from PTB time to CLOCK_MONOTONIC/Tobii Pro SDK system time
+                end
+            else
+                if nargin<1
+                    PTBtime = GetSecs();
+                end
+            end
+            time = int64(PTBtime*1000*1000);
         end
         
         function message = getValidationQualityMessage(cal,kCal)
