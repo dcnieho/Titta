@@ -894,22 +894,21 @@ classdef Titta < handle
             % time. PTB time is in seconds, and may be using a different
             % clock than Tobii time. Tobii time is in microseconds.
             if IsLinux
-                % on Linux, Tobii SDK on Linux and mono clock on PTB
-                % internally both use CLOCK_MONOTONIC, whereas clock used
-                % for PTB's GetSecs, Flip timestamps, etc, uses
+                % on Linux, Tobii Pro SDK on Linux and mono clock on PTB
+                % internally both use CLOCK_MONOTONIC, whereas the clock
+                % used for PTB's GetSecs, Flip timestamps, etc, uses
                 % CLOCK_REALTIME. GetSecs('AllClocks') enables getting time
                 % in both clocks, so we can calculate the offset between
                 % the two clocks and remap PTB time to
-                % CLOCK_MONOTONIC/Tobii Pro SDK system time. This is done
-                % using the AllClocks subfunction of GetSecs, allowing to
-                % remap with better (usually much better) accuracy than 20
-                % microseconds. We detemine the offset anew every time this
-                % function is called, as REALTIME_CLOCK/PTB time may be
-                % affected by NTP adjustments, and the two clocks may thus
-                % drift.
+                % CLOCK_MONOTONIC/Tobii Pro SDK system time. The AllClocks
+                % subfunction of GetSecs allows to remap with better
+                % (usually much better) accuracy than 20 microseconds. We
+                % detemine the offset anew every time this function is
+                % called, as REALTIME_CLOCK/PTB time may be affected by NTP
+                % adjustments, and the two clocks may thus drift.
                 [PTBgs,~,~,PTBmono] = GetSecs('AllClocks');
                 if nargin<1
-                    PTBtime = PTBmono;                  % just get CLOCK_MONOTONIC timestamp
+                    PTBtime = PTBmono;                  % not PTB time specified, just get CLOCK_MONOTONIC timestamp
                 else
                     PTBtime = PTBtime-PTBgs+PTBmono;    % PTBgs-PTBmono is offset required to remap from PTB time to CLOCK_MONOTONIC/Tobii Pro SDK system time
                 end
