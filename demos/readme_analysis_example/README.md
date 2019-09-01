@@ -1,4 +1,4 @@
-The files in this folder demonstrate performing fixation classification on the data recorded with the readme scripts using I2MC (https://github.com/royhessels/I2MC). First follow the instructions in readme_analysis_example/function_library/I2MC/get_I2MC.txt, the run the scripts in the following order:
+The files in this folder demonstrate performing fixation classification on the data recorded with the readme scripts using I2MC (https://github.com/royhessels/I2MC). First follow the instructions in `readme_analysis_example/function_library/I2MC/get_I2MC.txt`, then place the `.mat`-file or -files recorded with any of the `readme.m` files in the folder `readme_analysis_example/data`, and finally run the scripts in the following order:
 
 1. `a_ophakker.m`
 2. `b_detFix.m`
