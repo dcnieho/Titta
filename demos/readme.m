@@ -130,7 +130,8 @@ try
     % read in konijntjes image (may want to preload this before the trial
     % to ensure good timing)
     stimFName = 'konijntjes1024x768.jpg';
-    stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
+    stimDir   = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos');
+    stimFName = fullfile(stimDir,stimFName);
     im = imread(stimFName);
     tex     = Screen('MakeTexture',wpnt,im);
     
@@ -165,7 +166,7 @@ try
     EThndl.sendMessage('FIX ON',startT);
     % 2. image
     stimFNameBlur = 'konijntjes1024x768blur.jpg';
-    stimFNameBlur = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFNameBlur);
+    stimFNameBlur = fullfile(stimDir,stimFNameBlur);
     im = imread(stimFNameBlur);
     tex     = Screen('MakeTexture',wpnt,im);
     texRect = Screen('Rect',tex);
@@ -184,8 +185,13 @@ try
     end
     EThndl.buffer.stop('gaze');
     
-    % save data to mat file
-    EThndl.saveData(fullfile(cd,'t'), true);
+    % save data to mat file, adding info about the experiment
+    dat = EThndl.collectSessionData();
+    dat.expt.winRect = winRect;
+    dat.expt.stimDir = stimDir;
+    save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
+    % NB: if you don't want to add anything to the saved data, you can use
+    % EThndl.saveData directly
     
     % shut down
     EThndl.deInit();

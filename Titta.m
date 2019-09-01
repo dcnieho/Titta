@@ -597,37 +597,10 @@ classdef Titta < handle
             % information and system info
             
             % 1. get filename and path
-            [path,file,ext] = fileparts(filename);
-            assert(~isempty(path),'Titta: saveData: filename should contain a path')
-            % eat .mat off filename, preserve any other extension user may
-            % have provided
-            if ~isempty(ext) && ~strcmpi(ext,'.mat')
-                file = [file ext];
+            if nargin<3
+                doAppendVersion = false;
             end
-            % add versioning info to file name, if wanted and if already
-            % exists
-            if nargin>=3 && doAppendVersion
-                % see what files we have in data folder with the same name
-                f = dir(path);
-                f = f(~[f.isdir]);
-                f = regexp({f.name},['^' regexptranslate('escape',file) '(_\d+)?\.mat$'],'tokens');
-                % see if any. if so, see what number to append
-                f = [f{:}];
-                if ~isempty(f)
-                    % files with this subject name exist
-                    f=cellfun(@(x) sscanf(x,'_%d'),[f{:}],'uni',false);
-                    f=sort([f{:}]);
-                    if isempty(f)
-                        file = [file '_1'];
-                    else
-                        file = [file '_' num2str(max(f)+1)];
-                    end
-                end
-            end
-            % now make sure file ends with .mat
-            file = [file '.mat'];
-            % construct full filename
-            filename = fullfile(path,file);
+            filename = Titta.getFileName(filename, doAppendVersion);
             
             % 2. collect all data to save
             dat = obj.collectSessionData();
@@ -636,7 +609,7 @@ classdef Titta < handle
             try
                 save(filename,'-struct','dat');
             catch ME
-                error('Titta: Error saving data:\n%s',ME.getReport('extended'))
+                error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
             end
         end
         
@@ -955,6 +928,41 @@ classdef Titta < handle
             end
             msg = [msg{:}]; msg(end) = [];
             message = sprintf('CALIBRATION %1$d Data Quality (computed from validation %2$d):\npoint\tacc2D (%4$c)\taccX (%4$c)\taccY (%4$c)\tSTD2D (%4$c)\tRMS2D (%4$c)\tdata loss (%%)\n%3$s',kCal,iVal,msg,char(176));
+        end
+        
+        function filename = getFileName(filename, doAppendVersion)
+            % 1. get filename and path
+            [path,file,ext] = fileparts(filename);
+            assert(~isempty(path),'Titta: getFileName: filename should contain a path')
+            % eat .mat off filename, preserve any other extension user may
+            % have provided
+            if ~isempty(ext) && ~strcmpi(ext,'.mat')
+                file = [file ext];
+            end
+            % add versioning info to file name, if wanted and if already
+            % exists
+            if nargin>=2 && doAppendVersion
+                % see what files we have in data folder with the same name
+                f = dir(path);
+                f = f(~[f.isdir]);
+                f = regexp({f.name},['^' regexptranslate('escape',file) '(_\d+)?\.mat$'],'tokens');
+                % see if any. if so, see what number to append
+                f = [f{:}];
+                if ~isempty(f)
+                    % files with this subject name exist
+                    f=cellfun(@(x) sscanf(x,'_%d'),[f{:}],'uni',false);
+                    f=sort([f{:}]);
+                    if isempty(f)
+                        file = [file '_1'];
+                    else
+                        file = [file '_' num2str(max(f)+1)];
+                    end
+                end
+            end
+            % now make sure file ends with .mat
+            file = [file '.mat'];
+            % construct full filename
+            filename = fullfile(path,file);
         end
     end
     
