@@ -114,7 +114,8 @@ try
     
     % later:
     EThndl.buffer.start('gaze');
-     
+    WaitSecs(.8);   % wait for eye tracker to start and gaze to be picked up
+    
     % send message into ET data file
     EThndl.sendMessage('test');
     
