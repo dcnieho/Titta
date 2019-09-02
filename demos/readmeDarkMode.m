@@ -18,7 +18,7 @@ useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 % task parameters
 fixTime                 = .5;
-imageTime               = 2;
+imageTime               = 4;
 scr                     = max(Screen('Screens'));
 
 addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
@@ -113,6 +113,7 @@ try
     
     % later:
     EThndl.buffer.start('gaze');
+    WaitSecs(.8);   % wait for eye tracker to start and gaze to be picked up
      
     % send message into ET data file
     EThndl.sendMessage('test');
@@ -128,18 +129,18 @@ try
     
     % read in konijntjes image (may want to preload this before the trial
     % to ensure good timing)
-    stimFName = 'konijntjes1024x768.jpg';
-    stimFName = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFName);
-    im = imread(stimFName);
-    tex     = Screen('MakeTexture',wpnt,im);
-    texRect = Screen('Rect',tex);
+    stimFName   = 'konijntjes1024x768.jpg';
+    stimDir     = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos');
+    stimFullName= fullfile(stimDir,stimFName);
+    im          = imread(stimFullName);
+    tex         = Screen('MakeTexture',wpnt,im);
     
     % show on screen and log when it was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    Screen('DrawTexture',wpnt,tex);
+    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
     imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
     
@@ -164,12 +165,11 @@ try
     startT = Screen('Flip',wpnt);
     EThndl.sendMessage('FIX ON',startT);
     % 2. image
-    stimFNameBlur = 'konijntjes1024x768blur.jpg';
-    stimFNameBlur = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos',stimFNameBlur);
-    im = imread(stimFNameBlur);
-    tex     = Screen('MakeTexture',wpnt,im);
-    texRect = Screen('Rect',tex);
-    Screen('DrawTexture',wpnt,tex);
+    stimFNameBlur   = 'konijntjes1024x768blur.jpg';
+    stimFullNameBlur= fullfile(stimDir,stimFNameBlur);
+    im              = imread(stimFullNameBlur);
+    tex             = Screen('MakeTexture',wpnt,im);
+    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
     imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     
@@ -184,8 +184,13 @@ try
     end
     EThndl.buffer.stop('gaze');
     
-    % save data to mat file
-    EThndl.saveData(fullfile(cd,'t'), true);
+    % save data to mat file, adding info about the experiment
+    dat = EThndl.collectSessionData();
+    dat.expt.winRect = winRect;
+    dat.expt.stimDir = stimDir;
+    save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
+    % NB: if you don't want to add anything to the saved data, you can use
+    % EThndl.saveData directly
     
     % shut down
     EThndl.deInit();

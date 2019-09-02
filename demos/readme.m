@@ -170,8 +170,7 @@ try
     stimFullNameBlur= fullfile(stimDir,stimFNameBlur);
     im              = imread(stimFullNameBlur);
     tex             = Screen('MakeTexture',wpnt,im);
-    texRect         = Screen('Rect',tex);
-    Screen('DrawTexture',wpnt,tex);
+    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
     imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     
