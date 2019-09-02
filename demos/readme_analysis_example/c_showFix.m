@@ -5,6 +5,8 @@ clear variables; clear global; clear mex; close all; fclose('all'); clc
 dbstop if error % for debugging: trigger a debug point when an error occurs
 
 % setup directories
+myDir = fileparts(mfilename('fullpath'));
+cd(myDir);
                                 dirs.home       = cd;
 cd data;                        dirs.data       = cd;
         cd samples_ophak;       dirs.samples    = cd;
@@ -52,11 +54,7 @@ for p=1:nfiles
     end
     
     % load img, if only one
-    if 0
-        imgFile  = fullfile(sess.expt.stimDir,what{1});
-    else
-        imgFile = what{1};
-    end
+    imgFile  = fullfile(sess.expt.stimDir,what{1});
     if ~exist(imgFile,'file')
         img      = [];
     else

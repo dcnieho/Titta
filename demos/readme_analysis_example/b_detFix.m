@@ -7,6 +7,8 @@ clear variables; clear global; clear mex; close all; fclose('all'); clc
 dbstop if error % for debugging: trigger a debug point when an error occurs
 
 % setup directories
+myDir = fileparts(mfilename('fullpath'));
+cd(myDir);
 cd data;                        dirs.data       = cd;
         cd samples_ophak;       dirs.samplesO   = cd;
 cd ..;
@@ -58,13 +60,8 @@ for p=1:nfiles
     % event detection
     % make params struct (only have to specify those you want to be
     % different from their defaults)
-    if 0
-        opt.xres          = dat.expt.winRect(3);
-        opt.yres          = dat.expt.winRect(4);
-    else
-        opt.xres          = 1920;
-        opt.yres          = 1080;
-    end
+    opt.xres          = sess.expt.winRect(3);
+    opt.yres          = sess.expt.winRect(4);
     opt.missingx      = nan;
     opt.missingy      = nan;
     opt.scrSz         = [sess.geom.displayArea.width sess.geom.displayArea.height]/10;

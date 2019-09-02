@@ -5,6 +5,8 @@ clear variables; clear global; clear mex; close all; fclose('all'); clc
 dbstop if error % for debugging: trigger a debug point when an error occurs
 
 % setup directories
+myDir = fileparts(mfilename('fullpath'));
+cd(myDir);
 cd data;                        dirs.data       = cd;
         cd mat;                 dirs.mat        = cd;
 cd ..;
