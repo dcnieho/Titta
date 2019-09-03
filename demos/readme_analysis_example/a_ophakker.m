@@ -43,7 +43,7 @@ for p=1:nfiles
     ts      = dat.data.gaze.systemTimeStamp;
     samp    = [dat.data.gaze.left.gazePoint.onDisplayArea.*scrRes.'; dat.data.gaze.right.gazePoint.onDisplayArea.*scrRes.'; dat.data.gaze.left.pupil.diameter; dat.data.gaze.right.pupil.diameter];
     header  = {'t','gLX','gLY','gRX','gRY','pL','pR'};
-    [times,what,msgs] = parseMsgs(dat.msgs);
+    [times,what,msgs] = parseMsgs(dat.messages);
     
     % split up per task and write
     for q=1:length(times.fix)

@@ -28,9 +28,9 @@ for p=1:nfiles
     fprintf('%s\n',files(p).fname);
     
     % load data file
-    C = load(fullfile(dirs.mat,files(p).name),'cal');
-    sel = C.cal{end}.selectedCal;
-    cal = C.cal{end}.attempt{sel};
+    C = load(fullfile(dirs.mat,files(p).name),'calibration');
+    sel = C.calibration{end}.selectedCal;
+    cal = C.calibration{end}.attempt{sel};
     acc = cal.val{end}.acc(:).'; % [LX LY RX RY]
 
     % print to file

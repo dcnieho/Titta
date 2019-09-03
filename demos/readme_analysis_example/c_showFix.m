@@ -50,7 +50,7 @@ for p=1:nfiles
 
     sessionFileName = sprintf('%s.mat',files(p).subj);
     if ~strcmp(lastRead,sessionFileName)
-        sess = load(fullfile(dirs.mat,sessionFileName),'expt','geom','settings');
+        sess = load(fullfile(dirs.mat,sessionFileName),'expt');
     end
     
     % load img, if only one

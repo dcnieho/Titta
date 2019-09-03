@@ -49,7 +49,7 @@ for p=1:nfiles
     % load session data
     sessionFileName = sprintf('%s.mat',files(p).subj);
     if ~strcmp(lastRead,sessionFileName)
-        sess = load(fullfile(dirs.mat,sessionFileName),'expt','geom','settings');
+        sess = load(fullfile(dirs.mat,sessionFileName),'expt','geometry','settings');
     end
     
     % load messges and trial mat file. We'll need to find when in trial the
@@ -64,7 +64,7 @@ for p=1:nfiles
     opt.yres          = sess.expt.winRect(4);
     opt.missingx      = nan;
     opt.missingy      = nan;
-    opt.scrSz         = [sess.geom.displayArea.width sess.geom.displayArea.height]/10;
+    opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;
     opt.disttoscreen  = disttoscreen;
     opt.freq          = sess.settings.freq;
     if opt.freq>120
