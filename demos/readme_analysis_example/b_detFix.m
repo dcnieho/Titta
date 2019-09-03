@@ -28,6 +28,9 @@ disttoscreen = 65;  % cm, change to whatever is appropriate, though it matters l
 maxMergeDist = 15;
 minFixDur    = 60;
 
+%%% check I2MC (fixation classifier) is available
+assert(~~exist('I2MCfunc','file'),'It appears that I2MC is not available. please follow the instructions in /readme_analysis_example/function_library/I2MC/get_I2MC.txt to download it.')
+
 %%% get all trials, parse into subject and stimulus
 [files,nfiles]  = FileFromFolder(dirs.samplesO,[],'txt');
 files           = parseFileNames(files);
@@ -75,8 +78,12 @@ for p=1:nfiles
         opt.chebyOrder    = 7;
     else
         % 90 Hz, 60 Hz, 30 Hz
-        opt.downsampFilter=  false;
+        opt.downsampFilter= false;
         opt.downsamples   = [2 3];
+    end
+    if (~isfield(opt,'downsampFilter') || opt.downsampFilter) && ~exist('cheby1','file')
+        warning('By default, I2MC runs a Chebyshev filter over the data as part of its operation. It appears that this filter (the function ''cheby1'' from the signal processing toolbox) is not available in your installation. I am thus disabling the filter.')
+        opt.downsampFilter= false;
     end
     opt.maxMergeDist  = maxMergeDist;
     opt.minFixDur     = minFixDur;
