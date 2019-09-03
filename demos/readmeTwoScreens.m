@@ -148,7 +148,7 @@ try
     stimDir     = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos');
     stimFullName= fullfile(stimDir,stimFName);
     im          = imread(stimFullName);
-    tex         = Screen('MakeTexture',wpnt,im);
+    tex         = Screen('MakeTexture',wpntP,im);
     nextFlipT   = startT+fixTime-1/hz/2;
     
     % now update also operator screen, once timing critical bit is done
@@ -165,7 +165,7 @@ try
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
+    Screen('DrawTexture',wpntP,tex);                    % draw centered on the screen
     imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
@@ -211,8 +211,8 @@ try
     stimFNameBlur   = 'konijntjes1024x768blur.jpg';
     stimFullNameBlur= fullfile(stimDir,stimFNameBlur);
     im              = imread(stimFullNameBlur);
-    tex             = Screen('MakeTexture',wpnt,im);
-    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
+    tex             = Screen('MakeTexture',wpntP,im);
+    Screen('DrawTexture',wpntP,tex);                    % draw centered on the screen
     imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
