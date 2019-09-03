@@ -567,10 +567,10 @@ classdef Titta < handle
         
         function dat = collectSessionData(obj)
             obj.StopRecordAll();
-            dat.cal         = obj.calibrateHistory;
-            dat.msgs        = obj.getMessages();
+            dat.calibration = obj.calibrateHistory;
+            dat.messages    = obj.getMessages();
             dat.systemInfo  = obj.systemInfo;
-            dat.geom        = obj.geom;
+            dat.geometry    = obj.geom;
             dat.settings    = obj.settings;
             if isa(dat.settings.cal.drawFunction,'function_handle')
                 dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
