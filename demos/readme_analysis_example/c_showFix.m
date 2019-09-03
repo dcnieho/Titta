@@ -83,5 +83,8 @@ for p=1:nfiles
         return;
     end
 end
+if ishghandle(fhndl)
+    close(fhndl);
+end
 
 rmpath(genpath(dirs.funclib));                  % cleanup path
