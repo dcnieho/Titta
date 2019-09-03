@@ -44,7 +44,7 @@ lastRead= '';
 for p=1:nfiles
     fprintf('%s:\n',files(p).fname);
     % load data
-    data    = readintfile(fullfile(dirs.samplesO,files(p).name),1,7);
+    data    = readNumericFile(fullfile(dirs.samplesO,files(p).name),7,1);
     
     % load session data
     sessionFileName = sprintf('%s.mat',files(p).subj);
