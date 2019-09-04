@@ -46,5 +46,5 @@ else
     else
         error('Support for 32bit MATLAB on Linux not planned. May actually just work, go ahead and try');
     end
-    mex('-R2017b', '-v', '-O', 'CXXFLAGS="$CXXFLAGS -std=c++17"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'TobiiMex_matlab',bitLbl)), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab/TobiiMex_matlab.cpp', 'src/*.cpp', '-ltobii_research');
+    mex('-R2017b', '-v', '-O', 'CXXFLAGS="$CXXFLAGS -std=c++17"', 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN''"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'TobiiMex_matlab',bitLbl)), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab/TobiiMex_matlab.cpp', 'src/*.cpp', '-ltobii_research');
 end
