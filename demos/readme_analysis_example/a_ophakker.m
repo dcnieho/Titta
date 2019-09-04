@@ -41,12 +41,12 @@ for p=1:nfiles
     dat     = load(fullfile(dirs.mat,files(p).name));
     scrRes  = dat.expt.winRect(3:4);
     ts      = dat.data.gaze.systemTimeStamp;
-    samp    = [dat.data.gaze.left.gazePoint.onDisplayArea.*scrRes.'; dat.data.gaze.right.gazePoint.onDisplayArea.*scrRes.'; dat.data.gaze.left.pupil.diameter; dat.data.gaze.right.pupil.diameter];
+    samp    = [bsxfun(@times,dat.data.gaze.left.gazePoint.onDisplayArea,scrRes.'); bsxfun(@times,dat.data.gaze.right.gazePoint.onDisplayArea,scrRes.'); dat.data.gaze.left.pupil.diameter; dat.data.gaze.right.pupil.diameter];
     header  = {'t','gLX','gLY','gRX','gRY','pL','pR'};
-    [times,what,msgs] = parseMsgs(dat.messages);
+    [timest,what,msgs] = parseMsgs(dat.messages);
     
     % split up per task and write
-    for q=1:length(times.fix)
+    for q=1:length(timest.fix)
         fname = sprintf('%s_R%03d.txt',files(p).fname,q);
         fprintf('%s\n',fname);
         
@@ -65,7 +65,7 @@ for p=1:nfiles
         % data
         fmt = ['%ld\t' repmat('%.2f\t',1,length(header)-3) repmat('%.4f\t',1,2)];
         fmt(end) = 'n';
-        qSel = ts>=times.fix(q) & ts<=times.end(q);
+        qSel = ts>=timest.fix(q) & ts<=timest.end(q);
         data = [num2cell(ts(qSel)); num2cell(samp(:,qSel))];
         fprintf(fid,fmt,data{:});
         fclose(fid);
