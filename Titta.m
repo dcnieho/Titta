@@ -1990,8 +1990,8 @@ classdef Titta < handle
             gazeVec     = gazeData.gazePoint.inUserCoords-gazeData.gazeOrigin.inUserCoords;
             angs2D      = AngleBetweenVectors(vecToPoint,gazeVec);
             out.offs    = bsxfun(@times,angs2D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
-            out.acc     = mean(out.offs,2,'omitnan');
-            out.acc2D   = mean( angs2D ,2,'omitnan');
+            out.acc     = mean(abs(out.offs),2,'omitnan');
+            out.acc2D   = mean(    angs2D   ,2,'omitnan');
             
             % 2. RMS
             out.RMS     = sqrt(mean(diff(out.offs,[],2).^2,2,'omitnan'));
