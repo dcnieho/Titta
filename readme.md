@@ -80,6 +80,7 @@ Titta.getDefaults('trackerName');` Supported eye trackers and their correspondin
     |Tobii Pro X120||
     |Tobii Pro T60||
     |Tobii Pro T120||
+    |Tobii EyeX||
   
     Note that the VR eye trackers are not supported by Titta.
   
