@@ -69,18 +69,16 @@ Titta.getDefaults('trackerName');` Supported eye trackers and their correspondin
     |---|---|
     |Tobii Pro Spectrum|`Tobii Pro Spectrum`|
     |Tobii Pro TX300|`Tobii TX300`|
-    |Tobii Pro X2-60|`X2-60_Compact`|
+    |Tobii Pro T60 XL|`Tobii T60 XL`|
     |Tobii Pro Nano|`Tobii Pro Nano`|
+    |Tobii Pro X3-120|`Tobii Pro X3-120 EPU`|
+    |Tobii Pro X2-60|`X2-60_Compact`|
+    |Tobii Pro X2-30|`X2-30_Compact`|
+    |Tobii Pro X60|`Tobii X60`|
+    |Tobii Pro X120|`Tobii X120`|
+    |Tobii Pro T60|`Tobii T60`|
+    |Tobii Pro T120|`Tobii T120`|
     |Tobii 4C|`IS4_Large_Peripheral`|
-    |(TODO: I have not yet tested the below systems)||
-    |Tobii Pro T60 XL||
-    |Tobii Pro X2-30||
-    |Tobii Pro X3-120||
-    |Tobii Pro X60||
-    |Tobii Pro X120||
-    |Tobii Pro T60||
-    |Tobii Pro T120||
-    |Tobii EyeX||
   
     Note that the VR eye trackers are not supported by Titta.
   
