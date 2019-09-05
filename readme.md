@@ -63,7 +63,7 @@ The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://w
 As demonstrated in the demo scripts, the toolbox is configured through
 the following interface:
 1. Retrieve (default) settings for eye tracker of interest: `settings =
-Titta.getDefaults('trackerName');` Supported eye trackers and their corresponding model names in the Tobii Pro SDK/Titta are:
+Titta.getDefaults('tracker model name');` Supported eye trackers and their corresponding model names in the Tobii Pro SDK/Titta are:
 
     |Eye tracker|Model name|
     |---|---|
@@ -94,7 +94,7 @@ The below method can be called on a Titta instance or on the Titta class directl
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`getDefaults`|<ol><li>`tracker`: one of the supported eye tracker model names</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
+|`getDefaults`|<ol><li>`tracker`: one of the supported eye tracker model names, [see above](#usage).</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
 |`getTimeAsSystemTime`|<ol><li>`time`: A PsychtoolBox timestamp that is to be converted to Tobii system time. Optional, if not provided, current GetSecs time is used.</li></ol>|<ol><li>`time`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Maps the provided PsychtoolBox timestamp (or the current PsychtoolBox time provided by the `GetSecs()` function) to the Tobii system time provided in microseconds by the Tobii Pro SDK. On Windows, PsychtoolBox time and Tobii system time use the same clock, and this operation thus only entails a conversion from seconds to microseconds. On Linux, the clocks are different, and remapping is performed using the PTB function `GetSecs('AllClocks')` with an accuracy of 20 microseconds or better.|
 |`getValidationQualityMessage`|<ol><li>`cal`: a list of calibration attempts, or a specific calibration attempt</li><li>`kCal`: an (optional) index into the list of calibration attempts to indicate which to process</li></ol>|<ol><li>`message`: A tab-separated text rendering of the per-point and average validation data quality for each eye that was calibrated</li></ol>|Provides a textual rendering of data quality as assessed through a validation procedure.|
 |`getFileName`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename with versioning added where data file could be saved.</li></ol>|Get filename for saving data, with optoinal versioning.|
