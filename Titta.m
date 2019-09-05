@@ -663,12 +663,28 @@ classdef Titta < handle
                     settings.trackingMode           = 'human';
                 case 'Tobii TX300'
                     settings.freq                   = 300;
-                case 'IS4_Large_Peripheral'
-                    settings.freq                   = 90;
-                case 'X2-60_Compact'
+                case 'Tobii T60 XL'
                     settings.freq                   = 60;
+                    
                 case 'Tobii Pro Nano'
                     settings.freq                   = 60;
+                case 'Tobii Pro X3-120 EPU' % TODO what is the name without EPU?
+                    settings.freq                   = 120;
+                case 'X2-60_Compact'
+                    settings.freq                   = 60;
+                case 'X2-30_Compact'
+                    settings.freq                   = 40;   % reports 40Hz instead of actual 30Hz rate...
+                case 'Tobii X60'
+                    settings.freq                   = 60;
+                case 'Tobii X120'
+                    settings.freq                   = 120;
+                case 'Tobii T60'
+                    settings.freq                   = 60;
+                case 'Tobii T120'
+                    settings.freq                   = 120;
+                    
+                case 'IS4_Large_Peripheral'
+                    settings.freq                   = 90;
             end
             
             if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
