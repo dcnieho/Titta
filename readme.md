@@ -20,8 +20,6 @@ To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing
 
 Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
 
-*Note* that this toolbox is in a beta state. The API may change drastically at any time without notice. Work is ongoing, and code may also be in a broken or untested state without warning.
-
 ## Supported platforms
 Currently the toolbox is only supported on Windows (tested on Windows 10 and Windows 7), Linux support is nearly completed, and OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
 
