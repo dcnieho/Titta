@@ -656,7 +656,7 @@ classdef Titta < handle
             settings.tracker    = tracker;
             
             % default tracking settings per eye-tracker
-            settings.trackingMode           = 'Default';    % if tracker doesn't support trackingMode, SDK will use "Default" it seems. so use that by Default here too
+            settings.trackingMode           = 'Default';    % for all trackers except Spectrum, default tracking mode is "Default". So use that as a default
             switch tracker
                 case 'Tobii Pro Spectrum'
                     settings.freq                   = 600;
