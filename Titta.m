@@ -370,7 +370,8 @@ classdef Titta < handle
             end
             
             % see what text renderer to use
-            obj.usingFTGLTextRenderer = (~IsWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're on a Windows platform with the high quality text renderer present (was never supported for 32bit PTB, so check only for 64bit)
+            isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
+            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
             if ~obj.usingFTGLTextRenderer
                 assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end
@@ -687,12 +688,17 @@ classdef Titta < handle
                     settings.freq                   = 90;
             end
             
-            if ~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
-                % seems text gets rendered a little larger with this one,
-                % make sure we have good default sizes anyway
-                textFac = 0.75;
-            else
-                textFac = 1;
+            % check have PTB, adjust text setting if needed
+            textFac                     = 1;
+            qUsingOldWindowsPTBRenderer = false;
+            if ~~exist('PsychtoolboxVersion','file')
+                if IsWin && (~exist('libptbdrawtext_ftgl64.dll','file') || Screen('Preference','TextRenderer')==0)
+                    % seems text gets rendered a little larger with the old
+                    % text renderer, make sure we have good default sizes
+                    % anyway
+                    qUsingOldWindowsPTBRenderer = true;
+                    textFac                     = 0.75;
+                end
             end
             
             % some default colors to be used below
@@ -742,7 +748,7 @@ classdef Titta < handle
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
-            if IsWin
+            if streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32'))   % on Windows
                 settings.UI.cursor.normal           = 0;                        % arrow
                 settings.UI.cursor.clickable        = 2;                        % hand
             elseif IsLinux
@@ -750,7 +756,7 @@ classdef Titta < handle
                 settings.UI.cursor.clickable        = 58;                       % hand
             end
             settings.UI.button.margins          = [14 16];
-            if (IsWin && ~exist('libptbdrawtext_ftgl64.dll','file')) || Screen('Preference','TextRenderer')==0 % if old text renderer, we have different defaults and an extra settings
+            if qUsingOldWindowsPTBRenderer  % old text PTB renderer on Windows
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
             settings.UI.button.setup.text.font          = 'Segoe UI';
