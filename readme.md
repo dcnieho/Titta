@@ -16,6 +16,8 @@ Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license
 `demos/readme.m` shows a minimal example of using the toolbox's
 functionality.
 
+Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobiipro.com/product-listing/eye-tracker-manager/) before trying to use it with Titta. Some of the supported eye tracker require several setup step before they are ready for use. If these are not performed, Titta will throw strange error messages.
+
 To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of PsychToolbox is recommended, at least 3.0.16 "Burnout".
 
 Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
