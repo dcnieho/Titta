@@ -46,7 +46,7 @@ end
 
 % create textfile and open for writing fixations
 fid = fopen(fullfile(dirs.out,'allfixations.txt'),'w');
-fprintf(fid,'File\tFixStart\tFixEnd\tFixDur\tXPos\tYPos\tRMSxy\tBCEA\tFixRangeX\tFixRangeY\n');
+fprintf(fid,'Subject\tRunNr\tFixStart\tFixEnd\tFixDur\tXPos\tYPos\tRMSxy\tBCEA\tFixRangeX\tFixRangeY\n');
 
 lastRead= '';
 for p=1:nfiles
@@ -109,7 +109,7 @@ for p=1:nfiles
     
     % also store to text file
     for f=1:numel(fix.start)
-        fprintf(fid,'%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).fname, [fix.startT(f) fix.endT(f) fix.dur(f) fix.xpos(f) fix.ypos(f) fix.RMSxy(f), fix.BCEA(f), fix.fixRangeX(f), fix.fixRangeY(f)]);
+        fprintf(fid,'%s\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).subj, files(p).runnr, [fix.startT(f) fix.endT(f) fix.dur(f) fix.xpos(f) fix.ypos(f) fix.RMSxy(f), fix.BCEA(f), fix.fixRangeX(f), fix.fixRangeY(f)]);
     end
 end
 
