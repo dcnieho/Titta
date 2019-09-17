@@ -18,7 +18,6 @@ addpath(genpath(dirs.funclib));                 % add dirs to path
 
 %%% get all trials, parse into subject and stimulus
 [files,nfiles]  = FileFromFolder(dirs.mat,[],'mat');
-files           = parseFileNames(files);
 
 
 fid = fopen(fullfile(dirs.out,'validation_accuracy.xls'),'wt');
