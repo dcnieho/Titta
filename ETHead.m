@@ -31,6 +31,7 @@ classdef ETHead < handle
         
         showEyes            = true;
         showPupils          = true;
+        showYaw             = true;
         
         crossClr            = [255 0 0];
         eyeClr              = 255;
@@ -109,7 +110,9 @@ classdef ETHead < handle
                 dX          = diff(Xs);
                 dY          = diff(Ys);
                 this.dZ     = diff(dists);
-                this.yaw    = atan2(this.dZ,dX);
+                if this.showYaw
+                    this.yaw    = atan2(this.dZ,dX);
+                end
                 roll        = atan2(     dY,dX);
                 this.Rori   = [cos(roll) sin(roll); -sin(roll) cos(roll)];
                 

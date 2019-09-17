@@ -727,6 +727,8 @@ classdef Titta < handle
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
+            settings.UI.setup.showYaw           = true;                         % show yaw of head?
+            settings.UI.setup.showYawToOperator = true;                         % show yaw of head on operator screen?
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
@@ -1031,11 +1033,12 @@ classdef Titta < handle
             head.rectWH             = obj.scrInfo.resolution{1};
             head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
             head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
+            head.showYaw            = obj.settings.UI.setup.showYaw;
             head.showEyes           = obj.settings.UI.setup.showEyes;
-            head.showPupils         = obj.settings.UI.setup.showPupils;
-            head.crossClr           = obj.settings.UI.setup.crossClr;
             head.eyeClr             = obj.settings.UI.setup.eyeClr;
+            head.showPupils         = obj.settings.UI.setup.showPupils;
             head.pupilClr           = obj.settings.UI.setup.pupilClr;
+            head.crossClr           = obj.settings.UI.setup.crossClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             if qHaveOperatorScreen
                 headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
@@ -1043,11 +1046,12 @@ classdef Titta < handle
                 headO.rectWH            = head.rectWH;
                 headO.headCircleFillClr = head.headCircleFillClr;
                 headO.headCircleEdgeClr = head.headCircleEdgeClr;
+                headO.showYaw           = obj.settings.UI.setup.showYawToOperator;
                 headO.showEyes          = head.showEyes;
-                headO.showPupils        = head.showPupils;
-                headO.crossClr          = head.crossClr;
                 headO.eyeClr            = head.eyeClr;
+                headO.showPupils        = head.showPupils;
                 headO.pupilClr          = head.pupilClr;
+                headO.crossClr          = head.crossClr;
                 headO.crossEye          = head.crossEye;
                 refClrO                 = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
                 bgClrO                  = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
