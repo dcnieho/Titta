@@ -722,7 +722,7 @@ classdef Titta < handle
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
             settings.serialNumber               = '';
             settings.licenseFile                = '';                           % should be single string or cell array of strings, with each string being the path to a license file to apply
-            settings.nTryReConnect              = 4;                            % How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found
+            settings.nTryReConnect              = 3;                            % How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found
             settings.connectRetryWait           = [1 2];                        % seconds
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
             settings.UI.setup.showEyes          = true;
