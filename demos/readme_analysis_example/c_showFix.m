@@ -60,7 +60,8 @@ for p=1:nfiles
     else
         img.data = imread(imgFile);
         % centered on screen
-        stimRect = CenterRect([0 0 size(img.data,2) size(img.data,1)],sess.expt.winRect);
+        stimOff  = [sess.expt.winRect(3)-size(img.data,2) sess.expt.winRect(4)-size(img.data,1)]./2;
+        stimRect = [0 0 size(img.data,2) size(img.data,1)]+[stimOff stimOff];
         img.x    = linspace(stimRect(1),stimRect(3),size(img.data,2));
         img.y    = linspace(stimRect(2),stimRect(4),size(img.data,1));
     end
