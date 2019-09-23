@@ -134,6 +134,8 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         function setTrackingMode(~,~)
         end
+        function setDeviceName(~,~)
+        end
         function applyLicenses(~,~)
         end
         function clearLicenses(~)
