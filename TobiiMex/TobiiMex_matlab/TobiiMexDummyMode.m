@@ -243,11 +243,33 @@ isValid = ismember(stream,{'gaze','eyeImage','externalSignal','timeSync','positi
 end
 
 function sample = getMouseSample(isRecording)
+% figure out mouse to screen mapping
+persistent rects;
+if isempty(rects)
+    scrs    = Screen('Screens');
+    for p=length(scrs):-1:1
+        rects(p,:) = Screen('GlobalRect',scrs(p));
+    end
+    if ~isscalar(scrs)
+        rects(1,:) = [];
+    end
+end
+
 [mx, my] = deal([]);
 if isRecording
     [mx, my] = GetMouse();
 end
-rect = Screen('Rect',0);
+if size(rects,1)>1
+    qRect = inRect([mx my].',rects.');
+    rect = rects(qRect,:);
+    
+    % translate to local rect
+    mx  = mx-rect(1);
+    my  = my-rect(2);
+    rect= OffsetRect(rect,-rect(1),-rect(2));
+else
+    rect = rects;
+end
 % put into fake SampleStruct
 ts = round(GetSecs*1000*1000);
 gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true);
