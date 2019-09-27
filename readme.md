@@ -18,7 +18,7 @@ functionality.
 
 Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobiipro.com/product-listing/eye-tracker-manager/) before trying to use it with Titta. Some of the supported eye tracker require several setup step before they are ready for use. If these are not performed, Titta will throw strange error messages.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of PsychToolbox is recommended, at least 3.0.16 "Burnout" SP", released on 2019-09-26.
+To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of (PsychToolbox)[http://psychtoolbox.org/] is recommended, at least [3.0.16 "Burnout" SP", released on 2019-09-26](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2019-09-26_V3.0.16).
 
 Only the `Titta.calibrate()` function and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
 
