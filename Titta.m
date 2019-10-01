@@ -190,6 +190,11 @@ classdef Titta < handle
             
             % Connect to eyetracker
             iTry = 1;
+            if exist('WaitSecs','file')==3
+                wfunc = @(x) WaitSecs('YieldSecs',x);
+            else
+                wfunc = @pause;
+            end
             while true
                 if iTry<obj.settings.nTryReConnect+1
                     func = @warning;
@@ -209,15 +214,16 @@ classdef Titta < handle
                         end
                     end
                     func('Titta: No eye trackers of model ''%s'' connected%s',obj.settings.tracker,extra);
-                    pause(obj.settings.connectRetryWait(min(iTry,end)));
+                    wfunc(obj.settings.connectRetryWait(min(iTry,end)));
                     iTry = iTry+1;
                     continue;
                 end
                 qModel = strcmp({trackers.model},obj.settings.tracker);
-                % if obligatory serial also given, check on that
-                % a serial number preceeded by '*' denotes the serial number is
-                % optional. That means that if only a single other tracker of
-                % the same type is found, that one will be used.
+                % If obligatory serial also given, check on that.
+                % A serial number preceeded by '*' denotes the serial
+                % number is optional. That means that if only a single
+                % other tracker of the same type is found, that one will be
+                % used.
                 assert(sum(qModel)==1 || ~isempty(obj.settings.serialNumber),'Titta: If more than one connected eye tracker is of the requested model, a serial number must be provided to allow connecting to the right one')
                 if sum(qModel)>1 || (~isempty(obj.settings.serialNumber) && obj.settings.serialNumber(1)~='*')
                     % more than one tracker found or non-optional serial
@@ -233,7 +239,7 @@ classdef Titta < handle
                             extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.serialNumber));
                         end
                         func('Titta: No eye trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
-                        pause(obj.settings.connectRetryWait(min(iTry,end)));
+                        wfunc(obj.settings.connectRetryWait(min(iTry,end)));
                         iTry = iTry+1;
                         continue;
                     else
