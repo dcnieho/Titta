@@ -43,6 +43,7 @@ try
     settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
     settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     % calibration display
+    settings.cal.bgColor            = bgClr;    % should always be set, is background color when cleaning up after calibration and for message that calibration failed
     if useAnimatedCalibration
         % custom calibration drawer
         calViz                      = AnimatedCalibrationDisplay();
@@ -52,7 +53,6 @@ try
         calViz.fixFrontColor        = fixClrs(2);
     else
         % set color of built-in fixation points
-        settings.cal.bgColor        = bgClr;
         settings.cal.fixBackColor   = fixClrs(1);
         settings.cal.fixFrontColor  = fixClrs(2);
     end
