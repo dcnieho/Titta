@@ -12,8 +12,23 @@ clear all
 sca
 
 DEBUGlevel              = 0;
-fixClrs                 = [255 100];
-bgClr                   = 0;
+if 0
+    % black background
+    bgClr                   = 0;
+    fixClrs                 = [255 100];
+    refCircleClr            = [255 0 0];
+    headCircleEdgeClr       = [255 255 0];
+    headCircleFillClr       = [255 255 0 .3*255];
+    eyeClr                  = 255;
+else
+    % white background
+    bgClr                   = 255;
+    fixClrs                 = [0 180];
+    refCircleClr            = [137 171 227];
+    headCircleEdgeClr       = [221 88 0];
+    headCircleFillClr       = [221 88 0 .5*255];
+    eyeClr                  = 245;
+end
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 % task parameters
@@ -34,7 +49,10 @@ try
     settings.UI.setup.instruct.color= fixClrs(1);
     settings.UI.setup.fixBackColor  = fixClrs(1);
     settings.UI.setup.fixFrontColor = fixClrs(2);
-    settings.UI.setup.refCircleClr  = [255 0 0];
+    settings.UI.setup.refCircleClr  = refCircleClr;
+    settings.UI.setup.headCircleEdgeClr = headCircleEdgeClr;
+    settings.UI.setup.headCircleFillClr = headCircleFillClr;
+    settings.UI.setup.eyeClr        = eyeClr;
     % 2. validation result screen
     settings.UI.val.bgColor                 = bgClr;
     settings.UI.val.avg.text.color          = fixClrs(1);
