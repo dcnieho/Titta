@@ -44,13 +44,16 @@ classdef ETHead < handle
     properties (SetAccess=private)
         wpnt;
         eyeDist             = 6.2;
+        eyeDistGuidePos     = 0.1375;   % kinda arbitrary value to use when eyeDistGuidePos has not been measured yet
         avgX
         avgY
         avgDist
         nEyeDistMeasures    = 0;
+        nEyeDistMeasuresGP  = 0;
         Rori                = [1 0; 0 1];
         yaw                 = 0;
         dZ                  = 0;
+        dZGP                = 0;
         headPos
     end
     
@@ -121,6 +124,17 @@ classdef ETHead < handle
                 this.nEyeDistMeasures = this.nEyeDistMeasures+1;
                 this.eyeDist          = (this.eyeDist*(this.nEyeDistMeasures-1)+hypot(dX,this.dZ))/this.nEyeDistMeasures;
             end
+            % if we have guide positions, also keep track of eye distance
+            % in there. This is not perfect as distance between eyes scales
+            % with physical distance to eye tracker in this coordinate
+            % system (and later possibly in more complex ways), but for
+            % head position visualization it is better to do this than to
+            % not do it at all.
+            if ~isnan(leftGuidePos(1)) && ~isnan(rightGuidePos(1))
+                this.dZGP               = diff([leftGuidePos(3) rightGuidePos(3)]);
+                this.nEyeDistMeasuresGP = this.nEyeDistMeasuresGP+1;
+                this.eyeDistGuidePos    = (this.eyeDistGuidePos*(this.nEyeDistMeasuresGP-1)+hypot(diff([leftGuidePos(1) rightGuidePos(1)]),this.dZGP))/this.nEyeDistMeasuresGP;
+            end
             % if we have only one eye, make fake second eye
             % position so drawn head position doesn't jump so much.
             off   = this.Rori*[this.eyeDist; 0];
@@ -132,6 +146,19 @@ classdef ETHead < handle
                 Xs(2)   = Xs(1)   +off(1);
                 Ys(2)   = Ys(1)   -off(2);
                 dists(2)= dists(1)+this.dZ;
+            end
+            % same for guidepos-based head position (see discussion above
+            % in code block where this.eyeDistGuidePos is determined).
+            offGP = this.Rori*[this.eyeDistGuidePos; 0];
+            if isnan(leftGuidePos)
+                this.eyeDistGuidePos
+                leftGuidePos(1)     = rightGuidePos(1) +offGP(1);
+                leftGuidePos(2)     = rightGuidePos(2) -offGP(2);
+                leftGuidePos(3)     = rightGuidePos(3) -this.dZGP;
+            elseif ~this.qHaveRight
+                rightGuidePos(1)    = leftGuidePos(1)  -offGP(1);
+                rightGuidePos(2)    = leftGuidePos(2)  +offGP(2);
+                rightGuidePos(3)    = leftGuidePos(3)  +this.dZGP;
             end
             % determine head position in user coordinate system
             this.avgX    = mean(Xs(~isnan(Xs))); % on purpose isnan() instead of qHave, as we may have just repaired a missing Xs and Ys above
@@ -159,7 +186,8 @@ classdef ETHead < handle
             else
                 % if we don't have a reference position, that means we only
                 % have the position guide to go on
-                % this is not jump-proof when one eye is lost. So be it
+                % this is not perfectly jump-proof when one eye is lost. So
+                % be it
                 avgXtb  = 1-mean([leftGuidePos(1) rightGuidePos(1)],'omitnan');
                 avgYtb  =   mean([leftGuidePos(2) rightGuidePos(2)],'omitnan');
                 avgZtb  =   mean([leftGuidePos(3) rightGuidePos(3)],'omitnan');
