@@ -1,9 +1,13 @@
 function drawFix(dat,fixI2MC,res,img,missing,titel)
 
 %% optional, if missing specified, remove missing from plotted 2D data
+datp = [];
 if isfield(dat,'left') && isfield(dat,'right')
     datx = [dat.left.X dat.right.X];
     daty = [dat.left.Y dat.right.Y];
+    if isfield(dat.left,'pupil')
+        datp = [dat.left.pupil dat.right.pupil];
+    end
 else
     datx = dat.average.X;
     daty = dat.average.Y;
@@ -15,10 +19,18 @@ if nargin>4
 end
 
 %% configure axis positions
-xpos = [0.1300 0.7673 0.7750 0.1577];
-ypos = [0.1300 0.5482 0.7750 0.1577];
-fixpos=[0.1300 0.1100 0.3347 0.3768];
-rawpos=[0.5703 0.1100 0.3347 0.3768];
+if ~isempty(datp)
+    xpos = [0.1300 0.84 0.7750 0.12];
+    ypos = [0.1300 0.66 0.7750 0.12];
+    ppos = [0.1300 0.50 0.7750 0.10];
+    fixpos=[0.1300 0.11 0.3347 0.34];
+    rawpos=[0.5703 0.11 0.3347 0.34];
+else
+    xpos = [0.1300 0.7673 0.7750 0.1577];
+    ypos = [0.1300 0.5482 0.7750 0.1577];
+    fixpos=[0.1300 0.1100 0.3347 0.3768];
+    rawpos=[0.5703 0.1100 0.3347 0.3768];
+end
 
 %% convert time everywhere such that t0=0 and time is in seconds
 dat.time = dat.time./1000;
@@ -26,8 +38,12 @@ fixI2MC.startT = fixI2MC.startT./1000;
 fixI2MC.endT   = fixI2MC.endT  ./1000;
 
 %% 1D plots
-[hx,hxr] = plotXT(xpos,dat.time,datx,res(1),false,'xpos',fixI2MC);
-[hy,hyr] = plotXT(ypos,dat.time,daty,res(2),true ,'ypos',fixI2MC);
+[hx,hxr] = plotXT(xpos,dat.time,datx,res(1),false,'x','xpos',fixI2MC);
+[hy,hyr] = plotXT(ypos,dat.time,daty,res(2),true ,'y','ypos',fixI2MC);
+[hp,hpr] = deal([]);
+if ~isempty(datp)
+    [hp,hpr] = plotXT(ppos,dat.time,datp,[],false,'p',[]);
+end
 
 
 %% 2D plots
@@ -55,13 +71,14 @@ end
 %% axes and data linking setup
 % link time for x-t, y-t plots, link full view for 2D raw and fixation
 % plots
-linkaxes([hx hy],'x');
+linkaxes([hx hy hp],'x');
 linkaxes([hr hf],'xy');
 % link x-t time extents to data shown in 2D by setting up callbacks for
-% actions that change the x-t, y-t axes
+% actions that change the x-t, y-t and pup-t axes
 actions = {
     hx,[hrl hfr hfi];
     hy,[hrl hfr hfi];
+    hp,[hrl hfr hfi];
 };
 set(zoom(gcf),'ActionPostCallback',@(obj,evd) viewCallbackFcn(obj,evd,actions));
 set(pan(gcf) ,'ActionPostCallback',@(obj,evd) viewCallbackFcn(obj,evd,actions));
@@ -76,7 +93,7 @@ end
 
 
 %%% helpers
-function [h,hr] = plotXT(pos,time,xpos,res,qYRev,fixField,fixI2MC)
+function [h,hr] = plotXT(pos,time,xpos,res,qYRev,type,fixField,fixI2MC)
 h = axes('position',pos); hold on
 if qYRev
     h.YDir = 'reverse';
@@ -88,12 +105,25 @@ if size(xpos,2)>1
     hr(2) = plot(time,xpos(:,2),'r-');
 end
 % layout
-ylabel('Horizontal position (pixels)');
+switch type
+    case 'x'
+        ylabel('Horizontal position (pixels)');
+    case 'y'
+        ylabel('Vertical position (pixels)');
+    case 'p'
+        ylabel('pupil diameter (mm)');
+end
 xlabel('time (s)');
-axis([time([1 end]).' 0 res]);
+if isempty(res)
+    xlim( time([1 end]).');
+else
+    axis([time([1 end]).' 0 res]);
+end
 % add fixations
-for b = 1:length(fixI2MC.startT)
-    plot([fixI2MC.startT(b) fixI2MC.endT(b)],[fixI2MC.(fixField)(b) fixI2MC.(fixField)(b)],'k-','LineWidth',2);
+if ~isempty(fixField)
+    for b = 1:length(fixI2MC.startT)
+        plot([fixI2MC.startT(b) fixI2MC.endT(b)],[fixI2MC.(fixField)(b) fixI2MC.(fixField)(b)],'k-','LineWidth',2);
+    end
 end
 end
 

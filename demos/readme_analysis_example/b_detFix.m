@@ -100,6 +100,8 @@ for p=1:nfiles
     dat.left.Y      = data(:,3);
     dat.right.X     = data(:,4);
     dat.right.Y     = data(:,5);
+    dat.left.pupil  = data(:,6);    % add pupil data to file. not used by I2MC but good for plotting
+    dat.right.pupil = data(:,7);
     [fix,dat]       = I2MCfunc(dat,opt);
     
     % collect info and store
