@@ -735,7 +735,7 @@ classdef Titta < handle
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.showYaw           = true;                         % show yaw of head?
             settings.UI.setup.showYawToOperator = true;                         % show yaw of head on operator screen?
-            settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: middle of trackbox. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
+            settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: ideal head positioning determined through eye tracker's positioning stream. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
@@ -747,8 +747,9 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            % functions for drawing instruction and positioning information on user and operator screen. Note that rx, ry and rz may be
-            % NaN (unknown) if reference position is not set by user, and eye tracker does not inform us about its trackbox
+            % functions for drawing instruction and positioning information
+            % on user and operator screen. Note that rx, ry and rz are
+            % NaN (unknown) if reference position is not set by user
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.setup.instruct.font     = 'Segoe UI';
@@ -1065,13 +1066,7 @@ classdef Titta < handle
             
             % get reference position
             if isempty(obj.settings.UI.setup.referencePos)
-                if isfield(obj.geom.trackBox,'backLowerLeft')
-                    obj.settings.UI.setup.referencePos = [mean([obj.geom.trackBox.backLowerLeft(1) obj.geom.trackBox.backLowerRight(1)]) mean([obj.geom.trackBox.backLowerLeft(2) obj.geom.trackBox.backUpperLeft(2)]) mean([obj.geom.trackBox.frontLowerLeft(3) obj.geom.trackBox.backLowerLeft(3)])]./10;
-                else
-                    % tracker does not provide trackbox, and thus we can't
-                    % determine the center of it.
-                    obj.settings.UI.setup.referencePos = [NaN NaN NaN];
-                end
+                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
             end
             % position reference circle on screen
             refPosO = obj.scrInfo.resolution{1}/2;
