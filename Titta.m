@@ -675,7 +675,7 @@ classdef Titta < handle
                     
                 case 'Tobii Pro Nano'
                     settings.freq                   = 60;
-                case 'Tobii Pro X3-120 EPU' % TODO what is the name without EPU?
+                case {'Tobii Pro X3-120','Tobii Pro X3-120 EPU'}
                     settings.freq                   = 120;
                 case 'X2-60_Compact'
                     settings.freq                   = 60;
