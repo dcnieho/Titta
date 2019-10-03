@@ -2446,7 +2446,7 @@ classdef Titta < handle
                         % draw fixation points
                         obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.val.onlineGaze.fixBackSize,obj.settings.UI.val.onlineGaze.fixFrontSize,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
                         % draw gaze data
-                        eyeData = obj.buffer.consumeN('gaze');
+                        eyeData = obj.buffer.peekN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
@@ -2535,7 +2535,7 @@ classdef Titta < handle
                                 break;
                             else
                                 if ~iscell(keys), keys = {keys}; end
-                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys)) %#ok<STREMP>
+                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys)) 
                                     % up arrow key (test so round-about
                                     % because KbName could return both 'up'
                                     % and 'UpArrow', depending on platform
@@ -2545,7 +2545,7 @@ classdef Titta < handle
                                         qChangeMenuArrow = true;
                                         break;
                                     end
-                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys)) %#ok<STREMP>
+                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys)) 
                                     % down key
                                     if currentMenuSel<length(iValid)
                                         currentMenuSel   = currentMenuSel+1;
