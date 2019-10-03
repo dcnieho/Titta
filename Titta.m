@@ -832,7 +832,7 @@ classdef Titta < handle
             settings.UI.button.val.toggCal.visible      = false;
             settings.UI.button.val.toggCal.string       = 'show cal (<i>t<i>)';
             settings.UI.button.val.toggCal.fillColor    = toggleButClr.fill;
-            settings.UI.button.val.toggCal.edgeColor    = toggleButClr.fill;
+            settings.UI.button.val.toggCal.edgeColor    = toggleButClr.edge;
             settings.UI.button.val.toggCal.textColor    = toggleButClr.text;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
             settings.UI.cal.errMsg.font         = 'Segoe UI';
