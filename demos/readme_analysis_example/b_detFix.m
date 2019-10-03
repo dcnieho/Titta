@@ -57,7 +57,7 @@ for p=1:nfiles
     % load session data
     sessionFileName = sprintf('%s.mat',files(p).subj);
     if ~strcmp(lastRead,sessionFileName)
-        sess = load(fullfile(dirs.mat,sessionFileName),'expt','geometry','settings');
+        sess = load(fullfile(dirs.mat,sessionFileName),'expt','geometry','settings','systemInfo');
     end
     
     % load messges and trial mat file. We'll need to find when in trial the
@@ -85,6 +85,13 @@ for p=1:nfiles
         % 90 Hz, 60 Hz, 30 Hz
         opt.downsampFilter= false;
         opt.downsamples   = [2 3];
+    end
+    if strcmp(sess.systemInfo.model,'X2-30_Compact')
+        if sess.settings.freq==40
+            % for some weird reason the X2-30 reports 40Hz even though it is 30
+            opt.freq = 30;
+        end
+        warning('Be careful about using I2MC with data that is only 30 Hz. In a brief test, this did not appear to work well with the settings in this file.')
     end
     if (~isfield(opt,'downsampFilter') || opt.downsampFilter) && ~exist('cheby1','file')
         warning('By default, I2MC runs a Chebyshev filter over the data as part of its operation. It appears that this filter (the function ''cheby1'' from the signal processing toolbox) is not available in your installation. I am thus disabling the filter.')
