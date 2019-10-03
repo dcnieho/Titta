@@ -44,17 +44,19 @@ classdef ETHead < handle
     properties (SetAccess=private)
         wpnt;
         eyeDist             = 6.2;
-        eyeDistGuidePos     = 0.1375;   % kinda arbitrary value to use when eyeDistGuidePos has not been measured yet
+        nEyeDistMeasures    = 0;
         avgX
         avgY
         avgDist
-        nEyeDistMeasures    = 0;
-        nEyeDistMeasuresGP  = 0;
         Rori                = [1 0; 0 1];
         yaw                 = 0;
+        eyeDistGuidePos     = 0.1375;   % kinda arbitrary value to use when eyeDistGuidePos has not been measured yet
+        RoriGP              = [1 0; 0 1];
+        yawGP               = 0;
         dZ                  = 0;
         dZGP                = 0;
         headPos
+        drawYaw             = 0;
     end
     
     properties (Access=private, Hidden=true)
@@ -113,14 +115,13 @@ classdef ETHead < handle
                 dX          = diff(Xs);
                 dY          = diff(Ys);
                 this.dZ     = diff(dists);
-                if this.showYaw
-                    this.yaw    = atan2(this.dZ,dX);
-                end
+                this.yaw    = atan2(this.dZ,dX);
                 roll        = atan2(     dY,dX);
                 this.Rori   = [cos(roll) sin(roll); -sin(roll) cos(roll)];
                 
                 % update eye distance measure (maintain running
-                % average)
+                % average). NB: ignoring dY leads to a more stable
+                % visualization, so we're doing that.
                 this.nEyeDistMeasures = this.nEyeDistMeasures+1;
                 this.eyeDist          = (this.eyeDist*(this.nEyeDistMeasures-1)+hypot(dX,this.dZ))/this.nEyeDistMeasures;
             end
@@ -131,9 +132,13 @@ classdef ETHead < handle
             % head position visualization it is better to do this than to
             % not do it at all.
             if ~isnan(leftGuidePos(1)) && ~isnan(rightGuidePos(1))
+                dXGP                    = diff([leftGuidePos(1) rightGuidePos(1)]);
+                dYGP                    = diff([leftGuidePos(2) rightGuidePos(2)]);
                 this.dZGP               = diff([leftGuidePos(3) rightGuidePos(3)]);
-                this.nEyeDistMeasuresGP = this.nEyeDistMeasuresGP+1;
-                this.eyeDistGuidePos    = (this.eyeDistGuidePos*(this.nEyeDistMeasuresGP-1)+hypot(diff([leftGuidePos(1) rightGuidePos(1)]),this.dZGP))/this.nEyeDistMeasuresGP;
+                this.eyeDistGuidePos    = this.eyeDistGuidePos/2 + hypot(dXGP,hypot(dYGP,this.dZGP))/2; % take equally weighted average of previous and current provides stable visualization
+                this.yawGP              = atan2(this.dZGP,dXGP);
+                rollGP                  = atan2(     dYGP,dXGP);
+                this.RoriGP             = [cos(rollGP) sin(rollGP); -sin(rollGP) cos(rollGP)];
             end
             % if we have only one eye, make fake second eye
             % position so drawn head position doesn't jump so much.
@@ -149,15 +154,14 @@ classdef ETHead < handle
             end
             % same for guidepos-based head position (see discussion above
             % in code block where this.eyeDistGuidePos is determined).
-            offGP = this.Rori*[this.eyeDistGuidePos; 0];
+            offGP = this.RoriGP*[this.eyeDistGuidePos; 0];
             if isnan(leftGuidePos)
-                this.eyeDistGuidePos
-                leftGuidePos(1)     = rightGuidePos(1) +offGP(1);
-                leftGuidePos(2)     = rightGuidePos(2) -offGP(2);
+                leftGuidePos(1)     = rightGuidePos(1) -offGP(1);
+                leftGuidePos(2)     = rightGuidePos(2) +offGP(2);
                 leftGuidePos(3)     = rightGuidePos(3) -this.dZGP;
             elseif ~this.qHaveRight
-                rightGuidePos(1)    = leftGuidePos(1)  -offGP(1);
-                rightGuidePos(2)    = leftGuidePos(2)  +offGP(2);
+                rightGuidePos(1)    = leftGuidePos(1)  +offGP(1);
+                rightGuidePos(2)    = leftGuidePos(2)  -offGP(2);
                 rightGuidePos(3)    = leftGuidePos(3)  +this.dZGP;
             end
             % determine head position in user coordinate system
@@ -183,6 +187,9 @@ classdef ETHead < handle
                 end
                 avgYtb  = 1-avgYtb;    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                 fac     = this.avgDist/this.referencePos(3);
+                if this.showYaw
+                    this.drawYaw = this.yaw;
+                end
             else
                 % if we don't have a reference position, that means we only
                 % have the position guide to go on
@@ -192,6 +199,9 @@ classdef ETHead < handle
                 avgYtb  =   mean([leftGuidePos(2) rightGuidePos(2)],'omitnan');
                 avgZtb  =   mean([leftGuidePos(3) rightGuidePos(3)],'omitnan');
                 fac     = avgZtb+.5;    % make 1 the ideal position, less than 1 too close, more too far
+                if this.showYaw
+                    this.drawYaw = this.yawGP;
+                end
             end
             
             % scale up size of oval. define size/rect at standard distance, have a
