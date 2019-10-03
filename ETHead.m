@@ -13,7 +13,8 @@
 classdef ETHead < handle
     properties
         % setup head position visualization
-        distGain            = 1.5;
+        distGain            = 1.8;
+        distGainGP          = 1;
         eyeSzFac            = .25;
         eyeMarginFac        = .25;
         pupilSzFac          = .50;
@@ -187,6 +188,7 @@ classdef ETHead < handle
                 end
                 avgYtb  = 1-avgYtb;    % 1-Y to flip direction (positive UCS is upward, should be downward for drawing on screen)
                 fac     = this.avgDist/this.referencePos(3);
+                dGain   = this.distGain;
                 if this.showYaw
                     this.drawYaw = this.yaw;
                 end
@@ -199,6 +201,7 @@ classdef ETHead < handle
                 avgYtb  =   mean([leftGuidePos(2) rightGuidePos(2)],'omitnan');
                 avgZtb  =   mean([leftGuidePos(3) rightGuidePos(3)],'omitnan');
                 fac     = avgZtb+.5;    % make 1 the ideal position, less than 1 too close, more too far
+                dGain   = this.distGainGP;
                 if this.showYaw
                     this.drawYaw = this.yawGP;
                 end
@@ -209,7 +212,7 @@ classdef ETHead < handle
             if ~isnan(this.avgDist)
                 pos             = [avgXtb avgYtb];
                 % determine size of head, based on distance from reference distance
-                this.headSz     = this.refSz - this.refSz*(fac-1)*this.distGain;
+                this.headSz     = this.refSz - this.refSz*(fac-1)*dGain;
                 % move
                 this.headPos    = pos.*this.rectWH + this.allPosOff;
             else
