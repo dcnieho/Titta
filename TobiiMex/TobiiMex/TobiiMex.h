@@ -58,6 +58,17 @@ public:
     static TobiiMex::DataStream stringToDataStream(std::string stream_);
     static std::string dataStreamToString(TobiiMex::DataStream stream_);
 
+    // side of buffer to get samples from
+    enum class BufferSide
+    {
+        Unknown,
+        Start,
+        End
+    };
+    // "first", or "last"
+    static TobiiMex::BufferSide stringToBufferSide(std::string bufferSide_);
+    static std::string bufferSideToString(TobiiMex::BufferSide bufferSide_);
+
 public:
     TobiiMex(std::string address_);
     TobiiMex(TobiiResearchEyeTracker* et_);
@@ -113,14 +124,14 @@ public:
 
     // consume samples (by default all)
     template <typename T>
-    std::vector<T> consumeN(std::optional<size_t> firstN_ = std::nullopt);
+    std::vector<T> consumeN(std::optional<size_t> NSamp_ = std::nullopt, std::optional<BufferSide> side_ = std::nullopt);
     // consume samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
     std::vector<T> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // peek samples (by default only last one, can specify how many to peek from end of buffer)
     template <typename T>
-    std::vector<T> peekN(std::optional<size_t> lastN_ = std::nullopt);
+    std::vector<T> peekN(std::optional<size_t> NSamp_ = std::nullopt, std::optional<BufferSide> side_ = std::nullopt);
     // peek samples within given timestamps (inclusive, by default whole buffer)
     template <typename T>
     std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
@@ -152,6 +163,9 @@ private:
     //// generic functions for internal use
     // helpers
     template <typename T>  std::vector<T>&  getBuffer();
+    template <typename T>
+                           std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator>
+                                            getIteratorsFromSampleAndSide(size_t NSamp_, BufferSide side_);
     template <typename T>
                            std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator, bool>
                                             getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_);

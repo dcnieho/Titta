@@ -273,13 +273,17 @@ classdef TobiiMex < handle
                 this.cppmethod('clearTimeRange',stream);
             end
         end
-        function data = consumeN(this,stream,firstN)
-            % optional input argument firstN: how many samples to consume
-            % from start. Default: all
+        function data = consumeN(this,stream,NSamp,side)
+            % optional input arguments:
+            % - NSamp: how many samples to consume. Default: all
+            % -  side: Which side of buffer to consume samples from.
+            %          Default: start
             assert(nargin>1,'TobiiMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
-            if nargin>2 && ~isempty(firstN)
-                data = this.cppmethod('consumeN',stream,uint64(firstN));
+            if nargin>3 && ~isempty(side)
+                data = this.cppmethod('consumeN',stream,uint64(NSamp),ensureStringIsChar(side));
+            elseif nargin>2 && ~isempty(NSamp)
+                data = this.cppmethod('consumeN',stream,uint64(NSamp));
             else
                 data = this.cppmethod('consumeN',stream);
             end
@@ -296,13 +300,18 @@ classdef TobiiMex < handle
                 data = this.cppmethod('consumeTimeRange',stream);
             end
         end
-        function data = peekN(this,stream,lastN)
-            % optional input argument lastN: how many samples to peek from
-            % end. Default: 1. To get all, ask for -1 samples
+        function data = peekN(this,stream,NSamp,side)
+            % optional input arguments:
+            % - NSamp: how many samples to consume. Default: 1. To get all,
+            %          ask for inf samples
+            % -  side: Which side of buffer to consume samples from.
+            %          Default: end
             assert(nargin>1,'TobiiMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
             stream = ensureStringIsChar(stream);
-            if nargin>2 && ~isempty(lastN)
-                data = this.cppmethod('peekN',stream,uint64(lastN));
+            if nargin>3 && ~isempty(side)
+                data = this.cppmethod('peekN',stream,uint64(NSamp),ensureStringIsChar(side));
+            elseif nargin>2 && ~isempty(NSamp)
+                data = this.cppmethod('peekN',stream,uint64(NSamp));
             else
                 data = this.cppmethod('peekN',stream);
             end

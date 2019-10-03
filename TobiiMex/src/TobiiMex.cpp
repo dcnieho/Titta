@@ -44,30 +44,32 @@ namespace
     // default argument values
     namespace defaults
     {
-        constexpr size_t  sampleBufSize         = 2<<19;        // about half an hour at 600Hz
+        constexpr size_t                sampleBufSize             = 2<<19;        // about half an hour at 600Hz
 
-        constexpr size_t  eyeImageBufSize       = 2<<11;        // about seven minutes at 2*5Hz
-        constexpr bool    eyeImageAsGIF         = false;
+        constexpr size_t                eyeImageBufSize           = 2<<11;        // about seven minutes at 2*5Hz
+        constexpr bool                  eyeImageAsGIF             = false;
 
-        constexpr size_t  extSignalBufSize      = 2<<9;
+        constexpr size_t                extSignalBufSize          = 2<<9;
 
-        constexpr size_t  timeSyncBufSize       = 2<<9;
+        constexpr size_t                timeSyncBufSize           = 2<<9;
 
-        constexpr size_t  positioningBufSize    = 2<<11;
+        constexpr size_t                positioningBufSize        = 2<<11;
 
-        constexpr int64_t clearTimeRangeStart   = 0;
-        constexpr int64_t clearTimeRangeEnd     = std::numeric_limits<int64_t>::max();
+        constexpr int64_t               clearTimeRangeStart       = 0;
+        constexpr int64_t               clearTimeRangeEnd         = std::numeric_limits<int64_t>::max();
 
-        constexpr bool    stopBufferEmpties     = false;
-        constexpr size_t  consumeAmount         = -1;           // this overflows on purpose, consume all samples is default
-        constexpr int64_t consumeTimeRangeStart = 0;
-        constexpr int64_t consumeTimeRangeEnd   = std::numeric_limits<int64_t>::max();
-        constexpr size_t  peekAmount            = 1;
-        constexpr int64_t peekTimeRangeStart    = 0;
-        constexpr int64_t peekTimeRangeEnd      = std::numeric_limits<int64_t>::max();
+        constexpr bool                  stopBufferEmpties         = false;
+        constexpr TobiiMex::BufferSide  consumeSide  = TobiiMex::BufferSide::Start;
+        constexpr size_t                consumeNSamp              = -1;           // this overflows on purpose, consume all samples is default
+        constexpr int64_t               consumeTimeRangeStart     = 0;
+        constexpr int64_t               consumeTimeRangeEnd       = std::numeric_limits<int64_t>::max();
+        constexpr TobiiMex::BufferSide  peekSide     = TobiiMex::BufferSide::End;
+        constexpr size_t                peekNSamp                 = 1;
+        constexpr int64_t               peekTimeRangeStart        = 0;
+        constexpr int64_t               peekTimeRangeEnd          = std::numeric_limits<int64_t>::max();
 
-        constexpr size_t  logBufSize            = 2<<8;
-        constexpr bool    logBufClear           = true;
+        constexpr size_t                logBufSize                = 2<<8;
+        constexpr bool                  logBufClear               = true;
     }
 
     // Map string to a Data Stream
@@ -78,6 +80,13 @@ namespace
         { "externalSignal", TobiiMex::DataStream::ExtSignal },
         { "timeSync",       TobiiMex::DataStream::TimeSync },
         { "positioning",    TobiiMex::DataStream::Positioning }
+    };
+
+    // Map string to a Sample Side
+    const std::map<std::string, TobiiMex::BufferSide> bufferSideMap =
+    {
+        { "start",          TobiiMex::BufferSide::Start },
+        { "end",            TobiiMex::BufferSide::End }
     };
 
     std::unique_ptr<std::vector<TobiiMex*>> g_allInstances = std::make_unique<std::vector<TobiiMex*>>();
@@ -98,6 +107,24 @@ TobiiMex::DataStream TobiiMex::stringToDataStream(std::string stream_)
 std::string TobiiMex::dataStreamToString(TobiiMex::DataStream stream_)
 {
     auto v = *find_if(dataStreamMap.begin(), dataStreamMap.end(), [&stream_](auto p) {return p.second == stream_;});
+    return v.first;
+}
+
+TobiiMex::BufferSide TobiiMex::stringToBufferSide(std::string bufferSide_)
+{
+    auto it = bufferSideMap.find(bufferSide_);
+    if (it == bufferSideMap.end())
+    {
+        std::stringstream os;
+        os << "Titta: Requested buffer side \"" << bufferSide_ << "\" is not recognized. Supported sample sides are: \"first\" and \"last\"";
+        DoExitWithMsg(os.str());
+    }
+    return it->second;
+}
+
+std::string TobiiMex::bufferSideToString(TobiiMex::BufferSide bufferSide_)
+{
+    auto v = *find_if(bufferSideMap.begin(), bufferSideMap.end(), [&bufferSide_](auto p) {return p.second == bufferSide_;});
     return v.first;
 }
 
@@ -701,6 +728,30 @@ std::vector<T>& TobiiMex::getBuffer()
         return _positioning;
 }
 template <typename T>
+std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator>
+TobiiMex::getIteratorsFromSampleAndSide(size_t NSamp_, TobiiMex::BufferSide side_)
+{
+    auto& buf    = getBuffer<T>();
+    auto startIt = std::begin(buf);
+    auto   endIt = std::end(buf);
+    auto nSamp   = std::min(NSamp_, std::size(buf));
+
+    switch (side_)
+    {
+    case TobiiMex::BufferSide::Start:
+        endIt   = std::next(startIt, nSamp);
+        break;
+    case TobiiMex::BufferSide::End:
+        startIt = std::prev(endIt  , nSamp);
+        break;
+    default:
+        DoExitWithMsg("Titta: Mex: getIteratorsFromSampleAndSide: unknown TobiiMex::BufferSide provided.");
+        break;
+    }
+    return { startIt, endIt };
+}
+
+template <typename T>
 std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator, bool>
 TobiiMex::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 {
@@ -732,7 +783,7 @@ TobiiMex::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
         endIt   = std::upper_bound(startIt, endIt, timeEnd_  , [&field](const int64_t& a_, const T& b_) {return a_ < b_.*field;});
 
     // 5. done, return
-    return {startIt,endIt, inclFirst&&inclLast};
+    return {startIt, endIt, inclFirst&&inclLast};
 }
 
 
@@ -924,17 +975,16 @@ std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::ite
     }
 }
 template <typename T>
-std::vector<T> TobiiMex::consumeN(std::optional<size_t> firstN_)
+std::vector<T> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_)
 {
     // deal with default arguments
-    auto firstN = firstN_.value_or(defaults::consumeAmount);
+    auto N      = NSamp_.value_or(defaults::consumeNSamp);
+    auto side   = side_.value_or(defaults::consumeSide);
 
-    auto l = lockForWriting<T>();
-
+    auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf    = getBuffer<T>();
-    auto startIt = std::begin(buf);
-    auto   endIt = std::next(startIt, std::min(firstN, std::size(buf)));
 
+    auto [startIt, endIt] = getIteratorsFromSampleAndSide<T>(N, side);
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename T>
@@ -961,18 +1011,17 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, const typename std::vecto
     return std::vector<T>(startIt_, endIt_);
 }
 template <typename T>
-std::vector<T> TobiiMex::peekN(std::optional<size_t> lastN_)
+std::vector<T> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_)
 {
     // deal with default arguments
-    auto lastN = lastN_.value_or(defaults::peekAmount);
+    auto N      = NSamp_.value_or(defaults::peekNSamp);
+    auto side   = side_.value_or(defaults::peekSide);
 
     auto l = lockForReading<T>();
-
     auto& buf = getBuffer<T>();
-    auto   endIt = std::end(buf);
-    auto startIt = std::prev(endIt, std::min(lastN, std::size(buf)));
 
-    return peekFromVec(buf, startIt,endIt);
+    auto [startIt, endIt] = getIteratorsFromSampleAndSide<T>(N, side);
+    return peekFromVec(buf, startIt, endIt);
 }
 template <typename T>
 std::vector<T> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
@@ -1098,32 +1147,32 @@ bool TobiiMex::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
 }
 
 // gaze data, instantiate templated functions
-template std::vector<TobiiMex::gaze> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::gaze> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::gaze> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiMex::gaze> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::gaze> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::gaze> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // eye images, instantiate templated functions
-template std::vector<TobiiMex::eyeImage> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::eyeImage> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiMex::eyeImage> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::eyeImage> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::eyeImage> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // external signals, instantiate templated functions
-template std::vector<TobiiMex::extSignal> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::extSignal> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::extSignal> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiMex::extSignal> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::extSignal> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::extSignal> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // time sync data, instantiate templated functions
-template std::vector<TobiiMex::timeSync> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::timeSync> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::timeSync> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiMex::timeSync> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::timeSync> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<TobiiMex::timeSync> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
-template std::vector<TobiiMex::positioning> TobiiMex::consumeN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::positioning> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 //template std::vector<TobiiMex::positioning> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<TobiiMex::positioning> TobiiMex::peekN(std::optional<size_t> lastN_);
+template std::vector<TobiiMex::positioning> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 //template std::vector<TobiiMex::positioning> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);

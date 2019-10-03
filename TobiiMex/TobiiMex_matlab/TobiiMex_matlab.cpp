@@ -656,7 +656,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             TobiiMex::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
-            // get optional input argument
+            // get optional input arguments
             std::optional<uint64_t> nSamp;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
@@ -664,23 +664,32 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     mexErrMsgTxt("consumeN: Expected second argument to be a uint64 scalar.");
                 nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
             }
+            std::optional<TobiiMex::BufferSide> side;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsChar(prhs[4]))
+                    mexErrMsgTxt("consumeN: Third input must be a sample side identifier string ('first', or 'last').");
+                char* bufferCstr = mxArrayToString(prhs[4]);
+                side = instance->stringToBufferSide(bufferCstr);
+                mxFree(bufferCstr);
+            }
 
             switch (dataStream)
             {
                 case TobiiMex::DataStream::Gaze:
-                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::gaze>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::gaze>(nSamp,side));
                     return;
                 case TobiiMex::DataStream::EyeImage:
-                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::eyeImage>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::eyeImage>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::ExtSignal:
-                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::extSignal>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::extSignal>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::TimeSync:
-                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::timeSync>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::timeSync>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::Positioning:
-                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::positioning>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::positioning>(nSamp, side));
                     return;
             }
         }
@@ -739,7 +748,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             TobiiMex::DataStream dataStream = instance->stringToDataStream(bufferCstr);
             mxFree(bufferCstr);
 
-            // get optional input argument
+            // get optional input arguments
             std::optional<uint64_t> nSamp;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
@@ -747,23 +756,32 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     mexErrMsgTxt("peekN: Expected second argument to be a uint64 scalar.");
                 nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
             }
+            std::optional<TobiiMex::BufferSide> side;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsChar(prhs[4]))
+                    mexErrMsgTxt("peekN: Third input must be a sample side identifier string ('first', or 'last').");
+                char* bufferCstr = mxArrayToString(prhs[4]);
+                side = instance->stringToBufferSide(bufferCstr);
+                mxFree(bufferCstr);
+            }
 
             switch (dataStream)
             {
                 case TobiiMex::DataStream::Gaze:
-                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::gaze>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::gaze>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::EyeImage:
-                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::eyeImage>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::eyeImage>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::ExtSignal:
-                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::extSignal>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::extSignal>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::TimeSync:
-                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::timeSync>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::timeSync>(nSamp, side));
                     return;
                 case TobiiMex::DataStream::Positioning:
-                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::positioning>(nSamp));
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::positioning>(nSamp, side));
                     return;
             }
         }
