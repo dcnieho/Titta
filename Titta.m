@@ -412,7 +412,7 @@ classdef Titta < handle
                     if ~kCal
                         kCal = 1;
                     else
-                        kCal    = length(out.attempt)+1;
+                        kCal = length(out.attempt)+1;
                     end
                     qNewCal = false;
                 end
@@ -1430,7 +1430,7 @@ classdef Titta < handle
             % do calibration
             if qDoCal
                 % show display
-                [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1);
+                [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1,[],kCal==1);
                 obj.sendMessage(sprintf('STOP CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
                 out.cal.data = obj.ConsumeAllData(calStartT);
                 if out.cal.status==1
@@ -1557,7 +1557,7 @@ classdef Titta < handle
             obj.buffer.stop('positioning');
         end
         
-        function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip)
+        function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip,qFirstCalAfterCalModeEntered)
             % status output (in out.status):
             %  1: finished succesfully (you should out.result.status though
             %     to verify that the eye tracker agrees that the
@@ -1567,7 +1567,9 @@ classdef Titta < handle
             % -3: abort calibration/validation and go back to setup (escape
             %     key)
             % -5: Exit completely (shift+escape)
-            qFirst              = nargin<5;
+            if nargin<6 || isempty(qFirstCalAfterCalModeEntered)
+                qFirstCalAfterCalModeEntered = false;
+            end
             qHaveOperatorScreen = ~isscalar(wpnt);
             qShowEyeImage       = qHaveOperatorScreen && obj.buffer.hasStream('eyeImage');
             
@@ -1638,15 +1640,17 @@ classdef Titta < handle
                 drawFunction = @obj.drawFixationPointDefault;
             end
             % anchor timing, get ready for displaying calibration points
-            if qFirst
+            if nargin<5 || isempty(lastFlip)    % first in sequence
                 flipT   = GetSecs();
             else
                 flipT   = lastFlip;
             end
             qStartOfSequence = tick==-1;
-            if qCal
+            if qCal && ~qFirstCalAfterCalModeEntered
                 % make sure we start with a clean slate:
                 % discard data from all points, if any
+                % NB: already at clean state if first calibration (for this
+                % eye) after mode entered, so can skip
                 for p=1:size(points,1)
                     % queue up all the discard actions quickly
                     obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
@@ -1663,8 +1667,13 @@ classdef Titta < handle
                     drawFunction(wpnt(1),drawCmd,1,points(1,3:4),tick,stage);
                     drawCmd = 'draw';
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
-                    computeResult  = obj.buffer.calibrationRetrieveResult();
-                    nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
+                    while true
+                        computeResult  = obj.buffer.calibrationRetrieveResult();
+                        if isempty(computeResult)
+                            break;
+                        end
+                        nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
+                    end
                     if nReply==size(points,1)
                         break;
                     end
