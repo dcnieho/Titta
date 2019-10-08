@@ -1013,6 +1013,10 @@ classdef Titta < handle
             % logic: if user is at reference viewing distance and at
             % desired position in head box vertically and horizontally, two
             % circles will overlap indicating correct positioning
+            % further logic: this display is like a mirror, making it
+            % directly intuitive how the head is oriented w.r.t. the eye
+            % tracker. Only information missing is pitch, as that cannot be
+            % known from only the 3D positions of the two eyes.
             
             startT                  = obj.sendMessage(sprintf('START SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.start('gaze');
