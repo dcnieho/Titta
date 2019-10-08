@@ -38,6 +38,7 @@ try
     
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
+    % request some debug output to command window, can skip for normal use
     settings.debugMode      = true;
     % customize colors of setup and calibration interface (yes, colors of
     % everything can be set, so there is a lot here).
