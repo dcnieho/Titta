@@ -399,8 +399,7 @@ classdef Titta < handle
             % selected by user.
             % there are three start modes:
             % 0. skip head positioning, go straight to calibration
-            % 1. start with simple head positioning interface
-            % 2. start with advanced head positioning interface
+            % 1. start with head positioning interface
             startScreen         = obj.settings.UI.startScreen;
             kCal                = 0;
             out                 = struct('selectedCal', nan, 'wasSkipped', false);
