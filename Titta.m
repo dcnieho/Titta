@@ -1556,7 +1556,7 @@ classdef Titta < handle
             obj.buffer.stop('positioning');
         end
         
-        function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip,qFirstCalAfterCalModeEntered)
+        function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip,qIsFirstCalAttempt)
             % status output (in out.status):
             %  1: finished succesfully (you should out.result.status though
             %     to verify that the eye tracker agrees that the
@@ -1566,8 +1566,8 @@ classdef Titta < handle
             % -3: abort calibration/validation and go back to setup (escape
             %     key)
             % -5: Exit completely (shift+escape)
-            if nargin<6 || isempty(qFirstCalAfterCalModeEntered)
-                qFirstCalAfterCalModeEntered = false;
+            if nargin<6 || isempty(qIsFirstCalAttempt)
+                qIsFirstCalAttempt = false;
             end
             qHaveOperatorScreen = ~isscalar(wpnt);
             qShowEyeImage       = qHaveOperatorScreen && obj.buffer.hasStream('eyeImage');
@@ -1645,7 +1645,8 @@ classdef Titta < handle
                 flipT   = lastFlip;
             end
             qStartOfSequence = tick==-1;
-            if qCal && ~qFirstCalAfterCalModeEntered
+            drawCmd = 'new';
+            if qCal && ~qIsFirstCalAttempt
                 % make sure we start with a clean slate:
                 % discard data from all points, if any
                 % NB: already at clean state if first calibration (for this
@@ -1657,7 +1658,6 @@ classdef Titta < handle
                 % now we expect size(points,1) completed DiscardData
                 % reports as well
                 nReply = 0;
-                drawCmd = 'new';
                 while true
                     tick    = tick+1;
                     for w=1:length(wpnt)
