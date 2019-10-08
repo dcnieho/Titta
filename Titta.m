@@ -1640,9 +1640,18 @@ classdef Titta < handle
             end
             
             % if calibrating, make sure we start with a clean slate:
-            % discard data from all points, if any
+            % discard data from all points, if any.
+            % Specifically, Tobii eye trackers have a FIFO buffer of
+            % samples per calibration coordinate. This buffer may be longer
+            % than the amount of samples collected during a single
+            % calibration attempt, meaning that two consecutive
+            % calibrations may not be fully independent from each other.
+            % This appears to be unwanted in almost all cases, so here we
+            % clear the buffers for each calibration coordinate before we
+            % start collecting data for them.
             % NB: already at clean state if first calibration (for this
-            % eye) after mode entered, so can skip
+            % eye) after mode entered, because entering calibration mode
+            % clears all buffers, so can skip
             if qCal && ~qIsFirstCalAttempt
                 for p=1:size(points,1)
                     % queue up all the discard actions quickly
