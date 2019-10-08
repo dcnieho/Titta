@@ -1638,19 +1638,12 @@ classdef Titta < handle
             else
                 drawFunction = @obj.drawFixationPointDefault;
             end
-            % anchor timing, get ready for displaying calibration points
-            if nargin<5 || isempty(lastFlip)    % first in sequence
-                flipT   = GetSecs();
-            else
-                flipT   = lastFlip;
-            end
-            qStartOfSequence = tick==-1;
-            drawCmd = 'new';
+            
+            % if calibrating, make sure we start with a clean slate:
+            % discard data from all points, if any
+            % NB: already at clean state if first calibration (for this
+            % eye) after mode entered, so can skip
             if qCal && ~qIsFirstCalAttempt
-                % make sure we start with a clean slate:
-                % discard data from all points, if any
-                % NB: already at clean state if first calibration (for this
-                % eye) after mode entered, so can skip
                 for p=1:size(points,1)
                     % queue up all the discard actions quickly
                     obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
@@ -1659,25 +1652,22 @@ classdef Titta < handle
                 % reports as well
                 nReply = 0;
                 while true
-                    tick    = tick+1;
-                    for w=1:length(wpnt)
-                        Screen('FillRect', wpnt(w), bgClr{w});
-                    end
-                    drawFunction(wpnt(1),drawCmd,1,points(1,3:4),tick,stage);
-                    drawCmd = 'draw';
-                    flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
-                    while true
-                        computeResult  = obj.buffer.calibrationRetrieveResult();
-                        if isempty(computeResult)
-                            break;
-                        end
-                        nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
-                    end
+                    computeResult  = obj.buffer.calibrationRetrieveResult();
+                    nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
                     if nReply==size(points,1)
                         break;
                     end
+                    WaitSecs('YieldSecs',0.001);    % don't sping too hard
                 end
             end
+            
+            % anchor timing, get ready for displaying calibration points
+            if nargin<5 || isempty(lastFlip)    % first in sequence
+                flipT   = GetSecs();
+            else
+                flipT   = lastFlip;
+            end
+            qStartOfSequence = tick==-1;        % are we at the start of a calibrate/validate sequence?
             
             % prepare output
             out.status = 1; % calibration went ok, unless otherwise stated
@@ -1727,11 +1717,7 @@ classdef Titta < handle
                     advancePoint    = false;
                     qNewPoint       = true;
                     tick0p          = nan;
-                    if currentPoint~=1 || ~qCal
-                        % first point was already shown during delete above
-                        % when in calibration phase
-                        drawCmd         = 'new';
-                    end
+                    drawCmd         = 'new';
                 end
                 
                 % call drawer function
