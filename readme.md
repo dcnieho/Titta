@@ -141,7 +141,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.licenseFile`|If you tracker needs a license file applied (e.g. Tobii 4C), provide the full path to the license file here, or a cell array of full paths if there are multiple licenses to apply.|
 |`settings.nTryReConnect`|How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to `TobiiMex.findAllEyeTrackers()` for network eye trackers to be found.|
 |`settings.connectRetryWait`|Seconds: time to wait between connection retries.|
-|`settings.debugMode`|Only for Titta developer use.|
+|`settings.debugMode`|Only for Titta developer use. Prints some debug output to command window.|
 |  |  |
 |`settings.cal.pointPos`|Nx2 matrix of screen positions ([0,1] range) of calibration points, leave empty to do a zero-point calibration, i.e., use the tracker's default calibration.|
 |`settings.cal.autoPace`|0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted. Applies also to validation points since calibration and validation points are shown as one continuous stream.|
