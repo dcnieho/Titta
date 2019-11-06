@@ -316,7 +316,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::Delete:
         {
-            instanceTab.erase(instIt);
+            instanceTab.erase(instIt);      // erase from map
+            instance.reset();               // decrement ref count of shared pointer, should cause it to delete instance itself
             mexUnlock();
             plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
             break;
