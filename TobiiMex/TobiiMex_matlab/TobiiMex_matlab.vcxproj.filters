@@ -30,6 +30,12 @@
     <ClInclude Include="include_matlab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="is_container_trait.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mex_type_utils_fwd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="TobiiMex.m">

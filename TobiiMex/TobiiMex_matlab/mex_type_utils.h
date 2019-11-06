@@ -1,56 +1,37 @@
 #pragma once
 #include <type_traits>
-#include <string>
-#include <variant>
-#include <vector>
-#include <array>
-#include <tuple>
-#include <optional>
-#include <memory>
-#include <cstring>
 
+#include "mex_type_utils_fwd.h"
 #include "pack_utils.h"
-#include "include_matlab.h"
-#include "is_container_trait.h"
 
 namespace mxTypes
 {
+    // needed helper to be able to do static_assert(false,...) in some constexpr if branches below, e.g. to mark them as todo TODO
+    template <class...> constexpr std::false_type always_false{};
+
     // functionality to convert C++ types to MATLAB ClassIDs and back
+    template <typename T> struct typeToMxClass { static_assert(always_false<T>, "mxClassID not implemented for this type"); static constexpr mxClassID value = mxUNKNOWN_CLASS; };
+    template <>           struct typeToMxClass<double  > { static constexpr mxClassID value = mxDOUBLE_CLASS; };
+    template <>           struct typeToMxClass<float   > { static constexpr mxClassID value = mxSINGLE_CLASS; };
+    template <>           struct typeToMxClass<bool    > { static constexpr mxClassID value = mxLOGICAL_CLASS; };
+    template <>           struct typeToMxClass<uint64_t> { static constexpr mxClassID value = mxUINT64_CLASS; };
+    template <>           struct typeToMxClass<int64_t > { static constexpr mxClassID value = mxINT64_CLASS; };
+    template <>           struct typeToMxClass<uint32_t> { static constexpr mxClassID value = mxUINT32_CLASS; };
+    template <>           struct typeToMxClass<int32_t > { static constexpr mxClassID value = mxINT32_CLASS; };
+    template <>           struct typeToMxClass<uint16_t> { static constexpr mxClassID value = mxUINT16_CLASS; };
+    template <>           struct typeToMxClass<int16_t > { static constexpr mxClassID value = mxINT16_CLASS; };
+    template <>           struct typeToMxClass<uint8_t > { static constexpr mxClassID value = mxUINT8_CLASS; };
+    template <>           struct typeToMxClass<int8_t  > { static constexpr mxClassID value = mxINT8_CLASS; };
     template <typename T>
-    constexpr mxClassID typeToMxClass()
-    {
-        if      constexpr (std::is_same_v<T, double>)
-            return mxDOUBLE_CLASS;
-        else if constexpr (std::is_same_v<T, float>)
-            return mxSINGLE_CLASS;
-        else if constexpr (std::is_same_v<T, bool>)
-            return mxLOGICAL_CLASS;
-        else if constexpr (std::is_same_v<T, uint64_t>)
-            return mxUINT64_CLASS;
-        else if constexpr (std::is_same_v<T, int64_t>)
-            return mxINT64_CLASS;
-        else if constexpr (std::is_same_v<T, uint32_t>)
-            return mxUINT32_CLASS;
-        else if constexpr (std::is_same_v<T, int32_t>)
-            return mxINT32_CLASS;
-        else if constexpr (std::is_same_v<T, uint16_t>)
-            return mxUINT16_CLASS;
-        else if constexpr (std::is_same_v<T, int16_t>)
-            return mxINT16_CLASS;
-        else if constexpr (std::is_same_v<T, uint8_t>)
-            return mxUINT8_CLASS;
-        else if constexpr (std::is_same_v<T, int8_t>)
-            return mxINT8_CLASS;
-    }
+    constexpr mxClassID typeToMxClass_v = typeToMxClass<T>::value;
 
     template <typename T>
-    constexpr bool typeNeedsMxCellStorage()
+    struct typeNeedsMxCellStorage
     {
-        if constexpr (std::is_arithmetic_v<T>)  // true for integrals and floating point, and bool is included in integral
-            return false;
-        else
-            return true;
-    }
+        static constexpr bool value = !std::is_arithmetic_v<T>; // true for integrals and floating point, and bool is included in integral
+    };
+    template <typename T>
+    constexpr bool typeNeedsMxCellStorage_v = typeNeedsMxCellStorage<T>::value;
 
     template <mxClassID T>
     constexpr mxClassID MxClassToType()
@@ -79,9 +60,6 @@ namespace mxTypes
             using type = int8_t;
     }
 
-    // needed helper to mark TODO constexpr if branches below
-    template <class...> constexpr std::false_type always_false{};
-
     //// converters of generic data types to MATLAB variables
     //// to simple variables
     // forward declarations
@@ -108,9 +86,9 @@ namespace mxTypes
     typename std::enable_if_t<!is_container_v<T>, mxArray*>
         ToMatlab(T val_)
     {
-        static_assert(!typeNeedsMxCellStorage<T>(), "T must be arithmetic. Implement a specialization of ToMxArray for your type");
+        static_assert(!typeNeedsMxCellStorage_v<T>, "T must be arithmetic. Implement a specialization of ToMxArray for your type");
         mxArray* temp;
-        auto storage = static_cast<T*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, 1, typeToMxClass<T>(), mxREAL)));
+        auto storage = static_cast<T*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, 1, typeToMxClass_v<T>, mxREAL)));
         *storage = val_;
         return temp;
     }
@@ -119,31 +97,30 @@ namespace mxTypes
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
         ToMatlab(Cont data_)
     {
-        mxArray* temp;
+        mxArray* temp = nullptr;
         using V = typename Cont::value_type;
-        if constexpr (typeNeedsMxCellStorage<V>())
+        if constexpr (typeNeedsMxCellStorage_v<V>)
         {
-            if (!data_.size())
-                temp = mxCreateCellMatrix(0, 0);
-            else
-            {
-                temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1);
-                mwIndex i = 0;
-                for (auto &item : data_)
-                    mxSetCell(temp, i++, ToMatlab(item));
-            }
+            temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1);
+            mwIndex i = 0;
+            for (auto& item : data_)
+                mxSetCell(temp, i++, ToMatlab(item));
         }
-        else if constexpr (is_guaranteed_contiguous_v<Cont>)
+        else if constexpr (is_guaranteed_contiguous_v<Cont>&& typeToMxClass_v<V> != mxSTRUCT_CLASS)
         {
+            auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(static_cast<mwSize>(data_.size()), 1, typeToMxClass_v<V>, mxREAL)));
+            // contiguous storage, can memcopy
+            if (data_.size())
+                memcpy(storage, &data_[0], data_.size());
+        }
+        else if constexpr (typeToMxClass_v<V> == mxSTRUCT_CLASS)
+        {
+            mwIndex i = 0;
             if (!data_.size())
-                temp = mxCreateNumericMatrix(0, 0, typeToMxClass<V>(), mxREAL);
+                temp = mxCreateDoubleMatrix(0, 0, mxREAL);
             else
-            {
-                auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(static_cast<mwSize>(data_.size()), 1, typeToMxClass<V>(), mxREAL)));
-                // contiguous storage, can memcopy
-                if (data_.size())
-                    std::memcpy(storage, &data_[0], data_.size()*sizeof(V));
-            }
+                for (auto& item : data_)
+                    temp = ToMatlab(item, i++, static_cast<mwSize>(data_.size()), temp);
         }
         else
         {
@@ -175,47 +152,6 @@ namespace mxTypes
             return mxCreateDoubleMatrix(0, 0, mxREAL);
         else
             return ToMatlab(*val_);
-    }
-
-
-    //// array of structs
-    template<typename V, typename OutOrFun, typename... Fs, typename... Ts, typename... Fs2>
-    void ToStructArrayImpl(mxArray* out_, const V& item_, const mwIndex& idx1_, int idx2_, std::tuple<OutOrFun, Ts Fs::*...> expr, Fs2... fields)
-    {
-        if constexpr (std::is_invocable_v<OutOrFun, Ts...>)
-            if constexpr (sizeof...(Ts) == 2)
-                mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<0>(expr)(item_.*std::get<1>(expr), item_.*std::get<2>(expr))));
-            else if constexpr (sizeof...(Ts) == 1)
-                mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(std::get<0>(expr)(item_.*std::get<1>(expr))));
-            else
-                static_assert(always_false<Ts...>,"Support for more than two input arguments has not been implemented. Make generic, or add your needed case above");
-        else
-            mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(static_cast<OutOrFun>(item_.*std::get<1>(expr))));
-        if constexpr (!sizeof...(fields))
-            return;
-        else
-            ToStructArrayImpl(out_, item_, idx1_, ++idx2_, fields...);
-    }
-
-    template<typename V, typename F, typename T, typename... Fs>
-    void ToStructArrayImpl(mxArray* out_, const V& item_, const mwIndex& idx1_, int idx2_, T F::*field, Fs... fields)
-    {
-        mxSetFieldByNumber(out_, idx1_, idx2_, ToMatlab(item_.*field));
-        if constexpr (!sizeof...(fields))
-            return;
-        else
-            ToStructArrayImpl(out_, item_, idx1_, ++idx2_, fields...);
-    }
-
-    template<template<typename, typename> class Cont, typename V, typename... Rest, typename... Fs>
-    void ToStructArray(mxArray* out_, const Cont<V, Rest...>& data_, Fs... fields)
-    {
-        mwIndex i = 0;
-        for (const auto& item : data_)
-        {
-            ToStructArrayImpl(out_, item, i, 0, fields...);
-            i++;
-        }
     }
 
 

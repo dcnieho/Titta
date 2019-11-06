@@ -66,9 +66,19 @@
 
 // converting data to matlab. First here user extensions, then include with generic code driving this
 // extend set of function to convert C++ data to matlab
-#include "is_container_trait.h"
+#include "mex_type_utils_fwd.h"
 namespace mxTypes
 {
+    // template specializations
+    // NB: to get types output as a struct, specialize typeToMxClass for them
+    // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
+    // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type
+    template <>
+    struct typeNeedsMxCellStorage<TobiiResearchCalibrationPoint> { static constexpr bool value = false; };
+
+    template <>
+    struct typeToMxClass<TobiiResearchCalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+
     // forward declarations
     template<typename Cont, typename... Fs>
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
@@ -98,9 +108,9 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiTypes::CalibrationAction                     data_);
     mxArray* ToMatlab(TobiiResearchCalibrationResult                    data_);
     mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint>        data_);
+    mxArray* ToMatlab(TobiiResearchCalibrationPoint data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>		data_);
+    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>       data_);
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
     mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
@@ -907,7 +917,7 @@ namespace mxTypes
             // determine what return type we get
             // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
             using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields..., &retT::x));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass_v<U>, mxREAL)));
             for (auto &samp : data_)
             {
                 storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::x);
@@ -919,7 +929,7 @@ namespace mxTypes
         else
         {
             using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields...));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass<U>(), mxREAL)));
+            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass_v<U>, mxREAL)));
             for (auto &samp : data_)
                 storage[i++] = mxTypes::getFieldWrapper(samp, fields...);
         }
@@ -1345,20 +1355,18 @@ namespace mxTypes
         }
         return mxCreateString(str.c_str());
     }
-    mxArray* ToMatlab(std::vector<TobiiResearchCalibrationPoint> data_)
+    mxArray* ToMatlab(TobiiResearchCalibrationPoint data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
-        if (!data_.size())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
+        if (idx_ == 0)
+        {
+            const char* fieldNames[] = { "position","samples" };
+            storage_ = mxCreateStructMatrix(size_, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
 
-        const char* fieldNames[] = {"position","samples"};
-        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.position_on_display_area));
+        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(std::vector<TobiiResearchCalibrationSample>(data_.calibration_samples, data_.calibration_samples+data_.calibration_sample_count)));
 
-        ToStructArray(out, data_,
-                      &TobiiResearchCalibrationPoint::position_on_display_area,
-                      std::make_tuple([](auto a, auto b) {return std::vector<TobiiResearchCalibrationSample>(a,a+b); }, &TobiiResearchCalibrationPoint::calibration_samples, &TobiiResearchCalibrationPoint::calibration_sample_count)
-        );
-
-        return out;
+        return storage_;
     }
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D data_)
     {
