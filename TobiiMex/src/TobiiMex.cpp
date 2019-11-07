@@ -98,7 +98,7 @@ TobiiMex::DataStream TobiiMex::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << "Titta: Requested stream \"" << stream_ << "\" is not recognized. Supported streams are: \"gaze\", \"eyeImage\", \"externalSignal\", \"timeSync\" and \"positioning\"";
+        os << R"(Titta: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning")";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -116,7 +116,7 @@ TobiiMex::BufferSide TobiiMex::stringToBufferSide(std::string bufferSide_)
     if (it == bufferSideMap.end())
     {
         std::stringstream os;
-        os << "Titta: Requested buffer side \"" << bufferSide_ << "\" is not recognized. Supported sample sides are: \"first\" and \"last\"";
+        os << R"("Titta: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported sample sides are: "first" and "last")";
         DoExitWithMsg(os.str());
     }
     return it->second;
