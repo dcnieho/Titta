@@ -1239,11 +1239,11 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available
                 if ~qHideSetup
-                    drawOrientedPoly(wpnt(1),circVerts,1,0,[0 1; 1 0],refSz,refPosP,[],refClr ,5);
+                    drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClr ,5);
                 end
                 if qHaveOperatorScreen
                     % no vertical/horizontal offset on operator screen
-                    drawOrientedPoly(wpnt(2),circVerts,1,0,[0 1; 1 0],refSz,refPosO,[],refClrO,5);
+                    drawOrientedPoly(wpnt(2),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosO,[],refClrO,5);
                 end
                 % stylized head
                 head.draw();

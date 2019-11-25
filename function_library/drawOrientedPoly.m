@@ -7,12 +7,13 @@ end
 % the higher the simulated z, the more pure orthographic is approached. z=5
 % looks nice to me
 z=5;
-depthOri = depthOri*1.25;   % exaggerate head depth rotation a bit, looks more like the eye images and simply makes it more visible
-proj = bsxfun(@rdivide,[verts(1,:)*cos(depthOri); verts(2,:)],(z+verts(1,:)*sin(depthOri)))*z; % depth is defined by x coord as circle is rotated around yaw axis
+% make 3D verts
+verts   = [verts(1,:)*cos(depthOri(1)); verts(2,:)*cos(depthOri(2)); z+verts(1,:)*sin(depthOri(1))+verts(2,:)*sin(depthOri(2))];
+proj    = verts(1:2,:)./verts(3,:)*z; % depth is defined by x coord as circle is rotated around yaw axis
 % rotate image on projection plane for head roll
-proj = rotMat*proj;
+proj    = rotMat*proj;
 % scale and move to right place
-proj = bsxfun(@plus,proj*scaleFac,pos(:));
+proj    = bsxfun(@plus,proj*scaleFac,pos(:));
 
 % draw fill if any
 if ~isempty(fillClr)

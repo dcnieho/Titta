@@ -18,8 +18,10 @@ classdef ETHead < handle
         eyeSzFac            = .25;
         eyeMarginFac        = .25;
         pupilSzFac          = .50;
-        pupilRefDiam        = 5;    % mm
+        pupilRefDiam        = 5;        % mm
         pupilSzGain         = 1.5;
+        yawFac              = 1.25;     % exaggerate yaw head depth rotation a bit, looks more like the eye images and simply makes it more visible
+        pitchFac            = 1;
         
         refSz;
         rectWH;
@@ -51,6 +53,7 @@ classdef ETHead < handle
         avgDist
         Rori                = [1 0; 0 1];
         yaw                 = 0;
+        pitch               = 0;
         eyeDistGuidePos     = 0.1375;   % kinda arbitrary value to use when eyeDistGuidePos has not been measured yet
         RoriGP              = [1 0; 0 1];
         yawGP               = 0;
@@ -89,7 +92,17 @@ classdef ETHead < handle
         
         function update(this,...
                  leftOriginValid, leftGazeOriginUCS, leftGuidePos, leftPupilDiameter,...
-                rightOriginValid,rightGazeOriginUCS,rightGuidePos, rightPupilDiameter)
+                rightOriginValid,rightGazeOriginUCS,rightGuidePos, rightPupilDiameter, pitch)
+            
+            % pitch cannot be computed from these inputs, but can be
+            % provided if known from another source. Pitch is in degrees,
+            % and applied after yaw. Roll is applied last, by simply
+            % rotating projection plane
+            if nargin>=10
+                this.pitch = pitch/180*pi;
+            else
+                this.pitch = 0;
+            end
             
             [lEye,rEye] = deal(nan(3,1));
             if isempty(leftGuidePos)
@@ -222,8 +235,9 @@ classdef ETHead < handle
         
         function draw(this)
             if ~isempty(this.headPos)
+                oris = [this.yaw this.pitch].*[this.yawFac this.pitchFac];
                 % draw head
-                drawOrientedPoly(this.wpnt,this.circVerts,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.headCircleFillClr),this.getColorForWindow(this.headCircleEdgeClr),this.headCircleEdgeWidth);
+                drawOrientedPoly(this.wpnt,this.circVerts,1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.headCircleFillClr),this.getColorForWindow(this.headCircleEdgeClr),this.headCircleEdgeWidth);
                 if this.showEyes
                     for e=1:2
                         eyeOff = [this.eyeMarginFac*2;0];               % *2 because all sizes are radii
@@ -238,21 +252,21 @@ classdef ETHead < handle
                         if e==this.crossEye
                             % draw cross indicating not being calibrated
                             cross = [cosd(45) sind(45); -sind(45) cosd(45)]*[1 1 4 4 1 1 -1 -1 -4 -4 -1 -1; 4 1 1 -1 -1 -4 -4 -1 -1 1 1 4]/4*this.eyeSzFac + eyeOff;
-                            drawOrientedPoly(this.wpnt,cross,0,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.crossClr));
+                            drawOrientedPoly(this.wpnt,cross,0,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.crossClr));
                         elseif (e==1 && this.qHaveLeft) || (e==2 && this.qHaveRight)
                             % draw eye
                             eye = bsxfun(@plus,this.eyeSzFac*this.circVerts,eyeOff);
-                            drawOrientedPoly(this.wpnt,eye,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
+                            drawOrientedPoly(this.wpnt,eye,1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
                             % if wanted, draw pupil
                             if this.showPupils
                                 pupilSz = (1+(pup/this.pupilRefDiam-1)*this.pupilSzGain)*this.pupilSzFac*this.eyeSzFac;
                                 pup     = bsxfun(@plus,pupilSz*this.circVerts,eyeOff);
-                                drawOrientedPoly(this.wpnt,pup,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.pupilClr));
+                                drawOrientedPoly(this.wpnt,pup,1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.pupilClr));
                             end
                         else
                             % draw line indicating closed/missing eye
                             line = bsxfun(@plus,[-1 1 1 -1; -1/5 -1/5 1/5 1/5]*this.eyeSzFac,eyeOff);
-                            drawOrientedPoly(this.wpnt,line,1,this.yaw,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
+                            drawOrientedPoly(this.wpnt,line,1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.eyeClr));
                         end
                     end
                 end
@@ -357,6 +371,28 @@ classdef ETHead < handle
                 eyes= Rmat*eyesPos;
                 eyes(2,:) = eyes(2,:)-Rdist;
                 head.update(true, [eyes(1,1) 0 650-eyes(2,1)].', [], 5, true, [eyes(1,2) 0 650-eyes(2,2)].', [], 5);
+                head.draw();
+                Screen('Flip',wpnt);
+                if KbCheck()
+                    break;
+                end
+                t = t+dt;
+            end
+            KbWait([],1);
+            
+            % head pitch
+            Rdist   = 60;
+            range   = 35/180*pi;
+            cps     = 2/3;
+            dphi    = cps*2*pi;
+            dt      = 1/hz;
+            t       = 0;
+            while true
+                DrawFormattedText(wpnt,'Head pitch.','center',winRect(4)*.15,0,50);
+                ori = range*sin(t*dphi);
+                Yoff= Rdist*sin(ori);
+                Zoff= Rdist*cos(ori)-Rdist;
+                head.update(true, [-30 Yoff 650+Zoff].', [], 5, true, [30 Yoff 650+Zoff].', [], 5, -ori*180/pi);
                 head.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
