@@ -35,10 +35,16 @@ classdef ETHead < handle
         showEyes            = true;
         showPupils          = true;
         showYaw             = true;
+        drawGrid            = false;
         
         crossClr            = [255 0 0];
         eyeClr              = 255;
         pupilClr            = 0;
+        
+        numGridLines        = 5;
+        gridType            = 3;                    % 1: horizontal lines, 2: vertical lines, 3: both
+        gridLineColor       = [255 255 0 .3*255];
+        gridLineWidth       = .03;
         
         referencePos;
         allPosOff           = [0 0];
@@ -73,6 +79,7 @@ classdef ETHead < handle
         rPup
         headSz
         circVerts
+        gridVerts           = {};
     end
     
     methods
@@ -231,11 +238,42 @@ classdef ETHead < handle
             else
                 this.headPos    = [];
             end
+            
+            % if gridlines, pregen them
+            if this.drawGrid
+                this.gridVerts = cell(1,this.numGridLines*sum(logical(bitand(this.gridType,[1 2]))));
+                idx = 0;
+                if bitand(this.gridType,1) % horizontal lines
+                    vPos = linspace(-1,1,this.numGridLines+2); vPos = vPos(2:end-1);
+                    for p=1:this.numGridLines
+                        v = vPos(p)+[-1 1]*this.gridLineWidth/2;
+                        h = sqrt(1-v.^2);
+                        this.gridVerts{idx+p} = [h([1 2 2 1]).*[1 1 -1 -1]; v([1 2 2 1])];
+                    end
+                    idx = idx+this.numGridLines;
+                end
+                if bitand(this.gridType,2) % vertical lines
+                    hPos = linspace(-1,1,this.numGridLines+2); hPos = hPos(2:end-1);
+                    for p=1:this.numGridLines
+                        h = hPos(p)+[-1 1]*this.gridLineWidth/2;
+                        v = sqrt(1-h.^2);
+                        this.gridVerts{idx+p} = [h([1 2 2 1]); v([1 2 2 1]).*[1 1 -1 -1]];
+                    end
+                end
+            end
         end
         
         function draw(this)
             if ~isempty(this.headPos)
                 oris = [this.yaw this.pitch].*[this.yawFac this.pitchFac];
+                
+                % draw grid on head
+                if this.drawGrid && ~isempty(this.gridVerts)
+                    for p=1:length(this.gridVerts)
+                        drawOrientedPoly(this.wpnt,this.gridVerts{p},1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.gridLineColor),[0 0 0 0],1);
+                    end
+                end
+        
                 % draw head
                 drawOrientedPoly(this.wpnt,this.circVerts,1,oris,this.Rori,this.headSz,this.headPos,this.getColorForWindow(this.headCircleFillClr),this.getColorForWindow(this.headCircleEdgeClr),this.headCircleEdgeWidth);
                 if this.showEyes
@@ -302,6 +340,14 @@ classdef ETHead < handle
             head.rectWH         = winRect(3:4);
             head.refSz          = .1*winRect(3);
             head.referencePos   = [0 0 65]; % cm, note that position inputs to head.update are in mm, not cm
+            head.allPosOff      = [-winRect(3)*.2 0];
+            
+            head2                = ETHead(wpnt,[],[]);
+            head2.rectWH         = winRect(3:4);
+            head2.refSz          = .1*winRect(3);
+            head2.referencePos   = [0 0 65]; % cm, note that position inputs to head.update are in mm, not cm
+            head2.drawGrid       = true;
+            head2.allPosOff      = [winRect(3)*.2 0];
             
             % overall params
             cps     = 2/3;
@@ -314,6 +360,8 @@ classdef ETHead < handle
             DrawFormattedText(wpnt,'This demo will show the below head animated in various ways. Press any key to continue to the next animation.','center',winRect(4)*.15,0,50);
             head.update(true, [-eyeDist 0 650].', [], 5, true, [eyeDist 0 650].', [], 5);
             head.draw();
+            head2.update(true, [-eyeDist 0 650].', [], 5, true, [eyeDist 0 650].', [], 5);
+            head2.draw();
             Screen('Flip',wpnt);
             KbStrokeWait;
             
@@ -326,6 +374,8 @@ classdef ETHead < handle
                 d = range(1) + diff(range)*(.5+normOff/2);
                 head.update(normOff<=0, [-eyeDist 0 d].', [], 5, normOff>0, [eyeDist 0 d].', [], 5);
                 head.draw();
+                head2.update(normOff<=0, [-eyeDist 0 d].', [], 5, normOff>0, [eyeDist 0 d].', [], 5);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     break;
@@ -347,6 +397,8 @@ classdef ETHead < handle
                 eyes(2,:) = eyes(2,:)-Rdist;
                 head.update(true, [eyes(:,1); 650], [], 5, true, [eyes(:,2); 650], [], 5);
                 head.draw();
+                head2.update(true, [eyes(:,1); 650], [], 5, true, [eyes(:,2); 650], [], 5);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     break;
@@ -368,6 +420,8 @@ classdef ETHead < handle
                 eyes(2,:) = eyes(2,:)-Rdist;
                 head.update(true, [eyes(1,1) 0 650-eyes(2,1)].', [], 5, true, [eyes(1,2) 0 650-eyes(2,2)].', [], 5);
                 head.draw();
+                head2.update(true, [eyes(1,1) 0 650-eyes(2,1)].', [], 5, true, [eyes(1,2) 0 650-eyes(2,2)].', [], 5);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     break;
@@ -387,6 +441,8 @@ classdef ETHead < handle
                 Zoff= Rdist*cos(ori)-Rdist;
                 head.update(true, [-eyeDist Yoff 650+Zoff].', [], 5, true, [eyeDist Yoff 650+Zoff].', [], 5, -ori*180/pi);
                 head.draw();
+                head2.update(true, [-eyeDist Yoff 650+Zoff].', [], 5, true, [eyeDist Yoff 650+Zoff].', [], 5, -ori*180/pi);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     break;
@@ -403,6 +459,8 @@ classdef ETHead < handle
                 offset = range*sin(t*dphi);
                 head.update(true, [-eyeDist 0 650].', [], 5+offset, true, [eyeDist 0 650].', [], 5-offset);
                 head.draw();
+                head2.update(true, [-eyeDist 0 650].', [], 5+offset, true, [eyeDist 0 650].', [], 5-offset);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     break;
@@ -436,10 +494,13 @@ classdef ETHead < handle
                 
                 head.update(true, [(eyes1(1,1)+eyes2(1,1))/2 eyes1(2,1) 650-eyes2(2,1)].', [], 5+rangep*normOff, true, [(eyes1(1,2)+eyes2(1,2))/2 eyes1(2,2) 650-eyes2(2,2)].', [], 5-rangep*normOff);
                 head.draw();
+                head2.update(true, [(eyes1(1,1)+eyes2(1,1))/2 eyes1(2,1) 650-eyes2(2,1)].', [], 5+rangep*normOff, true, [(eyes1(1,2)+eyes2(1,2))/2 eyes1(2,2) 650-eyes2(2,2)].', [], 5-rangep*normOff);
+                head2.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
                     mode=mode+1;
                     head.crossEye = 1;
+                    head2.crossEye = 2;
                     KbWait([],1);
                     if mode==2
                         break;
