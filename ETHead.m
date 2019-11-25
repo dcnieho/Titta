@@ -303,24 +303,28 @@ classdef ETHead < handle
             head.refSz          = .1*winRect(3);
             head.referencePos   = [0 0 65]; % cm, note that position inputs to head.update are in mm, not cm
             
+            % overall params
+            cps     = 2/3;
+            dphi    = cps*2*pi;
+            dt      = 1/hz;
+            eyeDist = 30;   % half eye dist
+            
+            
             % starting screen
             DrawFormattedText(wpnt,'This demo will show the below head animated in various ways. Press any key to continue to the next animation.','center',winRect(4)*.15,0,50);
-            head.update(true, [0 0 650].', [], 5, true, [0 0 650].', [], 5);
+            head.update(true, [-eyeDist 0 650].', [], 5, true, [eyeDist 0 650].', [], 5);
             head.draw();
             Screen('Flip',wpnt);
             KbStrokeWait;
             
             % back and forth in depth, blinking eye
             range = [500 800];
-            cps = 2/3;
-            dphi= cps*2*pi;
-            dt  = 1/hz;
             t   = 0;
             while true
                 DrawFormattedText(wpnt,'Head moving back and forth in depth, eyes blinking.','center',winRect(4)*.15,0,50);
                 normOff = sin(t*dphi);
                 d = range(1) + diff(range)*(.5+normOff/2);
-                head.update(normOff<=0, [0 0 d].', [], 5, normOff>0, [0 0 d].', [], 5);
+                head.update(normOff<=0, [-eyeDist 0 d].', [], 5, normOff>0, [eyeDist 0 d].', [], 5);
                 head.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
@@ -333,11 +337,8 @@ classdef ETHead < handle
             % sideways around rotation point
             Rdist = 250;
             range = 15/180*pi;
-            cps = 2/3;
-            dphi= cps*2*pi;
-            dt  = 1/hz;
             t   = 0;
-            eyesPos = [-30 30;Rdist Rdist];
+            eyesPos = [[-1 1]*eyeDist;Rdist Rdist];
             while true
                 DrawFormattedText(wpnt,'Head swinging left-to-right.','center',winRect(4)*.15,0,50);
                 ori = range*sin(t*dphi);
@@ -355,13 +356,10 @@ classdef ETHead < handle
             KbWait([],1);
             
             % head yaw
-            Rdist = 60;
-            range = 35/180*pi;
-            cps = 2/3;
-            dphi= cps*2*pi;
-            dt  = 1/hz;
-            t   = 0;
-            eyesPos = [-30 30;Rdist Rdist];
+            Rdist   = 60;
+            range   = 35/180*pi;
+            t       = 0;
+            eyesPos = [[-1 1]*eyeDist;Rdist Rdist];
             while true
                 DrawFormattedText(wpnt,'Head yaw.','center',winRect(4)*.15,0,50);
                 ori = range*sin(t*dphi);
@@ -381,16 +379,13 @@ classdef ETHead < handle
             % head pitch
             Rdist   = 60;
             range   = 35/180*pi;
-            cps     = 2/3;
-            dphi    = cps*2*pi;
-            dt      = 1/hz;
             t       = 0;
             while true
                 DrawFormattedText(wpnt,'Head pitch.','center',winRect(4)*.15,0,50);
                 ori = range*sin(t*dphi);
                 Yoff= Rdist*sin(ori);
                 Zoff= Rdist*cos(ori)-Rdist;
-                head.update(true, [-30 Yoff 650+Zoff].', [], 5, true, [30 Yoff 650+Zoff].', [], 5, -ori*180/pi);
+                head.update(true, [-eyeDist Yoff 650+Zoff].', [], 5, true, [eyeDist Yoff 650+Zoff].', [], 5, -ori*180/pi);
                 head.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
@@ -401,15 +396,12 @@ classdef ETHead < handle
             KbWait([],1);
             
             % pupils
-            range = 2.5;
-            cps = 2/3;
-            dphi= cps*2*pi;
-            dt  = 1/hz;
-            t   = 0;  
+            range   = 2.5;
+            t       = 0;  
             while true
                 DrawFormattedText(wpnt,'Crazy pupils.','center',winRect(4)*.15,0,50);
                 offset = range*sin(t*dphi);
-                head.update(true, [0 0 650].', [], 5+offset, true, [0 0 650].', [], 5-offset);
+                head.update(true, [-eyeDist 0 650].', [], 5+offset, true, [eyeDist 0 650].', [], 5-offset);
                 head.draw();
                 Screen('Flip',wpnt);
                 if KbCheck()
@@ -425,12 +417,9 @@ classdef ETHead < handle
             Rdist2 = 60;
             range2 = 35/180*pi;
             rangep = 1.5;
-            cps = 2/3;
-            dphi= cps*2*pi;
-            dt  = 1/hz;
             t   = 0;
-            eyesPos1 = [-30 30;Rdist1 Rdist1];
-            eyesPos2 = [-30 30;Rdist2 Rdist2];
+            eyesPos1 = [[-1 1]*eyeDist;Rdist1 Rdist1];
+            eyesPos2 = [[-1 1]*eyeDist;Rdist2 Rdist2];
             mode = 0;
             while true
                 DrawFormattedText(wpnt,'All together now.','center',winRect(4)*.15,0,50);
