@@ -276,10 +276,8 @@ classdef ETHead < handle
     
     methods (Static)
         function showDemo()
-            DEBUGlevel = 0;
-            
             scr = max(Screen('Screens'));
-            if DEBUGlevel>1
+            if false
                 % make screen partially transparent on OSX and windows vista or
                 % higher, so we can debug.
                 PsychDebugWindowConfiguration;
