@@ -7,12 +7,13 @@ function y = truncExpRandDiscrete(s,mu,vals)
 % See also truncExpRand
 %
 % example:
-% vals=[1000:1000/60:3500];
-% s=truncExpRandDiscrete([1,1000000],1500,vals);
-% n=histc(s,vals);
-% p=exppdf(vals,1500);
+% isi = 1000/60;
+% vals= [1000:isi:3500];
+% s   = truncExpRandDiscrete([1,30000000],1500,vals);
+% n   = histc(s,vals);
+% p   = exppdf(vals,1500);
 % bar(vals,n./sum(n),'histc')
-% hold on, plot(vals,p./sum(p),'r')
+% hold on, plot(vals+isi/2,p./sum(p),'r')
 
 exppdf = @(x,mu) exp(-x ./ mu) ./ mu;
 
@@ -22,7 +23,6 @@ cdf    = cumsum(ps(:))./sum(ps);
 % do inverse transform sampling, using emperical cdf
 pin    = rand(s);
 
-% bin the samples, as cdf is discrete
-[~,x]  = histc(pin,[0;cdf]);
-
-y      = vals(x);
+% now use the cdf to look up the corresponding value from vals for each
+% sample
+y      = interp1(cdf,vals,pin,'next','extrap'); % extrap needed as interval (0, cdf(1)] is outside the input range and would map to nan otherwise
