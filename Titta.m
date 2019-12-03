@@ -1253,6 +1253,7 @@ classdef Titta < handle
                 
                 % draw buttons
                 [mousePos(1), mousePos(2)] = GetMouse();
+                [mousePos(1), mousePos(2)] = RemapMouse(wpnt(end), 'AllViews', mousePos(1), mousePos(2));
                 but(1).draw(mousePos,qShowEyeImage);
                 but(2).draw(mousePos);
                 but(3).draw(mousePos);
@@ -2409,6 +2410,7 @@ classdef Titta < handle
                     obj.drawCachedText(valInfoTopTextCache);
                     % draw buttons
                     [mousePos(1), mousePos(2)] = GetMouse();
+                    [mousePos(1), mousePos(2)] = RemapMouse(wpnt(end), 'AllViews', mousePos(1), mousePos(2));
                     but(1).draw(mousePos);
                     but(2).draw(mousePos);
                     but(3).draw(mousePos);
@@ -2649,6 +2651,7 @@ classdef Titta < handle
             % date!
             [~,~,keyCode]   = KbCheck();
             [mx,my,buttons] = GetMouse();
+            [mx,my]         = RemapMouse(obj.wpnts(end), 'AllViews', mx, my);
             
             % get only fresh mouse and key presses (so change from state
             % "up" to state "down")
