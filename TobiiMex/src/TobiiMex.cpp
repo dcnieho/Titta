@@ -568,7 +568,8 @@ void TobiiMex::calibrationThread()
                 auto nItem = workItem.calData.size();
                 calData.data = malloc(nItem);
                 calData.size = nItem;
-                std::memcpy(calData.data, workItem.calData.data(), nItem);
+                if (nItem)
+                    std::memcpy(calData.data, &workItem.calData[0], nItem);
 
                 result = tobii_research_apply_calibration_data(_eyetracker.et, &calData);
                 free(calData.data);
