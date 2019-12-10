@@ -111,7 +111,7 @@ namespace mxTypes
             auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(static_cast<mwSize>(data_.size()), 1, typeToMxClass_v<V>, mxREAL)));
             // contiguous storage, can memcopy
             if (data_.size())
-                memcpy(storage, &data_[0], data_.size());
+                memcpy(storage, &data_[0], data_.size()*sizeof(data_[0]));
         }
         else if constexpr (typeToMxClass_v<V> == mxSTRUCT_CLASS)
         {
