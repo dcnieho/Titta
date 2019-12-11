@@ -1,3 +1,4 @@
+function antiSaccade(varargin)
 % This demo code is part of Titta, a toolbox providing convenient access to
 % eye tracking functionality using Tobii eye trackers
 %
@@ -17,74 +18,13 @@
 %
 % Note that by default, this code runs a brief demo instead of the protocol
 % recommended by Antoniades et al. The full protocol would take over 15
-% minutes. To run the full protocol, set qDemo below to false.
-sca
-clear variables
+% minutes. To run the full protocol, set doDemo below to false.
 
-% add functions folder and Titta folder to path
-myDir = fileparts(mfilename('fullpath'));
-addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
-
-DEBUGlevel              = 0;
-qDemo                   = true;                             % if true, do a short run of pro- and antisaccades for demo purposes. If false, run recommended Antoniades et al. protocol
-
-% provide info about your screen (set to defaults for screen of Spectrum)
-sv.scr.num              = 0;
-sv.scr.rect             = [1920 1080];                      % expected screen resolution   (px)
-sv.scr.framerate        = 60;                               % expected screen refresh rate (hz)
-sv.scr.viewdist         = 65;                               % viewing    distance      (cm)
-sv.scr.sizey            = 29.69997;                         % vertical   screen   size (cm)
-sv.scr.multiSample      = 8;
-
-sv.bgclr                = 127;                              % screen background color (L, or RGB): here midgray
-
-% setup eye tracker
-qUseDummyMode           = false;
-settings                = Titta.getDefaults('Tobii Pro Spectrum');
-settings.cal.bgColor    = sv.bgclr;
-% custom calibration drawer
-calViz                  = AnimatedCalibrationDisplay();
-calViz.bgColor          = sv.bgclr;
-settings.cal.drawFunction = @calViz.doDraw;
-
-% task parameters, either in brief demo mode or with all defaults as per
-% the protocol recommended by Antoniades et al. (2013)
-if qDemo
-    sv.blockSetup      = {'P',10;'A',10};                       % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
-    sv.nTrainTrial     = [4 4];                                 % number of training trials for [pro-, anti-saccades]
-    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
-    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
-    sv.breakT          = 5000;                                  % the minimum resting time between blocks (ms)
+if nargin<1
+    sv      = antiSaccadeParameters(true,false);
 else
-    sv.blockSetup      = {'P',60;'A',40;'A',40;'A',40;'P',60};  % blocks and number of trials per block to run: P for pro-saccade and A for anti-saccade
-    sv.nTrainTrial     = [10 4];                                % number of training trials for [pro-, anti-saccades]
-    sv.delayTMean      = 1500;                                  % the mean of the truncated exponential distribution for delay times
-    sv.delayTLimits    = [1000 3500];                           % the limits of the truncated exponential distribution for delay times
-    sv.breakT          = 60000;                                 % the minimum resting time between blocks (ms)
+    sv      = varargin{1};
 end
-sv.targetDuration  = 1000;                                  % the duration for which the target is shown
-sv.restT           = 1000;                                  % the blank time between trials
-% fixation point
-sv.fixBackSize     = 0.25;                                  % degrees
-sv.fixFrontSize    = 0.1;                                   % degrees
-sv.fixBackColor    = 0;                                     % L or RGB
-sv.fixFrontColor   = 255;                                   % L or RGB
-% target point
-sv.targetDiameter  = 0.5;                                   % degrees
-sv.targetColor     = 0;                                     % L or RGB
-sv.targetEccentricity  = 8;                                 % degrees
-
-% default text settings
-text.font           = 'Consolas';
-text.size           = 20;
-text.style          = 0;                                    % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-text.wrapAt         = 62;
-text.vSpacing       = 1;
-text.lineCentOff    = 3;                                    % amount (pixels) to move single line text down so that it is visually centered on requested coordinate
-text.color          = 0;                                    % L or RGB
-
-
-
 
 %% prepare run
 %%%%%%%%%%%%%%%%%% get display setup
@@ -99,8 +39,8 @@ if frate==59
 end
 
 %%%%%%%%%%%%%%%%%% check and compute display setup
-assert(DEBUGlevel || isequal(rect(3:4),sv.scr.rect),'expected resolution of [%s], but got [%s]',num2str(sv.scr.rect),num2str(rect(3:4)));
-assert(DEBUGlevel || frate==sv.scr.framerate,'expected framerate of %d, but got %d',sv.scr.framerate,frate);
+assert(sv.DEBUGlevel || isequal(rect(3:4),sv.scr.rect),'expected resolution of [%s], but got [%s]',num2str(sv.scr.rect),num2str(rect(3:4)));
+assert(sv.DEBUGlevel || frate==sv.scr.framerate,'expected framerate of %d, but got %d',sv.scr.framerate,frate);
 sv.scr.FOVy        = 2*atand(.5 .* sv.scr.sizey./sv.scr.viewdist);       % Screen's Field of View (degrees)
 sv.scr.aspectr     = sv.scr.rect(1) ./ sv.scr.rect(2);                   % aspect ratio
 sv.scr.FOVx        = 2*atand(tand(sv.scr.FOVy/2)*sv.scr.aspectr);
@@ -119,7 +59,7 @@ sv.bgclr        = color2RGBA(sv.bgclr);
 sv.fixBackColor = color2RGBA(sv.fixBackColor);
 sv.fixFrontColor= color2RGBA(sv.fixFrontColor);
 sv.targetColor  = color2RGBA(sv.targetColor);
-text.color      = color2RGBA(text.color);
+sv.text.color   = color2RGBA(sv.text.color);
 % insert training blocks
 bIdx = find(strcmp(sv.blockSetup(:,1),'P'));
 if ~isempty(bIdx)
@@ -173,14 +113,14 @@ end
 %% run
 try 
     % init
-    EThndl          = Titta(settings);
-    if qUseDummyMode
+    EThndl          = Titta(sv.ET.settings);
+    if sv.ET.useDummyMode
         EThndl          = EThndl.setDummyMode();
     end
     EThndl.init();
     
     
-    if DEBUGlevel>1
+    if sv.DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
         % higher, so we can debug.
         PsychDebugWindowConfiguration;
@@ -211,7 +151,7 @@ try
         end
         if ~isempty(data.trials(p).instruct.text)
             insText                     = data.trials(p).instruct.text;
-            data.trials(p).instruct     = drawInstruction(insText,addToStruct(text,'color',[0 0 0 255]),wpnt,{'space'},@EThndl.sendMessage);
+            data.trials(p).instruct     = drawInstruction(insText,addToStruct(sv.text,'color',[0 0 0 255]),wpnt,{'space'},@EThndl.sendMessage);
             data.trials(p).instruct.text= insText;
             clearTime                   = data.trials(p).instruct.Toffset;
         end
@@ -236,7 +176,7 @@ try
         % break if after last of block and not training.
         if data.trials(p).qLastOfBlock && ~data.trials(p).qTraining && p~=length(data.trials)
             EThndl.sendMessage('BREAK START');
-            displaybreak(sv.breakT/1000,wpnt,addToStruct(text,'color',[200 0 0 255]),'space',@EThndl.sendMessage);
+            displaybreak(sv.breakT/1000,wpnt,addToStruct(sv.text,'color',[200 0 0 255]),'space',@EThndl.sendMessage);
             clearTime = Screen('Flip',wpnt);
             EThndl.sendMessage('BREAK OFF',clearTime);
         end
