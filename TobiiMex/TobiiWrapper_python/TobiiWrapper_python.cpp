@@ -309,7 +309,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
         .def("peekN",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
-            -> std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>>
+            -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
             {
                 TobiiMex::DataStream dataStream = TobiiMex::stringToDataStream(stream_);
 
@@ -325,7 +325,14 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                     return instance_.peekN<TobiiMex::gaze>(NSamp_, bufSide);
                 case TobiiMex::DataStream::EyeImage:
                     return instance_.peekN<TobiiMex::eyeImage>(NSamp_, bufSide);
+                case TobiiMex::DataStream::ExtSignal:
+                    return instance_.peekN<TobiiMex::extSignal>(NSamp_, bufSide);
+                case TobiiMex::DataStream::TimeSync:
+                    return instance_.peekN<TobiiMex::timeSync>(NSamp_, bufSide);
+                case TobiiMex::DataStream::Positioning:
+                    return instance_.peekN<TobiiMex::positioning>(NSamp_, bufSide);
                 }
+                return std::nullopt;
             },
             "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a = "")
 
