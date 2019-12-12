@@ -327,7 +327,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                     return instance_.peekN<TobiiMex::eyeImage>(NSamp_, bufSide);
                 }
             },
-            "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), py::arg_v("side", "", "None"))
+            "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a = "")
 
         .def("stop", py::overload_cast<std::string, std::optional<bool>>(&TobiiMex::stop),
             "stream"_a, py::arg_v("emptyBuffer", std::nullopt, "None"))
