@@ -2,7 +2,7 @@
 
 #print(TobiiWrapper)
 #help(TobiiWrapper)
-#help(TobiiWrapper.TobiiWrapper)
+#help(TobiiWrapper.wrapper)
 
 
 
@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 #%% ET settings
-tw = TobiiWrapper.TobiiWrapper('tet-tcp://169.254.10.20')
+tw = TobiiWrapper.wrapper('tet-tcp://169.254.10.20')
 print(tw)
    
 #%% Record some data

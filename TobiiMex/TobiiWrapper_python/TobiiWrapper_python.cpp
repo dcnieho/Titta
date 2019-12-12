@@ -47,7 +47,7 @@ template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::s
 #ifdef NDEBUG
     return string_format("[%.3f,%.3f,%.3f] mm", instance_.x, instance_.y, instance_.z);
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchPoint3D at [%.3f,%.3f,%.3f] mm>", instance_.x, instance_.y, instance_.z);
+    return string_format("<TobiiWrapper.point_3D at [%.3f,%.3f,%.3f] mm>", instance_.x, instance_.y, instance_.z);
 #endif
 }
 template <> std::string toString<>(const TobiiResearchNormalizedPoint2D& instance_, std::string spacing)
@@ -55,7 +55,7 @@ template <> std::string toString<>(const TobiiResearchNormalizedPoint2D& instanc
 #ifdef NDEBUG
     return string_format("[%.3f,%.3f] mm", instance_.x, instance_.y);
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchNormalizedPoint2D at [%.3f,%.3f] mm>", instance_.x, instance_.y);
+    return string_format("<TobiiWrapper.point_2D_norm at [%.3f,%.3f] mm>", instance_.x, instance_.y);
 #endif
 }
 template <> std::string toString<>(const TobiiResearchGazePoint& instance_, std::string spacing)
@@ -64,7 +64,7 @@ template <> std::string toString<>(const TobiiResearchGazePoint& instance_, std:
 #ifdef NDEBUG
     return string_format("(validity: %s)\n%son_display_area: %s\n%sin_user_coordinates: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchGazePoint (validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
+    return string_format("<TobiiWrapper.gaze_point (validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchPupilData& instance_, std::string spacing)
@@ -73,7 +73,7 @@ template <> std::string toString<>(const TobiiResearchPupilData& instance_, std:
 #ifdef NDEBUG
     return string_format("(validity: %s)\n%sdiameter: %.3f mm", isValid(instance_.validity), nextLvl.c_str(), instance_.diameter);
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchPupilData (validity: %s) containing:\n%sdiameter: %.3f mm>", isValid(instance_.validity), nextLvl.c_str(), instance_.diameter);
+    return string_format("<TobiiWrapper.pupil_data (validity: %s) containing:\n%sdiameter: %.3f mm>", isValid(instance_.validity), nextLvl.c_str(), instance_.diameter);
 #endif
 }
 template <> std::string toString<>(const TobiiResearchGazeOrigin& instance_, std::string spacing)
@@ -82,7 +82,7 @@ template <> std::string toString<>(const TobiiResearchGazeOrigin& instance_, std
 #ifdef NDEBUG
     return string_format("(validity: %s)\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchGazeOrigin (validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
+    return string_format("<TobiiWrapper.gaze_origin (validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchEyeData& instance_, std::string spacing)
@@ -91,7 +91,7 @@ template <> std::string toString<>(const TobiiResearchEyeData& instance_, std::s
 #ifdef NDEBUG
     return string_format("\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s", spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(), spacing.c_str(), toString(instance_.pupil_data, nextLvl).c_str(), spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchEyeData containing:\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s>", spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(), spacing.c_str(), toString(instance_.pupil_data, nextLvl).c_str(), spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str());
+    return string_format("<TobiiWrapper.eye_data containing:\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s>", spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(), spacing.c_str(), toString(instance_.pupil_data, nextLvl).c_str(), spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchGazeData& instance_, std::string spacing)
@@ -100,7 +100,7 @@ template <> std::string toString<>(const TobiiResearchGazeData& instance_, std::
 #ifdef NDEBUG
     return string_format("sample (system_time: %" PRId64 "):\n%sleft: %s\n%sright: %s", instance_.system_time_stamp, spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper_python.TobiiResearchGazeData (system_time: %" PRId64 ") containing:\n%sleft: %s\n%sright: %s>", instance_.system_time_stamp, spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+    return string_format("<TobiiWrapper.gaze_data (system_time: %" PRId64 ") containing:\n%sleft: %s\n%sright: %s>", instance_.system_time_stamp, spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
 #endif
 }
 
@@ -120,13 +120,13 @@ PYBIND11_MODULE(TobiiWrapper_python, m)
 PYBIND11_MODULE(TobiiWrapper_python_d, m)
 #endif
 {
-    py::enum_<TobiiResearchEyeImageType>(m, "TobiiResearchEyeImageType")
+    py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
         .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
         .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
         .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
         .export_values();
 
-    py::class_<TobiiTypes::eyeImage>(m, "eyeImage")
+    py::class_<TobiiTypes::eyeImage>(m, "eye_image")
         .def_readwrite("is_gif", &TobiiTypes::eyeImage::isGif)
         .def_readwrite("device_time_stamp", &TobiiTypes::eyeImage::device_time_stamp)
         .def_readwrite("system_time_stamp", &TobiiTypes::eyeImage::system_time_stamp)
@@ -164,12 +164,12 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ;
 
 
-    py::enum_<TobiiResearchValidity>(m, "TobiiResearchValidity")
+    py::enum_<TobiiResearchValidity>(m, "validity")
         .value("invalid", TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_INVALID)
         .value("valid", TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_VALID)
         .export_values()
         ;
-    py::class_<TobiiResearchPoint3D>(m, "TobiiResearchPoint3D")
+    py::class_<TobiiResearchPoint3D>(m, "point_3D")
         .def_readwrite("x", &TobiiResearchPoint3D::x)
         .def_readwrite("y", &TobiiResearchPoint3D::y)
         .def_readwrite("z", &TobiiResearchPoint3D::z)
@@ -187,7 +187,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__",[](const TobiiResearchPoint3D& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchNormalizedPoint2D>(m, "TobiiResearchNormalizedPoint2D")
+    py::class_<TobiiResearchNormalizedPoint2D>(m, "point_2D_norm")
         .def_readwrite("x", &TobiiResearchNormalizedPoint2D::x)
         .def_readwrite("y", &TobiiResearchNormalizedPoint2D::y)
         .def(py::pickle(
@@ -204,7 +204,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__",[](const TobiiResearchNormalizedPoint2D& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchGazePoint>(m, "TobiiResearchGazePoint")
+    py::class_<TobiiResearchGazePoint>(m, "gaze_point")
         .def_readwrite("on_display_area", &TobiiResearchGazePoint::position_on_display_area)
         .def_readwrite("in_user_coordinates", &TobiiResearchGazePoint::position_in_user_coordinates)
         .def_readwrite("validity", &TobiiResearchGazePoint::validity)
@@ -222,7 +222,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__", [](const TobiiResearchGazePoint& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchPupilData>(m, "TobiiResearchPupilData")
+    py::class_<TobiiResearchPupilData>(m, "pupil_data")
         .def_readwrite("diameter", &TobiiResearchPupilData::diameter)
         .def_readwrite("validity", &TobiiResearchPupilData::validity)
         .def(py::pickle(
@@ -239,7 +239,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__",[](const TobiiResearchPupilData& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchGazeOrigin>(m, "TobiiResearchGazeOrigin")
+    py::class_<TobiiResearchGazeOrigin>(m, "gaze_origin")
         .def_readwrite("in_user_coordinates", &TobiiResearchGazeOrigin::position_in_user_coordinates)
         .def_readwrite("in_track_box_coordinates", &TobiiResearchGazeOrigin::position_in_track_box_coordinates)
         .def_readwrite("validity", &TobiiResearchGazeOrigin::validity)
@@ -257,7 +257,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__", [](const TobiiResearchGazeOrigin& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchEyeData>(m, "TobiiResearchEyeData")
+    py::class_<TobiiResearchEyeData>(m, "eye_data")
         .def_readwrite("gaze_point", &TobiiResearchEyeData::gaze_point)
         .def_readwrite("pupil", &TobiiResearchEyeData::pupil_data)
         .def_readwrite("gaze_origin", &TobiiResearchEyeData::gaze_origin)
@@ -275,7 +275,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__", [](const TobiiResearchEyeData& instance_){ return toString(instance_); })
         ;
-    py::class_<TobiiResearchGazeData>(m, "TobiiResearchGazeData")
+    py::class_<TobiiResearchGazeData>(m, "gaze_data")
         .def_readwrite("left", &TobiiResearchGazeData::left_eye)
         .def_readwrite("right", &TobiiResearchGazeData::right_eye)
         .def_readwrite("device_time_stamp", &TobiiResearchGazeData::device_time_stamp)
@@ -295,13 +295,13 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def("__repr__", [](const TobiiResearchGazeData& instance_){ return toString(instance_); })
         ;
 
-    py::class_<TobiiMex>(m, "TobiiWrapper")
+    py::class_<TobiiMex>(m, "wrapper")
         .def(py::init<std::string>(),"address"_a)
 
         .def("__repr__",
             [](TobiiMex& instance_)
             {
-                return string_format("<TobiiWrapper_python.TobiiWrapper connected to '%s' @%.0f Hz at '%s'>", instance_.getConnectedEyeTracker().model.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+                return string_format("<TobiiWrapper.wrapper connected to '%s' @%.0f Hz at '%s'>", instance_.getConnectedEyeTracker().model.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
             })
 
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
