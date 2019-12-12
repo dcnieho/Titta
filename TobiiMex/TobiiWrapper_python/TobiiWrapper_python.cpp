@@ -307,6 +307,35 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
             "stream"_a, py::arg_v("initialBufferSize", std::nullopt, "None"), py::arg_v("asGif", std::nullopt, "None"))
 
+        .def("consumeN",
+            [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
+            -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
+            {
+                TobiiMex::DataStream dataStream = TobiiMex::stringToDataStream(stream_);
+
+                std::optional<TobiiMex::BufferSide> bufSide;
+                if (!side_.empty())
+                {
+                    bufSide = TobiiMex::stringToBufferSide(side_);
+                }
+
+                switch (dataStream)
+                {
+                case TobiiMex::DataStream::Gaze:
+                    return instance_.consumeN<TobiiMex::gaze>(NSamp_, bufSide);
+                case TobiiMex::DataStream::EyeImage:
+                    return instance_.consumeN<TobiiMex::eyeImage>(NSamp_, bufSide);
+                case TobiiMex::DataStream::ExtSignal:
+                    return instance_.consumeN<TobiiMex::extSignal>(NSamp_, bufSide);
+                case TobiiMex::DataStream::TimeSync:
+                    return instance_.consumeN<TobiiMex::timeSync>(NSamp_, bufSide);
+                case TobiiMex::DataStream::Positioning:
+                    return instance_.consumeN<TobiiMex::positioning>(NSamp_, bufSide);
+                }
+                return std::nullopt;
+            },
+            "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a="")
+
         .def("peekN",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
