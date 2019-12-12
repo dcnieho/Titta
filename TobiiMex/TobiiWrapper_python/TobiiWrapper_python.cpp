@@ -35,13 +35,12 @@ const char* imageType(TobiiResearchEyeImageType type_)
 {
     return type_ == TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL ? "full" : (TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL ? "cropped" : "unknown");
 }
+const char* external_signal_change_type(TobiiResearchExternalSignalChangeType type_)
+{
+    return type_ == TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED ? "value_changed" : (TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE ? "initial_value" : "connection_restored");
+}
 
 template <typename T> std::string toString(const T& instance_, std::string spacing="");
-
-template <> std::string toString<>(const TobiiTypes::eyeImage& instance_, std::string spacing)
-{
-    return string_format("%s image from camera %d, %dbit, %dx%d", imageType(instance_.type), instance_.camera_id, instance_.bits_per_pixel, instance_.width, instance_.height);
-}
 
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
 {
@@ -105,6 +104,41 @@ template <> std::string toString<>(const TobiiResearchGazeData& instance_, std::
 #endif
 }
 
+template <> std::string toString<>(const TobiiTypes::eyeImage& instance_, std::string spacing)
+{
+    return string_format("%s image taken at system_time: %" PRId64 " with camera %d, %dbit, %dx%d", imageType(instance_.type), instance_.system_time_stamp, instance_.camera_id, instance_.bits_per_pixel, instance_.width, instance_.height);
+}
+
+template <> std::string toString<>(const TobiiResearchExternalSignalData& instance_, std::string spacing)
+{
+    return string_format("external signal arrived at system_time: %" PRId64 ", type: %s, value: %d", instance_.system_time_stamp, external_signal_change_type(instance_.change_type), instance_.value);
+}
+
+template <> std::string toString<>(const TobiiResearchTimeSynchronizationData& instance_, std::string spacing)
+{
+    return string_format("time sync system_request_time_stamp: %" PRId64 ", device_time_stamp: %" PRId64 ", system_response_time_stamp: %" PRId64 "", instance_.system_request_time_stamp, instance_.device_time_stamp, instance_.system_response_time_stamp);
+}
+
+template <> std::string toString<>(const TobiiResearchEyeUserPositionGuide& instance_, std::string spacing)
+{
+    auto nextLvl = spacing + "  ";
+#ifdef NDEBUG
+    return string_format("(validity: %s)\n%suser_position: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+#else
+    return string_format("<TobiiWrapper.positioning_eye (validity: %s) containing:\n%suser_position: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+#endif
+}
+template <> std::string toString<>(const TobiiResearchUserPositionGuide& instance_, std::string spacing)
+{
+    auto nextLvl = spacing + "  ";
+#ifdef NDEBUG
+    return string_format("positioning:\n%sleft: %s\n%sright: %s", spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+#else
+    return string_format("<TobiiWrapper.positioning containing:\n%sleft: %s\n%sright: %s>", spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+#endif
+}
+
+
 py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_)
 {
     py::array_t<uint8_t> a;
@@ -121,50 +155,7 @@ PYBIND11_MODULE(TobiiWrapper_python, m)
 PYBIND11_MODULE(TobiiWrapper_python_d, m)
 #endif
 {
-    py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
-        .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
-        .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
-        .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
-        .export_values();
-
-    py::class_<TobiiTypes::eyeImage>(m, "eye_image")
-        .def_readwrite("is_gif", &TobiiTypes::eyeImage::isGif)
-        .def_readwrite("device_time_stamp", &TobiiTypes::eyeImage::device_time_stamp)
-        .def_readwrite("system_time_stamp", &TobiiTypes::eyeImage::system_time_stamp)
-        .def_readwrite("bits_per_pixel", &TobiiTypes::eyeImage::bits_per_pixel)
-        .def_readwrite("padding_per_pixel", &TobiiTypes::eyeImage::padding_per_pixel)
-        .def_readwrite("width", &TobiiTypes::eyeImage::width)
-        .def_readwrite("height", &TobiiTypes::eyeImage::height)
-        .def_readwrite("type", &TobiiTypes::eyeImage::type)
-        .def_readwrite("camera_id", &TobiiTypes::eyeImage::camera_id)
-        .def_property_readonly("image",&imageToNumpy)
-        .def(py::pickle(
-            [](const TobiiTypes::eyeImage& p) { // __getstate__
-                return py::make_tuple(p.isGif, p.device_time_stamp, p.system_time_stamp, p.bits_per_pixel, p.padding_per_pixel, p.width, p.height, p.type, p.camera_id, imageToNumpy(p));
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 10)
-                    throw std::runtime_error("Invalid state!");
-
-                TobiiTypes::eyeImage p;
-                p.isGif = t[0].cast<bool>();
-                p.device_time_stamp = t[1].cast<int64_t>();
-                p.system_time_stamp = t[2].cast<int64_t>();
-                p.bits_per_pixel = t[3].cast<int>();
-                p.padding_per_pixel = t[4].cast<int>();
-                p.width = t[5].cast<int>();
-                p.height = t[6].cast<int>();
-                p.type = t[7].cast<TobiiResearchEyeImageType>();
-                p.camera_id = t[8].cast<int>();
-                auto im = t[9].cast<py::array_t<uint8_t>>();
-                p.setData(im.data(), im.nbytes());
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiTypes::eyeImage& instance_) { return toString(instance_); })
-        ;
-
-
+    // gaze
     py::enum_<TobiiResearchValidity>(m, "validity")
         .value("invalid", TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_INVALID)
         .value("valid", TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_VALID)
@@ -296,6 +287,137 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def("__repr__", [](const TobiiResearchGazeData& instance_){ return toString(instance_); })
         ;
 
+
+    // eye images
+    py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
+        .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
+        .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
+        .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
+        .export_values();
+    py::class_<TobiiTypes::eyeImage>(m, "eye_image")
+        .def_readwrite("is_gif", &TobiiTypes::eyeImage::isGif)
+        .def_readwrite("device_time_stamp", &TobiiTypes::eyeImage::device_time_stamp)
+        .def_readwrite("system_time_stamp", &TobiiTypes::eyeImage::system_time_stamp)
+        .def_readwrite("bits_per_pixel", &TobiiTypes::eyeImage::bits_per_pixel)
+        .def_readwrite("padding_per_pixel", &TobiiTypes::eyeImage::padding_per_pixel)
+        .def_readwrite("width", &TobiiTypes::eyeImage::width)
+        .def_readwrite("height", &TobiiTypes::eyeImage::height)
+        .def_readwrite("type", &TobiiTypes::eyeImage::type)
+        .def_readwrite("camera_id", &TobiiTypes::eyeImage::camera_id)
+        .def_property_readonly("image", &imageToNumpy)
+        .def(py::pickle(
+            [](const TobiiTypes::eyeImage& p) { // __getstate__
+                return py::make_tuple(p.isGif, p.device_time_stamp, p.system_time_stamp, p.bits_per_pixel, p.padding_per_pixel, p.width, p.height, p.type, p.camera_id, imageToNumpy(p));
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 10)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::eyeImage p;
+                p.isGif = t[0].cast<bool>();
+                p.device_time_stamp = t[1].cast<int64_t>();
+                p.system_time_stamp = t[2].cast<int64_t>();
+                p.bits_per_pixel = t[3].cast<int>();
+                p.padding_per_pixel = t[4].cast<int>();
+                p.width = t[5].cast<int>();
+                p.height = t[6].cast<int>();
+                p.type = t[7].cast<TobiiResearchEyeImageType>();
+                p.camera_id = t[8].cast<int>();
+                auto im = t[9].cast<py::array_t<uint8_t>>();
+                p.setData(im.data(), im.nbytes());
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiTypes::eyeImage& instance_) { return toString(instance_); })
+        ;
+
+
+    // external signal
+    py::enum_<TobiiResearchExternalSignalChangeType>(m, "external_signal_change_type")
+        .value("value_changed", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED)
+        .value("initial_value", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE)
+        .value("connection_restored", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED)
+        .export_values();
+    py::class_<TobiiResearchExternalSignalData>(m, "external_signal")
+        .def_readwrite("device_time_stamp", &TobiiResearchExternalSignalData::device_time_stamp)
+        .def_readwrite("system_time_stamp", &TobiiResearchExternalSignalData::system_time_stamp)
+        .def_readwrite("value", &TobiiResearchExternalSignalData::value)
+        .def_readwrite("change_type", &TobiiResearchExternalSignalData::change_type)
+        .def(py::pickle(
+            [](const TobiiResearchExternalSignalData& p) { // __getstate__
+                return py::make_tuple(p.device_time_stamp, p.system_time_stamp, p.value, p.change_type);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 4)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchExternalSignalData p{ t[0].cast<int64_t>(),t[1].cast<int64_t>(),t[2].cast<uint32_t>(),t[3].cast<TobiiResearchExternalSignalChangeType>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchExternalSignalData& instance_) { return toString(instance_); })
+        ;
+
+
+    // time sync
+    py::class_<TobiiResearchTimeSynchronizationData>(m, "time_sync")
+        .def_readwrite("system_request_time_stamp", &TobiiResearchTimeSynchronizationData::system_request_time_stamp)
+        .def_readwrite("device_time_stamp", &TobiiResearchTimeSynchronizationData::device_time_stamp)
+        .def_readwrite("system_response_time_stamp", &TobiiResearchTimeSynchronizationData::system_response_time_stamp)
+        .def(py::pickle(
+            [](const TobiiResearchTimeSynchronizationData& p) { // __getstate__
+                return py::make_tuple(p.system_request_time_stamp, p.device_time_stamp, p.system_response_time_stamp);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 3)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchTimeSynchronizationData p{ t[0].cast<int64_t>(),t[1].cast<int64_t>(),t[2].cast<int64_t>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchTimeSynchronizationData& instance_) { return toString(instance_); })
+        ;
+
+
+    // positioning
+    py::class_<TobiiResearchEyeUserPositionGuide>(m, "positioning_eye")
+        .def_readwrite("user_position", &TobiiResearchEyeUserPositionGuide::user_position)
+        .def_readwrite("validity", &TobiiResearchEyeUserPositionGuide::validity)
+        .def(py::pickle(
+            [](const TobiiResearchEyeUserPositionGuide& p) { // __getstate__
+                return py::make_tuple(p.user_position, p.validity);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchEyeUserPositionGuide p{ t[0].cast<TobiiResearchNormalizedPoint3D>(),t[1].cast<TobiiResearchValidity>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchEyeUserPositionGuide& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiResearchUserPositionGuide>(m, "positioning")
+        .def_readwrite("left", &TobiiResearchUserPositionGuide::left_eye)
+        .def_readwrite("right", &TobiiResearchUserPositionGuide::right_eye)
+        .def(py::pickle(
+            [](const TobiiResearchUserPositionGuide& p) { // __getstate__
+                return py::make_tuple(p.left_eye, p.right_eye);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchUserPositionGuide p{ t[0].cast<TobiiResearchEyeUserPositionGuide>(),t[1].cast<TobiiResearchEyeUserPositionGuide>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchUserPositionGuide& instance_) { return toString(instance_); })
+        ;
+
+
+    // main class
     py::class_<TobiiMex>(m, "wrapper")
         .def(py::init<std::string>(),"address"_a)
 
