@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <variant>
+#include <optional>
 #include <cstdio>
 #include <inttypes.h>
 
