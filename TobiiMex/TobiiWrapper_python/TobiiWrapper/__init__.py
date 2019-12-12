@@ -1,4 +1,4 @@
-﻿debug = True
+﻿debug = False
 import sys;
 if sys.maxsize > 2**32:
     # running on 64bit platform
