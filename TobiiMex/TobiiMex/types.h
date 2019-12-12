@@ -99,6 +99,16 @@ namespace TobiiTypes
 
         // get eye image data
         void* data() const { return _eyeIm.get(); }
+        // set eye image data
+        void setData(const uint8_t* data_, size_t nBytes_)
+        {
+            if (nBytes_)
+            {
+                _eyeIm.reset(malloc(nBytes_));
+                std::memcpy(_eyeIm.get(), data_, nBytes_);
+                data_size = nBytes_;
+            }
+        }
 
         friend void swap(eyeImage& first, eyeImage& second)
         {
