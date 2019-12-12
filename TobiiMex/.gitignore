@@ -19,3 +19,4 @@ git_refid.h
 *.ipdb
 /*.vs
 *_d.mex*
+*_d.pyd*

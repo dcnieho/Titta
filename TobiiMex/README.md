@@ -18,55 +18,27 @@ Some environment variables must be set when working on the code or building it f
 - `PYTHON_ROOT`: `C:\Program Files\PsychoPy3`
 
 ### Dependencies
-#### readerwriterqueue
+#### [readerwriterqueue](https://github.com/cameron314/readerwriterqueue)
 readerwriterqueue located at `deps/include/readerwriterqueue` is required for compiling TobiiMex. Make sure you clone the Titta repository including all submodules so that this dependency is available.
 
-#### Tobii Pro SDK
+#### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
 To update the Tobii Pro C SDK used to build TobiiMex against, you need to manually put the some files in the right place:
 1. The \*.h include files are placed in `\TobiiMex\deps\include`
 2. The Windows \*.lib link libraries are placed in `\TobiiMex\deps\lib`, renaming `Tobii_C_SDK\64\lib\tobii_research.lib` as `tobii_research64.lib`, and `Tobii_C_SDK\32\lib\tobii_research.lib` as `tobii_research32.lib`.
 3. The \*.dll and \*.so files are placed in the respective output directories, `\TobiiMex\TobiiMex_matlab\64` and `\TobiiMex\TobiiMex_matlab\32` (the latter Windows only)
 
-#### PsychoPy
-Building the Python wrapper is somewhat involved. Follow the below steps for Windows using Visual Studio:
-
-The below steps are specific to PsychoPy version 3.2.4, 64bit, using Python 3.6.6. Furthermore using vcpkg commit `7a14422290e7583c68ee290f7dbb5d61872a7a99`. If your version of PsychoPy uses a different Python version, is installed in a different location, or the vcpkg port cmake file has changed, you may need to adapt the below accordingly.
-
-1. setup vcpkg:
-```
-git clone https://github.com/Microsoft/vcpkg.git
-
-cd vcpkg
-.\bootstrap-vcpkg.bat
-.\vcpkg integrate install
-```
-2. Make sure the PsychoPy version you want to work with is installed.
-3. Determine the location of PsychoPy. For me it is: `C:/Program Files/PsychoPy3` (note the forward slashes)
-4. In your vcpkg directory, you need to edit some files.
-
-   a. At `<vcpkg root>\ports\boost-python`, open the file `CONTROL`. Remove `, python3` from the `Build-Depends:` line. Save.
-   
-   b. At `<vcpkg root>\ports\boost-python`, open the file `portfile.cmake`. Apply the following patch
-   ```diff
-    )
-
-    # Find Python. Can't use find_package here, but we already know where everything is
-   -file(GLOB PYTHON_INCLUDE_PATH "${CURRENT_INSTALLED_DIR}/include/python[0-9.]*")
-   -set(PYTHONLIBS_RELEASE "${CURRENT_INSTALLED_DIR}/lib")
-   -set(PYTHONLIBS_DEBUG "${CURRENT_INSTALLED_DIR}/debug/lib")
-   -string(REGEX REPLACE ".*python([0-9\.]+)$" "\\1" PYTHON_VERSION "${PYTHON_INCLUDE_PATH}")
-   +set(PYTHON_INCLUDE_PATH "C:/Program Files/PsychoPy3/include")^M
-   +set(PYTHONLIBS_RELEASE "C:/Program Files/PsychoPy3/Libs")^M
-   +set(PYTHONLIBS_DEBUG "C:/Program Files/PsychoPy3/Libs")^M
-   +set(PYTHON_VERSION "3.6")^M
-    include(${CURRENT_INSTALLED_DIR}/share/boost-build/boost-modular-build.cmake)
-    boost_modular_build(SOURCE_PATH ${SOURCE_PATH})
-    include(${CURRENT_INSTALLED_DIR}/share/boost-vcpkg-helpers/boost-modular-headers.cmake)
-   ```
-   Save the file and close it.
-
-5. Now you are ready to install boost-python, issue:
-`vcpkg install boost-python:x64-windows`
+#### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
+1. Make sure the PsychoPy version you want to work with is installed.
+2. Make sure the `PYTHON_ROOT` environment variable is set to the location of your PsychoPy installation.
+3. Install PyBind11: in the root folder of your PsychoPy installation, execute `python -m pip install pybind11`
+4. As per [here](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites), make sure you have the Python Development workload for visual studio installed. Note however that you can unselect the Python 3 installation, the web tools and the miniconda installation that it by default installs, as we will be using the PsychoPy installation's Python environment. Check the "Python native development tools" option.
 
 ### Set up the Python environment for Visual Studio Python integration
-Last, visual studio needs to be able to find your PsychoPy's Python environment. To do so, add a new Python environment, choose existing environment, and point it to the root of your PsychoPy install, in my case, `C:\Program Files\PsychoPy3`.
+Last, visual studio needs to be able to find your PsychoPy's Python environment. To do so, add a new Python environment, choose existing environment, and point it to the root of your PsychoPy install. In my case, that is `C:\Program Files\PsychoPy3`.
+
+#### Enabling native debugging
+To be able to debug both the Python and C++ side of things with PsychoPy, you must install the debug symbols for the Python installation. This is done through the installer normally, but we don't have an option to do that with PyschoPy. So we have to add them manually. Here's how:
+1. For 64bit Python 3.6.6 (what I am using in the current example), navigate to this [download location](https://www.python.org/ftp/python/3.6.6/amd64/).
+2. Download all `*_d.msi` and `*_pdb.msi` files there (might be overkill, but better have them all).
+3. Open a cmd with admin privileges, navigate to your download location.
+4. Execute for each file a command like: `core_d.msi TARGETDIR="C:\Program Files\PsychoPy3"`, where the `TARGETDIR` is set to the location of your PsychoPy installation.
