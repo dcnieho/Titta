@@ -1,5 +1,7 @@
 #include "TobiiMex/types.h"
 
+#include <sstream>
+
 #include "TobiiMex/utils.h"
 
 namespace TobiiTypes
@@ -42,6 +44,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker device name", status);
             deviceName = device_name;
             tobii_research_free_string(device_name);
+            if (singleOpt) return;
         }
         if (!singleOpt || paramToRefresh_ == "serialNumber")
         {
@@ -51,6 +54,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker serial number", status);
             serialNumber = serial_number;
             tobii_research_free_string(serial_number);
+            if (singleOpt) return;
         }
         if (!singleOpt || paramToRefresh_ == "model")
         {
@@ -60,6 +64,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker model", status);
             model = modelT;
             tobii_research_free_string(modelT);
+            if (singleOpt) return;
         }
         if (!singleOpt || paramToRefresh_ == "firmwareVersion")
         {
@@ -69,6 +74,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker firmware version", status);
             firmwareVersion = firmware_version;
             tobii_research_free_string(firmware_version);
+            if (singleOpt) return;
         }
         if (!singleOpt || paramToRefresh_ == "runtimeVersion")
         {
@@ -78,6 +84,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker runtime version", status);
             runtimeVersion = runtime_version;
             tobii_research_free_string(runtime_version);
+            if (singleOpt) return;
         }
         if (!singleOpt || paramToRefresh_ == "address")
         {
@@ -87,6 +94,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker address", status);
             address = addressT;
             tobii_research_free_string(addressT);
+            if (singleOpt) return;
         }
 
         // its capabilities
@@ -95,6 +103,7 @@ namespace TobiiTypes
             status = tobii_research_get_capabilities(et, &capabilities);
             if (status != TOBII_RESEARCH_STATUS_OK)
                 ErrorExit("Cannot get eye tracker capabilities", status);
+            if (singleOpt) return;
         }
 
         // get supported sampling frequencies
@@ -107,6 +116,7 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker output frequencies", status);
             supportedFrequencies.insert(supportedFrequencies.end(), &tobiiFreqs->frequencies[0], &tobiiFreqs->frequencies[tobiiFreqs->frequency_count]);   // yes, pointer to one past last element
             tobii_research_free_gaze_output_frequencies(tobiiFreqs);
+            if (singleOpt) return;
         }
 
         // get supported eye tracking modes
@@ -119,6 +129,15 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker's tracking modes", status);
             supportedModes.insert(supportedModes.end(), &tobiiModes->modes[0], &tobiiModes->modes[tobiiModes->mode_count]);   // yes, pointer to one past last element
             tobii_research_free_eye_tracking_modes(tobiiModes);
+            if (singleOpt) return;
+        }
+
+        if (singleOpt)
+        {
+            // shouldn't get here if a single option is specified, must be unknown option
+            std::stringstream os;
+            os << "eyeTracker::refreshInfo: Option " << paramToRefresh_.value() << " unknown.";
+            DoExitWithMsg(os.str());
         }
     }
 }
