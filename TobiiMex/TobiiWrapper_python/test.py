@@ -122,7 +122,7 @@ plt.figure()
 plt.plot(np.diff(ut2) / 1000)
 
 
-all_images = tw.peek_n('eyeImage',10000000)
+all_images = tw.peek_time_range('eyeImage') # by default peeks all
 print(all_images[0])
 pickle.dump(all_images,open( "save2.pkl", "wb" ))
 
