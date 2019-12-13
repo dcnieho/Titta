@@ -3,7 +3,7 @@
 #print(TobiiWrapper)
 #help(TobiiWrapper)
 #help(TobiiWrapper.wrapper)
-
+#exit()
 
 
 
@@ -25,8 +25,12 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 #%% ET settings
+TobiiWrapper.wrapper.startLogging()
 tw = TobiiWrapper.wrapper('tet-tcp://169.254.10.20')
 print(tw)
+print(tw.findAllEyeTrackers())
+print(tw.getSDKVersion())
+print(tw.getSystemTimestamp())
    
 #%% Record some data
 success = tw.start('gaze')
@@ -129,7 +133,11 @@ pickle.dump(all_p,open( "save5.pkl", "wb" ))
 all_p2 = pickle.load( open( "save5.pkl", "rb" ) )
 print(all_p2[0])
 
-
+print('get log')
+l=tw.getLog()
+print('print log')
+print(l)
+tw.stopLogging()
 
 
 plt.show()
