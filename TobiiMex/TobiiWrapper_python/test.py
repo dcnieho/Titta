@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 #%% ET settings
-TobiiWrapper.wrapper.startLogging()
-ets = TobiiWrapper.wrapper.findAllEyeTrackers()
+TobiiWrapper.wrapper.start_logging()
+ets = TobiiWrapper.wrapper.find_all_eye_trackers()
 print(ets)
 if len(ets)==0:
     raise Exception('No eye trackers found')
@@ -34,8 +34,8 @@ if len(ets)==0:
 tw = TobiiWrapper.wrapper(ets[0].address)
 print(tw)
 
-print(tw.getSDKVersion())
-print(tw.getSystemTimestamp())
+print(tw.get_SDK_version())
+print(tw.get_system_timestamp())
 
 print(tw.connected_eye_tracker)
 freq = tw.gaze_frequency
@@ -66,7 +66,7 @@ ts_old = 0
 
 t0 = time.clock()
 while k < n_samples:
-    samples = tw.peekN('gaze')
+    samples = tw.peek_n('gaze')
     if len(samples)>0:
         ts = samples[0].system_time_stamp
 
@@ -93,7 +93,7 @@ plt.figure()
 plt.plot(np.diff(out[:, 1] / 1000))
 
 #%% Plot timestamps of samples in the buffer (and test pickle save and load)
-all_samples = tw.peekN('gaze',10000000)
+all_samples = tw.peek_n('gaze',10000000)
 pickle.dump(all_samples,open( "save.pkl", "wb" ))
 #print(all_samples[0])
 #print(all_samples[0].left)
@@ -119,7 +119,7 @@ plt.figure()
 plt.plot(np.diff(ut2) / 1000)
 
 
-all_images = tw.peekN('eyeImage',10000000)
+all_images = tw.peek_n('eyeImage',10000000)
 print(all_images[0])
 pickle.dump(all_images,open( "save2.pkl", "wb" ))
 
@@ -131,31 +131,31 @@ plt.figure()
 plt.imshow(all_images2[0].image)
 
 
-all_ext = tw.peekN('externalSignal',10000000)
+all_ext = tw.peek_N('externalSignal',10000000)
 print(all_ext[0])
 pickle.dump(all_ext,open( "save3.pkl", "wb" ))
 all_ext2 = pickle.load( open( "save3.pkl", "rb" ) )
 print(all_ext2[0])
 
 
-all_t = tw.peekN('timeSync',10000000)
+all_t = tw.peek_n('timeSync',10000000)
 print(all_t[0])
 pickle.dump(all_t,open( "save4.pkl", "wb" ))
 all_t2 = pickle.load( open( "save4.pkl", "rb" ) )
 print(all_t2[0])
 
 
-all_p = tw.peekN('positioning',10000000)
+all_p = tw.peek_n('positioning',10000000)
 print(all_p[0])
 pickle.dump(all_p,open( "save5.pkl", "wb" ))
 all_p2 = pickle.load( open( "save5.pkl", "rb" ) )
 print(all_p2[0])
 
 print('get log')
-l=tw.getLog()
+l=tw.get_log()
 print('print log')
 print(l)
-tw.stopLogging()
+tw.stop_logging()
 
 
 plt.show()
