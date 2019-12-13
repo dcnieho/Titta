@@ -9,9 +9,9 @@
 
 '''
 Since samples are pulled in callbacks with the Tobii SDK, it may get
-hick-ups if your script is doing something very computationally heavy,
+hiccups if your script is doing something very computationally heavy,
 without allowing significant sleeps (which would allow the callback to
-be called and therefore all sample to be collected appropriately).
+be called and therefore all samples to be collected appropriately).
 
 This can be tested in a while-loop like the one below.                                    
 '''
@@ -31,6 +31,19 @@ print(tw)
 print(tw.findAllEyeTrackers())
 print(tw.getSDKVersion())
 print(tw.getSystemTimestamp())
+
+print(tw.connected_eye_tracker)
+freq = tw.gaze_frequency
+print(tw.gaze_frequency)
+if freq==150:
+    tw.gaze_frequency = 600
+else:
+    tw.gaze_frequency = 150
+print(tw)
+print(tw.tracking_mode)
+print(tw.track_box)
+print(tw.display_area)
+print(tw.device_name)
    
 #%% Record some data
 success = tw.start('gaze')
@@ -39,7 +52,7 @@ success = tw.start('externalSignal')
 success = tw.start('timeSync')
 success = tw.start('positioning')
 core.wait(0.2)
-n_samples = 600 * 2 # Record two seconds of data at 600 Hz
+n_samples = tw.gaze_frequency * 2 # Record what should be two seconds of data
 
 out = []
 k = 0
