@@ -38,12 +38,12 @@ print(tw)
 
 # test properties
 # 1. these are read-write
-freq = tw.gaze_frequency
-print(tw.gaze_frequency)
+freq = tw.frequency
+print(tw.frequency)
 if freq==150:
-    tw.gaze_frequency = 600
+    tw.frequency = 600
 else:
-    tw.gaze_frequency = 150
+    tw.frequency = 150
 print(tw)
 print(tw.tracking_mode)
 print(tw.device_name)
