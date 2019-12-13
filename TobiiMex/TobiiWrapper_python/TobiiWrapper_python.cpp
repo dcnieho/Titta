@@ -853,6 +853,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_static("stop_logging", &TobiiMex::stopLogging)
 
         //// eye-tracker specific getters and setters
+        .def_property_readonly("info", &TobiiMex::getEyeTrackerInfo)
         .def_property("device_name", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("deviceName").deviceName; }, & TobiiMex::setDeviceName)
         .def_property_readonly("serial_number", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("serialNumber").serialNumber; })
         .def_property_readonly("model", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("model").model; })
