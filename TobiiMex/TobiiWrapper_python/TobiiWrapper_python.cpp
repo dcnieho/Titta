@@ -664,11 +664,16 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
         //// data streams
         // query if stream is supported
+        .def("has_stream", py::overload_cast<std::string>(&TobiiMex::hasStream, py::const_),
+            "stream"_a)
+
         // start stream
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_GIF", std::nullopt, "None"))
 
         // request stream state
+        .def("is_recording", py::overload_cast<std::string>(&TobiiMex::isRecording, py::const_),
+            "stream"_a)
 
         // consume samples (by default all)
         .def("consume_N",
