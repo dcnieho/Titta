@@ -290,7 +290,7 @@ classdef Titta < handle
             
             % set tracker to operate at requested tracking frequency
             try
-                obj.buffer.setFrequency(obj.settings.freq);
+                obj.buffer.frequency = obj.settings.freq;
             catch ME
                 % provide nice error message
                 allFs = ['[' sprintf('%d, ',theTracker.supportedFrequencies) ']']; allFs(end-2:end-1) = [];
@@ -300,7 +300,7 @@ classdef Titta < handle
             % set eye tracking mode.
             if ~isempty(obj.settings.trackingMode)
                 try
-                    obj.buffer.setTrackingMode(obj.settings.trackingMode);
+                    obj.buffer.trackingMode = obj.settings.trackingMode;
                 catch ME
                     % add info about possible tracking modes.
                     allModes = ['[' sprintf('''%s'', ',theTracker.supportedModes{:}) ']']; allModes(end-2:end-1) = [];
@@ -316,10 +316,10 @@ classdef Titta < handle
             
             % get info about the system
             obj.systemInfo                  = obj.buffer.getEyeTrackerInfo();
-            obj.systemInfo.samplerate       = obj.buffer.getFrequency();
+            obj.systemInfo.samplerate       = obj.buffer.frequency;
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
-            obj.systemInfo.trackingMode     = obj.buffer.getTrackingMode();
-            obj.systemInfo.SDKVersion       = obj.buffer.getSDKVersion();   % SDK version consumed by MEX file
+            obj.systemInfo.trackingMode     = obj.buffer.trackingMode;
+            obj.systemInfo.SDKVersion       = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
             out.systemInfo                  = obj.systemInfo;
             
             % get information about display geometry and trackbox
