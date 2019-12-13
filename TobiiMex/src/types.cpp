@@ -13,6 +13,21 @@ namespace TobiiTypes
         }
     };
 
+    eyeTracker::eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
+        TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_) :
+        deviceName(deviceName_),
+        serialNumber(serialNumber_),
+        model(model_),
+        firmwareVersion(firmwareVersion_),
+        runtimeVersion(runtimeVersion_),
+        address(address_),
+        capabilities(capabilities_),
+        supportedFrequencies(supportedFrequencies_),
+        supportedModes(supportedModes_)
+    {
+
+    }
+
     void eyeTracker::refreshInfo()
     {
         // get all info about the eye tracker

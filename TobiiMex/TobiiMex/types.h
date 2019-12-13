@@ -15,6 +15,8 @@ namespace TobiiTypes
     public:
         eyeTracker() {}
         eyeTracker(TobiiResearchEyeTracker* et_);
+        eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
+            TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_);
 
         void refreshInfo();
 
