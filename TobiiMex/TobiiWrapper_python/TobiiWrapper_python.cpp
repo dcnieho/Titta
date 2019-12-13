@@ -703,8 +703,30 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 }
                 return std::nullopt;
             },
-            "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a="")
+            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), "side"_a="")
         // consume samples within given timestamps (inclusive, by default whole buffer)
+        .def("consume_time_range",
+            [](TobiiMex& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>>>
+            {
+                TobiiMex::DataStream dataStream = TobiiMex::stringToDataStream(stream_);
+
+                switch (dataStream)
+                {
+                case TobiiMex::DataStream::Gaze:
+                    return instance_.consumeTimeRange<TobiiMex::gaze>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::EyeImage:
+                    return instance_.consumeTimeRange<TobiiMex::eyeImage>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::ExtSignal:
+                    return instance_.consumeTimeRange<TobiiMex::extSignal>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::TimeSync:
+                    return instance_.consumeTimeRange<TobiiMex::timeSync>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::Positioning:
+                    DoExitWithMsg("consume_time_range: not supported for positioning stream.");
+                }
+                return std::nullopt;
+            },
+            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
         .def("peek_N",
@@ -734,11 +756,38 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 }
                 return std::nullopt;
             },
-            "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a = "")
+            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), "side"_a = "")
         // peek samples within given timestamps (inclusive, by default whole buffer)
+        .def("peek_time_range",
+            [](TobiiMex& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>>>
+            {
+                TobiiMex::DataStream dataStream = TobiiMex::stringToDataStream(stream_);
+
+                switch (dataStream)
+                {
+                case TobiiMex::DataStream::Gaze:
+                    return instance_.peekTimeRange<TobiiMex::gaze>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::EyeImage:
+                    return instance_.peekTimeRange<TobiiMex::eyeImage>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::ExtSignal:
+                    return instance_.peekTimeRange<TobiiMex::extSignal>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::TimeSync:
+                    return instance_.peekTimeRange<TobiiMex::timeSync>(timeStart_, timeEnd_);
+                case TobiiMex::DataStream::Positioning:
+                    DoExitWithMsg("peek_time_range: not supported for positioning stream.");
+                }
+                return std::nullopt;
+            },
+            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // clear all buffer contents
+        .def("clear", py::overload_cast<std::string>(&TobiiMex::clear),
+            "stream"_a)
+
         // clear contents buffer within given timestamps (inclusive, by default whole buffer)
+        .def("clear_time_range", py::overload_cast<std::string, std::optional<int64_t>, std::optional<int64_t>>(&TobiiMex::clearTimeRange),
+            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // stop, optionally deletes the buffer
         .def("stop", py::overload_cast<std::string, std::optional<bool>>(&TobiiMex::stop),
