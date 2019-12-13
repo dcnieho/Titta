@@ -662,7 +662,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             })
 
         //// global SDK functions
-        .def_static("get_SDK_ersion", &TobiiMex::getSDKVersion)
+        .def_static("get_SDK_version", &TobiiMex::getSDKVersion)
         .def_static("get_system_timestamp", &TobiiMex::getSystemTimestamp)
         .def_static("find_all_eye_trackers", &TobiiMex::findAllEyeTrackers)
         // logging
