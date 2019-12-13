@@ -345,6 +345,19 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__", [](const TobiiResearchDisplayArea& instance_) { return toString(instance_); })
         ;
+    py::enum_<TobiiResearchLicenseValidationResult>(m, "license_validation_result")
+        .value("ok", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK)
+        .value("tampered", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_TAMPERED)
+        .value("invalid_application_signature", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_APPLICATION_SIGNATURE)
+        .value("nonsigned_application", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_NONSIGNED_APPLICATION)
+        .value("expired", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_EXPIRED)
+        .value("premature", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_PREMATURE)
+        .value("invalid_process_name", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_PROCESS_NAME)
+        .value("invalid_serial_number", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_SERIAL_NUMBER)
+        .value("invalid_model", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_MODEL)
+        .value("unknown", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN)
+        .export_values()
+        ;
 
     // gaze
     py::enum_<TobiiResearchValidity>(m, "validity")
@@ -643,6 +656,8 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         // setters (though we can easily provide the getter for this property too, so lets do that to keep our user's life simple
         .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().deviceName; }, &TobiiMex::setDeviceName)
         // modifiers
+        .def("apply_licenses", &TobiiMex::applyLicenses)
+        .def("clear_licenses", &TobiiMex::clearLicenses)
 
         //// calibration
 
