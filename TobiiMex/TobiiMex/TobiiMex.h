@@ -95,8 +95,8 @@ public:
     void setTrackingMode(std::string trackingMode_);
     void setDeviceName(std::string deviceName_);
     // modifiers
-    std::vector<TobiiResearchLicenseValidationResult> applyLicenses(std::vector<std::vector<uint8_t>> licenses_); // this refreshes eye tracker info
-    void clearLicenses(); // this refreshes eye tracker info
+    std::vector<TobiiResearchLicenseValidationResult> applyLicenses(std::vector<std::vector<uint8_t>> licenses_); // NB: this triggers a refresh of eye tracker info
+    void clearLicenses(); // NB: this triggers a refresh of eye tracker info
 
     //// calibration
     void enterCalibrationMode(bool doMonocular_);
@@ -129,7 +129,7 @@ public:
     template <typename T>
     std::vector<T> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
-    // peek samples (by default only last one, can specify how many to peek from end of buffer)
+    // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
     template <typename T>
     std::vector<T> peekN(std::optional<size_t> NSamp_ = std::nullopt, std::optional<BufferSide> side_ = std::nullopt);
     // peek samples within given timestamps (inclusive, by default whole buffer)
@@ -143,7 +143,7 @@ public:
     void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
     void clearTimeRange(DataStream  stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
-    // stop optionally deletes the buffer
+    // stop, optionally deletes the buffer
     bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
     bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
 
