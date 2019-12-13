@@ -242,36 +242,9 @@ classdef TobiiMex < handle
                 success = this.cppmethod('start',stream);
             end
         end
-        function success = stop(this,stream,doClearBuffer)
-            % optional boolean input indicating whether buffer should be
-            % cleared out
-            assert(nargin>1,'TobiiMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
-            stream = ensureStringIsChar(stream);
-            if nargin>2 && ~isempty(doClearBuffer)
-                success = this.cppmethod('stop',stream,logical(doClearBuffer));
-            else
-                success = this.cppmethod('stop',stream);
-            end
-        end
         function status = isRecording(this,stream)
             assert(nargin>1,'TobiiMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
-            status = this.cppmethod('isBuffering',ensureStringIsChar(stream));
-        end
-        function clear(this,stream)
-            assert(nargin>1,'TobiiMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
-            this.cppmethod('clear',ensureStringIsChar(stream));
-        end
-        function clearTimeRange(this,stream,startT,endT)
-            % optional start and end time inputs. Default: whole buffer
-            assert(nargin>1,'TobiiMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
-            if nargin>3 && ~isempty(endT)
-                this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
-            elseif nargin>2 && ~isempty(startT)
-                this.cppmethod('clearTimeRange',stream,int64(startT));
-            else
-                this.cppmethod('clearTimeRange',stream);
-            end
+            status = this.cppmethod('isRecording',ensureStringIsChar(stream));
         end
         function data = consumeN(this,stream,NSamp,side)
             % optional input arguments:
@@ -326,6 +299,33 @@ classdef TobiiMex < handle
                 data = this.cppmethod('peekTimeRange',stream,int64(startT));
             else
                 data = this.cppmethod('peekTimeRange',stream);
+            end
+        end
+        function clear(this,stream)
+            assert(nargin>1,'TobiiMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            this.cppmethod('clear',ensureStringIsChar(stream));
+        end
+        function clearTimeRange(this,stream,startT,endT)
+            % optional start and end time inputs. Default: whole buffer
+            assert(nargin>1,'TobiiMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            stream = ensureStringIsChar(stream);
+            if nargin>3 && ~isempty(endT)
+                this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
+            elseif nargin>2 && ~isempty(startT)
+                this.cppmethod('clearTimeRange',stream,int64(startT));
+            else
+                this.cppmethod('clearTimeRange',stream);
+            end
+        end
+        function success = stop(this,stream,doClearBuffer)
+            % optional boolean input indicating whether buffer should be
+            % cleared out
+            assert(nargin>1,'TobiiMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            stream = ensureStringIsChar(stream);
+            if nargin>2 && ~isempty(doClearBuffer)
+                success = this.cppmethod('stop',stream,logical(doClearBuffer));
+            else
+                success = this.cppmethod('stop',stream);
             end
         end
     end

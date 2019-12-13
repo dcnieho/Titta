@@ -119,8 +119,8 @@ public:
     bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
 
     // request stream state
-    bool isBuffering(std::string stream_) const;
-    bool isBuffering(DataStream  stream_) const;
+    bool isRecording(std::string stream_) const;
+    bool isRecording(DataStream  stream_) const;
 
     // consume samples (by default all)
     template <typename T>
@@ -144,8 +144,8 @@ public:
     void clearTimeRange(DataStream  stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // stop, optionally deletes the buffer
-    bool stop(std::string stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
-    bool stop(DataStream  stream_, std::optional<bool> emptyBuffer_ = std::nullopt);
+    bool stop(std::string stream_, std::optional<bool> clearBuffer_ = std::nullopt);
+    bool stop(DataStream  stream_, std::optional<bool> clearBuffer_ = std::nullopt);
 
 private:
     void Init();

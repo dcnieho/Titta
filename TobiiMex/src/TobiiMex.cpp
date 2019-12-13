@@ -932,11 +932,11 @@ bool TobiiMex::start(DataStream  stream_, std::optional<size_t> initialBufferSiz
     return result == TOBII_RESEARCH_STATUS_OK;
 }
 
-bool TobiiMex::isBuffering(std::string stream_) const
+bool TobiiMex::isRecording(std::string stream_) const
 {
-    return isBuffering(stringToDataStream(stream_));
+    return isRecording(stringToDataStream(stream_));
 }
-bool TobiiMex::isBuffering(DataStream  stream_) const
+bool TobiiMex::isRecording(DataStream  stream_) const
 {
     bool success = false;
     switch (stream_)
@@ -1101,15 +1101,15 @@ void TobiiMex::clearTimeRange(DataStream stream_, std::optional<int64_t> timeSta
     }
 }
 
-bool TobiiMex::stop(std::string stream_, std::optional<bool> emptyBuffer_)
+bool TobiiMex::stop(std::string stream_, std::optional<bool> clearBuffer_)
 {
-    return stop(stringToDataStream(stream_), emptyBuffer_);
+    return stop(stringToDataStream(stream_), clearBuffer_);
 }
 
-bool TobiiMex::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
+bool TobiiMex::stop(DataStream  stream_, std::optional<bool> clearBuffer_)
 {
     // deal with default arguments
-    auto emptyBuffer = emptyBuffer_.value_or(defaults::stopBufferEmpties);
+    auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -1137,7 +1137,7 @@ bool TobiiMex::stop(DataStream  stream_, std::optional<bool> emptyBuffer_)
             break;
     }
 
-    if (emptyBuffer)
+    if (clearBuffer)
         clear(stream_);
 
     bool success = result == TOBII_RESEARCH_STATUS_OK;

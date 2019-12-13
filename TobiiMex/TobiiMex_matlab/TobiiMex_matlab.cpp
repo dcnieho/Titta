@@ -169,32 +169,32 @@ namespace {
         //// data streams
         HasStream,
         Start,
-        IsBuffering,
-        Clear,
-        ClearTimeRange,
-        Stop,
+        IsRecording,
         ConsumeN,
         ConsumeTimeRange,
         PeekN,
-        PeekTimeRange
+        PeekTimeRange,
+        Clear,
+        ClearTimeRange,
+        Stop
     };
 
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
         // MATLAB interface
-        { "touch",				Action::Touch },
-        { "new",				Action::New },
-        { "delete",				Action::Delete },
+        { "touch",				            Action::Touch },
+        { "new",				            Action::New },
+        { "delete",				            Action::Delete },
 
         //// global SDK functions
-        { "getSDKVersion",		Action::GetSDKVersion },
-        { "getSystemTimestamp",	Action::GetSystemTimestamp },
-        { "findAllEyeTrackers",	Action::FindAllEyeTrackers },
+        { "getSDKVersion",		            Action::GetSDKVersion },
+        { "getSystemTimestamp",	            Action::GetSystemTimestamp },
+        { "findAllEyeTrackers",	            Action::FindAllEyeTrackers },
         // logging
-        { "startLogging",		Action::StartLogging },
-        { "getLog",				Action::GetLog },
-        { "stopLogging",		Action::StopLogging },
+        { "startLogging",		            Action::StartLogging },
+        { "getLog",				            Action::GetLog },
+        { "stopLogging",		            Action::StopLogging },
 
         //// eye-tracker specific getters and setters
         // getters
@@ -223,16 +223,16 @@ namespace {
         { "calibrationRetrieveResult",      Action::CalibrationRetrieveResult },
 
         //// data streams
-        { "hasStream",          Action::HasStream },
-        { "start",		        Action::Start },
-        { "isBuffering",        Action::IsBuffering },
-        { "clear",				Action::Clear },
-        { "clearTimeRange",		Action::ClearTimeRange },
-        { "stop",		        Action::Stop },
-        { "consumeN",			Action::ConsumeN },
-        { "consumeTimeRange",   Action::ConsumeTimeRange },
-        { "peekN",				Action::PeekN },
-        { "peekTimeRange",		Action::PeekTimeRange },
+        { "hasStream",                      Action::HasStream },
+        { "start",		                    Action::Start },
+        { "isRecording",                    Action::IsRecording },
+        { "consumeN",			            Action::ConsumeN },
+        { "consumeTimeRange",               Action::ConsumeTimeRange },
+        { "peekN",				            Action::PeekN },
+        { "peekTimeRange",		            Action::PeekTimeRange },
+        { "clear",				            Action::Clear },
+        { "clearTimeRange",		            Action::ClearTimeRange },
+        { "stop",		                    Action::Stop },
     };
 
 
@@ -588,74 +588,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxFree(bufferCstr);
             return;
         }
-        case Action::IsBuffering:
+        case Action::IsRecording:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("isBuffering: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("isRecording: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get data stream identifier string, call isBuffering() on instance
             char *bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->isBuffering(bufferCstr));
+            plhs[0] = mxCreateLogicalScalar(instance->isRecording(bufferCstr));
             mxFree(bufferCstr);
             return;
-        }
-        case Action::Clear:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
-
-            // get data stream identifier string, clear buffer
-            char *bufferCstr = mxArrayToString(prhs[2]);
-            instance->clear(bufferCstr);
-            mxFree(bufferCstr);
-            break;
-        }
-        case Action::ClearTimeRange:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
-
-            // get optional input arguments
-            std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    mexErrMsgTxt("clearTimeRange: Expected second argument to be a int64 scalar.");
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
-            }
-            std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
-                    mexErrMsgTxt("clearTimeRange: Expected third argument to be a int64 scalar.");
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
-            }
-
-            // get data stream identifier string, clear buffer
-            char *bufferCstr = mxArrayToString(prhs[2]);
-            instance->clearTimeRange(bufferCstr,timeStart,timeEnd);
-            mxFree(bufferCstr);
-            break;
-        }
-        case Action::Stop:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
-
-            // get optional input argument
-            std::optional<bool> deleteBuffer;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
-                    mexErrMsgTxt("stop: Expected second argument to be a logical scalar.");
-                deleteBuffer = mxIsLogicalScalarTrue(prhs[3]);
-            }
-
-            // get data stream identifier string, stop buffering
-            char *bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->stop(bufferCstr,deleteBuffer));
-            mxFree(bufferCstr);
-            break;
         }
         case Action::ConsumeN:
         {
@@ -796,7 +738,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     return;
             }
         }
-
         case Action::PeekTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
@@ -841,6 +782,64 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     DoExitWithMsg("peekTimeRange: not supported for positioning stream.");
                     return;
             }
+        }
+        case Action::Clear:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+
+            // get data stream identifier string, clear buffer
+            char* bufferCstr = mxArrayToString(prhs[2]);
+            instance->clear(bufferCstr);
+            mxFree(bufferCstr);
+            break;
+        }
+        case Action::ClearTimeRange:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+
+            // get optional input arguments
+            std::optional<int64_t> timeStart;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                    mexErrMsgTxt("clearTimeRange: Expected second argument to be a int64 scalar.");
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+            }
+            std::optional<int64_t> timeEnd;
+            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            {
+                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                    mexErrMsgTxt("clearTimeRange: Expected third argument to be a int64 scalar.");
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+            }
+
+            // get data stream identifier string, clear buffer
+            char* bufferCstr = mxArrayToString(prhs[2]);
+            instance->clearTimeRange(bufferCstr, timeStart, timeEnd);
+            mxFree(bufferCstr);
+            break;
+        }
+        case Action::Stop:
+        {
+            if (nrhs < 3 || !mxIsChar(prhs[2]))
+                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+
+            // get optional input argument
+            std::optional<bool> clearBuffer;
+            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            {
+                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
+                    mexErrMsgTxt("stop: Expected second argument to be a logical scalar.");
+                clearBuffer = mxIsLogicalScalarTrue(prhs[3]);
+            }
+
+            // get data stream identifier string, stop buffering
+            char* bufferCstr = mxArrayToString(prhs[2]);
+            plhs[0] = mxCreateLogicalScalar(instance->stop(bufferCstr, clearBuffer));
+            mxFree(bufferCstr);
+            break;
         }
 
         default:
