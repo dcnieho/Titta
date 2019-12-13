@@ -27,17 +27,21 @@ std::string string_format(const std::string& format, Args ... args)
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
-const char* isValid(TobiiResearchValidity validity_)
+const char* validityToString(TobiiResearchValidity validity_)
 {
     return validity_ == TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_VALID ? "valid" : "invalid";
 }
-const char* imageType(TobiiResearchEyeImageType type_)
+const char* imageTypeToString(TobiiResearchEyeImageType type_)
 {
-    return type_ == TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL ? "full" : (TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL ? "cropped" : "unknown");
+    return type_ == TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL ? "full" : (type_ == TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED ? "cropped" : "unknown");
 }
-const char* external_signal_change_type(TobiiResearchExternalSignalChangeType type_)
+const char* externalSignalChangeTypeToString(TobiiResearchExternalSignalChangeType type_)
 {
-    return type_ == TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED ? "value_changed" : (TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE ? "initial_value" : "connection_restored");
+    return type_ == TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED ? "value_changed" : (type_ == TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE ? "initial_value" : "connection_restored");
+}
+const char* calibrationEyeValidityToString(TobiiResearchCalibrationEyeValidity validity_)
+{
+    return validity_ == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED ? "invalid_and_not_used" : (validity_==TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED ? "valid_but_not_used" : (validity_==TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED ? "valid_and_used" : "unknown"));
 }
 
 
@@ -65,6 +69,19 @@ template <> std::string toString<>(const TobiiResearchDisplayArea& instance_, st
     return string_format("display_area for %.1fmm x %.1fmm screen", instance_.width, instance_.height);
 }
 
+template <> std::string toString<>(const TobiiResearchCalibrationResult& instance_, std::string spacing)
+{
+    return string_format("calibration_result for %d calibration points", instance_.calibration_point_count);
+}
+template <> std::string toString<>(const TobiiResearchCalibrationPoint& instance_, std::string spacing)
+{
+    return string_format("calibration_point with %d samples", instance_.calibration_sample_count);
+}
+template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instance_, std::string spacing)
+{
+    return string_format("calibration_eye_data (%s) at [%.4f,%.4f]", instance_.validity, instance_.position_on_display_area.x, instance_.position_on_display_area.y);
+}
+
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
 {
 #ifdef NDEBUG
@@ -85,27 +102,27 @@ template <> std::string toString<>(const TobiiResearchGazePoint& instance_, std:
 {
     auto nextLvl = spacing + "  ";
 #ifdef NDEBUG
-    return string_format("(validity: %s)\n%son_display_area: %s\n%sin_user_coordinates: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
+    return string_format("(validity: %s)\n%son_display_area: %s\n%sin_user_coordinates: %s", validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper.gaze_point (validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
+    return string_format("<TobiiWrapper.gaze_point (validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>", validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchPupilData& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
 #ifdef NDEBUG
-    return string_format("(validity: %s)\n%sdiameter: %.3f mm", isValid(instance_.validity), nextLvl.c_str(), instance_.diameter);
+    return string_format("(validity: %s)\n%sdiameter: %.3f mm", validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
 #else
-    return string_format("<TobiiWrapper.pupil_data (validity: %s) containing:\n%sdiameter: %.3f mm>", isValid(instance_.validity), nextLvl.c_str(), instance_.diameter);
+    return string_format("<TobiiWrapper.pupil_data (validity: %s) containing:\n%sdiameter: %.3f mm>", validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
 #endif
 }
 template <> std::string toString<>(const TobiiResearchGazeOrigin& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
 #ifdef NDEBUG
-    return string_format("(validity: %s)\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
+    return string_format("(validity: %s)\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s", validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper.gaze_origin (validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
+    return string_format("<TobiiWrapper.gaze_origin (validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>", validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchEyeData& instance_, std::string spacing)
@@ -129,12 +146,12 @@ template <> std::string toString<>(const TobiiResearchGazeData& instance_, std::
 
 template <> std::string toString<>(const TobiiTypes::eyeImage& instance_, std::string spacing)
 {
-    return string_format("%s image taken at system_time: %" PRId64 " with camera %d, %dbit, %dx%d", imageType(instance_.type), instance_.system_time_stamp, instance_.camera_id, instance_.bits_per_pixel, instance_.width, instance_.height);
+    return string_format("%s image taken at system_time: %" PRId64 " with camera %d, %dbit, %dx%d", imageTypeToString(instance_.type), instance_.system_time_stamp, instance_.camera_id, instance_.bits_per_pixel, instance_.width, instance_.height);
 }
 
 template <> std::string toString<>(const TobiiResearchExternalSignalData& instance_, std::string spacing)
 {
-    return string_format("external signal arrived at system_time: %" PRId64 ", type: %s, value: %d", instance_.system_time_stamp, external_signal_change_type(instance_.change_type), instance_.value);
+    return string_format("external signal arrived at system_time: %" PRId64 ", type: %s, value: %d", instance_.system_time_stamp, externalSignalChangeTypeToString(instance_.change_type), instance_.value);
 }
 
 template <> std::string toString<>(const TobiiResearchTimeSynchronizationData& instance_, std::string spacing)
@@ -146,9 +163,9 @@ template <> std::string toString<>(const TobiiResearchEyeUserPositionGuide& inst
 {
     auto nextLvl = spacing + "  ";
 #ifdef NDEBUG
-    return string_format("(validity: %s)\n%suser_position: %s", isValid(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+    return string_format("(validity: %s)\n%suser_position: %s", validityToString(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
 #else
-    return string_format("<TobiiWrapper.positioning_eye (validity: %s) containing:\n%suser_position: %s>", isValid(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+    return string_format("<TobiiWrapper.positioning_eye (validity: %s) containing:\n%suser_position: %s>", validityToString(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
 #endif
 }
 template <> std::string toString<>(const TobiiResearchUserPositionGuide& instance_, std::string spacing)
@@ -194,6 +211,16 @@ std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities dat
         out.emplace_back("can_do_monocular_calibration");
 
     return out;
+}
+
+std::vector<TobiiResearchCalibrationPoint> CalibrationPointsToVec(const TobiiResearchCalibrationResult& instance_)
+{
+    return std::vector<TobiiResearchCalibrationPoint>(instance_.calibration_points, instance_.calibration_points + instance_.calibration_point_count);
+}
+
+std::vector<TobiiResearchCalibrationSample> CalibrationSamplesToVec(const TobiiResearchCalibrationPoint& instance_)
+{
+    return std::vector<TobiiResearchCalibrationSample>(instance_.calibration_samples, instance_.calibration_samples + instance_.calibration_sample_count);
 }
 
 
@@ -384,6 +411,159 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .value("unknown", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN)
         .export_values()
         ;
+
+    // calibration
+    py::enum_<TobiiTypes::CalibrationState>(m, "calibration_state")
+        .value("not_yet_ntered", TobiiTypes::CalibrationState::NotYetEntered)
+        .value("awaiting_cal_point", TobiiTypes::CalibrationState::AwaitingCalPoint)
+        .value("collecting_data", TobiiTypes::CalibrationState::CollectingData)
+        .value("discarding_data", TobiiTypes::CalibrationState::DiscardingData)
+        .value("computing", TobiiTypes::CalibrationState::Computing)
+        .value("getting_calibration_data", TobiiTypes::CalibrationState::GettingCalibrationData)
+        .value("applying_calibration_data", TobiiTypes::CalibrationState::ApplyingCalibrationData)
+        .value("left", TobiiTypes::CalibrationState::Left)
+        .export_values()
+        ;
+    py::enum_<TobiiTypes::CalibrationAction>(m, "calibration_action")
+        .value("nothing", TobiiTypes::CalibrationAction::Nothing)
+        .value("enter", TobiiTypes::CalibrationAction::Enter)
+        .value("collect_data", TobiiTypes::CalibrationAction::CollectData)
+        .value("discard_data", TobiiTypes::CalibrationAction::DiscardData)
+        .value("compute", TobiiTypes::CalibrationAction::Compute)
+        .value("get_calibration_data", TobiiTypes::CalibrationAction::GetCalibrationData)
+        .value("apply_calibration_data", TobiiTypes::CalibrationAction::ApplyCalibrationData)
+        .value("exit", TobiiTypes::CalibrationAction::Exit)
+        .export_values()
+        ;
+    py::enum_<TobiiResearchCalibrationStatus>(m, "calibration_status")
+        .value("failure", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_FAILURE)
+        .value("success", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS)
+        .value("success_left_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_LEFT_EYE)
+        .value("success_right_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_RIGHT_EYE)
+        .export_values()
+        ;
+    py::enum_<TobiiResearchSelectedEye>(m, "selected_eye")
+        .value("left", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_LEFT)
+        .value("right", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_RIGHT)
+        .value("both", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_BOTH)
+        .export_values()
+        ;
+    py::enum_<TobiiResearchCalibrationEyeValidity>(m, "calibration_eye_validity")
+        .value("invalid_and_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED)
+        .value("valid_but_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED)
+        .value("valid_and_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
+        .value("unknown", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN)
+        .export_values()
+        ;
+    py::class_<TobiiResearchCalibrationEyeData>(m, "calibration_eye_data")
+        .def_readwrite("position_on_display_area", &TobiiResearchCalibrationEyeData::position_on_display_area)
+        .def_readwrite("validity", &TobiiResearchCalibrationEyeData::validity)
+        .def(py::pickle(
+            [](const TobiiResearchCalibrationEyeData& p) { // __getstate__
+                return py::make_tuple(p.position_on_display_area, p.validity);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchCalibrationEyeData p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<TobiiResearchCalibrationEyeValidity>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchCalibrationEyeData& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiResearchCalibrationSample>(m, "calibration_sample")
+        .def_readwrite("left", &TobiiResearchCalibrationSample::left_eye)
+        .def_readwrite("right", &TobiiResearchCalibrationSample::right_eye)
+        .def(py::pickle(
+            [](const TobiiResearchCalibrationSample& p) { // __getstate__
+                return py::make_tuple(p.left_eye, p.right_eye);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchCalibrationSample p{ t[0].cast<TobiiResearchCalibrationEyeData>(), t[1].cast<TobiiResearchCalibrationEyeData>() };
+                return p;
+            }
+        ))
+        ;
+    py::class_<TobiiResearchCalibrationPoint>(m, "calibration_point")
+        .def_readwrite("position_on_display_area", &TobiiResearchCalibrationPoint::position_on_display_area)
+        .def_property_readonly("samples", &CalibrationSamplesToVec)
+        .def(py::pickle(
+            [](const TobiiResearchCalibrationPoint& p) { // __getstate__
+                return py::make_tuple(p.position_on_display_area, CalibrationSamplesToVec(p));
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                auto samples = t[0].cast<std::vector<TobiiResearchCalibrationPoint>>();
+                auto samples_c = static_cast<TobiiResearchCalibrationSample*>(malloc(samples.size() * sizeof(TobiiResearchCalibrationSample)));
+                TobiiResearchCalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), samples_c, samples.size() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchCalibrationPoint& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiResearchCalibrationResult>(m, "calibration_result")
+        .def_property_readonly("points", &CalibrationPointsToVec)
+        .def_readwrite("status", &TobiiResearchCalibrationResult::status)
+        .def(py::pickle(
+            [](const TobiiResearchCalibrationResult& p) { // __getstate__
+                return py::make_tuple(CalibrationPointsToVec(p), p.status);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 2)
+                    throw std::runtime_error("Invalid state!");
+
+                auto points = t[0].cast < std::vector<TobiiResearchCalibrationResult>>();
+                auto points_c = static_cast<TobiiResearchCalibrationPoint*>(malloc(points.size() * sizeof(TobiiResearchCalibrationPoint)));
+                TobiiResearchCalibrationResult p{ points_c, points.size(), t[1].cast<TobiiResearchCalibrationStatus>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchCalibrationResult& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiTypes::CalibrationWorkItem>(m, "calibration_work_item")
+        .def_readwrite("action", &TobiiTypes::CalibrationWorkItem::action)
+        .def_readwrite("coordinates", &TobiiTypes::CalibrationWorkItem::coordinates)
+        .def_readwrite("eye", &TobiiTypes::CalibrationWorkItem::eye)
+        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkItem::calData)
+        .def(py::pickle(
+            [](const TobiiTypes::CalibrationWorkItem& p) { // __getstate__
+                return py::make_tuple(p.action, p.coordinates, p.eye, p.calData);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 4)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::CalibrationWorkItem p{ t[0].cast<TobiiTypes::CalibrationAction>(),t[1].cast<std::vector<double>>(),t[2].cast<std::string>(),t[3].cast<std::vector<uint8_t>>() };
+                return p;
+            }
+        ))
+        ;
+    py::class_<TobiiTypes::CalibrationWorkResult>(m, "calibration_work_result")
+        .def_readwrite("work_item", &TobiiTypes::CalibrationWorkResult::workItem)
+        .def_property_readonly("status", [](TobiiTypes::CalibrationWorkResult& instance_) { return static_cast<int>(instance_.status); })
+        .def_readwrite("status_string", &TobiiTypes::CalibrationWorkResult::statusString)
+        .def_property_readonly("calibration_result", [](TobiiTypes::CalibrationWorkResult& instance_) { return instance_.calibrationResult; })
+        .def_property_readonly("calibration_data", [](TobiiTypes::CalibrationWorkResult& instance_) { auto calData = instance_.calibrationData; return std::vector<uint8_t>(static_cast<uint8_t*>(calData->data), static_cast<uint8_t*>(calData->data) + calData->size); })
+        .def(py::pickle(
+            [](const TobiiTypes::CalibrationWorkResult& p) { // __getstate__
+                return py::make_tuple(p.workItem, p.status, p.statusString, p.calibrationResult, p.calibrationData);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 5)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),t[1].cast<TobiiResearchStatus>(),t[2].cast<std::string>(),t[3].cast<std::shared_ptr<TobiiResearchCalibrationResult>>(),t[4].cast<std::shared_ptr<TobiiResearchCalibrationData>>() };
+                return p;
+            }
+        ))
+        ;
+    
 
     // gaze
     py::enum_<TobiiResearchValidity>(m, "validity")
