@@ -170,6 +170,32 @@ py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_)
     return a;
 }
 
+std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities data_)
+{
+    std::vector<std::string> out;
+
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+        out.emplace_back("can_set_display_area");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+        out.emplace_back("has_external_signal");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+        out.emplace_back("has_eye_images");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+        out.emplace_back("has_gaze_data");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+        out.emplace_back("has_HMD_gaze_data");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+        out.emplace_back("can_do_screen_based_calibration");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+        out.emplace_back("can_do_HMD_based_calibration");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+        out.emplace_back("has_HMD_lens_config");
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+        out.emplace_back("can_do_monocular_calibration");
+
+    return out;
+}
+
 
 // start module scope
 #ifdef NDEBUG
@@ -205,7 +231,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_readwrite("firmware_version", &TobiiTypes::eyeTracker::firmwareVersion)
         .def_readwrite("runtime_version", &TobiiTypes::eyeTracker::runtimeVersion)
         .def_readwrite("address", &TobiiTypes::eyeTracker::address)
-        .def_readwrite("capabilities", &TobiiTypes::eyeTracker::capabilities)
+        .def_property_readonly("capabilities", &convertCapabilities)
         .def_readwrite("supported_frequencies", &TobiiTypes::eyeTracker::supportedFrequencies)
         .def_readwrite("supported_modes", &TobiiTypes::eyeTracker::supportedModes)
         .def(py::pickle(
@@ -653,7 +679,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_property_readonly("firmware_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().firmwareVersion; })
         .def_property_readonly("runtime_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().runtimeVersion; })
         .def_property_readonly("address", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().address; })
-        .def_property_readonly("capabilities", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().capabilities; })
+        .def_property_readonly("capabilities", [](TobiiMex& instance_) { return convertCapabilities(instance_.getConnectedEyeTracker().capabilities); })
         .def_property_readonly("supported_frequencies", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().supportedFrequencies; })
         .def_property_readonly("supported_modes", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().supportedModes; })
         .def_property("gaze_frequency", &TobiiMex::getCurrentFrequency, &TobiiMex::setGazeFrequency)
