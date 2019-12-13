@@ -397,6 +397,15 @@ const TobiiResearchDisplayArea TobiiMex::getDisplayArea() const
     return display_area;
 }
 // setters
+void TobiiMex::setDeviceName(std::string deviceName_)
+{
+    TobiiResearchStatus status = tobii_research_set_device_name(_eyetracker.et, deviceName_.c_str());
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Cannot set eye tracker device name", status);
+
+    // refresh eye tracker info to get updated name
+    _eyetracker.refreshInfo("deviceName");
+}
 void TobiiMex::setFrequency(float frequency_)
 {
     TobiiResearchStatus status = tobii_research_set_gaze_output_frequency(_eyetracker.et, frequency_);
@@ -414,15 +423,6 @@ void TobiiMex::setTrackingMode(std::string trackingMode_)
 
     // refresh eye tracker info to get updated tracking mode
     _eyetracker.refreshInfo("trackingMode");
-}
-void TobiiMex::setDeviceName(std::string deviceName_)
-{
-    TobiiResearchStatus status = tobii_research_set_device_name(_eyetracker.et, deviceName_.c_str());
-    if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot set eye tracker device name", status);
-
-    // refresh eye tracker info to get updated name
-    _eyetracker.refreshInfo();
 }
 // modifiers
 std::vector<TobiiResearchLicenseValidationResult> TobiiMex::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
