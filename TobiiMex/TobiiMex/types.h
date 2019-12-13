@@ -13,7 +13,7 @@ namespace TobiiTypes
     class eyeTracker
     {
     public:
-        eyeTracker() {}
+        eyeTracker() = default;
         eyeTracker(TobiiResearchEyeTracker* et_);
         eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
             TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_);
@@ -149,7 +149,7 @@ namespace TobiiTypes
     class logMessage
     {
     public:
-        logMessage() {}
+        logMessage() = default;
         logMessage(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, std::string message_) :
             system_time_stamp(system_time_stamp_),
             source(source_),
@@ -169,7 +169,7 @@ namespace TobiiTypes
     class streamErrorMessage
     {
     public:
-        streamErrorMessage() {}
+        streamErrorMessage() = default;
         streamErrorMessage(std::string serial_, int64_t system_time_stamp_, TobiiResearchStreamError error_, TobiiResearchStreamErrorSource source_, std::string message_) :
             machineSerial(serial_),
             system_time_stamp(system_time_stamp_),

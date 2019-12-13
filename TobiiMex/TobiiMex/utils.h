@@ -13,19 +13,19 @@ std::string TobiiResearchLogSourceToExplanation(TobiiResearchLogSource trl_);
 std::string TobiiResearchLogLevelToString     (TobiiResearchLogLevel trl_);
 std::string TobiiResearchLogLevelToExplanation(TobiiResearchLogLevel trl_);
 
-std::string TobiiResearchStreamErrorToString(TobiiResearchStreamError trl_);
+std::string TobiiResearchStreamErrorToString     (TobiiResearchStreamError trl_);
 std::string TobiiResearchStreamErrorToExplanation(TobiiResearchStreamError trl_);
 
-std::string TobiiResearchStreamErrorSourceToString(TobiiResearchStreamErrorSource trl_);
+std::string TobiiResearchStreamErrorSourceToString     (TobiiResearchStreamErrorSource trl_);
 std::string TobiiResearchStreamErrorSourceToExplanation(TobiiResearchStreamErrorSource trl_);
 
-std::string TobiiResearchLicenseValidationResultToString(TobiiResearchLicenseValidationResult trl_);
+std::string TobiiResearchLicenseValidationResultToString     (TobiiResearchLicenseValidationResult trl_);
 std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicenseValidationResult trl_);
 
 // the below function is called when an error occurred and application execution should halt
 // this function is not defined in this library, it is for the user to implement depending on his platform
 void DoExitWithMsg(std::string errMsg_);
-// this function is used to simply relay a message
+// this function is used to simply relay a message, it should also be implemented by the user for their platform
 void RelayMsg(std::string msg_);
 
 // wrapper around DoExitWithMsg() that nicely formats the Tobii SDK error code
