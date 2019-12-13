@@ -372,7 +372,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         case Action::GetEyeTrackerInfo:
         {
-            // vector so we don't have write another ToMatlab
+            // put in vector so we don't have write another ToMatlab()
             std::vector<TobiiTypes::eyeTracker> temp;
             temp.push_back(instance->getEyeTrackerInfo());
             plhs[0] = mxTypes::ToMatlab(temp);
