@@ -143,6 +143,15 @@ namespace {
         //// eye-tracker specific getters and setters
         // getters
         GetEyeTrackerInfo,
+        GetDeviceName,
+        GetSerialNumber,
+        GetModel,
+        GetFirmwareVersion,
+        GetRuntimeVersion,
+        GetAddress,
+        GetCapabilities,
+        GetSupportedFrequencies,
+        GetSupportedModes,
         GetFrequency,
         GetTrackingMode,
         GetTrackBox,
@@ -199,6 +208,15 @@ namespace {
         //// eye-tracker specific getters and setters
         // getters
         { "getEyeTrackerInfo",              Action::GetEyeTrackerInfo },
+        { "getDeviceName",                  Action::GetDeviceName },
+        { "getSerialNumber",                Action::GetSerialNumber },
+        { "getModel",                       Action::GetModel },
+        { "getFirmwareVersion",             Action::GetFirmwareVersion },
+        { "getRuntimeVersion",              Action::GetRuntimeVersion },
+        { "getAddress",                     Action::GetAddress },
+        { "getCapabilities",                Action::GetCapabilities },
+        { "getSupportedFrequencies",        Action::GetSupportedFrequencies },
+        { "getSupportedModes",              Action::GetSupportedModes },
         { "getFrequency",                   Action::GetFrequency },
         { "getTrackingMode",                Action::GetTrackingMode },
         { "getTrackBox",			        Action::GetTrackBox },
@@ -376,6 +394,51 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             std::vector<TobiiTypes::eyeTracker> temp;
             temp.push_back(instance->getEyeTrackerInfo());
             plhs[0] = mxTypes::ToMatlab(temp);
+            break;
+        }
+        case Action::GetDeviceName:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("deviceName").deviceName);
+            break;
+        }
+        case Action::GetSerialNumber:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("serialNumber").serialNumber);
+            break;
+        }
+        case Action::GetModel:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("model").model);
+            break;
+        }
+        case Action::GetFirmwareVersion:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("firmwareVersion").firmwareVersion);
+            break;
+        }
+        case Action::GetRuntimeVersion:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("runtimeVersion").runtimeVersion);
+            break;
+        }
+        case Action::GetAddress:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("address").address);
+            break;
+        }
+        case Action::GetCapabilities:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("capabilities").capabilities);
+            break;
+        }
+        case Action::GetSupportedFrequencies:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("supportedFrequencies").supportedFrequencies);
+            break;
+        }
+        case Action::GetSupportedModes:
+        {
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("supportedModes").supportedModes);
             break;
         }
         case Action::GetFrequency:
