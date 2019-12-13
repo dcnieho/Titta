@@ -26,9 +26,14 @@ plt.close('all')
 
 #%% ET settings
 TobiiWrapper.wrapper.startLogging()
-tw = TobiiWrapper.wrapper('tet-tcp://169.254.10.20')
+ets = TobiiWrapper.wrapper.findAllEyeTrackers()
+print(ets)
+if len(ets)==0:
+    raise Exception('No eye trackers found')
+
+tw = TobiiWrapper.wrapper(ets[0].address)
 print(tw)
-print(tw.findAllEyeTrackers())
+
 print(tw.getSDKVersion())
 print(tw.getSystemTimestamp())
 
