@@ -373,10 +373,10 @@ void TobiiMex::Init()
 }
 
 // getters and setters
-const TobiiTypes::eyeTracker TobiiMex::getConnectedEyeTracker()
+const TobiiTypes::eyeTracker TobiiMex::getConnectedEyeTracker(std::optional<std::string> paramToRefresh_ /*= std::nullopt*/)
 {
     // refresh ET info to make sure its up to date
-    _eyetracker.refreshInfo();
+    _eyetracker.refreshInfo(paramToRefresh_);
 
     return _eyetracker;
 }

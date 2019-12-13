@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <cstring>
+#include <optional>
 
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
@@ -18,7 +19,7 @@ namespace TobiiTypes
         eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
             TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_);
 
-        void refreshInfo();
+        void refreshInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
 
     public:
         TobiiResearchEyeTracker*    et = nullptr;
