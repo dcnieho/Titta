@@ -16,6 +16,21 @@ classdef TobiiMex < handle
         % should be 'SetAccess = immutable', but Octave does not support it
         mexClassWrapperFnc;     % the MEX function owning the class instances
     end
+    properties (Dependent, SetAccess=private)
+        serialNumber
+        model
+        firmwareVersion
+        runtimeVersion
+        address
+        capabilities
+        supportedFrequencies
+        supportedModes
+    end
+    properties (Dependent)
+        deviceName
+        frequency
+        trackingMode
+    end
     
     methods (Static = true)
         function mexFnc = checkMEXFnc(mexFnc)
@@ -140,10 +155,37 @@ classdef TobiiMex < handle
         function eyeTracker = getEyeTrackerInfo(this)
             eyeTracker = this.cppmethod('getEyeTrackerInfo');
         end
-        function frequency = getFrequency(this)
+        function frequency = get.deviceName(this)
+            frequency = this.cppmethod('getDeviceName');
+        end
+        function serialNumber = get.serialNumber(this)
+            serialNumber = this.cppmethod('getSerialNumber');
+        end
+        function model = get.model(this)
+            model = this.cppmethod('getModel');
+        end
+        function firmwareVersion = get.firmwareVersion(this)
+            firmwareVersion = this.cppmethod('getFirmwareVersion');
+        end
+        function runtimeVersion = get.runtimeVersion(this)
+            runtimeVersion = this.cppmethod('getRuntimeVersion');
+        end
+        function address = get.address(this)
+            address = this.cppmethod('getAddress');
+        end
+        function capabilities = get.capabilities(this)
+            capabilities = this.cppmethod('getCapabilities');
+        end
+        function supportedFrequencies = get.supportedFrequencies(this)
+            supportedFrequencies = this.cppmethod('getSupportedFrequencies');
+        end
+        function supportedModes = get.supportedModes(this)
+            supportedModes = this.cppmethod('getSupportedModes');
+        end
+        function frequency = get.frequency(this)
             frequency = this.cppmethod('getFrequency');
         end
-        function trackingMode = getTrackingMode(this)
+        function trackingMode = get.trackingMode(this)
             trackingMode = this.cppmethod('getTrackingMode');
         end
         function trackBox = getTrackBox(this)
@@ -153,19 +195,19 @@ classdef TobiiMex < handle
             displayArea = this.cppmethod('getDisplayArea');
         end
         % setters
-        function setFrequency(this,frequency)
-            assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
-            this.cppmethod('setFrequency',single(frequency));
-        end
-        function setTrackingMode(this,trackingMode)
-            assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');
-            trackingMode = ensureStringIsChar(trackingMode);
-            this.cppmethod('setTrackingMode',trackingMode);
-        end
-        function setDeviceName(this,deviceName)
+        function set.deviceName(this,deviceName)
             assert(nargin>1,'TobiiMex::setDisplayName: provide device name argument.');
             deviceName = ensureStringIsChar(deviceName);
             this.cppmethod('setDeviceName',deviceName);
+        end
+        function set.frequency(this,frequency)
+            assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
+            this.cppmethod('setFrequency',single(frequency));
+        end
+        function set.trackingMode(this,trackingMode)
+            assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');
+            trackingMode = ensureStringIsChar(trackingMode);
+            this.cppmethod('setTrackingMode',trackingMode);
         end
         % modifiers
         function applyLicenses(this,licenses)
