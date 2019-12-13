@@ -40,6 +40,7 @@ const char* external_signal_change_type(TobiiResearchExternalSignalChangeType ty
     return type_ == TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED ? "value_changed" : (TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE ? "initial_value" : "connection_restored");
 }
 
+
 template <typename T> std::string toString(const T& instance_, std::string spacing="");
 
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
@@ -424,7 +425,11 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def("__repr__",
             [](TobiiMex& instance_)
             {
-                return string_format("<TobiiWrapper.wrapper connected to '%s' @%.0f Hz at '%s'>", instance_.getConnectedEyeTracker().model.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+#ifdef NDEBUG
+                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getConnectedEyeTracker().model.c_str(), instance_.getConnectedEyeTracker().serialNumber.c_str(), instance_.getConnectedEyeTracker().deviceName.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+#else
+                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getConnectedEyeTracker().model.c_str(), instance_.getConnectedEyeTracker().serialNumber.c_str(), instance_.getConnectedEyeTracker().deviceName.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+#endif
             })
 
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
