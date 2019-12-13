@@ -24,8 +24,10 @@ import matplotlib.pyplot as plt
 
 plt.close('all')
 
-#%% ET settings
+# static functions, connect to first eye tracker found
 TobiiWrapper.wrapper.start_logging()
+print(TobiiWrapper.wrapper.get_SDK_version())
+print(TobiiWrapper.wrapper.get_system_timestamp())
 ets = TobiiWrapper.wrapper.find_all_eye_trackers()
 print(ets)
 if len(ets)==0:
@@ -34,10 +36,8 @@ if len(ets)==0:
 tw = TobiiWrapper.wrapper(ets[0].address)
 print(tw)
 
-print(tw.get_SDK_version())
-print(tw.get_system_timestamp())
-
-print(tw.connected_eye_tracker)
+# test properties
+# 1. these are read-write
 freq = tw.gaze_frequency
 print(tw.gaze_frequency)
 if freq==150:
@@ -46,11 +46,20 @@ else:
     tw.gaze_frequency = 150
 print(tw)
 print(tw.tracking_mode)
+print(tw.device_name)
+# 2. these are read only
+print(tw.serial_number)
+print(tw.model)
+print(tw.firmware_version)
+print(tw.runtime_version)
+print(tw.address)
+print(tw.capabilities)
+print(tw.supported_frequencies)
+print(tw.supported_modes)
 print(tw.track_box)
 print(tw.display_area)
-print(tw.device_name)
    
-#%% Record some data
+#%% Record some data (and test all streams while we do so)
 success = tw.start('gaze')
 success = tw.start('eyeImage')
 success = tw.start('externalSignal')
@@ -95,12 +104,6 @@ plt.plot(np.diff(out[:, 1] / 1000))
 #%% Plot timestamps of samples in the buffer (and test pickle save and load)
 all_samples = tw.peek_n('gaze',10000000)
 pickle.dump(all_samples,open( "save.pkl", "wb" ))
-#print(all_samples[0])
-#print(all_samples[0].left)
-#print(all_samples[0].left.gaze_point.on_display_area.x)
-#print(all_samples[0].left.gaze_point.on_display_area)
-#print(all_samples[0].left.gaze_point)
-#print(all_samples[0].left)
 print(all_samples[0])
 ut =[]
 for i in all_samples:
@@ -151,10 +154,11 @@ pickle.dump(all_p,open( "save5.pkl", "wb" ))
 all_p2 = pickle.load( open( "save5.pkl", "rb" ) )
 print(all_p2[0])
 
-print('get log')
 l=tw.get_log()
-print('print log')
 print(l)
+pickle.dump(l,open( "save6.pkl", "wb" ))
+l2 = pickle.load( open( "save6.pkl", "rb" ) )
+print(l2)
 tw.stop_logging()
 
 
