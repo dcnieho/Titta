@@ -12,8 +12,7 @@ classdef TobiiMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
-    properties (GetAccess = protected, SetAccess = private, Hidden = false)
-        % should be 'SetAccess = immutable', but Octave does not support it
+    properties (GetAccess = protected, SetAccess = immutable, Hidden = false)
         mexClassWrapperFnc;     % the MEX function owning the class instances
     end
     properties (Dependent, SetAccess=private)
