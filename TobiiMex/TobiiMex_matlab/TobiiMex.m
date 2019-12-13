@@ -137,14 +137,14 @@ classdef TobiiMex < handle
         
         %% eye-tracker specific getters and setters
         % getters
-        function eyeTracker = getConnectedEyeTracker(this)
-            eyeTracker = this.cppmethod('getConnectedEyeTracker');
+        function eyeTracker = getEyeTrackerInfo(this)
+            eyeTracker = this.cppmethod('getEyeTrackerInfo');
         end
-        function frequency = getCurrentFrequency(this)
-            frequency = this.cppmethod('getCurrentFrequency');
+        function frequency = getFrequency(this)
+            frequency = this.cppmethod('getFrequency');
         end
-        function trackingMode = getCurrentTrackingMode(this)
-            trackingMode = this.cppmethod('getCurrentTrackingMode');
+        function trackingMode = getTrackingMode(this)
+            trackingMode = this.cppmethod('getTrackingMode');
         end
         function trackBox = getTrackBox(this)
             trackBox = this.cppmethod('getTrackBox');
@@ -153,9 +153,9 @@ classdef TobiiMex < handle
             displayArea = this.cppmethod('getDisplayArea');
         end
         % setters
-        function setGazeFrequency(this,frequency)
-            assert(nargin>1,'TobiiMex::setGazeFrequency: provide frequency argument.');
-            this.cppmethod('setGazeFrequency',single(frequency));
+        function setFrequency(this,frequency)
+            assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
+            this.cppmethod('setFrequency',single(frequency));
         end
         function setTrackingMode(this,trackingMode)
             assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');

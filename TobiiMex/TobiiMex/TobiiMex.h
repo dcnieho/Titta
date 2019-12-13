@@ -85,13 +85,13 @@ public:
 
     //// eye-tracker specific getters and setters
     // getters
-    const TobiiTypes::eyeTracker getConnectedEyeTracker(std::optional<std::string> paramToRefresh_ = std::nullopt);
-    const float getCurrentFrequency() const;
-    const std::string getCurrentTrackingMode() const;
+    const TobiiTypes::eyeTracker getEyeTrackerInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
+    const float getFrequency() const;
+    const std::string getTrackingMode() const;
     const TobiiResearchTrackBox getTrackBox() const;
     const TobiiResearchDisplayArea getDisplayArea() const;
     // setters
-    void setGazeFrequency(float frequency_);
+    void setFrequency(float frequency_);
     void setTrackingMode(std::string trackingMode_);
     void setDeviceName(std::string deviceName_); // NB: this triggers a refresh of eye tracker info
     // modifiers

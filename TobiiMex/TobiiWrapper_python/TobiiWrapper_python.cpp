@@ -835,9 +835,9 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             [](TobiiMex& instance_)
             {
 #ifdef NDEBUG
-                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getConnectedEyeTracker().model.c_str(), instance_.getConnectedEyeTracker().serialNumber.c_str(), instance_.getConnectedEyeTracker().deviceName.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getFrequency(), instance_.getEyeTrackerInfo().address.c_str());
 #else
-                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getConnectedEyeTracker().model.c_str(), instance_.getConnectedEyeTracker().serialNumber.c_str(), instance_.getConnectedEyeTracker().deviceName.c_str(), instance_.getCurrentFrequency(), instance_.getConnectedEyeTracker().address.c_str());
+                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getFrequency(), instance_.getEyeTrackerInfo().address.c_str());
 #endif
             })
 
@@ -853,17 +853,17 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_static("stop_logging", &TobiiMex::stopLogging)
 
         //// eye-tracker specific getters and setters
-        .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("device_name").deviceName; }, & TobiiMex::setDeviceName)
-        .def_property_readonly("serial_number", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("serial_number").serialNumber; })
-        .def_property_readonly("model", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("model").model; })
-        .def_property_readonly("firmware_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("firmware_version").firmwareVersion; })
-        .def_property_readonly("runtime_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("runtime_version").runtimeVersion; })
-        .def_property_readonly("address", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("address").address; })
-        .def_property_readonly("capabilities", [](TobiiMex& instance_) { return convertCapabilities(instance_.getConnectedEyeTracker("capabilities").capabilities); })
-        .def_property_readonly("supported_frequencies", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("supported_frequencies").supportedFrequencies; })
-        .def_property_readonly("supported_modes", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker("supported_modes").supportedModes; })
-        .def_property("gaze_frequency", &TobiiMex::getCurrentFrequency, &TobiiMex::setGazeFrequency)
-        .def_property("tracking_mode", &TobiiMex::getCurrentTrackingMode, &TobiiMex::setTrackingMode)
+        .def_property("device_name", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("device_name").deviceName; }, & TobiiMex::setDeviceName)
+        .def_property_readonly("serial_number", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("serial_number").serialNumber; })
+        .def_property_readonly("model", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("model").model; })
+        .def_property_readonly("firmware_version", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("firmware_version").firmwareVersion; })
+        .def_property_readonly("runtime_version", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("runtime_version").runtimeVersion; })
+        .def_property_readonly("address", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("address").address; })
+        .def_property_readonly("capabilities", [](TobiiMex& instance_) { return convertCapabilities(instance_.getEyeTrackerInfo("capabilities").capabilities); })
+        .def_property_readonly("supported_frequencies", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("supported_frequencies").supportedFrequencies; })
+        .def_property_readonly("supported_modes", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("supported_modes").supportedModes; })
+        .def_property("gaze_frequency", &TobiiMex::getFrequency, &TobiiMex::setFrequency)
+        .def_property("tracking_mode", &TobiiMex::getTrackingMode, &TobiiMex::setTrackingMode)
         .def_property_readonly("track_box", &TobiiMex::getTrackBox)
         .def_property_readonly("display_area", &TobiiMex::getDisplayArea)
         // modifiers

@@ -142,13 +142,13 @@ namespace {
 
         //// eye-tracker specific getters and setters
         // getters
-        GetConnectedEyeTracker,
-        GetCurrentFrequency,
-        GetCurrentTrackingMode,
+        GetEyeTrackerInfo,
+        GetFrequency,
+        GetTrackingMode,
         GetTrackBox,
         GetDisplayArea,
         // setters
-        SetGazeFrequency,
+        SetFrequency,
         SetTrackingMode,
         SetDeviceName,
         // modifiers
@@ -198,13 +198,13 @@ namespace {
 
         //// eye-tracker specific getters and setters
         // getters
-        { "getConnectedEyeTracker",			Action::GetConnectedEyeTracker },
-        { "getCurrentFrequency",			Action::GetCurrentFrequency },
-        { "getCurrentTrackingMode",			Action::GetCurrentTrackingMode },
+        { "getEyeTrackerInfo",              Action::GetEyeTrackerInfo },
+        { "getFrequency",                   Action::GetFrequency },
+        { "getTrackingMode",                Action::GetTrackingMode },
         { "getTrackBox",			        Action::GetTrackBox },
         { "getDisplayArea",			        Action::GetDisplayArea },
         // setters
-        { "setGazeFrequency",			    Action::SetGazeFrequency },
+        { "setGazeFrequency",			    Action::SetFrequency },
         { "setTrackingMode",			    Action::SetTrackingMode },
         { "setDeviceName",			        Action::SetDeviceName },
         // modifiers
@@ -370,22 +370,22 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             plhs[0] = mxCreateLogicalScalar(TobiiMex::stopLogging());
             return;
 
-        case Action::GetConnectedEyeTracker:
+        case Action::GetEyeTrackerInfo:
         {
             // vector so we don't have write another ToMatlab
             std::vector<TobiiTypes::eyeTracker> temp;
-            temp.push_back(instance->getConnectedEyeTracker());
+            temp.push_back(instance->getEyeTrackerInfo());
             plhs[0] = mxTypes::ToMatlab(temp);
             break;
         }
-        case Action::GetCurrentFrequency:
+        case Action::GetFrequency:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getCurrentFrequency());
+            plhs[0] = mxTypes::ToMatlab(instance->getFrequency());
             break;
         }
-        case Action::GetCurrentTrackingMode:
+        case Action::GetTrackingMode:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getCurrentTrackingMode());
+            plhs[0] = mxTypes::ToMatlab(instance->getTrackingMode());
             break;
         }
         case Action::GetTrackBox:
@@ -398,14 +398,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             plhs[0] = mxTypes::ToMatlab(instance->getDisplayArea());
             break;
         }
-        case Action::SetGazeFrequency:
+        case Action::SetFrequency:
         {
             float freq = 0.f;
             if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsSingle(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("setGazeFrequency: Expected second argument to be a float scalar.");
+                mexErrMsgTxt("setFrequency: Expected second argument to be a float scalar.");
             freq = *static_cast<float*>(mxGetData(prhs[2]));
 
-            instance->setGazeFrequency(freq);
+            instance->setFrequency(freq);
             break;
         }
         case Action::SetTrackingMode:

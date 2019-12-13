@@ -285,12 +285,12 @@ classdef Titta < handle
                 
                 % applying license may have changed eye tracker's
                 % capabilities or other info. get a fresh copy
-                theTracker = obj.buffer.getConnectedEyeTracker();
+                theTracker = obj.buffer.getEyeTrackerInfo();
             end
             
             % set tracker to operate at requested tracking frequency
             try
-                obj.buffer.setGazeFrequency(obj.settings.freq);
+                obj.buffer.setFrequency(obj.settings.freq);
             catch ME
                 % provide nice error message
                 allFs = ['[' sprintf('%d, ',theTracker.supportedFrequencies) ']']; allFs(end-2:end-1) = [];
@@ -315,10 +315,10 @@ classdef Titta < handle
             end
             
             % get info about the system
-            obj.systemInfo                  = obj.buffer.getConnectedEyeTracker();
-            obj.systemInfo.samplerate       = obj.buffer.getCurrentFrequency();
+            obj.systemInfo                  = obj.buffer.getEyeTrackerInfo();
+            obj.systemInfo.samplerate       = obj.buffer.getFrequency();
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
-            obj.systemInfo.trackingMode     = obj.buffer.getCurrentTrackingMode();
+            obj.systemInfo.trackingMode     = obj.buffer.getTrackingMode();
             obj.systemInfo.SDKVersion       = obj.buffer.getSDKVersion();   % SDK version consumed by MEX file
             out.systemInfo                  = obj.systemInfo;
             
