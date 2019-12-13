@@ -60,6 +60,11 @@ template <> std::string toString<>(const TobiiTypes::streamErrorMessage& instanc
     return string_format("stream_error_message (machine: %s, system_time: %" PRId64 ", source: %s, error: %s): %s", instance_.machineSerial.c_str(), instance_.system_time_stamp, TobiiResearchStreamErrorSourceToString(instance_.source).c_str(), TobiiResearchStreamErrorToString(instance_.error).c_str(), instance_.message.c_str());
 }
 
+template <> std::string toString<>(const TobiiResearchDisplayArea& instance_, std::string spacing)
+{
+    return string_format("display_area for %.1fmm x %.1fmm screen", instance_.width, instance_.height);
+}
+
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
 {
 #ifdef NDEBUG
@@ -292,6 +297,53 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             }
         ))
         .def("__repr__", [](const TobiiTypes::streamErrorMessage& instance_) { return toString(instance_); })
+        ;
+
+    // getters and setters
+    py::class_<TobiiResearchTrackBox>(m, "track_box")
+        .def_readwrite("back_lower_left", &TobiiResearchTrackBox::back_lower_left)
+        .def_readwrite("back_lower_right", &TobiiResearchTrackBox::back_lower_right)
+        .def_readwrite("back_upper_left", &TobiiResearchTrackBox::back_upper_left)
+        .def_readwrite("back_upper_right", &TobiiResearchTrackBox::back_upper_right)
+        .def_readwrite("front_lower_left", &TobiiResearchTrackBox::front_lower_left)
+        .def_readwrite("front_lower_right", &TobiiResearchTrackBox::front_lower_right)
+        .def_readwrite("front_upper_left", &TobiiResearchTrackBox::front_upper_left)
+        .def_readwrite("front_upper_right", &TobiiResearchTrackBox::front_upper_right)
+        .def(py::pickle(
+            [](const TobiiResearchTrackBox& p) { // __getstate__
+                return py::make_tuple(p.back_lower_left, p.back_lower_right, p.back_upper_left, p.back_upper_right, p.front_lower_left, p.front_lower_right, p.front_upper_left, p.front_upper_right);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 8)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchTrackBox p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<TobiiResearchPoint3D>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<TobiiResearchPoint3D>(),t[6].cast<TobiiResearchPoint3D>(),t[7].cast<TobiiResearchPoint3D>() };
+                return p;
+            }
+        ))
+        // default is fine for this one
+        //.def("__repr__", [](const TobiiResearchTrackBox& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiResearchDisplayArea>(m, "display_area")
+        .def_readwrite("bottom_left", &TobiiResearchDisplayArea::bottom_left)
+        .def_readwrite("bottom_right", &TobiiResearchDisplayArea::bottom_right)
+        .def_readwrite("height", &TobiiResearchDisplayArea::height)
+        .def_readwrite("top_left", &TobiiResearchDisplayArea::top_left)
+        .def_readwrite("top_right", &TobiiResearchDisplayArea::top_right)
+        .def_readwrite("width", &TobiiResearchDisplayArea::width)
+        .def(py::pickle(
+            [](const TobiiResearchDisplayArea& p) { // __getstate__
+                return py::make_tuple(p.bottom_left, p.bottom_right, p.height, p.top_left, p.top_right, p.width);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 6)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchDisplayArea p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<float>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<float>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchDisplayArea& instance_) { return toString(instance_); })
         ;
 
     // gaze
@@ -583,7 +635,13 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
         //// eye-tracker specific getters and setters
         // getters
-        // setters
+        .def_property_readonly("connected_eye_tracker", &TobiiMex::getConnectedEyeTracker)
+        .def_property("gaze_frequency", &TobiiMex::getCurrentFrequency, &TobiiMex::setGazeFrequency)
+        .def_property("tracking_mode", &TobiiMex::getCurrentTrackingMode, &TobiiMex::setTrackingMode)
+        .def_property_readonly("track_box", &TobiiMex::getTrackBox)
+        .def_property_readonly("display_area", &TobiiMex::getDisplayArea)
+        // setters (though we can easily provide the getter for this property too, so lets do that to keep our user's life simple
+        .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().deviceName; }, &TobiiMex::setDeviceName)
         // modifiers
 
         //// calibration
