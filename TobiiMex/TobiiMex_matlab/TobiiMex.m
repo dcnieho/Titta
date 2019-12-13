@@ -17,6 +17,8 @@ classdef TobiiMex < handle
         mexClassWrapperFnc;     % the MEX function owning the class instances
     end
     properties (Dependent, SetAccess=private)
+        SDKVersion
+        systemTimestamp
         serialNumber
         model
         firmwareVersion
@@ -119,10 +121,10 @@ classdef TobiiMex < handle
         end
         
         %% global SDK functions
-        function SDKVersion = getSDKVersion(this)
+        function SDKVersion = get.SDKVersion(this)
             SDKVersion = this.cppmethodGlobal('getSDKVersion');
         end
-        function systemTimestamp = getSystemTimestamp(this)
+        function systemTimestamp = get.systemTimestamp(this)
             systemTimestamp = this.cppmethodGlobal('getSystemTimestamp');
         end
         function eyeTrackerList = findAllEyeTrackers(this)
