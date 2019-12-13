@@ -636,15 +636,15 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             })
 
         //// global SDK functions
-        .def_static("getSDKVersion", &TobiiMex::getSDKVersion)
-        .def_static("getSystemTimestamp", &TobiiMex::getSystemTimestamp)
-        .def_static("findAllEyeTrackers", &TobiiMex::findAllEyeTrackers)
+        .def_static("get_SDK_ersion", &TobiiMex::getSDKVersion)
+        .def_static("get_system_timestamp", &TobiiMex::getSystemTimestamp)
+        .def_static("find_all_eye_trackers", &TobiiMex::findAllEyeTrackers)
         // logging
-        .def_static("startLogging", &TobiiMex::startLogging,
-            py::arg_v("initialBufferSize", std::nullopt, "None"))
-        .def_static("getLog", &TobiiMex::getLog,
-            py::arg_v("clearLog", std::nullopt, "None"))
-        .def_static("stopLogging", &TobiiMex::stopLogging)
+        .def_static("start_logging", &TobiiMex::startLogging,
+            py::arg_v("initial_buffer_size", std::nullopt, "None"))
+        .def_static("get_log", &TobiiMex::getLog,
+            py::arg_v("clear_log", std::nullopt, "None"))
+        .def_static("stop_logging", &TobiiMex::stopLogging)
 
         //// eye-tracker specific getters and setters
         // getters
@@ -665,12 +665,12 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         // query if stream is supported
         // start stream
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
-            "stream"_a, py::arg_v("initialBufferSize", std::nullopt, "None"), py::arg_v("asGif", std::nullopt, "None"))
+            "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_GIF", std::nullopt, "None"))
 
         // request stream state
 
         // consume samples (by default all)
-        .def("consumeN",
+        .def("consume_N",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
             {
@@ -701,7 +701,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         // consume samples within given timestamps (inclusive, by default whole buffer)
 
         // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
-        .def("peekN",
+        .def("peek_N",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
             {
@@ -736,7 +736,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
         // stop, optionally deletes the buffer
         .def("stop", py::overload_cast<std::string, std::optional<bool>>(&TobiiMex::stop),
-            "stream"_a, py::arg_v("emptyBuffer", std::nullopt, "None"))
+            "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
         ;
 }
 
