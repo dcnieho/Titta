@@ -647,14 +647,19 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_static("stop_logging", &TobiiMex::stopLogging)
 
         //// eye-tracker specific getters and setters
-        // getters
-        .def_property_readonly("connected_eye_tracker", &TobiiMex::getConnectedEyeTracker)
+        .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().deviceName; }, & TobiiMex::setDeviceName)
+        .def_property_readonly("serial_number", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().serialNumber; })
+        .def_property_readonly("model", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().model; })
+        .def_property_readonly("firmware_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().firmwareVersion; })
+        .def_property_readonly("runtime_version", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().runtimeVersion; })
+        .def_property_readonly("address", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().address; })
+        .def_property_readonly("capabilities", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().capabilities; })
+        .def_property_readonly("supported_frequencies", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().supportedFrequencies; })
+        .def_property_readonly("supported_modes", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().supportedModes; })
         .def_property("gaze_frequency", &TobiiMex::getCurrentFrequency, &TobiiMex::setGazeFrequency)
         .def_property("tracking_mode", &TobiiMex::getCurrentTrackingMode, &TobiiMex::setTrackingMode)
         .def_property_readonly("track_box", &TobiiMex::getTrackBox)
         .def_property_readonly("display_area", &TobiiMex::getDisplayArea)
-        // setters (though we can easily provide the getter for this property too, so lets do that to keep our user's life simple
-        .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().deviceName; }, &TobiiMex::setDeviceName)
         // modifiers
         .def("apply_licenses", &TobiiMex::applyLicenses,
             "licenses"_a)
