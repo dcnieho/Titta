@@ -31,6 +31,9 @@ print(tw)
 #%% Record some data
 success = tw.start('gaze')
 success = tw.start('eyeImage')
+success = tw.start('externalSignal')
+success = tw.start('timeSync')
+success = tw.start('positioning')
 core.wait(0.2)
 n_samples = 600 * 2 # Record two seconds of data at 600 Hz
 
@@ -56,6 +59,9 @@ while k < n_samples:
 print(time.clock() - t0)
 success = tw.stop('gaze')
 success = tw.stop('eyeImage')
+success = tw.stop('externalSignal')
+success = tw.stop('timeSync')
+success = tw.stop('positioning')
 
 
 #%% Plot data captured in real time (tobii time stamps, and loop intervals)
@@ -101,6 +107,30 @@ plt.imshow(all_images[0].image)
 all_images2 = pickle.load( open( "save2.pkl", "rb" ) )
 plt.figure()
 plt.imshow(all_images2[0].image)
+
+
+all_ext = tw.peekN('externalSignal',10000000)
+print(all_ext[0])
+pickle.dump(all_ext,open( "save3.pkl", "wb" ))
+all_ext2 = pickle.load( open( "save3.pkl", "rb" ) )
+print(all_ext2[0])
+
+
+all_t = tw.peekN('timeSync',10000000)
+print(all_t[0])
+pickle.dump(all_t,open( "save4.pkl", "wb" ))
+all_t2 = pickle.load( open( "save4.pkl", "rb" ) )
+print(all_t2[0])
+
+
+all_p = tw.peekN('positioning',10000000)
+print(all_p[0])
+pickle.dump(all_p,open( "save5.pkl", "wb" ))
+all_p2 = pickle.load( open( "save5.pkl", "rb" ) )
+print(all_p2[0])
+
+
+
 
 plt.show()
 
