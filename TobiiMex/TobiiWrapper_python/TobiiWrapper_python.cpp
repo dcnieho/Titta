@@ -656,7 +656,8 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         // setters (though we can easily provide the getter for this property too, so lets do that to keep our user's life simple
         .def_property("device_name", [](TobiiMex& instance_) { return instance_.getConnectedEyeTracker().deviceName; }, &TobiiMex::setDeviceName)
         // modifiers
-        .def("apply_licenses", &TobiiMex::applyLicenses)
+        .def("apply_licenses", &TobiiMex::applyLicenses,
+            "licenses"_a)
         .def("clear_licenses", &TobiiMex::clearLicenses)
 
         //// calibration
