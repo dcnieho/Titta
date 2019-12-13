@@ -17,13 +17,15 @@ namespace TobiiTypes
         eyeTracker() = default;
         eyeTracker(TobiiResearchEyeTracker* et_);
         eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
-            TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_);
+            float frequency_, std::string trackingMode_, TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_);
 
         void refreshInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
 
     public:
         TobiiResearchEyeTracker*    et = nullptr;
         std::string                 deviceName, serialNumber, model, firmwareVersion, runtimeVersion, address;
+        float                       frequency;
+        std::string                 trackingMode;
         TobiiResearchCapabilities   capabilities = TOBII_RESEARCH_CAPABILITIES_NONE;
         std::vector<float>          supportedFrequencies;
         std::vector<std::string>    supportedModes;

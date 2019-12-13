@@ -16,19 +16,19 @@ namespace TobiiTypes
     };
 
     eyeTracker::eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
-        TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_) :
+        float frequency_, std::string trackingMode_, TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_) :
         deviceName(deviceName_),
         serialNumber(serialNumber_),
         model(model_),
         firmwareVersion(firmwareVersion_),
         runtimeVersion(runtimeVersion_),
         address(address_),
+        frequency(frequency_),
+        trackingMode(trackingMode_),
         capabilities(capabilities_),
         supportedFrequencies(supportedFrequencies_),
         supportedModes(supportedModes_)
-    {
-
-    }
+    {}
 
     void eyeTracker::refreshInfo(std::optional<std::string> paramToRefresh_ /*= std::nullopt*/)
     {
@@ -94,6 +94,27 @@ namespace TobiiTypes
                 ErrorExit("Cannot get eye tracker address", status);
             address = addressT;
             tobii_research_free_string(addressT);
+            if (singleOpt) return;
+        }
+
+        // frequency and tracking mode
+        if (!singleOpt || paramToRefresh_ == "frequency")
+        {
+            float gaze_frequency;
+            status = tobii_research_get_gaze_output_frequency(et, &gaze_frequency);
+            if (status != TOBII_RESEARCH_STATUS_OK)
+                ErrorExit("Cannot get eye tracker current frequency", status);
+            frequency = gaze_frequency;
+            if (singleOpt) return;
+        }
+        if (!singleOpt || paramToRefresh_ == "trackingMode")
+        {
+            char* tracking_mode;
+            status = tobii_research_get_eye_tracking_mode(et, &tracking_mode);
+            if (status != TOBII_RESEARCH_STATUS_OK)
+                ErrorExit("Cannot get eye tracker current tracking mode", status);
+            trackingMode = tracking_mode;
+            tobii_research_free_string(tracking_mode);
             if (singleOpt) return;
         }
 

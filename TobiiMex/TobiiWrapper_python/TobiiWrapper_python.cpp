@@ -258,18 +258,20 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_readwrite("firmware_version", &TobiiTypes::eyeTracker::firmwareVersion)
         .def_readwrite("runtime_version", &TobiiTypes::eyeTracker::runtimeVersion)
         .def_readwrite("address", &TobiiTypes::eyeTracker::address)
+        .def_readwrite("frequency", &TobiiTypes::eyeTracker::frequency)
+        .def_readwrite("tracking_mode", &TobiiTypes::eyeTracker::trackingMode)
         .def_property_readonly("capabilities", &convertCapabilities)
         .def_readwrite("supported_frequencies", &TobiiTypes::eyeTracker::supportedFrequencies)
         .def_readwrite("supported_modes", &TobiiTypes::eyeTracker::supportedModes)
         .def(py::pickle(
             [](const TobiiTypes::eyeTracker& p) { // __getstate__
-                return py::make_tuple(p.deviceName, p.serialNumber, p.model, p.firmwareVersion, p.runtimeVersion, p.address, p.capabilities, p.supportedFrequencies, p.supportedModes);
+                return py::make_tuple(p.deviceName, p.serialNumber, p.model, p.firmwareVersion, p.runtimeVersion, p.address, p.frequency, p.trackingMode, p.capabilities, p.supportedFrequencies, p.supportedModes);
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 9)
+                if (t.size() != 11)
                     throw std::runtime_error("Invalid state!");
 
-                TobiiTypes::eyeTracker p{ t[0].cast<std::string>(),t[1].cast<std::string>(),t[2].cast<std::string>(),t[3].cast<std::string>(),t[4].cast<std::string>(),t[5].cast<std::string>(),t[6].cast<TobiiResearchCapabilities>(),t[7].cast<std::vector<float>>(),t[8].cast<std::vector<std::string>>() };
+                TobiiTypes::eyeTracker p{ t[0].cast<std::string>(),t[1].cast<std::string>(),t[2].cast<std::string>(),t[3].cast<std::string>(),t[4].cast<std::string>(),t[5].cast<std::string>(),t[6].cast<float>(),t[7].cast<std::string>(),t[8].cast<TobiiResearchCapabilities>(),t[9].cast<std::vector<float>>(),t[10].cast<std::vector<std::string>>() };
                 return p;
             }
         ))
@@ -835,9 +837,9 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             [](TobiiMex& instance_)
             {
 #ifdef NDEBUG
-                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getFrequency(), instance_.getEyeTrackerInfo().address.c_str());
+                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
 #else
-                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getFrequency(), instance_.getEyeTrackerInfo().address.c_str());
+                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
 #endif
             })
 
@@ -863,8 +865,8 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_property_readonly("capabilities", [](TobiiMex& instance_) { return convertCapabilities(instance_.getEyeTrackerInfo("capabilities").capabilities); })
         .def_property_readonly("supported_frequencies", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("supportedFrequencies").supportedFrequencies; })
         .def_property_readonly("supported_modes", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
-        .def_property("frequency", &TobiiMex::getFrequency, &TobiiMex::setFrequency)
-        .def_property("tracking_mode", &TobiiMex::getTrackingMode, &TobiiMex::setTrackingMode)
+        .def_property("frequency", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("frequency").frequency; }, &TobiiMex::setFrequency)
+        .def_property("tracking_mode", [](TobiiMex& instance_) { return instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &TobiiMex::setTrackingMode)
         .def_property_readonly("track_box", &TobiiMex::getTrackBox)
         .def_property_readonly("display_area", &TobiiMex::getDisplayArea)
         // modifiers

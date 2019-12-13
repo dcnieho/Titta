@@ -443,12 +443,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::GetFrequency:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getFrequency());
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("frequency").frequency);
             break;
         }
         case Action::GetTrackingMode:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getTrackingMode());
+            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("trackingMode").trackingMode);
             break;
         }
         case Action::GetTrackBox:

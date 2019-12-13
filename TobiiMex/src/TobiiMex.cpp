@@ -380,25 +380,6 @@ const TobiiTypes::eyeTracker TobiiMex::getEyeTrackerInfo(std::optional<std::stri
 
     return _eyetracker;
 }
-const float TobiiMex::getFrequency() const
-{
-    float gaze_output_frequency;
-    TobiiResearchStatus status = tobii_research_get_gaze_output_frequency(_eyetracker.et, &gaze_output_frequency);
-    if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye tracker current frequency", status);
-    return gaze_output_frequency;
-}
-const std::string TobiiMex::getTrackingMode() const
-{
-    char* eye_tracking_mode;
-    TobiiResearchStatus status = tobii_research_get_eye_tracking_mode(_eyetracker.et, &eye_tracking_mode);
-    if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye tracker current tracking mode", status);
-
-    std::string etMode(eye_tracking_mode);
-    tobii_research_free_string(eye_tracking_mode);
-    return etMode;
-}
 const TobiiResearchTrackBox TobiiMex::getTrackBox() const
 {
     TobiiResearchTrackBox track_box;
@@ -421,12 +402,18 @@ void TobiiMex::setFrequency(float frequency_)
     TobiiResearchStatus status = tobii_research_set_gaze_output_frequency(_eyetracker.et, frequency_);
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker frequency", status);
+
+    // refresh eye tracker info to get updated frequency
+    _eyetracker.refreshInfo("frequency");
 }
 void TobiiMex::setTrackingMode(std::string trackingMode_)
 {
     TobiiResearchStatus status = tobii_research_set_eye_tracking_mode(_eyetracker.et, trackingMode_.c_str());
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Cannot set eye tracker tracking mode", status);
+
+    // refresh eye tracker info to get updated tracking mode
+    _eyetracker.refreshInfo("trackingMode");
 }
 void TobiiMex::setDeviceName(std::string deviceName_)
 {
