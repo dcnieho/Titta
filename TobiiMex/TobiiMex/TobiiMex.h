@@ -149,7 +149,7 @@ public:
 
 private:
     void Init();
-    // Tobii callbacks needs to be friends
+    // Tobii callbacks need to be friends
     friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
     friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
     friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
