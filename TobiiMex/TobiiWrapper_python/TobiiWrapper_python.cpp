@@ -43,6 +43,23 @@ const char* external_signal_change_type(TobiiResearchExternalSignalChangeType ty
 
 template <typename T> std::string toString(const T& instance_, std::string spacing="");
 
+template <> std::string toString<>(const TobiiResearchSDKVersion& instance_, std::string spacing)
+{
+    return string_format("SDK_version %d.%d.%d.%d", instance_.major, instance_.minor, instance_.revision, instance_.build);
+}
+template <> std::string toString<>(const TobiiTypes::eyeTracker& instance_, std::string spacing)
+{
+    return string_format("eye_tracker_info for %s (%s)", instance_.model.c_str(), instance_.serialNumber.c_str());
+}
+template <> std::string toString<>(const TobiiTypes::logMessage& instance_, std::string spacing)
+{
+    return string_format("log_message (system_time: %" PRId64 ", source: %s, level: %s): %s", instance_.system_time_stamp, TobiiResearchLogSourceToString(instance_.source).c_str(), TobiiResearchLogLevelToString(instance_.level).c_str(), instance_.message.c_str());
+}
+template <> std::string toString<>(const TobiiTypes::streamErrorMessage& instance_, std::string spacing)
+{
+    return string_format("stream_error_message (machine: %s, system_time: %" PRId64 ", source: %s, error: %s): %s", instance_.machineSerial.c_str(), instance_.system_time_stamp, TobiiResearchStreamErrorSourceToString(instance_.source).c_str(), TobiiResearchStreamErrorToString(instance_.error).c_str(), instance_.message.c_str());
+}
+
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
 {
 #ifdef NDEBUG
@@ -156,6 +173,127 @@ PYBIND11_MODULE(TobiiWrapper_python, m)
 PYBIND11_MODULE(TobiiWrapper_python_d, m)
 #endif
 {
+    // SDK and eye tracker info
+    py::class_<TobiiResearchSDKVersion>(m, "SDK_version")
+        .def_readwrite("major", &TobiiResearchSDKVersion::major)
+        .def_readwrite("minor", &TobiiResearchSDKVersion::minor)
+        .def_readwrite("revision", &TobiiResearchSDKVersion::revision)
+        .def_readwrite("build", &TobiiResearchSDKVersion::build)
+        .def(py::pickle(
+            [](const TobiiResearchSDKVersion& p) { // __getstate__
+                return py::make_tuple(p.major, p.minor, p.revision, p.build);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 4)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiResearchSDKVersion p{ t[0].cast<int>(),t[1].cast<int>(),t[2].cast<int>(),t[3].cast<int>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiResearchSDKVersion& instance_) { return toString(instance_); })
+        ;
+    py::class_<TobiiTypes::eyeTracker>(m, "eye_tracker_info")
+        .def_readwrite("device_name", &TobiiTypes::eyeTracker::deviceName)
+        .def_readwrite("serial_number", &TobiiTypes::eyeTracker::serialNumber)
+        .def_readwrite("model", &TobiiTypes::eyeTracker::model)
+        .def_readwrite("firmware_version", &TobiiTypes::eyeTracker::firmwareVersion)
+        .def_readwrite("runtime_version", &TobiiTypes::eyeTracker::runtimeVersion)
+        .def_readwrite("address", &TobiiTypes::eyeTracker::address)
+        .def_readwrite("capabilities", &TobiiTypes::eyeTracker::capabilities)
+        .def_readwrite("supported_frequencies", &TobiiTypes::eyeTracker::supportedFrequencies)
+        .def_readwrite("supported_modes", &TobiiTypes::eyeTracker::supportedModes)
+        .def(py::pickle(
+            [](const TobiiTypes::eyeTracker& p) { // __getstate__
+                return py::make_tuple(p.deviceName, p.serialNumber, p.model, p.firmwareVersion, p.runtimeVersion, p.address, p.capabilities, p.supportedFrequencies, p.supportedModes);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 9)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::eyeTracker p{ t[0].cast<std::string>(),t[1].cast<std::string>(),t[2].cast<std::string>(),t[3].cast<std::string>(),t[4].cast<std::string>(),t[5].cast<std::string>(),t[6].cast<TobiiResearchCapabilities>(),t[7].cast<std::vector<float>>(),t[8].cast<std::vector<std::string>>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiTypes::eyeTracker& instance_) { return toString(instance_); })
+        ;
+
+    // logging
+    py::enum_<TobiiResearchLogSource>(m, "log_source")
+        .value("stream_engine", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE)
+        .value("SDK", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_SDK)
+        .value("firmware_upgrade", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE)
+        .export_values()
+        ;
+    py::enum_<TobiiResearchLogLevel>(m, "log_level")
+        .value("error", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_ERROR)
+        .value("warning", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_WARNING)
+        .value("information", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_INFORMATION)
+        .value("debug", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_DEBUG)
+        .value("trace", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_TRACE)
+        .export_values()
+        ;
+    py::class_<TobiiTypes::logMessage>(m, "log_message")
+        .def_readwrite("system_time_stamp", &TobiiTypes::logMessage::system_time_stamp)
+        .def_readwrite("source", &TobiiTypes::logMessage::source)
+        .def_readwrite("level", &TobiiTypes::logMessage::level)
+        .def_readwrite("message", &TobiiTypes::logMessage::message)
+        .def(py::pickle(
+            [](const TobiiTypes::logMessage& p) { // __getstate__
+                return py::make_tuple(p.system_time_stamp, p.source, p.level, p.message);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 4)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::logMessage p{ t[0].cast<int64_t>(),t[1].cast<TobiiResearchLogSource>(),t[2].cast<TobiiResearchLogLevel>(),t[3].cast<std::string>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiTypes::logMessage& instance_) { return toString(instance_); })
+        ;
+    py::enum_<TobiiResearchStreamError>(m, "stream_error")
+        .value("connection_lost", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_CONNECTION_LOST)
+        .value("insufficient_license", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_INSUFFICIENT_LICENSE)
+        .value("not_supported", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_NOT_SUPPORTED)
+        .value("too_many_subscribers", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_TOO_MANY_SUBSCRIBERS)
+        .value("internal_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_INTERNAL_ERROR)
+        .value("user_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_USER_ERROR)
+        .export_values()
+        ;
+    py::enum_<TobiiResearchStreamErrorSource>(m, "stream_error_source")
+        .value("user", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_USER)
+        .value("stream_pump", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_STREAM_PUMP)
+        .value("subscription_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_GAZE_DATA)
+        .value("subscription_external_signal", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_EXTERNAL_SIGNAL)
+        .value("subscription_time_synchronization_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_TIME_SYNCHRONIZATION_DATA)
+        .value("subscription_eye_image", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_EYE_IMAGE)
+        .value("subscription_notification", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_NOTIFICATION)
+        .value("subscription_HMD_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_HMD_GAZE_DATA)
+        .value("subscription_user_position_guide", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE)
+        .export_values()
+        ;
+    py::class_<TobiiTypes::streamErrorMessage>(m, "stream_error_message")
+        .def_readwrite("machine_serial", &TobiiTypes::streamErrorMessage::machineSerial)
+        .def_readwrite("system_time_stamp", &TobiiTypes::streamErrorMessage::system_time_stamp)
+        .def_readwrite("error", &TobiiTypes::streamErrorMessage::error)
+        .def_readwrite("source", &TobiiTypes::streamErrorMessage::source)
+        .def_readwrite("message", &TobiiTypes::streamErrorMessage::message)
+        .def(py::pickle(
+            [](const TobiiTypes::streamErrorMessage& p) { // __getstate__
+                return py::make_tuple(p.machineSerial, p.system_time_stamp, p.error, p.source, p.message);
+            },
+            [](py::tuple t) { // __setstate__
+                if (t.size() != 5)
+                    throw std::runtime_error("Invalid state!");
+
+                TobiiTypes::streamErrorMessage p{ t[0].cast<std::string>(),t[1].cast<int64_t>(),t[2].cast<TobiiResearchStreamError>(),t[3].cast<TobiiResearchStreamErrorSource>(),t[4].cast<std::string>() };
+                return p;
+            }
+        ))
+        .def("__repr__", [](const TobiiTypes::streamErrorMessage& instance_) { return toString(instance_); })
+        ;
+
     // gaze
     py::enum_<TobiiResearchValidity>(m, "validity")
         .value("invalid", TobiiResearchValidity::TOBII_RESEARCH_VALIDITY_INVALID)
@@ -432,9 +570,33 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 #endif
             })
 
+        //// global SDK functions
+        .def_static("getSDKVersion", &TobiiMex::getSDKVersion)
+        .def_static("getSystemTimestamp", &TobiiMex::getSystemTimestamp)
+        .def_static("findAllEyeTrackers", &TobiiMex::findAllEyeTrackers)
+        // logging
+        .def_static("startLogging", &TobiiMex::startLogging,
+            py::arg_v("initialBufferSize", std::nullopt, "None"))
+        .def_static("getLog", &TobiiMex::getLog,
+            py::arg_v("clearLog", std::nullopt, "None"))
+        .def_static("stopLogging", &TobiiMex::stopLogging)
+
+        //// eye-tracker specific getters and setters
+        // getters
+        // setters
+        // modifiers
+
+        //// calibration
+
+        //// data streams
+        // query if stream is supported
+        // start stream
         .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TobiiMex::start),
             "stream"_a, py::arg_v("initialBufferSize", std::nullopt, "None"), py::arg_v("asGif", std::nullopt, "None"))
 
+        // request stream state
+
+        // consume samples (by default all)
         .def("consumeN",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
@@ -463,7 +625,9 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 return std::nullopt;
             },
             "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a="")
+        // consume samples within given timestamps (inclusive, by default whole buffer)
 
+        // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
         .def("peekN",
             [](TobiiMex& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> std::optional<std::variant<std::vector<TobiiMex::gaze>, std::vector<TobiiMex::eyeImage>, std::vector<TobiiMex::extSignal>, std::vector<TobiiMex::timeSync>, std::vector<TobiiMex::positioning>>>
@@ -492,7 +656,12 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 return std::nullopt;
             },
             "stream"_a, py::arg_v("NSamp", std::nullopt, "None"), "side"_a = "")
+        // peek samples within given timestamps (inclusive, by default whole buffer)
 
+        // clear all buffer contents
+        // clear contents buffer within given timestamps (inclusive, by default whole buffer)
+
+        // stop, optionally deletes the buffer
         .def("stop", py::overload_cast<std::string, std::optional<bool>>(&TobiiMex::stop),
             "stream"_a, py::arg_v("emptyBuffer", std::nullopt, "None"))
         ;
