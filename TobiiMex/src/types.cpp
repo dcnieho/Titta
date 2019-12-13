@@ -34,7 +34,7 @@ namespace TobiiTypes
         // get all info about the eye tracker
         TobiiResearchStatus status;
         // first bunch of strings
-        if (!singleOpt || paramToRefresh_=="device_name")
+        if (!singleOpt || paramToRefresh_=="deviceName")
         {
             char* device_name;
             status = tobii_research_get_device_name(et, &device_name);
@@ -43,7 +43,7 @@ namespace TobiiTypes
             deviceName = device_name;
             tobii_research_free_string(device_name);
         }
-        if (!singleOpt || paramToRefresh_ == "serial_number")
+        if (!singleOpt || paramToRefresh_ == "serialNumber")
         {
             char* serial_number;
             status = tobii_research_get_serial_number(et, &serial_number);
@@ -61,7 +61,7 @@ namespace TobiiTypes
             model = modelT;
             tobii_research_free_string(modelT);
         }
-        if (!singleOpt || paramToRefresh_ == "firmware_version")
+        if (!singleOpt || paramToRefresh_ == "firmwareVersion")
         {
             char* firmware_version;
             status = tobii_research_get_firmware_version(et, &firmware_version);
@@ -70,7 +70,7 @@ namespace TobiiTypes
             firmwareVersion = firmware_version;
             tobii_research_free_string(firmware_version);
         }
-        if (!singleOpt || paramToRefresh_ == "runtime_version")
+        if (!singleOpt || paramToRefresh_ == "runtimeVersion")
         {
             char* runtime_version;
             status = tobii_research_get_runtime_version(et, &runtime_version);
@@ -79,7 +79,7 @@ namespace TobiiTypes
             runtimeVersion = runtime_version;
             tobii_research_free_string(runtime_version);
         }
-        if (!singleOpt || paramToRefresh_ == "addressT")
+        if (!singleOpt || paramToRefresh_ == "address")
         {
             char* addressT;
             status = tobii_research_get_address(et, &addressT);
@@ -98,7 +98,7 @@ namespace TobiiTypes
         }
 
         // get supported sampling frequencies
-        if (!singleOpt || paramToRefresh_ == "supported_frequencies")
+        if (!singleOpt || paramToRefresh_ == "supportedFrequencies")
         {
             TobiiResearchGazeOutputFrequencies* tobiiFreqs = nullptr;
             supportedFrequencies.clear();
@@ -110,7 +110,7 @@ namespace TobiiTypes
         }
 
         // get supported eye tracking modes
-        if (!singleOpt || paramToRefresh_ == "supported_modes")
+        if (!singleOpt || paramToRefresh_ == "supportedModes")
         {
             TobiiResearchEyeTrackingModes* tobiiModes = nullptr;
             supportedModes.clear();
