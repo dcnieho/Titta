@@ -316,9 +316,7 @@ classdef Titta < handle
             
             % get info about the system
             obj.systemInfo                  = obj.buffer.getEyeTrackerInfo();
-            obj.systemInfo.samplerate       = obj.buffer.frequency;
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
-            obj.systemInfo.trackingMode     = obj.buffer.trackingMode;
             obj.systemInfo.SDKVersion       = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
             out.systemInfo                  = obj.systemInfo;
             
