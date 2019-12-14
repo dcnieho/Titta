@@ -95,6 +95,9 @@ res = []
 while res==[]:
     res = tw.calibration_retrieve_result()
 print(res)
+pickle.dump(res,open( "save.pkl", "wb" ))
+res2 = pickle.load( open( "save.pkl", "rb" ) )
+print(res2)
 
 tw.calibration_get_data()
 res = []
