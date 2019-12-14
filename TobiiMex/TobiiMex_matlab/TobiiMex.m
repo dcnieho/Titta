@@ -156,8 +156,8 @@ classdef TobiiMex < handle
         function eyeTracker = getEyeTrackerInfo(this)
             eyeTracker = this.cppmethod('getEyeTrackerInfo');
         end
-        function frequency = get.deviceName(this)
-            frequency = this.cppmethod('getDeviceName');
+        function deviceName = get.deviceName(this)
+            deviceName = this.cppmethod('getDeviceName');
         end
         function serialNumber = get.serialNumber(this)
             serialNumber = this.cppmethod('getSerialNumber');
