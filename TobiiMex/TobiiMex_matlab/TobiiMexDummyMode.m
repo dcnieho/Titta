@@ -140,40 +140,46 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         
         %% data streams
-        function supported = hasStream(~,stream)
+        function supported = hasStream(this,stream)
             assert(nargin>1,'Titta::buffer::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            supported   = checkValidStream(ensureStringIsChar(stream));
+            supported   = checkValidStream(this,stream);
         end
         function success = start(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            success = checkValidStream(ensureStringIsChar(stream));
+            success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = true;
             end
         end
         function success = stop(this,stream,~)
             assert(nargin>1,'Titta::buffer::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            success = checkValidStream(ensureStringIsChar(stream));
+            success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = false;
             end
         end
         function status = isRecording(this,stream)
             assert(nargin>1,'Titta::buffer::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
+            stream = checkValidStream(this,stream);
             status = false;
             if strcmpi(stream,'gaze')
                 status = this.isRecordingGaze;
             end
         end
-        function clear(~,~)
+        function clear(this,stream)
             assert(nargin>1,'Titta::buffer::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            checkValidStream(this,stream);
         end
-        function clearTimeRange(~,~,~,~)
+        function clearTimeRange(this,stream,~,~)
+            assert(nargin>1,'Titta::buffer::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            checkValidStream(this,stream);
         end
-        function data = consumeN(this,stream,~,~)
+        function data = consumeN(this,stream,~,side)
             assert(nargin>1,'Titta::buffer::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
+            stream = checkValidStream(this,stream);
+            if nargin>3
+                stream = checkValidBufferSide(this,side);
+            end
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
@@ -181,15 +187,18 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         function data = consumeTimeRange(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
+            stream = checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
             end
         end
-        function data = peekN(this,stream,~,~)
+        function data = peekN(this,stream,~,side)
             assert(nargin>1,'Titta::buffer::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
+            stream = checkValidStream(this,stream);
+            if nargin>3
+                stream = checkValidBufferSide(this,side);
+            end
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
@@ -197,7 +206,7 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         function data = peekTimeRange(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            stream = ensureStringIsChar(stream);
+            stream = checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
@@ -214,9 +223,11 @@ if isa(str,'string')
 end
 end
 
-function isValid = checkValidStream(stream)
-isValid = ismember(stream,{'gaze','eyeImage','externalSignal','timeSync','positioning'});
-assert(isValid,"Titta: Requested stream ""%s"" is not recognized. Supported streams are: ""gaze"", ""eyeImage"", ""externalSignal"", ""timeSync"" and ""positioning""",stream);
+function isValid = checkValidStream(this,stream)
+isValid = this.cppmethodGlobal('checkDataStream',ensureStringIsChar(stream));
+end
+function isValid = checkValidBufferSide(this,side)
+isValid = this.cppmethodGlobal('checkBufferSide',ensureStringIsChar(side));
 end
 
 function sample = getMouseSample(isRecording)
