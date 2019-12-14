@@ -124,40 +124,40 @@ plt.plot(np.diff(ut2) / 1000)
 
 all_images = tw.peek_time_range('eye_image') # by default peeks all
 print(all_images[0])
-pickle.dump(all_images,open( "save2.pkl", "wb" ))
+pickle.dump(all_images,open( "save.pkl", "wb" ))
 
 plt.figure()
 plt.imshow(all_images[0].image)
 
-all_images2 = pickle.load( open( "save2.pkl", "rb" ) )
+all_images2 = pickle.load( open( "save.pkl", "rb" ) )
 plt.figure()
 plt.imshow(all_images2[0].image)
 
 
 all_ext = tw.peek_N('external_signal',10000000)
 print(all_ext[0])
-pickle.dump(all_ext,open( "save3.pkl", "wb" ))
-all_ext2 = pickle.load( open( "save3.pkl", "rb" ) )
+pickle.dump(all_ext,open( "save.pkl", "wb" ))
+all_ext2 = pickle.load( open( "save.pkl", "rb" ) )
 print(all_ext2[0])
 
 
 all_t = tw.peek_n('time_sync',10000000)
 print(all_t[0])
-pickle.dump(all_t,open( "save4.pkl", "wb" ))
-all_t2 = pickle.load( open( "save4.pkl", "rb" ) )
+pickle.dump(all_t,open( "save.pkl", "wb" ))
+all_t2 = pickle.load( open( "save.pkl", "rb" ) )
 print(all_t2[0])
 
 
 all_p = tw.peek_n('positioning',10000000)
 print(all_p[0])
-pickle.dump(all_p,open( "save5.pkl", "wb" ))
-all_p2 = pickle.load( open( "save5.pkl", "rb" ) )
+pickle.dump(all_p,open( "save.pkl", "wb" ))
+all_p2 = pickle.load( open( "save.pkl", "rb" ) )
 print(all_p2[0])
 
 l=tw.get_log()
 print(l)
-pickle.dump(l,open( "save6.pkl", "wb" ))
-l2 = pickle.load( open( "save6.pkl", "rb" ) )
+pickle.dump(l,open( "save.pkl", "wb" ))
+l2 = pickle.load( open( "save.pkl", "rb" ) )
 print(l2)
 tw.stop_logging()
 
