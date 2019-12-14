@@ -1011,20 +1011,22 @@ namespace mxTypes
     }
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
     {
-        const char* fieldNames[] = {"deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","capabilities","supportedFrequencies","supportedModes"};
+        const char* fieldNames[] = {"deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","frequency","trackingMode","capabilities","supportedFrequencies","supportedModes"};
         mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         for (size_t i = 0; i!=data_.size(); i++)
         {
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 0, mxCreateString(data_[i].deviceName.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 1, mxCreateString(data_[i].serialNumber.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 2, mxCreateString(data_[i].model.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 3, mxCreateString(data_[i].firmwareVersion.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 4, mxCreateString(data_[i].runtimeVersion.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 5, mxCreateString(data_[i].address.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 6, ToMatlab(data_[i].capabilities));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 7, ToMatlab(std::vector<double>(data_[i].supportedFrequencies.begin(), data_[i].supportedFrequencies.end()))); // return frequencies as double, not single, precision
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 8, ToMatlab(data_[i].supportedModes));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  0, mxCreateString(data_[i].deviceName.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  1, mxCreateString(data_[i].serialNumber.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  2, mxCreateString(data_[i].model.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  3, mxCreateString(data_[i].firmwareVersion.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  4, mxCreateString(data_[i].runtimeVersion.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  5, mxCreateString(data_[i].address.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  6, ToMatlab(static_cast<double>(data_[i].frequency)));    // output as double, not single
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  7, mxCreateString(data_[i].trackingMode.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  8, ToMatlab(data_[i].capabilities));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  9, ToMatlab(std::vector<double>(data_[i].supportedFrequencies.begin(), data_[i].supportedFrequencies.end()))); // return frequencies as double, not single, precision
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 10, ToMatlab(data_[i].supportedModes));
         }
 
         return out;
