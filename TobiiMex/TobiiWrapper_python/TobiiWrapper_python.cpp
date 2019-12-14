@@ -877,7 +877,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         //// calibration
         .def("enter_calibration_mode", &TobiiMex::enterCalibrationMode,
             "do_monocular"_a)
-        .def("enter_calibration_mode", &TobiiMex::enterCalibrationMode,
+        .def("leave_calibration_mode", &TobiiMex::leaveCalibrationMode,
             "force"_a)
         .def("calibration_collect_data", &TobiiMex::calibrationCollectData,
             "coordinates"_a, py::arg_v("eye", std::nullopt, "None"))
