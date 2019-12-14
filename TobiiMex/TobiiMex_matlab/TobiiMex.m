@@ -154,40 +154,76 @@ classdef TobiiMex < handle
         %% eye-tracker specific getters and setters
         % getters
         function eyeTracker = getEyeTrackerInfo(this)
-            eyeTracker = this.cppmethod('getEyeTrackerInfo');
+            eyeTracker = struct();
+            if ~isempty(this.instanceHandle)
+                eyeTracker = this.cppmethod('getEyeTrackerInfo');
+            end
         end
         function deviceName = get.deviceName(this)
-            deviceName = this.cppmethod('getDeviceName');
+            deviceName = '';
+            if ~isempty(this.instanceHandle)
+                deviceName = this.cppmethod('getDeviceName');
+            end
         end
         function serialNumber = get.serialNumber(this)
-            serialNumber = this.cppmethod('getSerialNumber');
+            serialNumber = '';
+            if ~isempty(this.instanceHandle)
+                serialNumber = this.cppmethod('getSerialNumber');
+            end
         end
         function model = get.model(this)
-            model = this.cppmethod('getModel');
+            model = '';
+            if ~isempty(this.instanceHandle)
+                model = this.cppmethod('getModel');
+            end
         end
         function firmwareVersion = get.firmwareVersion(this)
-            firmwareVersion = this.cppmethod('getFirmwareVersion');
+            firmwareVersion = '';
+            if ~isempty(this.instanceHandle)
+                firmwareVersion = this.cppmethod('getFirmwareVersion');
+            end
         end
         function runtimeVersion = get.runtimeVersion(this)
-            runtimeVersion = this.cppmethod('getRuntimeVersion');
+            runtimeVersion = '';
+            if ~isempty(this.instanceHandle)
+                runtimeVersion = this.cppmethod('getRuntimeVersion');
+            end
         end
         function address = get.address(this)
-            address = this.cppmethod('getAddress');
+            address = '';
+            if ~isempty(this.instanceHandle)
+                address = this.cppmethod('getAddress');
+            end
         end
         function capabilities = get.capabilities(this)
-            capabilities = this.cppmethod('getCapabilities');
+            capabilities = {};
+            if ~isempty(this.instanceHandle)
+                capabilities = this.cppmethod('getCapabilities');
+            end
         end
         function supportedFrequencies = get.supportedFrequencies(this)
-            supportedFrequencies = this.cppmethod('getSupportedFrequencies');
+            supportedFrequencies = [];
+            if ~isempty(this.instanceHandle)
+                supportedFrequencies = this.cppmethod('getSupportedFrequencies');
+            end
         end
         function supportedModes = get.supportedModes(this)
-            supportedModes = this.cppmethod('getSupportedModes');
+            supportedModes = {};
+            if ~isempty(this.instanceHandle)
+                supportedModes = this.cppmethod('getSupportedModes');
+            end
         end
         function frequency = get.frequency(this)
-            frequency = this.cppmethod('getFrequency');
+            frequency = [];
+            if ~isempty(this.instanceHandle)
+                frequency = this.cppmethod('getFrequency');
+            end
         end
         function trackingMode = get.trackingMode(this)
-            trackingMode = this.cppmethod('getTrackingMode');
+            trackingMode = '';
+            if ~isempty(this.instanceHandle)
+                trackingMode = this.cppmethod('getTrackingMode');
+            end
         end
         function trackBox = getTrackBox(this)
             trackBox = this.cppmethod('getTrackBox');
@@ -197,18 +233,24 @@ classdef TobiiMex < handle
         end
         % setters
         function set.deviceName(this,deviceName)
-            assert(nargin>1,'TobiiMex::setDisplayName: provide device name argument.');
-            deviceName = ensureStringIsChar(deviceName);
-            this.cppmethod('setDeviceName',deviceName);
+            if ~isempty(this.instanceHandle)
+                assert(nargin>1,'TobiiMex::setDisplayName: provide device name argument.');
+                deviceName = ensureStringIsChar(deviceName);
+                this.cppmethod('setDeviceName',deviceName);
+            end
         end
         function set.frequency(this,frequency)
-            assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
-            this.cppmethod('setFrequency',single(frequency));
+            if ~isempty(this.instanceHandle)
+                assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
+                this.cppmethod('setFrequency',single(frequency));
+            end
         end
         function set.trackingMode(this,trackingMode)
-            assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');
-            trackingMode = ensureStringIsChar(trackingMode);
-            this.cppmethod('setTrackingMode',trackingMode);
+            if ~isempty(this.instanceHandle)
+                assert(nargin>1,'TobiiMex::setTrackingMode: provide tracking mode argument.');
+                trackingMode = ensureStringIsChar(trackingMode);
+                this.cppmethod('setTrackingMode',trackingMode);
+            end
         end
         % modifiers
         function applyLicenses(this,licenses)
