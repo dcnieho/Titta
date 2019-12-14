@@ -24,7 +24,7 @@ namespace TobiiTypes
     public:
         TobiiResearchEyeTracker*    et = nullptr;
         std::string                 deviceName, serialNumber, model, firmwareVersion, runtimeVersion, address;
-        float                       frequency;
+        float                       frequency = 0.f;
         std::string                 trackingMode;
         TobiiResearchCapabilities   capabilities = TOBII_RESEARCH_CAPABILITIES_NONE;
         std::vector<float>          supportedFrequencies;
