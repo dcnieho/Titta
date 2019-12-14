@@ -16,6 +16,12 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 
+// forward declares
+py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_);
+std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities data_);
+std::vector<TobiiResearchCalibrationPoint> CalibrationPointsToVec(const TobiiResearchCalibrationResult& instance_);
+std::vector<TobiiResearchCalibrationSample> CalibrationSamplesToVec(const TobiiResearchCalibrationPoint& instance_);
+
 
 
 template<typename ... Args>
@@ -69,17 +75,41 @@ template <> std::string toString<>(const TobiiResearchDisplayArea& instance_, st
     return string_format("display_area for %.1fmm x %.1fmm screen", instance_.width, instance_.height);
 }
 
-template <> std::string toString<>(const TobiiResearchCalibrationResult& instance_, std::string spacing)
+template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instance_, std::string spacing)
 {
-    return string_format("calibration_result for %d calibration points", instance_.calibration_point_count);
+    return string_format("calibration_eye_data (%s) at [%.4f,%.4f]", calibrationEyeValidityToString(instance_.validity), instance_.position_on_display_area.x, instance_.position_on_display_area.y);
+}
+template <> std::string toString<>(const TobiiResearchCalibrationSample& instance_, std::string spacing)
+{
+    auto nextLvl = spacing + "  ";
+    return string_format("calibration_sample:\n%sleft: %s\n%sright: %s", nextLvl.c_str(), toString(instance_.left_eye), nextLvl.c_str(), toString(instance_.right_eye));
 }
 template <> std::string toString<>(const TobiiResearchCalibrationPoint& instance_, std::string spacing)
 {
-    return string_format("calibration_point with %d samples", instance_.calibration_sample_count);
+    int nValidLeft = 0, nValidRight = 0;
+    for (auto& sample : CalibrationSamplesToVec(instance_))
+    {
+        if (sample.left_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
+            ++nValidLeft;
+        if (sample.right_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
+            ++nValidRight;
+    }
+    auto ret = string_format("calibration_point at [%.4f,%.4f] with %d samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_sample_count, nValidLeft, nValidRight);
+#ifndef NDEBUG
+    auto nextLvl = spacing + "  ";
+    ret += ":\n";
+    for (auto& sample : CalibrationSamplesToVec(instance_))
+        ret += string_format("%s%s\n", nextLvl.c_str(), toString(sample,nextLvl));
+#endif
+
+    return ret;
 }
-template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instance_, std::string spacing)
+template <> std::string toString<>(const TobiiResearchCalibrationResult& instance_, std::string spacing)
 {
-    return string_format("calibration_eye_data (%s) at [%.4f,%.4f]", instance_.validity, instance_.position_on_display_area.x, instance_.position_on_display_area.y);
+    std::string pointStr;
+    for (auto& point : CalibrationPointsToVec(instance_))
+        pointStr += string_format("  %s\n", toString(point, "  ").c_str());
+    return string_format("calibration_result for %d calibration points:\n[%s]", instance_.calibration_point_count, pointStr.c_str());
 }
 
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
@@ -489,6 +519,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 return p;
             }
         ))
+        .def("__repr__", [](const TobiiResearchCalibrationSample& instance_) { return toString(instance_); })
         ;
     py::class_<TobiiResearchCalibrationPoint>(m, "calibration_point")
         .def_readwrite("position_on_display_area", &TobiiResearchCalibrationPoint::position_on_display_area)
