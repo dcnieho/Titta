@@ -89,6 +89,13 @@ classdef Titta < handle
         end
         
         function setOptions(obj,settings)
+            % special handling of changes to frequency and tracking mode
+            if isfield(settings,'freq') && settings.freq ~= obj.settings.freq
+                obj.frequency = settings.freq;
+            end
+            if isfield(settings,'trackingMode') && settings.trackingMode ~= obj.settings.trackingMode
+                obj.trackingMode = settings.trackingMode;
+            end
             if obj.isInitialized
                 % only a subset of settings is allowed. Overwrite those
                 % that are not allowed to be changed so that we are certain
@@ -753,8 +760,6 @@ classdef Titta < handle
             % run
             notAllowed = {...
                 'tracker'
-                'trackingMode'
-                'freq'
                 'serialNumber'
                 'licenseFile'
                 'nTryReConnect'
