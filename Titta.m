@@ -90,10 +90,10 @@ classdef Titta < handle
         
         function setOptions(obj,settings)
             % special handling of changes to frequency and tracking mode
-            if isfield(settings,'freq') && settings.freq ~= obj.settings.freq
+            if isfield(settings,'freq') && isfield(obj.settings,'freq') && settings.freq ~= obj.settings.freq
                 obj.frequency = settings.freq;
             end
-            if isfield(settings,'trackingMode') && settings.trackingMode ~= obj.settings.trackingMode
+            if isfield(settings,'trackingMode') && isfield(obj.settings,'trackingMode') && settings.trackingMode ~= obj.settings.trackingMode
                 obj.trackingMode = settings.trackingMode;
             end
             if obj.isInitialized
