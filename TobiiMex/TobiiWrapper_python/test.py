@@ -63,6 +63,15 @@ print(tw.display_area)
 #tw.clear_licenses()
 #tw.apply_licenses()
 
+# test clock, is time.clock() same as Tobii system clock?
+clks = []
+for k in enumerate(1000):
+    if k%10<5:
+        clks.append[time.clock(), TobiiWrapper.wrapper.get_system_timestamp()]
+    else:
+        clks.append[TobiiWrapper.wrapper.get_system_timestamp(), time.clock()]
+
+
 # test calibration (just go through the motions, that it fails doesn't matter for our test)
 
 
