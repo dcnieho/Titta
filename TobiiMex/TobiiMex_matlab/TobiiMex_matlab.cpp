@@ -443,7 +443,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::GetFrequency:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("frequency").frequency);
+            plhs[0] = mxTypes::ToMatlab(static_cast<double>(instance->getEyeTrackerInfo("frequency").frequency));
             break;
         }
         case Action::GetTrackingMode:
@@ -473,12 +473,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::SetFrequency:
         {
-            float freq = 0.f;
+            double freq = 0.;
             if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsSingle(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
-                mexErrMsgTxt("setFrequency: Expected second argument to be a float scalar.");
-            freq = *static_cast<float*>(mxGetData(prhs[2]));
+                mexErrMsgTxt("setFrequency: Expected second argument to be a double scalar.");
+            freq = *static_cast<double*>(mxGetData(prhs[2]));
 
-            instance->setFrequency(freq);
+            instance->setFrequency(static_cast<float>(freq));
             break;
         }
         case Action::SetTrackingMode:

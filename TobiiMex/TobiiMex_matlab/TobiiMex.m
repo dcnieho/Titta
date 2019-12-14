@@ -242,7 +242,7 @@ classdef TobiiMex < handle
         function set.frequency(this,frequency)
             if ~isempty(this.instanceHandle)
                 assert(nargin>1,'TobiiMex::setFrequency: provide frequency argument.');
-                this.cppmethod('setFrequency',single(frequency));
+                this.cppmethod('setFrequency',double(frequency));
             end
         end
         function set.trackingMode(this,trackingMode)
