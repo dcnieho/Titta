@@ -61,9 +61,9 @@ print(tw.display_area)
    
 #%% Record some data (and test all streams while we do so)
 success = tw.start('gaze')
-success = tw.start('eyeImage')
-success = tw.start('externalSignal')
-success = tw.start('timeSync')
+success = tw.start('eye_image')
+success = tw.start('external_signal')
+success = tw.start('time_sync')
 success = tw.start('positioning')
 core.wait(0.2)
 n_samples = tw.gaze_frequency * 2 # Record what should be two seconds of data
@@ -89,9 +89,9 @@ while k < n_samples:
    
 print(time.clock() - t0)
 success = tw.stop('gaze')
-success = tw.stop('eyeImage')
-success = tw.stop('externalSignal')
-success = tw.stop('timeSync')
+success = tw.stop('eye_image')
+success = tw.stop('external_signal')
+success = tw.stop('time_sync')
 success = tw.stop('positioning')
 
 
@@ -122,7 +122,7 @@ plt.figure()
 plt.plot(np.diff(ut2) / 1000)
 
 
-all_images = tw.peek_time_range('eyeImage') # by default peeks all
+all_images = tw.peek_time_range('eye_image') # by default peeks all
 print(all_images[0])
 pickle.dump(all_images,open( "save2.pkl", "wb" ))
 
@@ -134,14 +134,14 @@ plt.figure()
 plt.imshow(all_images2[0].image)
 
 
-all_ext = tw.peek_N('externalSignal',10000000)
+all_ext = tw.peek_N('external_signal',10000000)
 print(all_ext[0])
 pickle.dump(all_ext,open( "save3.pkl", "wb" ))
 all_ext2 = pickle.load( open( "save3.pkl", "rb" ) )
 print(all_ext2[0])
 
 
-all_t = tw.peek_n('timeSync',10000000)
+all_t = tw.peek_n('time_sync',10000000)
 print(all_t[0])
 pickle.dump(all_t,open( "save4.pkl", "wb" ))
 all_t2 = pickle.load( open( "save4.pkl", "rb" ) )
