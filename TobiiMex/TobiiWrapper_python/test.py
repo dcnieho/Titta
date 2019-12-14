@@ -68,11 +68,14 @@ print(tw.display_area)
 
    
 #%% Record some data (and test all streams while we do so)
+print(tw.has_stream('gaze'))
+print(tw.is_recording('gaze'))
 success = tw.start('gaze')
 success = tw.start('eye_image')
 success = tw.start('external_signal')
 success = tw.start('time_sync')
 success = tw.start('positioning')
+print(tw.is_recording('gaze'))
 core.wait(0.2)
 n_samples = tw.gaze_frequency * 2 # Record what should be two seconds of data
 
