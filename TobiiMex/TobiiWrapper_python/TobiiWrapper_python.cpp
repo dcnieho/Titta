@@ -951,7 +951,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 case TobiiMex::DataStream::TimeSync:
                     return instance_.consumeTimeRange<TobiiMex::timeSync>(timeStart_, timeEnd_);
                 case TobiiMex::DataStream::Positioning:
-                    DoExitWithMsg("consume_time_range: not supported for positioning stream.");
+                    DoExitWithMsg("Titta::cpp::consume_time_range: not supported for positioning stream.");
                 }
                 return std::nullopt;
             },
@@ -1004,7 +1004,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 case TobiiMex::DataStream::TimeSync:
                     return instance_.peekTimeRange<TobiiMex::timeSync>(timeStart_, timeEnd_);
                 case TobiiMex::DataStream::Positioning:
-                    DoExitWithMsg("peek_time_range: not supported for positioning stream.");
+                    DoExitWithMsg("Titta::cpp::peek_time_range: not supported for positioning stream.");
                 }
                 return std::nullopt;
             },
