@@ -83,37 +83,6 @@ classdef TobiiMexDummyMode < TobiiMex
                     fprintf('methods in %s with wrong number of output arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingOutput).Name);
                 end
-                
-                % next, also check properties
-                thisProperties = thisInfo.PropertyList;
-                superProperties= superInfo.PropertyList;
-                % for both, limit to only properties that have public get
-                % or a public set, and are not hidden
-                superProperties(~(strcmp({superProperties.GetAccess},'public')|strcmp({superProperties.SetAccess},'public')) | (~~[superProperties.Hidden])) = [];
-                thisProperties (~(strcmp({ thisProperties.GetAccess},'public')|strcmp({ thisProperties.SetAccess},'public')) | (~~[ thisProperties.Hidden])) = [];
-                % for properties of this dummy mode class, also remove
-                % properties
-                definingClass = [thisProperties.DefiningClass];
-                thisProperties(~strcmp({definingClass.Name},thisInfo.Name)) = [];
-                definingClass = [superProperties.DefiningClass];
-                superProperties(~strcmp({definingClass.Name},superInfo.Name)) = [];
-                
-                % now check for problems:
-                % 1. any properties we define here that are not in superclass?
-                notInSuper = ~ismember({thisProperties.Name},{superProperties.Name});
-                if any(notInSuper)
-                    fprintf('properties that are in %s but not in %s:\n',thisInfo.Name,superInfo.Name);
-                    fprintf('  %s\n',thisMethods(notInSuper).Name);
-                end
-                
-                % 2. properties from superclas that are not overridden.
-                % filter out those methods that we on purpose do not define
-                % in this subclass, as the superclass methods work fine
-                qNotOverridden = ~ismember({superProperties.Name},{thisProperties.Name}) & ~ismember({superProperties.Name},{'SDKVersion','systemTimestamp'});
-                if any(qNotOverridden)
-                    fprintf('properties from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
-                    fprintf('  %s\n',superProperties(qNotOverridden).Name);
-                end
             end
         end
         
