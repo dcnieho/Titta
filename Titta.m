@@ -29,10 +29,27 @@ classdef Titta < handle
     end
     
     properties (SetAccess=protected)
-        systemInfo;
         geom;
         calibrateHistory;
         buffer;
+    end
+    
+    properties (Dependent, SetAccess=private)
+        systemInfo  % struct with all the below properties in it, for easy copying
+        
+        deviceName
+        serialNumber
+        model
+        firmwareVersion
+        runtimeVersion
+        address
+        capabilities
+        supportedFrequencies
+        supportedModes
+    end
+    properties (Dependent)
+        frequency
+        trackingMode
     end
     
     methods
@@ -183,6 +200,100 @@ classdef Titta < handle
             end
         end
         
+        % getters
+        function systemInfo = get.systemInfo(obj)
+            systemInfo = [];
+            if obj.isInitialized
+                systemInfo              = obj.buffer.getEyeTrackerInfo();
+                systemInfo.SDKVersion   = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
+            end
+        end
+        function deviceName = get.deviceName(obj)
+            deviceName = [];
+            if obj.isInitialized
+                deviceName = obj.buffer.deviceName;
+            end
+        end
+        function serialNumber = get.serialNumber(obj)
+            serialNumber = [];
+            if obj.isInitialized
+                serialNumber = obj.buffer.serialNumber;
+            end
+        end
+        function model = get.model(obj)
+            model = [];
+            if obj.isInitialized
+                model = obj.buffer.model;
+            end
+        end
+        function firmwareVersion = get.firmwareVersion(obj)
+            firmwareVersion = [];
+            if obj.isInitialized
+                firmwareVersion = obj.buffer.firmwareVersion;
+            end
+        end
+        function runtimeVersion = get.runtimeVersion(obj)
+            runtimeVersion = [];
+            if obj.isInitialized
+                runtimeVersion = obj.buffer.runtimeVersion;
+            end
+        end
+        function address = get.address(obj)
+            address = [];
+            if obj.isInitialized
+                address = obj.buffer.address;
+            end
+        end
+        function capabilities = get.capabilities(obj)
+            capabilities = [];
+            if obj.isInitialized
+                capabilities = obj.buffer.capabilities;
+            end
+        end
+        function supportedFrequencies = get.supportedFrequencies(obj)
+            supportedFrequencies = [];
+            if obj.isInitialized
+                supportedFrequencies = obj.buffer.supportedFrequencies;
+            end
+        end
+        function supportedModes = get.supportedModes(obj)
+            supportedModes = [];
+            if obj.isInitialized
+                supportedModes = obj.buffer.supportedModes;
+            end
+        end
+        function frequency = get.frequency(obj)
+            frequency = [];
+            if obj.isInitialized
+                frequency = obj.buffer.frequency;
+            end
+        end
+        function trackingMode = get.trackingMode(obj)
+            trackingMode = [];
+            if obj.isInitialized
+                trackingMode = obj.buffer.trackingMode;
+            end
+        end
+        % setters
+        function set.frequency(obj,frequency)
+            assert(nargin>1,'Titta::set.frequency: provide frequency argument.');
+            if obj.isInitialized
+                obj.buffer.frequency = frequency;
+                % if successful (would have thrown on previous line if
+                % not), update frequency stored in settings as well
+                obj.settings.freq = obj.buffer.frequency;
+            end
+        end
+        function set.trackingMode(obj,trackingMode)
+            assert(nargin>1,'Titta::set.trackingMode: provide tracking mode argument.');
+            if obj.isInitialized
+                obj.buffer.trackingMode = trackingMode;
+                % if successful (would have thrown on previous line if
+                % not), update tracking mode stored in settings as well
+                obj.settings.trackingMode = obj.buffer.trackingMode;
+            end
+        end
+        
         function out = init(obj)
             % Load in our callback buffer mex
             obj.buffer = TobiiMex();
@@ -315,9 +426,7 @@ classdef Titta < handle
             end
             
             % get info about the system
-            obj.systemInfo                  = obj.buffer.getEyeTrackerInfo();
             assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
-            obj.systemInfo.SDKVersion       = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
             out.systemInfo                  = obj.systemInfo;
             
             % get information about display geometry and trackbox
