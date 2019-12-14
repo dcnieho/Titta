@@ -77,8 +77,11 @@ namespace
     {
         { "gaze",           TobiiMex::DataStream::Gaze },
         { "eyeImage",       TobiiMex::DataStream::EyeImage },
+        { "eye_image",      TobiiMex::DataStream::EyeImage },
         { "externalSignal", TobiiMex::DataStream::ExtSignal },
+        { "external_signal",TobiiMex::DataStream::ExtSignal },
         { "timeSync",       TobiiMex::DataStream::TimeSync },
+        { "time_sync",      TobiiMex::DataStream::TimeSync },
         { "positioning",    TobiiMex::DataStream::Positioning }
     };
 
