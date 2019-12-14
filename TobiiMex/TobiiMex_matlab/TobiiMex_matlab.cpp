@@ -433,7 +433,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::GetSupportedFrequencies:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("supportedFrequencies").supportedFrequencies);
+            // return as doubles
+            std::vector<double> freqs;
+            for (float f : instance->getEyeTrackerInfo("supportedFrequencies").supportedFrequencies)
+                freqs.push_back(static_cast<double>(f));
+            plhs[0] = mxTypes::ToMatlab(freqs);
             break;
         }
         case Action::GetSupportedModes:
