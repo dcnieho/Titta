@@ -58,6 +58,14 @@ print(tw.supported_frequencies)
 print(tw.supported_modes)
 print(tw.track_box)
 print(tw.display_area)
+
+# with a 4C, test:
+#tw.clear_licenses()
+#tw.apply_licenses()
+
+# test calibration (just go through the motions, that it fails doesn't matter for our test)
+
+
    
 #%% Record some data (and test all streams while we do so)
 success = tw.start('gaze')
