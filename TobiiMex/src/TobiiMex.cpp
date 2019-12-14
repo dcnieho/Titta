@@ -116,7 +116,7 @@ TobiiMex::BufferSide TobiiMex::stringToBufferSide(std::string bufferSide_)
     if (it == bufferSideMap.end())
     {
         std::stringstream os;
-        os << R"("Titta: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported sample sides are: "first" and "last")";
+        os << R"("Titta: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "first" and "last")";
         DoExitWithMsg(os.str());
     }
     return it->second;
