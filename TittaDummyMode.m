@@ -64,7 +64,7 @@ classdef TittaDummyMode < Titta
                     fprintf('  %s\n',thisMethods(notInSuper).Name);
                 end
                 
-                % 2. methods from superclas that are not overridden.
+                % 2. methods from superclass that are not overridden.
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
                 qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'getMessages','sendMessage','setOptions','getOptions','delete'});
