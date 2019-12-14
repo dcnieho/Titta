@@ -73,8 +73,36 @@ for k in enumerate(1000):
 
 
 # test calibration (just go through the motions, that it fails doesn't matter for our test)
+tw.leave_calibration_mode(True)
+tw.enter_calibration_mode()
 
+tw.calibration_discard_data([0.1,0.1])
+res = []
+while res==[]:
+    res = tw.calibration_retrieve_result()
+print(res)
 
+tw.calibration_collect_data([0.1,0.1])
+res = []
+while res==[]:
+    res = tw.calibration_retrieve_result()
+print(res)
+
+print(tw.calibration_get_status)
+
+tw.calibration_compute_and_apply()
+res = []
+while res==[]:
+    res = tw.calibration_retrieve_result()
+print(res)
+
+tw.calibration_get_data()
+res = []
+while res==[]:
+    res = tw.calibration_retrieve_result()
+print(res)
+
+tw.calibration_apply_data()
    
 #%% Record some data (and test all streams while we do so)
 print(tw.has_stream('gaze'))
