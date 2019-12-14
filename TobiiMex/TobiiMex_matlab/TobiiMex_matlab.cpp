@@ -139,6 +139,9 @@ namespace {
         StartLogging,
         GetLog,
         StopLogging,
+        // check functions for dummy mode
+        CheckDataStream,
+        CheckBufferSide,
 
         //// eye-tracker specific getters and setters
         // getters
@@ -204,6 +207,9 @@ namespace {
         { "startLogging",		            Action::StartLogging },
         { "getLog",				            Action::GetLog },
         { "stopLogging",		            Action::StopLogging },
+        // check functions for dummy mode
+        { "checkDataStream",		        Action::CheckDataStream },
+        { "checkBufferSide",		        Action::CheckBufferSide },
 
         //// eye-tracker specific getters and setters
         // getters
@@ -301,7 +307,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     InstancePtrType instance;
     if (action != Action::Touch && action != Action::New &&
         action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
-        action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging)
+        action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
+        action != Action::CheckDataStream && action != Action::CheckBufferSide)
     {
         instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
         instance = instIt->second;
@@ -387,6 +394,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::StopLogging:
             plhs[0] = mxCreateLogicalScalar(TobiiMex::stopLogging());
             return;
+        case Action::CheckDataStream:
+        {
+            if (nrhs < 2 || !mxIsChar(prhs[1]))
+                mexErrMsgTxt("checkDataStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+
+            // get data stream identifier string, check if valid
+            char* bufferCstr = mxArrayToString(prhs[1]);
+            TobiiMex::stringToDataStream(bufferCstr);
+            mxFree(bufferCstr);
+            plhs[0] = mxCreateLogicalScalar(true);
+            return;
+        }
+        case Action::CheckBufferSide:
+        {
+            if (nrhs < 2 || !mxIsChar(prhs[1]))
+                mexErrMsgTxt("checkBufferSide: First input must be a sample side identifier string ('first', or 'last').");
+
+            // get data stream identifier string, check if valid
+            char* bufferCstr = mxArrayToString(prhs[1]);
+            TobiiMex::stringToBufferSide(bufferCstr);
+            mxFree(bufferCstr);
+            plhs[0] = mxCreateLogicalScalar(true);
+            return;
+        }
 
         case Action::GetEyeTrackerInfo:
         {
