@@ -501,8 +501,10 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 if (t.size() != 2)
                     throw std::runtime_error("Invalid state!");
 
-                auto samples = t[0].cast<std::vector<TobiiResearchCalibrationPoint>>();
-                auto samples_c = static_cast<TobiiResearchCalibrationSample*>(malloc(samples.size() * sizeof(TobiiResearchCalibrationSample)));
+                auto samples = t[1].cast<std::vector<TobiiResearchCalibrationSample>>();
+                auto nBytes = samples.size() * sizeof(TobiiResearchCalibrationSample);
+                auto samples_c = static_cast<TobiiResearchCalibrationSample*>(malloc(nBytes));
+                memcpy(samples_c, &samples[0], nBytes);
                 TobiiResearchCalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), samples_c, samples.size() };
                 return p;
             }
@@ -520,8 +522,10 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 if (t.size() != 2)
                     throw std::runtime_error("Invalid state!");
 
-                auto points = t[0].cast < std::vector<TobiiResearchCalibrationResult>>();
-                auto points_c = static_cast<TobiiResearchCalibrationPoint*>(malloc(points.size() * sizeof(TobiiResearchCalibrationPoint)));
+                auto points = t[0].cast<std::vector<TobiiResearchCalibrationPoint>>();
+                auto nBytes = points.size() * sizeof(TobiiResearchCalibrationPoint);
+                auto points_c = static_cast<TobiiResearchCalibrationPoint*>(malloc(nBytes));
+                memcpy(points_c, &points[0], nBytes);
                 TobiiResearchCalibrationResult p{ points_c, points.size(), t[1].cast<TobiiResearchCalibrationStatus>() };
                 return p;
             }
