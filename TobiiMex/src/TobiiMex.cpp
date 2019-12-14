@@ -98,7 +98,7 @@ TobiiMex::DataStream TobiiMex::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << R"(Titta: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning")";
+        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning")";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -116,7 +116,7 @@ TobiiMex::BufferSide TobiiMex::stringToBufferSide(std::string bufferSide_)
     if (it == bufferSideMap.end())
     {
         std::stringstream os;
-        os << R"("Titta: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "first" and "last")";
+        os << R"("Titta::cpp: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "first" and "last")";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -208,7 +208,7 @@ TobiiResearchSDKVersion TobiiMex::getSDKVersion()
     TobiiResearchSDKVersion sdk_version;
     TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get Tobii SDK version", status);
+        ErrorExit("Titta::cpp: Cannot get Tobii SDK version", status);
     return sdk_version;
 }
 int64_t TobiiMex::getSystemTimestamp()
@@ -216,7 +216,7 @@ int64_t TobiiMex::getSystemTimestamp()
     int64_t system_time_stamp;
     TobiiResearchStatus status = tobii_research_get_system_time_stamp(&system_time_stamp);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get Tobii SDK system time", status);
+        ErrorExit("Titta::cpp: Cannot get Tobii SDK system time", status);
     return system_time_stamp;
 }
 std::vector<TobiiTypes::eyeTracker> TobiiMex::findAllEyeTrackers()
@@ -224,7 +224,7 @@ std::vector<TobiiTypes::eyeTracker> TobiiMex::findAllEyeTrackers()
     TobiiResearchEyeTrackers* tobiiTrackers = nullptr;
     TobiiResearchStatus status = tobii_research_find_all_eyetrackers(&tobiiTrackers);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye trackers", status);
+        ErrorExit("Titta::cpp: Cannot get eye trackers", status);
     std::vector<TobiiTypes::eyeTracker> eyeTrackers;
 
     eyeTrackers.insert(eyeTrackers.end(), &tobiiTrackers->eyetrackers[0], &tobiiTrackers->eyetrackers[tobiiTrackers->count]);   // yes, pointer to one past last element
@@ -318,7 +318,7 @@ TobiiMex::TobiiMex(std::string address_)
     if (status != TOBII_RESEARCH_STATUS_OK)
     {
         std::stringstream os;
-        os << "Cannot get eye tracker \"" << address_ << "\"";
+        os << "Titta::cpp: Cannot get eye tracker \"" << address_ << "\"";
         ErrorExit(os.str(), status);
     }
     _eyetracker = TobiiTypes::eyeTracker(et);
@@ -385,7 +385,7 @@ const TobiiResearchTrackBox TobiiMex::getTrackBox() const
     TobiiResearchTrackBox track_box;
     TobiiResearchStatus status = tobii_research_get_track_box(_eyetracker.et, &track_box);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye tracker track box", status);
+        ErrorExit("Titta::cpp: Cannot get eye tracker track box", status);
     return track_box;
 }
 const TobiiResearchDisplayArea TobiiMex::getDisplayArea() const
@@ -393,7 +393,7 @@ const TobiiResearchDisplayArea TobiiMex::getDisplayArea() const
     TobiiResearchDisplayArea display_area;
     TobiiResearchStatus status = tobii_research_get_display_area(_eyetracker.et, &display_area);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot get eye tracker display area", status);
+        ErrorExit("Titta::cpp: Cannot get eye tracker display area", status);
     return display_area;
 }
 // setters
@@ -401,7 +401,7 @@ void TobiiMex::setDeviceName(std::string deviceName_)
 {
     TobiiResearchStatus status = tobii_research_set_device_name(_eyetracker.et, deviceName_.c_str());
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot set eye tracker device name", status);
+        ErrorExit("Titta::cpp: Cannot set eye tracker device name", status);
 
     // refresh eye tracker info to get updated name
     _eyetracker.refreshInfo("deviceName");
@@ -410,7 +410,7 @@ void TobiiMex::setFrequency(float frequency_)
 {
     TobiiResearchStatus status = tobii_research_set_gaze_output_frequency(_eyetracker.et, frequency_);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot set eye tracker frequency", status);
+        ErrorExit("Titta::cpp: Cannot set eye tracker frequency", status);
 
     // refresh eye tracker info to get updated frequency
     _eyetracker.refreshInfo("frequency");
@@ -419,7 +419,7 @@ void TobiiMex::setTrackingMode(std::string trackingMode_)
 {
     TobiiResearchStatus status = tobii_research_set_eye_tracking_mode(_eyetracker.et, trackingMode_.c_str());
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot set eye tracker tracking mode", status);
+        ErrorExit("Titta::cpp: Cannot set eye tracker tracking mode", status);
 
     // refresh eye tracker info to get updated tracking mode
     _eyetracker.refreshInfo("trackingMode");
@@ -437,7 +437,7 @@ std::vector<TobiiResearchLicenseValidationResult> TobiiMex::applyLicenses(std::v
     std::vector<TobiiResearchLicenseValidationResult> validationResults(licenses_.size(), TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN);
     TobiiResearchStatus status = tobii_research_apply_licenses(_eyetracker.et, const_cast<const void**>(reinterpret_cast<void**>(licenseKeyRing.data())), licenseLengths.data(), validationResults.data(), licenses_.size());
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot apply eye tracker license(s)", status);
+        ErrorExit("Titta::cpp: Cannot apply eye tracker license(s)", status);
 
     // refresh eye tracker info, e.g. capabilities may have changed after license applied
     _eyetracker.refreshInfo();
@@ -448,7 +448,7 @@ void TobiiMex::clearLicenses()
 {
     TobiiResearchStatus status = tobii_research_clear_applied_licenses(_eyetracker.et);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Cannot clear eye tracker license(s)", status);
+        ErrorExit("Titta::cpp: Cannot clear eye tracker license(s)", status);
 
     // refresh eye tracker info, e.g. capabilities may have changed after licenses removed
     _eyetracker.refreshInfo();
@@ -581,7 +581,7 @@ void TobiiMex::enterCalibrationMode(bool doMonocular_)
 {
     if (_calibrationThread.joinable())
     {
-        DoExitWithMsg("enterCalibrationMode: Calibration mode already entered");
+        DoExitWithMsg("Titta::cpp::enterCalibrationMode: Calibration mode already entered");
     }
 
     _calibrationIsMonocular = doMonocular_;
@@ -622,7 +622,7 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
         if (workItem.eye != "left" && workItem.eye != "right")
         {
             std::stringstream os;
-            os << "calibrationCollectData: Cannot start calibration for eye " << workItem.eye << ", unknown. Expected left or right.";
+            os << "Titta::cpp::calibrationCollectData: Cannot start calibration for eye " << workItem.eye << ", unknown. Expected left or right.";
             DoExitWithMsg(os.str());
         }
     }
@@ -631,7 +631,7 @@ void TobiiMex::calibrationCollectData(std::array<double, 2> coordinates_, std::o
 {
     if (!_calibrationThread.joinable())
     {
-        DoExitWithMsg("calibrationCollectData: you have not entered calibration mode, call enterCalibrationMode first");
+        DoExitWithMsg("Titta::cpp::calibrationCollectData: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::CollectData};
@@ -642,7 +642,7 @@ void TobiiMex::calibrationDiscardData(std::array<double, 2> coordinates_, std::o
 {
     if (!_calibrationThread.joinable())
     {
-        DoExitWithMsg("calibrationDiscardData: you have not entered calibration mode, call enterCalibrationMode first");
+        DoExitWithMsg("Titta::cpp::calibrationDiscardData: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
     TobiiTypes::CalibrationWorkItem workItem{ TobiiTypes::CalibrationAction::DiscardData };
@@ -653,7 +653,7 @@ void TobiiMex::calibrationComputeAndApply()
 {
     if (!_calibrationThread.joinable())
     {
-        DoExitWithMsg("calibrationComputeAndApply: you have not entered calibration mode, call enterCalibrationMode first");
+        DoExitWithMsg("Titta::cpp::calibrationComputeAndApply: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Compute});
@@ -662,7 +662,7 @@ void TobiiMex::calibrationGetData()
 {
     if (!_calibrationThread.joinable())
     {
-        DoExitWithMsg("calibrationGetData: you have not entered calibration mode, call enterCalibrationMode first");
+        DoExitWithMsg("Titta::cpp::calibrationGetData: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
@@ -671,7 +671,7 @@ void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
 {
     if (!_calibrationThread.joinable())
     {
-        DoExitWithMsg("calibrationApplyData: you have not entered calibration mode, call enterCalibrationMode first");
+        DoExitWithMsg("Titta::cpp::calibrationApplyData: you have not entered calibration mode, call enterCalibrationMode first");
     }
 
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
@@ -733,7 +733,7 @@ TobiiMex::getIteratorsFromSampleAndSide(size_t NSamp_, TobiiMex::BufferSide side
         startIt = std::prev(endIt  , nSamp);
         break;
     default:
-        DoExitWithMsg("Titta: Mex: getIteratorsFromSampleAndSide: unknown TobiiMex::BufferSide provided.");
+        DoExitWithMsg("Titta::cpp::getIteratorsFromSampleAndSide: unknown TobiiMex::BufferSide provided.");
         break;
     }
     return { startIt, endIt };
@@ -912,7 +912,7 @@ bool TobiiMex::start(DataStream  stream_, std::optional<size_t> initialBufferSiz
     if (result != TOBII_RESEARCH_STATUS_OK)
     {
         std::stringstream os;
-        os << "Cannot start recording " << dataStreamToString(stream_) << " stream";
+        os << "Titta::cpp::start: Cannot start recording " << dataStreamToString(stream_) << " stream";
         ErrorExit(os.str(), result);
     }
 
@@ -1083,7 +1083,7 @@ void TobiiMex::clearTimeRange(DataStream stream_, std::optional<int64_t> timeSta
             clearImpl<timeSync>(timeStart, timeEnd);
             break;
         case DataStream::Positioning:
-            DoExitWithMsg("clearTimeRange: not supported for the positioning stream.");
+            DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
             break;
     }
 }

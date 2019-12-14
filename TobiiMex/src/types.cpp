@@ -41,7 +41,7 @@ namespace TobiiTypes
             char* device_name;
             status = tobii_research_get_device_name(et, &device_name);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker device name", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker device name", status);
             deviceName = device_name;
             tobii_research_free_string(device_name);
             if (singleOpt) return;
@@ -51,7 +51,7 @@ namespace TobiiTypes
             char* serial_number;
             status = tobii_research_get_serial_number(et, &serial_number);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker serial number", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker serial number", status);
             serialNumber = serial_number;
             tobii_research_free_string(serial_number);
             if (singleOpt) return;
@@ -61,7 +61,7 @@ namespace TobiiTypes
             char* modelT;
             status = tobii_research_get_model(et, &modelT);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker model", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker model", status);
             model = modelT;
             tobii_research_free_string(modelT);
             if (singleOpt) return;
@@ -71,7 +71,7 @@ namespace TobiiTypes
             char* firmware_version;
             status = tobii_research_get_firmware_version(et, &firmware_version);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker firmware version", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker firmware version", status);
             firmwareVersion = firmware_version;
             tobii_research_free_string(firmware_version);
             if (singleOpt) return;
@@ -81,7 +81,7 @@ namespace TobiiTypes
             char* runtime_version;
             status = tobii_research_get_runtime_version(et, &runtime_version);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker runtime version", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker runtime version", status);
             runtimeVersion = runtime_version;
             tobii_research_free_string(runtime_version);
             if (singleOpt) return;
@@ -91,7 +91,7 @@ namespace TobiiTypes
             char* addressT;
             status = tobii_research_get_address(et, &addressT);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker address", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker address", status);
             address = addressT;
             tobii_research_free_string(addressT);
             if (singleOpt) return;
@@ -103,7 +103,7 @@ namespace TobiiTypes
             float gaze_frequency;
             status = tobii_research_get_gaze_output_frequency(et, &gaze_frequency);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker current frequency", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current frequency", status);
             frequency = gaze_frequency;
             if (singleOpt) return;
         }
@@ -112,7 +112,7 @@ namespace TobiiTypes
             char* tracking_mode;
             status = tobii_research_get_eye_tracking_mode(et, &tracking_mode);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker current tracking mode", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current tracking mode", status);
             trackingMode = tracking_mode;
             tobii_research_free_string(tracking_mode);
             if (singleOpt) return;
@@ -123,7 +123,7 @@ namespace TobiiTypes
         {
             status = tobii_research_get_capabilities(et, &capabilities);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker capabilities", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker capabilities", status);
             if (singleOpt) return;
         }
 
@@ -134,7 +134,7 @@ namespace TobiiTypes
             supportedFrequencies.clear();
             status = tobii_research_get_all_gaze_output_frequencies(et, &tobiiFreqs);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker output frequencies", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker output frequencies", status);
             supportedFrequencies.insert(supportedFrequencies.end(), &tobiiFreqs->frequencies[0], &tobiiFreqs->frequencies[tobiiFreqs->frequency_count]);   // yes, pointer to one past last element
             tobii_research_free_gaze_output_frequencies(tobiiFreqs);
             if (singleOpt) return;
@@ -147,7 +147,7 @@ namespace TobiiTypes
             supportedModes.clear();
             status = tobii_research_get_all_eye_tracking_modes(et, &tobiiModes);
             if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Cannot get eye tracker's tracking modes", status);
+                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker's tracking modes", status);
             supportedModes.insert(supportedModes.end(), &tobiiModes->modes[0], &tobiiModes->modes[tobiiModes->mode_count]);   // yes, pointer to one past last element
             tobii_research_free_eye_tracking_modes(tobiiModes);
             if (singleOpt) return;
@@ -157,7 +157,7 @@ namespace TobiiTypes
         {
             // shouldn't get here if a single option is specified, must be unknown option
             std::stringstream os;
-            os << "eyeTracker::refreshInfo: Option " << paramToRefresh_.value() << " unknown.";
+            os << "Titta::cpp::eyeTracker::refreshInfo: Option " << paramToRefresh_.value() << " unknown.";
             DoExitWithMsg(os.str());
         }
     }

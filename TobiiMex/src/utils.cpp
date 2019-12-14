@@ -123,7 +123,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "lookupTobiiResearchStatus: code " << in_ << " unknown";
+                os << "Titta::cpp::lookupTobiiResearchStatus: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchStatusInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
@@ -151,7 +151,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "lookupTobiiResearchLogSource: code " << in_ << " unknown";
+                os << "Titta::cpp::lookupTobiiResearchLogSource: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchLogSourceInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
@@ -183,7 +183,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "lookupTobiiResearchLogLevel: code " << in_ << " unknown";
+                os << "Titta::cpp::lookupTobiiResearchLogLevel: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchLogLevelInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
@@ -217,7 +217,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "lookupTobiiResearchStreamError: code " << in_ << " unknown";
+                os << "Titta::cpp::lookupTobiiResearchStreamError: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchStreamErrorInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
@@ -257,7 +257,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "lookupTobiiResearchStreamErrorSourceInfo: code " << in_ << " unknown";
+                os << "Titta::cpp::lookupTobiiResearchStreamErrorSourceInfo: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchStreamErrorSourceInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
@@ -299,7 +299,7 @@ namespace
             default:
             {
                 std::stringstream os;
-                os << "TobiiResearchLicenseValidationResult: code " << in_ << " unknown";
+                os << "Titta::cpp::TobiiResearchLicenseValidationResult: code " << in_ << " unknown";
                 DoExitWithMsg(os.str());
                 return TobiiResearchLicenseValidationResultInfo{ "", static_cast<int>(-999), "" };  // to shut up compiler warnings
             }
@@ -371,7 +371,7 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
 {
     std::stringstream os;
-    os << "TobiiMex Error: " << errMsg_ << std::endl;
+    os << "Titta::cpp Error: " << errMsg_ << std::endl;
     os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << " (" << TobiiResearchStatusToExplanation(errCode_) << ")" << std::endl;
 
     DoExitWithMsg(os.str());
