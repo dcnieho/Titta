@@ -151,13 +151,6 @@ classdef TobiiMexDummyMode < TobiiMex
                 this.isRecordingGaze = true;
             end
         end
-        function success = stop(this,stream,~)
-            assert(nargin>1,'Titta::cpp::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            success = checkValidStream(this,stream);
-            if strcmpi(stream,'gaze')
-                this.isRecordingGaze = false;
-            end
-        end
         function status = isRecording(this,stream)
             assert(nargin>1,'Titta::cpp::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = checkValidStream(this,stream);
@@ -165,14 +158,6 @@ classdef TobiiMexDummyMode < TobiiMex
             if strcmpi(stream,'gaze')
                 status = this.isRecordingGaze;
             end
-        end
-        function clear(this,stream)
-            assert(nargin>1,'Titta::cpp::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            checkValidStream(this,stream);
-        end
-        function clearTimeRange(this,stream,~,~)
-            assert(nargin>1,'Titta::cpp::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
-            checkValidStream(this,stream);
         end
         function data = consumeN(this,stream,~,side)
             assert(nargin>1,'Titta::cpp::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
@@ -210,6 +195,21 @@ classdef TobiiMexDummyMode < TobiiMex
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
+            end
+        end
+        function clear(this,stream)
+            assert(nargin>1,'Titta::cpp::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            checkValidStream(this,stream);
+        end
+        function clearTimeRange(this,stream,~,~)
+            assert(nargin>1,'Titta::cpp::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            checkValidStream(this,stream);
+        end
+        function success = stop(this,stream,~)
+            assert(nargin>1,'Titta::cpp::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            success = checkValidStream(this,stream);
+            if strcmpi(stream,'gaze')
+                this.isRecordingGaze = false;
             end
         end
     end
