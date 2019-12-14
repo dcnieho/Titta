@@ -216,6 +216,7 @@ end
 
 function isValid = checkValidStream(stream)
 isValid = ismember(stream,{'gaze','eyeImage','externalSignal','timeSync','positioning'});
+assert(isValid,"Titta: Requested stream ""%s"" is not recognized. Supported streams are: ""gaze"", ""eyeImage"", ""externalSignal"", ""timeSync"" and ""positioning""",stream);
 end
 
 function sample = getMouseSample(isRecording)
