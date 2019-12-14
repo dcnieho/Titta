@@ -474,7 +474,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::SetFrequency:
         {
             double freq = 0.;
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsSingle(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
                 mexErrMsgTxt("setFrequency: Expected second argument to be a double scalar.");
             freq = *static_cast<double*>(mxGetData(prhs[2]));
 
