@@ -109,7 +109,7 @@ classdef TobiiMexDummyMode < TobiiMex
                 % 2. properties from superclas that are not overridden.
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
-                qNotOverridden = ~ismember({superProperties.Name},{thisProperties.Name}) & ~ismember({superProperties.Name},{'geom','calibrateHistory','buffer'});
+                qNotOverridden = ~ismember({superProperties.Name},{thisProperties.Name}) & ~ismember({superProperties.Name},{'SDKVersion','systemTimestamp'});
                 if any(qNotOverridden)
                     fprintf('properties from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superProperties(qNotOverridden).Name);
