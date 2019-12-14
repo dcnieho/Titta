@@ -169,6 +169,10 @@ for i in all_samples2:
 plt.figure()
 plt.plot(np.diff(ut2) / 1000)
 
+all_samples3 = tw.consume_N('gaze',10000000)
+all_samples4 = tw.consume_time_range('gaze')
+print([len(all_samples, all_samples2, all_samples3, all_samples4)])
+
 
 all_images = tw.peek_time_range('eye_image') # by default peeks all
 print(all_images[0])
