@@ -47,8 +47,11 @@ classdef TobiiMexDummyMode < TobiiMex
                     fprintf('  %s\n',thisMethods(notInSuper).Name);
                 end
                 
-                % 2. methods from superclas that are not overridden.
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name});
+                % 2. methods from superclass that are not overridden.
+                % filter out those methods that we on purpose do not define
+                % in this subclass, as the superclass methods work fine
+                % (call static functions in the mex)
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging'});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
@@ -93,35 +96,12 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         
         %% global SDK functions
-        function SDKVersion = getSDKVersion(~)
-            SDKVersion = '';
-        end
-        function systemTimestamp = getSystemTimestamp(~)
-            systemTimestamp = [];
-        end
-        function eyeTrackerList = findAllEyeTrackers(~)
-            eyeTrackerList = [];
-        end
-        % logging
-        function success = startLogging(~,~)
-            success = true;
-        end
-        function data = getLog(~,~)
-            data = [];
-        end
-        function stopLogging(~)
-        end
+        % no need to override any
         
         %% eye-tracker specific getters and setters
         % getters
-        function eyeTracker = getConnectedEyeTracker(~)
+        function eyeTracker = getEyeTrackerInfo(~)
             eyeTracker = [];
-        end
-        function frequency = getCurrentFrequency(~)
-            frequency = [];
-        end
-        function trackingMode = getCurrentTrackingMode(~)
-            trackingMode = '';
         end
         function trackBox = getTrackBox(~)
             trackBox = [];
@@ -130,12 +110,8 @@ classdef TobiiMexDummyMode < TobiiMex
             displayArea = [];
         end
         % setters
-        function setGazeFrequency(~,~)
-        end
-        function setTrackingMode(~,~)
-        end
-        function setDeviceName(~,~)
-        end
+        % properties only, so nothing to override
+        % modifiers
         function applyLicenses(~,~)
         end
         function clearLicenses(~)
@@ -160,7 +136,7 @@ classdef TobiiMexDummyMode < TobiiMex
             status = '';
         end
         function result = calibrationRetrieveResult(~)
-            result = [];
+            result = struct();
         end
         
         %% data streams
@@ -195,7 +171,7 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         function clearTimeRange(~,~,~,~)
         end
-        function data = consumeN(this,stream,~)
+        function data = consumeN(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = ensureStringIsChar(stream);
             data = [];
@@ -211,7 +187,7 @@ classdef TobiiMexDummyMode < TobiiMex
                 data = getMouseSample(this.isRecordingGaze);
             end
         end
-        function data = peekN(this,stream,~)
+        function data = peekN(this,stream,~,~)
             assert(nargin>1,'Titta::buffer::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             stream = ensureStringIsChar(stream);
             data = [];
