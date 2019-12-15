@@ -16,12 +16,6 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 
-// forward declares
-py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_);
-std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities data_);
-std::vector<TobiiResearchCalibrationPoint> CalibrationPointsToVec(const TobiiResearchCalibrationResult& instance_);
-std::vector<TobiiResearchCalibrationSample> CalibrationSamplesToVec(const TobiiResearchCalibrationPoint& instance_);
-
 
 
 template<typename ... Args>
@@ -82,34 +76,38 @@ template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instan
 template <> std::string toString<>(const TobiiResearchCalibrationSample& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
-    return string_format("calibration_sample:\n%sleft: %s\n%sright: %s", nextLvl.c_str(), toString(instance_.left_eye), nextLvl.c_str(), toString(instance_.right_eye));
+    return string_format("calibration_sample:\n%sleft: %s\n%sright: %s", nextLvl.c_str(), toString(instance_.left_eye).c_str(), nextLvl.c_str(), toString(instance_.right_eye).c_str());
 }
-template <> std::string toString<>(const TobiiResearchCalibrationPoint& instance_, std::string spacing)
+template <> std::string toString<>(const TobiiTypes::CalibrationPoint& instance_, std::string spacing)
 {
     int nValidLeft = 0, nValidRight = 0;
-    for (auto& sample : CalibrationSamplesToVec(instance_))
+    for (auto& sample : instance_.calibration_samples)
     {
         if (sample.left_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
             ++nValidLeft;
         if (sample.right_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
             ++nValidRight;
     }
-    auto ret = string_format("calibration_point at [%.4f,%.4f] with %d samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_sample_count, nValidLeft, nValidRight);
+    auto ret = string_format("calibration_point at [%.4f,%.4f] with %Iu samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_samples.size(), nValidLeft, nValidRight);
 #ifndef NDEBUG
     auto nextLvl = spacing + "  ";
     ret += ":\n";
-    for (auto& sample : CalibrationSamplesToVec(instance_))
-        ret += string_format("%s%s\n", nextLvl.c_str(), toString(sample,nextLvl));
+    for (auto& sample : instance_.calibration_samples)
+        ret += string_format("%s%s\n", nextLvl.c_str(), toString(sample,nextLvl).c_str());
 #endif
 
     return ret;
 }
-template <> std::string toString<>(const TobiiResearchCalibrationResult& instance_, std::string spacing)
+template <> std::string toString<>(const TobiiTypes::CalibrationResult& instance_, std::string spacing)
 {
     std::string pointStr;
-    for (auto& point : CalibrationPointsToVec(instance_))
-        pointStr += string_format("  %s\n", toString(point, "  ").c_str());
-    return string_format("calibration_result for %d calibration points:\n[%s]", instance_.calibration_point_count, pointStr.c_str());
+    if (!instance_.calibration_points.empty())
+    {
+        pointStr += string_format(":\n");
+        for (auto& point : instance_.calibration_points)
+            pointStr += string_format("  %s\n", toString(point, "  ").c_str());
+    }
+    return string_format("calibration_result for %Iu calibration points%s", instance_.calibration_points.size(), pointStr.c_str());
 }
 
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
@@ -241,16 +239,6 @@ std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities dat
         out.emplace_back("can_do_monocular_calibration");
 
     return out;
-}
-
-std::vector<TobiiResearchCalibrationPoint> CalibrationPointsToVec(const TobiiResearchCalibrationResult& instance_)
-{
-    return std::vector<TobiiResearchCalibrationPoint>(instance_.calibration_points, instance_.calibration_points + instance_.calibration_point_count);
-}
-
-std::vector<TobiiResearchCalibrationSample> CalibrationSamplesToVec(const TobiiResearchCalibrationPoint& instance_)
-{
-    return std::vector<TobiiResearchCalibrationSample>(instance_.calibration_samples, instance_.calibration_samples + instance_.calibration_sample_count);
 }
 
 
@@ -446,7 +434,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
     // calibration
     py::enum_<TobiiTypes::CalibrationState>(m, "calibration_state")
-        .value("not_yet_ntered", TobiiTypes::CalibrationState::NotYetEntered)
+        .value("not_yet_entered", TobiiTypes::CalibrationState::NotYetEntered)
         .value("awaiting_cal_point", TobiiTypes::CalibrationState::AwaitingCalPoint)
         .value("collecting_data", TobiiTypes::CalibrationState::CollectingData)
         .value("discarding_data", TobiiTypes::CalibrationState::DiscardingData)
@@ -521,47 +509,39 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         ))
         .def("__repr__", [](const TobiiResearchCalibrationSample& instance_) { return toString(instance_); })
         ;
-    py::class_<TobiiResearchCalibrationPoint>(m, "calibration_point")
-        .def_readwrite("position_on_display_area", &TobiiResearchCalibrationPoint::position_on_display_area)
-        .def_property_readonly("samples", &CalibrationSamplesToVec)
+    py::class_<TobiiTypes::CalibrationPoint>(m, "calibration_point")
+        .def_readwrite("position_on_display_area", &TobiiTypes::CalibrationPoint::position_on_display_area)
+        .def_readwrite("samples", &TobiiTypes::CalibrationPoint::calibration_samples)
         .def(py::pickle(
-            [](const TobiiResearchCalibrationPoint& p) { // __getstate__
-                return py::make_tuple(p.position_on_display_area, CalibrationSamplesToVec(p));
+            [](const TobiiTypes::CalibrationPoint& p) { // __getstate__
+                return py::make_tuple(p.position_on_display_area, p.calibration_samples);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
                     throw std::runtime_error("Invalid state!");
 
-                auto samples = t[1].cast<std::vector<TobiiResearchCalibrationSample>>();
-                auto nBytes = samples.size() * sizeof(TobiiResearchCalibrationSample);
-                auto samples_c = static_cast<TobiiResearchCalibrationSample*>(malloc(nBytes));
-                memcpy(samples_c, &samples[0], nBytes);
-                TobiiResearchCalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), samples_c, samples.size() };
+                TobiiTypes::CalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<std::vector<TobiiResearchCalibrationSample>>() };
                 return p;
             }
         ))
-        .def("__repr__", [](const TobiiResearchCalibrationPoint& instance_) { return toString(instance_); })
+        .def("__repr__", [](const TobiiTypes::CalibrationPoint& instance_) { return toString(instance_); })
         ;
-    py::class_<TobiiResearchCalibrationResult>(m, "calibration_result")
-        .def_property_readonly("points", &CalibrationPointsToVec)
-        .def_readwrite("status", &TobiiResearchCalibrationResult::status)
+    py::class_<TobiiTypes::CalibrationResult>(m, "calibration_result")
+        .def_readwrite("points", &TobiiTypes::CalibrationResult::calibration_points)
+        .def_readwrite("status", &TobiiTypes::CalibrationResult::status)
         .def(py::pickle(
-            [](const TobiiResearchCalibrationResult& p) { // __getstate__
-                return py::make_tuple(CalibrationPointsToVec(p), p.status);
+            [](const TobiiTypes::CalibrationResult& p) { // __getstate__
+                return py::make_tuple(p.calibration_points, p.status);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
                     throw std::runtime_error("Invalid state!");
 
-                auto points = t[0].cast<std::vector<TobiiResearchCalibrationPoint>>();
-                auto nBytes = points.size() * sizeof(TobiiResearchCalibrationPoint);
-                auto points_c = static_cast<TobiiResearchCalibrationPoint*>(malloc(nBytes));
-                memcpy(points_c, &points[0], nBytes);
-                TobiiResearchCalibrationResult p{ points_c, points.size(), t[1].cast<TobiiResearchCalibrationStatus>() };
+                TobiiTypes::CalibrationResult p{ t[0].cast<std::vector<TobiiTypes::CalibrationPoint>>(), t[1].cast<TobiiResearchCalibrationStatus>() };
                 return p;
             }
         ))
-        .def("__repr__", [](const TobiiResearchCalibrationResult& instance_) { return toString(instance_); })
+        .def("__repr__", [](const TobiiTypes::CalibrationResult& instance_) { return toString(instance_); })
         ;
     py::class_<TobiiTypes::CalibrationWorkItem>(m, "calibration_work_item")
         .def_readwrite("action", &TobiiTypes::CalibrationWorkItem::action)
@@ -585,17 +565,17 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
         .def_readwrite("work_item", &TobiiTypes::CalibrationWorkResult::workItem)
         .def_property_readonly("status", [](TobiiTypes::CalibrationWorkResult& instance_) { return static_cast<int>(instance_.status); })
         .def_readwrite("status_string", &TobiiTypes::CalibrationWorkResult::statusString)
-        .def_property_readonly("calibration_result", [](TobiiTypes::CalibrationWorkResult& instance_) { return instance_.calibrationResult; })
-        .def_property_readonly("calibration_data", [](TobiiTypes::CalibrationWorkResult& instance_) { auto calData = instance_.calibrationData; return std::vector<uint8_t>(static_cast<uint8_t*>(calData->data), static_cast<uint8_t*>(calData->data) + calData->size); })
+        .def_readwrite("calibration_result", &TobiiTypes::CalibrationWorkResult::calibrationResult)
+        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkResult::calibrationData)
         .def(py::pickle(
             [](const TobiiTypes::CalibrationWorkResult& p) { // __getstate__
-                return py::make_tuple(p.workItem, p.status, p.statusString, p.calibrationResult, p.calibrationData);
+                return py::make_tuple(p.workItem, static_cast<int>(p.status), p.statusString, p.calibrationResult, p.calibrationData);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 5)
                     throw std::runtime_error("Invalid state!");
 
-                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),t[1].cast<TobiiResearchStatus>(),t[2].cast<std::string>(),t[3].cast<std::shared_ptr<TobiiResearchCalibrationResult>>(),t[4].cast<std::shared_ptr<TobiiResearchCalibrationData>>() };
+                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),static_cast<TobiiResearchStatus>(t[1].cast<int>()),t[2].cast<std::string>(),t[3].cast<TobiiTypes::CalibrationResult>(),t[4].cast<std::vector<uint8_t>>() };
                 return p;
             }
         ))
