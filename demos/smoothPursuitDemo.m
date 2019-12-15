@@ -16,6 +16,7 @@ fixClrs                 = [0 255];
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
+runInDummyMode          = true;
 % task parameters
 fixTime                 = .5;           % s
 dur                     = 4;            % s
@@ -64,7 +65,9 @@ try
     
     % init
     EThndl          = Titta(settings);
-    EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
+    if runInDummyMode
+        EThndl          = EThndl.setDummyMode();
+    end
     EThndl.init();
     
     if DEBUGlevel>1
