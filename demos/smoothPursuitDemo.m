@@ -235,8 +235,8 @@ hl      = plot(t,lx,'Color',eyeColors{1}/255);
 hr      = plot(t,rx,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
 ylim([0 dat.expt.winRect(3)]);
-ylabel(['Horizontal gaze' newline 'position (deg)'])
-legend([hs hl hr],'dot position','left gaze','right gaze','Location','NorthEast')
+ylabel(['Horizontal gaze' newline 'position (pixels)'])
+legend([hs hl hr],'dot position','left gaze','right gaze','Location','NorthWest')
 
 ax(2)   = subplot(2,1,2);
 hold on
@@ -245,9 +245,11 @@ hl      = plot(t,ly,'Color',eyeColors{1}/255);
 hr      = plot(t,ry,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
 ylim([0 dat.expt.winRect(4)]);
-ylabel(['Vertical gaze' newline 'position (deg)'])
+ylabel(['Vertical gaze' newline 'position (pixels)'])
 xlabel('Time (ms)');
 
 linkaxes(ax,'x');
-f.WindowState = 'maximized';
+if isprop(f,'WindowState')
+    f.WindowState = 'maximized';
+end
 zoom on
