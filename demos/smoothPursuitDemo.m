@@ -165,6 +165,7 @@ try
     % EThndl.collectSessionData() below. Note that we peek, not consume, so
     % that all data remains in the buffer to store to file.
     gazeData = EThndl.buffer.peekTimeRange('gaze',startT,endT);
+    % I'm not going to use that however, just showing whats possible.
     
     % save data to mat file, adding info about the experiment
     dat                 = EThndl.collectSessionData();
@@ -183,3 +184,66 @@ end
 sca
 
 % make plot, showing fixation and pursuit interval, data for both eyes.
+% select relevant part of data and plot it
+ETdat   = dat.data.gaze;
+msgs    = dat.messages;
+% get what happened when from message log
+iStart  = find(~cellfun(@isempty,strfind(msgs(:,2),'FIX ON')));     %#ok<STRCLFH>
+iPursuit= find(~cellfun(@isempty,strfind(msgs(:,2),'PURSUIT AT'))); %#ok<STRCLFH>
+iEnd    = find(strcmp(msgs(:,2),'STIM OFF'),1,'last');
+Ts      = cat(1,msgs{iStart,1},msgs{iPursuit,1},msgs{iEnd,1});
+Ts      = double(Ts-startT)/1000;   % convert to ms, relative to start time
+% get dot positions during fixation and pursuit stimulus
+posF    = sscanf(msgs{iStart,2},'FIX ON (%f,%f)');
+posP    = cellfun(@(x) sscanf(x,'PURSUIT AT (%f,%f)'),msgs(iPursuit,2),'uni',false);
+posP    = cat(2,posP{:});
+pos     = [posF posP];
+% double them up so we can accurately represent sample-and-hold nature of a
+% screen in our plots
+Ts      = reshape([Ts(1:end-1) Ts(2:end)].',1,[]);
+pos     = reshape([pos;pos],2,[]);
+
+% convert gaze data to deg offset from center of screen (fixation point)
+if runInDummyMode
+    [lx, ly]    = deal([]);
+    [rx, ry]    = deal([]);
+    t           = [];
+else
+    leftDeg = convToDeg(ETdat. left,dat.geometry);
+    rightDeg= convToDeg(ETdat.right,dat.geometry);
+    
+    qDat    = ETdat.systemTimeStamp>=startT & ETdat.systemTimeStamp<=endT;
+    t       = ETdat.systemTimeStamp(qDat); t=double(t-startT)/1000;
+    lx      = leftDeg.x(qDat);
+    ly      = leftDeg.y(qDat);
+    rx      = rightDeg.x(qDat);
+    ry      = rightDeg.y(qDat);
+end
+
+
+eyeColors = {[255 127   0],[  0  95 191]};
+newline = sprintf('\n'); %#ok<SPRINTFN>
+f       = figure;
+ax(1)   = subplot(2,1,1);
+hold on
+hs      = plot(Ts,pos(1,:));
+hl      = plot(t,lx,'Color',eyeColors{1}/255);
+hr      = plot(t,rx,'Color',eyeColors{2}/255);
+xlim(Ts([1 end]))
+ylim([0 dat.expt.winRect(3)]);
+ylabel(['Horizontal gaze' newline 'position (deg)'])
+legend([hs hl hr],'dot position','left gaze','right gaze','Location','NorthEast')
+
+ax(2)   = subplot(2,1,2);
+hold on
+hs      = plot(Ts,pos(2,:));
+hl      = plot(t,ly,'Color',eyeColors{1}/255);
+hr      = plot(t,ry,'Color',eyeColors{2}/255);
+xlim(Ts([1 end]))
+ylim([0 dat.expt.winRect(4)]);
+ylabel(['Vertical gaze' newline 'position (deg)'])
+xlabel('Time (ms)');
+
+linkaxes(ax,'x');
+f.WindowState = 'maximized';
+zoom on
