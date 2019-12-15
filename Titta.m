@@ -742,8 +742,10 @@ classdef Titta < handle
             % buffers
             obj.buffer = [];
             
-            % clear msgs
+            % clear msgs and other fields
             obj.msgs = simpleVec(cell(1,2),1024);   % (re)initialize with space for 1024 messages
+            obj.calibrateHistory = [];
+            obj.geom = [];
             
             % mark as deinited
             obj.isInitialized = false;
