@@ -131,6 +131,7 @@ try
     
     % First draw a fixation point
     Screen('gluDisk',wpnt,fixClrs(1),stim.x(1),stim.y(1),round(winRect(3)/100));
+    Screen('gluDisk',wpnt,fixClrs(2),stim.x(1),stim.y(1),round(winRect(3)/250));
     startT = Screen('Flip',wpnt);
     % log when fixation dot appeared in eye-tracker time. NB:
     % system_timestamp of the Tobii data uses the same clock as
