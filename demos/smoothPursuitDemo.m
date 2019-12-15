@@ -145,7 +145,7 @@ try
     for f=1:nFrame
         Screen('gluDisk',wpnt,fixClrs(1),stim.x(f),stim.y(f),round(winRect(3)/160));
         frameT(f)   = Screen('Flip',wpnt,nextFlipT);
-        EThndl.sendMessage(sprintf('PURSUIT AT (%.1f,%.1f)',stim.x(f),stim.y(f)),frameT);
+        EThndl.sendMessage(sprintf('PURSUIT AT (%.1f,%.1f)',stim.x(f),stim.y(f)),frameT(f));
         
         nextFlipT   = frameT(f)+.5/hz;  % we want to show a new location each frame, but ask for a bit early to provide the needed slack
     end
