@@ -228,9 +228,9 @@ namespace {
         { "getTrackBox",			        Action::GetTrackBox },
         { "getDisplayArea",			        Action::GetDisplayArea },
         // setters
-        { "setDeviceName",			        Action::SetDeviceName },
-        { "setGazeFrequency",			    Action::SetFrequency },
-        { "setTrackingMode",			    Action::SetTrackingMode },
+        { "setDeviceName",                  Action::SetDeviceName },
+        { "setFrequency",                   Action::SetFrequency },
+        { "setTrackingMode",                Action::SetTrackingMode },
         // modifiers
         { "applyLicenses",		    	    Action::ApplyLicenses },
         { "clearLicenses",		    	    Action::ClearLicenses },
