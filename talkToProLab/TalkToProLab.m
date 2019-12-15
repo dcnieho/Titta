@@ -190,6 +190,8 @@ classdef TalkToProLab < handle
                 elseif throwWhenNotFound
                     error('TalkToProLab: Media with the name ''%s'' was not found in the project that is open in Pro Lab.',name)
                 end
+            elseif throwWhenNotFound
+                error('TalkToProLab: findMedia: Media with the name ''%s'' was not found in the project that is open in Pro Lab. Use TalkToProLab.uploadMedia to upload media with that name.',name)
             end
         end
         
