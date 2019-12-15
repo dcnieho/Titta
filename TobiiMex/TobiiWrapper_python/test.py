@@ -17,12 +17,12 @@ This can be tested in a while-loop like the one below.
 '''
 # Import modules
 import pickle
-import numpy as np
+#import numpy as np
 import time
-from psychopy import core
-import matplotlib.pyplot as plt
+#from psychopy import core
+#import matplotlib.pyplot as plt
 
-plt.close('all')
+#plt.close('all')
 
 # static functions, connect to first eye tracker found
 TobiiWrapper.wrapper.start_logging()
@@ -31,9 +31,9 @@ print(TobiiWrapper.wrapper.get_system_timestamp())
 ets = TobiiWrapper.wrapper.find_all_eye_trackers()
 print(ets)
 if len(ets)==0:
-    raise Exception('No eye trackers found')
-
-tw = TobiiWrapper.wrapper(ets[0].address)
+    tw = TobiiWrapper.wrapper('tet-tcp://169.254.10.20')
+else:
+    tw = TobiiWrapper.wrapper(ets[0].address)
 print(tw)
 
 # test properties
@@ -65,47 +65,89 @@ print(tw.display_area)
 
 # test clock, is time.clock() same as Tobii system clock?
 clks = []
-for k in enumerate(1000):
+for k in range(1000):
     if k%10<5:
-        clks.append[time.clock(), TobiiWrapper.wrapper.get_system_timestamp()]
+        clks.append([time.clock(), TobiiWrapper.wrapper.get_system_timestamp()])
     else:
-        clks.append[TobiiWrapper.wrapper.get_system_timestamp(), time.clock()]
+        clks.append([TobiiWrapper.wrapper.get_system_timestamp(), time.clock()])
 
 
 # test calibration (just go through the motions, that it fails doesn't matter for our test)
 tw.leave_calibration_mode(True)
+
+print("enter_calibration_mode:")
 tw.enter_calibration_mode()
-
-tw.calibration_discard_data([0.1,0.1])
-res = []
-while res==[]:
+res = None
+while res==None:
     res = tw.calibration_retrieve_result()
-print(res)
-
-tw.calibration_collect_data([0.1,0.1])
-res = []
-while res==[]:
-    res = tw.calibration_retrieve_result()
-print(res)
-
-print(tw.calibration_get_status)
-
-tw.calibration_compute_and_apply()
-res = []
-while res==[]:
-    res = tw.calibration_retrieve_result()
-print(res)
+print(res.work_item.action)
+print(res.status_string)
 pickle.dump(res,open( "save.pkl", "wb" ))
 res2 = pickle.load( open( "save.pkl", "rb" ) )
-print(res2)
 
-tw.calibration_get_data()
-res = []
-while res==[]:
+print("calibration_discard_data:")
+tw.calibration_discard_data([0.1,0.1])
+res = None
+while res==None:
     res = tw.calibration_retrieve_result()
-print(res)
+print(res.work_item.action)
+print(res.work_item.coordinates)
+print(res.status_string)
+pickle.dump(res,open( "save.pkl", "wb" ))
+res2 = pickle.load( open( "save.pkl", "rb" ) )
 
-tw.calibration_apply_data()
+print("calibration_collect_data:")
+time.sleep(0.5)
+tw.calibration_collect_data([0.5,0.5])
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+time.sleep(0.5)
+tw.calibration_collect_data([0.5,0.5])
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+tw.calibration_collect_data([0.45,0.45])
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+print(res.work_item.action)
+print(res.work_item.coordinates)
+print(res.status_string)
+pickle.dump(res,open( "save.pkl", "wb" ))
+res2 = pickle.load( open( "save.pkl", "rb" ) )
+
+print(tw.calibration_get_status())
+
+print("calibration_compute_and_apply:")
+tw.calibration_compute_and_apply()
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+print(res.work_item.action)
+print(res.status_string)
+print(res.calibration_result)
+pickle.dump(res,open( "save.pkl", "wb" ))
+res2 = pickle.load( open( "save.pkl", "rb" ) )
+
+print("calibration_get_data:")
+tw.calibration_get_data()
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+print(res.work_item.action)
+print(res.status_string)
+#print(res.calibration_data)
+pickle.dump(res,open( "save.pkl", "wb" ))
+res2 = pickle.load( open( "save.pkl", "rb" ) )
+
+print("calibration_apply_data:")
+tw.calibration_apply_data(res.calibration_data)
+res = None
+while res==None:
+    res = tw.calibration_retrieve_result()
+print(res.work_item.action)
+print(res.status_string)
    
 #%% Record some data (and test all streams while we do so)
 print(tw.has_stream('gaze'))
