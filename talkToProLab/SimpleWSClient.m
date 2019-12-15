@@ -97,10 +97,10 @@ try
     bakclasspathFile = [classpathFile '.bak'];
     
     % read each line into separate cell
-    fid = fopen(classpathFile);
-    fileContentsWrapped = textscan(fid, '%s', 'delimiter', '\n');
-    fclose(fid);
-    fileContents = fileContentsWrapped{1};
+    txt = fileread(classpathFile);
+    fileContents = strsplit(txt,'\n');
+    fileContents = fileContents(:); % ensure column vector
+    fileContents(cellfun(@isempty,fileContents)) = [];
     
     j = 1;
     newFileContents = {};
@@ -112,7 +112,7 @@ try
         if isempty(strfind(fileContents{i}, 'matlab-websocket'))
             newFileContents{j, 1} = fileContents{i}; %#ok<AGROW>
             j = j + 1;
-        elseif ~isempty(strfind(fileContents{i}, 'matlab-websocket'))
+        else
             if ~pathInserted
                 newFileContents{j, 1} = jarPath; %#ok<AGROW>
                 pathInserted = 1;
@@ -133,7 +133,7 @@ try
     % they are, then there's no need to do anything.
     updateClasspath = 1;
     if length(fileContents) == length(newFileContents)
-        if strcmp(fileContents, newFileContents)
+        if all(strcmp(fileContents, newFileContents))
             updateClasspath = 0;
         end
     end
