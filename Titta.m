@@ -433,7 +433,7 @@ classdef Titta < handle
             end
             
             % get info about the system
-            assert(obj.systemInfo.samplerate==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.samplerate);
+            assert(obj.systemInfo.frequency==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.frequency);
             out.systemInfo                  = obj.systemInfo;
             
             % get information about display geometry and trackbox
