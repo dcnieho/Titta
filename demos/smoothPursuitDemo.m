@@ -18,7 +18,7 @@ useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 runInDummyMode          = true;
 % task parameters
-fixTime                 = .5;           % s
+fixTime                 = 1.2;          % s
 dur                     = 4;            % s
 cps                     = 0.375;        % Hz
 range                   = [0.1 0.9];    % fraction of screen width and height
