@@ -13,7 +13,7 @@
     <OutputPath>.</OutputPath>
     <Name>TobiiWrapper_python_py</Name>
     <RootNamespace>TobiiWrapper_python</RootNamespace>
-    <InterpreterId>Global|VisualStudio|PsychoPy3</InterpreterId>
+    <InterpreterId>Global|VisualStudio|PsychoPy3 (x64)</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
@@ -34,7 +34,8 @@
     <Compile Include="TobiiWrapper\x64\__init__.py" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|VisualStudio|PsychoPy3" />
+    <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x64)" />
+    <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x86)" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="TobiiWrapper\" />
