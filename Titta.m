@@ -209,82 +209,82 @@ classdef Titta < handle
         
         % getters
         function systemInfo = get.systemInfo(obj)
-            systemInfo = [];
-            if obj.isInitialized
+            systemInfo = struct();
+            if ~isempty(obj.buffer)
                 systemInfo              = obj.buffer.getEyeTrackerInfo();
                 systemInfo.SDKVersion   = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
             end
         end
         function deviceName = get.deviceName(obj)
             deviceName = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 deviceName = obj.buffer.deviceName;
             end
         end
         function serialNumber = get.serialNumber(obj)
             serialNumber = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 serialNumber = obj.buffer.serialNumber;
             end
         end
         function model = get.model(obj)
             model = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 model = obj.buffer.model;
             end
         end
         function firmwareVersion = get.firmwareVersion(obj)
             firmwareVersion = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 firmwareVersion = obj.buffer.firmwareVersion;
             end
         end
         function runtimeVersion = get.runtimeVersion(obj)
             runtimeVersion = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 runtimeVersion = obj.buffer.runtimeVersion;
             end
         end
         function address = get.address(obj)
             address = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 address = obj.buffer.address;
             end
         end
         function capabilities = get.capabilities(obj)
             capabilities = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 capabilities = obj.buffer.capabilities;
             end
         end
         function supportedFrequencies = get.supportedFrequencies(obj)
             supportedFrequencies = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 supportedFrequencies = obj.buffer.supportedFrequencies;
             end
         end
         function supportedModes = get.supportedModes(obj)
             supportedModes = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 supportedModes = obj.buffer.supportedModes;
             end
         end
         function frequency = get.frequency(obj)
             frequency = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 frequency = obj.buffer.frequency;
             end
         end
         function trackingMode = get.trackingMode(obj)
             trackingMode = [];
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 trackingMode = obj.buffer.trackingMode;
             end
         end
         % setters
         function set.frequency(obj,frequency)
             assert(nargin>1,'Titta::set.frequency: provide frequency argument.');
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 obj.buffer.frequency = frequency;
                 % if successful (would have thrown on previous line if
                 % not), update frequency stored in settings as well
@@ -293,7 +293,7 @@ classdef Titta < handle
         end
         function set.trackingMode(obj,trackingMode)
             assert(nargin>1,'Titta::set.trackingMode: provide tracking mode argument.');
-            if obj.isInitialized
+            if ~isempty(obj.buffer)
                 obj.buffer.trackingMode = trackingMode;
                 % if successful (would have thrown on previous line if
                 % not), update tracking mode stored in settings as well
