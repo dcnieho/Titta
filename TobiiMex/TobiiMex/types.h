@@ -202,7 +202,8 @@ namespace TobiiTypes
         CalibrationPoint(TobiiResearchCalibrationPoint in_)
         {
             position_on_display_area = in_.position_on_display_area;
-            calibration_samples = std::vector<TobiiResearchCalibrationSample>(in_.calibration_samples, in_.calibration_samples + in_.calibration_sample_count);
+            if (in_.calibration_samples)
+                calibration_samples = std::vector<TobiiResearchCalibrationSample>(in_.calibration_samples, in_.calibration_samples + in_.calibration_sample_count);
         }
 
         TobiiResearchNormalizedPoint2D position_on_display_area;
@@ -221,7 +222,8 @@ namespace TobiiTypes
             if (in_)
             {
                 status = in_->status;
-                calibration_points.insert(calibration_points.end(), &in_->calibration_points[0], &in_->calibration_points[in_->calibration_point_count]);
+                if (in_->calibration_points)
+                    calibration_points.insert(calibration_points.end(), &in_->calibration_points[0], &in_->calibration_points[in_->calibration_point_count]);
             }
         }
 
