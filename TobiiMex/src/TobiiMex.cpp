@@ -525,10 +525,8 @@ void TobiiMex::calibrationThread()
             else
                 result = tobii_research_screen_based_calibration_compute_and_apply(_eyetracker.et, &computeResult);
 
-            TobiiTypes::CalibrationWorkResult workResult{workItem, result};
-            if (computeResult)
-                workResult.calibrationResult = {computeResult,tobii_research_free_screen_based_calibration_result};
-            _calibrationWorkResultQueue.enqueue(std::move(workResult));
+            _calibrationWorkResultQueue.enqueue({ workItem, result, {}, computeResult });
+            tobii_research_free_screen_based_calibration_result(computeResult);
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;
             break;
@@ -542,7 +540,8 @@ void TobiiMex::calibrationThread()
 
             TobiiTypes::CalibrationWorkResult workResult{ workItem, result };
             if (calData->size)
-                workResult.calibrationData = {calData,tobii_research_free_calibration_data};
+                workResult.calibrationData = std::vector<uint8_t>(static_cast<uint8_t*>(calData->data), static_cast<uint8_t*>(calData->data) + calData->size);
+            tobii_research_free_calibration_data(calData);
             _calibrationWorkResultQueue.enqueue(std::move(workResult));
 
             _calibrationState = TobiiTypes::CalibrationState::AwaitingCalPoint;

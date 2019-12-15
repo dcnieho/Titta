@@ -106,14 +106,13 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
     mxArray* ToMatlab(TobiiResearchStatus                               data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationAction                     data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationResult                    data_);
+    mxArray* ToMatlab(TobiiTypes::CalibrationResult                     data_);
     mxArray* ToMatlab(TobiiResearchCalibrationStatus                    data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationPoint data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
+    mxArray* ToMatlab(TobiiTypes::CalibrationPoint data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>       data_);
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
-    mxArray* ToMatlab(TobiiResearchCalibrationData                      data_);
 }
 #include "mex_type_utils.h"
 
@@ -1422,16 +1421,15 @@ namespace mxTypes
         }
         return mxCreateString(str.c_str());
     }
-    mxArray* ToMatlab(TobiiResearchCalibrationResult data_)
+    mxArray* ToMatlab(TobiiTypes::CalibrationResult data_)
     {
-        std::vector<TobiiResearchCalibrationPoint> points(data_.calibration_points, data_.calibration_points+data_.calibration_point_count);
         const char* fieldNames[] = {"status","points"};
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1. status
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.status));
         // 2. data per calibration point
-        mxSetFieldByNumber(out, 0, 1, ToMatlab(points));
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.calibration_points));
 
         return out;
     }
@@ -1455,7 +1453,7 @@ namespace mxTypes
         }
         return mxCreateString(str.c_str());
     }
-    mxArray* ToMatlab(TobiiResearchCalibrationPoint data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
+    mxArray* ToMatlab(TobiiTypes::CalibrationPoint data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
         if (idx_ == 0)
         {
@@ -1464,7 +1462,7 @@ namespace mxTypes
         }
 
         mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.position_on_display_area));
-        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(std::vector<TobiiResearchCalibrationSample>(data_.calibration_samples, data_.calibration_samples+data_.calibration_sample_count)));
+        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(data_.calibration_samples));
 
         return storage_;
     }
@@ -1519,11 +1517,6 @@ namespace mxTypes
             break;
         }
         return mxCreateString(str.c_str());
-    }
-
-    mxArray* ToMatlab(TobiiResearchCalibrationData data_)
-    {
-        return ToMatlab(std::vector<uint8_t>(static_cast<uint8_t*>(data_.data), static_cast<uint8_t*>(data_.data)+data_.size));
     }
 }
 

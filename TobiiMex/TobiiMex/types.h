@@ -190,6 +190,38 @@ namespace TobiiTypes
     };
 
 
+    //// calibration
+    // replacements for some Tobii classes, so we don't have to deal with their C-arrays
+    struct CalibrationPoint
+    {
+        CalibrationPoint() = default;
+        CalibrationPoint(TobiiResearchCalibrationPoint in_)
+        {
+            position_on_display_area = in_.position_on_display_area;
+            calibration_samples = std::vector<TobiiResearchCalibrationSample>(in_.calibration_samples, in_.calibration_samples + in_.calibration_sample_count);
+        }
+
+        TobiiResearchNormalizedPoint2D position_on_display_area;
+        std::vector<TobiiResearchCalibrationSample> calibration_samples;
+    };
+
+    struct CalibrationResult
+    {
+        CalibrationResult() = default;
+        CalibrationResult(TobiiResearchCalibrationResult* in_)
+        {
+            if (in_)
+            {
+                status = in_->status;
+                calibration_points.insert(calibration_points.end(), &in_->calibration_points[0], &in_->calibration_points[in_->calibration_point_count]);
+            }
+        }
+
+        std::vector<CalibrationPoint> calibration_points;
+        TobiiResearchCalibrationStatus status = TOBII_RESEARCH_CALIBRATION_FAILURE;
+    };
+
+    // enums and classes for my calibration machinery
     enum class CalibrationState
     {
         NotYetEntered,
@@ -217,7 +249,7 @@ namespace TobiiTypes
     struct CalibrationWorkItem
     {
         CalibrationAction	action = CalibrationAction::Nothing;
-        // some actions need one or both of the below
+        // some actions need one or multiple of the below
         std::vector<double> coordinates;
         std::string         eye;
         std::vector<uint8_t>calData;
@@ -225,10 +257,10 @@ namespace TobiiTypes
 
     struct CalibrationWorkResult
     {
-        CalibrationWorkItem                             workItem;
-        TobiiResearchStatus                             status;
-        std::string                                     statusString;
-        std::shared_ptr<TobiiResearchCalibrationResult> calibrationResult;
-        std::shared_ptr<TobiiResearchCalibrationData>   calibrationData;
+        CalibrationWorkItem     workItem;
+        TobiiResearchStatus     status;
+        std::string             statusString;
+        CalibrationResult       calibrationResult;
+        std::vector<uint8_t>    calibrationData;
     };
 }
