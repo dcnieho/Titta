@@ -192,6 +192,8 @@ iStart  = find(~cellfun(@isempty,strfind(msgs(:,2),'FIX ON')));     %#ok<STRCLFH
 iPursuit= find(~cellfun(@isempty,strfind(msgs(:,2),'PURSUIT AT'))); %#ok<STRCLFH>
 iEnd    = find(strcmp(msgs(:,2),'STIM OFF'),1,'last');
 Ts      = cat(1,msgs{iStart,1},msgs{iPursuit,1},msgs{iEnd,1});
+startT  = Ts(1);
+endT    = Ts(end);
 Ts      = double(Ts-startT)/1000;   % convert to ms, relative to start time
 % get dot positions during fixation and pursuit stimulus
 posF    = sscanf(msgs{iStart,2},'FIX ON (%f,%f)');
@@ -209,15 +211,17 @@ if runInDummyMode
     [rx, ry]    = deal([]);
     t           = [];
 else
-    leftDeg = convToDeg(ETdat. left,dat.geometry);
-    rightDeg= convToDeg(ETdat.right,dat.geometry);
+    left.x  = ETdat. left.gazePoint.onDisplayArea(1,:) * dat.expt.winRect(3);
+    left.y  = ETdat. left.gazePoint.onDisplayArea(2,:) * dat.expt.winRect(4);
+    right.x = ETdat.right.gazePoint.onDisplayArea(1,:) * dat.expt.winRect(3);
+    right.y = ETdat.right.gazePoint.onDisplayArea(2,:) * dat.expt.winRect(4);
     
     qDat    = ETdat.systemTimeStamp>=startT & ETdat.systemTimeStamp<=endT;
     t       = ETdat.systemTimeStamp(qDat); t=double(t-startT)/1000;
-    lx      = leftDeg.x(qDat);
-    ly      = leftDeg.y(qDat);
-    rx      = rightDeg.x(qDat);
-    ry      = rightDeg.y(qDat);
+    lx      = left.x(qDat);
+    ly      = left.y(qDat);
+    rx      = right.x(qDat);
+    ry      = right.y(qDat);
 end
 
 
@@ -226,7 +230,7 @@ newline = sprintf('\n'); %#ok<SPRINTFN>
 f       = figure;
 ax(1)   = subplot(2,1,1);
 hold on
-hs      = plot(Ts,pos(1,:));
+hs      = plot(Ts,pos(1,:),'k');
 hl      = plot(t,lx,'Color',eyeColors{1}/255);
 hr      = plot(t,rx,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
@@ -236,7 +240,7 @@ legend([hs hl hr],'dot position','left gaze','right gaze','Location','NorthEast'
 
 ax(2)   = subplot(2,1,2);
 hold on
-hs      = plot(Ts,pos(2,:));
+hs      = plot(Ts,pos(2,:),'k');
 hl      = plot(t,ly,'Color',eyeColors{1}/255);
 hr      = plot(t,ry,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
