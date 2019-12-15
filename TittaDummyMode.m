@@ -67,7 +67,7 @@ classdef TittaDummyMode < Titta
                 % 2. methods from superclass that are not overridden.
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'getMessages','sendMessage','setOptions','getOptions','delete'});
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'getMessages','sendMessage','collectSessionData','saveData','setOptions','getOptions','delete'});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
@@ -120,13 +120,6 @@ classdef TittaDummyMode < Titta
         
         function out = calibrate(~,~,~)
             out = [];
-        end
-        
-        function dat = collectSessionData(~)
-            dat = [];
-        end
-        
-        function saveData(~,~,~)
         end
         
         function out = deInit(obj)
