@@ -12,7 +12,7 @@ clear all
 sca
 
 DEBUGlevel              = 0;
-if 0
+if 1
     % black background
     bgClr                   = 0;
     fixClrs                 = [255 100];
