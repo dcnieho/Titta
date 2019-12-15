@@ -156,7 +156,7 @@ classdef TalkToProLab < handle
             resp    = waitForResponse(this.clientProject,'ListParticipants');
             names   = {resp.participant_list.participant_name};
             qPart   = strcmp(names,name);
-            assert(~any(qPart)||allowExisting,'TalkToProLab: Participant with name ''%s'' already exists',name)
+            assert(~any(qPart)||allowExisting,'TalkToProLab: createParticipant: Participant with name ''%s'' already exists',name)
             
             if any(qPart)
                 % use existing
@@ -188,7 +188,7 @@ classdef TalkToProLab < handle
                     mediaID     = resp.media_list{qMedia}.media_id; % for convenience, provide direct mediaID output
                     mediaInfo   = resp.media_list{qMedia};
                 elseif throwWhenNotFound
-                    error('TalkToProLab: Media with the name ''%s'' was not found in the project that is open in Pro Lab.',name)
+                    error('TalkToProLab: findMedia: Media with the name ''%s'' was not found in the project that is open in Pro Lab. Use TalkToProLab.uploadMedia to upload media with that name.',name)
                 end
             elseif throwWhenNotFound
                 error('TalkToProLab: findMedia: Media with the name ''%s'' was not found in the project that is open in Pro Lab. Use TalkToProLab.uploadMedia to upload media with that name.',name)
@@ -349,7 +349,7 @@ classdef TalkToProLab < handle
             % that we skip that
             if nargin<6 || isempty(skipStateCheck) || ~skipStateCheck
                 state = this.getExternalPresenterState();
-                assert(strcmpi(state,'ready'),'TalkToProLab: Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state);
+                assert(strcmpi(state,'ready'),'TalkToProLab: startRecording: Tobii Pro Lab is not in the expected state. Should be ''ready'', is ''%s''. Make sure Pro Lab is on the recording tab and that currently no recording is active',state);
             end
             % scrLatency is optional
             request = struct('operation','StartRecording',...
