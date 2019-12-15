@@ -16,7 +16,7 @@ fixClrs                 = [0 255];
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
-runInDummyMode          = true;
+runInDummyMode          = false;
 % task parameters
 fixTime                 = 1.2;          % s
 dur                     = 4;            % s
