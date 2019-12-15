@@ -126,9 +126,6 @@ try
     EThndl.buffer.start('gaze');
     WaitSecs(.8);   % wait for eye tracker to start and gaze to be picked up
     
-    % send message into ET data file
-    EThndl.sendMessage('test');
-    
     % First draw a fixation point
     Screen('gluDisk',wpnt,fixClrs(1),stim.x(1),stim.y(1),round(winRect(3)/100));
     startT = Screen('Flip',wpnt);
@@ -143,8 +140,8 @@ try
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    nextFlipT = startT+fixTime-1/hz/2;  % bit of slack to make sure requested presentation time can be achieved
-    frameT = nan(1,nFrame);
+    nextFlipT   = startT+fixTime-1/hz/2;    % bit of slack to make sure requested presentation time can be achieved
+    frameT      = nan(1,nFrame);
     for f=1:nFrame
         Screen('gluDisk',wpnt,fixClrs(1),stim.x(f),stim.y(f),round(winRect(3)/160));
         frameT(f)   = Screen('Flip',wpnt,nextFlipT);
