@@ -209,7 +209,7 @@ classdef Titta < handle
         
         % getters
         function systemInfo = get.systemInfo(obj)
-            systemInfo = struct();
+            systemInfo = [];
             if ~isempty(obj.buffer)
                 systemInfo              = obj.buffer.getEyeTrackerInfo();
                 systemInfo.SDKVersion   = obj.buffer.SDKVersion;    % SDK version consumed by MEX file
