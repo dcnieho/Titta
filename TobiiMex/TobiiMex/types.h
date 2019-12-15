@@ -195,6 +195,10 @@ namespace TobiiTypes
     struct CalibrationPoint
     {
         CalibrationPoint() = default;
+        CalibrationPoint(TobiiResearchNormalizedPoint2D pos_, std::vector<TobiiResearchCalibrationSample> samples_) :
+            position_on_display_area(pos_),
+            calibration_samples(samples_)
+        {}
         CalibrationPoint(TobiiResearchCalibrationPoint in_)
         {
             position_on_display_area = in_.position_on_display_area;
@@ -208,7 +212,11 @@ namespace TobiiTypes
     struct CalibrationResult
     {
         CalibrationResult() = default;
-        CalibrationResult(TobiiResearchCalibrationResult* in_)
+        CalibrationResult(std::vector<CalibrationPoint> points_, TobiiResearchCalibrationStatus status_) :
+            calibration_points(points_),
+            status(status_)
+        {}
+        CalibrationResult(TobiiResearchCalibrationResult * in_)
         {
             if (in_)
             {
