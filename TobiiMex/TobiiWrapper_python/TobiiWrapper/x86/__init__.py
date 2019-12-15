@@ -1,1 +1,1 @@
-﻿from TobiiWrapper_python import *
+﻿
