@@ -911,9 +911,9 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
 
         //// calibration
         .def("enter_calibration_mode", &TobiiMex::enterCalibrationMode,
-            "do_monocular"_a)
+            "do_monocular"_a=false)
         .def("leave_calibration_mode", &TobiiMex::leaveCalibrationMode,
-            "force"_a)
+            "force"_a=false)
         .def("calibration_collect_data", &TobiiMex::calibrationCollectData,
             "coordinates"_a, py::arg_v("eye", std::nullopt, "None"))
         .def("calibration_discard_data", &TobiiMex::calibrationDiscardData,
@@ -924,7 +924,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
             "cal_data"_a)
         .def("calibration_get_status", &TobiiMex::calibrationGetStatus)
         .def("calibration_retrieve_result", &TobiiMex::calibrationRetrieveResult,
-            "make_string"_a)
+            "make_string"_a=true)
 
         //// data streams
         // query if stream is supported
