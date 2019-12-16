@@ -1782,8 +1782,8 @@ classdef Titta < handle
                 % reports as well
                 nReply = 0;
                 while true
-                    computeResult  = obj.buffer.calibrationRetrieveResult();
-                    nReply  = nReply + (~isempty(computeResult) && strcmp(computeResult.workItem.action,'DiscardData'));
+                    callResult  = obj.buffer.calibrationRetrieveResult();
+                    nReply  = nReply + (~isempty(callResult) && strcmp(callResult.workItem.action,'DiscardData'));
                     if nReply==size(points,1)
                         break;
                     end
@@ -1924,9 +1924,9 @@ classdef Titta < handle
                             nCollecting = 1;
                         else
                             % check status
-                            computeResult  = obj.buffer.calibrationRetrieveResult();
-                            if ~isempty(computeResult)
-                                if strcmp(computeResult.workItem.action,'CollectData') && computeResult.status==0     % TOBII_RESEARCH_STATUS_OK
+                            callResult  = obj.buffer.calibrationRetrieveResult();
+                            if ~isempty(callResult)
+                                if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
                                 else
@@ -1949,7 +1949,7 @@ classdef Titta < handle
                                 end
                             end
                             if advancePoint
-                                out.pointStatus{currentPoint} = computeResult;
+                                out.pointStatus{currentPoint} = callResult;
                             end
                         end
                     else
