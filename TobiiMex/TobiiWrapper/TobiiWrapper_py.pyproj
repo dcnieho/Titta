@@ -11,8 +11,8 @@
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>TobiiWrapper_python_py</Name>
-    <RootNamespace>TobiiWrapper_python</RootNamespace>
+    <Name>TobiiWrapper_py</Name>
+    <RootNamespace>TobiiWrapper</RootNamespace>
     <InterpreterId>Global|VisualStudio|PsychoPy3 (x64)</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
@@ -43,8 +43,8 @@
     <Folder Include="TobiiWrapper\x64\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="TobiiWrapper_python_cpp.vcxproj">
-      <Name>TobiiWrapper_python_cpp</Name>
+    <ProjectReference Include="TobiiWrapper_cpp.vcxproj">
+      <Name>TobiiWrapper_cpp</Name>
       <Project>{2c6137c2-382b-4a3e-b06d-38dc4f6e5ee7}</Project>
       <Private>True</Private>
     </ProjectReference>

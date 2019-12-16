@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2C6137C2-382B-4A3E-B06D-38DC4F6E5EE7}</ProjectGuid>
-    <RootNamespace>TobiiWrapper_python</RootNamespace>
+    <RootNamespace>TobiiWrapper</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>TobiiWrapper_python_cpp</ProjectName>
+    <ProjectName>TobiiWrapper_cpp</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -73,24 +73,24 @@
     <TargetExt>.pyd</TargetExt>
     <OutDir>.\TobiiWrapper\x86\</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>TobiiWrapper_python_d</TargetName>
+    <TargetName>TobiiWrapper_d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.pyd</TargetExt>
-    <TargetName>TobiiWrapper_python_d</TargetName>
+    <TargetName>TobiiWrapper_d</TargetName>
     <OutDir>.\TobiiWrapper\x64\</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.\TobiiWrapper\x64\</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>TobiiWrapper_python</TargetName>
+    <TargetName>TobiiWrapper</TargetName>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\TobiiWrapper\x86\</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>TobiiWrapper_python</TargetName>
+    <TargetName>TobiiWrapper</TargetName>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -159,7 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TobiiWrapper_python.cpp" />
+    <ClCompile Include="TobiiWrapper.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -244,9 +244,9 @@ std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities dat
 
 // start module scope
 #ifdef NDEBUG
-PYBIND11_MODULE(TobiiWrapper_python, m)
+PYBIND11_MODULE(TobiiWrapper, m)
 #else
-PYBIND11_MODULE(TobiiWrapper_python_d, m)
+PYBIND11_MODULE(TobiiWrapper_d, m)
 #endif
 {
     // SDK and eye tracker info
