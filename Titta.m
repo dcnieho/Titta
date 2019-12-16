@@ -565,6 +565,17 @@ classdef Titta < handle
                             assert(obj.hasCap('CanDoMonocularCalibration'),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
                         end
                         obj.buffer.enterCalibrationMode(qDoMonocular);
+                        while true
+                            callResult  = obj.buffer.calibrationRetrieveResult();
+                            if ~isempty(callResult) && strcmp(callResult.workItem.action,'Enter')
+                                if callResult.status==0
+                                    break;
+                                else
+                                    error('Titta: error entering calibration mode: %s',callResult.statusString);
+                                end
+                            end
+                            WaitSecs('YieldSecs',0.001);    % don't sping too hard
+                        end
                         qHasEnteredCalMode = true;
                     end
                     out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
@@ -650,6 +661,17 @@ classdef Titta < handle
             
             if bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode)
                 obj.buffer.leaveCalibrationMode();
+                while true
+                    callResult  = obj.buffer.calibrationRetrieveResult();
+                    if ~isempty(callResult) && strcmp(callResult.workItem.action,'Exit')
+                        if callResult.status==0
+                            break;
+                        else
+                            error('Titta: error exiting calibration mode: %s',callResult.statusString);
+                        end
+                    end
+                    WaitSecs('YieldSecs',0.001);    % don't sping too hard
+                end
             end
             % log to messages which calibration was selected
             if ~isnan(out.selectedCal)
