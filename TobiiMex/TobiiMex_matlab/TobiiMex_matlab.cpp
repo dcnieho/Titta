@@ -55,6 +55,7 @@
 #include <sstream>
 #include <atomic>
 #include <cstring>
+#include <inttypes.h>
 
 #include "include_matlab.h"
 
@@ -365,12 +366,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::StartLogging:
         {
             // get optional input argument
-            std::optional<uint64_t> bufSize;
+            std::optional<size_t> bufSize;
             if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
                 if (!mxIsUint64(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
                     mexErrMsgTxt("startLogging: Expected first argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[1]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[1]));
+                if (temp > SIZE_MAX)
+                    mexErrMsgTxt("startLogging: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.");
+                bufSize = static_cast<size_t>(temp);
             }
 
             plhs[0] = mxCreateLogicalScalar(TobiiMex::startLogging(bufSize));
@@ -664,12 +668,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
 
             // get optional input arguments
-            std::optional<uint64_t> bufSize;
+            std::optional<size_t> bufSize;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
                 if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
                     mexErrMsgTxt("start: Expected second argument to be a uint64 scalar.");
-                bufSize = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                if (temp > SIZE_MAX)
+                    mexErrMsgTxt("start: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.");
+                bufSize = static_cast<size_t>(temp);
             }
             std::optional<bool> asGif;
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
@@ -707,12 +714,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxFree(bufferCstr);
 
             // get optional input arguments
-            std::optional<uint64_t> nSamp;
+            std::optional<size_t> nSamp;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
                 if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
                     mexErrMsgTxt("consumeN: Expected second argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                if (temp>SIZE_MAX)
+                    mexErrMsgTxt("consumeN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.");
+                nSamp = static_cast<size_t>(temp);
             }
             std::optional<TobiiMex::BufferSide> side;
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
@@ -799,12 +809,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxFree(bufferCstr);
 
             // get optional input arguments
-            std::optional<uint64_t> nSamp;
+            std::optional<size_t> nSamp;
             if (nrhs > 3 && !mxIsEmpty(prhs[3]))
             {
                 if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
                     mexErrMsgTxt("peekN: Expected second argument to be a uint64 scalar.");
-                nSamp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                if (temp > SIZE_MAX)
+                    mexErrMsgTxt("peekN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.");
+                nSamp = static_cast<size_t>(temp);
             }
             std::optional<TobiiMex::BufferSide> side;
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
