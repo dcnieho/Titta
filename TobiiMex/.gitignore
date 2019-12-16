@@ -20,3 +20,4 @@ git_refid.h
 /*.vs
 *_d.mex*
 *_d.pyd*
+*.whl
