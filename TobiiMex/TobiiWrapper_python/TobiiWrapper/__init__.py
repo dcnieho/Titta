@@ -12,3 +12,8 @@ else:
         from .x86.TobiiWrapper_python_d import *
     else:
         from .x86.TobiiWrapper_python import *
+
+# numpy must be imported because module is built including numpy
+# functionality. Random crashes will ensure otherwise, even when
+# not using the numpy-exporting method call
+import numpy
