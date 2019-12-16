@@ -17,7 +17,7 @@ if isWin
         else
             error('32bit Octave not supported. You can try your luck. But then you''ll have to build PsychToolbox yourself as well for 32bit Octave');
         end
-        inpArgs = {'-v', '-O', '--output', fullfile(myDir,'TobiiMex_matlab',bitLbl,sprintf('TobiiMex_matlab.%s',mexext)), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(myDir,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(myDir,'src','TobiiMex.cpp'), fullfile(myDir,'src','types.cpp'), fullfile(myDir,'src','utils.cpp'), sprintf('-ltobii_research%s',bitLbl)};
+        inpArgs = {'-v', '-O', '--output', fullfile(myDir,'TobiiMex_matlab',bitLbl,sprintf('TobiiMex_matlab.%s',mexext)), '-DBUILD_FROM_SCRIPT', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), fullfile(myDir,'TobiiMex_matlab','TobiiMex_matlab.cpp'), fullfile(myDir,'src','TobiiMex.cpp'), fullfile(myDir,'src','types.cpp'), fullfile(myDir,'src','utils.cpp'), sprintf('-ltobii_research%s',bitLbl)};
         
         % i need to switch path to bindir or mex/mkoctfile fails because
         % gcc not found. Find proper solution for that later.
@@ -37,7 +37,7 @@ if isWin
         else
             error('We must build with VS2019 or later, but last supported 32bit matlab version, R2015b, doesn''t support that compiler. Compile the mex file through the msvc project')
         end
-        mex(extra{:}, '-v', '-O', 'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /Oi /GL /permissive-"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp', 'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"');
+        mex(extra{:}, '-v', '-O', 'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /Oi /GL /permissive-"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_SCRIPT', sprintf('-L%s',fullfile(myDir,'deps','lib')), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab\TobiiMex_matlab.cpp', 'src\*.cpp', 'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"');
     end
 else
     % Linux
@@ -46,5 +46,5 @@ else
     else
         error('Support for 32bit MATLAB on Linux not planned. May actually just work, go ahead and try');
     end
-    mex('-R2017b', '-v', '-O', 'CXXFLAGS="$CXXFLAGS -std=c++17"', 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN''"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_MEX', sprintf('-L%s',fullfile(myDir,'TobiiMex_matlab',bitLbl)), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab/TobiiMex_matlab.cpp', 'src/*.cpp', '-ltobii_research');
+    mex('-R2017b', '-v', '-O', 'CXXFLAGS="$CXXFLAGS -std=c++17"', 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN''"', '-outdir', fullfile(myDir,'TobiiMex_matlab',bitLbl), '-DBUILD_FROM_SCRIPT', sprintf('-L%s',fullfile(myDir,'TobiiMex_matlab',bitLbl)), sprintf('-I%s',fullfile(myDir,'deps','include')), sprintf('-I%s',myDir), sprintf('-I%s',fullfile(myDir,'TobiiMex_matlab')), 'TobiiMex_matlab/TobiiMex_matlab.cpp', 'src/*.cpp', '-ltobii_research');
 end

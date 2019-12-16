@@ -19,7 +19,7 @@
 #else
 #   pragma comment(lib, "tobii_research32.lib")
 #endif
-#ifndef BUILD_FROM_MEX
+#ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
 #       pragma comment(lib, "TobiiMex_d.lib")
 #   else
