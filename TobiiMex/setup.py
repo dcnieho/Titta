@@ -1,9 +1,20 @@
+# to build, run python -m pip wheel .
+# to install, run python -m pip install .
+# add -v switch to see output during build
+
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
+import platform
 
 __version__ = '1.0.0-rc1'
+
+# choose right version of dll to install along with built module
+if platform.architecture()[0]=="64bit":
+    data_files = [('lib\\site-packages\\',["./TobiiMex_matlab/64/tobii_research.dll"])]
+else:
+    data_files = [('lib\\site-packages\\',["./TobiiMex_matlab/32/tobii_research.dll"])]
 
 
 class get_pybind_include(object):
@@ -24,7 +35,7 @@ class get_pybind_include(object):
 ext_modules = [
     Extension(
         'TobiiWrapper',
-        ['src/TobiiMex.cpp','src/types.cpp','src/utils.cpp','TobiiWrapper_python/TobiiWrapper_python.cpp'],
+        ['src/TobiiMex.cpp','src/types.cpp','src/utils.cpp','TobiiWrapper/TobiiWrapper.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
@@ -66,7 +77,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 setup(
-    name='TobiiWrapper_python',
+    name='TobiiWrapper',
     version=__version__,
     author='Diederick C. Niehorster',
     author_email='diederick_c.niehorster@humlab.lu.se',
@@ -78,7 +89,5 @@ setup(
     install_requires=['pybind11>=2.4'],
     setup_requires=['pybind11>=2.4'],
     cmdclass={'build_ext': BuildExt},
-    zip_safe=False,
-    packages=['TobiiWrapper'],
-    package_dir = {'': 'TobiiWrapper_python'}
+    data_files=data_files
 )
