@@ -167,10 +167,9 @@ try
     else
         mustRestart = isempty(which('io.github.jebej.matlabwebsocket.MatlabWebSocketClient'));
     end
-catch %#ok<CTCH>
-    lerr = psychlasterror;
+catch ME
     fprintf('Could not update the Matlab Java classpath file due to the following error:\n');
-    fprintf('%s\n\n', lerr.message);
+    fprintf('%s\n\n', ME.message);
     fprintf('You likely do not have sufficient access permissions for the Matlab application\n');
     fprintf('folder or file itself to change the file %s .\n', classpathFile);
     fprintf('Please ask the system administrator to enable write-access to that file and its\n');
@@ -179,7 +178,7 @@ catch %#ok<CTCH>
     fprintf('%s\n', jarPath);
     fprintf('to the file: %s\n\n', classpathFile);
     fprintf('TalkToProLab will <b><u>not work</b></u> if you skip this step, Titta will still\n');
-    fprintf('be functional, \n');
+    fprintf('be functional. \n');
     fprintf('\nPress RETURN or ENTER to confirm you read and understood the above message.\n');
     pause;
     
