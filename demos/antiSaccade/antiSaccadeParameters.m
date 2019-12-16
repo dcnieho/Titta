@@ -5,7 +5,7 @@ function sv = antiSaccadeParameters(doDemo,useProLabIntegration)
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% Niehorster, D.C., Andersson, R. & Nystrom, M., (in prep). Titta: A
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 %
