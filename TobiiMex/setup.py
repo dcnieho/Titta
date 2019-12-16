@@ -54,12 +54,12 @@ ext_modules = [
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
-        'msvc': ['/DBUILD_FROM_SCRIPT','/DNDEBUG','/EHsc','/std:c++latest'],
-        'unix': ['-DBUILD_FROM_SCRIPT','-DNDEBUG','-std=c++17'],
+        'msvc': ['/DBUILD_FROM_SCRIPT','/DNDEBUG','/Zp8','/GR','/W3','/EHs','/nologo','/MD','/std:c++latest','/Gy','/Oi','/GL','/permissive-','/O2'],
+        'unix': ['-DBUILD_FROM_SCRIPT','-DNDEBUG','-std=c++17','-O3','-fvisibility=hidden'],
     }
     l_opts = {
-        'msvc': [],
-        'unix': [],
+        'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
+        'unix': ['-Wl,-rpath,''$ORIGIN'''],
     }
 
     def build_extensions(self):
@@ -68,7 +68,6 @@ class BuildExt(build_ext):
         link_opts = self.l_opts.get(ct, [])
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
