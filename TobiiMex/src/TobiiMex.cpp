@@ -615,6 +615,11 @@ void TobiiMex::leaveCalibrationMode(bool force_)
 
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
 }
+void checkInCalibrationMode(const std::thread& thread_)
+{
+    if (!thread_.joinable())
+        DoExitWithMsg("Titta::cpp::calibrationCollectData: you have not entered calibration mode, call enterCalibrationMode first");
+}
 void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
     workItem.coordinates = {coordinates_.begin(),coordinates_.end()};
@@ -631,51 +636,31 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
 }
 void TobiiMex::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
-    if (!_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::calibrationCollectData: you have not entered calibration mode, call enterCalibrationMode first");
-    }
-
+    checkInCalibrationMode(_calibrationThread);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::CollectData};
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 void TobiiMex::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
-    if (!_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::calibrationDiscardData: you have not entered calibration mode, call enterCalibrationMode first");
-    }
-
-    TobiiTypes::CalibrationWorkItem workItem{ TobiiTypes::CalibrationAction::DiscardData };
+    checkInCalibrationMode(_calibrationThread);
+    TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::DiscardData};
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 void TobiiMex::calibrationComputeAndApply()
 {
-    if (!_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::calibrationComputeAndApply: you have not entered calibration mode, call enterCalibrationMode first");
-    }
-
+    checkInCalibrationMode(_calibrationThread);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Compute});
 }
 void TobiiMex::calibrationGetData()
 {
-    if (!_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::calibrationGetData: you have not entered calibration mode, call enterCalibrationMode first");
-    }
-
+    checkInCalibrationMode(_calibrationThread);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
 }
 void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
 {
-    if (!_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::calibrationApplyData: you have not entered calibration mode, call enterCalibrationMode first");
-    }
-
+    checkInCalibrationMode(_calibrationThread);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
     workItem.calData = calData_;
     _calibrationWorkQueue.enqueue(std::move(workItem));
