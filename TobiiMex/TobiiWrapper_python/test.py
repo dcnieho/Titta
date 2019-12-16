@@ -159,7 +159,7 @@ success = tw.start('time_sync')
 success = tw.start('positioning')
 print(tw.is_recording('gaze'))
 core.wait(0.2)
-n_samples = tw.gaze_frequency * 2 # Record what should be two seconds of data
+n_samples = tw.frequency * 2 # Record what should be two seconds of data
 
 out = []
 k = 0
@@ -168,7 +168,7 @@ ts_old = 0
 
 t0 = time.clock()
 while k < n_samples:
-    samples = tw.peek_n('gaze')
+    samples = tw.peek_N('gaze')
     if len(samples)>0:
         ts = samples[0].system_time_stamp
 
@@ -216,7 +216,7 @@ plt.plot(np.diff(ut2) / 1000)
 
 all_samples3 = tw.consume_N('gaze',10000000)
 all_samples4 = tw.consume_time_range('gaze')
-print([len(all_samples, all_samples2, all_samples3, all_samples4)])
+print([len(all_samples), len(all_samples2), len(all_samples3), len(all_samples4)])
 
 
 all_images = tw.peek_time_range('eye_image') # by default peeks all
