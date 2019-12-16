@@ -482,15 +482,17 @@ void TobiiMex::calibrationThread()
         {
             // Start a data collection
             _calibrationState = TobiiTypes::CalibrationState::CollectingData;
+            auto& coords = workItem.coordinates.value();
             if (_calibrationIsMonocular)
             {
                 TobiiResearchSelectedEye collectEye=TOBII_RESEARCH_SELECTED_EYE_LEFT, ignore;
                 if (workItem.eye == "right")
                     collectEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-                result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), collectEye, &ignore);
+                
+                result = tobii_research_screen_based_monocular_calibration_collect_data(_eyetracker.et, static_cast<float>(coords[0]), static_cast<float>(coords[1]), collectEye, &ignore);
             }
             else
-                result = tobii_research_screen_based_calibration_collect_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_collect_data(_eyetracker.et, static_cast<float>(coords[0]), static_cast<float>(coords[1]));
 
             _calibrationWorkResultQueue.enqueue({workItem, result});
 
@@ -501,15 +503,16 @@ void TobiiMex::calibrationThread()
         {
             // discard calibration data for a specific point
             _calibrationState = TobiiTypes::CalibrationState::DiscardingData;
+            auto& coords = workItem.coordinates.value();
             if (_calibrationIsMonocular)
             {
                 TobiiResearchSelectedEye discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
                 if (workItem.eye == "right")
                     discardEye = TOBII_RESEARCH_SELECTED_EYE_RIGHT;
-                result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]), discardEye);
+                result = tobii_research_screen_based_monocular_calibration_discard_data(_eyetracker.et, static_cast<float>(coords[0]), static_cast<float>(coords[1]), discardEye);
             }
             else
-                result = tobii_research_screen_based_calibration_discard_data(_eyetracker.et, static_cast<float>(workItem.coordinates[0]), static_cast<float>(workItem.coordinates[1]));
+                result = tobii_research_screen_based_calibration_discard_data(_eyetracker.et, static_cast<float>(coords[0]), static_cast<float>(coords[1]));
 
             _calibrationWorkResultQueue.enqueue({workItem, result});
 
@@ -550,15 +553,15 @@ void TobiiMex::calibrationThread()
         case TobiiTypes::CalibrationAction::ApplyCalibrationData:
         {
             _calibrationState = TobiiTypes::CalibrationState::ApplyingCalibrationData;
-            if (!workItem.calData.empty())
+            if (!workItem.calData.value().empty())
             {
                 TobiiResearchCalibrationData calData;
                 // copy calibration data into array
-                auto nItem = workItem.calData.size();
+                auto nItem = workItem.calData.value().size();
                 calData.data = malloc(nItem);
                 calData.size = nItem;
                 if (nItem)
-                    std::memcpy(calData.data, &workItem.calData[0], nItem);
+                    std::memcpy(calData.data, &workItem.calData.value()[0], nItem);
 
                 result = tobii_research_apply_calibration_data(_eyetracker.et, &calData);
                 free(calData.data);
@@ -629,7 +632,7 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
         if (workItem.eye != "left" && workItem.eye != "right")
         {
             std::stringstream os;
-            os << "Titta::cpp::calibrationCollectData: Cannot start calibration for eye " << workItem.eye << ", unknown. Expected left or right.";
+            os << "Titta::cpp::calibrationCollectData: Cannot start calibration for eye " << workItem.eye.value() << ", unknown. Expected left or right.";
             DoExitWithMsg(os.str());
         }
     }

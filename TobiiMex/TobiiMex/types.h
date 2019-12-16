@@ -258,19 +258,20 @@ namespace TobiiTypes
 
     struct CalibrationWorkItem
     {
-        CalibrationAction	action = CalibrationAction::Nothing;
+        CalibrationAction	                action = CalibrationAction::Nothing;
         // some actions need one or multiple of the below
-        std::vector<double> coordinates;
-        std::string         eye;
-        std::vector<uint8_t>calData;
+        std::optional<std::vector<double>>  coordinates;
+        std::optional<std::string>          eye;
+        std::optional<std::vector<uint8_t>> calData;
     };
 
     struct CalibrationWorkResult
     {
-        CalibrationWorkItem     workItem;
-        TobiiResearchStatus     status;
-        std::string             statusString;
-        CalibrationResult       calibrationResult;
-        std::vector<uint8_t>    calibrationData;
+        CalibrationWorkItem                 workItem;
+        TobiiResearchStatus                 status;
+        std::string                         statusString;
+        // some results may have one of the below attached
+        std::optional<CalibrationResult>    calibrationResult;
+        std::optional<std::vector<uint8_t>> calibrationData;
     };
 }

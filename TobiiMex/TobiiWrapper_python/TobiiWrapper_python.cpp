@@ -556,7 +556,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 if (t.size() != 4)
                     throw std::runtime_error("Invalid state!");
 
-                TobiiTypes::CalibrationWorkItem p{ t[0].cast<TobiiTypes::CalibrationAction>(),t[1].cast<std::vector<double>>(),t[2].cast<std::string>(),t[3].cast<std::vector<uint8_t>>() };
+                TobiiTypes::CalibrationWorkItem p{ t[0].cast<TobiiTypes::CalibrationAction>(),t[1].cast<std::optional<std::vector<double>>>(),t[2].cast<std::optional<std::string>>(),t[3].cast<std::optional<std::vector<uint8_t>>>() };
                 return p;
             }
         ))
@@ -575,7 +575,7 @@ PYBIND11_MODULE(TobiiWrapper_python_d, m)
                 if (t.size() != 5)
                     throw std::runtime_error("Invalid state!");
 
-                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),static_cast<TobiiResearchStatus>(t[1].cast<int>()),t[2].cast<std::string>(),t[3].cast<TobiiTypes::CalibrationResult>(),t[4].cast<std::vector<uint8_t>>() };
+                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),static_cast<TobiiResearchStatus>(t[1].cast<int>()),t[2].cast<std::string>(),t[3].cast<std::optional<TobiiTypes::CalibrationResult>>(),t[4].cast<std::optional<std::vector<uint8_t>>>() };
                 return p;
             }
         ))
