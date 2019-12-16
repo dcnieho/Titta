@@ -29,18 +29,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="test.py" />
-    <Compile Include="TobiiWrapper\__init__.py" />
-    <Compile Include="TobiiWrapper\x86\__init__.py" />
-    <Compile Include="TobiiWrapper\x64\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x64)" />
     <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x86)" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TobiiWrapper\" />
-    <Folder Include="TobiiWrapper\x86\" />
-    <Folder Include="TobiiWrapper\x64\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="TobiiWrapper_cpp.vcxproj">
