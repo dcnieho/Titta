@@ -4,7 +4,7 @@
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nyström, M., (in prep). Titta: A
+% Niehorster, D.C., Andersson, R. & Nystrï¿½m, M., (in prep). Titta: A
 % toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers.
 
@@ -93,7 +93,7 @@ classdef Titta < handle
             if isfield(settings,'freq') && isfield(obj.settings,'freq') && settings.freq ~= obj.settings.freq
                 obj.frequency = settings.freq;
             end
-            if isfield(settings,'trackingMode') && isfield(obj.settings,'trackingMode') && settings.trackingMode ~= obj.settings.trackingMode
+            if isfield(settings,'trackingMode') && isfield(obj.settings,'trackingMode') && ~strcmp(settings.trackingMode,obj.settings.trackingMode)
                 obj.trackingMode = settings.trackingMode;
             end
             if obj.isInitialized
