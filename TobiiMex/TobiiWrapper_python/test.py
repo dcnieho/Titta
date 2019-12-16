@@ -7,22 +7,14 @@
 
 
 
-'''
-Since samples are pulled in callbacks with the Tobii SDK, it may get
-hiccups if your script is doing something very computationally heavy,
-without allowing significant sleeps (which would allow the callback to
-be called and therefore all samples to be collected appropriately).
-
-This can be tested in a while-loop like the one below.                                    
-'''
 # Import modules
 import pickle
-#import numpy as np
+import numpy as np
 import time
-#from psychopy import core
-#import matplotlib.pyplot as plt
+from psychopy import core
+import matplotlib.pyplot as plt
 
-#plt.close('all')
+plt.close('all')
 
 # static functions, connect to first eye tracker found
 TobiiWrapper.wrapper.start_logging()
@@ -63,16 +55,7 @@ print(tw.display_area)
 #tw.clear_licenses()
 #tw.apply_licenses()
 
-# test clock, is time.clock() same as Tobii system clock?
-clks = []
-for k in range(1000):
-    if k%10<5:
-        clks.append([time.clock(), TobiiWrapper.wrapper.get_system_timestamp()])
-    else:
-        clks.append([TobiiWrapper.wrapper.get_system_timestamp(), time.clock()])
-
-
-# test calibration (just go through the motions, that it fails doesn't matter for our test)
+# test calibration (just go through the motions without display, seems to succeed anyway with two positions if there are eyes)
 tw.leave_calibration_mode(True)
 
 print("enter_calibration_mode:")
@@ -159,6 +142,18 @@ success = tw.start('time_sync')
 success = tw.start('positioning')
 print(tw.is_recording('gaze'))
 core.wait(0.2)
+
+
+'''
+Since samples are pulled in callbacks with the Tobii SDK, it may get
+hiccups if your script is doing something very computationally heavy,
+without allowing significant sleeps (which would allow the callback to
+be called and therefore all samples to be collected appropriately).
+
+This can be tested in a while-loop like the one below.
+
+TobiiWrapper doesn't show this problem luckily, so the below loop should be fine
+'''
 n_samples = tw.frequency * 2 # Record what should be two seconds of data
 
 out = []
@@ -190,6 +185,7 @@ success = tw.stop('positioning')
 
 #%% Plot data captured in real time (tobii time stamps, and loop intervals)
 out = np.array(out)
+plt.figure()
 plt.plot(np.diff(out[:, 0] * 1000))
 plt.figure()
 plt.plot(np.diff(out[:, 1] / 1000))
