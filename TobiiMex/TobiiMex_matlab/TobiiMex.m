@@ -270,14 +270,22 @@ classdef TobiiMex < handle
         end
         
         %% calibration
-        function enterCalibrationMode(this,doMonocular)
-            this.cppmethod('enterCalibrationMode',doMonocular);
+        function hasEnqueuedEnter = enterCalibrationMode(this,doMonocular)
+            hasEnqueuedEnter = this.cppmethod('enterCalibrationMode',doMonocular);
         end
-        function leaveCalibrationMode(this,force)
-            if nargin<2
-                force = false;
+        function isInCalibrationMode = isInCalibrationMode(this,throwErrorIfNot)
+            if nargin>1 && ~isempty(throwErrorIfNot)
+                isInCalibrationMode = this.cppmethod('isInCalibrationMode',throwErrorIfNot);
+            else
+                isInCalibrationMode = this.cppmethod('isInCalibrationMode');
             end
-            this.cppmethod('leaveCalibrationMode',force);
+        end
+        function hasEnqueuedLeave = leaveCalibrationMode(this,force)
+            if nargin>1 && ~isempty(force)
+                hasEnqueuedLeave = this.cppmethod('leaveCalibrationMode',force);
+            else
+                hasEnqueuedLeave = this.cppmethod('leaveCalibrationMode');
+            end
         end
         function calibrationCollectData(this,coordinates,eye)
             if nargin>2 && ~isempty(eye)

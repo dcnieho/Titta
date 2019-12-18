@@ -169,6 +169,7 @@ namespace {
 
         //// calibration
         EnterCalibrationMode,
+        IsInCalibrationMode,
         LeaveCalibrationMode,
         CalibrationCollectData,
         CalibrationDiscardData,
@@ -237,6 +238,7 @@ namespace {
 
         //// calibration
         { "enterCalibrationMode",			Action::EnterCalibrationMode },
+        { "isInCalibrationMode",            Action::IsInCalibrationMode },
         { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
         { "calibrationCollectData",		    Action::CalibrationCollectData },
         { "calibrationDiscardData",			Action::CalibrationDiscardData },
@@ -563,19 +565,36 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::EnterCalibrationMode:
         {
             if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("enterCalibrationMode: First argument must be a logical scalar.");;
+                mexErrMsgTxt("enterCalibrationMode: First argument must be a logical scalar.");
 
             bool doMonocular = mxIsLogicalScalarTrue(prhs[2]);
-            instance->enterCalibrationMode(doMonocular);
+            plhs[0] = mxTypes::ToMatlab(instance->enterCalibrationMode(doMonocular));
+            break;
+        }
+        case Action::IsInCalibrationMode:
+        {
+            std::optional<bool> issueErrorIfNot;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("isInCalibrationMode: First argument must be a logical scalar.");
+                issueErrorIfNot = mxIsLogicalScalarTrue(prhs[2]);
+            }
+
+            plhs[0] = mxTypes::ToMatlab(instance->isInCalibrationMode(issueErrorIfNot));
             break;
         }
         case Action::LeaveCalibrationMode:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
-                mexErrMsgTxt("leaveCalibrationMode: First argument must be a logical scalar.");;
+            std::optional<bool> force;
+            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            {
+                if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                    mexErrMsgTxt("leaveCalibrationMode: First argument must be a logical scalar.");
+                force = mxIsLogicalScalarTrue(prhs[2]);
+            }
 
-            bool force = mxIsLogicalScalarTrue(prhs[2]);
-            instance->leaveCalibrationMode(force);
+            plhs[0] = mxTypes::ToMatlab(instance->leaveCalibrationMode(force));
             break;
         }
         case Action::CalibrationCollectData:

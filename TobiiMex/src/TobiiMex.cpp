@@ -44,6 +44,9 @@ namespace
     // default argument values
     namespace defaults
     {
+        constexpr bool                  doErrorWhenCheckCallMode  = false;
+        constexpr bool                  forceExitCalibrationMode  = false;
+
         constexpr size_t                sampleBufSize             = 2<<19;        // about half an hour at 600Hz
 
         constexpr size_t                eyeImageBufSize           = 2<<11;        // about seven minutes at 2*5Hz
@@ -582,7 +585,7 @@ void TobiiMex::calibrationThread()
 
     _calibrationState = TobiiTypes::CalibrationState::Left;
 }
-void TobiiMex::enterCalibrationMode(bool doMonocular_)
+bool TobiiMex::enterCalibrationMode(bool doMonocular_)
 {
     if (_calibrationThread.joinable())
     {
@@ -596,10 +599,23 @@ void TobiiMex::enterCalibrationMode(bool doMonocular_)
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Enter});
     _calibrationState   = TobiiTypes::CalibrationState::NotYetEntered;
     _calibrationThread  = std::thread(&TobiiMex::calibrationThread, this);
+
+    return true;
 }
-void TobiiMex::leaveCalibrationMode(bool force_)
+bool TobiiMex::isInCalibrationMode(std::optional<bool> issueErrorIfNot_)
 {
-    if (force_)
+    bool doError = issueErrorIfNot_.value_or(defaults::doErrorWhenCheckCallMode);
+    bool isInCal = _calibrationThread.joinable();
+    if (!isInCal && doError)
+        DoExitWithMsg("Titta::cpp::isInCalibrationMode: you have not entered calibration mode, call enterCalibrationMode first");
+
+    return isInCal;
+}
+bool TobiiMex::leaveCalibrationMode(std::optional<bool> force_)
+{
+    bool forceIt = force_.value_or(defaults::forceExitCalibrationMode);
+    bool issuedLeave = false;
+    if (forceIt)
     {
         // call leave calibration mode on Tobii SDK, ignore error
         // this is provided as user code may need to ensure we're not in
@@ -614,14 +630,11 @@ void TobiiMex::leaveCalibrationMode(bool force_)
         _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Exit});
         if (_calibrationThread.joinable())
             _calibrationThread.join();
+        issuedLeave = true;
     }
 
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
-}
-void checkInCalibrationMode(const std::thread& thread_)
-{
-    if (!thread_.joinable())
-        DoExitWithMsg("Titta::cpp::calibrationCollectData: you have not entered calibration mode, call enterCalibrationMode first");
+    return issuedLeave; // we indicate if a leave action has been enqueued. direct force-leave above thus does not lead us to return true
 }
 void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
@@ -639,31 +652,31 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
 }
 void TobiiMex::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
-    checkInCalibrationMode(_calibrationThread);
+    isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::CollectData};
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 void TobiiMex::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
-    checkInCalibrationMode(_calibrationThread);
+    isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::DiscardData};
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 void TobiiMex::calibrationComputeAndApply()
 {
-    checkInCalibrationMode(_calibrationThread);
+    isInCalibrationMode(true);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Compute});
 }
 void TobiiMex::calibrationGetData()
 {
-    checkInCalibrationMode(_calibrationThread);
+    isInCalibrationMode(true);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
 }
 void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
 {
-    checkInCalibrationMode(_calibrationThread);
+    isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
     workItem.calData = calData_;
     _calibrationWorkQueue.enqueue(std::move(workItem));

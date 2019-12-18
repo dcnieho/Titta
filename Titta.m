@@ -659,9 +659,14 @@ classdef Titta < handle
                 Screen('Flip',          wpnt(w));                           % clear screen
             end
             
-            if bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode)
-                obj.buffer.leaveCalibrationMode();
-                while true
+            % if we want to exit calibration mode because:
+            % 1. user requests it (flag bit 2 is set)
+            % 2. user didn't request it, but we entered calibration mode
+            %    and operator skipped calibration,
+            % then issue a leave here now and wait for it to complete
+            if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
+                issuedLeave = obj.buffer.leaveCalibrationMode();    % returns false if we never were in calibration mode to begin with
+                while true && issuedLeave
                     callResult  = obj.buffer.calibrationRetrieveResult();
                     if ~isempty(callResult) && strcmp(callResult.workItem.action,'Exit')
                         if callResult.status==0

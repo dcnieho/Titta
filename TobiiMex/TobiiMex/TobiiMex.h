@@ -97,8 +97,9 @@ public:
     void clearLicenses();
 
     //// calibration
-    void enterCalibrationMode(bool doMonocular_);
-    void leaveCalibrationMode(bool force_);
+    bool enterCalibrationMode(bool doMonocular_);
+    bool isInCalibrationMode(std::optional<bool> issueErrorIfNot_);
+    bool leaveCalibrationMode(std::optional<bool> force_);
     void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationComputeAndApply();
