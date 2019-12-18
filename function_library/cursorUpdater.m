@@ -1,43 +1,28 @@
 function fhndl = cursorUpdater(cursors)
 
 if nargin<1 || isempty(cursors)
-    fhndl.update = @(~,~) 1;   % dummy function that swallows arguments and is noop
-    fhndl.reset  = @(~,~) 1;
+    fhndl.update        = @(~,~) 1;   % dummy function that swallows arguments and is noop
+    fhndl.updateCursors = @(~,~) 1;
+    fhndl.reset         = @(~,~) 1;
     return;
 end
 
 usingPoly = isfield(cursors,'poly');
-
-% process rects/polys
-if usingPoly
-    cursorPolys = cursors.poly;
-    nAOI        = length(cursorPolys);
-    nElemPerAOI = ones(1,nAOI);
-else
-    cursorRects = [cursors.rect{:}];
-    nAOI        = length(cursors.rect);
-    nElemPerAOI = cellfun(@(x) size(x,2),cursors.rect);
-end
-% cursor looks are numbered IDs as eaten by ShowMouse. -1 means hide cursor
-cursorLooks = [cursors.cursor cursors.other];
-cursorIdxs  = SmartVec(1:nAOI,nElemPerAOI,0);
-currCursor  = nan;
-% optional (default on) reset of cursor when calling reset(). Have it as an
-% option as some function out of the reach of the user always call reset
-% upon exit, user can here configure if it actually does something
-qCursorReset = true;
-if isfield(cursors,'qReset')
-    qCursorReset = cursors.qReset;
-end
-% if resetting, indicate what cursor to reset to. if empty, we reset to
-% cursors.other.
+cursorPolys = [];
+cursorRects = [];
+nAOI        = [];
+nElemPerAOI = [];
+cursorLooks = [];
+cursorIdxs  = [];
+qCursorReset= [];
 cursorReset = [];
-if isfield(cursors,'reset')
-    cursorReset = cursors.reset;
-end
+updateCursors(cursors);
 
-fhndl.update = @update;
-fhndl.reset  = @reset;
+currCursor  = nan;
+
+fhndl.update        = @update;
+fhndl.updateCursors = @updateCursors;
+fhndl.reset         = @reset;
 
     function update(x,y)
         if usingPoly
@@ -75,6 +60,37 @@ fhndl.reset  = @reset;
                 ShowCursor(curr);
             end
             currCursor = curr;
+        end
+    end
+
+    function updateCursors(cursors)
+        % process rects/polys
+        usingPoly = isfield(cursors,'poly');
+        if usingPoly
+            cursorPolys = cursors.poly;
+            nAOI        = length(cursorPolys);
+            nElemPerAOI = ones(1,nAOI);
+        else
+            cursorRects = [cursors.rect{:}];
+            nAOI        = length(cursors.rect);
+            nElemPerAOI = cellfun(@(x) size(x,2),cursors.rect);
+        end
+        % cursor looks are numbered IDs as eaten by ShowMouse. -1 means hide cursor
+        cursorLooks = [cursors.cursor cursors.other];
+        cursorIdxs  = SmartVec(1:nAOI,nElemPerAOI,0);
+        
+        % optional (default on) reset of cursor when calling reset(). Have it as an
+        % option as some function out of the reach of the user always call reset
+        % upon exit, user can here configure if it actually does something
+        qCursorReset = true;
+        if isfield(cursors,'qReset')
+            qCursorReset = cursors.qReset;
+        end
+        % if resetting, indicate what cursor to reset to. if empty, we reset to
+        % cursors.other.
+        cursorReset = [];
+        if isfield(cursors,'reset')
+            cursorReset = cursors.reset;
         end
     end
 
