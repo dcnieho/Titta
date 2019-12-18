@@ -71,14 +71,14 @@
 namespace mxTypes
 {
     // template specializations
-    // NB: to get types output as a struct, specialize typeToMxClass for them
+    // NB: to get types output as a struct, specialize typeToMxClass for them (set mxClassID value = mxSTRUCT_CLASS)
     // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
-    // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type
+    // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
     template <>
-    struct typeNeedsMxCellStorage<TobiiResearchCalibrationPoint> { static constexpr bool value = false; };
+    struct typeNeedsMxCellStorage<TobiiTypes::CalibrationPoint> { static constexpr bool value = false; };
 
     template <>
-    struct typeToMxClass<TobiiResearchCalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+    struct typeToMxClass<TobiiTypes::CalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
 
     // forward declarations
     template<typename Cont, typename... Fs>
