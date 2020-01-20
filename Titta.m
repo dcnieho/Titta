@@ -1196,7 +1196,7 @@ classdef Titta < handle
             if qHaveOperatorScreen
                 headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
                 headO.refSz             = head.refSz;
-                headO.rectWH            = head.rectWH;
+                headO.rectWH            = obj.scrInfo.resolution{2};
                 headO.headCircleFillClr = head.headCircleFillClr;
                 headO.headCircleEdgeClr = head.headCircleEdgeClr;
                 headO.showYaw           = obj.settings.UI.setup.showYawToOperator;
@@ -1215,7 +1215,7 @@ classdef Titta < handle
                 obj.settings.UI.setup.referencePos = [NaN NaN NaN];
             end
             % position reference circle on screen
-            refPosO = obj.scrInfo.resolution{1}/2;
+            refPosP = obj.scrInfo.resolution{1}/2;
             allPosOff = [0 0];
             if ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
                 scrWidth  = obj.geom.displayArea.width/10;
@@ -1223,7 +1223,7 @@ classdef Titta < handle
                 pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
                 allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
             end
-            refPosP = refPosO+allPosOff;
+            refPosP = refPosP+allPosOff;
             
             head.referencePos   = obj.settings.UI.setup.referencePos;
             head.allPosOff      = allPosOff;
@@ -1231,6 +1231,7 @@ classdef Titta < handle
                 headO.referencePos  = head.referencePos;
                 % NB: no offset on screen for head on operator screen, so
                 % don't use allPosOff
+                refPosO = obj.scrInfo.resolution{2}/2;
             end
 
             % setup buttons
@@ -1256,7 +1257,7 @@ classdef Titta < handle
             end
             
             % setup fixation points in the corners of the screen
-            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{w},4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
             % setup cursors
             butRects        = cat(1,but.rect).';
@@ -1372,11 +1373,11 @@ classdef Titta < handle
                 % draw distance info
                 if ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(1),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 if qHaveOperatorScreen
                     str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(2),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
