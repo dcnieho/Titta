@@ -106,8 +106,9 @@ classdef TittaDummyMode < Titta
         end
         
         function out = setDummyMode(obj)
-            % we're already in dummy mode, just pass out the same instance
             out = obj;
+            % N.B.: we're already in dummy mode, so just pass out the
+            % current instance
         end
         
         function out = init(obj)
