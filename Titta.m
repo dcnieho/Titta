@@ -9,13 +9,16 @@
 %    toolbox for creating Psychtoolbox and Psychopy experiments with Tobii
 %    eye trackers.
 %
-%    For detailed documentation, refer to <a
-%    href="https://github.com/dcnieho/Titta/blob/master/readme.md">the readme on GitHub</a>.
+%    For detailed documentation, refer to <a href="https://github.com/dcnieho/Titta/blob/master/readme.md">the readme on GitHub</a>.
 %
 %    For help on the constructor method, type:
 %      <a href="matlab: help Titta.Titta">help Titta.Titta</a>
 %
 %    For static methods:
+%      <a href="matlab: help Titta.getDefaults">help Titta.getDefaults</a>
+%      <a href="matlab: help Titta.getFileName">help Titta.getFileName</a>
+%      <a href="matlab: help Titta.getTimeAsSystemTime">help Titta.getTimeAsSystemTime</a>
+%      <a href="matlab: help Titta.getValidationQualityMessage">help Titta.getValidationQualityMessage</a>
 %
 %    For methods:
 %      <a href="matlab: help Titta.setDummyMode">help Titta.setDummyMode</a>
@@ -909,7 +912,7 @@ classdef Titta < handle
             %    on Windows, and are transparently remapped to system time
             %    on Linux with less than 20 microsecond error.
             %
-            %    See also TITTA.GETMESSAGES
+            %    See also TITTA.GETMESSAGES, TITTA.GETTIMEASSYSTEMTIME
             
             % Tobii system timestamp is from same clock as PTB's clock. So
             % we're good. If an event has a known time (e.g. a screen
@@ -980,17 +983,19 @@ classdef Titta < handle
             dat.data        = obj.ConsumeAllData();
         end
         
-        function saveData(obj, filename, doAppendVersion)
+        function filename = saveData(obj, filename, doAppendVersion)
             % Save all session data to mat-file
             %
-            %    Titta.saveData(FILENAME) saves the data returned by
-            %    Titta.collectSessionData() directly to a mat-file with the
-            %    specified FILENAME. Overwrites existing FILENAME file.
+            %    FILENAME = Titta.saveData(FILENAME) saves the data
+            %    returned by Titta.collectSessionData() directly to a
+            %    mat-file with the specified FILENAME. Overwrites existing
+            %    FILENAME file.
             %
-            %    Titta.saveData(FILENAME, DOAPPENDVERSION) allows to
-            %    automatically append a version number (_1, _2, etc) to the
-            %    specified FILENAME if the destination file already exists.
-            %    Default: false.
+            %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination file
+            %    already exists. Default: false. Returns the FILENAME at
+            %    which the file was saved.
             %
             %    See also TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
             
@@ -1056,6 +1061,13 @@ classdef Titta < handle
     end
     methods (Static)
         function settings = getDefaults(tracker)
+            % Get the default settings for a given eye tracker
+            %
+            %    SETTINGS = Titta.getDefaults(TRACKER) return a struct of
+            %    containing the default SETTINGS for the specified TRACKER.
+            %
+            %    See also the TITTA.TITTA constructor
+            
             assert(nargin>=1,'Titta: you must provide a tracker name when calling getDefaults')
             settings.tracker    = tracker;
             
@@ -1294,12 +1306,27 @@ classdef Titta < handle
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
-        function time = getTimeAsSystemTime(PTBtime)
-            % maps either inputted PTB time (e.g. from GetSecs, audio or
-            % video timestamps, PsychHID timestamps, etc) or current
-            % GetSecs if no input argument was provided to Tobii system
-            % time. PTB time is in seconds, and may be using a different
-            % clock than Tobii time. Tobii time is in microseconds.
+        function systemTime = getTimeAsSystemTime(PTBtime)
+            % Get the default settings for a given eye tracker
+            %
+            %    SYSTEMTIME = Titta.getTimeAsSystemTime() provides the
+            %    current Tobii SYSTEMTIME. This time is based on the
+            %    current time provided by GetSecs().
+            %
+            %    SYSTEMTIME = Titta.getTimeAsSystemTime(PTBTIME) maps the
+            %    provided PTBTIME to Tobii SYSTEMTIME.
+            % 
+            %    PTBTIME is PsychtoolBox time (e.g. from GetSecs, audio or
+            %    video timestamps, PsychHID timestamps, etc). PTB time is
+            %    in seconds.
+            %
+            %    SYSTEMTIME is Tobii system time in microseconds. It may be
+            %    using a different computer clock than PTB time. In that
+            %    case, this function not only converts from seconds to
+            %    microseconds, but also remaps the time between the clocks.
+            %
+            %    See also TITTA.SENDMESSAGE
+            
             if IsLinux
                 % on Linux, Tobii Pro SDK on Linux and mono clock on PTB
                 % internally both use CLOCK_MONOTONIC, whereas the clock
@@ -1324,10 +1351,27 @@ classdef Titta < handle
                     PTBtime = GetSecs();
                 end
             end
-            time = int64(PTBtime*1000*1000);
+            systemTime = int64(PTBtime*1000*1000);
         end
         
         function message = getValidationQualityMessage(cal,kCal)
+            % Get a formatted message about data quality during validation
+            %
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL) formats
+            %    the calibration information CAL into a text MESSAGE
+            %    informing about achieved data quality.
+            %
+            %    If CAL is a struct with an array of calibration attemps,
+            %    in which case information about the CAL.selectedCal is
+            %    output. If CAL is a specific calibration attempt, the
+            %    message is formatted for this calibration.
+            % 
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL,KCAL)
+            %    formats the calibration information for specific
+            %    calibration KCAL in the calibration attempt array CAL.
+            %
+            %    See also TITTA.CALIBRATE
+            
             if isfield(cal,'attempt')
                 % find selected calibration, make sure we output quality
                 % info for that
@@ -1359,6 +1403,18 @@ classdef Titta < handle
         end
         
         function filename = getFileName(filename, doAppendVersion)
+            % Get the filename for saving data
+            %
+            %    FILENAME = Titta.getFileName(FILENAME) checks the provided
+            %    FILENAME.
+            %
+            %    FILENAME = Titta.getFileName(FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination file
+            %    already exists. Default: false.
+            %
+            %    See also TITTA.SAVEDATA
+            
             % 1. get filename and path
             [path,file,ext] = fileparts(filename);
             assert(~isempty(path),'Titta: getFileName: filename should contain a path')
