@@ -356,11 +356,9 @@ The below method can be called on a TalkToProLab instance or on the TalkToProLab
 |`makeAOITag`|<ol><li>`tagName`: The name of the tag</li><li>`groupName`: (optional) the name of the tag group the tag belongs to.</li></ol>|<ol><li>`tag`: The AOI tag.</li></ol>|Generates an AOI tag in the format expected by `TalkToProLab.attachAOIToImage()`.|
 
 #### Construction
-An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. Two additional constructor arguments are provided.
-
-`doCheckSync`: (default `true`) determines whether clock sync between PsychToolbox and Pro Lab endpoint should be checked. Set to false if you want to use `TalkToProLab` without PsychToolbox (no other part of the `TalkToProLab` class uses PsychToolbox functionality), or if you want to use `TalkToProLab` with a two-computer setup, where Pro Lab runs on a different machine than MATLAB. Note that in this case, you are responsible for figuring out the sync between Pro Lab your local machine yourself. This is important because `TalkToProLab.sendStimulusEvent()` and `TalkToProLab.sendCustomEvent()` take timestamps in Pro Lab time, not local time. You can use the `TalkToProLab.clientClock` to talk directly to Pro Lab's clock websocket service.
-
-`IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `localhost` for a one-computer setup.
+An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. Two optional additional constructor arguments can be provided.
+- `doCheckSync`: (default `true`) determines whether clock sync between PsychToolbox and Pro Lab endpoint should be checked. Set to false if you want to use `TalkToProLab` without PsychToolbox (no other part of the `TalkToProLab` class uses PsychToolbox functionality), or if you want to use `TalkToProLab` with a two-computer setup, where Pro Lab runs on a different machine than MATLAB. Note that in this case, you are responsible for figuring out the sync between Pro Lab your local machine yourself. This is important because `TalkToProLab.sendStimulusEvent()` and `TalkToProLab.sendCustomEvent()` take timestamps in Pro Lab time, not local time. You can use the `TalkToProLab.clientClock` to talk directly to Pro Lab's clock websocket service.
+- `IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `localhost` for a one-computer setup.
 
 #### Methods
 The following method calls are available on a TalkToProLab instance
