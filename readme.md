@@ -284,8 +284,6 @@ The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entr
 #### Static methods
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`getSDKVersion`||<ol><li>`SDKVersion`: SDK version string.</li></ol>|Returns the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
-|`getSystemTimestamp`||<ol><li>`systemTimestamp`: An int64 scalar denoting Tobii system time in microseconds</li></ol>|Gets the current system time through the Tobii Pro SDK.|
 |`findAllEyeTrackers`||<ol><li>`eyeTrackerList`: An array of structs with information about the connected eye trackers.</li></ol>|Gets the eye trackers that are connected to the system, as listed by the Tobii Pro SDK.|
 |||||
 |`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
@@ -302,28 +300,25 @@ The following method calls are available on a TobiiMex instance:
 | --- | --- | --- | --- |
 |`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`getConnectedEyeTracker()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
-|`getCurrentFrequency()`||<ol><li>`frequency`: current sampling frequency of the connected eye tracker.</li></ol>|Get the current sampling frequency of the connected eye tracker.|
-|`getCurrentTrackingMode()`||<ol><li>`trackingMode`: current tracking mode of the connected eye tracker.</li></ol>|Get the current tracking mode of the connected eye tracker.|
+|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
 |`getTrackBox()`||<ol><li>`trackBox`: track box of the connected eye tracker.</li></ol>|Get the track box of the connected eye tracker.|
 |`getDisplayArea()`||<ol><li>`displayArea`: display area of the connected eye tracker.</li></ol>|Get the display area of the connected eye tracker.|
-|`setGazeFrequency()`|<ol><li>`frequency`: requested sampling frequency for the connected eye tracker.</li></ol>||Set the sampling frequency of the connected eye tracker.|
-|`setTrackingMode()`|<ol><li>`trackingMode`: requested tracking mode for the connected eye tracker.</li></ol>||Set the tracking mode of the connected eye tracker.|
 |`applyLicenses()`|<ol><li>`licenses`: a cell array of licenses (`char` of `uint8` representations of the license file read in binary mode).</li></ol>||Apply license(s) to the connected eye tracker.|
 |`clearLicenses()`|||Clear all licenses that may have been applied to the connected eye tracker. Refreshes the eye tracker's info, so use `getConnectedEyeTracker()` to check for any updated capabilities.|
 |||||
 |`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
 |`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer. The default initial buffer size should cover about 30 minutes of recording gaze data at 600Hz, and longer for the other streams. Growth of the buffer should cause no performance impact at all as it happens on a separate thread. To be certain, you can indicate a buffer size that is sufficient for the number of samples that you expect to record. Note that all buffers are fully in-memory. As such, ensure that the computer has enough memory to satify your needs, or you risk a recording-destroying crash.|
-|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
 |`isRecording()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`status`: a boolean indicating whether data of the indicated type is currently being streamed to buffer</li></ol>|Check if data of a specified type is being streamed to buffer.|
-|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>||Clear the buffer for data of the specified type.|
-|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
 |`consumeN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`N`: (optional) number of samples to consume from the start of the buffer. Defaults to all.</li><li>`side`: a string, possible values: `first` and `last`. Indicates from which side of the buffer to consume N samples. Default: `first`.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
 |`consumeTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
 |`peekN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`N`: (optional) number of samples to peek from the end of the buffer. Defaults to 1.</li><li>`side`: a string, possible values: `first` and `last`. Indicates from which side of the buffer to peek N samples. Default: `last`.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
 |`peekTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
+|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>||Clear the buffer for data of the specified type.|
+|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
+|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
 |||||
-|`enterCalibrationMode()`|<ol><li>`doMonocular`: boolean indicating whether the calibration is monocular or binocular</li></ol>||Queue request for the tracker to enter into calibration mode.|
+|`enterCalibrationMode()`|<ol><li>`throwErrorIfNot`: Optionally throws error if not in calibration mode. Default `false`.</li></ol>|<ol><li>`isInCalibrationMode`: Boolean indicating whether eye tracker is in calibration mode.</li></ol>|Check whether eye tracker is in calibration mode.|
+|`isInCalibrationMode()`|<ol><li>`doMonocular`: boolean indicating whether the calibration is monocular or binocular</li></ol>||Queue request for the tracker to enter into calibration mode.|
 |`leaveCalibrationMode()`|<ol><li>`force`: set to true if you want to be completely sure that the tracker is not in calibration mode after this call: this also ensures calibration mode is left if code other than this interface put the eye tracker into calibration mode</li></ol>||Queue request for the tracker to leave the calibration mode.|
 |`calibrationCollectData()`|<ol><li>`coordinates`: the coordinates of the point that the participant is asked to fixate, 2-element array with values in the range [0,1]</li><li>`eye`: (optional) the eye for which to collect calibration data. Possible values: `left` and `right`</li></ol>||Queue request for the tracker to collect gaze data for a single calibration point.|
 |`calibrationDiscardData()`|<ol><li>`coordinates`: the coordinates of the point for which calibration data should be discarded, 2-element array with values in the range [0,1]</li><li>`eye`: (optional) the eye for which collected calibration data should be discarded. Possible values: `left` and `right`</li></ol>||Queue request for the tracker to discard any already collected gaze data for a single calibration point.|
@@ -332,6 +327,25 @@ The following method calls are available on a TobiiMex instance:
 |`calibrationApplyData()`|<ol><li>`cal`: a binary stream as gotten through `calibrationGetData()`</li></ol>||Apply the provided calibration data.|
 |`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TobiiMex's calibration mechanism.|
 |`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TobiiMex's calibration mechanism.|
+
+#### Properties
+The following read-only properties are available for a TobiiMex instance:
+
+|Property|Description|
+| --- | --- |
+|`getSDKVersion`|Get the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
+|`getSystemTimestamp`|Get the current system time through the Tobii Pro SDK. Returns an int64 scalar denoting Tobii system time in microseconds.|
+|`deviceName`|Get or set connected eye tracker's device name.|
+|`serialNumber`|Get connected eye tracker's serial number.|
+|`model`|Get connected eye tracker's model name.|
+|`firmwareVersion`|Get connected eye tracker's firmware version.|
+|`runtimeVersion`|Get connected eye tracker's runtime version.|
+|`address`|Get connected eye tracker's address.|
+|`capabilities`|Get connected eye tracker's exposed capabilities.|
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
+|`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
+|`supportedModes`|Get connected eye tracker's supported tracking modes.|
 
 ### `TalkToProLab` class
 #### Static methods
