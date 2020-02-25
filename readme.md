@@ -94,10 +94,10 @@ The below method can be called on a Titta instance or on the Titta class directl
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`getDefaults`|<ol><li>`tracker`: one of the supported eye tracker model names, [see above](#usage).</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
-|`getTimeAsSystemTime`|<ol><li>`time`: A PsychtoolBox timestamp that is to be converted to Tobii system time. Optional, if not provided, current GetSecs time is used.</li></ol>|<ol><li>`time`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Maps the provided PsychtoolBox timestamp (or the current PsychtoolBox time provided by the `GetSecs()` function) to the Tobii system time provided in microseconds by the Tobii Pro SDK. On Windows, PsychtoolBox time and Tobii system time use the same clock, and this operation thus only entails a conversion from seconds to microseconds. On Linux, the clocks are different, and remapping is performed using the PTB function `GetSecs('AllClocks')` with an accuracy of 20 microseconds or better.|
-|`getValidationQualityMessage`|<ol><li>`cal`: a list of calibration attempts, or a specific calibration attempt</li><li>`kCal`: an (optional) index into the list of calibration attempts to indicate which to process</li></ol>|<ol><li>`message`: A tab-separated text rendering of the per-point and average validation data quality for each eye that was calibrated</li></ol>|Provides a textual rendering of data quality as assessed through a validation procedure.|
-|`getFileName`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename with versioning added where data file could be saved.</li></ol>|Get filename for saving data, with optoinal versioning.|
+|`getDefaults()`|<ol><li>`tracker`: one of the supported eye tracker model names, [see above](#usage).</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
+|`getTimeAsSystemTime()`|<ol><li>`time`: A PsychtoolBox timestamp that is to be converted to Tobii system time. Optional, if not provided, current GetSecs time is used.</li></ol>|<ol><li>`time`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Maps the provided PsychtoolBox timestamp (or the current PsychtoolBox time provided by the `GetSecs()` function) to the Tobii system time provided in microseconds by the Tobii Pro SDK. On Windows, PsychtoolBox time and Tobii system time use the same clock, and this operation thus only entails a conversion from seconds to microseconds. On Linux, the clocks are different, and remapping is performed using the PTB function `GetSecs('AllClocks')` with an accuracy of 20 microseconds or better.|
+|`getValidationQualityMessage()`|<ol><li>`cal`: a list of calibration attempts, or a specific calibration attempt</li><li>`kCal`: an (optional) index into the list of calibration attempts to indicate which to process</li></ol>|<ol><li>`message`: A tab-separated text rendering of the per-point and average validation data quality for each eye that was calibrated</li></ol>|Provides a textual rendering of data quality as assessed through a validation procedure.|
+|`getFileName()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename with versioning added where data file could be saved.</li></ol>|Get filename for saving data, with optional versioning.|
 
 #### Construction
 An instance of Titta is constructed by calling `Titta()` with either the name of a specific supported eye tracker model (in which case default settings for this model will be used) or with a settings struct retrieved from `Titta.getDefaults()`, possibly with changed settings (passing the settings struct unchanged is equivalent to using the eye tracker model name as input argument).
@@ -115,7 +115,7 @@ The following method calls are available on a Titta instance:
 |`sendMessage()`|<ol><li>`message`: Message to be written into idf file</li><li>`time`: (optional) timestamp of the message (in seconds, will be stored as microseconds). Candidate times are the timestamps provided by PsychToolbox, such as the timestamp returned by `Screen('Flip')` or keyboard functions such as `KbEventGet`.</li></ol>|<ol><li>`time`: timestamp (microseconds) stored with the message</li></ol>|Store timestamped message|
 |`getMessages()`||<ol><li>`messages`: returns Nx2 cell array containing N timestamps (microseconds, first column) and the associated N messages (second column)</li></ol>|Get all the timestamped messages stored during the current session.|
 |`collectSessionData()`||<ol><li>`data`: struct with all information and data collected during the current session. Contains information about all calibration attemps; all timestamped messages; eye-tracker system information; setup geometry and settings that are in effect; and log messages generated by the eye tracker; and any data in the buffers of any of the eye-tracker's data streams</li></ol>|Collects all data one may want to store to file, neatly organized.|
-|`saveData()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>||Save data returned by `collectSessionData()` directly to mat file at specified location|
+|`saveData()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename at which the data was saved</li></ol>|Save data returned by `collectSessionData()` directly to mat file at specified location|
 |`deInit()`||<ol><li>`log`: struct of log messages generated by the eye tracker during the current session, if any.</li></ol>|Close connection to the eye tracker and clean up|
 
 
@@ -124,10 +124,21 @@ The following read-only properties are available for a Titta instance:
 
 |Property|Description|
 | --- | --- |
-|`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to, such as serial number.|
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
 |`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiimex-class) instance for interaction with the eye tracker's data streams, or for directly interacting with the eye tracker through the Tobii Pro SDK. Note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
+|`deviceName`|Get connected eye tracker's device name.|
+|`serialNumber`|Get connected eye tracker's serial number.|
+|`model`|Get connected eye tracker's model name.|
+|`firmwareVersion`|Get connected eye tracker's firmware version.|
+|`runtimeVersion`|Get connected eye tracker's runtime version.|
+|`address`|Get connected eye tracker's address.|
+|`capabilities`|Get connected eye tracker's exposed capabilities.|
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
+|`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
+|`supportedModes`|Get connected eye tracker's supported tracking modes.|
+|`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to: the device name, serial number, model name, firmware version, runtime version, address, sampling frequency, tracking mode, capabilities, supported sampling frequencies, and supported tracking modes of the connected eye tracker.|
 
 #### Supported options
 Which of the below options are available depends on the eye tracker model. The `getDefaults()` and `getOptions()` method calls return the appropriate set of options for the indicated eye tracker.
