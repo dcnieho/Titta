@@ -89,6 +89,7 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
 
 ## API
 ### `Titta` class
+Help on each of the below listed static methods, methods and properties can be had inside MATLAB by typing on the commands line `help Titta.<function name>`, e.g. `help Titta.calibrate`. Help on the constructor is had with `help Titta.Titta`.
 #### Static methods
 The below method can be called on a Titta instance or on the Titta class directly.
 
