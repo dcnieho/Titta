@@ -3,10 +3,8 @@ specifically offering integration with [PsychToolbox](http://psychtoolbox.org/).
 that integrates with PsychoPy is also available from
 https://github.com/marcus-nystrom/Titta. For a similar toolbox for SMI eye trackers, please see www.github.com/dcnieho/SMITE.
 
-Cite as:
-Niehorster, D.C., Andersson, R., & Nyström, M., (in prep). Titta: A
-toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
-trackers.
+Please cite:
+[Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
 
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 

@@ -5,9 +5,10 @@
 %    for the latest version.
 %    When using Titta, please cite the following paper:
 %
-%    Niehorster, D.C., Andersson, R. & Nystrom, M., (in prep). Titta: A
+%    Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A
 %    toolbox for creating Psychtoolbox and Psychopy experiments with Tobii
-%    eye trackers.
+%    eye trackers. Behavior Research Methods.
+%    doi: https://doi.org/10.3758/s13428-020-01358-8
 %
 %    For detailed documentation, refer to <a href="https://github.com/dcnieho/Titta/blob/master/readme.md">the readme on GitHub</a>.
 %
