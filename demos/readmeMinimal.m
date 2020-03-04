@@ -39,6 +39,7 @@ try
     [wpnt,winRect] = Screen('OpenWindow', scr, 127, [], [], [], [], 4);
     hz=Screen('NominalFrameRate', wpnt);
     Priority(1);
+    KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % read in stimuli
     stimFName   = {'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'};
