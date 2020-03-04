@@ -749,6 +749,10 @@ classdef Titta < handle
                         case -5
                             % full stop
                             obj.buffer.leaveCalibrationMode();
+                            if obj.settings.UI.setup.hardExitClosesPTB
+                                sca
+                                ListenChar(0); Priority(0);
+                            end
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.setupStatus);
@@ -801,6 +805,10 @@ classdef Titta < handle
                         case -5
                             % full stop
                             obj.buffer.leaveCalibrationMode();
+                            if obj.settings.UI.setup.hardExitClosesPTB
+                                sca
+                                ListenChar(0); Priority(0);
+                            end
                             error('Titta: run ended from calibration routine')
                         otherwise
                             error('Titta: status %d not implemented',out.attempt{kCal}.status);
@@ -844,6 +852,10 @@ classdef Titta < handle
                     case -5
                         % full stop
                         obj.buffer.leaveCalibrationMode();
+                        if obj.settings.UI.setup.hardExitClosesPTB
+                            sca
+                            ListenChar(0); Priority(0);
+                        end
                         error('Titta: run ended from Tobii routine')
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
@@ -1166,6 +1178,7 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
+            settings.UI.setup.hardExitClosesPTB = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
             % functions for drawing instruction and positioning information
             % on user and operator screen. Note that rx, ry and rz are
             % NaN (unknown) if reference position is not set by user
