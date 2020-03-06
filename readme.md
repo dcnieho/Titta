@@ -47,6 +47,7 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
     1. Then download MatlabWebSocket (available from https://github.com/jebej/MatlabWebSocket).
     1. Put the MatlabWebSocket directory inside Titta at the right location:
       `<tittaRootDir>/talkToProLab/MatlabWebSocket`).
+1. When running on Windows, ensure you have the latest version of the [Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) installed. This is the most likely cause of errors like "The specified module could not be found" when loading the mex file.
 
 ## Contents
 The toolbox consists of multiple parts:
