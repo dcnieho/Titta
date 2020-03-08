@@ -1,12 +1,54 @@
 % Titta is a toolbox providing convenient access to eye tracking
 % functionality using Tobii eye trackers 
 %
-% Titta can be found at https://github.com/dcnieho/Titta. Check there for
-% the latest version.
-% When using Titta, please cite the following paper:
-% Niehorster, D.C., Andersson, R. & Nystrom, M., (in prep). Titta: A
-% toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
-% trackers.
+%    Titta can be found at https://github.com/dcnieho/Titta. Check there
+%    for the latest version.
+%    When using Titta, please cite the following paper:
+%
+%    Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A
+%    toolbox for creating Psychtoolbox and Psychopy experiments with Tobii
+%    eye trackers. Behavior Research Methods.
+%    doi: https://doi.org/10.3758/s13428-020-01358-8
+%
+%    For detailed documentation, refer to <a href="https://github.com/dcnieho/Titta/blob/master/readme.md">the readme on GitHub</a>.
+%
+%    For help on the constructor method, type:
+%      <a href="matlab: help Titta.Titta">help Titta.Titta</a>
+%
+%    For static methods:
+%      <a href="matlab: help Titta.getDefaults">help Titta.getDefaults</a>
+%      <a href="matlab: help Titta.getFileName">help Titta.getFileName</a>
+%      <a href="matlab: help Titta.getTimeAsSystemTime">help Titta.getTimeAsSystemTime</a>
+%      <a href="matlab: help Titta.getValidationQualityMessage">help Titta.getValidationQualityMessage</a>
+%
+%    For methods:
+%      <a href="matlab: help Titta.setDummyMode">help Titta.setDummyMode</a>
+%      <a href="matlab: help Titta.getOptions">help Titta.getOptions</a>
+%      <a href="matlab: help Titta.setOptions">help Titta.setOptions</a>
+%      <a href="matlab: help Titta.init">help Titta.init</a>
+%      <a href="matlab: help Titta.calibrate">help Titta.calibrate</a>
+%      <a href="matlab: help Titta.sendMessage">help Titta.sendMessage</a>
+%      <a href="matlab: help Titta.getMessages">help Titta.getMessages</a>
+%      <a href="matlab: help Titta.collectSessionData">help Titta.collectSessionData</a>
+%      <a href="matlab: help Titta.saveData">help Titta.saveData</a>
+%      <a href="matlab: help Titta.deInit">help Titta.deInit</a>
+%    
+%    For properties:
+%      <a href="matlab: help Titta.geom">help Titta.geom</a>
+%      <a href="matlab: help Titta.calibrateHistory">help Titta.calibrateHistory</a>
+%      <a href="matlab: help Titta.buffer">help Titta.buffer</a>
+%      <a href="matlab: help Titta.deviceName">help Titta.deviceName</a>
+%      <a href="matlab: help Titta.serialNumber">help Titta.serialNumber</a>
+%      <a href="matlab: help Titta.model">help Titta.model</a>
+%      <a href="matlab: help Titta.firmwareVersion">help Titta.firmwareVersion</a>
+%      <a href="matlab: help Titta.runtimeVersion">help Titta.runtimeVersion</a>
+%      <a href="matlab: help Titta.address">help Titta.address</a>
+%      <a href="matlab: help Titta.capabilities">help Titta.capabilities</a>
+%      <a href="matlab: help Titta.frequency">help Titta.frequency</a>
+%      <a href="matlab: help Titta.trackingMode">help Titta.trackingMode</a>
+%      <a href="matlab: help Titta.supportedFrequencies">help Titta.supportedFrequencies</a>
+%      <a href="matlab: help Titta.supportedModes">help Titta.supportedModes</a>
+%      <a href="matlab: help Titta.systemInfo">help Titta.systemInfo</a>
 
 classdef Titta < handle
     properties (Access = protected, Hidden = true)
@@ -29,31 +71,80 @@ classdef Titta < handle
     end
     
     properties (SetAccess=protected)
+        % Information about eye tracking setup's geometry
+        %
+        %    Titta.geom is a struct with information about the setup
+        %    geometry known to the eye tracker, such as screen width and
+        %    height, and the screen's location in the eye tracker's user
+        %    coordinate system. Filled when Titta.init() is called.
         geom;
+        
+        % Information about all performed calibration attempts
+        %
+        %    Titta.calibrateHistory is a cell array with information about
+        %    all calibration attempts during the current session.
         calibrateHistory;
+        
+        % Handle to TobiiMex instance for interaction with eye tracker
+        %
+        %    Titta.buffer is a handle to TobiiMex instance for interaction
+        %    with the eye tracker's data streams, or for directly
+        %    interacting with the eye tracker through the Tobii Pro SDK.
+        %    Note that this is at your own risk. Titta should have minimal
+        %    assumptions about eye-tracker state, but I cannot guarantee
+        %    that direct interaction with the eye tracker does not
+        %    interfere with later use of Titta in the same session.
+        %    Initialized when Titta.init() is called.
         buffer;
     end
     
     properties (Dependent, SetAccess=private)
-        systemInfo  % struct with all the below properties in it, for easy copying
-        
+        % Get connected eye tracker's device name
         deviceName
+        % Get connected eye tracker's serial number
         serialNumber
+        % Get connected eye tracker's model name
         model
+        % Get connected eye tracker's firmware version
         firmwareVersion
+        % Get connected eye tracker's runtime version
         runtimeVersion
+        % Get connected eye tracker's address
         address
+        % Get connected eye tracker's exposed capabilities
         capabilities
+        % Get connected eye tracker's supported sampling frequencies
         supportedFrequencies
+        % Get connected eye tracker's supported tracking modes
         supportedModes
+        
+        % Get information about connected eye tracker
+        %
+        %    Titta.systemInfo is a struct that contains information about
+        %    the device name, serial number, model name, firmware version,
+        %    runtime version, address, sampling frequency, tracking mode,
+        %    capabilities, supported sampling frequencies, and supported
+        %    tracking modes of the connected eye tracker.
+        systemInfo
     end
     properties (Dependent)
+        % Get or set connected eye tracker's sampling frequency
         frequency
+        % Get or set connected eye tracker's tracking mode
         trackingMode
     end
     
     methods
         function obj = Titta(settingsOrETName)
+            % Construct Titta instance
+            %
+            %    EThndl = Titta(TRACKERMODEL) constructs a Titta instance
+            %    with the default settings for the given TRACKERMODEL eye
+            %    tracker.
+            %
+            %    EThndl = Titta(SETTINGS) constructs a Titta instance
+            %    with the settings specified in SETTINGS.
+            
             % deal with inputs
             if ischar(settingsOrETName)
                 % only eye-tracker name provided, load defaults for this
@@ -71,11 +162,26 @@ classdef Titta < handle
         end
         
         function out = setDummyMode(obj)
+            % Enable dummy mode
+            %
+            %    Turn the current Titta instance into a dummy mode class.
+            %    EThndl = Titta.setDummyMode() returns a handle to a
+            %    TittaDummyMode instance.
+            
             assert(nargout==1,'Titta: you must use the output argument of setDummyMode, like: TobiiHandle = TobiiHandle.setDummyMode(), or TobiiHandle = setDummyMode(TobiiHandle)')
             out = TittaDummyMode(obj);
         end
         
         function out = getOptions(obj)
+            % Get active settings
+            % 
+            %    SETTINGS = Titta.getOptions() returns the currently active
+            %    settings. Only those settings that can be changed in the
+            %    current state are returned (which is a subset of all
+            %    settings once Titta.init() has been called)
+            % 
+            %    See also TITTA.SETOPTIONS
+            
             out = obj.settings;
             if ~obj.isInitialized
                 % no-op, return all settings
@@ -89,6 +195,15 @@ classdef Titta < handle
         end
         
         function setOptions(obj,settings)
+            % Change active settings
+            % 
+            %    Titta.setOptions(SETTINGS) changes the active settings to
+            %    those specified in SETTINGS. First use getOptions() to get
+            %    an up-to-date settings struct, then edit the wanted
+            %    settings and use this function to apply themm.
+            % 
+            %    See also TITTA.GETOPTIONS
+            
             % special handling of changes to frequency and tracking mode:
             % setting them on the Titta object has them changed on the eye
             % tracker
@@ -304,6 +419,14 @@ classdef Titta < handle
         end
         
         function out = init(obj)
+            % Initialize Titta instance
+            %
+            %    Titta.init() uses the currently active settings to 
+            %    connects to the indicated Tobii eye tracker and
+            %    initializes it.
+            % 
+            %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
+            
             % Load in our callback buffer mex
             obj.buffer = TobiiMex();
             obj.buffer.startLogging();
@@ -457,6 +580,84 @@ classdef Titta < handle
         end
         
         function out = calibrate(obj,wpnt,flag)
+            % Do participant setup and calibration
+            %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT) displays the
+            %    participant setup and calibration interface on the
+            %    PsychToolbox window specified by WPNT.
+            %
+            %    WPNT can also be an array of two window pointers.
+            %    In this case, the first window pointer is taken to refer
+            %    to the participant screen, and the second to an operator
+            %    screen. Aminimal interface is then presented on the
+            %    participant screen, while full information is shown on the
+            %    operator screen, including a live view of gaze data and
+            %    eye images (if available) during calibration and
+            %    validation.
+            %
+            %    CALIBRATIONATTEMPT is a struct containing information
+            %    about the calibration/validation run.
+            %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT,FLAG) provides
+            %    control over whether the call causes the eye tracker's
+            %    calibration mode to be entered or left. The available
+            %    flags are:
+            %      1 - enter calibration mode when starting calibration
+            %      2 - exit calibration mode when calibration finished
+            %      3 - (default) both enter and exit calibration mode
+            %
+            %    FLAG is used for bimonocular calibrations, when
+            %    Titta.calibrate() is called twice in a row, first to
+            %    calibrate the first eye (use FLAG=1 to enter calibration
+            %    mode here but not exit), and then a second time to
+            %    calibrate the other eye (use FLAG=2 to exit calibration
+            %    mode when done).
+            %
+            %    INTERFACE
+            %    During anywhere on the participant setup and calibration
+            %    screens, the following key combinations are available:
+            %      shift-escape - hard exit from the calibration mode
+            %                     (causes en error to be thrown and script
+            %                     execution to stop if that error is not
+            %                     caught).
+            %      shift-s      - skip calibration. If still at setup
+            %                     screen for the first time, the last
+            %                     calibration (perhaps of a previous
+            %                     session) remains active. To clear any
+            %                     calibration, enter the calibration screen
+            %                     and immediately then skip with this key
+            %                     combination.
+            %      shift-d      - take screenshot of the participant
+            %                     display, which will be stored to the
+            %                     current active directory (cd).
+            %      shift-o      - when in dual-screen mode, take a
+            %                     screenshot of the operator display, which
+            %                     will be stored to the current active
+            %                     directory (cd).
+            %      shift-g      - when in dual screen mode, by default the
+            %                     show gaze button on the validation result
+            %                     screen only shows real-time gaze position
+            %                     on the operator's screen. If the shift
+            %                     key is held down while clicking the
+            %                     button with the mouse, or when pressing
+            %                     the functionality's hotkey (g by
+            %                     default), real-time gaze will also be
+            %                     shown on the participant's screen.
+            %
+            %    In addition to these, during the calibration and
+            %    validation displays, the following keys are available:
+            %      escape    - return to setup screen.
+            %      r         - restart calibration sequence from the
+            %                  beginning
+            %      backspace - redo the current calibration/validation
+            %                  point. Using the AnimatedCalibrationDisplay
+            %                  class, this causes the currently displayed
+            %                  point to blink.
+            %      spacebar  - accept current calibration/validation point.
+            %                  Whether it is needed to press spacebar to
+            %                  collect data for a point depends on the
+            %                  settings.cal.autoPace setting.
+            
             % this function does all setup, draws the interface, etc
             % flag is for if you want to calibrate the two eyes separately,
             % monocularly. When doing first eye, set flag to 1, when second
@@ -693,6 +894,27 @@ classdef Titta < handle
         end
         
         function time = sendMessage(obj,str,time)
+            % Store timestamped message
+            %
+            %    TIME = Titta.sendMessage(MESSAGE) stores the message
+            %    MESSAGE with the current system timestamp.
+            %
+            %    TIME is the timestamp (in microseconds) indicating the eye
+            %    tracker's system time at which the timestamp was stored.
+            %
+            %    TIME = Titta.sendMessage(MESSAGE,TIMESTMP) stores MESSAGE
+            %    with the provided TIMESTAMP.
+            %
+            %    TIMESTAMP should be provided in seconds (will be stored as
+            %    microseconds). Candidate times are the timestamps provided
+            %    by PsychToolbox, such as the timestamp returned by
+            %    Screen('Flip') or keyboard functions such as KbEventGet.
+            %    These directly correspond to the eye tracker's system time
+            %    on Windows, and are transparently remapped to system time
+            %    on Linux with less than 20 microsecond error.
+            %
+            %    See also TITTA.GETMESSAGES, TITTA.GETTIMEASSYSTEMTIME
+            
             % Tobii system timestamp is from same clock as PTB's clock. So
             % we're good. If an event has a known time (e.g. a screen
             % flip), provide it as an input argument to this function. This
@@ -711,10 +933,32 @@ classdef Titta < handle
         end
         
         function msgs = getMessages(obj)
+            % Returns all the stored timestamped messages
+            %
+            %    MSGS = Titta.getMessages() returns all the timestamped
+            %    messages stored during the current session in a Nx2 cell
+            %    array containing N timestamps (microseconds, first column)
+            %    and the associated N messages (second column).
+            %
+            %    See also TITTA.SENDMESSAGE
+            
             msgs = obj.msgs.data;
         end
         
         function dat = collectSessionData(obj)
+            % Collects all data one may want to store to file, neatly organized
+            % 
+            %    DATA = Titta.collectSessionData() returns a struct with
+            %    all information and data collected during the current
+            %    session. Contains information about all calibration
+            %    attemps; all timestamped messages; eye-tracker system
+            %    information; setup geometry and settings that are in
+            %    effect; and log messages generated by the eye tracker; and
+            %    any data in the buffers of any of the eye-tracker's data
+            %    streams.
+            %
+            %    See also TITTA.SAVEDATA, TITTA.GETFILENAME
+            
             obj.StopRecordAll();
             dat.calibration = obj.calibrateHistory;
             dat.messages    = obj.getMessages();
@@ -740,10 +984,21 @@ classdef Titta < handle
             dat.data        = obj.ConsumeAllData();
         end
         
-        function saveData(obj, filename, doAppendVersion)
-            % convenience function that gets data from all streams and
-            % saves to mat file along with messages, calibration
-            % information and system info
+        function filename = saveData(obj, filename, doAppendVersion)
+            % Save all session data to mat-file
+            %
+            %    FILENAME = Titta.saveData(FILENAME) saves the data
+            %    returned by Titta.collectSessionData() directly to a
+            %    mat-file with the specified FILENAME. Overwrites existing
+            %    FILENAME file.
+            %
+            %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination file
+            %    already exists. Default: false. Returns the FILENAME at
+            %    which the file was saved.
+            %
+            %    See also TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
             
             % 1. get filename and path
             if nargin<3
@@ -763,6 +1018,12 @@ classdef Titta < handle
         end
         
         function out = deInit(obj)
+            % Closes connection to the eye tracker and cleans up
+            %
+            %    LOG = Titta.deInit() return a struct of log messages
+            %    generated by the eye tracker during the current session,
+            %    if any.
+            
             if ~isempty(obj.buffer)
                 % return log
                 out = obj.buffer.getLog(true);
@@ -801,6 +1062,13 @@ classdef Titta < handle
     end
     methods (Static)
         function settings = getDefaults(tracker)
+            % Get the default settings for a given eye tracker
+            %
+            %    SETTINGS = Titta.getDefaults(TRACKER) return a struct of
+            %    containing the default SETTINGS for the specified TRACKER.
+            %
+            %    See also the TITTA.TITTA constructor
+            
             assert(nargin>=1,'Titta: you must provide a tracker name when calling getDefaults')
             settings.tracker    = tracker;
             
@@ -1048,12 +1316,27 @@ classdef Titta < handle
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
-        function time = getTimeAsSystemTime(PTBtime)
-            % maps either inputted PTB time (e.g. from GetSecs, audio or
-            % video timestamps, PsychHID timestamps, etc) or current
-            % GetSecs if no input argument was provided to Tobii system
-            % time. PTB time is in seconds, and may be using a different
-            % clock than Tobii time. Tobii time is in microseconds.
+        function systemTime = getTimeAsSystemTime(PTBtime)
+            % Get the default settings for a given eye tracker
+            %
+            %    SYSTEMTIME = Titta.getTimeAsSystemTime() provides the
+            %    current Tobii SYSTEMTIME. This time is based on the
+            %    current time provided by GetSecs().
+            %
+            %    SYSTEMTIME = Titta.getTimeAsSystemTime(PTBTIME) maps the
+            %    provided PTBTIME to Tobii SYSTEMTIME.
+            % 
+            %    PTBTIME is PsychtoolBox time (e.g. from GetSecs, audio or
+            %    video timestamps, PsychHID timestamps, etc). PTB time is
+            %    in seconds.
+            %
+            %    SYSTEMTIME is Tobii system time in microseconds. It may be
+            %    using a different computer clock than PTB time. In that
+            %    case, this function not only converts from seconds to
+            %    microseconds, but also remaps the time between the clocks.
+            %
+            %    See also TITTA.SENDMESSAGE
+            
             if IsLinux
                 % on Linux, Tobii Pro SDK on Linux and mono clock on PTB
                 % internally both use CLOCK_MONOTONIC, whereas the clock
@@ -1078,10 +1361,27 @@ classdef Titta < handle
                     PTBtime = GetSecs();
                 end
             end
-            time = int64(PTBtime*1000*1000);
+            systemTime = int64(PTBtime*1000*1000);
         end
         
         function message = getValidationQualityMessage(cal,kCal)
+            % Get a formatted message about data quality during validation
+            %
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL) formats
+            %    the calibration information CAL into a text MESSAGE
+            %    informing about achieved data quality.
+            %
+            %    If CAL is a struct with an array of calibration attemps,
+            %    in which case information about the CAL.selectedCal is
+            %    output. If CAL is a specific calibration attempt, the
+            %    message is formatted for this calibration.
+            % 
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL,KCAL)
+            %    formats the calibration information for specific
+            %    calibration KCAL in the calibration attempt array CAL.
+            %
+            %    See also TITTA.CALIBRATE
+            
             if isfield(cal,'attempt')
                 % find selected calibration, make sure we output quality
                 % info for that
@@ -1113,6 +1413,18 @@ classdef Titta < handle
         end
         
         function filename = getFileName(filename, doAppendVersion)
+            % Get the filename for saving data
+            %
+            %    FILENAME = Titta.getFileName(FILENAME) checks the provided
+            %    FILENAME.
+            %
+            %    FILENAME = Titta.getFileName(FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination file
+            %    already exists. Default: false.
+            %
+            %    See also TITTA.SAVEDATA
+            
             % 1. get filename and path
             [path,file,ext] = fileparts(filename);
             assert(~isempty(path),'Titta: getFileName: filename should contain a path')
@@ -1205,7 +1517,7 @@ classdef Titta < handle
             if qHaveOperatorScreen
                 headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
                 headO.refSz             = head.refSz;
-                headO.rectWH            = head.rectWH;
+                headO.rectWH            = obj.scrInfo.resolution{2};
                 headO.headCircleFillClr = head.headCircleFillClr;
                 headO.headCircleEdgeClr = head.headCircleEdgeClr;
                 headO.showYaw           = obj.settings.UI.setup.showYawToOperator;
@@ -1224,7 +1536,7 @@ classdef Titta < handle
                 obj.settings.UI.setup.referencePos = [NaN NaN NaN];
             end
             % position reference circle on screen
-            refPosO = obj.scrInfo.resolution{1}/2;
+            refPosP = obj.scrInfo.resolution{1}/2;
             allPosOff = [0 0];
             if ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
                 scrWidth  = obj.geom.displayArea.width/10;
@@ -1232,7 +1544,7 @@ classdef Titta < handle
                 pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
                 allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
             end
-            refPosP = refPosO+allPosOff;
+            refPosP = refPosP+allPosOff;
             
             head.referencePos   = obj.settings.UI.setup.referencePos;
             head.allPosOff      = allPosOff;
@@ -1240,6 +1552,7 @@ classdef Titta < handle
                 headO.referencePos  = head.referencePos;
                 % NB: no offset on screen for head on operator screen, so
                 % don't use allPosOff
+                refPosO = obj.scrInfo.resolution{2}/2;
             end
 
             % setup buttons
@@ -1265,7 +1578,7 @@ classdef Titta < handle
             end
             
             % setup fixation points in the corners of the screen
-            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{w},4,1);
+            fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
             % setup cursors
             butRects        = cat(1,but.rect).';
@@ -1381,11 +1694,11 @@ classdef Titta < handle
                 % draw distance info
                 if ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(1),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 if qHaveOperatorScreen
                     str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(2),str,'center',fixPos(1,2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no

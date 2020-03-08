@@ -3,10 +3,8 @@ specifically offering integration with [PsychToolbox](http://psychtoolbox.org/).
 that integrates with PsychoPy is also available from
 https://github.com/marcus-nystrom/Titta. For a similar toolbox for SMI eye trackers, please see www.github.com/dcnieho/SMITE.
 
-Cite as:
-Niehorster, D.C., Andersson, R., & Nyström, M., (in prep). Titta: A
-toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye
-trackers.
+Please cite:
+[Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
 
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
@@ -49,6 +47,7 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
     1. Then download MatlabWebSocket (available from https://github.com/jebej/MatlabWebSocket).
     1. Put the MatlabWebSocket directory inside Titta at the right location:
       `<tittaRootDir>/talkToProLab/MatlabWebSocket`).
+1. When running on Windows, ensure you have the latest version of the [Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) installed. This is the most likely cause of errors like "The specified module could not be found" when loading the mex file.
 
 ## Contents
 The toolbox consists of multiple parts:
@@ -89,15 +88,16 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
 
 ## API
 ### `Titta` class
+Help on each of the below listed static methods, methods and properties can be had inside MATLAB by typing on the commands line `help Titta.<function name>`, e.g. `help Titta.calibrate`. Help on the constructor is had with `help Titta.Titta`.
 #### Static methods
 The below method can be called on a Titta instance or on the Titta class directly.
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`getDefaults`|<ol><li>`tracker`: one of the supported eye tracker model names, [see above](#usage).</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
-|`getTimeAsSystemTime`|<ol><li>`time`: A PsychtoolBox timestamp that is to be converted to Tobii system time. Optional, if not provided, current GetSecs time is used.</li></ol>|<ol><li>`time`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Maps the provided PsychtoolBox timestamp (or the current PsychtoolBox time provided by the `GetSecs()` function) to the Tobii system time provided in microseconds by the Tobii Pro SDK. On Windows, PsychtoolBox time and Tobii system time use the same clock, and this operation thus only entails a conversion from seconds to microseconds. On Linux, the clocks are different, and remapping is performed using the PTB function `GetSecs('AllClocks')` with an accuracy of 20 microseconds or better.|
-|`getValidationQualityMessage`|<ol><li>`cal`: a list of calibration attempts, or a specific calibration attempt</li><li>`kCal`: an (optional) index into the list of calibration attempts to indicate which to process</li></ol>|<ol><li>`message`: A tab-separated text rendering of the per-point and average validation data quality for each eye that was calibrated</li></ol>|Provides a textual rendering of data quality as assessed through a validation procedure.|
-|`getFileName`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename with versioning added where data file could be saved.</li></ol>|Get filename for saving data, with optoinal versioning.|
+|`getDefaults()`|<ol><li>`tracker`: one of the supported eye tracker model names, [see above](#usage).</li></ol>|<ol><li>`settings`: struct with all supported settings for a specific model of eyeTracker</li></ol>|Gets all supported settings with defaulted values for the indicated eyeTracker, can be modified and used for constructing an instance of Titta. See the [supported options](#supported-options) section below.|
+|`getTimeAsSystemTime()`|<ol><li>`time`: A PsychtoolBox timestamp that is to be converted to Tobii system time. Optional, if not provided, current GetSecs time is used.</li></ol>|<ol><li>`time`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Maps the provided PsychtoolBox timestamp (or the current PsychtoolBox time provided by the `GetSecs()` function) to the Tobii system time provided in microseconds by the Tobii Pro SDK. On Windows, PsychtoolBox time and Tobii system time use the same clock, and this operation thus only entails a conversion from seconds to microseconds. On Linux, the clocks are different, and remapping is performed using the PTB function `GetSecs('AllClocks')` with an accuracy of 20 microseconds or better.|
+|`getValidationQualityMessage()`|<ol><li>`cal`: a list of calibration attempts, or a specific calibration attempt</li><li>`kCal`: an (optional) index into the list of calibration attempts to indicate which to process</li></ol>|<ol><li>`message`: A tab-separated text rendering of the per-point and average validation data quality for each eye that was calibrated</li></ol>|Provides a textual rendering of data quality as assessed through a validation procedure.|
+|`getFileName()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename with versioning added where data file could be saved.</li></ol>|Get filename for saving data, with optional versioning.|
 
 #### Construction
 An instance of Titta is constructed by calling `Titta()` with either the name of a specific supported eye tracker model (in which case default settings for this model will be used) or with a settings struct retrieved from `Titta.getDefaults()`, possibly with changed settings (passing the settings struct unchanged is equivalent to using the eye tracker model name as input argument).
@@ -115,7 +115,7 @@ The following method calls are available on a Titta instance:
 |`sendMessage()`|<ol><li>`message`: Message to be written into idf file</li><li>`time`: (optional) timestamp of the message (in seconds, will be stored as microseconds). Candidate times are the timestamps provided by PsychToolbox, such as the timestamp returned by `Screen('Flip')` or keyboard functions such as `KbEventGet`.</li></ol>|<ol><li>`time`: timestamp (microseconds) stored with the message</li></ol>|Store timestamped message|
 |`getMessages()`||<ol><li>`messages`: returns Nx2 cell array containing N timestamps (microseconds, first column) and the associated N messages (second column)</li></ol>|Get all the timestamped messages stored during the current session.|
 |`collectSessionData()`||<ol><li>`data`: struct with all information and data collected during the current session. Contains information about all calibration attemps; all timestamped messages; eye-tracker system information; setup geometry and settings that are in effect; and log messages generated by the eye tracker; and any data in the buffers of any of the eye-tracker's data streams</li></ol>|Collects all data one may want to store to file, neatly organized.|
-|`saveData()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>||Save data returned by `collectSessionData()` directly to mat file at specified location|
+|`saveData()`|<ol><li>`filename`: filename (including path) where mat file will be stored</li><li>`doAppendVersion`: optional. Boolean indicating whether version numbers (`_1`, `_2`, etc) will automatically get appended to the filename if the destination file already exists</li></ol>|<ol><li>`filename`: filename at which the data was saved</li></ol>|Save data returned by `collectSessionData()` directly to mat file at specified location|
 |`deInit()`||<ol><li>`log`: struct of log messages generated by the eye tracker during the current session, if any.</li></ol>|Close connection to the eye tracker and clean up|
 
 
@@ -124,10 +124,21 @@ The following read-only properties are available for a Titta instance:
 
 |Property|Description|
 | --- | --- |
-|`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to, such as serial number.|
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
 |`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiimex-class) instance for interaction with the eye tracker's data streams, or for directly interacting with the eye tracker through the Tobii Pro SDK. Note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
+|`deviceName`|Get connected eye tracker's device name.|
+|`serialNumber`|Get connected eye tracker's serial number.|
+|`model`|Get connected eye tracker's model name.|
+|`firmwareVersion`|Get connected eye tracker's firmware version.|
+|`runtimeVersion`|Get connected eye tracker's runtime version.|
+|`address`|Get connected eye tracker's address.|
+|`capabilities`|Get connected eye tracker's exposed capabilities.|
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
+|`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
+|`supportedModes`|Get connected eye tracker's supported tracking modes.|
+|`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to: the device name, serial number, model name, firmware version, runtime version, address, sampling frequency, tracking mode, capabilities, supported sampling frequencies, and supported tracking modes of the connected eye tracker.|
 
 #### Supported options
 Which of the below options are available depends on the eye tracker model. The `getDefaults()` and `getOptions()` method calls return the appropriate set of options for the indicated eye tracker.
@@ -273,8 +284,6 @@ The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entr
 #### Static methods
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`getSDKVersion`||<ol><li>`SDKVersion`: SDK version string.</li></ol>|Returns the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
-|`getSystemTimestamp`||<ol><li>`systemTimestamp`: An int64 scalar denoting Tobii system time in microseconds</li></ol>|Gets the current system time through the Tobii Pro SDK.|
 |`findAllEyeTrackers`||<ol><li>`eyeTrackerList`: An array of structs with information about the connected eye trackers.</li></ol>|Gets the eye trackers that are connected to the system, as listed by the Tobii Pro SDK.|
 |||||
 |`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
@@ -291,28 +300,25 @@ The following method calls are available on a TobiiMex instance:
 | --- | --- | --- | --- |
 |`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`getConnectedEyeTracker()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
-|`getCurrentFrequency()`||<ol><li>`frequency`: current sampling frequency of the connected eye tracker.</li></ol>|Get the current sampling frequency of the connected eye tracker.|
-|`getCurrentTrackingMode()`||<ol><li>`trackingMode`: current tracking mode of the connected eye tracker.</li></ol>|Get the current tracking mode of the connected eye tracker.|
+|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
 |`getTrackBox()`||<ol><li>`trackBox`: track box of the connected eye tracker.</li></ol>|Get the track box of the connected eye tracker.|
 |`getDisplayArea()`||<ol><li>`displayArea`: display area of the connected eye tracker.</li></ol>|Get the display area of the connected eye tracker.|
-|`setGazeFrequency()`|<ol><li>`frequency`: requested sampling frequency for the connected eye tracker.</li></ol>||Set the sampling frequency of the connected eye tracker.|
-|`setTrackingMode()`|<ol><li>`trackingMode`: requested tracking mode for the connected eye tracker.</li></ol>||Set the tracking mode of the connected eye tracker.|
 |`applyLicenses()`|<ol><li>`licenses`: a cell array of licenses (`char` of `uint8` representations of the license file read in binary mode).</li></ol>||Apply license(s) to the connected eye tracker.|
 |`clearLicenses()`|||Clear all licenses that may have been applied to the connected eye tracker. Refreshes the eye tracker's info, so use `getConnectedEyeTracker()` to check for any updated capabilities.|
 |||||
 |`hasStream()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`supported`: a boolean indicating whether the connected eye tracker supports providing data of the requested stream type</li></ol>|Check whether the connected eye tracker supports providing a data stream of a specified type.|
 |`start()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated</li><li>`asGif`: an (optional) boolean that is ignored unless the stream type is `eyeImage`. It indicates whether eye images should be provided gif-encoded (true) or a raw grayscale pixel data (false).</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was started for the requested stream type</li></ol>|Start streaming data of a specified type to buffer. The default initial buffer size should cover about 30 minutes of recording gaze data at 600Hz, and longer for the other streams. Growth of the buffer should cause no performance impact at all as it happens on a separate thread. To be certain, you can indicate a buffer size that is sufficient for the number of samples that you expect to record. Note that all buffers are fully in-memory. As such, ensure that the computer has enough memory to satify your needs, or you risk a recording-destroying crash.|
-|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
 |`isRecording()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>|<ol><li>`status`: a boolean indicating whether data of the indicated type is currently being streamed to buffer</li></ol>|Check if data of a specified type is being streamed to buffer.|
-|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>||Clear the buffer for data of the specified type.|
-|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
 |`consumeN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`N`: (optional) number of samples to consume from the start of the buffer. Defaults to all.</li><li>`side`: a string, possible values: `first` and `last`. Indicates from which side of the buffer to consume N samples. Default: `first`.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
 |`consumeTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return and remove data of the specified type from the buffer.|
 |`peekN()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`N`: (optional) number of samples to peek from the end of the buffer. Defaults to 1.</li><li>`side`: a string, possible values: `first` and `last`. Indicates from which side of the buffer to peek N samples. Default: `last`.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
 |`peekTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to return data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to return data. Defaults to end of buffer.</li></ol>|<ol><li>`data`: struct containing data from the requested buffer in the indicated time range, if available. If not available, an empty struct is returned.</li></ol>|Return but do not remove data of the specified type from the buffer.|
+|`clear()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li></ol>||Clear the buffer for data of the specified type.|
+|`clearTimeRange()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal` and `timeSync`.</li><li>`startT`: (optional) timestamp indicating start of interval for which to clear data. Defaults to start of buffer.</li><li>`endT`: (optional) timestamp indicating end of interval for which to clear data. Defaults to end of buffer.</li></ol>||Clear data of the specified type within specified time range from the buffer.|
+|`stop()`|<ol><li>`stream`: a string, possible values: `gaze`, `eyeImage`, `externalSignal`, `timeSync` and `positioning`.</li><li>`doClearBuffer`: (optional) boolean indicating whether the buffer of the indicated stream type should be cleared</li></ol>|<ol><li>`success`: a boolean indicating whether streaming to buffer was stopped for the requested stream type</li></ol>|Stop streaming data of a specified type to buffer.|
 |||||
-|`enterCalibrationMode()`|<ol><li>`doMonocular`: boolean indicating whether the calibration is monocular or binocular</li></ol>||Queue request for the tracker to enter into calibration mode.|
+|`enterCalibrationMode()`|<ol><li>`throwErrorIfNot`: Optionally throws error if not in calibration mode. Default `false`.</li></ol>|<ol><li>`isInCalibrationMode`: Boolean indicating whether eye tracker is in calibration mode.</li></ol>|Check whether eye tracker is in calibration mode.|
+|`isInCalibrationMode()`|<ol><li>`doMonocular`: boolean indicating whether the calibration is monocular or binocular</li></ol>||Queue request for the tracker to enter into calibration mode.|
 |`leaveCalibrationMode()`|<ol><li>`force`: set to true if you want to be completely sure that the tracker is not in calibration mode after this call: this also ensures calibration mode is left if code other than this interface put the eye tracker into calibration mode</li></ol>||Queue request for the tracker to leave the calibration mode.|
 |`calibrationCollectData()`|<ol><li>`coordinates`: the coordinates of the point that the participant is asked to fixate, 2-element array with values in the range [0,1]</li><li>`eye`: (optional) the eye for which to collect calibration data. Possible values: `left` and `right`</li></ol>||Queue request for the tracker to collect gaze data for a single calibration point.|
 |`calibrationDiscardData()`|<ol><li>`coordinates`: the coordinates of the point for which calibration data should be discarded, 2-element array with values in the range [0,1]</li><li>`eye`: (optional) the eye for which collected calibration data should be discarded. Possible values: `left` and `right`</li></ol>||Queue request for the tracker to discard any already collected gaze data for a single calibration point.|
@@ -321,6 +327,25 @@ The following method calls are available on a TobiiMex instance:
 |`calibrationApplyData()`|<ol><li>`cal`: a binary stream as gotten through `calibrationGetData()`</li></ol>||Apply the provided calibration data.|
 |`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TobiiMex's calibration mechanism.|
 |`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TobiiMex's calibration mechanism.|
+
+#### Properties
+The following read-only properties are available for a TobiiMex instance:
+
+|Property|Description|
+| --- | --- |
+|`getSDKVersion`|Get the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
+|`getSystemTimestamp`|Get the current system time through the Tobii Pro SDK. Returns an int64 scalar denoting Tobii system time in microseconds.|
+|`deviceName`|Get or set connected eye tracker's device name.|
+|`serialNumber`|Get connected eye tracker's serial number.|
+|`model`|Get connected eye tracker's model name.|
+|`firmwareVersion`|Get connected eye tracker's firmware version.|
+|`runtimeVersion`|Get connected eye tracker's runtime version.|
+|`address`|Get connected eye tracker's address.|
+|`capabilities`|Get connected eye tracker's exposed capabilities.|
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
+|`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
+|`supportedModes`|Get connected eye tracker's supported tracking modes.|
 
 ### `TalkToProLab` class
 #### Static methods
@@ -331,11 +356,9 @@ The below method can be called on a TalkToProLab instance or on the TalkToProLab
 |`makeAOITag`|<ol><li>`tagName`: The name of the tag</li><li>`groupName`: (optional) the name of the tag group the tag belongs to.</li></ol>|<ol><li>`tag`: The AOI tag.</li></ol>|Generates an AOI tag in the format expected by `TalkToProLab.attachAOIToImage()`.|
 
 #### Construction
-An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. Two additional constructor arguments are provided.
-
-`doCheckSync`: (default `true`) determines whether clock sync between PsychToolbox and Pro Lab endpoint should be checked. Set to false if you want to use `TalkToProLab` without PsychToolbox (no other part of the `TalkToProLab` class uses PsychToolbox functionality), or if you want to use `TalkToProLab` with a two-computer setup, where Pro Lab runs on a different machine than MATLAB. Note that in this case, you are responsible for figuring out the sync between Pro Lab your local machine yourself. This is important because `TalkToProLab.sendStimulusEvent()` and `TalkToProLab.sendCustomEvent()` take timestamps in Pro Lab time, not local time. You can use the `TalkToProLab.clientClock` to talk directly to Pro Lab's clock websocket service.
-
-`IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `localhost` for a one-computer setup.
+An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. Two optional additional constructor arguments can be provided.
+- `doCheckSync`: (default `true`) determines whether clock sync between PsychToolbox and Pro Lab endpoint should be checked. Set to false if you want to use `TalkToProLab` without PsychToolbox (no other part of the `TalkToProLab` class uses PsychToolbox functionality), or if you want to use `TalkToProLab` with a two-computer setup, where Pro Lab runs on a different machine than MATLAB. Note that in this case, you are responsible for figuring out the sync between Pro Lab your local machine yourself. This is important because `TalkToProLab.sendStimulusEvent()` and `TalkToProLab.sendCustomEvent()` take timestamps in Pro Lab time, not local time. You can use the `TalkToProLab.clientClock` WebSocket interface to talk directly to Pro Lab's clock websocket service.
+- `IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `localhost` for a one-computer setup.
 
 #### Methods
 The following method calls are available on a TalkToProLab instance

@@ -8,7 +8,7 @@ Run `makeTobiiMex.m` to build the mex file. To build the 32bit Windows version, 
 
 For building the 32bit Windows mex file, a 32bit version of matlab must be installed. R2015b is the last version supporting 32bit.
 
-For building the Linux mex file the default 7.4.0 included with Ubuntu 18.04 was used.
+For building the Linux mex file the default gcc version 7.4.0 included with Ubuntu 18.04 was used.
 The mex file also builds with gcc 7.4.0 provided in the mingw64 distribution that comes with Octave 5.1.0. The Titta class is currently however not supported on Octave due to bugs in how Octave deals with function handles.
 
 ### Required environment variables
