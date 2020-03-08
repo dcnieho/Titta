@@ -1660,11 +1660,11 @@ classdef Titta < handle
                     end
                 else
                     head.update(...
-                        eyeData.left.gazeOrigin.valid, eyeData.left.gazeOrigin.inUserCoords, posGuide.left.user_position, eyeData.left.pupil.diameter,...
+                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     if qHaveOperatorScreen
                         headO.update(...
-                            eyeData.left.gazeOrigin.valid, eyeData.left.gazeOrigin.inUserCoords, posGuide.left.user_position, eyeData.left.pupil.diameter,...
+                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                             eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     end
                 end
@@ -2854,8 +2854,8 @@ classdef Titta < handle
                             bpos = calValPos(p,:).';
                             % left eye
                             if obj.calibrateLeftEye
-                                qVal = myVal.gazeData(p).left.gazePoint.valid;
-                                lEpos= bsxfun(@times,myVal.gazeData(p).left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
+                                qVal = myVal.gazeData(p). left.gazePoint.valid;
+                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                             % right eye
                             if obj.calibrateRightEye
@@ -2922,9 +2922,9 @@ classdef Titta < handle
                         % draw gaze data
                         eyeData = obj.buffer.peekN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
-                            lE = eyeData.left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
-                            if obj.calibrateLeftEye  && eyeData.left.gazePoint.valid(end)
+                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1), lE(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
