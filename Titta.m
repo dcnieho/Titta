@@ -864,6 +864,15 @@ classdef Titta < handle
             optionButClr.edge   = {[  0   0   0],[255 116   0],[255 236 219]};
             optionButClr.text   = {[255 116   0],[255 116   0],[255 236 219]};
             
+            % platform specific fonts
+            if IsWin
+                sansFont = 'Segoe UI';
+                monoFont = 'Consolas';
+            else
+                sansFont = 'Liberation Sans';
+                monoFont = 'Liberation Mono';
+            end
+
             % TODO: common file format
             
             % the rest here are good defaults for all
@@ -894,7 +903,7 @@ classdef Titta < handle
             % NaN (unknown) if reference position is not set by user
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
             settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %1$.1f cm, should be: %4$.1f cm\nY: %2$.1f cm, should be: %5$.1f cm\nDistance: %3$.1f cm, should be: %6$.1f cm',x,y,z,rx,ry,rz);
-            settings.UI.setup.instruct.font     = 'Segoe UI';
+            settings.UI.setup.instruct.font     = sansFont;
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -910,7 +919,7 @@ classdef Titta < handle
             if qUsingOldWindowsPTBRenderer  % old text PTB renderer on Windows
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font          = 'Segoe UI';
+            settings.UI.button.setup.text.font          = sansFont;
             settings.UI.button.setup.text.size          = 24*textFac;
             settings.UI.button.setup.text.style         = 0;
             settings.UI.button.setup.eyeIm.accelerator  = 'e';
@@ -931,7 +940,7 @@ classdef Titta < handle
             settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
             settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
             settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
-            settings.UI.button.val.text.font            = 'Segoe UI';
+            settings.UI.button.val.text.font            = sansFont;
             settings.UI.button.val.text.size            = 24*textFac;
             settings.UI.button.val.text.style           = 0;
             settings.UI.button.val.recal.accelerator    = 'escape';
@@ -977,7 +986,7 @@ classdef Titta < handle
             settings.UI.button.val.toggCal.edgeColor    = toggleButClr.edge;
             settings.UI.button.val.toggCal.textColor    = toggleButClr.text;
             settings.UI.cal.errMsg.string       = 'Calibration failed\nPress any key to continue';
-            settings.UI.cal.errMsg.font         = 'Segoe UI';
+            settings.UI.cal.errMsg.font         = sansFont;
             settings.UI.cal.errMsg.size         = 36*textFac;
             settings.UI.cal.errMsg.color        = [150 0 0];
             settings.UI.cal.errMsg.style        = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
@@ -993,19 +1002,19 @@ classdef Titta < handle
             settings.UI.val.onlineGaze.fixFrontSize = 5;
             settings.UI.val.onlineGaze.fixBackColor = 0;
             settings.UI.val.onlineGaze.fixFrontColor= 255;
-            settings.UI.val.avg.text.font       = 'Consolas';
+            settings.UI.val.avg.text.font       = monoFont;
             settings.UI.val.avg.text.size       = 24*textFac;
             settings.UI.val.avg.text.color      = 0;
             settings.UI.val.avg.text.eyeColors  = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
             settings.UI.val.waitMsg.string      = 'Please wait...';
-            settings.UI.val.waitMsg.font        = 'Segoe UI';
+            settings.UI.val.waitMsg.font        = sansFont;
             settings.UI.val.waitMsg.size        = 28*textFac;
             settings.UI.val.waitMsg.color       = 0;
             settings.UI.val.waitMsg.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.hover.bgColor       = 110;
-            settings.UI.val.hover.text.font     = 'Consolas';
+            settings.UI.val.hover.text.font     = monoFont;
             settings.UI.val.hover.text.size     = 20*textFac;
             settings.UI.val.hover.text.color    = 0;
             settings.UI.val.hover.text.eyeColors= eyeColors;                    % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
@@ -1013,7 +1022,7 @@ classdef Titta < handle
             settings.UI.val.menu.bgColor        = 110;
             settings.UI.val.menu.itemColor      = 140;
             settings.UI.val.menu.itemColorActive= 180;
-            settings.UI.val.menu.text.font      = 'Segoe UI';
+            settings.UI.val.menu.text.font      = sansFont;
             settings.UI.val.menu.text.size      = 24*textFac;
             settings.UI.val.menu.text.color     = 0;
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
@@ -1338,11 +1347,11 @@ classdef Titta < handle
                     end
                 else
                     head.update(...
-                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                        eyeData.left.gazeOrigin.valid, eyeData.left.gazeOrigin.inUserCoords, posGuide.left.user_position, eyeData.left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     if qHaveOperatorScreen
                         headO.update(...
-                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                            eyeData.left.gazeOrigin.valid, eyeData.left.gazeOrigin.inUserCoords, posGuide.left.user_position, eyeData.left.pupil.diameter,...
                             eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     end
                 end
@@ -2519,8 +2528,8 @@ classdef Titta < handle
                             bpos = calValPos(p,:).';
                             % left eye
                             if obj.calibrateLeftEye
-                                qVal = strcmp(myCal.points(p).samples. left.validity,'validAndUsed');
-                                lEpos= bsxfun(@times,myCal.points(p).samples. left.position(:,qVal),obj.scrInfo.resolution{1}.');
+                                qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                lEpos= bsxfun(@times,myCal.points(p).samples.left.position(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                             % right eye
                             if obj.calibrateRightEye
@@ -2532,8 +2541,8 @@ classdef Titta < handle
                             bpos = calValPos(p,:).';
                             % left eye
                             if obj.calibrateLeftEye
-                                qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
+                                qVal = myVal.gazeData(p).left.gazePoint.valid;
+                                lEpos= bsxfun(@times,myVal.gazeData(p).left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
                             end
                             % right eye
                             if obj.calibrateRightEye
@@ -2600,9 +2609,9 @@ classdef Titta < handle
                         % draw gaze data
                         eyeData = obj.buffer.peekN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
-                            lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            lE = eyeData.left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
-                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
+                            if obj.calibrateLeftEye  && eyeData.left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1), lE(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
