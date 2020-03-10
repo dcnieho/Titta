@@ -1484,7 +1484,7 @@ classdef Titta < handle
             %  2: skip calibration and continue with task (shift+s)
             % -4: go to validation screen (p) -- only if there are already
             %     completed calibrations
-            % -5: Exit completely (control+escape)
+            % -5: Exit completely (shift+escape)
             % (NB: no -1 for this function)
             
             % logic: if user is at reference viewing distance and at
