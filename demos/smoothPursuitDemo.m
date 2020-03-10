@@ -99,6 +99,7 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration
+    ListenChar(-1);
     if doBimonocularCalibration
         % do sequential monocular calibrations for the two eyes
         settings                = EThndl.getOptions();
@@ -119,6 +120,7 @@ try
         % do binocular calibration
         tobii.calVal{1}         = EThndl.calibrate(wpnt);
     end
+    ListenChar(0);
     
     % precompute target trajectory
     nFrame = hz*dur;

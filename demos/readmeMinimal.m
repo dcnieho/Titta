@@ -52,7 +52,9 @@ try
     % do calibration (info about validation accuracy will be stored in eye
     % tracker messages, and more info is collected by the
     % EThndl.collectSessionData() call below)
+    ListenChar(-1);
     EThndl.calibrate(wpnt);
+    ListenChar(0);
     
     
     % later:

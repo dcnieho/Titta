@@ -131,7 +131,9 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration, start recording
+    ListenChar(-1);
     calValInfo = EThndl.calibrate(wpnt);
+    ListenChar(0);
     EThndl.buffer.start('gaze');
     
     paddlePos = XMAX/2;     % start in center of screen horizontally

@@ -185,7 +185,9 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration, start recording
+    ListenChar(-1);
     calValInfo = EThndl.calibrate(wpnt);
+    ListenChar(0);
     EThndl.buffer.start('gaze');
     if ~sv.proLab.doDryRun
         TalkToProLabInstance.startRecording(sv.proLab.recordingName,sv.scr.rect(1),sv.scr.rect(2));
