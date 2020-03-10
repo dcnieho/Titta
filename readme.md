@@ -190,6 +190,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.setup.fixFrontSize`|Size (pixels) of small circle in fixation cross.|
 |`settings.UI.setup.fixBackColor`|Color (RGB, 0-255) of large circle in fixation cross.|
 |`settings.UI.setup.fixFrontColor`|Color (RGB, 0-255) of small circle in fixation cross.|
+|`settings.UI.setup.hardExitClosesPTB`|If `true` (default), pressing shift-escape in the calibration interface causes the PTB window to close.|
 |`settings.UI.setup.instruct.strFun`|Function handle to function producing positioning instruction string. This function should take six inputs: current head position `x`, `y`, and `z` as well as reference position `x`, `y` and `z`.|
 |`settings.UI.setup.instruct.font`|See [Text options](#text-options).|
 |`settings.UI.setup.instruct.size`|See [Text options](#text-options).|
