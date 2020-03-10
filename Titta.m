@@ -1582,7 +1582,7 @@ classdef Titta < handle
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
-                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{w}(1)/2;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{end}(1)/2;
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
@@ -1594,11 +1594,7 @@ classdef Titta < handle
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
             % setup cursors
-            butRects        = cat(1,but.rect).';
-            % for cursor, need to correct rect position based on global
-            % rect of window
-            rect     = Screen('GlobalRect',wpnt(end));
-            butRects = bsxfun(@plus,butRects,rect([1 2 1 2]).');
+            butRects = cat(1,but.rect).';
             cursors.rect    = num2cell(butRects,1);
             cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,size(cursors.rect));  % clickable items
             cursors.other   = obj.settings.UI.cursor.normal;                                % default
@@ -1621,7 +1617,8 @@ classdef Titta < handle
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
-            headPosLastT       = 0;
+            headPosLastT        = 0;
+            [mx,my]             = deal(0,0);
             while true
                 Screen('FillRect', wpnt(1), bgClr);
                 if qHaveOperatorScreen
@@ -1730,11 +1727,9 @@ classdef Titta < handle
                 end
                 
                 % draw buttons
-                [mousePos(1), mousePos(2)] = GetMouse();
-                [mousePos(1), mousePos(2)] = RemapMouse(wpnt(end), 'AllViews', mousePos(1), mousePos(2));
-                but(1).draw(mousePos,qShowEyeImage);
-                but(2).draw(mousePos);
-                but(3).draw(mousePos);
+                but(1).draw([mx my],qShowEyeImage);
+                but(2).draw([mx my]);
+                but(3).draw([mx my]);
                 
                 % draw fixation points
                 obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
@@ -1744,7 +1739,7 @@ classdef Titta < handle
                 
                 
                 % get user response
-                [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
+                [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress(wpnt(end));
                 % update cursor look if needed
                 cursor.update(mx,my);
                 if any(buttons)
@@ -2532,6 +2527,13 @@ classdef Titta < handle
             gRectOff                = Screen('GlobalRect',wpnt(end));
             gRectOff                = gRectOff([1 2 1 2]);
             
+            % prep scale factor for some display elements
+            if qHaveOperatorScreen
+                sFac = min(obj.scrInfo.resolution{end}./obj.scrInfo.resolution{1});
+            else
+                sFac = 1;
+            end
+            
             % find how many valid calibrations we have:
             iValid = getValidCalibrations(cal);
             if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
@@ -2561,11 +2563,11 @@ classdef Titta < handle
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution{1}(2)*.97);
+                yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
-                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{1}(1)/2;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{end}(1)/2;
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
@@ -2575,13 +2577,13 @@ classdef Titta < handle
             
             % 2. atop screen
             % position them
-            yPosTop             = .02*obj.scrInfo.resolution{1}(2);
+            yPosTop             = .02*obj.scrInfo.resolution{end}(2);
             buttonOff           = 900;
             if but(5).visible
-                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{1}(1)-buttonOff/2-but(5).rect(3),yPosTop);
+                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(5).rect(3),yPosTop);
             end
             if but(6).visible
-                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{1}(1)+buttonOff/2,yPosTop);
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)+buttonOff/2,yPosTop);
             end
             
             % 3. left side
@@ -2600,10 +2602,10 @@ classdef Titta < handle
                 totHeight       = nElem*(height+pad)-pad;
                 width           = 900;
                 % menu background
-                menuBackRect    = [-.5*width+obj.scrInfo.center{1}(1)-margin -.5*totHeight+obj.scrInfo.center{1}(2)-margin .5*width+obj.scrInfo.center{1}(1)+margin .5*totHeight+obj.scrInfo.center{1}(2)+margin];
+                menuBackRect    = [-.5*width+obj.scrInfo.center{end}(1)-margin -.5*totHeight+obj.scrInfo.center{end}(2)-margin .5*width+obj.scrInfo.center{end}(1)+margin .5*totHeight+obj.scrInfo.center{end}(2)+margin];
                 menuBackRectGlobal  = menuBackRect+gRectOff;
                 % menuRects
-                menuRects       = repmat([-.5*width+obj.scrInfo.center{1}(1) -height/2+obj.scrInfo.center{1}(2) .5*width+obj.scrInfo.center{1}(1) height/2+obj.scrInfo.center{1}(2)],length(iValid),1);
+                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],length(iValid),1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 menuRectsGlobal = bsxfun(@plus,menuRects,gRectOff);
                 % text in each rect
@@ -2749,7 +2751,7 @@ classdef Titta < handle
                                 strsep = '\n';
                             end
                             valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
-                            valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{1}(1)/2,.02*obj.scrInfo.resolution{1}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
+                            valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                             
                             % get info about where points were on screen
                             if qShowCal
@@ -2760,11 +2762,11 @@ classdef Titta < handle
                             calValPos   = zeros(nPoints,2);
                             if qShowCal
                                 for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution{1};
+                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution{end};
                                 end
                             else
                                 for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.val{iVal}.pointPos(p,2:3);
+                                    calValPos(p,:)  = cal{selection}.val{iVal}.pointPos(p,2:3)*sFac;
                                 end
                             end
                             % get rects around validation points
@@ -2846,7 +2848,7 @@ classdef Titta < handle
                     end
                     % draw validation screen image
                     % draw calibration/validation points
-                    obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI.val.fixBackSize,obj.settings.UI.val.fixFrontSize,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
+                    obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI.val.fixBackSize*sFac,obj.settings.UI.val.fixFrontSize*sFac,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
                     % draw captured data in characteristic tobii plot
                     for p=1:nPoints
                         if qShowCal
@@ -2855,12 +2857,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
-                                lEpos= bsxfun(@times,myCal.points(p).samples.left.position(:,qVal),obj.scrInfo.resolution{1}.');
+                                lEpos= bsxfun(@times,myCal.points(p).samples.left.position(:,qVal),obj.scrInfo.resolution{1}.')*sFac;
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
-                                rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution{1}.');
+                                rEpos= bsxfun(@times,myCal.points(p).samples.right.position(:,qVal),obj.scrInfo.resolution{1}.')*sFac;
                             end
                         else
                             myVal = cal{selection}.val{iVal};
@@ -2868,12 +2870,12 @@ classdef Titta < handle
                             % left eye
                             if obj.calibrateLeftEye
                                 qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
+                                lEpos= bsxfun(@times,myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.')*sFac;
                             end
                             % right eye
                             if obj.calibrateRightEye
                                 qVal = myVal.gazeData(p).right.gazePoint.valid;
-                                rEpos= bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.');
+                                rEpos= bsxfun(@times,myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal),obj.scrInfo.resolution{1}.')*sFac;
                             end
                         end
                         if obj.calibrateLeftEye  && ~isempty(lEpos)
@@ -2887,7 +2889,7 @@ classdef Titta < handle
                     % draw text with validation accuracy etc info
                     obj.drawCachedText(valInfoTopTextCache);
                     % draw buttons
-                    [mousePos(1), mousePos(2)] = GetMouse();
+                    [mousePos(1), mousePos(2)] = GetMouse(wpnt(end));
                     [mousePos(1), mousePos(2)] = RemapMouse(wpnt(end), 'AllViews', mousePos(1), mousePos(2));
                     but(1).draw(mousePos);
                     but(2).draw(mousePos);
@@ -2913,12 +2915,12 @@ classdef Titta < handle
                     % if hovering over validation point, show info
                     if ~isnan(pointToShowInfoFor)
                         rect = OffsetRect(infoBoxRect,mx-gRectOff(1),my-gRectOff(2));
-                        % mak sure does not go offscreen
-                        if rect(3)>obj.scrInfo.resolution{1}(1)
-                            rect = OffsetRect(rect,obj.scrInfo.resolution{1}(1)-rect(3),0);
+                        % make sure does not go offscreen
+                        if rect(3)>obj.scrInfo.resolution{end}(1)
+                            rect = OffsetRect(rect,obj.scrInfo.resolution{end}(1)-rect(3),0);
                         end
-                        if rect(4)>obj.scrInfo.resolution{1}(2)
-                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{1}(2)-rect(4));
+                        if rect(4)>obj.scrInfo.resolution{end}(2)
+                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{end}(2)-rect(4));
                         end
                         Screen('FillRect',wpnt(end),hoverBgClr,rect);
                         obj.drawCachedText(pointTextCache,rect);
@@ -2938,13 +2940,13 @@ classdef Titta < handle
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1), lE(2), 10);
+                                Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1)*sFac, lE(2)*sFac, 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
                                 end
                             end
                             if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
-                                Screen('gluDisk', wpnt(end),onlineGazeClr{2,end}, rE(1), rE(2), 10);
+                                Screen('gluDisk', wpnt(end),onlineGazeClr{2,end}, rE(1)*sFac, rE(2)*sFac, 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, rE(1), rE(2), 10);
                                 end
@@ -3122,14 +3124,48 @@ classdef Titta < handle
             obj.buffer.calibrationApplyData(cal.cal.computedCal);
         end
         
-        function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj)
+        function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj,win)
             % function that only returns key depress state changes in the
             % down direction, not keys that are held down or anything else
             % NB: before using this, make sure internal state is up to
             % date!
+            if nargin<2
+                win = [];
+            end
+            
             [~,~,keyCode]   = KbCheck();
-            [mx,my,buttons] = GetMouse();
-            [mx,my]         = RemapMouse(obj.wpnts(end), 'AllViews', mx, my);
+            [mx,my,buttons] = GetMouse(win);
+            if ~isempty(win)
+                % check if panel fitter active, if so, map mouse position
+                % to original stimulus image. Can't use RemapMouse and the
+                % mod() operation in there doesn't play nice with multiple
+                % screens
+                p = Screen('PanelFitter', win);
+                
+                % Panelfitter active aka p non-zero?
+                if any(p)
+                    % Non-Zero rotation angle?
+                    if p(9) ~= 0
+                        % Yes, need some extra rotation inversion transforms:
+                        xoff = p(5); yoff = p(6);
+                        cx = p(10); cy = p(11);
+                        angle = p(9);
+                        
+                        mx = mx - (xoff + cx);
+                        my = my - (yoff + cy);
+                        rot = atan2(my, mx) - (angle * pi / 180);
+                        rad = norm([my, mx]);
+                        mx = rad * cos(rot);
+                        my = rad * sin(rot);
+                        mx = mx + (xoff + cx);
+                        my = my + (yoff + cy);
+                    end
+                    
+                    % Invert scaling and offsets:
+                    mx = ((mx - p(5)) / (p(7) - p(5)) * (p(3) - p(1))) + p(1);
+                    my = ((my - p(6)) / (p(8) - p(6)) * (p(4) - p(2))) + p(2);
+                end
+            end
             
             % get only fresh mouse and key presses (so change from state
             % "up" to state "down")
