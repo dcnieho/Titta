@@ -15,8 +15,10 @@
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
 % NB: this code assumes main and secondary screen have the same resolution.
-% If not, either adjust the code, or look into solutions e.g. with
-% PsychImaging()'s 'UsePanelFitter'
+% Titta's setup displays work fine if this is not the case, but the
+% real-time gaze display during the mock experiment is not built for that.
+% So if your two monitors have different resolutions, either adjust the
+% code, or look into solutions e.g. with PsychImaging()'s 'UsePanelFitter'.
 
 clear all
 sca
