@@ -1818,6 +1818,7 @@ classdef Titta < handle
             end
             
             if obj.usingFTGLTextRenderer
+                text = double(text);     % this seems to solve encoding issues with, e.g., degrees symbol. Doesn't work with DrawFormattedText2GDI below though, so just fix it for the vast majority of users sadly...
                 for p=1:2:length(varargin)
                     inputs.(varargin{p}) = varargin{p+1};
                 end
