@@ -109,7 +109,13 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration
-    ListenChar(-1);
+    try
+        ListenChar(-1);
+    catch ME
+        % old PTBs don't have mode -1, use 2 instead which also supresses
+        % keypresses from leaking through to matlab
+        ListenChar(2);
+    end
     if doBimonocularCalibration
         % do sequential monocular calibrations for the two eyes
         settings                = EThndl.getOptions();

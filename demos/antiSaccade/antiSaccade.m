@@ -141,7 +141,13 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration, start recording
-    ListenChar(-1);
+    try
+        ListenChar(-1);
+    catch ME
+        % old PTBs don't have mode -1, use 2 instead which also supresses
+        % keypresses from leaking through to matlab
+        ListenChar(2);
+    end
     calValInfo = EThndl.calibrate(wpnt);
     ListenChar(0);
     EThndl.buffer.start('gaze');
