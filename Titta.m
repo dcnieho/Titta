@@ -2065,6 +2065,7 @@ classdef Titta < handle
             for w=length(wpnt):-1:1
                 fs(w) = Screen('NominalFrameRate',wpnt(w));
             end
+            fs = min(fs);
             
             % start recording eye images if not already started
             eyeStartTime    = [];
@@ -2081,7 +2082,7 @@ classdef Titta < handle
             % setup
             if qCal
                 points              = obj.settings.cal.pointPos;
-                paceIntervalTicks   = ceil(obj.settings.cal.paceDuration   *min(fs));
+                paceIntervalTicks   = ceil(obj.settings.cal.paceDuration   *fs);
                 out.pointStatus     = {};
                 extraInp            = {};
                 if ~strcmp(obj.settings.calibrateEye,'both')
@@ -2090,8 +2091,8 @@ classdef Titta < handle
                 stage               = 'cal';
             else
                 points              = obj.settings.val.pointPos;
-                paceIntervalTicks   = ceil(obj.settings.val.paceDuration   *min(fs));
-                collectInterval     = ceil(obj.settings.val.collectDuration*min(fs));
+                paceIntervalTicks   = ceil(obj.settings.val.paceDuration   *fs);
+                collectInterval     = ceil(obj.settings.val.collectDuration*fs);
                 nDataPoint          = ceil(obj.settings.val.collectDuration*obj.settings.freq);
                 tick0v              = nan;
                 out.gazeData        = [];
