@@ -310,21 +310,7 @@ classdef Titta < handle
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
             
             % check requested eye calibration mode
-            assert(ismember(obj.settings.calibrateEye,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',obj.settings.calibrateEye)
-            if ismember(obj.settings.calibrateEye,{'left','right'}) && obj.isInitialized
-                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
-            end
-            switch obj.settings.calibrateEye
-                case 'both'
-                    obj.calibrateLeftEye  = true;
-                    obj.calibrateRightEye = true;
-                case 'left'
-                    obj.calibrateLeftEye  = true;
-                    obj.calibrateRightEye = false;
-                case 'right'
-                    obj.calibrateLeftEye  = false;
-                    obj.calibrateRightEye = true;
-            end
+            obj.changeAndCheckCalibEyeMode();
         end
         
         % getters
@@ -556,9 +542,7 @@ classdef Titta < handle
             
             % if monocular tracking is requested, check that it is
             % supported
-            if ismember(obj.settings.calibrateEye,{'left','right'})
-                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
-            end
+            obj.changeAndCheckCalibEyeMode();
             
             % get info about the system
             assert(obj.systemInfo.frequency==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.frequency);
@@ -1497,6 +1481,32 @@ classdef Titta < handle
     methods (Access = private, Hidden)
         function out = hasCap(obj,cap)
             out = ismember(cap,obj.systemInfo.capabilities);
+        end
+        
+        function changeAndCheckCalibEyeMode(obj,mode)
+            if nargin<2 || ~isempty(mode)
+                mode = obj.settings.calibrateEye;
+            end
+            % check requested eye calibration mode
+            assert(ismember(mode,{'both','left','right'}),'Monocular/binocular recording setup ''%s'' not recognized. Supported modes are [''both'', ''left'', ''right'']',mode)
+            if ismember(mode,{'left','right'}) && obj.isInitialized
+                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested recording from only the %s eye, but this %s does not support monocular calibrations. Set mode to ''both''',mode,obj.settings.tracker);
+            end
+            
+            % finally, update selected mode
+            obj.settings.calibrateEye = mode;
+            % and set which eyes are calibrated
+            switch obj.settings.calibrateEye
+                case 'both'
+                    obj.calibrateLeftEye  = true;
+                    obj.calibrateRightEye = true;
+                case 'left'
+                    obj.calibrateLeftEye  = true;
+                    obj.calibrateRightEye = false;
+                case 'right'
+                    obj.calibrateLeftEye  = false;
+                    obj.calibrateRightEye = true;
+            end
         end
         
         function status = showHeadPositioning(obj,wpnt,out)            
