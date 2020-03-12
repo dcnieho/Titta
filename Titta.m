@@ -758,7 +758,7 @@ classdef Titta < handle
                         case -5
                             % full stop
                             obj.buffer.leaveCalibrationMode();
-                            if obj.settings.UI.setup.hardExitClosesPTB
+                            if obj.settings.UI.hardExitClosesPTB
                                 sca
                                 ListenChar(0); Priority(0);
                             end
@@ -814,7 +814,7 @@ classdef Titta < handle
                         case -5
                             % full stop
                             obj.buffer.leaveCalibrationMode();
-                            if obj.settings.UI.setup.hardExitClosesPTB
+                            if obj.settings.UI.hardExitClosesPTB
                                 sca
                                 ListenChar(0); Priority(0);
                             end
@@ -861,7 +861,7 @@ classdef Titta < handle
                     case -5
                         % full stop
                         obj.buffer.leaveCalibrationMode();
-                        if obj.settings.UI.setup.hardExitClosesPTB
+                        if obj.settings.UI.hardExitClosesPTB
                             sca
                             ListenChar(0); Priority(0);
                         end
@@ -1171,6 +1171,7 @@ classdef Titta < handle
             settings.nTryReConnect              = 3;                            % How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found
             settings.connectRetryWait           = [1 2];                        % seconds
             settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
+            settings.UI.hardExitClosesPTB       = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.showYaw           = true;                         % show yaw of head?
@@ -1187,7 +1188,6 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.hardExitClosesPTB = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
             % functions for drawing instruction and positioning information
             % on user and operator screen. Note that rx, ry and rz are
             % NaN (unknown) if reference position is not set by user

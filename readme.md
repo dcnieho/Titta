@@ -175,6 +175,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.val.pointNotifyFunction`|If provided, this callback is called for each validation point when collecting gaze data for the point completes.|
 |  |  |
 |`settings.UI.startScreen`|0: skip head positioning, go straight to calibration; 1: start with head positioning interface.|
+|`settings.UI.hardExitClosesPTB`|If `true` (default), pressing shift-escape in the calibration interface causes the PTB window to close.|
 |`settings.UI.setup.showEyes`|Show eyes on disk representing head used for head position visualization?|
 |`settings.UI.setup.showPupils`|Show pupils in the eyes?|
 |`settings.UI.setup.referencePos`|Location of head in trackbox for which head circle exactly overlaps reference circle in the head positioning visualization. [x y z] in cm. If empty, default: middle of trackbox|
@@ -190,7 +191,6 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.setup.fixFrontSize`|Size (pixels) of small circle in fixation cross.|
 |`settings.UI.setup.fixBackColor`|Color (RGB, 0-255) of large circle in fixation cross.|
 |`settings.UI.setup.fixFrontColor`|Color (RGB, 0-255) of small circle in fixation cross.|
-|`settings.UI.setup.hardExitClosesPTB`|If `true` (default), pressing shift-escape in the calibration interface causes the PTB window to close.|
 |`settings.UI.setup.instruct.strFun`|Function handle to function producing positioning instruction string. This function should take six inputs: current head position `x`, `y`, and `z` as well as reference position `x`, `y` and `z`.|
 |`settings.UI.setup.instruct.font`|See [Text options](#text-options).|
 |`settings.UI.setup.instruct.size`|See [Text options](#text-options).|
