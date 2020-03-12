@@ -191,6 +191,9 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.setup.fixFrontSize`|Size (pixels) of small circle in fixation cross.|
 |`settings.UI.setup.fixBackColor`|Color (RGB, 0-255) of large circle in fixation cross.|
 |`settings.UI.setup.fixFrontColor`|Color (RGB, 0-255) of small circle in fixation cross.|
+|`settings.UI.setup.showHeadToSubject`|If `true` (default), the reference circle and head display are shown on the participant monitor when showing setup display.|
+|`settings.UI.setup.showInstructionToSubject`|If `true` (default), the instruction text is shown on the participant monitor when showing setup display.|
+|`settings.UI.setup.showFixPointsToSubject`|If `true` (default), the fixation points in the corners of the screen are shown on the participant monitor when showing setup display.|
 |`settings.UI.setup.instruct.strFun`|Function handle to function producing positioning instruction string. This function should take six inputs: current head position `x`, `y`, and `z` as well as reference position `x`, `y` and `z`.|
 |`settings.UI.setup.instruct.font`|See [Text options](#text-options).|
 |`settings.UI.setup.instruct.size`|See [Text options](#text-options).|

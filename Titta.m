@@ -1188,6 +1188,9 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
+            settings.UI.setup.showHeadToSubject = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
+            settings.UI.setup.showInstructionToSubject = true;                  % if false, the instruction text is not shown on the participant monitor when showing setup display
+            settings.UI.setup.showFixPointsToSubject   = true;                  % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
             % functions for drawing instruction and positioning information
             % on user and operator screen. Note that rx, ry and rz are
             % NaN (unknown) if reference position is not set by user
@@ -1613,6 +1616,8 @@ classdef Titta < handle
             cursor  = cursorUpdater(cursors);
             
             % setup text for positioning message
+            % TODO: also for wpnt(2)?
+            % can put back old text font etc?
             Screen('TextFont',  wpnt(1), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
             Screen('TextSize',  wpnt(1), obj.settings.UI.setup.instruct.size);
             
@@ -1711,7 +1716,7 @@ classdef Titta < handle
                 % time when unstable track
                 qHideSetup = qShowEyeImage && isempty(head.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
                 % draw distance info
-                if ~qHideSetup
+                if obj.settings.UI.setup.showInstructionToSubject && ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                 end
@@ -1721,8 +1726,8 @@ classdef Titta < handle
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
-                % tracking data available
-                if ~qHideSetup
+                % tracking data available (so head not drawn)
+                if obj.settings.UI.setup.showHeadToSubject && ~qHideSetup
                     drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClr ,5);
                 end
                 if qHaveOperatorScreen
@@ -1730,7 +1735,9 @@ classdef Titta < handle
                     drawOrientedPoly(wpnt(2),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosO,[],refClrO,5);
                 end
                 % stylized head
-                head.draw();
+                if obj.settings.UI.setup.showHeadToSubject
+                    head.draw();
+                end
                 if qHaveOperatorScreen
                     headO.draw();
                 end
@@ -1741,7 +1748,9 @@ classdef Titta < handle
                 but(3).draw([mx my]);
                 
                 % draw fixation points
-                obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
+                if obj.settings.UI.setup.showFixPointsToSubject
+                    obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
+                end
                 
                 % drawing done, show
                 Screen('Flip',wpnt(1),[],0,0,1);
