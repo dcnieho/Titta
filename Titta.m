@@ -257,6 +257,10 @@ classdef Titta < handle
             obj.settings.UI.setup.fixBackColor          = color2RGBA(obj.settings.UI.setup.fixBackColor);
             obj.settings.UI.setup.fixFrontColor         = color2RGBA(obj.settings.UI.setup.fixFrontColor);
             obj.settings.UI.setup.instruct.color        = color2RGBA(obj.settings.UI.setup.instruct.color);
+            obj.settings.UI.setup.menu.bgColor          = color2RGBA(obj.settings.UI.setup.menu.bgColor);
+            obj.settings.UI.setup.menu.itemColor        = color2RGBA(obj.settings.UI.setup.menu.itemColor);
+            obj.settings.UI.setup.menu.itemColorActive  = color2RGBA(obj.settings.UI.setup.menu.itemColorActive);
+            obj.settings.UI.setup.menu.text.color       = color2RGBA(obj.settings.UI.setup.menu.text.color);
             obj.settings.UI.cal.errMsg.color            = color2RGBA(obj.settings.UI.cal.errMsg.color);
             obj.settings.UI.val.bgColor                 = color2RGBA(obj.settings.UI.val.bgColor);
             obj.settings.UI.val.fixBackColor            = color2RGBA(obj.settings.UI.val.fixBackColor);
@@ -1188,6 +1192,13 @@ classdef Titta < handle
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.setup.instruct.style    = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.setup.instruct.vSpacing = 1.5;
+            settings.UI.setup.menu.bgColor          = 110;
+            settings.UI.setup.menu.itemColor        = 140;
+            settings.UI.setup.menu.itemColorActive  = 180;
+            settings.UI.setup.menu.text.font        = sansFont;
+            settings.UI.setup.menu.text.size        = 24*textFac;
+            settings.UI.setup.menu.text.color       = 0;
+            settings.UI.setup.menu.text.style       = 0;
             if streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32'))   % on Windows
                 settings.UI.cursor.normal           = 0;                        % arrow
                 settings.UI.cursor.clickable        = 2;                        % hand
@@ -1533,6 +1544,7 @@ classdef Titta < handle
             % see if we already have valid calibrations
             qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
             qHaveOperatorScreen     = ~isscalar(wpnt);
+            qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
             % setup text for buttons
             for w=1:length(wpnt)
@@ -1601,7 +1613,7 @@ classdef Titta < handle
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
-            but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.setup.eyeIm    ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
@@ -1626,15 +1638,29 @@ classdef Titta < handle
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
-            % setup cursors
-            butRects = cat(1,but.rect).';
-            cursors.rect    = num2cell(butRects,1);
-            cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,size(cursors.rect));  % clickable items
-            cursors.other   = obj.settings.UI.cursor.normal;                                % default
-            if ~obj.settings.debugMode                                                      % for cleanup
-                cursors.reset = -1;                                                         % hide cursor (else will reset to cursor.other by default, so we're good with that default
+            % setup menu, if any
+            if qCanDoMonocularCalib
+                margin          = 10;
+                pad             = 3;
+                height          = 45;
+                nElem           = 3;
+                totHeight       = nElem*(height+pad)-pad;
+                width           = 900;
+                % menu background
+                menuBackRect    = [-.5*width+obj.scrInfo.center{end}(1)-margin -.5*totHeight+obj.scrInfo.center{end}(2)-margin .5*width+obj.scrInfo.center{end}(1)+margin .5*totHeight+obj.scrInfo.center{end}(2)+margin];
+                % menuRects
+                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],length(iValid),1);
+                menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                % text in each rect
+                Screen('TextFont',  wpnt(end), obj.settings.UI.setup.menu.text.font, obj.settings.UI.setup.menu.text.style);
+                Screen('TextSize',  wpnt(end), obj.settings.UI.setup.menu.text.size);
+                menuTextCache(1)= obj.getTextCache(wpnt(end), 'both eyes',menuRects(1,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                menuTextCache(2)= obj.getTextCache(wpnt(end), 'left eye' ,menuRects(2,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                menuTextCache(3)= obj.getTextCache(wpnt(end),'right eye' ,menuRects(3,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                
+                % get current state
+                currentMenuItem = find(ismember({'both','left','right'},obj.settings.calibrateEye));
             end
-            cursor  = cursorUpdater(cursors);
             
             % setup text for positioning message
             for w=1:length(wpnt)
@@ -1642,7 +1668,16 @@ classdef Titta < handle
                 Screen('TextSize',  wpnt(w), obj.settings.UI.setup.instruct.size);
             end
             
+            % setup colors
+            menuBgClr           = obj.getColorForWindow(obj.settings.UI.setup.menu.bgColor,wpnt(end));
+            menuItemClr         = obj.getColorForWindow(obj.settings.UI.setup.menu.itemColor      ,wpnt(end));
+            menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.setup.menu.itemColorActive,wpnt(end));
+            
             % get tracking status and visualize
+            qToggleSelectMenu   = true;
+            qSelectMenuOpen     = true;     % gets set to false on first draw as toggle above is true (hack to make sure we're set up on first entrance of draw loop)
+            qChangeMenuArrow    = false;
+            qSelectedEyeChanged = false;
             qToggleEyeImage     = qHaveOperatorScreen;  % eye images default off if single screen, default on if have operator screen
             qShowEyeImage       = false;
             texs                = [0 0];
@@ -1693,6 +1728,50 @@ classdef Titta < handle
                             eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{end}(1)         +margin/2,basePos-margin-szs(2,2));
                         end
                     end
+                end
+                
+                % update calibration mode
+                if qSelectedEyeChanged
+                    switch currentMenuSel
+                        case 1
+                            mode = 'both';
+                        case 2
+                            mode = 'left';
+                        case 3
+                            mode = 'right';
+                    end
+                    obj.changeAndCheckCalibEyeMode(mode);
+                    currentMenuItem = currentMenuSel;
+                end
+                
+                % setup cursors
+                if qToggleSelectMenu
+                    butRects            = cat(1,but.rect);
+                    qSelectMenuOpen     = ~qSelectMenuOpen;
+                    qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
+                    qToggleSelectMenu   = false;
+                    currentMenuSel      = currentMenuItem;
+                    if qSelectMenuOpen
+                        cursors.rect    = num2cell(menuRects.',1);
+                        cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1));     % clickable items
+                    else
+                        cursors.rect    = num2cell(butRects.',1);
+                        cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));  % clickable items
+                    end
+                    
+                    cursors.other   = obj.settings.UI.cursor.normal;                                % default
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
+                end
+                
+                if qChangeMenuArrow
+                    % setup arrow that can be moved with arrow keys
+                    rect = menuRects(currentMenuSel,:);
+                    rect(3) = rect(1)+RectWidth(rect)*.07;
+                    menuActiveCache = obj.getTextCache(wpnt(end),' <color=ff0000>-><color>',rect);
+                    qChangeMenuArrow = false;
                 end
                 
                 % get latest data from eye-tracker
@@ -1768,7 +1847,7 @@ classdef Titta < handle
                 end
                 
                 % draw buttons
-                but(1).draw([mx my]);
+                but(1).draw([mx my],qSelectMenuOpen);
                 but(2).draw([mx my],qShowEyeImage);
                 but(3).draw([mx my]);
                 but(4).draw([mx my]);
@@ -1776,6 +1855,21 @@ classdef Titta < handle
                 % draw fixation points
                 if obj.settings.UI.setup.showFixPointsToSubject
                     obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
+                end
+                
+                % if selection menu open, draw on top
+                if qSelectMenuOpen
+                    % menu background
+                    Screen('FillRect',wpnt(end),menuBgClr,menuBackRect);
+                    % menuRects, inactive and currently active
+                    qActive = iValid==selection;
+                    Screen('FillRect',wpnt(end),menuItemClr,menuRects(~qActive,:).');
+                    Screen('FillRect',wpnt(end),menuItemClrActive,menuRects( qActive,:).');
+                    % text in each rect
+                    for c=1:3
+                        obj.drawCachedText(menuTextCache(c));
+                    end
+                    obj.drawCachedText(menuActiveCache);
                 end
                 
                 % drawing done, show
@@ -1789,33 +1883,86 @@ classdef Titta < handle
                 if any(buttons)
                     % don't care which button for now. determine if clicked on either
                     % of the buttons
-                    qIn = inRect([mx my],butRects);
-                    if qIn(1)
-                        % TODO: pop up eye selection menu, like calibration
-                        % selection menu
-                    elseif qIn(2)
-                        qToggleEyeImage = true;
-                    elseif qIn(3)
-                        status = 1;
-                        break;
-                    elseif qIn(4)
-                        status = -4;
-                        break;
+                    if qSelectMenuOpen
+                        iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
+                        if ~isempty(iIn) && iIn<=3
+                            newSelection        = iValid(iIn);
+                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            qToggleSelectMenu   = true;
+                            break;
+                        else
+                            qToggleSelectMenu   = true;
+                            break;
+                        end
+                    end
+                    if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
+                        qIn = inRect([mx my],butRects);
+                        if qIn(1)
+                            qToggleSelectMenu = true;
+                        elseif qIn(2)
+                            qToggleEyeImage = true;
+                        elseif qIn(3)
+                            status = 1;
+                            break;
+                        elseif qIn(4)
+                            status = -4;
+                            break;
+                        end
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
-                        % TODO: pop up eye selection menu, like calibration
-                        % selection menu
-                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
-                        qToggleEyeImage = true;
-                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
-                        status = 1;
-                        break;
-                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidCalibrations
-                        status = -4;
-                        break;
-                    elseif any(strcmpi(keys,'escape')) && shiftIsDown
+                    if qSelectMenuOpen
+                        if any(strcmpi(keys,'escape'))
+                            qToggleSelectMenu = true;
+                            break;
+                        elseif ismember(keys(1),{'1','2','3'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                            newSelection        = iValid(str2double(keys(1)));
+                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            qToggleSelectMenu   = true;
+                            break;
+                        elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
+                            newSelection        = iValid(currentMenuSel);
+                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            qToggleSelectMenu   = true;
+                            break;
+                        else
+                            if ~iscell(keys), keys = {keys}; end
+                            if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+                                % up arrow key (test so round-about
+                                % because KbName could return both 'up'
+                                % and 'UpArrow', depending on platform
+                                % and mode)
+                                if currentMenuSel>1
+                                    currentMenuSel   = currentMenuSel-1;
+                                    qChangeMenuArrow = true;
+                                    break;
+                                end
+                            elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+                                % down key
+                                if currentMenuSel<length(iValid)
+                                    currentMenuSel   = currentMenuSel+1;
+                                    qChangeMenuArrow = true;
+                                    break;
+                                end
+                            end
+                        end
+                    else
+                        if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
+                            qToggleSelectMenu = true;
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
+                            qToggleEyeImage = true;
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
+                            status = 1;
+                            break;
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidCalibrations
+                            status = -4;
+                            break;
+                        end
+                    end
+                    
+                    
+                    % these key combinations should always be available
+                    if any(strcmpi(keys,'escape')) && shiftIsDown
                         status = -5;
                         break;
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
@@ -1831,6 +1978,7 @@ classdef Titta < handle
                     end
                 end
             end
+            
             % clean up
             HideCursor;
             obj.buffer.stop('positioning');
@@ -2964,7 +3112,7 @@ classdef Titta < handle
                         obj.drawCachedText(pointTextCache,rect);
                     end
                     % if have operator screen, show message to wait to
-                    % participant
+                    % participant (if any)
                     if qHaveOperatorScreen && ~qShowGaze && ~isempty(obj.settings.UI.val.waitMsg.string)
                         obj.drawCachedText(waitTextCache);
                     end
