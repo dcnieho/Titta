@@ -284,6 +284,9 @@ classdef Titta < handle
             obj.settings.UI.button.setup.prevcal.fillColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.fillColor);
             obj.settings.UI.button.setup.prevcal.edgeColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.edgeColor);
             obj.settings.UI.button.setup.prevcal.textColor  = color2RGBA(obj.settings.UI.button.setup.prevcal.textColor);
+            obj.settings.UI.button.setup.changeeye.fillColor= color2RGBA(obj.settings.UI.button.setup.changeeye.fillColor);
+            obj.settings.UI.button.setup.changeeye.edgeColor= color2RGBA(obj.settings.UI.button.setup.changeeye.edgeColor);
+            obj.settings.UI.button.setup.changeeye.textColor= color2RGBA(obj.settings.UI.button.setup.changeeye.textColor);
             obj.settings.UI.button.val.recal.fillColor      = color2RGBA(obj.settings.UI.button.val.recal.fillColor);
             obj.settings.UI.button.val.recal.edgeColor      = color2RGBA(obj.settings.UI.button.val.recal.edgeColor);
             obj.settings.UI.button.val.recal.textColor      = color2RGBA(obj.settings.UI.button.val.recal.textColor);
@@ -1233,6 +1236,12 @@ classdef Titta < handle
             settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
             settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
             settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
+            settings.UI.button.setup.changeeye.accelerator  = 'c';
+            settings.UI.button.setup.changeeye.visible      = false;
+            settings.UI.button.setup.changeeye.string       = 'change eye (<i>c<i>)';
+            settings.UI.button.setup.changeeye.fillColor    = optionButClr.fill;
+            settings.UI.button.setup.changeeye.edgeColor    = optionButClr.edge;
+            settings.UI.button.setup.changeeye.textColor    = optionButClr.text;
             settings.UI.button.val.text.font            = sansFont;
             settings.UI.button.val.text.size            = 24*textFac;
             settings.UI.button.val.text.style           = 0;
@@ -1582,9 +1591,11 @@ classdef Titta < handle
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
-            but(1)  = PTBButton(obj.settings.UI.button.setup.eyeIm  ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.setup.cal    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(3)  = PTBButton(obj.settings.UI.button.setup.prevcal, qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.setup.eyeIm    ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
+            
             % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
@@ -1747,9 +1758,10 @@ classdef Titta < handle
                 end
                 
                 % draw buttons
-                but(1).draw([mx my],qShowEyeImage);
-                but(2).draw([mx my]);
+                but(1).draw([mx my]);
+                but(2).draw([mx my],qShowEyeImage);
                 but(3).draw([mx my]);
+                but(4).draw([mx my]);
                 
                 % draw fixation points
                 if obj.settings.UI.setup.showFixPointsToSubject
@@ -1769,17 +1781,23 @@ classdef Titta < handle
                     % of the buttons
                     qIn = inRect([mx my],butRects);
                     if qIn(1)
-                        qToggleEyeImage = true;
+                        % TODO: pop up eye selection menu, like calibration
+                        % selection menu
                     elseif qIn(2)
+                        qToggleEyeImage = true;
+                    elseif qIn(3)
                         status = 1;
                         break;
-                    elseif qIn(3)
+                    elseif qIn(4)
                         status = -4;
                         break;
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
+                    if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
+                        % TODO: pop up eye selection menu, like calibration
+                        % selection menu
+                    elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
                         qToggleEyeImage = true;
                     elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                         status = 1;
