@@ -2574,11 +2574,6 @@ classdef Titta < handle
             % shift-o: take screenshot of operator screen
             qHaveOperatorScreen     = ~isscalar(wpnt);
             
-            % for cursor interaction, need to correct rect position
-            % based on global rect of window
-            gRectOff                = Screen('GlobalRect',wpnt(end));
-            gRectOff                = gRectOff([1 2 1 2]);
-            
             % find how many valid calibrations we have:
             iValid = getValidCalibrations(cal);
             if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
