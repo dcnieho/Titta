@@ -1718,11 +1718,15 @@ classdef Titta < handle
                 % draw distance info
                 if obj.settings.UI.setup.showInstructionToSubject && ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    if ~isempty(str)
+                        DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    end
                 end
                 if qHaveOperatorScreen
                     str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                    DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    if ~isempty(str)
+                        DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                    end
                 end
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
