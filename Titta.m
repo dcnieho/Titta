@@ -1616,10 +1616,10 @@ classdef Titta < handle
             cursor  = cursorUpdater(cursors);
             
             % setup text for positioning message
-            % TODO: also for wpnt(2)?
-            % can put back old text font etc?
-            Screen('TextFont',  wpnt(1), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
-            Screen('TextSize',  wpnt(1), obj.settings.UI.setup.instruct.size);
+            for w=1:length(wpnt)
+                Screen('TextFont',  wpnt(w), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
+                Screen('TextSize',  wpnt(w), obj.settings.UI.setup.instruct.size);
+            end
             
             % get tracking status and visualize
             qToggleEyeImage     = qHaveOperatorScreen;  % eye images default off if single screen, default on if have operator screen
