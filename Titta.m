@@ -765,22 +765,7 @@ classdef Titta < handle
                     % yet. Only do this now, so previous calibration
                     % survives a "skip calibration" during the setup screen
                     if bitand(flag,1) && ~qHasEnteredCalMode
-                        qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
-                        if qDoMonocular
-                            assert(obj.hasCap('CanDoMonocularCalibration'),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
-                        end
-                        obj.buffer.enterCalibrationMode(qDoMonocular);
-                        while true
-                            callResult  = obj.buffer.calibrationRetrieveResult();
-                            if ~isempty(callResult) && strcmp(callResult.workItem.action,'Enter')
-                                if callResult.status==0
-                                    break;
-                                else
-                                    error('Titta: error entering calibration mode: %s',callResult.statusString);
-                                end
-                            end
-                            WaitSecs('YieldSecs',0.001);    % don't sping too hard
-                        end
+                        obj.doEnterCalibrationMode();
                         qHasEnteredCalMode = true;
                     end
                     out.attempt{kCal} = obj.DoCalAndVal(wpnt,kCal,out.attempt{kCal});
@@ -878,18 +863,7 @@ classdef Titta < handle
             %    and operator skipped calibration,
             % then issue a leave here now and wait for it to complete
             if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
-                issuedLeave = obj.buffer.leaveCalibrationMode();    % returns false if we never were in calibration mode to begin with
-                while true && issuedLeave
-                    callResult  = obj.buffer.calibrationRetrieveResult();
-                    if ~isempty(callResult) && strcmp(callResult.workItem.action,'Exit')
-                        if callResult.status==0
-                            break;
-                        else
-                            error('Titta: error exiting calibration mode: %s',callResult.statusString);
-                        end
-                    end
-                    WaitSecs('YieldSecs',0.001);    % don't sping too hard
-                end
+                obj.doLeaveCalibrationMode();
             end
             % log to messages which calibration was selected
             if ~isnan(out.selectedCal)
@@ -1743,6 +1717,10 @@ classdef Titta < handle
                     end
                     obj.changeAndCheckCalibEyeMode(mode);
                     obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                    % exit and reenter calibration mode, if needed
+                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                        obj.doEnterCalibrationMode();
+                    end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
                     head.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
@@ -2341,7 +2319,7 @@ classdef Titta < handle
                     if nReply==size(points,1)
                         break;
                     end
-                    WaitSecs('YieldSecs',0.001);    % don't sping too hard
+                    WaitSecs('YieldSecs',0.001);    % don't spin too hard
                 end
             end
             
@@ -3305,6 +3283,40 @@ classdef Titta < handle
                 obj.buffer.clearTimeRange('gaze',gazeStartT);
             end
             HideCursor;
+        end
+        
+        function doEnterCalibrationMode(obj)
+            qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
+            if qDoMonocular
+                assert(obj.hasCap('CanDoMonocularCalibration'),'You requested calibrating only the %s eye, but this %s does not support monocular calibrations. Set settings.calibrateEye to ''both''',obj.settings.calibrateEye,obj.settings.tracker);
+            end
+            obj.buffer.enterCalibrationMode(qDoMonocular);
+            while true
+                callResult  = obj.buffer.calibrationRetrieveResult();
+                if ~isempty(callResult) && strcmp(callResult.workItem.action,'Enter')
+                    if callResult.status==0
+                        break;
+                    else
+                        error('Titta: error entering calibration mode: %s',callResult.statusString);
+                    end
+                end
+                WaitSecs('YieldSecs',0.001);    % don't spin too hard
+            end
+        end
+        
+        function issuedLeave = doLeaveCalibrationMode(obj)
+            issuedLeave = obj.buffer.leaveCalibrationMode();    % returns false if we never were in calibration mode to begin with
+            while true && issuedLeave
+                callResult  = obj.buffer.calibrationRetrieveResult();
+                if ~isempty(callResult) && strcmp(callResult.workItem.action,'Exit')
+                    if callResult.status==0
+                        break;
+                    else
+                        error('Titta: error exiting calibration mode: %s',callResult.statusString);
+                    end
+                end
+                WaitSecs('YieldSecs',0.001);    % don't spin too hard
+            end
         end
         
         function loadOtherCal(obj,cal)
