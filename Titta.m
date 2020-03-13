@@ -1495,7 +1495,7 @@ classdef Titta < handle
         end
         
         function changeAndCheckCalibEyeMode(obj,mode)
-            if nargin<2 || ~isempty(mode)
+            if nargin<2 || isempty(mode)
                 mode = obj.settings.calibrateEye;
             end
             % check requested eye calibration mode
@@ -1634,6 +1634,7 @@ classdef Titta < handle
                 butRects          = num2cell(butRects,2);
                 [but([but.visible]).rect] = butRects{:};
             end
+            butRects = cat(1,but.rect).';
             
             % setup fixation points in the corners of the screen
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
@@ -1645,11 +1646,11 @@ classdef Titta < handle
                 height          = 45;
                 nElem           = 3;
                 totHeight       = nElem*(height+pad)-pad;
-                width           = 900;
+                width           = 300;
                 % menu background
                 menuBackRect    = [-.5*width+obj.scrInfo.center{end}(1)-margin -.5*totHeight+obj.scrInfo.center{end}(2)-margin .5*width+obj.scrInfo.center{end}(1)+margin .5*totHeight+obj.scrInfo.center{end}(2)+margin];
                 % menuRects
-                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],length(iValid),1);
+                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],nElem,1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
                 Screen('TextFont',  wpnt(end), obj.settings.UI.setup.menu.text.font, obj.settings.UI.setup.menu.text.style);
@@ -1741,12 +1742,16 @@ classdef Titta < handle
                             mode = 'right';
                     end
                     obj.changeAndCheckCalibEyeMode(mode);
+                    obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                    % update states of this screen
                     currentMenuItem = currentMenuSel;
+                    head.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye  = head.crossEye;
+                    qSelectedEyeChanged = false;
                 end
                 
                 % setup cursors
                 if qToggleSelectMenu
-                    butRects            = cat(1,but.rect);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
@@ -1755,7 +1760,7 @@ classdef Titta < handle
                         cursors.rect    = num2cell(menuRects.',1);
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1));     % clickable items
                     else
-                        cursors.rect    = num2cell(butRects.',1);
+                        cursors.rect    = num2cell(butRects,1);
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));  % clickable items
                     end
                     
@@ -1862,7 +1867,7 @@ classdef Titta < handle
                     % menu background
                     Screen('FillRect',wpnt(end),menuBgClr,menuBackRect);
                     % menuRects, inactive and currently active
-                    qActive = iValid==selection;
+                    qActive = [1:3]==currentMenuItem; %#ok<NBRAK>
                     Screen('FillRect',wpnt(end),menuItemClr,menuRects(~qActive,:).');
                     Screen('FillRect',wpnt(end),menuItemClrActive,menuRects( qActive,:).');
                     % text in each rect
@@ -1886,13 +1891,11 @@ classdef Titta < handle
                     if qSelectMenuOpen
                         iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                         if ~isempty(iIn) && iIn<=3
-                            newSelection        = iValid(iIn);
-                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            currentMenuSel      = iIn;
+                            qSelectedEyeChanged = currentMenuItem~=currentMenuSel;
                             qToggleSelectMenu   = true;
-                            break;
                         else
                             qToggleSelectMenu   = true;
-                            break;
                         end
                     end
                     if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
@@ -1912,19 +1915,15 @@ classdef Titta < handle
                 elseif any(keyCode)
                     keys = KbName(keyCode);
                     if qSelectMenuOpen
-                        if any(strcmpi(keys,'escape'))
+                        if any(strcmpi(keys,'escape')) || any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
                             qToggleSelectMenu = true;
-                            break;
                         elseif ismember(keys(1),{'1','2','3'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                            newSelection        = iValid(str2double(keys(1)));
-                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            currentMenuSel      = str2double(keys(1));
+                            qSelectedEyeChanged = currentMenuItem~=currentMenuSel;
                             qToggleSelectMenu   = true;
-                            break;
                         elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
-                            newSelection        = iValid(currentMenuSel);
-                            qSelectedEyeChanged = currentMenuItem~=newSelection;
+                            qSelectedEyeChanged = currentMenuItem~=currentMenuSel;
                             qToggleSelectMenu   = true;
-                            break;
                         else
                             if ~iscell(keys), keys = {keys}; end
                             if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
@@ -1935,14 +1934,12 @@ classdef Titta < handle
                                 if currentMenuSel>1
                                     currentMenuSel   = currentMenuSel-1;
                                     qChangeMenuArrow = true;
-                                    break;
                                 end
                             elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
                                 % down key
-                                if currentMenuSel<length(iValid)
+                                if currentMenuSel<3
                                     currentMenuSel   = currentMenuSel+1;
                                     qChangeMenuArrow = true;
-                                    break;
                                 end
                             end
                         end
