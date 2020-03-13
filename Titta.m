@@ -2789,10 +2789,10 @@ classdef Titta < handle
                 % menu background
                 menuBackRect    = [-.5*width+obj.scrInfo.center{end}(1)-margin -.5*totHeight+obj.scrInfo.center{end}(2)-margin .5*width+obj.scrInfo.center{end}(1)+margin .5*totHeight+obj.scrInfo.center{end}(2)+margin];
                 % menuRects
-                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],length(iValid),1);
+                menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],nElem,1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
-                for c=length(iValid):-1:1
+                for c=nElem:-1:1
                     % find the active/last valid validation for this
                     % calibration
                     aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
@@ -3196,7 +3196,7 @@ classdef Titta < handle
                     elseif any(keyCode)
                         keys = KbName(keyCode);
                         if qSelectMenuOpen
-                            if any(strcmpi(keys,'escape')) || any(strcmpi(keys,'c'))
+                            if any(strcmpi(keys,'escape')) || any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator))
                                 qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
