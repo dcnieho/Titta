@@ -1544,7 +1544,7 @@ classdef Titta < handle
             obj.buffer.start('positioning');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
-            qHaveValidCalibrations  = isfield(out,'attempt') && ~isempty(getValidCalibrations(out.attempt));
+            qHaveValidValidations   = isfield(out,'attempt') && ~isempty(getValidValidations(out.attempt));
             qHaveOperatorScreen     = ~isscalar(wpnt);
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
@@ -1618,7 +1618,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.setup.eyeIm    ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidCalibrations, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
             
             % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
@@ -1957,7 +1957,7 @@ classdef Titta < handle
                         elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                             status = 1;
                             break;
-                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidCalibrations
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidValidations
                             status = -4;
                             break;
                         end
@@ -2727,7 +2727,7 @@ classdef Titta < handle
             qHaveOperatorScreen     = ~isscalar(wpnt);
             
             % find how many valid calibrations we have:
-            iValid = getValidCalibrations(cal);
+            iValid = getValidValidations(cal);
             if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
                 % this happens if setup cancelled to go directly to this validation
                 % viewer
@@ -3450,8 +3450,8 @@ function angle = AngleBetweenVectors(a,b)
 angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
-function iValid = getValidCalibrations(cal)
-iValid = find(cellfun(@(x) isfield(x,'cal') && isfield(x.cal,'status') && x.cal.status==1 && ~isempty(x.cal.result) && strcmpi(x.cal.result.status(1:7),'success') && any(cellfun(@(y) y.status, x.val)==1),cal));
+function iValid = getValidValidations(cal)
+iValid = find(cellfun(@(x) isfield(x,'cal') && any(cellfun(@(y) y.status, x.val)==1),cal));
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
