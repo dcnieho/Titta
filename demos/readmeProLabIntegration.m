@@ -273,6 +273,7 @@ try
     TalkToProLabInstance.disconnect();
 catch me
     sca
+    ListenChar(0);
     rethrow(me)
 end
 sca

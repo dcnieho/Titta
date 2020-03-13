@@ -399,6 +399,7 @@ try
     end
 catch me
     sca
+    ListenChar(0);
     rethrow(me)
 end
 % shut down
