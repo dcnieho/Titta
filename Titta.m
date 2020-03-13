@@ -896,6 +896,8 @@ classdef Titta < handle
                     add = ' (note that operator skipped instead of accepted calibration)';
                 end
                 obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
+            else
+                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: none',getEyeLbl(obj.settings.calibrateEye)));
             end
             
             % store calibration info in calibration history, for later
