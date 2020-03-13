@@ -1912,14 +1912,14 @@ classdef Titta < handle
                     end
                     if ~qSelectMenuOpen || qToggleSelectMenu     % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
                         qIn = inRect([mx my],butRects);
-                        if qIn(1)
+                        if qIn(1) && qCanDoMonocularCalib
                             qToggleSelectMenu = true;
-                        elseif qIn(2)
+                        elseif qIn(2) && qHasEyeIm
                             qToggleEyeImage = true;
                         elseif qIn(3)
                             status = 1;
                             break;
-                        elseif qIn(4)
+                        elseif qIn(4) && qHaveValidValidations
                             status = -4;
                             break;
                         end
@@ -1956,9 +1956,9 @@ classdef Titta < handle
                             end
                         end
                     else
-                        if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
+                        if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator)) && qCanDoMonocularCalib
                             qToggleSelectMenu = true;
-                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator))
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator)) && qHasEyeIm
                             qToggleEyeImage = true;
                         elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                             status = 1;
