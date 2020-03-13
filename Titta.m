@@ -2754,7 +2754,7 @@ classdef Titta < handle
                 end
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
-            qHaveMultipleValidCals  = ~isempty(iValid) && ~isscalar(iValid);
+            qHaveMultipleValidVals  = ~isempty(iValid) && ~isscalar(iValid);
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
             
             % setup text for buttons
@@ -2766,7 +2766,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.val.recal   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.val.reval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.val.continue,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidVals, wpnt(end), funs, obj.settings.UI.button.margins);
             but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
@@ -2806,7 +2806,7 @@ classdef Titta < handle
             
             
             % setup menu, if any
-            if qHaveMultipleValidCals
+            if qHaveMultipleValidVals
                 margin          = 10;
                 pad             = 3;
                 height          = 45;
@@ -3277,7 +3277,7 @@ classdef Titta < handle
                                 status = -3;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && qHaveMultipleValidCals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
