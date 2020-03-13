@@ -1333,7 +1333,7 @@ classdef Titta < handle
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
-            settings.cal.autoPace               = 1;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
+            settings.cal.autoPace               = 2;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration           = 0.8;                          % minimum duration (s) that each point is shown
             settings.cal.doRandomPointOrder     = true;
             settings.cal.bgColor                = 127;
