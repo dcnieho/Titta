@@ -3366,7 +3366,9 @@ classdef Titta < handle
         end
         
         function loadOtherCal(obj,cal)
-            obj.buffer.calibrationApplyData(cal.cal.computedCal);
+            if ~isempty(cal.cal.computedCal)    % empty when doing zero-point calibration. There is nothing to laod or change then anyway, so is ok to skip. NB: rethink if user ever gains interface for changing number of calibration points
+                obj.buffer.calibrationApplyData(cal.cal.computedCal);
+            end
         end
         
         function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj,win)
