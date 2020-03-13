@@ -732,7 +732,6 @@ classdef Titta < handle
                     end
                     qNewCal = false;
                 end
-                out.attempt{kCal}.eye  = obj.settings.calibrateEye;
                 if startScreen>0
                     %%% 2a: show head positioning screen
                     out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out);
@@ -1516,7 +1515,7 @@ classdef Titta < handle
             obj.buffer.start('positioning');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
-            qHaveValidCalibrations  = ~isempty(getValidCalibrations(out.attempt));
+            qHaveValidCalibrations  = isfield(out,'attempt') && ~isempty(getValidCalibrations(out.attempt));
             qHaveOperatorScreen     = ~isscalar(wpnt);
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
@@ -2057,6 +2056,7 @@ classdef Titta < handle
             qDoCal = ~isfield(out,'cal');
             
             % get data streams started
+            out.eye  = obj.settings.calibrateEye;
             eyeLbl = getEyeLbl(obj.settings.calibrateEye);
             if qDoCal
                 calStartT   = obj.sendMessage(sprintf('START CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
