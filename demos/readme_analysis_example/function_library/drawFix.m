@@ -50,9 +50,9 @@ end
 inr = struct('t',dat.time);
 inf = struct('t',dat.time,'I2MC',fixI2MC);
 % plot raw
-rdat = {{1,inr,datx(:,1),daty(:,1),'b-'}};
+rdat = {{1,inr,datx(:,1),daty(:,1),'r-'}};
 if size(datx,2)>1
-    rdat = {rdat{1}; {1,inr,datx(:,2),daty(:,2),'r-'}};
+    rdat = {rdat{1}; {1,inr,datx(:,2),daty(:,2),'b-'}};
 end
 [hr,hrl] = plot2D(rawpos,res,img,[],rdat{:});
 % plot fixations
@@ -83,6 +83,9 @@ actions = {
 set(zoom(gcf),'ActionPostCallback',@(obj,evd) viewCallbackFcn(obj,evd,actions));
 set(pan(gcf) ,'ActionPostCallback',@(obj,evd) viewCallbackFcn(obj,evd,actions));
 
+% legend
+legend(hxr,'left','right','Location','NorthEast');
+
 % set title. Below we'll add indication of which fix are currently shown
 tit = title(hx,texlabel(titel,'literal'));
 
@@ -100,9 +103,9 @@ if qYRev
 end
 % draw eye data
 hr = gobjects(1,2);
-hr(1) = plot(time,xpos(:,1),'b-');
+hr(1) = plot(time,xpos(:,1),'r-');
 if size(xpos,2)>1
-    hr(2) = plot(time,xpos(:,2),'r-');
+    hr(2) = plot(time,xpos(:,2),'b-');
 end
 % layout
 switch type
