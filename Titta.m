@@ -1125,8 +1125,6 @@ classdef Titta < handle
                 sansFont = 'Liberation Sans';
                 monoFont = 'Liberation Mono';
             end
-
-            % TODO: common file format
             
             % the rest here are good defaults for all
             settings.calibrateEye               = 'both';                       % 'both', also possible if supported by eye tracker: 'left' and 'right'
