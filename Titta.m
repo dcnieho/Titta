@@ -1628,9 +1628,9 @@ classdef Titta < handle
                 % text in each rect
                 Screen('TextFont',  wpnt(end), obj.settings.UI.setup.menu.text.font, obj.settings.UI.setup.menu.text.style);
                 Screen('TextSize',  wpnt(end), obj.settings.UI.setup.menu.text.size);
-                menuTextCache(1)= obj.getTextCache(wpnt(end), 'both eyes',menuRects(1,:),'baseColor',obj.settings.UI.val.menu.text.color);
-                menuTextCache(2)= obj.getTextCache(wpnt(end), 'left eye' ,menuRects(2,:),'baseColor',obj.settings.UI.val.menu.text.color);
-                menuTextCache(3)= obj.getTextCache(wpnt(end),'right eye' ,menuRects(3,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                menuTextCache(1)= obj.getTextCache(wpnt(end), '(1) both eyes',menuRects(1,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                menuTextCache(2)= obj.getTextCache(wpnt(end), '(2) left eye' ,menuRects(2,:),'baseColor',obj.settings.UI.val.menu.text.color);
+                menuTextCache(3)= obj.getTextCache(wpnt(end),'(3) right eye' ,menuRects(3,:),'baseColor',obj.settings.UI.val.menu.text.color);
                 
                 % get current state
                 currentMenuItem = find(ismember({'both','left','right'},obj.settings.calibrateEye));
@@ -2770,25 +2770,25 @@ classdef Titta < handle
                 menuRects       = repmat([-.5*width+obj.scrInfo.center{end}(1) -height/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) height/2+obj.scrInfo.center{end}(2)],nElem,1);
                 menuRects       = menuRects+bsxfun(@times,[height*([0:nElem-1]+.5)+[0:nElem-1]*pad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
                 % text in each rect
+                Screen('TextFont',  wpnt(end), obj.settings.UI.val.menu.text.font, obj.settings.UI.val.menu.text.style);
+                Screen('TextSize',  wpnt(end), obj.settings.UI.val.menu.text.size);
                 for c=nElem:-1:1
                     % find the active/last valid validation for this
                     % calibration
                     aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
                     % acc field is [lx rx; ly ry]
                     [strl,strr,strsep] = deal('');
-                    if obj.calibrateLeftEye
+                    if ismember(cal{iValid(c)}.eye,{'both','left'})
                         strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(1, 1 ),cal{iValid(c)}.val{aVal}.acc(2, 1 ),char(176));
                     end
-                    if obj.calibrateRightEye
-                        idx = 1+obj.calibrateLeftEye;
+                    if ismember(cal{iValid(c)}.eye,{'both','right'})
+                        idx = 1+strcmp(cal{iValid(c)}.eye,'both');
                         strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(1,idx),cal{iValid(c)}.val{aVal}.acc(2,idx),char(176));
                     end
-                    if obj.calibrateLeftEye && obj.calibrateRightEye
+                    if strcmp(cal{iValid(c)}.eye,'both')
                         strsep = ', ';
                     end
                     str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                    Screen('TextFont',  wpnt(end), obj.settings.UI.val.menu.text.font, obj.settings.UI.val.menu.text.style);
-                    Screen('TextSize',  wpnt(end), obj.settings.UI.val.menu.text.size);
                     menuTextCache(c) = obj.getTextCache(wpnt(end),str,menuRects(c,:),'baseColor',obj.settings.UI.val.menu.text.color);
                 end
             end
@@ -2902,14 +2902,14 @@ classdef Titta < handle
                             Screen('TextFont', wpnt(end), obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
                             Screen('TextSize', wpnt(end), obj.settings.UI.val.avg.text.size);
                             [strl,strr,strsep] = deal('');
-                            if obj.calibrateLeftEye
+                            if ismember(cal{selection}.eye,{'both','left'})
                                 strl = sprintf(' <color=%1$s>Left eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(1, 1 ),cal{selection}.val{iVal}.acc(2, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100,char(176));
                             end
-                            if obj.calibrateRightEye
-                                idx = 1+obj.calibrateLeftEye;
+                            if ismember(cal{selection}.eye,{'both','right'})
+                                idx = 1+strcmp(cal{selection}.eye,'both');
                                 strr = sprintf('<color=%1$s>Right eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(1,idx),cal{selection}.val{iVal}.acc(2,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100,char(176));
                             end
-                            if obj.calibrateLeftEye && obj.calibrateRightEye
+                            if strcmp(cal{selection}.eye,'both')
                                 strsep = '\n';
                             end
                             valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
@@ -2983,14 +2983,14 @@ classdef Titta < handle
                     % 1. prepare text
                     Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
-                    if obj.calibrateLeftEye && obj.calibrateRightEye
+                    if strcmp(cal{selection}.eye,'both')
                         lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
-                    elseif obj.calibrateLeftEye
+                    elseif strcmp(cal{selection}.eye,'left')
                         lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
                         str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
-                    elseif obj.calibrateRightEye
+                    elseif strcmp(cal{selection}.eye,'right')
                         rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
                         str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.val.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
                     end
@@ -3015,12 +3015,12 @@ classdef Titta < handle
                             myCal = cal{selection}.cal.result;
                             bpos = calValPos(p,:).';
                             % left eye
-                            if obj.calibrateLeftEye
+                            if ismember(cal{selection}.eye,{'both','left'})
                                 qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
                                 lEpos= myCal.points(p).samples.left.position(:,qVal);
                             end
                             % right eye
-                            if obj.calibrateRightEye
+                            if ismember(cal{selection}.eye,{'both','right'})
                                 qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
                                 rEpos= myCal.points(p).samples.right.position(:,qVal);
                             end
@@ -3028,21 +3028,21 @@ classdef Titta < handle
                             myVal = cal{selection}.val{iVal};
                             bpos = calValPos(p,:).';
                             % left eye
-                            if obj.calibrateLeftEye
+                            if ismember(cal{selection}.eye,{'both','left'})
                                 qVal = myVal.gazeData(p). left.gazePoint.valid;
                                 lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
                             end
                             % right eye
-                            if obj.calibrateRightEye
+                            if ismember(cal{selection}.eye,{'both','right'})
                                 qVal = myVal.gazeData(p).right.gazePoint.valid;
                                 rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
                             end
                         end
-                        if obj.calibrateLeftEye  && ~isempty(lEpos)
+                        if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
                             lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                             Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,eyeClrs{1},[],2);
                         end
-                        if obj.calibrateRightEye && ~isempty(rEpos)
+                        if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
                             rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                             Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,eyeClrs{2},[],2);
                         end
@@ -3104,13 +3104,13 @@ classdef Titta < handle
                         if ~isempty(eyeData.systemTimeStamp)
                             lE = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
-                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
+                            if ismember(cal{selection}.eye,{'both','left'})  && eyeData. left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1)*obj.scrInfo.sFac+obj.scrInfo.offset(1), lE(2)*obj.scrInfo.sFac+obj.scrInfo.offset(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
                                 end
                             end
-                            if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
+                            if ismember(cal{selection}.eye,{'both','right'}) && eyeData.right.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{2,end}, rE(1)*obj.scrInfo.sFac+obj.scrInfo.offset(1), rE(2)*obj.scrInfo.sFac+obj.scrInfo.offset(2), 10);
                                 if qHaveOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, rE(1), rE(2), 10);
@@ -3178,9 +3178,12 @@ classdef Titta < handle
                                 qToggleSelectMenu = true;
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                newSelection        = iValid(str2double(keys(1)));
-                                qSelectedCalChanged = selection~=newSelection;
-                                qToggleSelectMenu   = true;
+                                requested           = str2double(keys(1));
+                                if requested<=length(iValid)
+                                    newSelection        = iValid(requested);
+                                    qSelectedCalChanged = selection~=newSelection;
+                                    qToggleSelectMenu   = true;
+                                end
                                 break;
                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
                                 newSelection        = iValid(currentMenuSel);
