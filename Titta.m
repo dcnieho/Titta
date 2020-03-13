@@ -213,6 +213,8 @@ classdef Titta < handle
             if isfield(settings,'trackingMode') && isfield(obj.settings,'trackingMode') && ~strcmp(settings.trackingMode,obj.settings.trackingMode)
                 obj.trackingMode = settings.trackingMode;
             end
+            
+            % handle other settings
             if obj.isInitialized
                 % only a subset of settings is allowed. Overwrite those
                 % that are not allowed to be changed so that we are certain
@@ -240,6 +242,13 @@ classdef Titta < handle
                 end
                 obj.settings = settings;
             end
+            
+            % check validation point setup
+            assert(~isempty(obj.settings.val.pointPos),'Titta: having zero validation points is not allowed (you must report empirical calibration quality in your paper!)')
+            
+            % check requested eye calibration mode
+            obj.changeAndCheckCalibEyeMode();
+            
             % setup colors
             obj.settings.UI.val.eyeColors               = color2RGBA(obj.settings.UI.val.eyeColors);
             obj.settings.UI.val.onlineGaze.eyeColors    = color2RGBA(obj.settings.UI.val.onlineGaze.eyeColors);
@@ -312,9 +321,6 @@ classdef Titta < handle
             obj.settings.UI.button.val.toggCal.fillColor    = color2RGBA(obj.settings.UI.button.val.toggCal.fillColor);
             obj.settings.UI.button.val.toggCal.edgeColor    = color2RGBA(obj.settings.UI.button.val.toggCal.edgeColor);
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
-            
-            % check requested eye calibration mode
-            obj.changeAndCheckCalibEyeMode();
         end
         
         % getters
@@ -3453,7 +3459,7 @@ angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
 function iValid = getValidValidations(cal)
-iValid = find(cellfun(@(x) isfield(x,'cal') && any(cellfun(@(y) y.status, x.val)==1),cal));
+iValid = find(cellfun(@(x) isfield(x,'val') && any(cellfun(@(y) y.status, x.val)==1),cal));
 end
 
 function result = fixupTobiiCalResult(calResult,hasLeft,hasRight)
