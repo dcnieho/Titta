@@ -714,11 +714,12 @@ classdef Titta < handle
             % The below is a big loop that will run possibly multiple
             % calibration until exiting because skipped or a calibration is
             % selected by user.
-            % there are three start modes:
+            % there are two start modes:
             % 0. skip head positioning, go straight to calibration
             % 1. start with head positioning interface
             startScreen         = obj.settings.UI.startScreen;
-            kCal                = 0;
+            kCal                = 0;    % index into list of calibration attempts
+            currentSelection    = nan;  % keeps track of calibration that is currently applied
             out                 = struct('selectedCal', nan, 'wasSkipped', false);
             qNewCal             = true;
             qHasEnteredCalMode  = false;
@@ -730,9 +731,9 @@ classdef Titta < handle
                     else
                         kCal = length(out.attempt)+1;
                     end
-                    qNewCal = false;
+                    out.attempt{kCal}.dummy = [];   % dummy field so we don't need complicated logic below to check if out.attempt{kCal} is addressable
                 end
-                if startScreen>0
+                if startScreen==1
                     %%% 2a: show head positioning screen
                     out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out);
                     switch out.attempt{kCal}.setupStatus
@@ -741,6 +742,7 @@ classdef Titta < handle
                         case 2
                             % skip setup
                             out.wasSkipped = true;
+                            out.selectedCal = currentSelection; % though skipped, we may have a previous succesful calibration applied at this stage already, log that
                             break;
                         case -4
                             % go to validation viewer screen
@@ -772,9 +774,11 @@ classdef Titta < handle
                     switch out.attempt{kCal}.status
                         case 1
                             % all good, continue
+                            currentSelection = kCal;
                         case 2
                             % skip setup
-                            out.wasSkipped = true;
+                            out.wasSkipped  = true;
+                            out.selectedCal = currentSelection; % though skipped, we may have a previous succesful calibration applied at this stage already, log that
                             break;
                         case -1
                             % restart calibration
@@ -807,7 +811,8 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
-                [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,kCal);
+                [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,currentSelection);
+                currentSelection = kCal;
                 switch out.attempt{kCal}.valReviewStatus
                     case 1
                         % all good, we're done
@@ -816,17 +821,32 @@ classdef Titta < handle
                     case 2
                         % skip setup
                         out.wasSkipped = true;
+                        out.selectedCal = kCal; % even though skipped, if done so at this stage, we still have a calibration applied, so log that
                         break;
-                    case -1
-                        % restart calibration
+                    case {-1,-2}
+                        % -1: redo calibration+validation
+                        % -2: redo validation only, so add a validation to
+                        %     the current calibration
                         startScreen = 0;
-                        qNewCal     = true;
-                        continue;
-                    case -2
-                        % redo validation only
-                        startScreen = 0;
-                        % NB: not a new cal, we're adding a validation to
-                        % the current cal
+                        % check that current calibration mode matches that
+                        % of the calibration selected to be revalidated
+                        % if not exit calibration mode and reenter the
+                        % correct one
+                        next    = out.attempt{kCal}.eye;
+                        current = obj.settings.calibrateEye;
+                        if ~strcmp(next,current)
+                            % first change eye to be calibrated
+                            obj.changeAndCheckCalibEyeMode(next);
+                            % now also change mode in all cases (as this
+                            % also wipes state clean, so also wanted when
+                            % we remain monocular, but switch from left to
+                            % right eye)
+                            obj.doLeaveCalibrationMode();
+                            obj.doEnterCalibrationMode();
+                            currentSelection = nan;         % since calibration state cleared, this means there is no calibration applied right now
+                        end
+                        % indicate if redo cal or redo val
+                        qNewCal     = out.attempt{kCal}.valReviewStatus==-1;    % true if redo calibration, false if only redo validation
                         continue;
                     case -3
                         % go to setup
@@ -844,6 +864,11 @@ classdef Titta < handle
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
                 end
+            end
+            
+            % clean up dummy fields
+            for p=1:length(out.attempt)
+                out.attempt{p} = rmfield(out.attempt{p},'dummy');
             end
             
             % clean up and reset PTB state
@@ -866,7 +891,11 @@ classdef Titta < handle
             end
             % log to messages which calibration was selected
             if ~isnan(out.selectedCal)
-                obj.sendMessage(sprintf('CALIBRATION (%s) SELECTED no. %d',getEyeLbl(obj.settings.calibrateEye),out.selectedCal));
+                add = '';
+                if out.wasSkipped
+                    add = ' (note that operator skipped instead of accepted calibration)';
+                end
+                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
             end
             
             % store calibration info in calibration history, for later
@@ -2700,7 +2729,21 @@ classdef Titta < handle
             if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
                 % this happens if setup cancelled to go directly to this validation
                 % viewer
+                % select and load last successful calibration
                 selection = iValid(end);
+                obj.loadOtherCal(cal{selection});
+                result = obj.buffer.calibrationRetrieveResult();
+                while true
+                    callResult  = obj.buffer.calibrationRetrieveResult();
+                    if ~isempty(callResult) && strcmp(callResult.workItem.action,'ApplyCalibrationData')
+                        if callResult.status==0
+                            break;
+                        else
+                            error('Titta: error loading calibration: %s',callResult.statusString);
+                        end
+                    end
+                    WaitSecs('YieldSecs',0.001);    % don't spin too hard
+                end
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
             qHaveMultipleValidCals  = ~isempty(iValid) && ~isscalar(iValid);
@@ -2827,7 +2870,7 @@ classdef Titta < handle
             qSelectedCalChanged = false;
             qAwaitingCalChange  = false;
             qShowCal            = false;
-            fixPointRectSz      = 100*obj.scrInfo.sFac;
+            fixPointRectSz      = 80*obj.scrInfo.sFac;
             openInfoForPoint    = nan;
             pointToShowInfoFor  = nan;
             % Refresh internal key-/mouseState to make sure we don't
@@ -2866,7 +2909,7 @@ classdef Titta < handle
                         end
                         if qUpdateNow || (~isempty(result) && strcmp(result.workItem.action,'ApplyCalibrationData'))
                             if ~qUpdateNow && result.status~=0      % TOBII_RESEARCH_STATUS_OK
-                                error('%s',result.statusString)
+                                error('Titta: error loading calibration: %s',result.statusString)
                             end
                             if qAwaitingCalChange
                                 % calibration change has come through, make
