@@ -763,7 +763,10 @@ classdef Titta < handle
                 end
                 if startScreen==1
                     %%% 2a: show head positioning screen
-                    out.attempt{kCal}.setupStatus = obj.showHeadPositioning(wpnt,out);
+                    [out.attempt{kCal}.setupStatus,qCalReset] = obj.showHeadPositioning(wpnt,out);
+                    if qCalReset
+                        currentSelection = nan;
+                    end
                     switch out.attempt{kCal}.setupStatus
                         case 1
                             % all good, continue
@@ -1545,7 +1548,7 @@ classdef Titta < handle
             end
         end
         
-        function status = showHeadPositioning(obj,wpnt,out)            
+        function [status,qCalReset] = showHeadPositioning(obj,wpnt,out)            
             % status output:
             %  1: continue (setup seems good) (space)
             %  2: skip calibration and continue with task (shift+s)
@@ -1666,6 +1669,7 @@ classdef Titta < handle
             
             % setup menu, if any
             currentMenuItem = 0;
+            qCalReset       = false;
             if qCanDoMonocularCalib
                 margin          = 10;
                 pad             = 3;
@@ -1772,6 +1776,7 @@ classdef Titta < handle
                     % exit and reenter calibration mode, if needed
                     if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
                         obj.doEnterCalibrationMode();
+                        qCalReset = true;               % reentering calibration mode clears whatever was already loaded
                     end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
