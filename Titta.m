@@ -759,6 +759,7 @@ classdef Titta < handle
                         kCal = length(out.attempt)+1;
                     end
                     out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    out.attempt{kCal}.device    = obj.settings.tracker;
                 end
                 if startScreen==1
                     %%% 2a: show head positioning screen
