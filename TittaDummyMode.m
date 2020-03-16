@@ -121,7 +121,7 @@ classdef TittaDummyMode < Titta
             obj.isInitialized = true;
         end
         
-        function out = calibrate(~,~,~)
+        function out = calibrate(~,~,~,~)
             out = [];
         end
         

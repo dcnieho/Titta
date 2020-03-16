@@ -13,6 +13,7 @@
 classdef TobiiMexDummyMode < TobiiMex
     properties (Access = protected, Hidden = true)
         isRecordingGaze = false;
+        isInCalMode     = false;
     end
     
     methods
@@ -120,9 +121,16 @@ classdef TobiiMexDummyMode < TobiiMex
         end
         
         %% calibration
-        function enterCalibrationMode(~,~)
+        function hasEnqueuedEnter = enterCalibrationMode(this,~)
+            this.isInCalMode    = true;
+            hasEnqueuedEnter    = true;
         end
-        function leaveCalibrationMode(~,~)
+        function isInCalibrationMode = isInCalibrationMode(this,~)
+            isInCalibrationMode = this.isInCalMode;
+        end
+        function hasEnqueuedLeave = leaveCalibrationMode(this,~)
+            this.isInCalMode    = true;
+            hasEnqueuedLeave    = true;
         end
         function calibrationCollectData(~,~,~)
         end
