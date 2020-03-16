@@ -27,6 +27,7 @@
 %      <a href="matlab: help Titta.setOptions">help Titta.setOptions</a>
 %      <a href="matlab: help Titta.init">help Titta.init</a>
 %      <a href="matlab: help Titta.calibrate">help Titta.calibrate</a>
+%      <a href="matlab: help Titta.calibrateManual">help Titta.calibrateManual</a>
 %      <a href="matlab: help Titta.sendMessage">help Titta.sendMessage</a>
 %      <a href="matlab: help Titta.getMessages">help Titta.getMessages</a>
 %      <a href="matlab: help Titta.collectSessionData">help Titta.collectSessionData</a>
@@ -288,9 +289,9 @@ classdef Titta < handle
             obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor              = color2RGBA(obj.settings.cal.fixFrontColor);
             
-            obj.settings.UI.button.setup.eyeIm.fillColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.fillColor);
-            obj.settings.UI.button.setup.eyeIm.edgeColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.edgeColor);
-            obj.settings.UI.button.setup.eyeIm.textColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.textColor);
+            obj.settings.UI.button.setup.toggEyeIm.fillColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.fillColor);
+            obj.settings.UI.button.setup.toggEyeIm.edgeColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.edgeColor);
+            obj.settings.UI.button.setup.toggEyeIm.textColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.textColor);
             obj.settings.UI.button.setup.cal.fillColor      = color2RGBA(obj.settings.UI.button.setup.cal.fillColor);
             obj.settings.UI.button.setup.cal.edgeColor      = color2RGBA(obj.settings.UI.button.setup.cal.edgeColor);
             obj.settings.UI.button.setup.cal.textColor      = color2RGBA(obj.settings.UI.button.setup.cal.textColor);
@@ -671,42 +672,7 @@ classdef Titta < handle
             end
             
             % get info about screen
-            obj.wpnts = wpnt;
-            for w=length(wpnt):-1:1
-                obj.scrInfo.resolution{w}  = Screen('Rect',wpnt(w)); obj.scrInfo.resolution{w}(1:2) = [];
-                obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
-                obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
-                % get current PTB state so we can restore when returning
-                % 1. alpha blending
-                [osf{w},odf{w},ocm{w}]     = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                % 2. screen clear color so we can reset that too. There is only
-                % one way to do that annoyingly:
-                % 2.1. clear back buffer by flipping
-                Screen('Flip',wpnt(w));
-                % 2.2. read a pixel, this gets us the background color
-                bgClr{w} = double(reshape(Screen('GetImage',wpnt(w),[1 1 2 2],'backBuffer',obj.qFloatColorRange(w),4),1,4));
-                % 3. text
-                text.style(w)  = Screen('TextStyle', wpnt(w));
-                text.size(w)   = Screen('TextSize' , wpnt(w));
-                text.font{w}   = Screen('TextFont' , wpnt(w));
-                text.color{w}  = Screen('TextColor', wpnt(w));
-            end
-            % if we have multiple screens, figure out scaling factor, in
-            % case operator screen is smaller than experiment screen
-            if length(obj.wpnts)==2
-                obj.scrInfo.sFac    = min(obj.scrInfo.resolution{end}./obj.scrInfo.resolution{1});
-                obj.scrInfo.offset  = (obj.scrInfo.resolution{end}-obj.scrInfo.resolution{1}*obj.scrInfo.sFac)/2;
-            else
-                obj.scrInfo.sFac    = 1;
-                obj.scrInfo.offset  = [0 0];
-            end
-            
-            % see what text renderer to use
-            isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
-            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
-            if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
-            end
+            screenState = obj.getScreenInfo(wpnt);
             
             % init key, mouse state
             [~,~,obj.keyState] = KbCheck();
@@ -748,6 +714,7 @@ classdef Titta < handle
                 currentSelection    = nan;                  % keeps track of calibration that is currently applied
                 qNewCal             = true;
             end
+            out.type            = 'standard';
             out.selectedCal     = nan;
             out.wasSkipped      = false;
             while true
@@ -898,14 +865,7 @@ classdef Titta < handle
             end
             
             % clean up and reset PTB state
-            for w=length(wpnt):-1:1
-                Screen('FillRect',      wpnt(w),bgClr{w});                  % reset background color
-                Screen('BlendFunction', wpnt(w),osf{w},odf{w},ocm{w});      % reset blend function
-                Screen('TextFont',      wpnt(w),text.font{w},text.style(w));
-                Screen('TextColor',     wpnt(w),text.color{w});
-                Screen('TextSize',      wpnt(w),text.size(w));
-                Screen('Flip',          wpnt(w));                           % clear screen
-            end
+            obj.resetScreen(wpnt,screenState);
             
             % if we want to exit calibration mode because:
             % 1. user requests it (flag bit 2 is set)
@@ -915,24 +875,151 @@ classdef Titta < handle
             if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
                 obj.doLeaveCalibrationMode();
             end
-            % log to messages which calibration was selected
-            if ~isnan(out.selectedCal)
-                add = '';
-                if out.wasSkipped
-                    add = ' (note that operator skipped instead of accepted calibration)';
-                end
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
-            else
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: none',getEyeLbl(obj.settings.calibrateEye)));
+            
+            % log whole process in calibrateHistory and log to messages
+            % which calibration was selected
+            obj.logCalib(out);
+        end
+        
+        function out = calibrateManual(obj,wpnt,flag,previousCalibs)
+            % Do participant setup and calibration for non-compliant subjects
+            %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT) displays the
+            %    participant setup and calibration interface on the
+            %    PsychToolbox window specified by WPNT.
+            %
+            %    WPNT can also be an array of two window pointers.
+            %    In this case, the first window pointer is taken to refer
+            %    to the participant screen, and the second to an operator
+            %    screen. Aminimal interface is then presented on the
+            %    participant screen, while full information is shown on the
+            %    operator screen, including a live view of gaze data and
+            %    eye images (if available) during calibration and
+            %    validation.
+            %
+            %    CALIBRATIONATTEMPT is a struct containing information
+            %    about the calibration/validation run.
+            %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT,FLAG) provides
+            %    control over whether the call causes the eye tracker's
+            %    calibration mode to be entered or left. The available
+            %    flags are:
+            %      1 - enter calibration mode when starting calibration
+            %      2 - exit calibration mode when calibration finished
+            %      3 - (default) both enter and exit calibration mode
+            %
+            %    FLAG is used for bimonocular calibrations, when
+            %    Titta.calibrate() is called twice in a row, first to
+            %    calibrate the first eye (use FLAG=1 to enter calibration
+            %    mode here but not exit), and then a second time to
+            %    calibrate the other eye (use FLAG=2 to exit calibration
+            %    mode when done).
+            %
+            %    INTERFACE
+            %    During anywhere on the participant setup and calibration
+            %    screens, the following key combinations are available:
+            %      shift-escape - hard exit from the calibration mode
+            %                     (causes en error to be thrown and script
+            %                     execution to stop if that error is not
+            %                     caught).
+            %      shift-s      - skip calibration. If still at setup
+            %                     screen for the first time, the last
+            %                     calibration (perhaps of a previous
+            %                     session) remains active. To clear any
+            %                     calibration, enter the calibration screen
+            %                     and immediately then skip with this key
+            %                     combination.
+            %      shift-d      - take screenshot of the participant
+            %                     display, which will be stored to the
+            %                     current active directory (cd).
+            %      shift-o      - when in dual-screen mode, take a
+            %                     screenshot of the operator display, which
+            %                     will be stored to the current active
+            %                     directory (cd).
+            %      shift-g      - when in dual screen mode, by default the
+            %                     show gaze button on the validation result
+            %                     screen only shows real-time gaze position
+            %                     on the operator's screen. If the shift
+            %                     key is held down while clicking the
+            %                     button with the mouse, or when pressing
+            %                     the functionality's hotkey (g by
+            %                     default), real-time gaze will also be
+            %                     shown on the participant's screen.
+            %
+            %    In addition to these, during the calibration and
+            %    validation displays, the following keys are available:
+            %      escape    - return to setup screen.
+            %      r         - restart calibration sequence from the
+            %                  beginning
+            %      backspace - redo the current calibration/validation
+            %                  point. Using the AnimatedCalibrationDisplay
+            %                  class, this causes the currently displayed
+            %                  point to blink.
+            %      spacebar  - accept current calibration/validation point.
+            %                  Whether it is needed to press spacebar to
+            %                  collect data for a point depends on the
+            %                  settings.cal.autoPace setting.
+            
+            % this function does all setup, draws the interface, etc
+            % flag is for if you want to calibrate the two eyes separately,
+            % monocularly. When doing first eye, set flag to 1, when second
+            % eye set flag to 2. Internally for Titta flag 1 has the
+            % meaning "first calibration" and flag 2 "final calibration".
+            % This is checked against with bitand, so when user didn't
+            % specify we assume a single calibration will be done (which is
+            % thus both first and final) and thus set flag to 3.
+            assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
+            if nargin<3 || isempty(flag)
+                flag = 3;
+            end
+            if nargin<4 || isempty(previousCalibs)
+                previousCalibs = [];
             end
             
-            % store calibration info in calibration history, for later
-            % retrieval if wanted
-            if isempty(obj.calibrateHistory)
-                obj.calibrateHistory{1} = out;
-            else
-                obj.calibrateHistory{end+1} = out;
+            % get info about screen
+            screenState = obj.getScreenInfo(wpnt);
+            
+            % some preliminary setup, to make sure we are in known state
+            if bitand(flag,1)
+                obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
+                obj.doEnterCalibrationMode();
             end
+            obj.StopRecordAll();
+            
+            % setup the setup/calibration screens
+            if ~isempty(previousCalibs)
+                % prepopulate with previous calibrations passed by user
+                out                 = previousCalibs;
+                % preload the one previously selected by user
+                kCal                = out.selectedCal;      % index into list of calibration attempts
+                obj.loadOtherCal(out.attempt{kCal});
+                currentSelection    = kCal;                 % keeps track of calibration that is currently applied
+            else
+                kCal                = 0;                    % index into list of calibration attempts
+                currentSelection    = nan;                  % keeps track of calibration that is currently applied
+            end
+            out.type            = 'manual';
+            out.selectedCal     = nan;
+            out.wasSkipped      = false;
+            
+            % run the setup/calibration process
+            out = obj.doManualCalib(wpnt,out,kCal,currentSelection);
+            
+            % clean up and reset PTB state
+            obj.resetScreen(wpnt,screenState);
+            
+            % if we want to exit calibration mode because:
+            % 1. user requests it (flag bit 2 is set)
+            % 2. user didn't request it, but we entered calibration mode
+            %    and operator skipped calibration,
+            % then issue a leave here now and wait for it to complete
+            if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || out.wasSkipped)
+                obj.doLeaveCalibrationMode();
+            end
+            
+            % log whole process in calibrateHistory and log to messages
+            % which calibration was selected
+            obj.logCalib(out);
         end
         
         function time = sendMessage(obj,str,time)
@@ -1241,12 +1328,12 @@ classdef Titta < handle
             settings.UI.button.setup.text.font          = sansFont;
             settings.UI.button.setup.text.size          = 24*textFac;
             settings.UI.button.setup.text.style         = 0;
-            settings.UI.button.setup.eyeIm.accelerator  = 'e';
-            settings.UI.button.setup.eyeIm.visible      = true;
-            settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
-            settings.UI.button.setup.eyeIm.fillColor    = toggleButClr.fill;
-            settings.UI.button.setup.eyeIm.edgeColor    = toggleButClr.edge;
-            settings.UI.button.setup.eyeIm.textColor    = toggleButClr.text;
+            settings.UI.button.setup.toggEyeIm.accelerator  = 'e';
+            settings.UI.button.setup.toggEyeIm.visible      = true;
+            settings.UI.button.setup.toggEyeIm.string       = 'eye images (<i>e<i>)';
+            settings.UI.button.setup.toggEyeIm.fillColor    = toggleButClr.fill;
+            settings.UI.button.setup.toggEyeIm.edgeColor    = toggleButClr.edge;
+            settings.UI.button.setup.toggEyeIm.textColor    = toggleButClr.text;
             settings.UI.button.setup.cal.accelerator    = 'space';
             settings.UI.button.setup.cal.visible        = true;
             settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
@@ -1548,6 +1635,56 @@ classdef Titta < handle
             end
         end
         
+        function state = getScreenInfo(obj,wpnt)
+            obj.wpnts = wpnt;
+            for w=length(wpnt):-1:1
+                obj.scrInfo.resolution{w}  = Screen('Rect',wpnt(w)); obj.scrInfo.resolution{w}(1:2) = [];
+                obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
+                obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
+                % get current PTB state so we can restore when returning
+                % 1. alpha blending
+                [state.osf{w},state.odf{w},state.ocm{w}] = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                % 2. screen clear color so we can reset that too. There is only
+                % one way to do that annoyingly:
+                % 2.1. clear back buffer by flipping
+                Screen('Flip',wpnt(w));
+                % 2.2. read a pixel, this gets us the background color
+                state.bgClr{w} = double(reshape(Screen('GetImage',wpnt(w),[1 1 2 2],'backBuffer',obj.qFloatColorRange(w),4),1,4));
+                % 3. text
+                state.text.style(w)  = Screen('TextStyle', wpnt(w));
+                state.text.size(w)   = Screen('TextSize' , wpnt(w));
+                state.text.font{w}   = Screen('TextFont' , wpnt(w));
+                state.text.color{w}  = Screen('TextColor', wpnt(w));
+            end
+            % if we have multiple screens, figure out scaling factor, in
+            % case operator screen is smaller than experiment screen
+            if length(obj.wpnts)==2
+                obj.scrInfo.sFac    = min(obj.scrInfo.resolution{end}./obj.scrInfo.resolution{1});
+                obj.scrInfo.offset  = (obj.scrInfo.resolution{end}-obj.scrInfo.resolution{1}*obj.scrInfo.sFac)/2;
+            else
+                obj.scrInfo.sFac    = 1;
+                obj.scrInfo.offset  = [0 0];
+            end
+            
+            % see what text renderer to use
+            isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
+            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
+            if ~obj.usingFTGLTextRenderer
+                assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
+            end
+        end
+        
+        function obj.resetScreen(wpnt,state)
+            for w=length(wpnt):-1:1
+                Screen('FillRect',      wpnt(w),state.bgClr{w});                            % reset background color
+                Screen('BlendFunction', wpnt(w),state.osf{w},state.odf{w},state.ocm{w});    % reset blend function
+                Screen('TextFont',      wpnt(w),state.text.font{w},state.text.style(w));
+                Screen('TextColor',     wpnt(w),state.text.color{w});
+                Screen('TextSize',      wpnt(w),state.text.size(w));
+                Screen('Flip',          wpnt(w));                                           % clear screen
+            end
+        end
+        
         function [status,qCalReset] = showHeadPositioning(obj,wpnt,out)            
             % status output:
             %  1: continue (setup seems good) (space)
@@ -1582,67 +1719,20 @@ classdef Titta < handle
             
             % setup ovals
             ovalVSz     = .15;
-            refSz       = ovalVSz*obj.scrInfo.resolution{1}(2);
-            refClr      = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            bgClr       = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
-            % setup head position visualization
-            head                    = ETHead(wpnt(1),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
-            head.refSz              = refSz;
-            head.rectWH             = obj.scrInfo.resolution{1};
-            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
-            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
-            head.showYaw            = obj.settings.UI.setup.showYaw;
-            head.showEyes           = obj.settings.UI.setup.showEyes;
-            head.eyeClr             = obj.settings.UI.setup.eyeClr;
-            head.showPupils         = obj.settings.UI.setup.showPupils;
-            head.pupilClr           = obj.settings.UI.setup.pupilClr;
-            head.crossClr           = obj.settings.UI.setup.crossClr;
-            head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
-            if qHaveOperatorScreen
-                headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
-                headO.refSz             = head.refSz;
-                headO.rectWH            = obj.scrInfo.resolution{2};
-                headO.headCircleFillClr = head.headCircleFillClr;
-                headO.headCircleEdgeClr = head.headCircleEdgeClr;
-                headO.showYaw           = obj.settings.UI.setup.showYawToOperator;
-                headO.showEyes          = head.showEyes;
-                headO.eyeClr            = head.eyeClr;
-                headO.showPupils        = head.showPupils;
-                headO.pupilClr          = head.pupilClr;
-                headO.crossClr          = head.crossClr;
-                headO.crossEye          = head.crossEye;
-                refClrO                 = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
-                bgClrO                  = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
-            end
+            fac         = 1;
+            refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
+            refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
+            bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
+            [headP,refPosP] = setupHead(obj,wpnt(1),'setup',refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
+            refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+            bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
+            [headO,refPosO] = setupHead(obj,wpnt(2),'setup',refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
             
-            % get reference position
-            if isempty(obj.settings.UI.setup.referencePos)
-                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
-            end
-            % position reference circle on screen
-            refPosP = obj.scrInfo.resolution{1}/2;
-            allPosOff = [0 0];
-            if ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
-                scrWidth  = obj.geom.displayArea.width/10;
-                scrHeight = obj.geom.displayArea.height/10;
-                pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
-                allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
-            end
-            refPosP = refPosP+allPosOff;
-            
-            head.referencePos   = obj.settings.UI.setup.referencePos;
-            head.allPosOff      = allPosOff;
-            if qHaveOperatorScreen
-                headO.referencePos  = head.referencePos;
-                % NB: no offset on screen for head on operator screen, so
-                % don't use allPosOff
-                refPosO = obj.scrInfo.resolution{2}/2;
-            end
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
             but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.setup.eyeIm    ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.setup.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
             
@@ -1721,7 +1811,7 @@ classdef Titta < handle
             headPosLastT        = 0;
             [mx,my]             = deal(0,0);
             while true
-                Screen('FillRect', wpnt(1), bgClr);
+                Screen('FillRect', wpnt(1), bgClrP);
                 if qHaveOperatorScreen
                     Screen('FillRect', wpnt(2), bgClrO);
                 end
@@ -1780,8 +1870,8 @@ classdef Titta < handle
                     end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
-                    head.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
-                    headO.crossEye  = head.crossEye;
+                    headP.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye  = headP.crossEye;
                     qSelectedEyeChanged = false;
                 end
                 
@@ -1818,12 +1908,12 @@ classdef Titta < handle
                 eyeData     = obj.buffer.peekN('gaze',1);
                 posGuide    = obj.buffer.peekN('positioning',1);
                 if isempty(eyeData.systemTimeStamp)
-                    head.update([],[],[],[], [],[],[],[]);
+                    headP.update([],[],[],[], [],[],[],[]);
                     if qHaveOperatorScreen
                         headO.update([],[],[],[], [],[],[],[]);
                     end
                 else
-                    head.update(...
+                    headP.update(...
                         eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                     if qHaveOperatorScreen
@@ -1833,7 +1923,7 @@ classdef Titta < handle
                     end
                 end
                 
-                if ~isnan(head.avgDist)
+                if ~isnan(headP.avgDist)
                     headPosLastT = eyeData.systemTimeStamp;
                 end
                 
@@ -1854,16 +1944,16 @@ classdef Titta < handle
                 % and data is missing. But only do so after 200 ms of data
                 % missing, so that these elements don't flicker all the
                 % time when unstable track
-                qHideSetup = qShowEyeImage && isempty(head.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
+                qHideSetup = qShowEyeImage && isempty(headP.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
                 % draw distance info
                 if obj.settings.UI.setup.showInstructionToSubject && ~qHideSetup
-                    str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    str = obj.settings.UI.setup.instruct.strFun(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
                 end
                 if qHaveOperatorScreen
-                    str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    str = obj.settings.UI.setup.instruct.strFunO(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
@@ -1872,7 +1962,7 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available (so head not drawn)
                 if obj.settings.UI.setup.showHeadToSubject && ~qHideSetup
-                    drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClr ,5);
+                    drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClrP ,5);
                 end
                 if qHaveOperatorScreen
                     % no vertical/horizontal offset on operator screen
@@ -1880,7 +1970,7 @@ classdef Titta < handle
                 end
                 % stylized head
                 if obj.settings.UI.setup.showHeadToSubject
-                    head.draw();
+                    headP.draw();
                 end
                 if qHaveOperatorScreen
                     headO.draw();
@@ -1981,7 +2071,7 @@ classdef Titta < handle
                     else
                         if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator)) && qCanDoMonocularCalib
                             qToggleSelectMenu = true;
-                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator)) && qHasEyeIm
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.toggEyeIm.accelerator)) && qHasEyeIm
                             qToggleEyeImage = true;
                         elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                             status = 1;
@@ -3350,6 +3440,535 @@ classdef Titta < handle
             HideCursor;
         end
         
+        function out = doManualCalib(obj,wpnt,out,kCal,currentSelection)
+            % init key, mouse state
+            [~,~,obj.keyState]      = KbCheck();
+            [~,~,obj.mouseState]    = GetMouse();
+            
+            % get eye tracker capabilities
+            qHasEyeIm               = obj.buffer.hasStream('eyeImage');
+            qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
+            
+            startT                  = obj.sendMessage(sprintf('START MANUAL CALIBRATION (%s)',getEyeLbl(obj.settings.calibrateEye)));
+            obj.buffer.start('gaze');
+            obj.buffer.start('positioning');
+            
+            % setup head position visualization
+            ovalVSz     = .15;
+            facO        = .5;
+            refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
+            refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+            [headP,refPosP] = setupHead(obj,wpnt(1),'mancal',refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.mancal.head.showYaw,true);
+            [headO,refPosO] = setupHead(obj,wpnt(2),'mancal',refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.mancal.head.showYawToOperator,false);
+            
+            % setup text for buttons
+            Screen('TextFont',  wpnt(end), obj.settings.UI.button.mancal.text.font, obj.settings.UI.button.mancal.text.style);
+            Screen('TextSize',  wpnt(end), obj.settings.UI.button.mancal.text.size);
+            
+            % set up buttons
+            funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
+            but(1)  = PTBButton(obj.settings.UI.button.mancal.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.mancal.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.mancal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.mancal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(5)  = PTBButton(obj.settings.UI.button.mancal.snapshot ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.mancal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.mancal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            % 1. below screen
+            % position them
+            butRectsBase= cat(1,but([but(1:5).visible]).rect);
+            if ~isempty(butRectsBase)
+                buttonOff   = 80;
+                yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
+                buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
+                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
+                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{end}(1)/2;
+                butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
+                butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
+                butRects(:,4)     = yposBase;
+                butRects          = num2cell(butRects,2);
+                [but((1:length(but))<=5&[but.visible]).rect] = butRects{:};
+            end
+            
+            % 2. atop screen
+            % position them
+            yPosTop             = .02*obj.scrInfo.resolution{end}(2);
+            buttonOff           = 900;
+            if but(5).visible
+                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(5).rect(3),yPosTop);
+            end
+            if but(6).visible
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)+buttonOff/2,yPosTop);
+            end
+            
+            % setup head position screen (centered, can be dragged to move)
+            sz = obj.scrInfo.resolution{2}(2)*facO;
+            headORect = CenterRectOnPoint([0 0 sz sz],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            
+            % setup menu, if any
+            menuMargin      = 10;
+            menuPad         = 3;
+            menuElemHeight  = 45;
+            if qCanDoMonocularCalib
+                nElem               = 3;
+                totHeight           = nElem*(menuElemHeight+menuPad)-menuPad;
+                width               = 300;
+                % menu background
+                eyeMenuBackRect     = [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
+                % menuRects
+                eyeMenuRects        = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
+                eyeMenuRects        = eyeMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                % text in each rect
+                Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
+                Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                eyeMenuTextCache(1) = obj.getTextCache(wpnt(end), '(1) both eyes',eyeMenuRects(1,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                eyeMenuTextCache(2) = obj.getTextCache(wpnt(end), '(2) left eye' ,eyeMenuRects(2,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                eyeMenuTextCache(3) = obj.getTextCache(wpnt(end),'(3) right eye' ,eyeMenuRects(3,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                
+                % get current state
+                currentEyeMenuItem  = ismember({'both','left','right'},obj.settings.calibrateEye);
+            end
+            
+            % prep fixation targets
+            cPoints             = obj.settings.mancal.cal.pointPos;
+            vPoints             = obj.settings.mancal.val.pointPos;
+            cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),1)]; %#ok<NBRAK>
+            vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),1)]; %#ok<NBRAK>
+            cPointsO            = bsxfun(@plus,cPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
+            vPointsO            = bsxfun(@plus,vPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
+            
+            % prep point drawer and data collection logic
+            if isa(obj.settings.mancal.drawFunction,'function_handle')
+                drawFunction    = obj.settings.mancal.drawFunction;
+            else
+                drawFunction    = @obj.drawFixationPointDefault;
+            end
+            collectInterval     = ceil(obj.settings.mancal.val.collectDuration*fs);
+            nDataPoint          = ceil(obj.settings.mancal.val.collectDuration*obj.settings.freq);
+            
+            % prep colors
+            bgClrP              = obj.getColorForWindow(obj.settings.UI.mancal.bgColor,wpnt(1));
+            bgClrO              = obj.getColorForWindow(obj.settings.UI.mancal.bgColor,wpnt(2));
+            eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.mancal.eyeColors,'uni',false);
+            menuBgClr           = obj.getColorForWindow(obj.settings.UI.mancal.menu.bgColor,wpnt(end));
+            menuItemClr         = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColor      ,wpnt(end));
+            menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColorActive,wpnt(end));
+            hoverBgClr          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(end));
+            refClrP             = obj.getColorForWindow(obj.settings.UI.mancal.head.refCircleClr,wpnt(1));
+            headBgClrP          = obj.getColorForWindow(obj.settings.UI.mancal.head.bgColor,wpnt(1));
+            refClrO             = obj.getColorForWindow(obj.settings.UI.mancal.head.refCircleClr,wpnt(2));
+            headBgClrO          = obj.getColorForWindow(obj.settings.UI.mancal.head.bgColor,wpnt(2));
+            for w=length(wpnt):-1:1
+                onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.mancal.onlineGaze.eyeColors,'uni',false);
+            end
+            
+            
+            % outer loop, in which less frequent actions are done
+            % 1. head display
+            qShowHead               = true;
+            qShowHeadToAll          = false;
+            circVerts               = genCircle(200);
+            % 2. calibration/validation state
+            qToggleStage            = true;
+            stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
+            % 3. selection menus
+            qToggleSelectEyeMenu    = false;
+            qSelectEyeMenuOpen      = false;
+            qToggleSelectSnapMenu   = false;
+            qSelectSnapMenuOpen     = false;
+            qChangeMenuArrow        = false;
+            currentMenuRects        = [];
+            currentMenuSel          = 0;
+            % 4. eye selection
+            qSelectedEyeChanged     = false;
+            % 5. eye images
+            qToggleEyeImage         = true;     % eye images default on
+            qShowEyeImage           = false;
+            eyeTexs                 = [0 0];
+            eyeSzs                  = [];
+            eyeImageRect            = repmat({zeros(1,4)},1,2);
+            % 6. online gaze
+            qShowGazeToAll          = false;
+            qShowGaze               = false;
+            % 7. point selection by mouse and info about validated points
+            fixPointRectSz          = 80*obj.scrInfo.sFac;
+            openInfoForPoint        = nan;
+            pointToShowInfoFor      = nan;
+            % 8. snapshot saving and loading
+            qSaveSnapShot           = false;
+            % 9. applied calibration status
+            qAwaitingCalChange      = false;
+            awaitingCalChangeType   = '';       % 'compute' or 'snapshot'
+            % 10. cursor drawer state
+            qUpdateCursors          = true;
+            
+            % Refresh internal key-/mouseState to make sure we don't
+            % trigger on already pressed buttons
+            obj.getNewMouseKeyPress();
+            [mx,my]                 = deal(0,0);
+            
+            qDoneWithManualCalib    = false;
+            while ~qDoneWithManualCalib
+                % toggle stage
+                if qToggleStage
+                    switch stage
+                        case 'val'
+                            % change to cal
+                            stage   = 'cal';
+                            pointsP = cPointsP;
+                            pointsO = cPointsO;
+                        case 'cal'
+                            % change to val
+                            stage = 'val';
+                            pointsP = vPointsP;
+                            pointsO = vPointsO;
+                    end
+                    % get point rects on operator screen
+                    calValRects = zeros(size(pointsO,1),4);
+                    for p=1:size(pointsO,1)
+                        calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],pointsO(p,3),pointsO(p,4));
+                    end
+                    qUpdateCursors = true;
+                end
+                
+                % setup menu, if any
+                if qToggleSelectSnapMenu
+                    qSelectSnapMenuOpen = ~qSelectSnapMenuOpen;
+                    if qSelectSnapMenuOpen
+                        % this menu's length may change, have to generate
+                        % each time it opens
+                        nElem           = length(iValid);
+                        totHeight       = nElem*(menuElemHeight+menuPad)-menuPad;
+                        width           = 900;
+                        % menu background
+                        snapMenuBackRect= [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
+                        % menuRects
+                        snapMenuRects   = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
+                        snapMenuRects   = snapMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                        % text in each rect
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
+                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                        for c=nElem:-1:1
+                            % find the active/last valid validation for this
+                            % calibration
+                            aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
+                            % acc field is [lx rx; ly ry]
+                            [strl,strr,strsep] = deal('');
+                            if ismember(cal{iValid(c)}.eye,{'both','left'})
+                                strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(1, 1 ),cal{iValid(c)}.val{aVal}.acc(2, 1 ),char(176));
+                            end
+                            if ismember(cal{iValid(c)}.eye,{'both','right'})
+                                idx = 1+strcmp(cal{iValid(c)}.eye,'both');
+                                strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(1,idx),cal{iValid(c)}.val{aVal}.acc(2,idx),char(176));
+                            end
+                            if strcmp(cal{iValid(c)}.eye,'both')
+                                strsep = ', ';
+                            end
+                            str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
+                            snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                        end
+                        
+                        currentMenuBackRect = snapMenuBackRect;
+                        currentMenuRects    = snapMenuRects;
+                        currentMenuTextCache= snapMenuTextCache;
+                        menuActiveItem      = nan; % some boolean
+                        currentMenuSel      = find(menuActiveItem);
+                        qChangeMenuArrow    = true;
+                    end
+                elseif qToggleSelectEyeMenu
+                    qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
+                    if qSelectEyeMenuOpen
+                        currentMenuBackRect = eyeMenuBackRect;
+                        currentMenuRects    = eyeMenuRects;
+                        currentMenuTextCache= eyeMenuTextCache;
+                        menuActiveItem      = currentEyeMenuItem;
+                        currentMenuSel      = find(menuActiveItem);
+                        qChangeMenuArrow    = true;
+                    end
+                end
+                
+                % switch on/off eye images
+                if qHasEyeIm
+                    % toggle eye images on or off if requested
+                    if qToggleEyeImage
+                        if qShowEyeImage
+                            % switch off
+                            obj.buffer.stop('eyeImage');
+                            obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
+                        else
+                            % switch on
+                            eyeStartTime = obj.getTimeAsSystemTime();
+                            obj.buffer.start('eyeImage');
+                        end
+                        qShowEyeImage   = ~qShowEyeImage;
+                        qToggleEyeImage = false;
+                    end
+                end
+                
+                % update cursors
+                if qUpdateCursors
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        cursors.rect    = num2cell(currentMenuRects.',1);
+                    else
+                        butRects        = cat(1,but.rect);
+                        cursors.rect    = num2cell(butRects.',1);
+                    end
+                    cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));      % clickable items
+                    cursors.other   = obj.settings.UI.cursor.normal;                                        % default
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
+                end
+                
+                % update calibration mode
+                if qSelectedEyeChanged
+                    switch currentMenuSel
+                        case 1
+                            mode = 'both';
+                        case 2
+                            mode = 'left';
+                        case 3
+                            mode = 'right';
+                    end
+                    obj.changeAndCheckCalibEyeMode(mode);
+                    obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                    % exit and reenter calibration mode, if needed
+                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                        obj.doEnterCalibrationMode();
+                    end
+                    extraInp = {};
+                    if ~strcmp(obj.settings.calibrateEye,'both')
+                        extraInp            = {obj.settings.calibrateEye};
+                    end
+                    % update states of this screen
+                    currentMenuItem = currentMenuSel;
+                    headP.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye  = headP.crossEye;
+                    qSelectedEyeChanged = false;
+                    % TODO: update line display? yes, wipe it
+                end
+                
+                % update line displays of calibration/validation data
+                if false
+                    % prep to draw captured data in characteristic tobii plot
+                    for p=1:nPoints
+                        if qShowCal
+                            myCal = cal{selection}.cal.result;
+                            bpos = calValPos(p,:).';
+                            % left eye
+                            if ismember(cal{selection}.eye,{'both','left'})
+                                qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                lEpos= myCal.points(p).samples.left.position(:,qVal);
+                            end
+                            % right eye
+                            if ismember(cal{selection}.eye,{'both','right'})
+                                qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                rEpos= myCal.points(p).samples.right.position(:,qVal);
+                            end
+                        else
+                            myVal = cal{selection}.val{iVal};
+                            bpos = calValPos(p,:).';
+                            % left eye
+                            if ismember(cal{selection}.eye,{'both','left'})
+                                qVal = myVal.gazeData(p). left.gazePoint.valid;
+                                lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                            end
+                            % right eye
+                            if ismember(cal{selection}.eye,{'both','right'})
+                                qVal = myVal.gazeData(p).right.gazePoint.valid;
+                                rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                            end
+                        end
+                        if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
+                            lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                            lEpos = reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]);
+                        end
+                        if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
+                            rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                            rEpos = reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]);
+                        end
+                    end
+                end
+                
+                % draw loop
+                while true
+                    % per frame updates
+                    if qShowGazeToAll
+                        % prep gaze data
+                        gazePosP    = nan(2,2);
+                        eyeData     = obj.buffer.peekN('gaze');
+                        if ~isempty(eyeData.systemTimeStamp)
+                            if ismember(cal{selection}.eye,{'both','left'})  && eyeData. left.gazePoint.valid(end)
+                                gazePosP(:,1) = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            end
+                            if ismember(cal{selection}.eye,{'both','right'}) && eyeData.right.gazePoint.valid(end)
+                                gazePosP(:,2) = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            end
+                        end
+                    end
+                    
+                    % prep eye image
+                    if qHasEyeIm && qShowEyeImage
+                        % get eye image
+                        eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        [eyeTexs,eyeSzs]  = UploadImages(eyeTexs,eyeSzs,wpnt(end),eyeIm);
+                        
+                        % update eye image locations if size of returned eye image changed
+                        if (~any(isnan(eyeSzs(:,1))) && any(eyeSzs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(eyeSzs(:,2))) && any(eyeSzs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
+                            margin = 20;
+                            visible = [but.visible];
+                            if ~any(visible)
+                                basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                            else
+                                basePos = min(butRects(2,[but.visible]));
+                            end
+                            eyeImageRect{1} = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-margin/2,basePos-margin-eyeSzs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)         +margin/2,basePos-margin-eyeSzs(2,2));
+                        end
+                    end
+                    
+                    if qChangeMenuArrow
+                        % setup arrow that can be moved with arrow keys
+                        rect = currentMenuRects(currentMenuSel,:);
+                        rect(3) = rect(1)+RectWidth(rect)*.07;
+                        menuActiveCache = obj.getTextCache(wpnt(end),' <color=ff0000>-><color>',rect);
+                        qChangeMenuArrow = false;
+                    end
+
+                    
+                    % drawing
+                    Screen('FillRect', wpnt(1), bgClrP);
+                    Screen('FillRect', wpnt(2), bgClrO);
+                    % draw text with validation accuracy etc info
+                    %obj.drawCachedText(valInfoTopTextCache);
+                    % draw buttons
+                    mousePos = [mx my];
+                    but(1).draw(mousePos,qSelectEyeMenuOpen);
+                    but(2).draw(mousePos,qShowEyeImage);
+                    but(3).draw(mousePos);
+                    but(4).draw(mousePos);
+                    but(5).draw(mousePos,qSelectSnapMenuOpen);
+                    but(6).draw(mousePos,qShowHead);
+                    but(7).draw(mousePos,qShowGaze);
+                    
+                    % draw calibration/validation points
+                    % 1. first draw circles behind each point, denoting point state
+                    if false && ~isempty(highlight)
+                        Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.cal.fixBackSize*1.5/2);
+                    end
+                    % 2. then draw points themselves
+                    obj.drawFixPoints(wpnt(end),pointsO,obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixBackColor,obj.settings.UI.mancal.fixFrontColor);
+                    
+                    
+                    % draw line displays
+                    if ~isempty(lEpos)
+                        Screen('DrawLines',wpnt(end),lEpos,1,eyeClrs{1},[],2);
+                    end
+                    if ~isempty(rEpos)
+                        Screen('DrawLines',wpnt(end),rEpos,1,eyeClrs{2},[],2);
+                    end
+                    
+                    % if any extra info about a point, draw the box
+                    
+                    % if head shown, draw on top
+                    if qShowHead
+                        Screen('FillRect',wpnt(end),headBgClrO,headORect);
+                        drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5);
+                        headO.draw();
+                        % TODO: head location info text?
+                        % str = obj.settings.UI.mancal.instruct.strFunO(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                        % if ~isempty(str)
+                            % DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
+                        % end
+                        if qShowHeadToAll
+                            drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSzP,refPosP,[],refClrP,5);
+                            headP.draw();
+                        end
+                    end
+                    
+                    % if showing gaze, draw
+                    if qShowGaze
+                        clrs = {[],[]};
+                        if obj.calibrateLeftEye
+                            clrs{1} = onlineGazeClr{1,end};
+                        end
+                        if obj.calibrateRightEye
+                            clrs{2} = onlineGazeClr{2,end};
+                        end
+                        drawLiveData(wpnt(end),obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+                        if qShowGazeToAll
+                            if ~isnan(gazePosP(1,1))
+                                Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, gazePosP(1,1), gazePosP(2,1), 10);
+                            end
+                            if ~isnan(gazePosP(1,2))
+                                Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, gazePosP(1,2), gazePosP(2,2), 10);
+                            end
+                        end
+                    end
+                    
+                    
+                    % if selection menu open, draw on top
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        % menu background
+                        Screen('FillRect',wpnt(end),menuBgClr,currentMenuBackRect);
+                        % menuRects, inactive and currently active
+                        Screen('FillRect',wpnt(end),menuItemClr      ,currentMenuRects(~menuActiveItem,:).');
+                        Screen('FillRect',wpnt(end),menuItemClrActive,currentMenuRects( menuActiveItem,:).');
+                        % text in each rect
+                        for c=1:length(currentMenuTextCache)
+                            obj.drawCachedText(currentMenuTextCache(c));
+                        end
+                        obj.drawCachedText(menuActiveCache);
+                    end
+                    
+                    % on participant screen, draw fixation point if
+                    % currently active
+                    
+                    
+                    % drawing done, show
+                    Screen('Flip',wpnt(1),[],0,0,1);
+
+
+                end
+            end
+        end
+        
+        function [head,refPos] = setupHead(obj,wpnt,field,refSz,scrRes,fac,showYaw,isParticipantScreen)
+            % create head and setup looks
+            head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
+            head.refSz              = refSz;
+            head.rectWH             = scrRes*fac;
+            head.headCircleFillClr  = obj.settings.UI.(field).headCircleFillClr;
+            head.headCircleEdgeClr  = obj.settings.UI.(field).headCircleEdgeClr;
+            head.showYaw            = showYaw;
+            head.showEyes           = obj.settings.UI.(field).showEyes;
+            head.eyeClr             = obj.settings.UI.(field).eyeClr;
+            head.showPupils         = obj.settings.UI.(field).showPupils;
+            head.pupilClr           = obj.settings.UI.(field).pupilClr;
+            head.crossClr           = obj.settings.UI.(field).crossClr;
+            head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+            
+            % get reference position
+            if isempty(obj.settings.UI.(field).referencePos)
+                obj.settings.UI.(field).referencePos = [NaN NaN NaN];
+            end
+            head.referencePos       = obj.settings.UI.(field).referencePos;
+            
+            % position reference circle on screen
+            refPos          = scrRes/2;
+            allPosOff       = [0 0];
+            if isParticipantScreen && ~isnan(obj.settings.UI.(field).referencePos(1)) && any(obj.settings.UI.(field).referencePos(1:2)~=0)
+                scrWidth        = obj.geom.displayArea.width/10;
+                scrHeight       = obj.geom.displayArea.height/10;
+                pixPerCm        = mean(scrRes./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
+                allPosOff       = obj.settings.UI.(field).referencePos(1:2).*pixPerCm*fac;
+            end
+            refPos          = refPos+allPosOff;
+            head.allPosOff  = allPosOff;
+        end
+        
         function doEnterCalibrationMode(obj)
             qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
             if qDoMonocular
@@ -3407,6 +4026,27 @@ classdef Titta < handle
                     end
                     WaitSecs('YieldSecs',0.001);    % don't spin too hard
                 end
+            end
+        end
+        
+        function logCalib(obj,out)
+            % log to messages which calibration was selected
+            if ~isnan(out.selectedCal)
+                add = '';
+                if out.wasSkipped
+                    add = ' (note that operator skipped instead of accepted calibration)';
+                end
+                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
+            else
+                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: none',getEyeLbl(obj.settings.calibrateEye)));
+            end
+            
+            % store calibration info in calibration history, for later
+            % retrieval if wanted
+            if isempty(obj.calibrateHistory)
+                obj.calibrateHistory{1} = out;
+            else
+                obj.calibrateHistory{end+1} = out;
             end
         end
         
