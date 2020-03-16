@@ -980,9 +980,11 @@ classdef Titta < handle
             screenState = obj.getScreenInfo(wpnt);
             
             % some preliminary setup, to make sure we are in known state
+            qHasEnteredCalMode = false;
             if bitand(flag,1)
                 obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
                 obj.doEnterCalibrationMode();
+                qHasEnteredCalMode = true;
             end
             obj.StopRecordAll();
             
@@ -1013,7 +1015,7 @@ classdef Titta < handle
             % 2. user didn't request it, but we entered calibration mode
             %    and operator skipped calibration,
             % then issue a leave here now and wait for it to complete
-            if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || out.wasSkipped)
+            if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
                 obj.doLeaveCalibrationMode();
             end
             
@@ -1325,27 +1327,27 @@ classdef Titta < handle
             if qUsingOldWindowsPTBRenderer  % old text PTB renderer on Windows
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font          = sansFont;
-            settings.UI.button.setup.text.size          = 24*textFac;
-            settings.UI.button.setup.text.style         = 0;
+            settings.UI.button.setup.text.font              = sansFont;
+            settings.UI.button.setup.text.size              = 24*textFac;
+            settings.UI.button.setup.text.style             = 0;
             settings.UI.button.setup.toggEyeIm.accelerator  = 'e';
             settings.UI.button.setup.toggEyeIm.visible      = true;
             settings.UI.button.setup.toggEyeIm.string       = 'eye images (<i>e<i>)';
             settings.UI.button.setup.toggEyeIm.fillColor    = toggleButClr.fill;
             settings.UI.button.setup.toggEyeIm.edgeColor    = toggleButClr.edge;
             settings.UI.button.setup.toggEyeIm.textColor    = toggleButClr.text;
-            settings.UI.button.setup.cal.accelerator    = 'space';
-            settings.UI.button.setup.cal.visible        = true;
-            settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
-            settings.UI.button.setup.cal.fillColor      = continueButClr.fill;
-            settings.UI.button.setup.cal.edgeColor      = continueButClr.edge;
-            settings.UI.button.setup.cal.textColor      = continueButClr.text;
-            settings.UI.button.setup.prevcal.accelerator= 'p';
-            settings.UI.button.setup.prevcal.visible    = true;
-            settings.UI.button.setup.prevcal.string     = 'previous calibrations (<i>p<i>)';
-            settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
-            settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
-            settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
+            settings.UI.button.setup.cal.accelerator        = 'space';
+            settings.UI.button.setup.cal.visible            = true;
+            settings.UI.button.setup.cal.string             = 'calibrate (<i>spacebar<i>)';
+            settings.UI.button.setup.cal.fillColor          = continueButClr.fill;
+            settings.UI.button.setup.cal.edgeColor          = continueButClr.edge;
+            settings.UI.button.setup.cal.textColor          = continueButClr.text;
+            settings.UI.button.setup.prevcal.accelerator    = 'p';
+            settings.UI.button.setup.prevcal.visible        = true;
+            settings.UI.button.setup.prevcal.string         = 'previous calibrations (<i>p<i>)';
+            settings.UI.button.setup.prevcal.fillColor      = optionButClr.fill;
+            settings.UI.button.setup.prevcal.edgeColor      = optionButClr.edge;
+            settings.UI.button.setup.prevcal.textColor      = optionButClr.text;
             settings.UI.button.setup.changeeye.accelerator  = 'c';
             settings.UI.button.setup.changeeye.visible      = false;
             settings.UI.button.setup.changeeye.string       = 'change eye (<i>c<i>)';
@@ -1457,6 +1459,93 @@ classdef Titta < handle
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
             settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
+            
+            settings.UI.mancal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %1$.1f cm, target: %4$.1f cm\nY: %2$.1f cm, target: %5$.1f cm\nDistance: %3$.1f cm, target: %6$.1f cm',x,y,z,rx,ry,rz);
+            settings.UI.mancal.instruct.font    = sansFont;
+            settings.UI.mancal.instruct.size    = 24*textFac;
+            settings.UI.mancal.instruct.color   = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.mancal.instruct.style   = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.instruct.vSpacing= 1;
+            settings.UI.button.mancal.text.font             = sansFont;
+            settings.UI.button.mancal.text.size             = 24*textFac;
+            settings.UI.button.mancal.text.style            = 0;
+            settings.UI.button.mancal.changeeye.accelerator = 'c';
+            settings.UI.button.mancal.changeeye.visible     = false;
+            settings.UI.button.mancal.changeeye.string      = 'change eye (<i>c<i>)';
+            settings.UI.button.mancal.changeeye.fillColor   = optionButClr.fill;
+            settings.UI.button.mancal.changeeye.edgeColor   = optionButClr.edge;
+            settings.UI.button.mancal.changeeye.textColor   = optionButClr.text;
+            settings.UI.button.mancal.toggEyeIm.accelerator = 'e';
+            settings.UI.button.mancal.toggEyeIm.visible     = true;
+            settings.UI.button.mancal.toggEyeIm.string      = 'eye images (<i>e<i>)';
+            settings.UI.button.mancal.toggEyeIm.fillColor   = toggleButClr.fill;
+            settings.UI.button.mancal.toggEyeIm.edgeColor   = toggleButClr.edge;
+            settings.UI.button.mancal.toggEyeIm.textColor   = toggleButClr.text;
+            settings.UI.button.mancal.calval.accelerator    = 'm';
+            settings.UI.button.mancal.calval.visible        = true;
+            settings.UI.button.mancal.calval.string         = {'validate (<i>m<i>)','calibrate (<i>m<i>)'};
+            settings.UI.button.mancal.calval.fillColor      = optionButClr.fill;
+            settings.UI.button.mancal.calval.edgeColor      = optionButClr.edge;
+            settings.UI.button.mancal.calval.textColor      = optionButClr.text;
+            settings.UI.button.mancal.continue.accelerator  = 'space';
+            settings.UI.button.mancal.continue.visible      = true;
+            settings.UI.button.mancal.continue.string       = 'continue (<i>space<i>)';
+            settings.UI.button.mancal.continue.fillColor    = continueButClr.fill;
+            settings.UI.button.mancal.continue.edgeColor    = continueButClr.edge;
+            settings.UI.button.mancal.continue.textColor    = continueButClr.text;
+            settings.UI.button.mancal.snapshot.accelerator  = 's';
+            settings.UI.button.mancal.snapshot.visible      = true;
+            settings.UI.button.mancal.snapshot.string       = 'snapshot (<i>s<i>)';
+            settings.UI.button.mancal.snapshot.fillColor    = optionButClr.fill;
+            settings.UI.button.mancal.snapshot.edgeColor    = optionButClr.edge;
+            settings.UI.button.mancal.snapshot.textColor    = optionButClr.text;
+            settings.UI.button.mancal.toggHead.accelerator  = 'h';
+            settings.UI.button.mancal.toggHead.visible      = true;
+            settings.UI.button.mancal.toggHead.string       = 'show head (<i>h<i>)';
+            settings.UI.button.mancal.toggHead.fillColor    = toggleButClr.fill;
+            settings.UI.button.mancal.toggHead.edgeColor    = toggleButClr.edge;
+            settings.UI.button.mancal.toggHead.textColor    = toggleButClr.text;
+            settings.UI.button.mancal.toggGaze.accelerator  = 'g';
+            settings.UI.button.mancal.toggGaze.visible      = true;
+            settings.UI.button.mancal.toggGaze.string       = 'show gaze (<i>g<i>)';
+            settings.UI.button.mancal.toggGaze.fillColor    = toggleButClr.fill;
+            settings.UI.button.mancal.toggGaze.edgeColor    = toggleButClr.edge;
+            settings.UI.button.mancal.toggGaze.textColor    = toggleButClr.text;
+            settings.UI.mancal.menu.bgColor         = 110;
+            settings.UI.mancal.menu.itemColor       = 140;
+            settings.UI.mancal.menu.itemColorActive = 180;
+            settings.UI.mancal.menu.text.font       = sansFont;
+            settings.UI.mancal.menu.text.size       = 24*textFac;
+            settings.UI.mancal.menu.text.color      = 0;
+            settings.UI.mancal.menu.text.eyeColors  = eyeColors;                % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.menu.text.style      = 0;
+            settings.UI.mancal.hover.bgColor        = 110;
+            settings.UI.mancal.hover.text.font      = monoFont;
+            settings.UI.mancal.hover.text.size      = 20*textFac;
+            settings.UI.mancal.hover.text.color     = 0;
+            settings.UI.mancal.hover.text.eyeColors = eyeColors;                % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            
+            settings.UI.mancal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.bgColor              = 127;                      % background color for validation output screen
+            settings.UI.mancal.fixBackSize          = 20;
+            settings.UI.mancal.fixFrontSize         = 5;
+            settings.UI.mancal.fixBackColor         = 0;
+            settings.UI.mancal.fixFrontColor        = 255;
+            settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.mancal.bgColor                 = 127;
+            settings.mancal.fixBackSize             = 20;
+            settings.mancal.fixFrontSize            = 5;
+            settings.mancal.fixBackColor            = 0;
+            settings.mancal.fixFrontColor           = 255;
+            settings.mancal.drawFunction            = [];
+            settings.mancal.doRecordEyeImages       = false;
+            settings.mancal.doRecordExtSignal       = false;
+            settings.mancal.pointNotifyFunction     = [];                       % function that is called upon each calibration point completing
+            settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
+            settings.mancal.val.collectDuration     = 0.5;
+            
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -1674,7 +1763,7 @@ classdef Titta < handle
             end
         end
         
-        function obj.resetScreen(wpnt,state)
+        function resetScreen(~,wpnt,state)
             for w=length(wpnt):-1:1
                 Screen('FillRect',      wpnt(w),state.bgClr{w});                            % reset background color
                 Screen('BlendFunction', wpnt(w),state.osf{w},state.odf{w},state.ocm{w});    % reset blend function
@@ -1717,16 +1806,18 @@ classdef Titta < handle
                 Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
             end
             
-            % setup ovals
+            % setup head displays
             ovalVSz     = .15;
             fac         = 1;
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
             refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
             bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
-            [headP,refPosP] = setupHead(obj,wpnt(1),'setup',refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
-            refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
-            bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
-            [headO,refPosO] = setupHead(obj,wpnt(2),'setup',refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
+            if qHaveOperatorScreen
+                refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+                bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
+                [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
+            end
             
 
             % setup buttons
@@ -3449,6 +3540,14 @@ classdef Titta < handle
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
+            % timing is done in ticks (display refreshes) instead of time.
+            % If multiple screens, get lowest fs as that will determine
+            % tick rate
+            for w=length(wpnt):-1:1
+                fs(w) = Screen('NominalFrameRate',wpnt(w));
+            end
+            fs = min(fs);
+            
             startT                  = obj.sendMessage(sprintf('START MANUAL CALIBRATION (%s)',getEyeLbl(obj.settings.calibrateEye)));
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
@@ -3458,8 +3557,12 @@ classdef Titta < handle
             facO        = .5;
             refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
             refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
-            [headP,refPosP] = setupHead(obj,wpnt(1),'mancal',refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.mancal.head.showYaw,true);
-            [headO,refPosO] = setupHead(obj,wpnt(2),'mancal',refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.mancal.head.showYawToOperator,false);
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.setup.showYaw,true);
+            [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.setup.showYawToOperator,false);
+            % setup head position screen (centered, can be dragged to move)
+            headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            headO.allPosOff = headORect(1:2);
+            refPosO         = refPosO+headORect(1:2);
             
             % setup text for buttons
             Screen('TextFont',  wpnt(end), obj.settings.UI.button.mancal.text.font, obj.settings.UI.button.mancal.text.style);
@@ -3495,16 +3598,12 @@ classdef Titta < handle
             % position them
             yPosTop             = .02*obj.scrInfo.resolution{end}(2);
             buttonOff           = 900;
-            if but(5).visible
-                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(5).rect(3),yPosTop);
-            end
             if but(6).visible
-                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)+buttonOff/2,yPosTop);
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(6).rect(3),yPosTop);
             end
-            
-            % setup head position screen (centered, can be dragged to move)
-            sz = obj.scrInfo.resolution{2}(2)*facO;
-            headORect = CenterRectOnPoint([0 0 sz sz],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            if but(7).visible
+                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
+            end
             
             % setup menu, if any
             menuMargin      = 10;
@@ -3555,10 +3654,10 @@ classdef Titta < handle
             menuItemClr         = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColor      ,wpnt(end));
             menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColorActive,wpnt(end));
             hoverBgClr          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(end));
-            refClrP             = obj.getColorForWindow(obj.settings.UI.mancal.head.refCircleClr,wpnt(1));
-            headBgClrP          = obj.getColorForWindow(obj.settings.UI.mancal.head.bgColor,wpnt(1));
-            refClrO             = obj.getColorForWindow(obj.settings.UI.mancal.head.refCircleClr,wpnt(2));
-            headBgClrO          = obj.getColorForWindow(obj.settings.UI.mancal.head.bgColor,wpnt(2));
+            refClrP             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
+            headBgClrP          = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
+            refClrO             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+            headBgClrO          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(2));
             for w=length(wpnt):-1:1
                 onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.mancal.onlineGaze.eyeColors,'uni',false);
             end
@@ -3627,7 +3726,7 @@ classdef Titta < handle
                     % get point rects on operator screen
                     calValRects = zeros(size(pointsO,1),4);
                     for p=1:size(pointsO,1)
-                        calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],pointsO(p,3),pointsO(p,4));
+                        calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],pointsO(p,1),pointsO(p,2));
                     end
                     qUpdateCursors = true;
                 end
@@ -3794,17 +3893,40 @@ classdef Titta < handle
                 
                 % draw loop
                 while true
+                    % get eye data if needed
+                    if qShowGazeToAll || qShowHead
+                        eyeData     = obj.buffer.peekN('gaze',1);
+                    end
                     % per frame updates
                     if qShowGazeToAll
                         % prep gaze data
                         gazePosP    = nan(2,2);
-                        eyeData     = obj.buffer.peekN('gaze');
                         if ~isempty(eyeData.systemTimeStamp)
                             if ismember(cal{selection}.eye,{'both','left'})  && eyeData. left.gazePoint.valid(end)
                                 gazePosP(:,1) = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             end
                             if ismember(cal{selection}.eye,{'both','right'}) && eyeData.right.gazePoint.valid(end)
                                 gazePosP(:,2) = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            end
+                        end
+                    end
+                    
+                    % prep head
+                    if qShowHead
+                        posGuide    = obj.buffer.peekN('positioning',1);
+                        if isempty(eyeData.systemTimeStamp)
+                            headO.update([],[],[],[], [],[],[],[]);
+                            if qShowHeadToAll
+                                headP.update([],[],[],[], [],[],[],[]);
+                            end
+                        else
+                            headO.update(...
+                                eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                                eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                            if qShowHeadToAll
+                                headP.update(...
+                                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
                             end
                         end
                     end
@@ -3818,14 +3940,14 @@ classdef Titta < handle
                         % update eye image locations if size of returned eye image changed
                         if (~any(isnan(eyeSzs(:,1))) && any(eyeSzs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(eyeSzs(:,2))) && any(eyeSzs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
                             margin = 20;
-                            visible = [but.visible];
+                            visible = [but(1:5).visible];
                             if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution{1}(2)*.95);
                             else
-                                basePos = min(butRects(2,[but.visible]));
+                                basePos = min(butRects([but(1:5).visible],2));
                             end
                             eyeImageRect{1} = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-margin/2,basePos-margin-eyeSzs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)         +margin/2,basePos-margin-eyeSzs(2,2));
+                            eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)            +margin/2,basePos-margin-eyeSzs(2,2));
                         end
                     end
                     
@@ -3847,7 +3969,7 @@ classdef Titta < handle
                     mousePos = [mx my];
                     but(1).draw(mousePos,qSelectEyeMenuOpen);
                     but(2).draw(mousePos,qShowEyeImage);
-                    but(3).draw(mousePos);
+                    but(3).draw(mousePos,strcmp(stage,'val'));
                     but(4).draw(mousePos);
                     but(5).draw(mousePos,qSelectSnapMenuOpen);
                     but(6).draw(mousePos,qShowHead);
@@ -3863,12 +3985,12 @@ classdef Titta < handle
                     
                     
                     % draw line displays
-                    if ~isempty(lEpos)
-                        Screen('DrawLines',wpnt(end),lEpos,1,eyeClrs{1},[],2);
-                    end
-                    if ~isempty(rEpos)
-                        Screen('DrawLines',wpnt(end),rEpos,1,eyeClrs{2},[],2);
-                    end
+%                     if ~isempty(lEpos)
+%                         Screen('DrawLines',wpnt(end),lEpos,1,eyeClrs{1},[],2);
+%                     end
+%                     if ~isempty(rEpos)
+%                         Screen('DrawLines',wpnt(end),rEpos,1,eyeClrs{2},[],2);
+%                     end
                     
                     % if any extra info about a point, draw the box
                     
@@ -3877,11 +3999,10 @@ classdef Titta < handle
                         Screen('FillRect',wpnt(end),headBgClrO,headORect);
                         drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5);
                         headO.draw();
-                        % TODO: head location info text?
-                        % str = obj.settings.UI.mancal.instruct.strFunO(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
-                        % if ~isempty(str)
-                            % DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
-                        % end
+                        str = obj.settings.UI.mancal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                        if ~isempty(str)
+                            DrawFormattedText(wpnt(2),str,'center',headORect(2)+facO*.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.mancal.instruct.color,[],[],[],obj.settings.UI.mancal.instruct.vSpacing);
+                        end
                         if qShowHeadToAll
                             drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSzP,refPosP,[],refClrP,5);
                             headP.draw();
@@ -3935,35 +4056,35 @@ classdef Titta < handle
             end
         end
         
-        function [head,refPos] = setupHead(obj,wpnt,field,refSz,scrRes,fac,showYaw,isParticipantScreen)
+        function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,showYaw,isParticipantScreen)
             % create head and setup looks
             head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
             head.rectWH             = scrRes*fac;
-            head.headCircleFillClr  = obj.settings.UI.(field).headCircleFillClr;
-            head.headCircleEdgeClr  = obj.settings.UI.(field).headCircleEdgeClr;
+            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
+            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
             head.showYaw            = showYaw;
-            head.showEyes           = obj.settings.UI.(field).showEyes;
-            head.eyeClr             = obj.settings.UI.(field).eyeClr;
-            head.showPupils         = obj.settings.UI.(field).showPupils;
-            head.pupilClr           = obj.settings.UI.(field).pupilClr;
-            head.crossClr           = obj.settings.UI.(field).crossClr;
+            head.showEyes           = obj.settings.UI.setup.showEyes;
+            head.eyeClr             = obj.settings.UI.setup.eyeClr;
+            head.showPupils         = obj.settings.UI.setup.showPupils;
+            head.pupilClr           = obj.settings.UI.setup.pupilClr;
+            head.crossClr           = obj.settings.UI.setup.crossClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             
             % get reference position
-            if isempty(obj.settings.UI.(field).referencePos)
-                obj.settings.UI.(field).referencePos = [NaN NaN NaN];
+            if isempty(obj.settings.UI.setup.referencePos)
+                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
             end
-            head.referencePos       = obj.settings.UI.(field).referencePos;
+            head.referencePos       = obj.settings.UI.setup.referencePos;
             
             % position reference circle on screen
-            refPos          = scrRes/2;
+            refPos          = scrRes/2*fac;
             allPosOff       = [0 0];
-            if isParticipantScreen && ~isnan(obj.settings.UI.(field).referencePos(1)) && any(obj.settings.UI.(field).referencePos(1:2)~=0)
+            if isParticipantScreen && ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
                 scrWidth        = obj.geom.displayArea.width/10;
                 scrHeight       = obj.geom.displayArea.height/10;
                 pixPerCm        = mean(scrRes./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
-                allPosOff       = obj.settings.UI.(field).referencePos(1:2).*pixPerCm*fac;
+                allPosOff       = obj.settings.UI.setup.referencePos(1:2).*pixPerCm*fac;
             end
             refPos          = refPos+allPosOff;
             head.allPosOff  = allPosOff;
