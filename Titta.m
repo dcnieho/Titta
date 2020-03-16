@@ -1664,6 +1664,7 @@ classdef Titta < handle
             fixPos = ([-1 -1; -1 1; 1 1; 1 -1]*.9/2+.5) .* repmat(obj.scrInfo.resolution{1},4,1);
             
             % setup menu, if any
+            currentMenuItem = 0;
             if qCanDoMonocularCalib
                 margin          = 10;
                 pad             = 3;
