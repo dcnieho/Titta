@@ -138,8 +138,13 @@ try
         % keypresses from leaking through to matlab
         ListenChar(2);
     end
-    calValInfo = EThndl.calibrate(wpnt);
+    calInfo = EThndl.calibrate(wpnt);
     ListenChar(0);
+    
+    % find out which eye(s) to use, start acquiring samples
+    eye     = calInfo.attempt{calInfo.selectedCal}.eye;
+    useLeft = ismember(eye,{ 'left','both'});
+    useRight= ismember(eye,{'right','both'});
     EThndl.buffer.start('gaze');
     
     paddlePos = XMAX/2;     % start in center of screen horizontally
@@ -173,17 +178,27 @@ try
         % update paddle
         % 1. get eye data, determine how far to move
         samp    = EThndl.buffer.consumeN('gaze');
-        % see if have a sample with both eyes
-        qSelect = samp.left.gazePoint.valid & samp.left.gazePoint.valid;
-        if ~any(qSelect)
-            % if not, see if have sample for one of the eyes
+        % see if have a sample with both eyes, or of the selected eye if
+        % running monocular
+        qSelect = (~useLeft | samp.left.gazePoint.valid) & (~useRight | samp.left.gazePoint.valid);
+        if ~any(qSelect) && useLeft && useRight
+            % in case of using both eyes, if no sample for both eyes, see
+            % if we at least have a sample for one of the eyes
             qSelect = samp.left.gazePoint.valid | samp.right.gazePoint.valid;
         end
         i = find(qSelect,1,'last');
         % if have some form of eye position, update paddle position
         if ~isempty(i)
             gazeX   = [samp.left.gazePoint.onDisplayArea(1,i) samp.right.gazePoint.onDisplayArea(1,i)];
-            gazeX   = mean(gazeX(~isnan(gazeX)))*width;
+            % block out unused eye
+            if ~useLeft
+                gazeX(1) = nan;
+            end
+            if ~useRight
+                gazeX(2) = nan;
+            end
+            % get average
+            gazeX   = mean(gazeX,'omitnan')*width;
             trans   = gazeX-paddlePos;
             % 2. clamp paddle position to play area
             if paddlePos+trans-paddleWidth/2<XMIN
