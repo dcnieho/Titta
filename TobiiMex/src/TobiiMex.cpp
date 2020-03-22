@@ -463,7 +463,7 @@ void TobiiMex::clearLicenses()
 //// calibration
 void TobiiMex::calibrationThread()
 {
-    bool keepRunning            = true;
+    bool keepRunning = true;
     TobiiResearchStatus result;
     while (keepRunning)
     {
