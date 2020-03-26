@@ -1462,7 +1462,7 @@ classdef Titta < handle
             
             settings.UI.mancal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %1$.1f cm, target: %4$.1f cm\nY: %2$.1f cm, target: %5$.1f cm\nDistance: %3$.1f cm, target: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.mancal.instruct.font    = sansFont;
-            settings.UI.mancal.instruct.size    = 24*textFac;
+            settings.UI.mancal.instruct.size    = 16*textFac;
             settings.UI.mancal.instruct.color   = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.mancal.instruct.style   = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.mancal.instruct.vSpacing= 1;
@@ -3688,8 +3688,8 @@ classdef Titta < handle
             eyeSzs                  = [];
             eyeImageRect            = repmat({zeros(1,4)},1,2);
             % 6. online gaze
-            qShowGazeToAll          = false;
             qShowGaze               = false;
+            qShowGazeToAll          = false;
             % 7. point selection by mouse and info about validated points
             fixPointRectSz          = 80*obj.scrInfo.sFac;
             openInfoForPoint        = nan;
@@ -3729,6 +3729,7 @@ classdef Titta < handle
                         calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],pointsO(p,1),pointsO(p,2));
                     end
                     qUpdateCursors = true;
+                    qToggleStage = false;
                 end
                 
                 % setup menu, if any
@@ -3775,6 +3776,7 @@ classdef Titta < handle
                         currentMenuSel      = find(menuActiveItem);
                         qChangeMenuArrow    = true;
                     end
+                    qToggleSelectSnapMenu = false;
                 elseif qToggleSelectEyeMenu
                     qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
                     if qSelectEyeMenuOpen
@@ -3785,6 +3787,7 @@ classdef Titta < handle
                         currentMenuSel      = find(menuActiveItem);
                         qChangeMenuArrow    = true;
                     end
+                    qToggleSelectEyeMenu = false;
                 end
                 
                 % switch on/off eye images
@@ -3843,7 +3846,7 @@ classdef Titta < handle
                     end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
-                    headP.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headP.crossEye  = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
                     headO.crossEye  = headP.crossEye;
                     qSelectedEyeChanged = false;
                     % TODO: update line display? yes, wipe it
@@ -3997,8 +4000,10 @@ classdef Titta < handle
                     % if head shown, draw on top
                     if qShowHead
                         Screen('FillRect',wpnt(end),headBgClrO,headORect);
-                        drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5);
+                        drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5*facO);
                         headO.draw();
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.instruct.font, obj.settings.UI.mancal.instruct.style);
+                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.instruct.size);
                         str = obj.settings.UI.mancal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                         if ~isempty(str)
                             DrawFormattedText(wpnt(2),str,'center',headORect(2)+facO*.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.mancal.instruct.color,[],[],[],obj.settings.UI.mancal.instruct.vSpacing);
@@ -4051,7 +4056,166 @@ classdef Titta < handle
                     % drawing done, show
                     Screen('Flip',wpnt(1),[],0,0,1);
 
-
+                    % get user response
+                    [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress(wpnt(end));
+                    % update cursor look if needed
+                    cursor.update(mx,my);
+                    if any(buttons)
+                        % don't care which button for now. determine if clicked on either
+                        % of the buttons
+                        if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                            iIn = find(inRect([mx my],[currentMenuRects.' currentMenuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
+                            if ~isempty(iIn)
+                                if qSelectEyeMenuOpen
+                                    if iIn<=3
+                                        currentMenuSel      = iIn;
+                                        qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                        qToggleSelectEyeMenu= true;
+                                        break;
+                                    end
+                                elseif qSelectSnapMenuOpen
+                                    % TODO
+                                    qToggleSelectSnapMenu   = true;
+                                    break;
+                                end
+                            else
+                                if qSelectEyeMenuOpen
+                                    qToggleSelectEyeMenu    = true;
+                                elseif qSelectSnapMenuOpen
+                                    qToggleSelectSnapMenu   = true;
+                                end
+                                break;
+                            end
+                        end
+                        if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
+                            qIn = inRect([mx my],butRects.');
+                            if any(qIn)
+                                if qIn(1)
+                                    qToggleSelectEyeMenu= true;
+                                elseif qIn(2)
+                                    qToggleEyeImage     = true;
+                                elseif qIn(3)
+                                    qToggleStage        = true;
+                                elseif qIn(4)
+                                    status              = 1;
+                                    qDoneWithManualCalib= true;
+                                elseif qIn(5)
+                                    qToggleSelectEyeMenu= true;
+                                elseif qIn(6)
+                                    qShowHead           = ~qShowHead;
+                                    qShowHeadToAll      = shiftIsDown;
+                                elseif qIn(7)
+                                    qShowGaze           = ~qShowGaze;
+                                    qShowGazeToAll      = shiftIsDown;
+                                end
+                                break;
+                            end
+                        end
+                    elseif any(keyCode)
+                        keys = KbName(keyCode);
+                        if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                            if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)))
+                                if qSelectEyeMenuOpen
+                                    qToggleSelectEyeMenu    = true;
+                                elseif qSelectSnapMenuOpen
+                                    qToggleSelectSnapMenu   = true;
+                                end
+                                break;
+%                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+%                                 requested           = str2double(keys(1));
+%                                 if requested<=length(iValid)
+%                                     newSelection        = iValid(requested);
+%                                     qSelectedCalChanged = selection~=newSelection;
+%                                     qToggleSelectMenu   = true;
+%                                 end
+%                                 break;
+%                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
+%                                 newSelection        = iValid(currentMenuSel);
+%                                 qSelectedCalChanged = selection~=newSelection;
+%                                 qToggleSelectMenu   = true;
+%                                 break;
+%                             else
+%                                 if ~iscell(keys), keys = {keys}; end
+%                                 if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+%                                     % up arrow key (test so round-about
+%                                     % because KbName could return both 'up'
+%                                     % and 'UpArrow', depending on platform
+%                                     % and mode)
+%                                     if currentMenuSel>1
+%                                         currentMenuSel   = currentMenuSel-1;
+%                                         qChangeMenuArrow = true;
+%                                         break;
+%                                     end
+%                                 elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+%                                     % down key
+%                                     if currentMenuSel<length(iValid)
+%                                         currentMenuSel   = currentMenuSel+1;
+%                                         qChangeMenuArrow = true;
+%                                         break;
+%                                     end
+%                                 end
+                            end
+                        else
+                            if any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
+                                status = 1;
+                                qDoneWithManualCalib= true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))
+                                qToggleSelectEyeMenu= true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggEyeIm.accelerator)) && qHasEyeIm
+                                qToggleEyeImage     = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calval.accelerator))
+                                qToggleStage        = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator))
+                                qToggleSelectSnapMenu = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator))
+                                qShowHead           = ~qShowHead;
+                                qShowHeadToAll      = shiftIsDown;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
+                                qShowGaze           = ~qShowGaze;
+                                qShowGazeToAll      = shiftIsDown;
+                                break;
+                            end
+                        end
+                        
+                        % these key combinations should always be available
+                        if any(strcmpi(keys,'escape')) && shiftIsDown
+                            status = -5;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'s')) && shiftIsDown
+                            % skip calibration
+                            status = 2;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'d')) && shiftIsDown
+                            % take screenshot
+                            takeScreenshot(wpnt(1));
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown
+                            % take screenshot of operator screen
+                            takeScreenshot(wpnt(2));
+                        end
+                    end
+                    % check if hovering over point for which we have info
+                    if ~isempty(calValRects)
+                        iIn = find(inRect([mx my],calValRects.'));
+                        if ~isempty(iIn)
+                            % see if new point
+                            if pointToShowInfoFor~=iIn
+                                openInfoForPoint = iIn;
+                                break;
+                            end
+                        elseif ~isnan(pointToShowInfoFor)
+                            % stop showing info
+                            pointToShowInfoFor = nan;
+                            break;
+                        end
+                    end
                 end
             end
         end
@@ -4063,6 +4227,7 @@ classdef Titta < handle
             head.rectWH             = scrRes*fac;
             head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
             head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
+            head.headCircleEdgeWidth= head.headCircleEdgeWidth*fac;
             head.showYaw            = showYaw;
             head.showEyes           = obj.settings.UI.setup.showEyes;
             head.eyeClr             = obj.settings.UI.setup.eyeClr;
