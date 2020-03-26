@@ -3842,12 +3842,12 @@ classdef Titta < handle
                     end
                     extraInp = {};
                     if ~strcmp(obj.settings.calibrateEye,'both')
-                        extraInp            = {obj.settings.calibrateEye};
+                        extraInp        = {obj.settings.calibrateEye};
                     end
                     % update states of this screen
-                    currentMenuItem = currentMenuSel;
-                    headP.crossEye  = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
-                    headO.crossEye  = headP.crossEye;
+                    currentEyeMenuItem  = currentMenuSel;
+                    headP.crossEye      = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye      = headP.crossEye;
                     qSelectedEyeChanged = false;
                     % TODO: update line display? yes, wipe it
                 end
