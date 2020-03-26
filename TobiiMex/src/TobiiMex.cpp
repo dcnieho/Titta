@@ -628,8 +628,7 @@ bool TobiiMex::leaveCalibrationMode(std::optional<bool> force_)
         // tell thread to quit and wait until it quits
         // this calls tobii_research_screen_based_calibration_leave_calibration_mode() in the thread function before exiting
         _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::Exit});
-        if (_calibrationThread.joinable())
-            _calibrationThread.join();
+        _calibrationThread.join();
         issuedLeave = true;
     }
 
