@@ -3964,6 +3964,20 @@ classdef Titta < handle
                     but(6).draw(mousePos,qShowHead);
                     but(7).draw(mousePos,qShowGaze);
                     
+                    % draw eye images, if any
+                    if qShowEyeImage
+                        if eyeTexs(1)
+                            Screen('DrawTexture', wpnt(end), eyeTexs(1),[],eyeImageRect{1});
+                        else
+                            Screen('FillRect', wpnt(end), 0, eyeImageRect{1});
+                        end
+                        if eyeTexs(2)
+                            Screen('DrawTexture', wpnt(end), eyeTexs(2),[],eyeImageRect{2});
+                        else
+                            Screen('FillRect', wpnt(end), 0, eyeImageRect{2});
+                        end
+                    end
+                    
                     % draw calibration/validation points
                     % 1. first draw circles behind each point, denoting point state
                     if false && ~isempty(highlight)
