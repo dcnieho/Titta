@@ -4263,7 +4263,6 @@ classdef Titta < handle
             obj.buffer.stop('positioning');
             obj.buffer.stop('gaze');
             obj.sendMessage(sprintf('STOP SETUP (%s)',getEyeLbl(obj.settings.calibrateEye)));
-            %obj.buffer.clearTimeRange('gaze',startT);       % clear buffer from start time until now (now=default third argument)
             obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
             if qHasEyeIm
                 obj.buffer.stop('eyeImage');
