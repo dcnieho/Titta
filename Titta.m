@@ -322,6 +322,45 @@ classdef Titta < handle
             obj.settings.UI.button.val.toggCal.fillColor    = color2RGBA(obj.settings.UI.button.val.toggCal.fillColor);
             obj.settings.UI.button.val.toggCal.edgeColor    = color2RGBA(obj.settings.UI.button.val.toggCal.edgeColor);
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
+            
+            obj.settings.UI.mancal.instruct.color               = color2RGBA(obj.settings.UI.mancal.instruct.color);
+            obj.settings.UI.button.mancal.changeeye.fillColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.fillColor);
+            obj.settings.UI.button.mancal.changeeye.edgeColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.edgeColor);
+            obj.settings.UI.button.mancal.changeeye.textColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.textColor);
+            obj.settings.UI.button.mancal.toggEyeIm.fillColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.fillColor);
+            obj.settings.UI.button.mancal.toggEyeIm.edgeColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.edgeColor);
+            obj.settings.UI.button.mancal.toggEyeIm.textColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.textColor);
+            obj.settings.UI.button.mancal.calval.fillColor      = color2RGBA(obj.settings.UI.button.mancal.calval.fillColor);
+            obj.settings.UI.button.mancal.calval.edgeColor      = color2RGBA(obj.settings.UI.button.mancal.calval.edgeColor);
+            obj.settings.UI.button.mancal.calval.textColor      = color2RGBA(obj.settings.UI.button.mancal.calval.textColor);
+            obj.settings.UI.button.mancal.continue.fillColor    = color2RGBA(obj.settings.UI.button.mancal.continue.fillColor);
+            obj.settings.UI.button.mancal.continue.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.continue.edgeColor);
+            obj.settings.UI.button.mancal.continue.textColor    = color2RGBA(obj.settings.UI.button.mancal.continue.textColor);
+            obj.settings.UI.button.mancal.snapshot.fillColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.fillColor);
+            obj.settings.UI.button.mancal.snapshot.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.edgeColor);
+            obj.settings.UI.button.mancal.snapshot.textColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.textColor);
+            obj.settings.UI.button.mancal.toggHead.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.fillColor);
+            obj.settings.UI.button.mancal.toggHead.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.edgeColor);
+            obj.settings.UI.button.mancal.toggHead.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.textColor);
+            obj.settings.UI.button.mancal.toggGaze.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.fillColor);
+            obj.settings.UI.button.mancal.toggGaze.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.edgeColor);
+            obj.settings.UI.button.mancal.toggGaze.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.textColor);
+            obj.settings.UI.mancal.menu.bgColor                 = color2RGBA(obj.settings.UI.mancal.menu.bgColor);
+            obj.settings.UI.mancal.menu.itemColor               = color2RGBA(obj.settings.UI.mancal.menu.itemColor);
+            obj.settings.UI.mancal.menu.itemColorActive         = color2RGBA(obj.settings.UI.mancal.menu.itemColorActive);
+            obj.settings.UI.mancal.menu.text.color              = color2RGBA(obj.settings.UI.mancal.menu.text.color);
+            obj.settings.UI.mancal.menu.text.eyeColors          = color2RGBA(obj.settings.UI.mancal.menu.text.eyeColors);
+            obj.settings.UI.mancal.hover.bgColor                = color2RGBA(obj.settings.UI.mancal.hover.bgColor);
+            obj.settings.UI.mancal.hover.text.color             = color2RGBA(obj.settings.UI.mancal.hover.text.color);
+            obj.settings.UI.mancal.hover.text.eyeColors         = color2RGBA(obj.settings.UI.mancal.hover.text.eyeColors);
+            obj.settings.UI.mancal.onlineGaze.eyeColors         = color2RGBA(obj.settings.UI.mancal.onlineGaze.eyeColors);
+            obj.settings.UI.mancal.eyeColors                    = color2RGBA(obj.settings.UI.mancal.eyeColors);
+            obj.settings.UI.mancal.bgColor                      = color2RGBA(obj.settings.UI.mancal.bgColor);
+            obj.settings.UI.mancal.fixBackColor                 = color2RGBA(obj.settings.UI.mancal.fixBackColor);
+            obj.settings.UI.mancal.fixFrontColor                = color2RGBA(obj.settings.UI.mancal.fixFrontColor);
+            obj.settings.mancal.bgColor                         = color2RGBA(obj.settings.mancal.bgColor);
+            obj.settings.mancal.fixBackColor                    = color2RGBA(obj.settings.mancal.fixBackColor);
+            obj.settings.mancal.fixFrontColor                   = color2RGBA(obj.settings.mancal.fixFrontColor);
         end
         
         % getters
