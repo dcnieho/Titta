@@ -2012,10 +2012,10 @@ classdef Titta < handle
                     qToggleSelectMenu   = false;
                     currentMenuSel      = currentMenuItem;
                     if qSelectMenuOpen
-                        cursors.rect    = num2cell(menuRects.',1);
+                        cursors.rect    = menuRects.';
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1));     % clickable items
                     else
-                        cursors.rect    = num2cell(butRects,1);
+                        cursors.rect    = butRects;
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));  % clickable items
                     end
                     
@@ -3230,10 +3230,10 @@ classdef Titta < handle
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = [num2cell(menuRects.',1) num2cell(butRects(1:3,:).',1)];
+                        cursors.rect    = [menuRects.' butRects(1:3,:).'];
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1)+3); % clickable items
                     else
-                        cursors.rect    = num2cell(butRects.',1);
+                        cursors.rect    = butRects.';
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));      % clickable items
                     end
                     
