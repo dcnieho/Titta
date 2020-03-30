@@ -3636,6 +3636,8 @@ classdef Titta < handle
             if but(7).visible
                 but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
             end
+            % get all butRects, needed below in script
+            butRects        = cat(1,but.rect).';
             
             % setup menu, if any
             menuMargin      = 10;
@@ -3700,6 +3702,10 @@ classdef Titta < handle
             qShowHead               = true;
             qShowHeadToAll          = false;
             circVerts               = genCircle(200);
+            qDraggingHead           = false;
+            dragPos                 = [];
+            headResizingGrip        = nan;  % denotes which corner/edge is being dragged for resize action, nan if none currently active
+            headOriRect             = [];
             % 2. calibration/validation state
             qToggleStage            = true;
             stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
@@ -3842,14 +3848,20 @@ classdef Titta < handle
                 
                 % update cursors
                 if qUpdateCursors
-                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
-                        cursors.rect    = num2cell(currentMenuRects.',1);
-                    else
-                        butRects        = cat(1,but.rect);
-                        cursors.rect    = num2cell(butRects.',1);
+                    headRects   = [];
+                    headCursors = [];
+                    if qShowHead
+                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor.normal);
                     end
-                    cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));      % clickable items
-                    cursors.other   = obj.settings.UI.cursor.normal;                                        % default
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        otherRects  = currentMenuRects.';
+                    else
+                        otherRects  = butRects;
+                    end
+                    otherCursors    = repmat(obj.settings.UI.cursor.clickable,1,size(otherRects,2));    % clickable items
+                    cursors.rect    = [headRects otherRects];
+                    cursors.cursor  = [headCursors otherCursors];      
+                    cursors.other   = obj.settings.UI.cursor.normal;                                    % default
                     cursors.qReset  = false;
                     % NB: don't reset cursor to invisible here as it will then flicker every
                     % time you click something. default behaviour is good here
@@ -3972,7 +3984,7 @@ classdef Titta < handle
                             if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution{1}(2)*.95);
                             else
-                                basePos = min(butRects([but(1:5).visible],2));
+                                basePos = min(butRects(2,[but(1:5).visible]));
                             end
                             eyeImageRect{1} = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-margin/2,basePos-margin-eyeSzs(2,1));
                             eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)            +margin/2,basePos-margin-eyeSzs(2,2));
@@ -4045,7 +4057,7 @@ classdef Titta < handle
                         Screen('TextSize', wpnt(end), obj.settings.UI.mancal.instruct.size);
                         str = obj.settings.UI.mancal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                         if ~isempty(str)
-                            DrawFormattedText(wpnt(2),str,'center',headORect(2)+facO*.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.mancal.instruct.color,[],[],[],obj.settings.UI.mancal.instruct.vSpacing);
+                            DrawFormattedText2(str,'win',wpnt(2),'sx','center','xalign','center','xlayout','center','sy',.03*RectHeight(headORect),'yalign','top','baseColor',obj.settings.UI.mancal.instruct.color,'vSpacing',obj.settings.UI.mancal.instruct.vSpacing,'winRect',headORect);
                         end
                         if qShowHeadToAll
                             drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSzP,refPosP,[],refClrP,5);
@@ -4096,10 +4108,35 @@ classdef Titta < handle
                     Screen('Flip',wpnt(1),[],0,0,1);
 
                     % get user response
-                    [mx,my,buttons,keyCode,shiftIsDown] = obj.getNewMouseKeyPress(wpnt(end));
+                    [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
+                    % if any drag active change head rect position/size
+                    if qDraggingHead || ~isnan(headResizingGrip)
+                        % get current size
+                        w = RectWidth(headORect);
+                        h = RectHeight(headORect);
+                        % update headORect
+                        if qDraggingHead
+                            vec                 = [mx my]-dragPos;
+                            [headORect,refPosO] = updateHeadDrag(headOriRect,vec,obj.scrInfo.resolution{2},facO,headO);
+                        else
+                        end
+                        % update scale factor and some params of head
+                        % display
+%                         facO
+                        
+                        % also update cursor rects
+                        headRects = getSelectionRects(headORect,4,obj.settings.UI.cursor.normal);
+                        cursor.cursorRects(:,1:size(headRects,2)) = headRects;
+                    end
                     % update cursor look if needed
                     cursor.update(mx,my);
-                    if any(buttons)
+                    if (qDraggingHead || ~isnan(headResizingGrip)) && any(mouseRelease)
+                        % drag/resize finished, headORect already reflects
+                        % correct position/size, just update
+                        % dragging/resizing state
+                        qDraggingHead           = false;
+                        headResizingGrip        = nan;
+                    elseif any(mousePress)
                         % don't care which button for now. determine if clicked on either
                         % of the buttons
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
@@ -4127,31 +4164,42 @@ classdef Titta < handle
                             end
                         end
                         if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qIn = inRect([mx my],butRects.');
-                            if any(qIn)
-                                if qIn(1)
+                            qInBut = inRect([mx my],butRects);
+                            qOnHead= inRect([mx my],headRects);
+                            if any(qOnHead)
+                                % starting drag/resize of head
+                                if qOnHead(end)
+                                    qDraggingHead       = true;
+                                    dragPos             = [mx my];
+                                else
+                                    headResizingGrip    = find(qOnHead);
+                                end
+                                headOriRect             = headORect;
+                            elseif any(qInBut)
+                                if qInBut(1)
                                     qToggleSelectEyeMenu= true;
-                                elseif qIn(2)
+                                elseif qInBut(2)
                                     qToggleEyeImage     = true;
-                                elseif qIn(3)
+                                elseif qInBut(3)
                                     qToggleStage        = true;
-                                elseif qIn(4)
+                                elseif qInBut(4)
                                     status              = 1;
                                     qDoneWithManualCalib= true;
-                                elseif qIn(5)
+                                elseif qInBut(5)
                                     qToggleSelectEyeMenu= true;
-                                elseif qIn(6)
+                                elseif qInBut(6)
                                     qShowHead           = ~qShowHead;
                                     qShowHeadToAll      = shiftIsDown;
-                                elseif qIn(7)
+                                elseif qInBut(7)
                                     qShowGaze           = ~qShowGaze;
                                     qShowGazeToAll      = shiftIsDown;
                                 end
                                 break;
+                                % start drag
                             end
                         end
-                    elseif any(keyCode)
-                        keys = KbName(keyCode);
+                    elseif any(keyPress)
+                        keys = KbName(keyPress);
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
                             if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)))
                                 if qSelectEyeMenuOpen
@@ -4205,7 +4253,14 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
+                            if qDraggingHead || ~isnan(headResizingGrip)
+                                % cancel drag/resize of head display
+                                qDraggingHead           = false;
+                                headResizingGrip        = nan;
+                                [headORect,refPosO]     = updateHeadDrag(headOriRect,[0 0],obj.scrInfo.resolution{2},facO,headO);
+                                qUpdateCursors          = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
                                 status = 1;
                                 qDoneWithManualCalib= true;
                                 break;
@@ -4399,9 +4454,10 @@ classdef Titta < handle
             end
         end
         
-        function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj,win)
+        function [mx,my,mouse,key,shiftIsDown,mouseRelease,keyRelease] = getNewMouseKeyPress(obj,win)
             % function that only returns key depress state changes in the
-            % down direction, not keys that are held down or anything else
+            % down and up directions, not keys that are held down or
+            % anything else
             % NB: before using this, make sure internal state is up to
             % date!
             if nargin<2
@@ -4444,8 +4500,11 @@ classdef Titta < handle
             
             % get only fresh mouse and key presses (so change from state
             % "up" to state "down")
-            key     = keyCode & ~obj.keyState;
-            mouse   = buttons & ~obj.mouseState;
+            key         = keyCode & ~obj.keyState;
+            mouse       = buttons & ~obj.mouseState;
+            % check also for key or mouse button releases
+            mouseRelease= ~buttons & obj.mouseState;
+            keyRelease  = ~keyCode & obj.keyState;
             
             % get if shift key is currently down
             if any(keyCode)
@@ -4597,4 +4656,40 @@ end
 fname   = fullfile(dir,[datestr(now,'yyyy-mm-dd HH.MM.SS.FFF') '.png']);
 scrShot = Screen('GetImage',wpnt);
 imwrite(scrShot,fname);
+end
+
+function [headRects,headCursors] = getSelectionRects(headORect,margin,normCurs)
+headRects = repmat(headORect.',1,9);
+% add resize handle points
+rs = GrowRect(headORect,-margin,-margin);
+rb = GrowRect(headORect, margin, margin);
+%%% corners
+% left-upper
+headRects(:,1) = [rb(1) rb(2) rs(1) rs(2)];
+% right-upper
+headRects(:,2) = [rs(3) rb(2) rb(3) rs(2)];
+% left-lower
+headRects(:,3) = [rb(1) rs(4) rs(1) rb(4)];
+% right upper
+headRects(:,4) = [rs(3) rs(4) rb(3) rb(4)];
+%%% edges
+% upper
+headRects(:,5) = [rs(1) rb(2) rs(3) rs(2)];
+% lower
+headRects(:,6) = [rs(1) rs(4) rs(3) rb(4)];
+% left
+headRects(:,7) = [rb(1) rs(2) rs(1) rs(4)];
+% right
+headRects(:,8) = [rs(3) rs(2) rb(3) rs(4)];
+% drag rect should be the smaller rect itself
+headRects(:,9) = rs;
+% corresponding cursors
+headCursors = [9 10 9 10 4 4 5 5 normCurs];
+end
+
+function [headORect,refPosO] = updateHeadDrag(headOriRect,vec,scrRes,fac,headO)
+headORect       = OffsetRect(headOriRect,vec(1),vec(2));
+headO.allPosOff = headORect(1:2);
+refPosO         = scrRes/2*fac;
+refPosO         = refPosO+headORect(1:2);
 end
