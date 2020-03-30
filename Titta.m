@@ -3815,8 +3815,8 @@ classdef Titta < handle
                         currentMenuBackRect = eyeMenuBackRect;
                         currentMenuRects    = eyeMenuRects;
                         currentMenuTextCache= eyeMenuTextCache;
-                        menuActiveItem      = currentEyeMenuItem;
-                        currentMenuSel      = find(menuActiveItem);
+                        currentMenuSel      = currentEyeMenuItem;
+                        menuActiveItem      = currentEyeMenuItem==[1:3]; %#ok<NBRAK>
                         qChangeMenuArrow    = true;
                     end
                     qToggleSelectEyeMenu = false;
@@ -4160,39 +4160,49 @@ classdef Titta < handle
                                     qToggleSelectSnapMenu   = true;
                                 end
                                 break;
-%                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-%                                 requested           = str2double(keys(1));
-%                                 if requested<=length(iValid)
-%                                     newSelection        = iValid(requested);
-%                                     qSelectedCalChanged = selection~=newSelection;
-%                                     qToggleSelectMenu   = true;
-%                                 end
-%                                 break;
-%                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
-%                                 newSelection        = iValid(currentMenuSel);
-%                                 qSelectedCalChanged = selection~=newSelection;
-%                                 qToggleSelectMenu   = true;
-%                                 break;
-%                             else
-%                                 if ~iscell(keys), keys = {keys}; end
-%                                 if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
-%                                     % up arrow key (test so round-about
-%                                     % because KbName could return both 'up'
-%                                     % and 'UpArrow', depending on platform
-%                                     % and mode)
-%                                     if currentMenuSel>1
-%                                         currentMenuSel   = currentMenuSel-1;
-%                                         qChangeMenuArrow = true;
-%                                         break;
-%                                     end
-%                                 elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
-%                                     % down key
-%                                     if currentMenuSel<length(iValid)
-%                                         currentMenuSel   = currentMenuSel+1;
-%                                         qChangeMenuArrow = true;
-%                                         break;
-%                                     end
-%                                 end
+                            elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                                requested           = str2double(keys(1));
+                                if qSelectEyeMenuOpen
+                                    if requested<=3
+                                        currentMenuSel      = requested;
+                                        qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                        qToggleSelectEyeMenu= true;
+                                        break;
+                                    end
+                                elseif qSelectSnapMenuOpen
+                                    % TODO
+                                    qToggleSelectSnapMenu   = true;
+                                    break;
+                                end
+                                break;
+                            elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
+                                if qSelectEyeMenuOpen
+                                    qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                    qToggleSelectEyeMenu= true;
+                                elseif qSelectSnapMenuOpen
+                                    % TODO
+                                end
+                                break;
+                            else
+                                if ~iscell(keys), keys = {keys}; end
+                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+                                    % up arrow key (test so round-about
+                                    % because KbName could return both 'up'
+                                    % and 'UpArrow', depending on platform
+                                    % and mode)
+                                    if currentMenuSel>1
+                                        currentMenuSel   = currentMenuSel-1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+                                    % down key
+                                    if (qSelectEyeMenuOpen && currentMenuSel<3) || (qSelectSnapMenuOpen && false)  % TODO
+                                        currentMenuSel   = currentMenuSel+1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                end
                             end
                         else
                             if any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
