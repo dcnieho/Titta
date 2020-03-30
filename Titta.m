@@ -1998,20 +1998,13 @@ classdef Titta < handle
                 % get latest data from eye-tracker
                 eyeData     = obj.buffer.peekN('gaze',1);
                 posGuide    = obj.buffer.peekN('positioning',1);
-                if isempty(eyeData.systemTimeStamp)
-                    headP.update([],[],[],[], [],[],[],[]);
-                    if qHaveOperatorScreen
-                        headO.update([],[],[],[], [],[],[],[]);
-                    end
-                else
-                    headP.update(...
+                headP.update(...
+                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                if qHaveOperatorScreen
+                    headO.update(...
                         eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                    if qHaveOperatorScreen
-                        headO.update(...
-                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                    end
                 end
                 
                 if ~isnan(headP.avgDist)
@@ -3917,20 +3910,13 @@ classdef Titta < handle
                     % prep head
                     if qShowHead
                         posGuide    = obj.buffer.peekN('positioning',1);
-                        if isempty(eyeData.systemTimeStamp)
-                            headO.update([],[],[],[], [],[],[],[]);
-                            if qShowHeadToAll
-                                headP.update([],[],[],[], [],[],[],[]);
-                            end
-                        else
-                            headO.update(...
+                        headO.update(...
+                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                        if qShowHeadToAll
+                            headP.update(...
                                 eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                                 eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                            if qShowHeadToAll
-                                headP.update(...
-                                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                            end
                         end
                     end
                     
