@@ -3937,10 +3937,10 @@ classdef Titta < handle
                         % prep gaze data
                         gazePosP    = nan(2,2);
                         if ~isempty(eyeData.systemTimeStamp)
-                            if ismember(cal{selection}.eye,{'both','left'})  && eyeData. left.gazePoint.valid(end)
+                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
                                 gazePosP(:,1) = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             end
-                            if ismember(cal{selection}.eye,{'both','right'}) && eyeData.right.gazePoint.valid(end)
+                            if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
                                 gazePosP(:,2) = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             end
                         end
