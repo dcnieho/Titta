@@ -1567,6 +1567,8 @@ classdef Titta < handle
             settings.UI.mancal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.mancal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             
+            settings.UI.mancal.headScale            = .5;
+            settings.UI.mancal.headPos              = [];                       % if empty, centered
             settings.UI.mancal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.mancal.bgColor              = 127;                      % background color for validation output screen
             settings.UI.mancal.fixBackSize          = 20;
@@ -3587,13 +3589,17 @@ classdef Titta < handle
             
             % setup head position visualization
             ovalVSz     = .15;
-            facO        = .5;
+            facO        = obj.settings.UI.mancal.headScale;
             refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
             refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
             [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.setup.showYaw,true);
             [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.setup.showYawToOperator,false);
             % setup head position screen (centered, can be dragged to move)
-            headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            if isempty(obj.settings.UI.mancal.headPos)
+                headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            else
+                headORect       = OffsetRect([0 0 obj.scrInfo.resolution{2}*facO],obj.settings.UI.mancal.headPos(1),obj.settings.UI.mancal.headPos(2));
+            end
             headO.allPosOff = headORect(1:2);
             refPosO         = refPosO+headORect(1:2);
             
