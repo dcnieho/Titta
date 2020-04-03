@@ -1328,6 +1328,7 @@ classdef Titta < handle
             settings.UI.setup.refCircleClr      = [0 0 255];
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
             settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
+            settings.UI.setup.headCircleEdgeWidth= 5;
             settings.UI.setup.eyeClr            = 255;
             settings.UI.setup.pupilClr          = 0;
             settings.UI.setup.crossClr          = [255 0 0];
@@ -1501,7 +1502,7 @@ classdef Titta < handle
             
             settings.UI.mancal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %1$.1f cm, target: %4$.1f cm\nY: %2$.1f cm, target: %5$.1f cm\nDistance: %3$.1f cm, target: %6$.1f cm',x,y,z,rx,ry,rz);
             settings.UI.mancal.instruct.font    = sansFont;
-            settings.UI.mancal.instruct.size    = 16*textFac;
+            settings.UI.mancal.instruct.size    = 32*textFac;
             settings.UI.mancal.instruct.color   = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.mancal.instruct.style   = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.mancal.instruct.vSpacing= 1;
@@ -4054,7 +4055,7 @@ classdef Titta < handle
                         drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5*facO);
                         headO.draw();
                         Screen('TextFont', wpnt(end), obj.settings.UI.mancal.instruct.font, obj.settings.UI.mancal.instruct.style);
-                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.instruct.size);
+                        Screen('TextSize', wpnt(end), max(round(obj.settings.UI.mancal.instruct.size*facO),4));
                         str = obj.settings.UI.mancal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                         if ~isempty(str)
                             DrawFormattedText2(str,'win',wpnt(2),'sx','center','xalign','center','xlayout','center','sy',.03*RectHeight(headORect),'yalign','top','baseColor',obj.settings.UI.mancal.instruct.color,'vSpacing',obj.settings.UI.mancal.instruct.vSpacing,'winRect',headORect);
@@ -4111,19 +4112,90 @@ classdef Titta < handle
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
                     % if any drag active change head rect position/size
                     if qDraggingHead || ~isnan(headResizingGrip)
-                        % get current size
-                        w = RectWidth(headORect);
-                        h = RectHeight(headORect);
+                        mousePos = [mx my];
                         % update headORect
                         if qDraggingHead
-                            vec                 = [mx my]-dragPos;
-                            [headORect,refPosO] = updateHeadDrag(headOriRect,vec,obj.scrInfo.resolution{2},facO,headO);
+                            vec         = mousePos-dragPos;
+                            headORect   = OffsetRect(headOriRect,vec(1),vec(2));
                         else
+                            % get which to check against
+                            switch headResizingGrip
+                                case 1
+                                    % left-upper corner
+                                    rIdx = [1 2];
+                                    mIdx = [1 2];
+                                case 2
+                                    % right-upper corner
+                                    rIdx = [3 2];
+                                    mIdx = [1 2];
+                                case 3
+                                    % left-lower corner
+                                    rIdx = [1 4];
+                                    mIdx = [1 2];
+                                case 4
+                                    % right upper corner
+                                    rIdx = [3 4];
+                                    mIdx = [1 2];
+                                case 5
+                                    % upper edge
+                                    rIdx = [2];
+                                    mIdx = [2];
+                                case 6
+                                    % lower edge
+                                    rIdx = [4];
+                                    mIdx = [2];
+                                case 7
+                                    % left edge
+                                    rIdx = [1];
+                                    mIdx = [1];
+                                case 8
+                                    % right edge
+                                    rIdx = [3];
+                                    mIdx = [1];
+                            end
+                            headORect = headOriRect;
+                            headORect(rIdx) = mousePos(mIdx);
+                            scaleFacs = [RectWidth(headORect)/RectWidth(headOriRect) RectHeight(headORect)/RectHeight(headOriRect)];
+                            if ~all(scaleFacs==1)
+                                % scale changed, do update
+                                [scaleFac,i] = max(scaleFacs(mIdx));    % select dimension being scaled, if both select max scale fac
+                                if ~isscalar(rIdx)
+                                    % we are dragging a corner, make
+                                    % non-max dimension consistent with
+                                    % scaling of max dimension
+                                    i=mod(i,2)+1;   % get which is nonmax
+                                    aspectr = RectWidth(headOriRect)/RectHeight(headOriRect);
+                                    switch i
+                                        case 1
+                                            % horizontal should be adjusted
+                                            newSize = RectHeight(headOriRect)*scaleFac*aspectr;
+                                            if rIdx(i)==1
+                                                % left edge needs changing
+                                                headORect(1) = headORect(3)-newSize;
+                                            else
+                                                % right edge needs changing
+                                                headORect(3) = headORect(1)+newSize;
+                                            end
+                                        case 2
+                                            % vertical
+                                            newSize = RectWidth(headOriRect)*scaleFac/aspectr;
+                                            if rIdx(i)==2
+                                                % top edge needs changing
+                                                headORect(2) = headORect(4)-newSize;
+                                            else
+                                                % bottom edge needs changing
+                                                headORect(4) = headORect(2)+newSize;
+                                            end
+                                    end
+                                end
+                            end
+                            % now update scale factor of some of the
+                            % visualizations
+                            scaleFacs   = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
+                            facO        = min(scaleFacs);
+                            refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
                         end
-                        % update scale factor and some params of head
-                        % display
-%                         facO
-                        
+                        refPosO     = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                         % also update cursor rects
                         headRects = getSelectionRects(headORect,4,obj.settings.UI.cursor.normal);
                         cursor.cursorRects(:,1:size(headRects,2)) = headRects;
@@ -4172,7 +4244,7 @@ classdef Titta < handle
                                     qDraggingHead       = true;
                                     dragPos             = [mx my];
                                 else
-                                    headResizingGrip    = find(qOnHead);
+                                    headResizingGrip    = find(qOnHead,1);  % sometimes due to rounding, there is slight overlap between corner and edge rects. Corners are first in rects, so this puts preference on corners
                                 end
                                 headOriRect             = headORect;
                             elseif any(qInBut)
@@ -4255,10 +4327,14 @@ classdef Titta < handle
                         else
                             if qDraggingHead || ~isnan(headResizingGrip)
                                 % cancel drag/resize of head display
-                                qDraggingHead           = false;
-                                headResizingGrip        = nan;
-                                [headORect,refPosO]     = updateHeadDrag(headOriRect,[0 0],obj.scrInfo.resolution{2},facO,headO);
-                                qUpdateCursors          = true;
+                                qDraggingHead       = false;
+                                headResizingGrip    = nan;
+                                headORect           = headOriRect;
+                                scaleFacs           = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
+                                facO                = min(scaleFacs);
+                                refSzO              = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+                                refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
+                                qUpdateCursors      = true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
                                 status = 1;
@@ -4345,7 +4421,7 @@ classdef Titta < handle
             head.rectWH             = scrRes*fac;
             head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
             head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
-            head.headCircleEdgeWidth= head.headCircleEdgeWidth*fac;
+            head.headCircleEdgeWidth= obj.settings.UI.setup.headCircleEdgeWidth*fac;
             head.showYaw            = showYaw;
             head.showEyes           = obj.settings.UI.setup.showEyes;
             head.eyeClr             = obj.settings.UI.setup.eyeClr;
@@ -4687,9 +4763,21 @@ headRects(:,9) = rs;
 headCursors = [9 10 9 10 4 4 5 5 normCurs];
 end
 
-function [headORect,refPosO] = updateHeadDrag(headOriRect,vec,scrRes,fac,headO)
-headORect       = OffsetRect(headOriRect,vec(1),vec(2));
-headO.allPosOff = headORect(1:2);
+function refPosO = updateHeadDragResize(headRect,scrRes,fac,headO,refSzO,headCircleEdgeWidth)
+scaleFacs   = [RectWidth(headRect)/scrRes(1) RectHeight(headRect)/scrRes(2)];
+if scaleFacs(1)<=scaleFacs(2)
+    extraOff = (RectHeight(headRect)-scrRes(2)*scaleFacs(1))/2;
+    headO.allPosOff = headRect(1:2)+[0 extraOff];
+else
+    extraOff = (RectWidth(headRect)-scrRes(1)*scaleFacs(2))/2;
+    headO.allPosOff = headRect(1:2)+[extraOff 0];
+end
+
 refPosO         = scrRes/2*fac;
-refPosO         = refPosO+headORect(1:2);
+refPosO         = refPosO+headO.allPosOff;
+
+
+headO.refSz     = refSzO;
+headO.rectWH    = scrRes*fac;
+headO.headCircleEdgeWidth = headCircleEdgeWidth*fac;
 end

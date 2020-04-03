@@ -1,4 +1,10 @@
 function drawOrientedPoly(wpnt,verts,isConvex,depthOri,rotMat,scaleFac,pos,fillClr,edgeClr,edgeWidth)
+persistent minSmoothLineWidth
+persistent maxSmoothLineWidth
+if isempty(minSmoothLineWidth)
+    [minSmoothLineWidth, maxSmoothLineWidth] = Screen('DrawLines',wpnt);
+end
+
 if isempty(verts)
     return;
 end
@@ -23,6 +29,6 @@ end
 if nargin>=10
     len = size(proj,2);
     idxs = reshape([1:len-1;2:len],1,[]);
-    Screen('DrawLines', wpnt, proj(:,idxs), edgeWidth, edgeClr, [],2);
+    Screen('DrawLines', wpnt, proj(:,idxs), max(min(edgeWidth,maxSmoothLineWidth),minSmoothLineWidth), edgeClr, [],2);
 end
 end
