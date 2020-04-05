@@ -4161,15 +4161,48 @@ classdef Titta < handle
                             end
                             headORect = headOriRect;
                             headORect(rIdx) = mousePos(mIdx);
-                            scaleFacs = [RectWidth(headORect)/RectWidth(headOriRect) RectHeight(headORect)/RectHeight(headOriRect)];
-                            if ~all(scaleFacs==1)
+                            if RectWidth(headORect)~=RectWidth(headOriRect) || RectHeight(headORect)~=RectHeight(headOriRect)
                                 % scale changed, do update
-                                [scaleFac,i] = max(scaleFacs(mIdx));    % select dimension being scaled, if both select max scale fac
+                                
+                                % first, check rect did not get too small.
+                                % arbitrarily decide rect should be at
+                                % least 100 px high and wide
+                                w = RectWidth(headORect);
+                                if w<100
+                                    add = 100-w;
+                                    % find at which side to add
+                                    if any(rIdx==1)
+                                        % resize involves change of left edge,
+                                        % so add to that
+                                        headORect(1) = headORect(1)-add;
+                                    else
+                                        % right edge instead
+                                        headORect(3) = headORect(3)+add;
+                                    end
+                                end
+                                h = RectHeight(headORect);
+                                if h<100
+                                    add = 100-h;
+                                    % find at which side to add
+                                    if any(rIdx==2)
+                                        % resize involves change of top edge,
+                                        % so add to that
+                                        headORect(2) = headORect(2)-add;
+                                    else
+                                        % bottom edge instead
+                                        headORect(4) = headORect(4)+add;
+                                    end
+                                end
+                                
+                                % next, check if aspect ratio should be
+                                % maintained
+                                scaleFacs = [RectWidth(headORect)/RectWidth(headOriRect) RectHeight(headORect)/RectHeight(headOriRect)];
                                 if ~isscalar(rIdx) && shiftIsDown
                                     % we are dragging a corner, make
                                     % non-max dimension consistent with
                                     % scaling of max dimension
-                                    i=mod(i,2)+1;   % get which is nonmax
+                                    [scaleFac,i] = max(scaleFacs(mIdx));    % get largest scale fac
+                                    i=mod(i,2)+1;                           % get dimension's scaleFac is smaller
                                     aspectr = RectWidth(headOriRect)/RectHeight(headOriRect);
                                     switch i
                                         case 1
@@ -4195,6 +4228,7 @@ classdef Titta < handle
                                     end
                                 end
                             end
+                            
                             % now update scale factor of some of the
                             % visualizations
                             scaleFacs   = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
