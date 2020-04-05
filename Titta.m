@@ -3745,7 +3745,8 @@ classdef Titta < handle
             qShowGaze               = false;
             qShowGazeToAll          = false;
             % 7. point selection by mouse and info about validated points
-            fixPointRectSz          = 80*obj.scrInfo.sFac;
+            fixPointRectSzSel       = obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5;
+            fixPointRectSzHover     = 80*obj.scrInfo.sFac;
             openInfoForPoint        = nan;
             pointToShowInfoFor      = nan;
             % 8. snapshot saving and loading
@@ -3758,8 +3759,7 @@ classdef Titta < handle
             
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
-            obj.getNewMouseKeyPress();
-            [mx,my]                 = deal(0,0);
+            [mx,my]                 = obj.getNewMouseKeyPress(wpnt(end));
             
             qDoneWithManualCalib    = false;
             while ~qDoneWithManualCalib
@@ -3778,9 +3778,11 @@ classdef Titta < handle
                             pointsO = vPointsO;
                     end
                     % get point rects on operator screen
-                    calValRects = zeros(size(pointsO,1),4);
+                    calValRectsSel  = zeros(4,size(pointsO,1));
+                    calValRectsHover= zeros(4,size(pointsO,1));
                     for p=1:size(pointsO,1)
-                        calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],pointsO(p,1),pointsO(p,2));
+                        calValRectsSel(:,p)     = CenterRectOnPointd([0 0 fixPointRectSzSel   fixPointRectSzSel  ],pointsO(p,1),pointsO(p,2));
+                        calValRectsHover(:,p)   = CenterRectOnPointd([0 0 fixPointRectSzHover fixPointRectSzHover],pointsO(p,1),pointsO(p,2));
                     end
                     qUpdateCursors = true;
                     qToggleStage = false;
@@ -3872,7 +3874,7 @@ classdef Titta < handle
                     if qSelectEyeMenuOpen || qSelectSnapMenuOpen
                         otherRects  = currentMenuRects.';
                     else
-                        otherRects  = butRects;
+                        otherRects  = [butRects calValRectsSel];
                     end
                     otherCursors    = repmat(obj.settings.UI.cursor.clickable,1,size(otherRects,2));    % clickable items
                     cursors.rect    = [headRects otherRects];
@@ -4125,9 +4127,9 @@ classdef Titta < handle
 
                     % get user response
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
+                    mousePos = [mx my];
                     % if any drag active change head rect position/size
                     if qDraggingHead || ~isnan(headResizingGrip)
-                        mousePos = [mx my];
                         % update headORect
                         if qDraggingHead
                             vec         = mousePos-dragPos;
@@ -4261,7 +4263,7 @@ classdef Titta < handle
                         % don't care which button for now. determine if clicked on either
                         % of the buttons
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
-                            iIn = find(inRect([mx my],[currentMenuRects.' currentMenuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
+                            iIn = find(inRect(mousePos,[currentMenuRects.' currentMenuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
                             if ~isempty(iIn)
                                 if qSelectEyeMenuOpen
                                     if iIn<=3
@@ -4285,13 +4287,14 @@ classdef Titta < handle
                             end
                         end
                         if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qInBut = inRect([mx my],butRects);
-                            qOnHead= inRect([mx my],headRects);
+                            qInBut      = inRect(mousePos,butRects);
+                            qOnHead     = inRect(mousePos,headRects);
+                            qOnFixTarget= inRect(mousePos,calValRectsSel);
                             if any(qOnHead)
                                 % starting drag/resize of head
                                 if qOnHead(end)
                                     qDraggingHead       = true;
-                                    dragPos             = [mx my];
+                                    dragPos             = mousePos;
                                 else
                                     headResizingGrip    = find(qOnHead,1);  % sometimes due to rounding, there is slight overlap between corner and edge rects. Corners are first in rects, so this puts preference on corners
                                 end
@@ -4431,19 +4434,17 @@ classdef Titta < handle
                         end
                     end
                     % check if hovering over point for which we have info
-                    if ~isempty(calValRects)
-                        iIn = find(inRect([mx my],calValRects.'));
-                        if ~isempty(iIn)
-                            % see if new point
-                            if pointToShowInfoFor~=iIn
-                                openInfoForPoint = iIn;
-                                break;
-                            end
-                        elseif ~isnan(pointToShowInfoFor)
-                            % stop showing info
-                            pointToShowInfoFor = nan;
+                    iIn = find(inRect(mousePos,calValRectsHover));
+                    if ~isempty(iIn)
+                        % see if new point
+                        if pointToShowInfoFor~=iIn
+                            openInfoForPoint = iIn;
                             break;
                         end
+                    elseif ~isnan(pointToShowInfoFor)
+                        % stop showing info
+                        pointToShowInfoFor = nan;
+                        break;
                     end
                 end
             end
