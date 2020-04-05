@@ -4331,7 +4331,7 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if qDraggingHead || ~isnan(headResizingGrip)
+                            if any(strcmpi(keys,'escape')) && (qDraggingHead || ~isnan(headResizingGrip))
                                 % cancel drag/resize of head display
                                 qDraggingHead       = false;
                                 headResizingGrip    = nan;
