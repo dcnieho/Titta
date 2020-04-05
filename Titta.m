@@ -4389,7 +4389,7 @@ classdef Titta < handle
                                 status = 1;
                                 qDoneWithManualCalib= true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator)) && qCanDoMonocularCalib
                                 qToggleSelectEyeMenu= true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggEyeIm.accelerator)) && qHasEyeIm
