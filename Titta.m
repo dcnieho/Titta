@@ -4165,7 +4165,7 @@ classdef Titta < handle
                             if ~all(scaleFacs==1)
                                 % scale changed, do update
                                 [scaleFac,i] = max(scaleFacs(mIdx));    % select dimension being scaled, if both select max scale fac
-                                if ~isscalar(rIdx)
+                                if ~isscalar(rIdx) && shiftIsDown
                                     % we are dragging a corner, make
                                     % non-max dimension consistent with
                                     % scaling of max dimension
