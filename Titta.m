@@ -3033,6 +3033,10 @@ classdef Titta < handle
                 but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
             end
             
+            % check shiftable button accelerators do not conflict with
+            % built in ones
+            assert(~qHaveOperatorScreen || ~ismember(obj.settings.UI.button.val.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.val.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            
             
             % setup menu, if any
             if qHaveMultipleValidVals
@@ -3645,6 +3649,11 @@ classdef Titta < handle
             end
             % get all butRects, needed below in script
             butRects        = cat(1,but.rect).';
+            
+            % check shiftable button accelerators do not conflict with
+            % built in ones
+            assert(~ismember(obj.settings.UI.button.mancal.toggHead.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggHead.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~ismember(obj.settings.UI.button.mancal.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
             
             % setup menu, if any
             menuMargin      = 10;
