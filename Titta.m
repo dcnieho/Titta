@@ -742,12 +742,20 @@ classdef Titta < handle
                 end
                 obj.loadOtherCal(out.attempt{kCal});
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
-                qNewCal             = false;
+                % NB: qNewCal should also in this case be true, as the
+                % setup screen shown first is the start of a potential new
+                % calibration, if users skip to previously loaded
+                % calibrations, they cancel this potential new calibration
+                % like normal. Also, without this, when loading a previous
+                % calibration (this code branch) and then pressing
+                % continue/calibrate on the setup screen, a new validation
+                % is added for the loaded calibration, not a new
+                % calibration started.
             else
                 kCal                = 0;                    % index into list of calibration attempts
                 currentSelection    = nan;                  % keeps track of calibration that is currently applied
-                qNewCal             = true;
             end
+            qNewCal             = true;
             out.selectedCal     = nan;
             out.wasSkipped      = false;
             while true
