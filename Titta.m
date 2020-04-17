@@ -726,8 +726,9 @@ classdef Titta < handle
             % there are two start modes:
             % 0. skip head positioning, go straight to calibration
             % 1. start with head positioning interface
-            startScreen         = obj.settings.UI.startScreen;
-            qHasEnteredCalMode  = false;
+            startScreen             = obj.settings.UI.startScreen;
+            qHasEnteredCalMode      = false;
+            qGoToValidationViewer   = false;
             if ~isempty(previousCalibs)
                 % prepopulate with previous calibrations passed by user
                 out                 = previousCalibs;
@@ -760,7 +761,6 @@ classdef Titta < handle
             else
                 kCal                = 0;                    % index into list of calibration attempts
                 currentSelection    = nan;                  % keeps track of calibration that is currently applied
-                qGoToValidationViewer = false;
             end
             qNewCal             = true;
             out.selectedCal     = nan;
