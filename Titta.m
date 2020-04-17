@@ -731,8 +731,9 @@ classdef Titta < handle
             % there are two start modes:
             % 0. skip head positioning, go straight to calibration
             % 1. start with head positioning interface
-            startScreen         = obj.settings.UI.startScreen;
-            qHasEnteredCalMode  = false;
+            startScreen             = obj.settings.UI.startScreen;
+            qHasEnteredCalMode      = false;
+            qGoToValidationViewer   = false;
             if ~isempty(previousCalibs)
                 % prepopulate with previous calibrations passed by user
                 out                 = previousCalibs;
@@ -747,17 +748,30 @@ classdef Titta < handle
                 end
                 obj.loadOtherCal(out.attempt{kCal});
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
-                qNewCal             = false;
+                % NB: qNewCal should also in this case be true, as the
+                % setup screen shown first is the start of a potential new
+                % calibration, if users skip to previously loaded
+                % calibrations, they cancel this potential new calibration
+                % like normal. Also, without this, when loading a previous
+                % calibration (this code branch) and then pressing
+                % continue/calibrate on the setup screen, a new validation
+                % is added for the loaded calibration, not a new
+                % calibration started.
+                if startScreen==0
+                    % when user wants to skip the setup screen, bring them
+                    % straight to the validation result screen when loading
+                    % a previous calibration.
+                    qGoToValidationViewer = true;
+                end
             else
                 kCal                = 0;                    % index into list of calibration attempts
                 currentSelection    = nan;                  % keeps track of calibration that is currently applied
-                qNewCal             = true;
             end
+            qNewCal             = true;
             out.type            = 'standard';
             out.selectedCal     = nan;
             out.wasSkipped      = false;
             while true
-                qGoToValidationViewer = false;
                 if qNewCal
                     if ~kCal
                         kCal = 1;
@@ -848,6 +862,7 @@ classdef Titta < handle
                 
                 %%% 2c: show calibration results
                 % show validation result and ask to continue
+                qGoToValidationViewer = false;
                 [out.attempt,kCal] = obj.showCalValResult(wpnt,out.attempt,currentSelection);
                 currentSelection = kCal;
                 switch out.attempt{kCal}.valReviewStatus
@@ -1317,7 +1332,7 @@ classdef Titta < handle
             settings.licenseFile                = '';                           % should be single string or cell array of strings, with each string being the path to a license file to apply
             settings.nTryReConnect              = 3;                            % How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to find_all_eyetrackers for network eye trackers to be found
             settings.connectRetryWait           = [1 2];                        % seconds
-            settings.UI.startScreen             = 1;                            % 0. skip head positioning, go straight to calibration; 1. start with head positioning interface
+            settings.UI.startScreen             = 1;                            % 1. start with head positioning interface; 0. skip head positioning, go straight to calibration (if not loading previous calibrations), or validation result screen (if loading previous calibrations when calling Titta.calibrate()
             settings.UI.hardExitClosesPTB       = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
             settings.UI.setup.showEyes          = true;
             settings.UI.setup.showPupils        = true;

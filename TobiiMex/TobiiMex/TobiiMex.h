@@ -7,7 +7,6 @@
 #include <optional>
 #include <thread>
 #include <mutex>
-#include <condition_variable>
 #include <atomic>
 #include <variant>
 #include <tobii_research.h>
