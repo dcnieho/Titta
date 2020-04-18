@@ -2602,6 +2602,7 @@ classdef Titta < handle
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
                     
                     % first get computeAndApply result, then get
+                    % calibration data
                     if isempty(computeResult)
                         computeResult = obj.buffer.calibrationRetrieveResult();
                         if ~isempty(computeResult)
