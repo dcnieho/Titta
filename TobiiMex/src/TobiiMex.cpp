@@ -685,12 +685,12 @@ TobiiTypes::CalibrationState TobiiMex::calibrationGetStatus()
 {
     return _calibrationState;
 }
-std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveResult(bool makeString /*= false*/)
+std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveResult(bool makeStatusString_ /*= false*/)
 {
     TobiiTypes::CalibrationWorkResult out;
     if (_calibrationWorkResultQueue.try_dequeue(out))
     {
-        if (makeString)
+        if (makeStatusString_)
         {
             std::stringstream os;
             os << "Tobii SDK code: " << static_cast<int>(out.status) << ": " << TobiiResearchStatusToString(out.status) << " (" << TobiiResearchStatusToExplanation(out.status) << ")";
