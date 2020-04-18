@@ -1391,14 +1391,35 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult data_)
     {
-        const char* fieldNames[] = { "workItem","status","statusString","calibrationResult","calibrationData" };
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        auto hasCalResult = data_.calibrationResult.has_value();
+        auto hasCalData   = data_.calibrationData  .has_value();
+        mxArray* out;
+
+        // there are three options, neither of calResult and calData are available, or one of the two
+        // both is not possible as they are used in completely different situations
+        if (hasCalResult)
+        {
+            const char* fieldNames[] = { "workItem","status","statusString","calibrationResult" };
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+        else if (hasCalData)
+        {
+            const char* fieldNames[] = { "workItem","status","statusString","calibrationData" };
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+        else
+        {
+            const char* fieldNames[] = { "workItem","status","statusString" };
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.workItem));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.status));
         mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.statusString));
-        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationResult));
-        mxSetFieldByNumber(out, 0, 4, ToMatlab(data_.calibrationData));
+        if (hasCalResult)
+            mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationResult));
+        if (hasCalData)
+            mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationData));
 
         return out;
     }
