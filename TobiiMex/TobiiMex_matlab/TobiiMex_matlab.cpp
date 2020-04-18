@@ -1397,6 +1397,9 @@ namespace mxTypes
 
         // there are three options, neither of calResult and calData are available, or one of the two
         // both is not possible as they are used in completely different situations
+        // there are three options: (1) none of the two above variables are set; (2) only calData is
+        // set; (3) only calResult is set. Other combinations are not possible because of how work
+        // results are used in the code, these result from separate thread actions.
         if (hasCalResult)
         {
             const char* fieldNames[] = { "workItem","status","statusString","calibrationResult" };
@@ -1425,13 +1428,46 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem data_)
     {
-        const char* fieldNames[] = { "action","coordinates","eye","calData" };
-        mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        auto hasCoords  = data_.coordinates    .has_value();
+        auto hasEye     = data_.eye            .has_value();
+        auto hasCalData = data_.calibrationData.has_value();
+        mxArray* out;
+
+        // there are four options: (1) none of the three above variables are set; (2) calData is set
+        // (3) coordinates is set without eye; (4) coordinates is set with eye. Other combinations
+        // are not possible because of how work items are used in the code, these are separate thread
+        // actions.
+        if (hasCoords)
+        {
+            if (hasEye)
+            {
+                const char* fieldNames[] = { "action","coordinates","eye" };
+                out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            }
+            else
+            {
+                const char* fieldNames[] = { "action","coordinates" };
+                out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            }
+        }
+        else if (hasCalData)
+        {
+            const char* fieldNames[] = { "action","calibrationData" };
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+        else
+        {
+            const char* fieldNames[] = { "action" };
+            out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.action));
-        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.coordinates));
-        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.eye));
-        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationData));
+        if (hasCoords)
+            mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.coordinates));
+        if (hasEye)
+            mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.eye));
+        if (hasCalData)
+            mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.calibrationData));
 
         return out;
     }
