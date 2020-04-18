@@ -262,7 +262,7 @@ namespace TobiiTypes
         // some actions need one or multiple of the below
         std::optional<std::vector<double>>  coordinates;
         std::optional<std::string>          eye;
-        std::optional<std::vector<uint8_t>> calData;
+        std::optional<std::vector<uint8_t>> calibrationData;
     };
 
     struct CalibrationWorkResult

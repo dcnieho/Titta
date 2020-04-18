@@ -1410,7 +1410,7 @@ namespace mxTypes
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.action));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.coordinates));
         mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.eye));
-        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calData));
+        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.calibrationData));
 
         return out;
     }
