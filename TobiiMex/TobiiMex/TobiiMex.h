@@ -103,7 +103,7 @@ public:
     void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationComputeAndApply();
     void calibrationGetData();
-    void calibrationApplyData(std::vector<uint8_t> calData_);
+    void calibrationApplyData(std::vector<uint8_t> calibrationData_);
     TobiiTypes::CalibrationState calibrationGetStatus();
     std::optional<TobiiTypes::CalibrationWorkResult> calibrationRetrieveResult(bool makeStatusString_ = false);
 

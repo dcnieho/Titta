@@ -674,11 +674,11 @@ void TobiiMex::calibrationGetData()
     isInCalibrationMode(true);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
 }
-void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
+void TobiiMex::calibrationApplyData(std::vector<uint8_t> calibrationData_)
 {
     isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
-    workItem.calibrationData = calData_;
+    workItem.calibrationData = calibrationData_;
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 TobiiTypes::CalibrationState TobiiMex::calibrationGetStatus()
