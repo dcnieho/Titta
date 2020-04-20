@@ -556,15 +556,15 @@ void TobiiMex::calibrationThread()
         case TobiiTypes::CalibrationAction::ApplyCalibrationData:
         {
             _calibrationState = TobiiTypes::CalibrationState::ApplyingCalibrationData;
-            if (!workItem.calData.value().empty())
+            if (!workItem.calibrationData.value().empty())
             {
                 TobiiResearchCalibrationData calData;
                 // copy calibration data into array
-                auto nItem = workItem.calData.value().size();
+                auto nItem = workItem.calibrationData.value().size();
                 calData.data = malloc(nItem);
                 calData.size = nItem;
                 if (nItem)
-                    std::memcpy(calData.data, &workItem.calData.value()[0], nItem);
+                    std::memcpy(calData.data, &workItem.calibrationData.value()[0], nItem);
 
                 result = tobii_research_apply_calibration_data(_eyetracker.et, &calData);
                 free(calData.data);
@@ -673,23 +673,23 @@ void TobiiMex::calibrationGetData()
     isInCalibrationMode(true);
     _calibrationWorkQueue.enqueue({TobiiTypes::CalibrationAction::GetCalibrationData});
 }
-void TobiiMex::calibrationApplyData(std::vector<uint8_t> calData_)
+void TobiiMex::calibrationApplyData(std::vector<uint8_t> calibrationData_)
 {
     isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::ApplyCalibrationData};
-    workItem.calData = calData_;
+    workItem.calibrationData = calibrationData_;
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
 TobiiTypes::CalibrationState TobiiMex::calibrationGetStatus()
 {
     return _calibrationState;
 }
-std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveResult(bool makeString /*= false*/)
+std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveResult(bool makeStatusString_ /*= false*/)
 {
     TobiiTypes::CalibrationWorkResult out;
     if (_calibrationWorkResultQueue.try_dequeue(out))
     {
-        if (makeString)
+        if (makeStatusString_)
         {
             std::stringstream os;
             os << "Tobii SDK code: " << static_cast<int>(out.status) << ": " << TobiiResearchStatusToString(out.status) << " (" << TobiiResearchStatusToExplanation(out.status) << ")";

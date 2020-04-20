@@ -309,8 +309,8 @@ classdef TobiiMex < handle
         function calibrationGetData(this)
             this.cppmethod('calibrationGetData');
         end
-        function calibrationApplyData(this,cal)
-            this.cppmethod('calibrationApplyData',cal);
+        function calibrationApplyData(this,calibrationData)
+            this.cppmethod('calibrationApplyData',calibrationData);
         end
         function status = calibrationGetStatus(this)
             status = this.cppmethod('calibrationGetStatus');

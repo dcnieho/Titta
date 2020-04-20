@@ -13,7 +13,7 @@
     <OutputPath>.</OutputPath>
     <Name>TobiiWrapper_py</Name>
     <RootNamespace>TobiiWrapper</RootNamespace>
-    <InterpreterId>Global|VisualStudio|PsychoPy3 (x64)</InterpreterId>
+    <InterpreterId>CondaEnv|CondaEnv|psychopy</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
@@ -31,6 +31,7 @@
     <Compile Include="test.py" />
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|psychopy" />
     <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x64)" />
     <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x86)" />
   </ItemGroup>

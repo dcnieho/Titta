@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "TobiiMex/TobiiMex.h"
 #include "TobiiMex/utils.h"
 
@@ -543,10 +544,10 @@ PYBIND11_MODULE(TobiiWrapper, m)
         .def_readwrite("action", &TobiiTypes::CalibrationWorkItem::action)
         .def_readwrite("coordinates", &TobiiTypes::CalibrationWorkItem::coordinates)
         .def_readwrite("eye", &TobiiTypes::CalibrationWorkItem::eye)
-        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkItem::calData)
+        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkItem::calibrationData)
         .def(py::pickle(
             [](const TobiiTypes::CalibrationWorkItem& p) { // __getstate__
-                return py::make_tuple(p.action, p.coordinates, p.eye, p.calData);
+                return py::make_tuple(p.action, p.coordinates, p.eye, p.calibrationData);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
