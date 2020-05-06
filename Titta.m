@@ -4604,6 +4604,16 @@ classdef Titta < handle
                                 refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                                 qUpdateCursors      = true;
                                 break;
+                            elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                                % calibration/validation point
+                                requested           = str2double(keys(1));
+                                if requested<size(pointsP,1)
+                                    if pointsP(requested,end)~=2
+                                        pointList(1,end+1)      = requested; %#ok<AGROW>
+                                        pointsP(requested,end)  = 3; % status: enqueued
+                                        break;
+                                    end
+                                end
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
                                 status = 1;
                                 qDoneWithManualCalib= true;
