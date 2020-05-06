@@ -358,6 +358,7 @@ classdef Titta < handle
             obj.settings.UI.mancal.bgColor                      = color2RGBA(obj.settings.UI.mancal.bgColor);
             obj.settings.UI.mancal.fixBackColor                 = color2RGBA(obj.settings.UI.mancal.fixBackColor);
             obj.settings.UI.mancal.fixFrontColor                = color2RGBA(obj.settings.UI.mancal.fixFrontColor);
+            obj.settings.UI.mancal.fixPoint.text.color          = color2RGBA(obj.settings.UI.mancal.fixPoint.text.color);
             obj.settings.mancal.bgColor                         = color2RGBA(obj.settings.mancal.bgColor);
             obj.settings.mancal.fixBackColor                    = color2RGBA(obj.settings.mancal.fixBackColor);
             obj.settings.mancal.fixFrontColor                   = color2RGBA(obj.settings.mancal.fixFrontColor);
@@ -1593,6 +1594,10 @@ classdef Titta < handle
             settings.UI.mancal.fixFrontSize         = 5;
             settings.UI.mancal.fixBackColor         = 0;
             settings.UI.mancal.fixFrontColor        = 255;
+            settings.UI.mancal.fixPoint.text.font   = monoFont;
+            settings.UI.mancal.fixPoint.text.size   = 12*textFac;
+            settings.UI.mancal.fixPoint.text.color  = 255;
+            settings.UI.mancal.fixPoint.text.style  = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.mancal.paceDuration            = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.bgColor                 = 127;
@@ -3726,6 +3731,18 @@ classdef Titta < handle
             vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),1)]; %#ok<NBRAK>
             cPointsO            = bsxfun(@plus,cPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
             vPointsO            = bsxfun(@plus,vPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
+            % make text caches for numbering points
+            off = obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.7/2*[1 1]*sqrt(2)/2;
+            Screen('TextFont', wpnt(end), obj.settings.UI.mancal.fixPoint.text.font, obj.settings.UI.mancal.fixPoint.text.style);
+            Screen('TextSize', wpnt(end), max(round(obj.settings.UI.mancal.fixPoint.text.size*obj.scrInfo.sFac),4));
+            for p=size(cPointsO,1):-1:1
+                r = [cPointsO(p,:) cPointsO(p,:)]+[off off];
+                cPointTextCache(p) = obj.getTextCache(wpnt(end), num2str(p),r,'baseColor',obj.settings.UI.mancal.fixPoint.text.color,'xalign','left','yalign','top');
+            end
+            for p=size(vPointsO,1):-1:1
+                r = [vPointsO(p,:) vPointsO(p,:)]+[off off];
+                vPointTextCache(p) = obj.getTextCache(wpnt(end), num2str(p),r,'baseColor',obj.settings.UI.mancal.fixPoint.text.color,'xalign','left','yalign','top');
+            end
             
             % prep point drawer and data collection logic
             if isa(obj.settings.mancal.drawFunction,'function_handle')
@@ -3844,9 +3861,10 @@ classdef Titta < handle
                                 vPointsP(:,end) = pointsP(:,end);
                             end
                             % change to cal
-                            stage       = 'cal';
-                            pointsP     = cPointsP;
-                            pointsO     = cPointsO;
+                            stage           = 'cal';
+                            pointsP         = cPointsP;
+                            pointsO         = cPointsO;
+                            pointTextCache  = cPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.paceDuration    *fs);
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
@@ -3854,9 +3872,10 @@ classdef Titta < handle
                                 cPointsP(:,end) = pointsP(:,end);
                             end
                             % change to val
-                            stage = 'val';
-                            pointsP = vPointsP;
-                            pointsO = vPointsO;
+                            stage           = 'val';
+                            pointsP         = vPointsP;
+                            pointsO         = vPointsO;
+                            pointTextCache  = vPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
                     end
                     % get point rects on operator screen
@@ -4170,7 +4189,10 @@ classdef Titta < handle
                     end
                     % 2. then draw points themselves
                     obj.drawFixPoints(wpnt(end),pointsO,obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixBackColor,obj.settings.UI.mancal.fixFrontColor);
-                    
+                    % 3. draw text annotations
+                    for p=size(pointsO,1):-1:1
+                        obj.drawCachedText(pointTextCache(p));
+                    end
                     
                     % draw line displays
 %                     if ~isempty(lEpos)
