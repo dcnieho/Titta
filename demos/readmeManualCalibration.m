@@ -77,6 +77,9 @@ try
         settings.cal.fixBackColor   = fixClrs(1);
         settings.cal.fixFrontColor  = fixClrs(2);
     end
+    % callback function for completion of each calibration point
+    settings.mancal.pointNotifyFunction = @demoCalCompletionFun;
+    settings.mancal.val.pointNotifyFunction = @demoCalCompletionFun;
     
     % init
     EThndl          = Titta(settings);
