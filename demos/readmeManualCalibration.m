@@ -67,7 +67,7 @@ try
     if useAnimatedCalibration
         % custom calibration drawer
         calViz                      = AnimatedCalibrationDisplay();
-        settings.cal.drawFunction   = @calViz.doDraw;
+        settings.mancal.drawFunction= @calViz.doDraw;
         calViz.bgColor              = bgClr;
         calViz.fixBackColor         = fixClrs(1);
         calViz.fixFrontColor        = fixClrs(2);

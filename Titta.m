@@ -2905,8 +2905,10 @@ classdef Titta < handle
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
-            obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
-            qAllowAcceptKey = true;
+            if ~isnan(pos)
+                obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
+                qAllowAcceptKey = true;
+            end
         end
         
         function val = ProcessValData(obj,val)
@@ -3816,6 +3818,7 @@ classdef Titta < handle
             frameMsg                = '';
             out.pointPos            = [];
             out.pointStatus         = {};
+            out.gazeData            = [];
             whichPoint              = nan;
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted
@@ -4036,7 +4039,7 @@ classdef Titta < handle
                 
                 % calibration/validation logic variables
                 if ~isempty(pointList) && isnan(whichPoint)
-                    whichPoint              = pointList(1)
+                    whichPoint              = pointList(1);
                     drawCmd                 = 'new';
                     nCollectionTries        = 0;
                     qWaitForAllowAccept     = true;
@@ -4251,9 +4254,9 @@ classdef Titta < handle
                     
                     % calibration logic
                     % accept point
-                    if tick>tick0p+paceIntervalTicks
+                    if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
+                        qPointDone = false;
                         if strcmp(stage,'cal')
-                            qPointDone = false;
                             if ~nCollectionTries
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
@@ -4283,26 +4286,6 @@ classdef Titta < handle
                                     end
                                 end
                             end
-                            % if finished collecting, log, compute
-                            % calibration
-                            if qPointDone
-                                frameMsg = sprintf('POINT OFF %d (%.0f %.0f), status: ',whichPoint,pointsP(whichPoint,3:4));
-                                if callResult.status~=0
-                                    % success
-                                    frameMsg = [frameMsg 'ok']; %#ok<AGROW>
-                                else
-                                    % failure
-                                    frameMsg = [frameMsg sprintf('failed (%s)',callResult.statusString)]; %#ok<AGROW>
-                                end
-                                whichPoint = nan;
-                                % if no points enqueued, reset calibration
-                                % point drawer function (if any)
-                                if isempty(pointList) && isa(obj.settings.cal.drawFunction,'function_handle')
-                                    obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                                end
-                                % done with draw loop
-                                break;
-                            end
                         else
                             if isnan(tick0v)
                                 tick0v = tick;
@@ -4315,7 +4298,31 @@ classdef Titta < handle
                                     out.gazeData(end+1,1) = dat;
                                 end
                                 tick0v = nan;
+                                qPointDone = true;
                             end
+                        end
+                        % if finished collecting, log, clean up, and if in
+                        % calibration mode, calibrate if collection was
+                        % successful
+                        if qPointDone
+                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
+                            if strcmp(stage,'cal')
+                                if callResult.status~=0
+                                    % success
+                                    frameMsg = [frameMsg ', status: ok']; %#ok<AGROW>
+                                else
+                                    % failure
+                                    frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
+                                end
+                            end
+                            whichPoint = nan;
+                            % if no points enqueued, reset calibration
+                            % point drawer function (if any)
+                            if isempty(pointList)
+                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            end
+                            % done with draw loop
+                            break;
                         end
                     end
 
