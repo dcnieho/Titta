@@ -1034,6 +1034,8 @@ classdef Titta < handle
             screenState = obj.getScreenInfo(wpnt);
             
             % some preliminary setup, to make sure we are in known state
+            % NB: in contrast to calibrate() above, this function always
+            % wipes calibration state upon entry
             qHasEnteredCalMode = false;
             if bitand(flag,1)
                 obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
@@ -1591,6 +1593,7 @@ classdef Titta < handle
             settings.UI.mancal.fixBackColor         = 0;
             settings.UI.mancal.fixFrontColor        = 255;
             settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.mancal.paceDuration            = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.bgColor                 = 127;
             settings.mancal.fixBackSize             = 20;
             settings.mancal.fixFrontSize            = 5;
@@ -1601,6 +1604,7 @@ classdef Titta < handle
             settings.mancal.doRecordExtSignal       = false;
             settings.mancal.pointNotifyFunction     = [];                       % function that is called upon each calibration point completing
             settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
+            settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.val.collectDuration     = 0.5;
             
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
@@ -3603,9 +3607,20 @@ classdef Titta < handle
             end
             fs = min(fs);
             
-            startT                  = obj.sendMessage(sprintf('START MANUAL CALIBRATION (%s)',getEyeLbl(obj.settings.calibrateEye)));
+            if ~kCal
+                startT                  = obj.sendMessage(sprintf('START MANUAL CALIBRATION (%s), calibration no. 1',getEyeLbl(obj.settings.calibrateEye)));
+            else
+                startT                  = obj.sendMessage(sprintf('START MANUAL VALIDATION (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+            end
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
+            if obj.settings.mancal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
+                obj.buffer.start('eyeImage');
+            end
+            if obj.settings.mancal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
+                obj.buffer.start('externalSignal');
+            end
+            obj.buffer.start('timeSync');
             
             % setup head position visualization
             ovalVSz     = .15;
@@ -3698,7 +3713,12 @@ classdef Titta < handle
             % prep fixation targets
             cPoints             = obj.settings.mancal.cal.pointPos;
             vPoints             = obj.settings.mancal.val.pointPos;
+            % for each point: [x_norm y_norm x_pix y_pix ID_number status];
+            % cal status: 0: not collected; -1: failed; 1: collected; 2:
+            % collecting; 3: enqueued
             cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),1)]; %#ok<NBRAK>
+            % val status: 0: not collected; 1: collected; 2: collecting; 3:
+            % enqueued
             vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),1)]; %#ok<NBRAK>
             cPointsO            = bsxfun(@plus,cPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
             vPointsO            = bsxfun(@plus,vPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
@@ -3740,7 +3760,13 @@ classdef Titta < handle
             headOriRect             = [];
             % 2. calibration/validation state
             qToggleStage            = true;
-            stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
+            if kCal
+                % have a previous loaded calibration, start in validation
+                % mode
+                stage                   = 'cal';    % will be set to 'val' below because qToggleStage is true
+            else
+                stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
+            end
             % 3. selection menus
             qToggleSelectEyeMenu    = false;
             qSelectEyeMenuOpen      = false;
@@ -3751,6 +3777,10 @@ classdef Titta < handle
             currentMenuSel          = 0;
             % 4. eye selection
             qSelectedEyeChanged     = false;
+            extraInp = {};
+            if ~strcmp(obj.settings.calibrateEye,'both')
+                extraInp        = {obj.settings.calibrateEye};
+            end
             % 5. eye images
             qToggleEyeImage         = true;     % eye images default on
             qShowEyeImage           = false;
@@ -3768,8 +3798,10 @@ classdef Titta < handle
             % 8. snapshot saving and loading
             qSaveSnapShot           = false;
             % 9. applied calibration status
-            qAwaitingCalChange      = false;
-            awaitingCalChangeType   = '';       % 'compute' or 'snapshot'
+            qNewCal                 = true;
+            pointList               = [];
+            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: ok; 2: computing. initial state: 0 if new run, 1 if loaded previous
+            awaitingCalChangeType   = '';           % 'compute' or 'snapshot'
             % 10. cursor drawer state
             qUpdateCursors          = true;
             
@@ -3778,20 +3810,49 @@ classdef Titta < handle
             [mx,my]                 = obj.getNewMouseKeyPress(wpnt(end));
             
             qDoneWithManualCalib    = false;
+            tick                    = 0;
+            tick0p                  = nan;
+            out.flips               = GetSecs();    % anchor timing
+            frameMsg                = '';
+            out.pointPos            = [];
+            out.pointStatus         = {};
+            whichPoint              = nan;
             while ~qDoneWithManualCalib
+                % start new calibration, if wanted
+                if qNewCal
+                    if ~kCal
+                        kCal = 1;
+                    else
+                        kCal = length(out.attempt)+1;
+                    end
+                    out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    out.attempt{kCal}.device    = obj.settings.tracker;
+                    qNewCal = false;
+                end
+                
                 % toggle stage
                 if qToggleStage
                     switch stage
-                        case 'val'
+                        case 'val'  % currently 'val', becomes 'cal'
+                            % copy over status of val points to storage
+                            if exist('pointsP','var')
+                                vPointsP(:,end) = pointsP(:,end);
+                            end
                             % change to cal
-                            stage   = 'cal';
-                            pointsP = cPointsP;
-                            pointsO = cPointsO;
-                        case 'cal'
+                            stage       = 'cal';
+                            pointsP     = cPointsP;
+                            pointsO     = cPointsO;
+                            paceIntervalTicks   = ceil(obj.settings.mancal.paceDuration    *fs);
+                        case 'cal'  % currently 'cal', becomes 'val'
+                            % copy over status of cal points to storage
+                            if exist('pointsP','var')
+                                cPointsP(:,end) = pointsP(:,end);
+                            end
                             % change to val
                             stage = 'val';
                             pointsP = vPointsP;
                             pointsO = vPointsO;
+                            paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
                     end
                     % get point rects on operator screen
                     calValRectsSel  = zeros(4,size(pointsO,1));
@@ -3900,6 +3961,7 @@ classdef Titta < handle
                     % NB: don't reset cursor to invisible here as it will then flicker every
                     % time you click something. default behaviour is good here
                     cursor = cursorUpdater(cursors);
+                    qUpdateCursors = false;
                 end
                 
                 % update calibration mode
@@ -3972,8 +4034,26 @@ classdef Titta < handle
                     end
                 end
                 
+                % calibration/validation logic variables
+                if ~isempty(pointList) && isnan(whichPoint)
+                    whichPoint              = pointList(1)
+                    drawCmd                 = 'new';
+                    nCollectionTries        = 0;
+                    qWaitForAllowAccept     = true;
+                    tick0p                  = nan;
+                    tick0v                  = nan;
+                    frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
+                    pointsP(whichPoint,end) = 2;
+                    pointList(1)            = [];
+                    % todo: the below when point collection completed:
+                    % pointNotifyFun(obj,whichPoint,pointsP(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
+                end
+                
                 % draw loop
                 while true
+                    tick        = tick+1;
+                    nextFlipT   = out.flips(end)+1/1000;
+                    
                     % get eye data if needed
                     if qShowGazeToAll || qShowHead
                         eyeData     = obj.buffer.peekN('gaze',1);
@@ -4065,8 +4145,25 @@ classdef Titta < handle
                     
                     % draw calibration/validation points
                     % 1. first draw circles behind each point, denoting point state
-                    if false && ~isempty(highlight)
-                        Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.cal.fixBackSize*1.5/2);
+                    for p=1:size(pointsO,1)
+                        switch pointsP(p,end)
+                            case -1
+                                % failed
+                                clr = [255 0 0];
+                            case 0
+                                % not collected
+                                clr = [200 200 200];
+                            case 1
+                                % collected
+                                clr = [0 255 0];
+                            case 2
+                                % collecting
+                                clr = [0 0 255];
+                            case 3
+                                % enqueued
+                                clr = [0 255 255];
+                        end
+                        Screen('gluDisk', wpnt(end),obj.getColorForWindow(clr,wpnt(end)), pointsO(p,1), pointsO(p,2), obj.settings.UI.mancal.fixBackSize*1.5/2);
                     end
                     % 2. then draw points themselves
                     obj.drawFixPoints(wpnt(end),pointsO,obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixBackColor,obj.settings.UI.mancal.fixFrontColor);
@@ -4136,10 +4233,91 @@ classdef Titta < handle
                     
                     % on participant screen, draw fixation point if
                     % currently active
-                    
+                    if ~isnan(whichPoint)
+                        qAllowAccept= drawFunction(wpnt(1),drawCmd,whichPoint,pointsP(whichPoint,3:4),tick,stage);
+                        drawCmd     = 'draw';
+                        if qWaitForAllowAccept && qAllowAccept
+                            tick0p              = tick;
+                            qWaitForAllowAccept = false;
+                        end
+                    end
                     
                     % drawing done, show
-                    Screen('Flip',wpnt(1),[],0,0,1);
+                    out.flips(end+1) = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
+                    if ~isempty(frameMsg)
+                        obj.sendMessage(frameMsg,out.flips(end));
+                        frameMsg = '';
+                    end
+                    
+                    % calibration logic
+                    % accept point
+                    if tick>tick0p+paceIntervalTicks
+                        if strcmp(stage,'cal')
+                            qPointDone = false;
+                            if ~nCollectionTries
+                                % start collection
+                                obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                pointsP(whichPoint,end) = 2;    % status: collecting
+                                nCollectionTries = 1;
+                            else
+                                % check status
+                                callResult  = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(callResult)
+                                    if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
+                                        % success, next point
+                                        pointsP(whichPoint,end) = 1;        % status: collected
+                                        qPointDone              = true;
+                                        out.pointStatus{end+1}  = callResult;
+                                    else
+                                        % failed
+                                        if nCollectionTries==1
+                                            % if failed first time, immediately try again
+                                            obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                            nCollectionTries = 2;
+                                        else
+                                            % failed again, stop trying
+                                            pointsP(whichPoint,end) = -1;       % status: failed
+                                            qPointDone              = true;
+                                            out.pointStatus{end+1}  = callResult;
+                                        end
+                                    end
+                                end
+                            end
+                            % if finished collecting, log, compute
+                            % calibration
+                            if qPointDone
+                                frameMsg = sprintf('POINT OFF %d (%.0f %.0f), status: ',whichPoint,pointsP(whichPoint,3:4));
+                                if callResult.status~=0
+                                    % success
+                                    frameMsg = [frameMsg 'ok']; %#ok<AGROW>
+                                else
+                                    % failure
+                                    frameMsg = [frameMsg sprintf('failed (%s)',callResult.statusString)]; %#ok<AGROW>
+                                end
+                                whichPoint = nan;
+                                % if no points enqueued, reset calibration
+                                % point drawer function (if any)
+                                if isempty(pointList) && isa(obj.settings.cal.drawFunction,'function_handle')
+                                    obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                end
+                                % done with draw loop
+                                break;
+                            end
+                        else
+                            if isnan(tick0v)
+                                tick0v = tick;
+                            end
+                            if tick>tick0v+collectInterval
+                                dat = obj.buffer.peekN('gaze',nDataPoint);
+                                if isempty(out.gazeData)
+                                    out.gazeData = dat;
+                                else
+                                    out.gazeData(end+1,1) = dat;
+                                end
+                                tick0v = nan;
+                            end
+                        end
+                    end
 
                     % get user response
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
@@ -4330,12 +4508,19 @@ classdef Titta < handle
                                 elseif qInBut(6)
                                     qShowHead           = ~qShowHead;
                                     qShowHeadToAll      = shiftIsDown;
+                                    qUpdateCursors      = true;
                                 elseif qInBut(7)
                                     qShowGaze           = ~qShowGaze;
                                     qShowGazeToAll      = shiftIsDown;
                                 end
                                 break;
-                                % start drag
+                            elseif any(qOnFixTarget)
+                                which                   = find(qOnFixTarget,1);
+                                if pointsP(which,end)~=2
+                                    pointList(1,end+1) = which; %#ok<AGROW>
+                                    pointsP(which,end) = 3; % status: enqueued
+                                    break;
+                                end
                             end
                         end
                     elseif any(keyPress)
@@ -4423,6 +4608,7 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator))
                                 qShowHead           = ~qShowHead;
                                 qShowHeadToAll      = shiftIsDown;
+                                qUpdateCursors      = true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
                                 qShowGaze           = ~qShowGaze;
