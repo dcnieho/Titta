@@ -3754,7 +3754,7 @@ classdef Titta < handle
             
             % outer loop, in which less frequent actions are done
             % 1. head display
-            qShowHead               = true;
+            qShowHead               = false;
             qShowHeadToAll          = false;
             circVerts               = genCircle(200);
             qDraggingHead           = false;
