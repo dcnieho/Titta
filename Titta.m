@@ -1606,6 +1606,7 @@ classdef Titta < handle
             settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.val.collectDuration     = 0.5;
+            settings.mancal.val.pointNotifyFunction = [];                       % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
             
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
@@ -4048,8 +4049,6 @@ classdef Titta < handle
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
                     pointsP(whichPoint,end) = 2;
                     pointList(1)            = [];
-                    % todo: the below when point collection completed:
-                    % pointNotifyFun(obj,whichPoint,pointsP(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
                 end
                 
                 % draw loop
@@ -4307,13 +4306,21 @@ classdef Titta < handle
                         if qPointDone
                             frameMsg = sprintf('POINT OFF %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
                             if strcmp(stage,'cal')
-                                if callResult.status~=0
+                                if callResult.status==0
                                     % success
                                     frameMsg = [frameMsg ', status: ok']; %#ok<AGROW>
                                 else
                                     % failure
                                     frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
                                 end
+                                fun = obj.settings.mancal.pointNotifyFunction;
+                                extra = {out.pointStatus{end}}; %#ok<CCAT1>
+                            else
+                                fun = obj.settings.mancal.val.pointNotifyFunction;
+                                extra = {};
+                            end
+                            if isa(fun,'function_handle')
+                                fun(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,extra{:});
                             end
                             whichPoint = nan;
                             % if no points enqueued, reset calibration
