@@ -4531,7 +4531,7 @@ classdef Titta < handle
                                 break;
                             elseif any(qOnFixTarget)
                                 which                   = find(qOnFixTarget,1);
-                                if pointsP(which,end)~=2
+                                if ~ismember(pointsP(which,end),[2 3])
                                     pointList(1,end+1) = which; %#ok<AGROW>
                                     pointsP(which,end) = 3; % status: enqueued
                                     break;
@@ -4608,7 +4608,7 @@ classdef Titta < handle
                                 % calibration/validation point
                                 requested           = str2double(keys(1));
                                 if requested<size(pointsP,1)
-                                    if pointsP(requested,end)~=2
+                                    if ~ismember(pointsP(requested,end),[2 3])
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
                                         pointsP(requested,end)  = 3; % status: enqueued
                                         break;
