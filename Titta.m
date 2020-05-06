@@ -1584,6 +1584,7 @@ classdef Titta < handle
             settings.UI.mancal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.mancal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             
+            settings.UI.mancal.showHead             = false;                    % show head display when interface opens? If false, can stil be opened with button
             settings.UI.mancal.headScale            = .5;
             settings.UI.mancal.headPos              = [];                       % if empty, centered
             settings.UI.mancal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
@@ -3754,7 +3755,7 @@ classdef Titta < handle
             
             % outer loop, in which less frequent actions are done
             % 1. head display
-            qShowHead               = false;
+            qShowHead               = obj.settings.UI.mancal.showHead;
             qShowHeadToAll          = false;
             circVerts               = genCircle(200);
             qDraggingHead           = false;
