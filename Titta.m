@@ -3738,13 +3738,13 @@ classdef Titta < handle
             % prep fixation targets
             cPoints             = obj.settings.mancal.cal.pointPos;
             vPoints             = obj.settings.mancal.val.pointPos;
-            % for each point: [x_norm y_norm x_pix y_pix ID_number status];
-            % cal status: 0: not collected; -1: failed; 1: collected; 2:
-            % collecting; 3: enqueued
-            cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),1)]; %#ok<NBRAK>
-            % val status: 0: not collected; 1: collected; 2: collecting; 3:
-            % enqueued
-            vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),1)]; %#ok<NBRAK>
+            % for each point: [x_norm y_norm x_pix y_pix ID_number prev_status status];
+            % cal status: 0: not collected; -1: failed; 1: collected;
+            % 2: displaying; 3: collecting; 4: enqueued
+            cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),2)]; %#ok<NBRAK>
+            % val status: 0: not collected; 1: collected; 2: displaying;
+            % 3: collecting; 3: enqueued
+            vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),2)]; %#ok<NBRAK>
             cPointsO            = bsxfun(@plus,cPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
             vPointsO            = bsxfun(@plus,vPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
             % make text caches for numbering points
@@ -3874,7 +3874,7 @@ classdef Titta < handle
                         case 'val'  % currently 'val', becomes 'cal'
                             % copy over status of val points to storage
                             if exist('pointsP','var')
-                                vPointsP(:,end) = pointsP(:,end);
+                                vPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
                             end
                             % change to cal
                             stage           = 'cal';
@@ -3885,7 +3885,7 @@ classdef Titta < handle
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
                             if exist('pointsP','var')
-                                cPointsP(:,end) = pointsP(:,end);
+                                cPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
                             end
                             % change to val
                             stage           = 'val';
@@ -4083,7 +4083,7 @@ classdef Titta < handle
                     tick0p                  = nan;
                     tick0v                  = nan;
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
-                    pointsP(whichPoint,end) = 2;
+                    pointsP(whichPoint,end-[1 0])   = 2;    % set point to being displayed
                     pointList(1)            = [];
                 end
                 
@@ -4190,16 +4190,19 @@ classdef Titta < handle
                                 clr = [255 0 0];
                             case 0
                                 % not collected
-                                clr = [200 200 200];
+                                clr = [100 100 100];
                             case 1
                                 % collected
                                 clr = [0 255 0];
                             case 2
+                                % displaying
+                                clr = [0 255 255];
+                            case 3
                                 % collecting
                                 clr = [0 0 255];
-                            case 3
+                            case 4
                                 % enqueued
-                                clr = [0 255 255];
+                                clr = [200 200 200];
                         end
                         Screen('gluDisk', wpnt(end),obj.getColorForWindow(clr,wpnt(end)), pointsO(p,1), pointsO(p,2), obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5/2);
                     end
@@ -4298,7 +4301,7 @@ classdef Titta < handle
                             if ~nCollectionTries
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                pointsP(whichPoint,end) = 2;    % status: collecting
+                                pointsP(whichPoint,end-[1 0]) = [0 3];    % status: collecting, and set previous to not collected since it'll now be wiped
                                 nCollectionTries = 1;
                             else
                                 % check status
@@ -4306,7 +4309,7 @@ classdef Titta < handle
                                 if ~isempty(callResult)
                                     if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                         % success, next point
-                                        pointsP(whichPoint,end) = 1;        % status: collected
+                                        pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
                                         qPointDone              = true;
                                         out.pointStatus{end+1}  = callResult;
                                     else
@@ -4317,7 +4320,7 @@ classdef Titta < handle
                                             nCollectionTries = 2;
                                         else
                                             % failed again, stop trying
-                                            pointsP(whichPoint,end) = -1;       % status: failed
+                                            pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
                                             qPointDone              = true;
                                             out.pointStatus{end+1}  = callResult;
                                         end
@@ -4569,9 +4572,9 @@ classdef Titta < handle
                                 break;
                             elseif any(qOnFixTarget)
                                 which                   = find(qOnFixTarget,1);
-                                if ~ismember(pointsP(which,end),[2 3])
+                                if ~ismember(pointsP(which,end),[2 3 4])
                                     pointList(1,end+1) = which; %#ok<AGROW>
-                                    pointsP(which,end) = 3; % status: enqueued
+                                    pointsP(which,end) = 4; % status: enqueued
                                     break;
                                 end
                             end
@@ -4631,24 +4634,45 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if any(strcmpi(keys,'escape')) && (qDraggingHead || ~isnan(headResizingGrip))
-                                % cancel drag/resize of head display
-                                qDraggingHead       = false;
-                                headResizingGrip    = nan;
-                                headORect           = headOriRect;
-                                scaleFacs           = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
-                                facO                = min(scaleFacs);
-                                refSzO              = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
-                                refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
-                                qUpdateCursors      = true;
-                                break;
+                            if any(strcmpi(keys,'escape'))
+                                if qDraggingHead || ~isnan(headResizingGrip)
+                                    % cancel drag/resize of head display
+                                    qDraggingHead       = false;
+                                    headResizingGrip    = nan;
+                                    headORect           = headOriRect;
+                                    scaleFacs           = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
+                                    facO                = min(scaleFacs);
+                                    refSzO              = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+                                    refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
+                                    qUpdateCursors      = true;
+                                    break;
+                                elseif ~isempty(pointList)
+                                    % cancel all queued points
+                                    for p=1:length(pointList)
+                                        % reset to previous state
+                                        pointsP(pointList(p),end) = pointsP(pointList(p),end-1);
+                                    end
+                                    % clear list of enqueued points
+                                    pointList = [];
+                                    
+                                    % if currently showing point but not
+                                    % yet trying to collect, cancel as well
+                                    if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
+                                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                        whichPoint = nan;
+                                        % reset calibration point drawer
+                                        % function
+                                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                    end
+                                    break;
+                                end
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
                                 % calibration/validation point
                                 requested           = str2double(keys(1));
                                 if requested<size(pointsP,1)
-                                    if ~ismember(pointsP(requested,end),[2 3])
+                                    if ~ismember(pointsP(requested,end),[2 3 4])
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
-                                        pointsP(requested,end)  = 3; % status: enqueued
+                                        pointsP(requested,end)  = 4; % status: enqueued
                                         break;
                                     end
                                 end
