@@ -4083,7 +4083,7 @@ classdef Titta < handle
                     tick0p                  = nan;
                     tick0v                  = nan;
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
-                    pointsP(whichPoint,end-[1 0])   = 2;    % set point to being displayed
+                    pointsP(whichPoint,end) = 2;    % status: displayed
                     pointList(1)            = [];
                 end
                 
@@ -4190,19 +4190,19 @@ classdef Titta < handle
                                 clr = [255 0 0];
                             case 0
                                 % not collected
-                                clr = [100 100 100];
+                                clr = [200 200 200];
                             case 1
                                 % collected
                                 clr = [0 255 0];
                             case 2
                                 % displaying
-                                clr = [0 255 255];
+                                clr = [131 177 255];
                             case 3
                                 % collecting
                                 clr = [0 0 255];
                             case 4
                                 % enqueued
-                                clr = [200 200 200];
+                                clr = [0 255 255];
                         end
                         Screen('gluDisk', wpnt(end),obj.getColorForWindow(clr,wpnt(end)), pointsO(p,1), pointsO(p,2), obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5/2);
                     end
@@ -4646,11 +4646,13 @@ classdef Titta < handle
                                     refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                                     qUpdateCursors      = true;
                                     break;
-                                elseif ~isempty(pointList)
+                                elseif ~isempty(pointList) || ~isnan(whichPoint)
+                                    qDoneSomething = false;
                                     % cancel all queued points
                                     for p=1:length(pointList)
                                         % reset to previous state
                                         pointsP(pointList(p),end) = pointsP(pointList(p),end-1);
+                                        qDoneSomething = true;
                                     end
                                     % clear list of enqueued points
                                     pointList = [];
@@ -4659,12 +4661,17 @@ classdef Titta < handle
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
                                         frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                        % reset to previous state
+                                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
                                         whichPoint = nan;
                                         % reset calibration point drawer
                                         % function
                                         drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                        qDoneSomething = true;
                                     end
-                                    break;
+                                    if qDoneSomething
+                                        break;
+                                    end
                                 end
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
                                 % calibration/validation point
