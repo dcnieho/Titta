@@ -4669,7 +4669,7 @@ classdef Titta < handle
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
                                 % calibration/validation point
                                 requested           = str2double(keys(1));
-                                if requested<size(pointsP,1)
+                                if requested<=size(pointsP,1)
                                     if ~ismember(pointsP(requested,end),[2 3 4])
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
                                         pointsP(requested,end)  = 4; % status: enqueued
