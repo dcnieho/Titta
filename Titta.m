@@ -3986,7 +3986,7 @@ classdef Titta < handle
                     headRects   = [];
                     headCursors = [];
                     if qShowHead
-                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor.normal);
+                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor);
                     end
                     if qSelectEyeMenuOpen || qSelectSnapMenuOpen
                         otherRects  = currentMenuRects.';
@@ -4495,7 +4495,7 @@ classdef Titta < handle
                         end
                         refPosO     = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                         % also update cursor rects
-                        headRects = getSelectionRects(headORect,4,obj.settings.UI.cursor.normal);
+                        headRects = getSelectionRects(headORect,3,obj.settings.UI.cursor);
                         cursor.cursorRects(:,1:size(headRects,2)) = headRects;
                     end
                     % update cursor look if needed
@@ -5049,7 +5049,7 @@ scrShot = Screen('GetImage',wpnt);
 imwrite(scrShot,fname);
 end
 
-function [headRects,headCursors] = getSelectionRects(headORect,margin,normCurs)
+function [headRects,headCursors] = getSelectionRects(headORect,margin,cursors)
 headRects = repmat(headORect.',1,9);
 % add resize handle points
 rs = GrowRect(headORect,-margin,-margin);
@@ -5075,7 +5075,9 @@ headRects(:,8) = [rs(3) rs(2) rb(3) rs(4)];
 % drag rect should be the smaller rect itself
 headRects(:,9) = rs;
 % corresponding cursors
-headCursors = [9 10 9 10 4 4 5 5 normCurs];
+headCursors = [cursors.sizetopleft cursors.sizetopright cursors.sizebottomleft cursors.sizebottomright ...
+    cursors.sizetop cursors.sizebottom cursors.sizeleft cursors.sizeright ...
+    cursors.normal];
 end
 
 function refPosO = updateHeadDragResize(headRect,scrRes,fac,headO,refSzO,headCircleEdgeWidth)
