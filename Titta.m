@@ -3837,8 +3837,10 @@ classdef Titta < handle
             % 9. applied calibration status
             qNewCal                 = true;
             pointList               = [];
-            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: ok; 2: computing. initial state: 0 if new run, 1 if loaded previous
-            awaitingCalChangeType   = '';           % 'compute' or 'snapshot'
+            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating. initial state: 0 if new run, 1 if loaded previous
+            pointStateLastCal       = [];
+            awaitingCalChangeType   = '';           % 'compute' or 'load'
+            qUpdateCalStatusText    = true;
             % 10. cursor drawer state
             qUpdateCursors          = true;
             
@@ -4033,49 +4035,108 @@ classdef Titta < handle
                 end
                 
                 % update line displays of calibration/validation data
-                if false
-                    % prep to draw captured data in characteristic tobii plot
-                    for p=1:nPoints
-                        if qShowCal
-                            myCal = cal{selection}.cal.result;
-                            bpos = calValPos(p,:).';
-                            % left eye
-                            if ismember(cal{selection}.eye,{'both','left'})
-                                qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
-                                lEpos= myCal.points(p).samples.left.position(:,qVal);
+                if ~isempty(awaitingCalChangeType)
+                    switch awaitingCalChangeType
+                        case 'compute'
+                            if calibrationStatus==2
+                                % still waiting for computation to complete
+                                computeResult = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(computeResult)
+                                    if ~strcmpi(computeResult.calibrationResult.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                                        % calibration unsuccessful, we bail now
+                                        calibrationStatus       = -1;
+                                        awaitingCalChangeType   = '';
+                                    else
+                                        % calibration successful
+                                        calibrationStatus       = 1;
+                                        % issue command to get calibration data
+                                        obj.buffer.calibrationGetData();
+                                        % store calibration result
+                                        % TODO: store better
+                                        out.result              = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                                    end
+                                end
+                            elseif calibrationStatus==1
+                                % computed succesfully, waiting for
+                                % calibration data retrieval
+                                calData = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(calData) && strcmp(calData.workItem.action,'GetCalibrationData')
+                                    out.computedCal         = calData.calibrationData;
+                                    awaitingCalChangeType   = '';   % done with calibration/data acquisition sequence
+                                end
                             end
-                            % right eye
-                            if ismember(cal{selection}.eye,{'both','right'})
-                                qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
-                                rEpos= myCal.points(p).samples.right.position(:,qVal);
+                        case 'load'
+                            % TODO
+                    end
+                    
+                    if false %isempty(awaitingCalChangeType) || calibrationStatus==1   % status just changed: we have something to update
+                        % TODO
+                        % prep to draw captured data in characteristic tobii plot
+                        for p=1:nPoints
+                            if qShowCal
+                                myCal = cal{selection}.cal.result;
+                                bpos = calValPos(p,:).';
+                                % left eye
+                                if ismember(cal{selection}.eye,{'both','left'})
+                                    qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                    lEpos= myCal.points(p).samples.left.position(:,qVal);
+                                end
+                                % right eye
+                                if ismember(cal{selection}.eye,{'both','right'})
+                                    qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                    rEpos= myCal.points(p).samples.right.position(:,qVal);
+                                end
+                            else
+                                myVal = cal{selection}.val{iVal};
+                                bpos = calValPos(p,:).';
+                                % left eye
+                                if ismember(cal{selection}.eye,{'both','left'})
+                                    qVal = myVal.gazeData(p). left.gazePoint.valid;
+                                    lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                                end
+                                % right eye
+                                if ismember(cal{selection}.eye,{'both','right'})
+                                    qVal = myVal.gazeData(p).right.gazePoint.valid;
+                                    rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                                end
                             end
-                        else
-                            myVal = cal{selection}.val{iVal};
-                            bpos = calValPos(p,:).';
-                            % left eye
-                            if ismember(cal{selection}.eye,{'both','left'})
-                                qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                            if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
+                                lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                                lEpos = reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]);
                             end
-                            % right eye
-                            if ismember(cal{selection}.eye,{'both','right'})
-                                qVal = myVal.gazeData(p).right.gazePoint.valid;
-                                rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                            if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
+                                rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                                rEpos = reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]);
                             end
-                        end
-                        if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
-                            lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
-                            lEpos = reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]);
-                        end
-                        if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
-                            rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
-                            rEpos = reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]);
                         end
                     end
                 end
                 
+                if qUpdateCalStatusText
+                    % get color and text
+                    switch calibrationStatus
+                        case -1
+                            % failed
+                            text = 'failed';
+                            clr = [255 0 0];
+                        case 0
+                            % not calibrated
+                            text = 'not calibrated';
+                            clr = [200 200 200];
+                        case 1
+                            % calibrated
+                            text = 'calibrated';
+                            clr = [0 255 0];
+                        case 2
+                            % calibrating
+                            text = 'calibrating';
+                            clr = [0 0 255];
+                    end
+                    calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'baseColor',obj.getColorForWindow(clr,wpnt(end)),'xalign','left','yalign','top');
+                end
+                
                 % calibration/validation logic variables
-                if ~isempty(pointList) && isnan(whichPoint)
+                if ~isempty(pointList) && isnan(whichPoint) && isempty(awaitingCalChangeType)
                     whichPoint              = pointList(1);
                     drawCmd                 = 'new';
                     nCollectionTries        = 0;
@@ -4157,6 +4218,8 @@ classdef Titta < handle
                     Screen('FillRect', wpnt(2), bgClrO);
                     % draw text with validation accuracy etc info
                     %obj.drawCachedText(valInfoTopTextCache);
+                    % draw text with calibration status
+                    obj.drawCachedText(calTextCache);
                     % draw buttons
                     mousePos = [mx my];
                     but(1).draw(mousePos,qSelectEyeMenuOpen);
@@ -4369,6 +4432,14 @@ classdef Titta < handle
                             % point drawer function (if any)
                             if isempty(pointList)
                                 drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            end
+                            % if in calibration mode and point states have
+                            % changed, kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal)
+                                calibrationStatus       = 2;
+                                pointStateLastCal       = pointsP(:,end);
+                                awaitingCalChangeType   = 'compute';
+                                obj.buffer.calibrationComputeAndApply();
                             end
                             % done with draw loop
                             break;
@@ -4740,6 +4811,11 @@ classdef Titta < handle
                     elseif ~isnan(pointToShowInfoFor)
                         % stop showing info
                         pointToShowInfoFor = nan;
+                        break;
+                    end
+                    % if awaiting calibration status change, break out of
+                    % draw loop to check for state change
+                    if ~isempty(awaitingCalChangeType)
                         break;
                     end
                 end
