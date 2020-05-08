@@ -4117,7 +4117,7 @@ classdef Titta < handle
                     switch calibrationStatus
                         case -1
                             % failed
-                            text = 'failed';
+                            text = 'calibration failed';
                             clr = [255 0 0];
                         case 0
                             % not calibrated
