@@ -4102,14 +4102,18 @@ classdef Titta < handle
                     else
                         if isfield(out.attempt{kCal},'val')
                             % collect latest gaze data for each point
-                            strSetup = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
+                            strSetup        = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
                             [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));
-                            val.gazeData = struct(strSetup{:});
-                            val.pointPos = nan(size(pointsP,1),5);
-                            qFound = false(1,size(pointsP,1));
+                            val.gazeData    = struct(strSetup{:});
+                            val.pointPos    = nan(size(pointsP,1),5);
+                            qFound          = false(1,size(pointsP,1));
+                            whichCal        = getLastManualCal(out.attempt{kCal});
                             for p=length(out.attempt{kCal}.val):-1:1
                                 idx = out.attempt{kCal}.val{p}.point(1);
-                                if isempty(val.gazeData(idx).(strSetup{1,1}))
+                                if isempty(val.gazeData(idx).(strSetup{1,1})) && out.attempt{kCal}.val{p}.whichCal==whichCal
+                                    % we don't yet have validation data for
+                                    % this point, and it is for the current
+                                    % calibration -> collect
                                     qFound(idx) = true;
                                     % copy over all fields
                                     for f=1:size(strSetup,2)
@@ -4123,24 +4127,26 @@ classdef Titta < handle
                             val.pointPos(~qFound,:) = [];
                             
                             % compute data quality for these
-                            out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
-                            
-                            % prep displaying
-                            myVal = out.attempt{kCal}.val{valAction}.allPoints;
-                            for p=1:length(myVal.gazeData)
-                                point.left = [];
-                                point.right= [];
-                                % left eye
-                                if ismember(out.attempt{kCal}.eye,{'both','left'})
-                                    qVal        = myVal.gazeData(p). left.gazePoint.valid;
-                                    point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                            if ~isempty(val.pointPos)
+                                out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
+                                
+                                % prep displaying
+                                myVal = out.attempt{kCal}.val{valAction}.allPoints;
+                                for p=1:length(myVal.gazeData)
+                                    point.left = [];
+                                    point.right= [];
+                                    % left eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                        qVal        = myVal.gazeData(p). left.gazePoint.valid;
+                                        point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                                    end
+                                    % right eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                        qVal        = myVal.gazeData(p).right.gazePoint.valid;
+                                        point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                                    end
+                                    linesForPoints{myVal.pointPos(p,1)} = point;
                                 end
-                                % right eye
-                                if ismember(out.attempt{kCal}.eye,{'both','right'})
-                                    qVal        = myVal.gazeData(p).right.gazePoint.valid;
-                                    point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
-                                end
-                                linesForPoints{myVal.pointPos(p,1)} = point;
                             end
                         end
                     end
@@ -4159,7 +4165,7 @@ classdef Titta < handle
                 end
                 
                 % setup overlay with data quality info for specific point
-                if ~isnan(openInfoForPoint) && isfield(out.attempt{kCal},'val')
+                if ~isnan(openInfoForPoint) && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
                     pointToShowInfoFor = openInfoForPoint;
                     openInfoForPoint   = nan;
                     myVal = out.attempt{kCal}.val{valAction}.allPoints;
@@ -4236,6 +4242,11 @@ classdef Titta < handle
                     else
                         valAction               = valAction+1;
                         out.attempt{kCal}.val{valAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
+                        % store for which calibration this validation is
+                        % find last successful calibration (a calibration
+                        % was successful if it has points in the result
+                        % field)
+                        out.attempt{kCal}.val{valAction}.whichCal = getLastManualCal(out.attempt{kCal});
                     end
                 end
                 
@@ -5325,4 +5336,19 @@ refPosO         = refPosO+headO.allPosOff;
 headO.refSz     = refSzO;
 headO.rectWH    = scrRes*fac;
 headO.headCircleEdgeWidth = headCircleEdgeWidth*fac;
+end
+
+function whichCal = getLastManualCal(attempt)
+if ~isfield(attempt,'cal')
+    % direct validation without calibration,
+    % denoted by cal==0
+    whichCal = 0;
+else
+    for c=length(attempt.cal):-1:1
+        if isfield(attempt.cal{c},'computeResult') && ~isempty(attempt.cal{c}.computeResult.points)
+            whichCal = c;
+            break;
+        end
+    end
+end
 end
