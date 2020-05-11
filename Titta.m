@@ -4559,8 +4559,9 @@ classdef Titta < handle
                                 drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                             end
                             % if in calibration mode and point states have
-                            % changed, kick off a new calibration
-                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal)
+                            % changed, and no further calibration points
+                            % queued up -> kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList)
                                 calibrationStatus       = 2;
                                 pointStateLastCal       = pointsP(:,end);
                                 awaitingCalChangeType   = 'compute';
