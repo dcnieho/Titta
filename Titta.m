@@ -3837,7 +3837,7 @@ classdef Titta < handle
             % 9. applied calibration status
             qNewCal                 = true;
             pointList               = [];
-            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating. initial state: 0 if new run, 1 if loaded previous
+            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
             pointStateLastCal       = [];
             awaitingCalChangeType   = '';           % 'compute' or 'load'
             qUpdateCalStatusText    = true;
@@ -3853,9 +3853,6 @@ classdef Titta < handle
             tick0p                  = nan;
             out.flips               = GetSecs();    % anchor timing
             frameMsg                = '';
-            out.pointPos            = [];
-            out.pointStatus         = {};
-            out.gazeData            = [];
             whichPoint              = nan;
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted
@@ -3867,6 +3864,8 @@ classdef Titta < handle
                     end
                     out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                     out.attempt{kCal}.device    = obj.settings.tracker;
+                    calAction                   = 0;
+                    valAction                   = 0;
                     qNewCal = false;
                 end
                 
@@ -4052,18 +4051,17 @@ classdef Titta < handle
                                         calibrationStatus       = 1;
                                         % issue command to get calibration data
                                         obj.buffer.calibrationGetData();
-                                        % store calibration result
-                                        % TODO: store better
-                                        out.result              = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
                                     end
+                                    % store calibration result
+                                    out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
                                 % calibration data retrieval
                                 calData = obj.buffer.calibrationRetrieveResult();
                                 if ~isempty(calData) && strcmp(calData.workItem.action,'GetCalibrationData')
-                                    out.computedCal         = calData.calibrationData;
-                                    awaitingCalChangeType   = '';   % done with calibration/data acquisition sequence
+                                    out.attempt{kCal}.cal{calAction}.computedCal    = calData.calibrationData;
+                                    awaitingCalChangeType                           = '';   % done with calibration/data acquisition sequence
                                 end
                             end
                         case 'load'
@@ -4131,7 +4129,11 @@ classdef Titta < handle
                         case 2
                             % calibrating
                             text = 'calibrating';
-                            clr = [0 0 255];
+                            clr = [0 255 255];
+                        case 3
+                            % calibrating
+                            text = 'loading calibration';
+                            clr = [0 255 255];
                     end
                     calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'baseColor',obj.getColorForWindow(clr,wpnt(end)),'xalign','left','yalign','top');
                 end
@@ -4147,6 +4149,13 @@ classdef Titta < handle
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
                     pointsP(whichPoint,end) = 2;    % status: displayed
                     pointList(1)            = [];
+                    if strcmp(stage,'cal')
+                        calAction               = calAction+1;
+                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,1:5);
+                    else
+                        valAction               = valAction+1;
+                        out.attempt{kCal}.val{valAction}.point = pointsP(whichPoint,1:5);
+                    end
                 end
                 
                 % draw loop
@@ -4367,6 +4376,7 @@ classdef Titta < handle
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
                                 pointsP(whichPoint,end-[1 0]) = [0 3];    % status: collecting, and set previous to not collected since it'll now be wiped
                                 nCollectionTries = 1;
+                                out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                             else
                                 % check status
                                 callResult  = obj.buffer.calibrationRetrieveResult();
@@ -4375,7 +4385,7 @@ classdef Titta < handle
                                         % success, next point
                                         pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
                                         qPointDone              = true;
-                                        out.pointStatus{end+1}  = callResult;
+                                        out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
                                     else
                                         % failed
                                         if nCollectionTries==1
@@ -4386,7 +4396,7 @@ classdef Titta < handle
                                             % failed again, stop trying
                                             pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
                                             qPointDone              = true;
-                                            out.pointStatus{end+1}  = callResult;
+                                            out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
                                         end
                                     end
                                 end
@@ -4394,14 +4404,11 @@ classdef Titta < handle
                         else
                             if isnan(tick0v)
                                 tick0v = tick;
+                                out.attempt{kCal}.val{valAction}.wasCancelled = false;
                             end
                             if tick>tick0v+collectInterval
                                 dat = obj.buffer.peekN('gaze',nDataPoint);
-                                if isempty(out.gazeData)
-                                    out.gazeData = dat;
-                                else
-                                    out.gazeData(end+1,1) = dat;
-                                end
+                                out.attempt{kCal}.val{valAction}.gazeData = dat;
                                 tick0v = nan;
                                 qPointDone = true;
                             end
@@ -4420,7 +4427,7 @@ classdef Titta < handle
                                     frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
                                 end
                                 fun = obj.settings.mancal.pointNotifyFunction;
-                                extra = {out.pointStatus{end}}; %#ok<CCAT1>
+                                extra = {out.attempt{kCal}.cal{calAction}.collectStatus};
                             else
                                 fun = obj.settings.mancal.val.pointNotifyFunction;
                                 extra = {};
@@ -4733,6 +4740,7 @@ classdef Titta < handle
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
                                         frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                        out.attempt{kCal}.cal{calAction}.wasCancelled = true;
                                         % reset to previous state
                                         pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
                                         whichPoint = nan;
