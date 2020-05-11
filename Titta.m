@@ -1593,6 +1593,9 @@ classdef Titta < handle
             settings.UI.mancal.menu.text.color      = 0;
             settings.UI.mancal.menu.text.eyeColors  = eyeColors;                % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.mancal.menu.text.style      = 0;
+            settings.UI.mancal.calState.text.font   = sansFont;
+            settings.UI.mancal.calState.text.size   = 20*textFac;
+            settings.UI.mancal.calState.text.style  = 0;
             settings.UI.mancal.hover.bgColor        = 110;
             settings.UI.mancal.hover.text.font      = monoFont;
             settings.UI.mancal.hover.text.size      = 20*textFac;
@@ -4211,6 +4214,8 @@ classdef Titta < handle
                             text = 'loading calibration';
                             clr = [0 255 255];
                     end
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.calState.text.size);
                     calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'baseColor',obj.getColorForWindow(clr,wpnt(end)),'xalign','left','yalign','top');
                 end
                 
