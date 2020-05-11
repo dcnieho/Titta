@@ -4047,31 +4047,31 @@ classdef Titta < handle
                                 % still waiting for computation to complete
                                 computeResult = obj.buffer.calibrationRetrieveResult();
                                 if ~isempty(computeResult)
-                                    if ~strcmpi(computeResult.calibrationResult.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                                    % store calibration result
+                                    out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                                    if ~strcmpi(out.attempt{kCal}.cal{calAction}.computeResult.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
                                         % calibration unsuccessful, we bail now
                                         calibrationStatus       = -1;
                                         awaitingCalChangeType   = '';
                                     else
                                         % calibration successful
                                         calibrationStatus       = 1;
-                                        % issue command to get calibration data
+                                        % issue command to get calibration
+                                        % data
                                         obj.buffer.calibrationGetData();
-                                    end
-                                    % store calibration result
-                                    out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
-                                    qUpdateLineDisplay = true;
-                                    % denote all validation points as not
-                                    % collected
-                                    vPointsP(:,end-[1 0]) = 0;
-                                    % calibration output for a successful
-                                    % calibration may show that data for
-                                    % some calibration points was removed,
-                                    % update their state
-                                    if strcmpi(computeResult.calibrationResult.status(1:7),'Success')
+                                        % denote all validation points as
+                                        % not collected
+                                        vPointsP(:,end-[1 0]) = 0;
+                                        % calibration output for a
+                                        % successful calibration may show
+                                        % that data for some calibration
+                                        % points was removed, update their
+                                        % state
                                         pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
                                         qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs);
                                         pointsP(qNoData,end-[1 0]) = 0;
                                     end
+                                    qUpdateLineDisplay = true;
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
