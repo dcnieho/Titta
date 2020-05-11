@@ -3903,8 +3903,9 @@ classdef Titta < handle
                         calValRectsSel(:,p)     = CenterRectOnPointd([0 0 fixPointRectSzSel   fixPointRectSzSel  ],pointsO(p,1),pointsO(p,2));
                         calValRectsHover(:,p)   = CenterRectOnPointd([0 0 fixPointRectSzHover fixPointRectSzHover],pointsO(p,1),pointsO(p,2));
                     end
-                    qUpdateCursors = true;
-                    qToggleStage = false;
+                    qUpdateCursors      = true;
+                    qToggleStage        = false;
+                    qUpdateLineDisplay  = true;
                 end
                 
                 % setup menu, if any
@@ -4121,6 +4122,7 @@ classdef Titta < handle
                             linesForPoints{p}.right = bsxfun(@plus,bsxfun(@times,linesForPoints{p}.right,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                         end
                     end
+                    qUpdateLineDisplay = false;
                 end
                 
                 if qUpdateCalStatusText
@@ -4393,8 +4395,8 @@ classdef Titta < handle
                             if ~nCollectionTries
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                pointsP(whichPoint,end-[1 0]) = [0 3];      % status: collecting, and set previous to not collected since it'll now be wiped
-                                pointStateLastCal(whichPoint) = 0;          % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
+                                pointsP(whichPoint,end-[1 0]) = [0 3];          % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointStateLastCal(whichPoint) = 0; %#ok<AGROW>  % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
                                 nCollectionTries = 1;
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                             else
@@ -4425,12 +4427,15 @@ classdef Titta < handle
                             if isnan(tick0v)
                                 tick0v = tick;
                                 out.attempt{kCal}.val{valAction}.wasCancelled = false;
+                                pointsP(whichPoint,end) = 3;        % status: collecting
                             end
                             if tick>tick0v+collectInterval
                                 dat = obj.buffer.peekN('gaze',nDataPoint);
                                 out.attempt{kCal}.val{valAction}.gazeData = dat;
-                                tick0v = nan;
-                                qPointDone = true;
+                                tick0v              = nan;
+                                qPointDone          = true;
+                                qUpdateLineDisplay  = true;
+                                pointsP(whichPoint,end) = 1;        % status: collected
                             end
                         end
                         % if finished collecting, log, clean up, and if in
@@ -4760,7 +4765,11 @@ classdef Titta < handle
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
                                         frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                                        out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                                        if strcmp(stage,'cal')
+                                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                                        else
+                                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                                        end
                                         % reset to previous state
                                         pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
                                         whichPoint = nan;
