@@ -4165,10 +4165,10 @@ classdef Titta < handle
                     pointList(1)            = [];
                     if strcmp(stage,'cal')
                         calAction               = calAction+1;
-                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,1:5);
+                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
                     else
                         valAction               = valAction+1;
-                        out.attempt{kCal}.val{valAction}.point = pointsP(whichPoint,1:5);
+                        out.attempt{kCal}.val{valAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
                     end
                 end
                 
