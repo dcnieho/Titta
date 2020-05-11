@@ -4060,6 +4060,18 @@ classdef Titta < handle
                                     % store calibration result
                                     out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
                                     qUpdateLineDisplay = true;
+                                    % denote all validation points as not
+                                    % collected
+                                    vPointsP(:,end-[1 0]) = 0;
+                                    % calibration output for a successful
+                                    % calibration may show that data for
+                                    % some calibration points was removed,
+                                    % update their state
+                                    if strcmpi(computeResult.calibrationResult.status(1:7),'Success')
+                                        pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
+                                        qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs);
+                                        pointsP(qNoData,end-[1 0]) = 0;
+                                    end
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
@@ -4081,9 +4093,9 @@ classdef Titta < handle
                     % prep to draw captured data in characteristic tobii plot
                     if strcmp(stage,'cal')
                         if isfield(out.attempt{kCal},'cal') && isfield(out.attempt{kCal}.cal{calAction},'computeResult')
-                            myCal = out.attempt{kCal}.cal{calAction}.computeResult;
+                            myCal       = out.attempt{kCal}.cal{calAction}.computeResult;
+                            pointIdxs   = getWhichCalibrationPoints(pointsP(:,1:2),myCal.points);
                             for p=1:length(myCal.points)
-                                qPoint = sum(abs(bsxfun(@minus,pointsP(:,1:2),myCal.points(p).position(:).'))<0.0001,2)==2;
                                 point.left = [];
                                 point.right= [];
                                 % left eye
@@ -4096,7 +4108,7 @@ classdef Titta < handle
                                     qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
                                     point.right = myCal.points(p).samples.right.position(:,qVal);
                                 end
-                                linesForPoints{qPoint} = point;
+                                linesForPoints{pointIdxs(p)} = point;
                             end
                         end
                     else
@@ -5349,5 +5361,13 @@ if isfield(attempt,'cal')
             break;
         end
     end
+end
+end
+
+function pointIdxs = getWhichCalibrationPoints(allPointsNormPos,calResultPoints)
+pointIdxs = [];
+for p=1:length(calResultPoints)
+    qPoint      = sum(abs(bsxfun(@minus,allPointsNormPos,calResultPoints(p).position(:).'))<0.0001,2)==2;
+    pointIdxs   = [pointIdxs find(qPoint)]; %#ok<AGROW>
 end
 end
