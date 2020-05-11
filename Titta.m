@@ -3864,6 +3864,7 @@ classdef Titta < handle
                     end
                     out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                     out.attempt{kCal}.device    = obj.settings.tracker;
+                    out.attempt{kCal}.eye       = obj.settings.calibrateEye;
                     calAction                   = 0;
                     valAction                   = 0;
                     qNewCal = false;
@@ -4083,12 +4084,12 @@ classdef Titta < handle
                                 point.left = [];
                                 point.right= [];
                                 % left eye
-                                if ismember(obj.settings.calibrateEye,{'both','left'}) % TODO: store eye in out.attempt{kCal}.eye
+                                if ismember(out.attempt{kCal}.eye,{'both','left'})
                                     qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
                                     point.left  = myCal.points(p).samples.left.position(:,qVal);
                                 end
                                 % right eye
-                                if ismember(obj.settings.calibrateEye,{'both','right'})
+                                if ismember(out.attempt{kCal}.eye,{'both','right'})
                                     qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
                                     point.right = myCal.points(p).samples.right.position(:,qVal);
                                 end
@@ -4127,12 +4128,12 @@ classdef Titta < handle
                                 point.left = [];
                                 point.right= [];
                                 % left eye
-                                if ismember(obj.settings.calibrateEye,{'both','left'}) % TODO: store eye in out.attempt{kCal}.eye
+                                if ismember(out.attempt{kCal}.eye,{'both','left'})
                                     qVal        = myVal.gazeData(p). left.gazePoint.valid;
                                     point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
                                 end
                                 % right eye
-                                if ismember(obj.settings.calibrateEye,{'both','right'})
+                                if ismember(out.attempt{kCal}.eye,{'both','right'})
                                     qVal        = myVal.gazeData(p).right.gazePoint.valid;
                                     point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
                                 end
@@ -4167,14 +4168,14 @@ classdef Titta < handle
                         % prepare text
                         Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
                         Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
-                        if strcmp(obj.settings.calibrateEye,'both') % TODO: store eye in out.attempt{kCal}.eye
+                        if strcmp(out.attempt{kCal}.eye,'both') % TODO: store eye in out.attempt{kCal}.eye
                             lE = myVal.quality(idx).left;
                             rE = myVal.quality(idx).right;
                             str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
-                        elseif strcmp(obj.settings.calibrateEye,'left')
+                        elseif strcmp(out.attempt{kCal}.eye,'left')
                             lE = myVal.quality(idx).left;
                             str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
-                        elseif strcmp(obj.settings.calibrateEye,'right')
+                        elseif strcmp(out.attempt{kCal}.eye,'right')
                             rE = myVal.quality(idx).right;
                             str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
                         end
