@@ -4081,10 +4081,9 @@ classdef Titta < handle
                             myCal = out.attempt{kCal}.cal{calAction}.computeResult;
                             for p=1:length(myCal.points)
                                 qPoint = sum(abs(bsxfun(@minus,pointsP(:,1:2),myCal.points(p).position(:).'))<0.0001,2)==2;
-                                % left eye
-                                point.ref  = pointsP(qPoint,3:4);
                                 point.left = [];
                                 point.right= [];
+                                % left eye
                                 if ismember(obj.settings.calibrateEye,{'both','left'}) % TODO: store eye in out.attempt{kCal}.eye
                                     qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
                                     point.left  = myCal.points(p).samples.left.position(:,qVal);
@@ -4098,17 +4097,48 @@ classdef Titta < handle
                             end
                         end
                     else
-                        myVal = cal{selection}.val{iVal};
-                        bpos = calValPos(p,:).';
-                        % left eye
-                        if ismember(cal{selection}.eye,{'both','left'})
-                            qVal = myVal.gazeData(p). left.gazePoint.valid;
-                            lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
-                        end
-                        % right eye
-                        if ismember(cal{selection}.eye,{'both','right'})
-                            qVal = myVal.gazeData(p).right.gazePoint.valid;
-                            rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                        if isfield(out.attempt{kCal},'val')
+                            % collect latest gaze data for each point
+                            strSetup = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
+                            [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));
+                            val.gazeData = struct(strSetup{:});
+                            val.pointPos = nan(size(pointsP,1),5);
+                            qFound = false(1,size(pointsP,1));
+                            for p=length(out.attempt{kCal}.val):-1:1
+                                idx = out.attempt{kCal}.val{p}.point(1);
+                                if isempty(val.gazeData(idx).(strSetup{1,1}))
+                                    qFound(idx) = true;
+                                    % copy over all fields
+                                    for f=1:size(strSetup,2)
+                                        val.gazeData(idx).(strSetup{1,f}) = out.attempt{kCal}.val{p}.gazeData.(strSetup{1,f});
+                                    end
+                                    % also needs point position
+                                    val.pointPos(idx,:) = out.attempt{kCal}.val{p}.point;
+                                end
+                            end
+                            val.gazeData(~qFound)   = [];
+                            val.pointPos(~qFound,:) = [];
+                            
+                            % compute data quality for these
+                            out.attempt{kCal}.val{valAction}.all = obj.ProcessValData(val);
+                            
+                            % prep displaying
+                            myVal = out.attempt{kCal}.val{valAction}.all;
+                            for p=1:length(myVal.gazeData)
+                                point.left = [];
+                                point.right= [];
+                                % left eye
+                                if ismember(obj.settings.calibrateEye,{'both','left'}) % TODO: store eye in out.attempt{kCal}.eye
+                                    qVal        = myVal.gazeData(p). left.gazePoint.valid;
+                                    point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                                end
+                                % right eye
+                                if ismember(obj.settings.calibrateEye,{'both','right'})
+                                    qVal        = myVal.gazeData(p).right.gazePoint.valid;
+                                    point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                                end
+                                linesForPoints{myVal.pointPos(p,1)} = point;
+                            end
                         end
                     end
                     for p=1:length(linesForPoints)
