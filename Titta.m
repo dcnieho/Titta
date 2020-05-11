@@ -5340,11 +5340,9 @@ headO.headCircleEdgeWidth = headCircleEdgeWidth*fac;
 end
 
 function whichCal = getLastManualCal(attempt)
-if ~isfield(attempt,'cal')
-    % direct validation without calibration,
-    % denoted by cal==0
-    whichCal = 0;
-else
+% no valid calibration: denoted by cal==0
+whichCal = 0;
+if isfield(attempt,'cal')
     for c=length(attempt.cal):-1:1
         if isfield(attempt.cal{c},'computeResult') && ~isempty(attempt.cal{c}.computeResult.points)
             whichCal = c;
