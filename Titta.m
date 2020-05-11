@@ -4374,7 +4374,8 @@ classdef Titta < handle
                             if ~nCollectionTries
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                pointsP(whichPoint,end-[1 0]) = [0 3];    % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointsP(whichPoint,end-[1 0]) = [0 3];      % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointStateLastCal(whichPoint) = 0;          % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
                                 nCollectionTries = 1;
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                             else
