@@ -3841,6 +3841,7 @@ classdef Titta < handle
             pointStateLastCal       = [];
             awaitingCalChangeType   = '';           % 'compute' or 'load'
             qUpdateCalStatusText    = true;
+            qUpdateLineDisplay      = true;
             % 10. cursor drawer state
             qUpdateCursors          = true;
             
@@ -4054,6 +4055,7 @@ classdef Titta < handle
                                     end
                                     % store calibration result
                                     out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                                    qUpdateLineDisplay = true;
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
@@ -4067,46 +4069,56 @@ classdef Titta < handle
                         case 'load'
                             % TODO
                     end
+                end
                     
-                    if false %isempty(awaitingCalChangeType) || calibrationStatus==1   % status just changed: we have something to update
-                        % TODO
-                        % prep to draw captured data in characteristic tobii plot
-                        for p=1:nPoints
-                            if qShowCal
-                                myCal = cal{selection}.cal.result;
-                                bpos = calValPos(p,:).';
+                if qUpdateLineDisplay   % status just changed: we have something to update
+                    linesForPoints = cell(1,size(pointsP,1));
+                    
+                    % prep to draw captured data in characteristic tobii plot
+                    if strcmp(stage,'cal')
+                        if isfield(out.attempt{kCal},'cal') && isfield(out.attempt{kCal}.cal{calAction},'computeResult')
+                            myCal = out.attempt{kCal}.cal{calAction}.computeResult;
+                            for p=1:length(myCal.points)
+                                qPoint = sum(abs(bsxfun(@minus,pointsP(:,1:2),myCal.points(p).position(:).'))<0.0001,2)==2;
                                 % left eye
-                                if ismember(cal{selection}.eye,{'both','left'})
-                                    qVal = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
-                                    lEpos= myCal.points(p).samples.left.position(:,qVal);
+                                point.ref  = pointsP(qPoint,3:4);
+                                point.left = [];
+                                point.right= [];
+                                if ismember(obj.settings.calibrateEye,{'both','left'}) % TODO: store eye in out.attempt{kCal}.eye
+                                    qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                    point.left  = myCal.points(p).samples.left.position(:,qVal);
                                 end
                                 % right eye
-                                if ismember(cal{selection}.eye,{'both','right'})
-                                    qVal = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
-                                    rEpos= myCal.points(p).samples.right.position(:,qVal);
+                                if ismember(obj.settings.calibrateEye,{'both','right'})
+                                    qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                    point.right = myCal.points(p).samples.right.position(:,qVal);
                                 end
-                            else
-                                myVal = cal{selection}.val{iVal};
-                                bpos = calValPos(p,:).';
-                                % left eye
-                                if ismember(cal{selection}.eye,{'both','left'})
-                                    qVal = myVal.gazeData(p). left.gazePoint.valid;
-                                    lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
-                                end
-                                % right eye
-                                if ismember(cal{selection}.eye,{'both','right'})
-                                    qVal = myVal.gazeData(p).right.gazePoint.valid;
-                                    rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
-                                end
+                                linesForPoints{qPoint} = point;
                             end
-                            if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
-                                lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
-                                lEpos = reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]);
-                            end
-                            if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
-                                rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
-                                rEpos = reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]);
-                            end
+                        end
+                    else
+                        myVal = cal{selection}.val{iVal};
+                        bpos = calValPos(p,:).';
+                        % left eye
+                        if ismember(cal{selection}.eye,{'both','left'})
+                            qVal = myVal.gazeData(p). left.gazePoint.valid;
+                            lEpos= myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                        end
+                        % right eye
+                        if ismember(cal{selection}.eye,{'both','right'})
+                            qVal = myVal.gazeData(p).right.gazePoint.valid;
+                            rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                        end
+                    end
+                    for p=1:length(linesForPoints)
+                        if isempty(linesForPoints{p})
+                            continue;
+                        end
+                        if ~isempty(linesForPoints{p}.left)
+                            linesForPoints{p}.left  = bsxfun(@plus,bsxfun(@times,linesForPoints{p}.left,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                        end
+                        if ~isempty(linesForPoints{p}.right)
+                            linesForPoints{p}.right = bsxfun(@plus,bsxfun(@times,linesForPoints{p}.right,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                         end
                     end
                 end
@@ -4287,12 +4299,19 @@ classdef Titta < handle
                     end
                     
                     % draw line displays
-%                     if ~isempty(lEpos)
-%                         Screen('DrawLines',wpnt(end),lEpos,1,eyeClrs{1},[],2);
-%                     end
-%                     if ~isempty(rEpos)
-%                         Screen('DrawLines',wpnt(end),rEpos,1,eyeClrs{2},[],2);
-%                     end
+                    for p=1:length(linesForPoints)
+                        if isempty(linesForPoints{p})
+                            continue;
+                        end
+                        if ~isempty(linesForPoints{p}.left)
+                            lines  = reshape([repmat(pointsO(p,:).',1,size(linesForPoints{p}.left,2)) ; linesForPoints{p}.left ],2,[]);
+                            Screen('DrawLines',wpnt(end),lines,1,eyeClrs{1},[],2);
+                        end
+                        if ~isempty(linesForPoints{p}.right)
+                            lines  = reshape([repmat(pointsO(p,:).',1,size(linesForPoints{p}.right,2)); linesForPoints{p}.right],2,[]);
+                            Screen('DrawLines',wpnt(end),lines,1,eyeClrs{2},[],2);
+                        end
+                    end
                     
                     % if any extra info about a point, draw the box
                     
