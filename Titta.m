@@ -1377,14 +1377,14 @@ classdef Titta < handle
             if streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32'))   % on Windows
                 settings.UI.cursor.normal           = 0;                        % arrow
                 settings.UI.cursor.clickable        = 2;                        % hand
-                settings.UI.cursor.sizetopleft      = 9;                        % double-pointed arrow pointing northwest and southeast
-                settings.UI.cursor.sizetopright     = 10;                       % double-pointed arrow pointing northeast and southwest
-                settings.UI.cursor.sizebottomleft   = 10;                       % double-pointed arrow pointing northeast and southwest
-                settings.UI.cursor.sizebottomright  = 9;                        % double-pointed arrow pointing northwest and southeast
-                settings.UI.cursor.sizetop          = 4;                        % double-pointed arrow pointing north and south
-                settings.UI.cursor.sizebottom       = 4;                        % double-pointed arrow pointing north and south
-                settings.UI.cursor.sizeleft         = 5;                        % double-pointed arrow pointing west and east
-                settings.UI.cursor.sizeright        = 5;                        % double-pointed arrow pointing west and east
+                settings.UI.cursor.sizetopleft      = 10;
+                settings.UI.cursor.sizetopright     = 9;
+                settings.UI.cursor.sizebottomleft   = 9;
+                settings.UI.cursor.sizebottomright  = 10;
+                settings.UI.cursor.sizetop          = 4;
+                settings.UI.cursor.sizebottom       = 4;
+                settings.UI.cursor.sizeleft         = 5;
+                settings.UI.cursor.sizeright        = 5;
             elseif IsLinux
                 settings.UI.cursor.normal           = 2;                        % arrow
                 settings.UI.cursor.clickable        = 58;                       % hand
@@ -4032,6 +4032,7 @@ classdef Titta < handle
                     headO.crossEye      = headP.crossEye;
                     qSelectedEyeChanged = false;
                     % TODO: update line display? yes, wipe it
+                    % TODO: clear calibration, reset state
                 end
                 
                 % update line displays of calibration/validation data
