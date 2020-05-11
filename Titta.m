@@ -3778,7 +3778,6 @@ classdef Titta < handle
             menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColorActive,wpnt(end));
             hoverBgClr          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(end));
             refClrP             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            headBgClrP          = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
             refClrO             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
             headBgClrO          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(2));
             for w=length(wpnt):-1:1
@@ -4120,10 +4119,10 @@ classdef Titta < handle
                             val.pointPos(~qFound,:) = [];
                             
                             % compute data quality for these
-                            out.attempt{kCal}.val{valAction}.all = obj.ProcessValData(val);
+                            out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
                             
                             % prep displaying
-                            myVal = out.attempt{kCal}.val{valAction}.all;
+                            myVal = out.attempt{kCal}.val{valAction}.allPoints;
                             for p=1:length(myVal.gazeData)
                                 point.left = [];
                                 point.right= [];
@@ -4153,6 +4152,38 @@ classdef Titta < handle
                         end
                     end
                     qUpdateLineDisplay = false;
+                end
+                
+                % setup overlay with data quality info for specific point
+                if ~isnan(openInfoForPoint) && isfield(out.attempt{kCal},'val')
+                    pointToShowInfoFor = openInfoForPoint;
+                    openInfoForPoint   = nan;
+                    myVal = out.attempt{kCal}.val{valAction}.allPoints;
+                    % see if we have info for the requested point
+                    idx = find(myVal.pointPos(:,1)==pointToShowInfoFor,1);
+                    if isempty(idx)
+                        pointToShowInfoFor = nan;
+                    else
+                        % prepare text
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
+                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                        if strcmp(obj.settings.calibrateEye,'both') % TODO: store eye in out.attempt{kCal}.eye
+                            lE = myVal.quality(idx).left;
+                            rE = myVal.quality(idx).right;
+                            str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                        elseif strcmp(obj.settings.calibrateEye,'left')
+                            lE = myVal.quality(idx).left;
+                            str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
+                        elseif strcmp(obj.settings.calibrateEye,'right')
+                            rE = myVal.quality(idx).right;
+                            str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                        end
+                        [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
+                        % get box around text
+                        margin = 10;
+                        infoBoxRect = GrowRect(txtbounds,margin,margin);
+                        infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
+                    end
                 end
                 
                 if qUpdateCalStatusText
@@ -4382,6 +4413,20 @@ classdef Titta < handle
                                 Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, gazePosP(1,2), gazePosP(2,2), 10);
                             end
                         end
+                    end
+                    
+                    % if hovering over validation point, show info
+                    if ~isnan(pointToShowInfoFor)
+                        rect = OffsetRect(infoBoxRect,mx,my);
+                        % make sure does not go offscreen
+                        if rect(3)>obj.scrInfo.resolution{end}(1)
+                            rect = OffsetRect(rect,obj.scrInfo.resolution{end}(1)-rect(3),0);
+                        end
+                        if rect(4)>obj.scrInfo.resolution{end}(2)
+                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{end}(2)-rect(4));
+                        end
+                        Screen('FillRect',wpnt(end),hoverBgClr,rect);
+                        obj.drawCachedText(pointInfoTextCache,rect);
                     end
                     
                     
@@ -4870,7 +4915,9 @@ classdef Titta < handle
                     end
                     % check if hovering over point for which we have info
                     iIn = find(inRect(mousePos,calValRectsHover));
-                    if ~isempty(iIn)
+                    if ~isempty(iIn) && strcmp(stage,'val') && ...
+                            isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints') && ...
+                            any(out.attempt{kCal}.val{valAction}.allPoints.pointPos(:,1)==iIn)
                         % see if new point
                         if pointToShowInfoFor~=iIn
                             openInfoForPoint = iIn;
