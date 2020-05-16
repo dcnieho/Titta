@@ -350,6 +350,8 @@ classdef Titta < handle
             obj.settings.UI.mancal.menu.itemColorActive         = color2RGBA(obj.settings.UI.mancal.menu.itemColorActive);
             obj.settings.UI.mancal.menu.text.color              = color2RGBA(obj.settings.UI.mancal.menu.text.color);
             obj.settings.UI.mancal.menu.text.eyeColors          = color2RGBA(obj.settings.UI.mancal.menu.text.eyeColors);
+            obj.settings.UI.mancal.avg.text.color               = color2RGBA(obj.settings.UI.mancal.avg.text.color);
+            obj.settings.UI.mancal.avg.text.eyeColors           = color2RGBA(obj.settings.UI.mancal.avg.text.eyeColors);
             obj.settings.UI.mancal.hover.bgColor                = color2RGBA(obj.settings.UI.mancal.hover.bgColor);
             obj.settings.UI.mancal.hover.text.color             = color2RGBA(obj.settings.UI.mancal.hover.text.color);
             obj.settings.UI.mancal.hover.text.eyeColors         = color2RGBA(obj.settings.UI.mancal.hover.text.eyeColors);
@@ -1596,6 +1598,12 @@ classdef Titta < handle
             settings.UI.mancal.calState.text.font   = sansFont;
             settings.UI.mancal.calState.text.size   = 20*textFac;
             settings.UI.mancal.calState.text.style  = 0;
+            settings.UI.mancal.avg.text.font        = monoFont;
+            settings.UI.mancal.avg.text.size        = 24*textFac;
+            settings.UI.mancal.avg.text.color       = 0;
+            settings.UI.mancal.avg.text.eyeColors   = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.avg.text.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.avg.text.vSpacing    = 1;
             settings.UI.mancal.hover.bgColor        = 110;
             settings.UI.mancal.hover.text.font      = monoFont;
             settings.UI.mancal.hover.text.size      = 20*textFac;
@@ -4111,6 +4119,7 @@ classdef Titta < handle
                                 linesForPoints{pointIdxs(p)} = point;
                             end
                         end
+                        valInfoTopTextCache = [];
                     else
                         if isfield(out.attempt{kCal},'val')
                             % collect latest gaze data for each point
@@ -4159,6 +4168,32 @@ classdef Titta < handle
                                     end
                                     linesForPoints{myVal.pointPos(p,1)} = point;
                                 end
+                                
+                                % update info text
+                                % acc field is [lx rx; ly ry]
+                                % text only changes when calibration selection changes,
+                                % but putting these lines in the above if makes logic
+                                % more complicated. Now we regenerate the same text
+                                % when switching between viewing calibration and
+                                % validation output, thats an unimportant price to pay
+                                % for simpler logic
+                                Screen('TextFont', wpnt(end), obj.settings.UI.mancal.avg.text.font, obj.settings.UI.mancal.avg.text.style);
+                                Screen('TextSize', wpnt(end), obj.settings.UI.mancal.avg.text.size);
+                                [strl,strr,strsep] = deal('');
+                                if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                    strl = sprintf(' <color=%1$s>Left eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.mancal.avg.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),myVal.STD2D( 1 ),myVal.RMS2D( 1 ),myVal.dataLoss( 1 )*100,char(176));
+                                end
+                                if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                    idx = 1+strcmp(out.attempt{kCal}.eye,'both');
+                                    strr = sprintf('<color=%1$s>Right eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.mancal.avg.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),myVal.STD2D(idx),myVal.RMS2D(idx),myVal.dataLoss(idx)*100,char(176));
+                                end
+                                if strcmp(out.attempt{kCal}.eye,'both')
+                                    strsep = '\n';
+                                end
+                                valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                                valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.mancal.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.mancal.avg.text.color);
+                            else
+                                valInfoTopTextCache = [];
                             end
                         end
                     end
@@ -4331,7 +4366,9 @@ classdef Titta < handle
                     Screen('FillRect', wpnt(1), bgClrP);
                     Screen('FillRect', wpnt(2), bgClrO);
                     % draw text with validation accuracy etc info
-                    %obj.drawCachedText(valInfoTopTextCache);
+                    if ~isempty(valInfoTopTextCache)
+                        obj.drawCachedText(valInfoTopTextCache);
+                    end
                     % draw text with calibration status
                     obj.drawCachedText(calTextCache);
                     % draw buttons
