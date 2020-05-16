@@ -1559,7 +1559,7 @@ classdef Titta < handle
             settings.UI.button.mancal.toggEyeIm.textColor   = toggleButClr.text;
             settings.UI.button.mancal.calval.accelerator    = 'm';
             settings.UI.button.mancal.calval.visible        = true;
-            settings.UI.button.mancal.calval.string         = {'validate (<i>m<i>)','calibrate (<i>m<i>)'};
+            settings.UI.button.mancal.calval.string         = 'change mode (<i>m<i>)';
             settings.UI.button.mancal.calval.fillColor      = optionButClr.fill;
             settings.UI.button.mancal.calval.edgeColor      = optionButClr.edge;
             settings.UI.button.mancal.calval.textColor      = optionButClr.text;
@@ -4224,7 +4224,7 @@ classdef Titta < handle
                         % prepare text
                         Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
                         Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
-                        if strcmp(out.attempt{kCal}.eye,'both') % TODO: store eye in out.attempt{kCal}.eye
+                        if strcmp(out.attempt{kCal}.eye,'both')
                             lE = myVal.quality(idx).left;
                             rE = myVal.quality(idx).right;
                             str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
@@ -4269,7 +4269,13 @@ classdef Titta < handle
                     end
                     Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.mancal.calState.text.size);
-                    calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'baseColor',obj.getColorForWindow(clr,wpnt(end)),'xalign','left','yalign','top');
+                    if strcmp(stage,'cal')
+                        modetxt = 'calibrating';
+                    else
+                        modetxt = 'validating';
+                    end
+                    text = sprintf('<u>%s<u>\n<color=%s>%s',modetxt,clr2hex(clr),text);
+                    calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'xalign','left','yalign','top');
                 end
                 
                 % calibration/validation logic variables
@@ -4375,7 +4381,7 @@ classdef Titta < handle
                     mousePos = [mx my];
                     but(1).draw(mousePos,qSelectEyeMenuOpen);
                     but(2).draw(mousePos,qShowEyeImage);
-                    but(3).draw(mousePos,strcmp(stage,'val'));
+                    but(3).draw(mousePos);
                     but(4).draw(mousePos);
                     but(5).draw(mousePos,qSelectSnapMenuOpen);
                     but(6).draw(mousePos,qShowHead);
