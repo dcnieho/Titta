@@ -3743,7 +3743,7 @@ classdef Titta < handle
                 eyeMenuTextCache(3) = obj.getTextCache(wpnt(end),'(3) right eye' ,eyeMenuRects(3,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
                 
                 % get current state
-                currentEyeMenuItem  = ismember({'both','left','right'},obj.settings.calibrateEye);
+                currentEyeMenuItem  = find(ismember({'both','left','right'},obj.settings.calibrateEye));
             end
             
             % prep fixation targets
@@ -3845,7 +3845,7 @@ classdef Titta < handle
             % 8. snapshot saving and loading
             qSaveSnapShot           = false;
             % 9. applied calibration status
-            qNewCal                 = true;
+            qNewCal                 = kCal==0;
             pointList               = [];
             calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
             pointStateLastCal       = [];
@@ -3878,7 +3878,15 @@ classdef Titta < handle
                     out.attempt{kCal}.eye       = obj.settings.calibrateEye;
                     calAction                   = 0;
                     valAction                   = 0;
-                    qNewCal = false;
+                    qNewCal                     = false;
+                    % clear point statuses
+                    cPointsP(:,end-[1 0])       = 0;
+                    vPointsP(:,end-[1 0])       = 0;
+                    if exist('pointsP','var')
+                        pointsP (:,end-[1 0])   = 0; %#ok<AGROW>
+                    end
+                    calibrationStatus           = 0;
+                    qUpdateLineDisplay          = true;
                 end
                 
                 % toggle stage
@@ -4043,8 +4051,9 @@ classdef Titta < handle
                     headP.crossEye      = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
                     headO.crossEye      = headP.crossEye;
                     qSelectedEyeChanged = false;
-                    % TODO: update line display? yes, wipe it
-                    % TODO: clear calibration, reset state
+                    % reset cal state
+                    qNewCal             = true;
+                    continue;
                 end
                 
                 % update line displays of calibration/validation data
@@ -4077,7 +4086,7 @@ classdef Titta < handle
                                         % state
                                         pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
                                         qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs); %#ok<NBRAK>
-                                        pointsP(qNoData,end-[1 0]) = 0;
+                                        pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
                                     end
                                     qUpdateLineDisplay = true;
                                 end
