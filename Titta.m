@@ -4076,7 +4076,7 @@ classdef Titta < handle
                                         % points was removed, update their
                                         % state
                                         pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
-                                        qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs);
+                                        qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs); %#ok<NBRAK>
                                         pointsP(qNoData,end-[1 0]) = 0;
                                     end
                                     qUpdateLineDisplay = true;
@@ -4651,20 +4651,20 @@ classdef Titta < handle
                                     mIdx = [1 2];
                                 case 5
                                     % upper edge
-                                    rIdx = [2];
-                                    mIdx = [2];
+                                    rIdx = 2;
+                                    mIdx = 2;
                                 case 6
                                     % lower edge
-                                    rIdx = [4];
-                                    mIdx = [2];
+                                    rIdx = 4;
+                                    mIdx = 2;
                                 case 7
                                     % left edge
-                                    rIdx = [1];
-                                    mIdx = [1];
+                                    rIdx = 1;
+                                    mIdx = 1;
                                 case 8
                                     % right edge
-                                    rIdx = [3];
-                                    mIdx = [1];
+                                    rIdx = 3;
+                                    mIdx = 1;
                             end
                             headORect = headOriRect;
                             headORect(rIdx) = mousePos(mIdx);
