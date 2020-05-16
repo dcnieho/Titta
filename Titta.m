@@ -3846,6 +3846,7 @@ classdef Titta < handle
             qSaveSnapShot           = false;
             % 9. applied calibration status
             qNewCal                 = kCal==0;
+            qClearState             = false;
             pointList               = [];
             calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
             pointStateLastCal       = [];
@@ -3879,14 +3880,16 @@ classdef Titta < handle
                     calAction                   = 0;
                     valAction                   = 0;
                     qNewCal                     = false;
-                    % clear point statuses
+                end
+                
+                % clear point, calibration statuses, etc
+                if qClearState
                     cPointsP(:,end-[1 0])       = 0;
                     vPointsP(:,end-[1 0])       = 0;
-                    if exist('pointsP','var')
-                        pointsP (:,end-[1 0])   = 0; %#ok<AGROW>
-                    end
+                    pointsP (:,end-[1 0])       = 0; %#ok<AGROW>
                     calibrationStatus           = 0;
                     qUpdateLineDisplay          = true;
+                    qClearState                 = false;
                 end
                 
                 % toggle stage
@@ -4053,7 +4056,8 @@ classdef Titta < handle
                     qSelectedEyeChanged = false;
                     % reset cal state
                     qNewCal             = true;
-                    continue;
+                    qClearState         = true;
+                    continue;   % execute immediately, restart this update loop from top
                 end
                 
                 % update line displays of calibration/validation data
@@ -4296,7 +4300,7 @@ classdef Titta < handle
                     tick0p                  = nan;
                     tick0v                  = nan;
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
-                    pointsP(whichPoint,end) = 2;    % status: displayed
+                    pointsP(whichPoint,end) = 2;    %#ok<AGROW> % status: displayed
                     pointList(1)            = [];
                     if strcmp(stage,'cal')
                         calAction               = calAction+1;
