@@ -3751,7 +3751,7 @@ classdef Titta < handle
             vPoints             = obj.settings.mancal.val.pointPos;
             % for each point: [x_norm y_norm x_pix y_pix ID_number prev_status status];
             % cal status: 0: not collected; -1: failed; 1: collected;
-            % 2: displaying; 3: collecting; 4: enqueued
+            % 2: displaying; 3: collecting; 4: enqueued; 5: discarding
             cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),2)]; %#ok<NBRAK>
             % val status: 0: not collected; 1: collected; 2: displaying;
             % 3: collecting; 3: enqueued
@@ -3848,6 +3848,7 @@ classdef Titta < handle
             qNewCal                 = kCal==0;
             qClearState             = false;
             pointList               = [];
+            discardList             = [];
             calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
             pointStateLastCal       = [];
             awaitingCalChangeType   = '';           % 'compute' or 'load'
@@ -3865,7 +3866,8 @@ classdef Titta < handle
             tick0p                  = nan;
             out.flips               = GetSecs();    % anchor timing
             frameMsg                = '';
-            whichPoint              = nan;
+            whichPoint     = nan;
+            whichPointDiscard       = nan;
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted
                 if qNewCal
@@ -4144,7 +4146,7 @@ classdef Titta < handle
                             whichCal        = getLastManualCal(out.attempt{kCal});
                             for p=length(out.attempt{kCal}.val):-1:1
                                 idx = out.attempt{kCal}.val{p}.point(1);
-                                if isempty(val.gazeData(idx).(strSetup{1,1})) && out.attempt{kCal}.val{p}.whichCal==whichCal
+                                if ~isnan(idx) && isempty(val.gazeData(idx).(strSetup{1,1})) && out.attempt{kCal}.val{p}.whichCal==whichCal && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
                                     % we don't yet have validation data for
                                     % this point, and it is for the current
                                     % calibration -> collect
@@ -4289,10 +4291,40 @@ classdef Titta < handle
                     end
                     text = sprintf('<u>%s<u>\n<color=%s>%s',modetxt,clr2hex(clr),text);
                     calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'xalign','left','yalign','top');
+                    qUpdateCalStatusText = false;
                 end
                 
                 % calibration/validation logic variables
-                if ~isempty(pointList) && isnan(whichPoint) && isempty(awaitingCalChangeType)
+                if ~isempty(discardList) && isnan(whichPoint) && isnan(whichPointDiscard)
+                    whichPointDiscard               = discardList(1);
+                    if strcmp(stage,'cal')
+                        % start discard action
+                        obj.buffer.calibrationDiscardData(pointsP(whichPointDiscard,1:2),extraInp{:});
+                        pointsP(whichPointDiscard,end)  = 5;    %#ok<AGROW> % status: discarding
+                        calAction                       = calAction+1;
+                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
+                        discardList(1)                  = [];
+                    elseif isfield(out.attempt{kCal},'val')
+                        % for validation, find the point in question and
+                        % mark it as discarded, done super quick
+                        for p=length(out.attempt{kCal}.val):-1:1
+                            if out.attempt{kCal}.val{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
+                                out.attempt{kCal}.val{p}.wasDiscarded = true;
+                                break;
+                            end
+                        end
+                        pointsP(whichPointDiscard,end-[1 0])        = 0;    %#ok<AGROW> % status: not collected
+                        % need to updating lines display
+                        valAction                                   = valAction+1;      % because we qUpdateLineDisplay causes validation accuracy to be recalculated and we do not want to overwrite the previous state
+                        out.attempt{kCal}.val{valAction}.point      = nan(1,5);         % dummy point
+                        out.attempt{kCal}.val{valAction}.whichCal   = out.attempt{kCal}.val{valAction-1}.whichCal;
+                        qUpdateLineDisplay                          = true;
+                        discardList(1)                              = [];
+                        whichPointDiscard                           = nan;              % we're done already
+                        continue;
+                    end
+                end
+                if ~isempty(pointList) && isnan(whichPoint) && isnan(whichPointDiscard) && isempty(awaitingCalChangeType)
                     whichPoint              = pointList(1);
                     drawCmd                 = 'new';
                     nCollectionTries        = 0;
@@ -4436,6 +4468,9 @@ classdef Titta < handle
                             case 4
                                 % enqueued
                                 clr = [0 255 255];
+                            case 5
+                                % discarding
+                                clr = [188 61 18];
                         end
                         Screen('gluDisk', wpnt(end),obj.getColorForWindow(clr,wpnt(end)), pointsO(p,1), pointsO(p,2), obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5/2);
                     end
@@ -4460,8 +4495,6 @@ classdef Titta < handle
                             Screen('DrawLines',wpnt(end),lines,1,eyeClrs{2},[],2);
                         end
                     end
-                    
-                    % if any extra info about a point, draw the box
                     
                     % if head shown, draw on top
                     if qShowHead
@@ -4559,6 +4592,7 @@ classdef Titta < handle
                                 pointStateLastCal(whichPoint) = 0; %#ok<AGROW>  % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
                                 nCollectionTries = 1;
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                                out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
                             else
                                 % check status
                                 callResult  = obj.buffer.calibrationRetrieveResult();
@@ -4587,6 +4621,7 @@ classdef Titta < handle
                             if isnan(tick0v)
                                 tick0v = tick;
                                 out.attempt{kCal}.val{valAction}.wasCancelled = false;
+                                out.attempt{kCal}.val{valAction}.wasDiscarded = false;
                                 pointsP(whichPoint,end) = 3;        % status: collecting
                             end
                             if tick>tick0v+collectInterval
@@ -4837,7 +4872,51 @@ classdef Titta < handle
                                 break;
                             elseif any(qOnFixTarget)
                                 which                   = find(qOnFixTarget,1);
-                                if ~ismember(pointsP(which,end),[2 3 4])
+                                if shiftIsDown
+                                    qDoneSomething = false;
+                                    % if clicked point is enqueued, cancel
+                                    % it
+                                    qInList = pointList==which;
+                                    if any(qInList)
+                                        % reset to previous state
+                                        pointsP(qInList,end) = pointsP(qInList,end-1);
+                                        qDoneSomething = true;
+                                        % clear from list of enqueued points
+                                        pointList(qInList) = []; %#ok<AGROW>
+                                    end
+                                    
+                                    % if currently showing point but not
+                                    % yet trying to collect, cancel as well
+                                    if ~isnan(whichPoint) && whichPoint==which && pointsP(whichPoint,end)==2
+                                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                        if strcmp(stage,'cal')
+                                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                                        else
+                                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                                        end
+                                        % reset to previous state
+                                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                                        whichPoint = nan;
+                                        % reset calibration point drawer
+                                        % function
+                                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                        qDoneSomething = true;
+                                    end
+                                    
+                                    % if point already collected, enqueue a
+                                    % discard for it
+                                    if pointsP(which,end)==1
+                                        discardList = [discardList which]; %#ok<AGROW>
+                                        qDoneSomething = true;
+                                    end
+                                    if qDoneSomething
+                                        break;
+                                    end
+                                        
+                                elseif ~ismember(pointsP(which,end),[2 3 4])
+                                    % clicked point is not in enqueued,
+                                    % displaying or collecting status:
+                                    % enqueue
                                     pointList(1,end+1) = which; %#ok<AGROW>
                                     pointsP(which,end) = 4; % status: enqueued
                                     break;
