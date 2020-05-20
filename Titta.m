@@ -3643,11 +3643,7 @@ classdef Titta < handle
             end
             fs = min(fs);
             
-            if ~kCal
-                startT                  = obj.sendMessage(sprintf('START MANUAL CALIBRATION (%s), calibration no. 1',getEyeLbl(obj.settings.calibrateEye)));
-            else
-                startT                  = obj.sendMessage(sprintf('START MANUAL VALIDATION (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
-            end
+            startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
             if obj.settings.mancal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
@@ -3910,6 +3906,7 @@ classdef Titta < handle
                             pointsO         = cPointsO;
                             pointTextCache  = cPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.paceDuration    *fs);
+                            obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
                             if exist('pointsP','var')
@@ -3921,6 +3918,7 @@ classdef Titta < handle
                             pointsO         = vPointsO;
                             pointTextCache  = vPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
+                            obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                     end
                     % get point rects on operator screen
                     calValRectsSel  = zeros(4,size(pointsO,1));
