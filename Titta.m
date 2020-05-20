@@ -4299,13 +4299,15 @@ classdef Titta < handle
                 if ~isempty(discardList) && isnan(whichPoint) && isnan(whichPointDiscard)
                     whichPointDiscard               = discardList(1);
                     if strcmp(stage,'cal')
+                        calAction                                   = calAction+1;
                         % start discard action
                         obj.buffer.calibrationDiscardData(pointsP(whichPointDiscard,1:2),extraInp{:});
-                        pointsP(whichPointDiscard,end)  = 5;    %#ok<AGROW> % status: discarding
-                        calAction                       = calAction+1;
-                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
-                        discardList(1)                  = [];
+                        pointsP(whichPointDiscard,end)              = 5;    %#ok<AGROW> % status: discarding
+                        out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPointDiscard,[5 3 4 1 2]);
+                        out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                        discardList(1)                              = [];
                     elseif isfield(out.attempt{kCal},'val')
+                        valAction                                   = valAction+1;
                         % for validation, find the point in question and
                         % mark it as discarded, done super quick
                         for p=length(out.attempt{kCal}.val):-1:1
@@ -4316,9 +4318,9 @@ classdef Titta < handle
                         end
                         pointsP(whichPointDiscard,end-[1 0])        = 0;    %#ok<AGROW> % status: not collected
                         % need to updating lines display
-                        valAction                                   = valAction+1;      % because we qUpdateLineDisplay causes validation accuracy to be recalculated and we do not want to overwrite the previous state
                         out.attempt{kCal}.val{valAction}.point      = nan(1,5);         % dummy point
                         out.attempt{kCal}.val{valAction}.whichCal   = out.attempt{kCal}.val{valAction-1}.whichCal;
+                        out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                         qUpdateLineDisplay                          = true;
                         discardList(1)                              = [];
                         whichPointDiscard                           = nan;              % we're done already
@@ -4337,15 +4339,17 @@ classdef Titta < handle
                     pointList(1)            = [];
                     if strcmp(stage,'cal')
                         calAction               = calAction+1;
-                        out.attempt{kCal}.cal{calAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
+                        out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
+                        out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                     else
                         valAction               = valAction+1;
-                        out.attempt{kCal}.val{valAction}.point = pointsP(whichPoint,[5 3 4 1 2]);
+                        out.attempt{kCal}.val{valAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
                         % store for which calibration this validation is
                         % find last successful calibration (a calibration
                         % was successful if it has points in the result
                         % field)
-                        out.attempt{kCal}.val{valAction}.whichCal = getLastManualCal(out.attempt{kCal});
+                        out.attempt{kCal}.val{valAction}.whichCal   = getLastManualCal(out.attempt{kCal});
+                        out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                     end
                 end
                 
@@ -4582,6 +4586,39 @@ classdef Titta < handle
                     end
                     
                     % calibration logic
+                    % check for status of discarding point
+                    if ~isnan(whichPointDiscard)
+                        % check status
+                        callResult  = obj.buffer.calibrationRetrieveResult();
+                        if ~isempty(callResult) && strcmp(callResult.workItem.action,'DiscardData')
+                            pointsP(whichPointDiscard,end-[1 0]) = 0;        % status: not collected
+                            out.attempt{kCal}.cal{calAction}.discardStatus = callResult;
+                            out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                            out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                            
+                            % find which point we just discarded, mark it
+                            % as such
+                            for p=length(out.attempt{kCal}.cal):-1:1
+                                if out.attempt{kCal}.cal{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.cal{p}.wasCancelled && ~out.attempt{kCal}.cal{p}.wasDiscarded && ~isfield(out.attempt{kCal}.cal{p},'discardStatus')
+                                    out.attempt{kCal}.cal{p}.wasDiscarded = true;
+                                    break;
+                                end
+                            end
+                            
+                            % if in calibration mode and point states have
+                            % changed, and no further calibration points
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
+                                calibrationStatus       = 2;
+                                pointStateLastCal       = pointsP(:,end);
+                                awaitingCalChangeType   = 'compute';
+                                obj.buffer.calibrationComputeAndApply();
+                            end
+                            
+                            whichPointDiscard = nan;
+                        end
+                    end
                     % accept point
                     if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
                         qPointDone = false;
@@ -4664,8 +4701,9 @@ classdef Titta < handle
                             end
                             % if in calibration mode and point states have
                             % changed, and no further calibration points
-                            % queued up -> kick off a new calibration
-                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList)
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
                                 calibrationStatus       = 2;
                                 pointStateLastCal       = pointsP(:,end);
                                 awaitingCalChangeType   = 'compute';
