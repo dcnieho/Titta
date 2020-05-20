@@ -3892,6 +3892,7 @@ classdef Titta < handle
                     pointsP (:,end-[1 0])       = 0; %#ok<AGROW>
                     calibrationStatus           = 0;
                     qUpdateLineDisplay          = true;
+                    qUpdateCalStatusText        = true;
                     qClearState                 = false;
                 end
                 
@@ -4095,7 +4096,8 @@ classdef Titta < handle
                                         qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs); %#ok<NBRAK>
                                         pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
                                     end
-                                    qUpdateLineDisplay = true;
+                                    qUpdateLineDisplay  = true;
+                                    qUpdateCalStatusText= true;
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
@@ -4611,6 +4613,7 @@ classdef Titta < handle
                             % kick off a new calibration
                             if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
                                 calibrationStatus       = 2;
+                                qUpdateCalStatusText    = true;
                                 pointStateLastCal       = pointsP(:,end);
                                 awaitingCalChangeType   = 'compute';
                                 obj.buffer.calibrationComputeAndApply();
@@ -4705,6 +4708,7 @@ classdef Titta < handle
                             % kick off a new calibration
                             if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
                                 calibrationStatus       = 2;
+                                qUpdateCalStatusText    = true;
                                 pointStateLastCal       = pointsP(:,end);
                                 awaitingCalChangeType   = 'compute';
                                 obj.buffer.calibrationComputeAndApply();
