@@ -3866,8 +3866,9 @@ classdef Titta < handle
             tick0p                  = nan;
             out.flips               = GetSecs();    % anchor timing
             frameMsg                = '';
-            whichPoint     = nan;
+            whichPoint              = nan;
             whichPointDiscard       = nan;
+            qCancelPointCollect     = false;
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted
                 if qNewCal
@@ -4888,19 +4889,7 @@ classdef Titta < handle
                                     % if currently showing point but not
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && whichPoint==which && pointsP(whichPoint,end)==2
-                                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                                        if strcmp(stage,'cal')
-                                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
-                                        else
-                                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
-                                        end
-                                        % reset to previous state
-                                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
-                                        whichPoint = nan;
-                                        % reset calibration point drawer
-                                        % function
-                                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                                        qDoneSomething = true;
+                                        qCancelPointCollect = true;
                                     end
                                     
                                     % if point already collected, enqueue a
@@ -5004,19 +4993,7 @@ classdef Titta < handle
                                     % if currently showing point but not
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
-                                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                                        if strcmp(stage,'cal')
-                                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
-                                        else
-                                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
-                                        end
-                                        % reset to previous state
-                                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
-                                        whichPoint = nan;
-                                        % reset calibration point drawer
-                                        % function
-                                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                                        qDoneSomething = true;
+                                        qCancelPointCollect = true;
                                     end
                                     if qDoneSomething
                                         break;
@@ -5042,19 +5019,7 @@ classdef Titta < handle
                                         % if currently showing point but not
                                         % yet trying to collect, cancel as well
                                         if ~isnan(whichPoint) && whichPoint==requested && pointsP(whichPoint,end)==2
-                                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                                            if strcmp(stage,'cal')
-                                                out.attempt{kCal}.cal{calAction}.wasCancelled = true;
-                                            else
-                                                out.attempt{kCal}.val{valAction}.wasCancelled = true;
-                                            end
-                                            % reset to previous state
-                                            pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
-                                            whichPoint = nan;
-                                            % reset calibration point drawer
-                                            % function
-                                            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                                            qDoneSomething = true;
+                                            qCancelPointCollect = true;
                                         end
                                         
                                         % if point already collected, enqueue a
@@ -5120,6 +5085,24 @@ classdef Titta < handle
                             % take screenshot of operator screen
                             takeScreenshot(wpnt(2));
                         end
+                    end
+                    % check if a point collections needs to be cancelled
+                    if qCancelPointCollect && ~isnan(whichPoint)
+                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                        if strcmp(stage,'cal')
+                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                        else
+                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                        end
+                        % reset to previous state
+                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                        whichPoint = nan;
+                        % reset calibration point drawer
+                        % function
+                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                        % done, break from draw loop
+                        qCancelPointCollect     = false;
+                        break;
                     end
                     % check if hovering over point for which we have info
                     iIn = find(inRect(mousePos,calValRectsHover));
