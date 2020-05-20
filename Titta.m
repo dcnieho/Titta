@@ -3936,6 +3936,9 @@ classdef Titta < handle
                 if qToggleSelectSnapMenu
                     qSelectSnapMenuOpen = ~qSelectSnapMenuOpen;
                     if qSelectSnapMenuOpen
+                        % TODO: text format: N calibration points,
+                        % validation accuracy/no validation available
+                        
                         % this menu's length may change, have to generate
                         % each time it opens
                         nElem           = length(iValid);
