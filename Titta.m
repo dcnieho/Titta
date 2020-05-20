@@ -5026,7 +5026,50 @@ classdef Titta < handle
                                 % calibration/validation point
                                 requested           = str2double(keys(1));
                                 if requested<=size(pointsP,1)
-                                    if ~ismember(pointsP(requested,end),[2 3 4])
+                                    if shiftIsDown
+                                        qDoneSomething = false;
+                                        % if clicked point is enqueued, cancel
+                                        % it
+                                        qInList = pointList==requested;
+                                        if any(qInList)
+                                            % reset to previous state
+                                            pointsP(qInList,end) = pointsP(qInList,end-1);
+                                            qDoneSomething = true;
+                                            % clear from list of enqueued points
+                                            pointList(qInList) = []; %#ok<AGROW>
+                                        end
+                                        
+                                        % if currently showing point but not
+                                        % yet trying to collect, cancel as well
+                                        if ~isnan(whichPoint) && whichPoint==requested && pointsP(whichPoint,end)==2
+                                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                            if strcmp(stage,'cal')
+                                                out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                                            else
+                                                out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                                            end
+                                            % reset to previous state
+                                            pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                                            whichPoint = nan;
+                                            % reset calibration point drawer
+                                            % function
+                                            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                            qDoneSomething = true;
+                                        end
+                                        
+                                        % if point already collected, enqueue a
+                                        % discard for it
+                                        if pointsP(requested,end)==1
+                                            discardList = [discardList requested]; %#ok<AGROW>
+                                            qDoneSomething = true;
+                                        end
+                                        if qDoneSomething
+                                            break;
+                                        end
+                                    elseif ~ismember(pointsP(requested,end),[2 3 4])
+                                        % point is not in enqueued,
+                                        % displaying or collecting status:
+                                        % enqueue
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
                                         pointsP(requested,end)  = 4; % status: enqueued
                                         break;
