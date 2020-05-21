@@ -4679,11 +4679,24 @@ classdef Titta < handle
                             % queued up for collection or discarding ->
                             % kick off a new calibration
                             if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
-                                calibrationStatus       = 2;
                                 qUpdateCalStatusText    = true;
                                 pointStateLastCal       = pointsP(:,end);
-                                awaitingCalChangeType   = 'compute';
-                                obj.buffer.calibrationComputeAndApply();
+                                if all(pointsP(:,end)==0)
+                                    % if no points left, user intention is
+                                    % to clear the calibration. We do that
+                                    % by leaving and reentering calibration
+                                    % mode
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    qClearState = true;
+                                else
+                                    % data for some points left: issue
+                                    % calibration command
+                                    calibrationStatus       = 2;
+                                    awaitingCalChangeType   = 'compute';
+                                    obj.buffer.calibrationComputeAndApply();
+                                end
                             end
                             
                             whichPointDiscard = nan;
