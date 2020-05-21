@@ -2519,7 +2519,11 @@ classdef Titta < handle
             % for later analysis (it doesn't have timestamps, and is meant
             % for visualization only). It is cleared however, consistent
             % with effect of the above
-            obj.buffer.clear('positioning');
+            if nargin<2
+                % positioning stream doesn't have timestamps, and clear can
+                % thus only be called on it without a time range
+                obj.buffer.clear('positioning');
+            end
         end
         function ClearAllBuffers(obj,varargin)
             % clear all buffer, optionally only within specified time range
