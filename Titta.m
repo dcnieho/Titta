@@ -3838,6 +3838,7 @@ classdef Titta < handle
             fixPointRectSzHover     = 80*obj.scrInfo.sFac;
             openInfoForPoint        = nan;
             pointToShowInfoFor      = nan;
+            qUpdatePointHover       = false;
             % 8. snapshot saving and loading
             qSaveSnapShot           = false;
             % 9. applied calibration status
@@ -3930,6 +3931,7 @@ classdef Titta < handle
                     qUpdateCursors      = true;
                     qToggleStage        = false;
                     qUpdateLineDisplay  = true;
+                    qUpdatePointHover   = true;
                 end
                 
                 % setup menu, if any
@@ -4095,7 +4097,10 @@ classdef Titta < handle
                                         % state
                                         pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
                                         qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs); %#ok<NBRAK>
-                                        pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
+                                        if any(qNoData)
+                                            pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
+                                            qUpdatePointHover = true;
+                                        end
                                     end
                                     qUpdateLineDisplay  = true;
                                     qUpdateCalStatusText= true;
@@ -4230,38 +4235,6 @@ classdef Titta < handle
                     qUpdateLineDisplay = false;
                 end
                 
-                % setup overlay with data quality info for specific point
-                if ~isnan(openInfoForPoint) && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
-                    pointToShowInfoFor = openInfoForPoint;
-                    openInfoForPoint   = nan;
-                    myVal = out.attempt{kCal}.val{valAction}.allPoints;
-                    % see if we have info for the requested point
-                    idx = find(myVal.pointPos(:,1)==pointToShowInfoFor,1);
-                    if isempty(idx)
-                        pointToShowInfoFor = nan;
-                    else
-                        % prepare text
-                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
-                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
-                        if strcmp(out.attempt{kCal}.eye,'both')
-                            lE = myVal.quality(idx).left;
-                            rE = myVal.quality(idx).right;
-                            str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
-                        elseif strcmp(out.attempt{kCal}.eye,'left')
-                            lE = myVal.quality(idx).left;
-                            str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
-                        elseif strcmp(out.attempt{kCal}.eye,'right')
-                            rE = myVal.quality(idx).right;
-                            str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
-                        end
-                        [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
-                        % get box around text
-                        margin = 10;
-                        infoBoxRect = GrowRect(txtbounds,margin,margin);
-                        infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
-                    end
-                end
-                
                 if qUpdateCalStatusText
                     % get color and text
                     switch calibrationStatus
@@ -4300,6 +4273,7 @@ classdef Titta < handle
                 
                 % calibration/validation logic variables
                 if ~isempty(discardList) && isnan(whichPoint) && isnan(whichPointDiscard)
+                    % point discard logic
                     whichPointDiscard               = discardList(1);
                     if strcmp(stage,'cal')
                         calAction                                   = calAction+1;
@@ -4309,6 +4283,7 @@ classdef Titta < handle
                         out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPointDiscard,[5 3 4 1 2]);
                         out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                         discardList(1)                              = [];
+                        qUpdatePointHover                           = true;
                     elseif isfield(out.attempt{kCal},'val')
                         valAction                                   = valAction+1;
                         % for validation, find the point in question and
@@ -4327,10 +4302,12 @@ classdef Titta < handle
                         qUpdateLineDisplay                          = true;
                         discardList(1)                              = [];
                         whichPointDiscard                           = nan;              % we're done already
+                        qUpdatePointHover                           = true;
                         continue;
                     end
                 end
                 if ~isempty(pointList) && isnan(whichPoint) && isnan(whichPointDiscard) && isempty(awaitingCalChangeType)
+                    % point collect logic
                     whichPoint              = pointList(1);
                     drawCmd                 = 'new';
                     nCollectionTries        = 0;
@@ -4339,13 +4316,14 @@ classdef Titta < handle
                     tick0v                  = nan;
                     frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
                     pointsP(whichPoint,end) = 2;    %#ok<AGROW> % status: displayed
+                    qUpdatePointHover       = true;
                     pointList(1)            = [];
                     if strcmp(stage,'cal')
-                        calAction               = calAction+1;
+                        calAction                                   = calAction+1;
                         out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
                         out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                     else
-                        valAction               = valAction+1;
+                        valAction                                   = valAction+1;
                         out.attempt{kCal}.val{valAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
                         % store for which calibration this validation is
                         % find last successful calibration (a calibration
@@ -4353,6 +4331,80 @@ classdef Titta < handle
                         % field)
                         out.attempt{kCal}.val{valAction}.whichCal   = getLastManualCal(out.attempt{kCal});
                         out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    end
+                end
+                
+                % setup overlay with data quality info for specific point
+                if ~isnan(openInfoForPoint) || (qUpdatePointHover && ~isnan(pointToShowInfoFor))
+                    if ~isnan(openInfoForPoint)
+                        pointToShowInfoFor = openInfoForPoint;
+                        openInfoForPoint   = nan;
+                    end
+                    qUpdatePointHover   = false;
+                    txtbounds           = [];
+                    if strcmp(stage,'cal')
+                        switch pointsP(pointToShowInfoFor,end)
+                            case -1
+                                % failed
+                                clr = [255 0 0];
+                                txt = 'collection failed';
+                            case 0
+                                % not collected
+                                clr = [200 200 200];
+                                txt = 'not collected';
+                            case 1
+                                % collected
+                                clr = [0 255 0];
+                                txt = 'collected successfully';
+                            case 2
+                                % displaying
+                                clr = [131 177 255];
+                                txt = 'being shown to subject';
+                            case 3
+                                % collecting
+                                clr = [0 0 255];
+                                txt = 'data is being collected';
+                            case 4
+                                % enqueued
+                                clr = [0 255 255];
+                                txt = 'enqueued to be shown to participant';
+                            case 5
+                                % discarding
+                                clr = [188 61 18];
+                                txt = 'data is being discarded';
+                        end
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
+                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                        [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),sprintf('status: <color=%s>%s',clr2hex(clr),txt),[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
+                    elseif strcmp(stage,'val') && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
+                        myVal = out.attempt{kCal}.val{valAction}.allPoints;
+                        % see if we have info for the requested point
+                        idx = find(myVal.pointPos(:,1)==pointToShowInfoFor,1);
+                        if isempty(idx)
+                            pointToShowInfoFor = nan;
+                        else
+                            % prepare text
+                            Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
+                            Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                            if strcmp(out.attempt{kCal}.eye,'both')
+                                lE = myVal.quality(idx).left;
+                                rE = myVal.quality(idx).right;
+                                str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                            elseif strcmp(out.attempt{kCal}.eye,'left')
+                                lE = myVal.quality(idx).left;
+                                str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
+                            elseif strcmp(out.attempt{kCal}.eye,'right')
+                                rE = myVal.quality(idx).right;
+                                str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                            end
+                            [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
+                        end
+                    end
+                    if ~isempty(txtbounds)
+                        % get box around text
+                        margin = 10;
+                        infoBoxRect = GrowRect(txtbounds,margin,margin);
+                        infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
                     end
                 end
                 
@@ -4621,6 +4673,8 @@ classdef Titta < handle
                             end
                             
                             whichPointDiscard = nan;
+                            qUpdatePointHover = true;
+                            break;
                         end
                     end
                     % accept point
@@ -4630,11 +4684,13 @@ classdef Titta < handle
                             if ~nCollectionTries
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                pointsP(whichPoint,end-[1 0]) = [0 3];          % status: collecting, and set previous to not collected since it'll now be wiped
-                                pointStateLastCal(whichPoint) = 0; %#ok<AGROW>  % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
-                                nCollectionTries = 1;
+                                pointsP(whichPoint,end-[1 0])   = [0 3];            % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointStateLastCal(whichPoint)   = 0; %#ok<AGROW>    % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
+                                nCollectionTries                = 1;
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                                 out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                                qUpdatePointHover               = true;
+                                break;
                             else
                                 % check status
                                 callResult  = obj.buffer.calibrationRetrieveResult();
@@ -4665,6 +4721,8 @@ classdef Titta < handle
                                 out.attempt{kCal}.val{valAction}.wasCancelled = false;
                                 out.attempt{kCal}.val{valAction}.wasDiscarded = false;
                                 pointsP(whichPoint,end) = 3;        % status: collecting
+                                qUpdatePointHover       = true;
+                                break;
                             end
                             if tick>tick0v+collectInterval
                                 dat = obj.buffer.peekN('gaze',nDataPoint);
@@ -4714,6 +4772,7 @@ classdef Titta < handle
                                 awaitingCalChangeType   = 'compute';
                                 obj.buffer.calibrationComputeAndApply();
                             end
+                            qUpdatePointHover = true;
                             % done with draw loop
                             break;
                         end
@@ -4942,6 +5001,7 @@ classdef Titta < handle
                                         qDoneSomething = true;
                                     end
                                     if qDoneSomething
+                                        qUpdatePointHover = true;
                                         break;
                                     end
                                         
@@ -4951,6 +5011,7 @@ classdef Titta < handle
                                     % enqueue
                                     pointList(1,end+1) = which; %#ok<AGROW>
                                     pointsP(which,end) = 4; % status: enqueued
+                                    qUpdatePointHover  = true;
                                     break;
                                 end
                             end
@@ -5039,6 +5100,7 @@ classdef Titta < handle
                                         qCancelPointCollect = true;
                                     end
                                     if qDoneSomething
+                                        qUpdatePointHover = true;
                                         break;
                                     end
                                 end
@@ -5072,6 +5134,7 @@ classdef Titta < handle
                                             qDoneSomething = true;
                                         end
                                         if qDoneSomething
+                                            qUpdatePointHover = true;
                                             break;
                                         end
                                     elseif ~ismember(pointsP(requested,end),[2 3 4])
@@ -5080,6 +5143,7 @@ classdef Titta < handle
                                         % enqueue
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
                                         pointsP(requested,end)  = 4; % status: enqueued
+                                        qUpdatePointHover       = true;
                                         break;
                                     end
                                 end
@@ -5145,13 +5209,15 @@ classdef Titta < handle
                         drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                         % done, break from draw loop
                         qCancelPointCollect     = false;
+                        qUpdatePointHover       = true;
                         break;
                     end
                     % check if hovering over point for which we have info
                     iIn = find(inRect(mousePos,calValRectsHover));
-                    if ~isempty(iIn) && strcmp(stage,'val') && ...
-                            isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints') && ...
-                            any(out.attempt{kCal}.val{valAction}.allPoints.pointPos(:,1)==iIn)
+                    if ~isempty(iIn) && ((strcmp(stage,'val') && ...
+                                isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints') && ...
+                                any(out.attempt{kCal}.val{valAction}.allPoints.pointPos(:,1)==iIn)) || ...
+                                strcmp(stage,'cal'))
                         % see if new point
                         if pointToShowInfoFor~=iIn
                             openInfoForPoint = iIn;
