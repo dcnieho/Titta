@@ -3841,6 +3841,7 @@ classdef Titta < handle
             qUpdatePointHover       = false;
             % 8. snapshot saving and loading
             qSaveSnapShot           = false;
+            snapshots               = zeros(0,2);   % each row is a snapshot, indices indicating 1: which attempt, 2: which cal
             % 9. applied calibration status
             qNewCal                 = kCal==0;
             qClearState             = false;
@@ -3866,6 +3867,7 @@ classdef Titta < handle
             whichPoint              = nan;
             whichPointDiscard       = nan;
             qCancelPointCollect     = false;
+            qRegenSnapShotMenuListing = false;
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted
                 if qNewCal
@@ -3938,23 +3940,43 @@ classdef Titta < handle
                 if qToggleSelectSnapMenu
                     qSelectSnapMenuOpen = ~qSelectSnapMenuOpen;
                     if qSelectSnapMenuOpen
-                        % TODO: text format: N calibration points,
-                        % validation accuracy/no validation available
-                        
-                        % this menu's length may change, have to generate
-                        % each time it opens
-                        nElem           = length(iValid);
-                        totHeight       = nElem*(menuElemHeight+menuPad)-menuPad;
-                        width           = 900;
-                        % menu background
-                        snapMenuBackRect= [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
-                        % menuRects
-                        snapMenuRects   = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
-                        snapMenuRects   = snapMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
-                        % text in each rect
-                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
-                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
-                        for c=nElem:-1:1
+                        qRegenSnapShotMenuListing = true;
+                    end
+                    qToggleSelectSnapMenu = false;
+                elseif qToggleSelectEyeMenu
+                    qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
+                    if qSelectEyeMenuOpen
+                        currentMenuBackRect = eyeMenuBackRect;
+                        currentMenuRects    = eyeMenuRects;
+                        currentMenuTextCache= eyeMenuTextCache;
+                        currentMenuSel      = currentEyeMenuItem;
+                        menuActiveItem      = currentEyeMenuItem==[1:3]; %#ok<NBRAK>
+                        qChangeMenuArrow    = true;
+                    end
+                    qToggleSelectEyeMenu = false;
+                end
+                
+                if qRegenSnapShotMenuListing
+                    % TODO: text format: N calibration points,
+                    % validation accuracy/no validation available
+                    
+                    % this menu's length may change, have to generate
+                    % each time it opens
+                    nElem           = size(snapshots,1)+1;  % always have the "add snapshot" button at the end
+                    totHeight       = nElem*(menuElemHeight+menuPad)-menuPad;
+                    width           = 900;
+                    % menu background
+                    snapMenuBackRect= [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
+                    % menuRects
+                    snapMenuRects   = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
+                    snapMenuRects   = snapMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                    % text in each rect
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                    for c=nElem:-1:1
+                        if c==nElem
+                            str = '(+): add snapshot';
+                        else
                             % find the active/last valid validation for this
                             % calibration
                             aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
@@ -3971,28 +3993,17 @@ classdef Titta < handle
                                 strsep = ', ';
                             end
                             str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
-                            snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
                         end
-                        
-                        currentMenuBackRect = snapMenuBackRect;
-                        currentMenuRects    = snapMenuRects;
-                        currentMenuTextCache= snapMenuTextCache;
-                        menuActiveItem      = nan; % some boolean
-                        currentMenuSel      = find(menuActiveItem);
-                        qChangeMenuArrow    = true;
+                        snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
                     end
-                    qToggleSelectSnapMenu = false;
-                elseif qToggleSelectEyeMenu
-                    qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
-                    if qSelectEyeMenuOpen
-                        currentMenuBackRect = eyeMenuBackRect;
-                        currentMenuRects    = eyeMenuRects;
-                        currentMenuTextCache= eyeMenuTextCache;
-                        currentMenuSel      = currentEyeMenuItem;
-                        menuActiveItem      = currentEyeMenuItem==[1:3]; %#ok<NBRAK>
-                        qChangeMenuArrow    = true;
-                    end
-                    qToggleSelectEyeMenu = false;
+                    
+                    currentMenuBackRect         = snapMenuBackRect;
+                    currentMenuRects            = snapMenuRects;
+                    currentMenuTextCache        = snapMenuTextCache;
+                    menuActiveItem              = [false(1,nElem-1) true];
+                    currentMenuSel              = find(menuActiveItem);
+                    qChangeMenuArrow            = true;
+                    qRegenSnapShotMenuListing   = false;
                 end
                 
                 % switch on/off eye images
@@ -4613,12 +4624,15 @@ classdef Titta < handle
                         % menu background
                         Screen('FillRect',wpnt(end),menuBgClr,currentMenuBackRect);
                         % menuRects, inactive and currently active
-                        Screen('FillRect',wpnt(end),menuItemClr      ,currentMenuRects(~menuActiveItem,:).');
+                        if any(~menuActiveItem)
+                            Screen('FillRect',wpnt(end),menuItemClr      ,currentMenuRects(~menuActiveItem,:).');
+                        end
                         Screen('FillRect',wpnt(end),menuItemClrActive,currentMenuRects( menuActiveItem,:).');
                         % text in each rect
                         for c=1:length(currentMenuTextCache)
                             obj.drawCachedText(currentMenuTextCache(c));
                         end
+                        % arrow
                         obj.drawCachedText(menuActiveCache);
                     end
                     
