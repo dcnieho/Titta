@@ -3856,6 +3856,7 @@ classdef Titta < handle
             pointList               = [];
             discardList             = [];
             calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
+            usedCalibrationPoints   = [];
             pointStateLastCal       = [];
             awaitingCalChangeType   = '';           % 'compute' or 'load'
             qUpdateCalStatusText    = true;
@@ -3898,6 +3899,7 @@ classdef Titta < handle
                     vPointsP(:,end-[1 0])       = 0;
                     pointsP (:,end-[1 0])       = 0; %#ok<AGROW>
                     calibrationStatus           = 0;
+                    usedCalibrationPoints       = [];
                     qUpdateLineDisplay          = true;
                     qUpdateCalStatusText        = true;
                     qClearState                 = false;
@@ -4114,8 +4116,8 @@ classdef Titta < handle
                                         % that data for some calibration
                                         % points was removed, update their
                                         % state
-                                        pointIdxs = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
-                                        qNoData   = ~ismember([1:size(pointsP,1)],pointIdxs); %#ok<NBRAK>
+                                        usedCalibrationPoints = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
+                                        qNoData   = ~ismember([1:size(pointsP,1)],usedCalibrationPoints); %#ok<NBRAK>
                                         if any(qNoData)
                                             pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
                                             qUpdatePointHover = true;
@@ -4267,7 +4269,7 @@ classdef Titta < handle
                             clr = [200 200 200];
                         case 1
                             % calibrated
-                            text = 'calibrated';
+                            text = 'calibration succeeded';
                             clr = [0 255 0];
                         case 2
                             % calibrating
@@ -4285,7 +4287,8 @@ classdef Titta < handle
                     else
                         modetxt = 'validating';
                     end
-                    text = sprintf('<u>%s<u>\n<color=%s>%s',modetxt,clr2hex(clr),text);
+                    pointStr = sprintf('%d ',sort(usedCalibrationPoints));
+                    text = sprintf('<u>%s<u>\n<color=%s>%s<color>\nactive cal based on:\npoints [%s]',modetxt,clr2hex(clr),text,pointStr(1:end-1));
                     calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'xalign','left','yalign','top');
                     qUpdateCalStatusText = false;
                 end
