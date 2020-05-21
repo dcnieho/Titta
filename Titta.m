@@ -2507,6 +2507,9 @@ classdef Titta < handle
             Screen('Flip',wpnt(1),[],0,0,1);
         end
         
+        % NB: these three functions ignore the notification stream. Since
+        % its auto-started when connecting to tracker, we handle it
+        % separately
         function data = ConsumeAllData(obj,varargin)
             data.gaze           = obj.buffer.consumeTimeRange('gaze',varargin{:});
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
@@ -2514,9 +2517,10 @@ classdef Titta < handle
             data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
             % NB: positioning stream is not consumed as it will be useless
             % for later analysis (it doesn't have timestamps, and is meant
-            % for visualization only).
+            % for visualization only). It is cleared however, consistent
+            % with effect of the above
+            obj.buffer.clear('positioning');
         end
-        
         function ClearAllBuffers(obj,varargin)
             % clear all buffer, optionally only within specified time range
             obj.buffer.clearTimeRange('gaze',varargin{:});
@@ -2529,7 +2533,6 @@ classdef Titta < handle
                 obj.buffer.clear('positioning');
             end
         end
-        
         function StopRecordAll(obj)
             obj.buffer.stop('gaze');
             obj.buffer.stop('eyeImage');
