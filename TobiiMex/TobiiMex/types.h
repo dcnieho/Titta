@@ -189,6 +189,32 @@ namespace TobiiTypes
         std::string                     message;
     };
 
+    // My own almost class for Tobii notifications, for turning the union into something nicer to deal with
+    class notification
+    {
+    public:
+        notification() = default;
+        notification(TobiiResearchNotification notification_) :
+            system_time_stamp(notification_.system_time_stamp),
+            notification_type(notification_.notification_type)
+        {
+            // fill optional fields, depending on type of notification
+            if (notification_type==TOBII_RESEARCH_NOTIFICATION_DEVICE_FAULTS || notification_type==TOBII_RESEARCH_NOTIFICATION_DEVICE_WARNINGS)
+                errors_or_warnings = notification_.value.text;
+            else if (notification_type==TOBII_RESEARCH_NOTIFICATION_DISPLAY_AREA_CHANGED)
+                display_area = notification_.value.display_area;
+            else if (notification_type==TOBII_RESEARCH_NOTIFICATION_GAZE_OUTPUT_FREQUENCY_CHANGED)
+                output_frequency = notification_.value.output_frequency;
+        }
+
+    public:
+        int64_t                                 system_time_stamp = 0;
+        TobiiResearchNotificationType           notification_type = TOBII_RESEARCH_NOTIFICATION_UNKNOWN;
+        std::optional<float>                    output_frequency;
+        std::optional<TobiiResearchDisplayArea> display_area;
+        std::optional<std::string>              errors_or_warnings;
+    };
+
 
     //// calibration
     // replacements for some Tobii classes, so we don't have to deal with their C-arrays

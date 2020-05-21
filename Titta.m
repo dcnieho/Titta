@@ -1170,8 +1170,9 @@ classdef Titta < handle
             if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
                 dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
             end
-            dat.TobiiLog    = obj.buffer.getLog(false);
-            dat.data        = obj.ConsumeAllData();
+            dat.TobiiLog            = obj.buffer.getLog(false);
+            dat.TobiiNotifications  = obj.buffer.consumeN('notification');
+            dat.data                = obj.ConsumeAllData();
         end
         
         function filename = saveData(obj, filename, doAppendVersion)

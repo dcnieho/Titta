@@ -34,14 +34,15 @@ class TobiiMex
 {
 public:
     // short names for very long Tobii data types
-    using gaze       = TobiiResearchGazeData;
-    using eyeImage   = TobiiTypes::eyeImage;
-    using extSignal  = TobiiResearchExternalSignalData;
-    using timeSync   = TobiiResearchTimeSynchronizationData;
-    using positioning= TobiiResearchUserPositionGuide;
-    using logMessage = TobiiTypes::logMessage;
-    using streamError= TobiiTypes::streamErrorMessage;
-    using allLogTypes= std::variant<logMessage, streamError>;
+    using gaze          = TobiiResearchGazeData;
+    using eyeImage      = TobiiTypes::eyeImage;
+    using extSignal     = TobiiResearchExternalSignalData;
+    using timeSync      = TobiiResearchTimeSynchronizationData;
+    using positioning   = TobiiResearchUserPositionGuide;
+    using logMessage    = TobiiTypes::logMessage;
+    using streamError   = TobiiTypes::streamErrorMessage;
+    using notification  = TobiiTypes::notification;
+    using allLogTypes   = std::variant<logMessage, streamError>;
 
     // data stream type (NB: not log, as that isn't a class member)
     enum class DataStream
@@ -51,9 +52,10 @@ public:
         EyeImage,
         ExtSignal,
         TimeSync,
-        Positioning
+        Positioning,
+        Notification
     };
-    // "gaze", "eyeImage", "externalSignal", or "timeSync"
+    // "gaze", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
     static TobiiMex::DataStream stringToDataStream(std::string stream_);
     static std::string dataStreamToString(TobiiMex::DataStream stream_);
 
@@ -156,6 +158,7 @@ private:
     friend void TobiiPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
     friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
     friend void TobiiStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data);
+    friend void TobiiNotificationCallback(TobiiResearchNotification*             notification_, void* user_data);
     // calibration
     void calibrationThread();
     //// generic functions for internal use
@@ -189,6 +192,9 @@ private:
 
     bool                        _recordingPositioning   = false;
     std::vector<positioning>    _positioning;
+
+    bool                        _recordingNotification  = false;
+    std::vector<notification>   _notification;
 
     static inline bool          _isLogging              = false;
     static inline std::unique_ptr<

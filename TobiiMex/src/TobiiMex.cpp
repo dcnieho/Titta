@@ -15,7 +15,7 @@ namespace
     using read_lock  = std::shared_lock<mutex_type>;
     using write_lock = std::unique_lock<mutex_type>;
 
-    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLogs;
+    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLogs, g_mNotification;
 
     template <typename T>
     mutex_type& getMutex()
@@ -34,6 +34,8 @@ namespace
             return g_mLogs;
         if constexpr (std::is_same_v<T, TobiiMex::streamError>)
             return g_mLogs;
+        if constexpr (std::is_same_v<T, TobiiMex::notification>)
+            return g_mNotification;
     }
 
     template <typename T>
@@ -57,6 +59,8 @@ namespace
         constexpr size_t                timeSyncBufSize           = 2<<9;
 
         constexpr size_t                positioningBufSize        = 2<<11;
+
+        constexpr size_t                notificationBufSize       = 2<<6;
 
         constexpr int64_t               clearTimeRangeStart       = 0;
         constexpr int64_t               clearTimeRangeEnd         = std::numeric_limits<int64_t>::max();
@@ -85,7 +89,8 @@ namespace
         { "external_signal",TobiiMex::DataStream::ExtSignal },
         { "timeSync",       TobiiMex::DataStream::TimeSync },
         { "time_sync",      TobiiMex::DataStream::TimeSync },
-        { "positioning",    TobiiMex::DataStream::Positioning }
+        { "positioning",    TobiiMex::DataStream::Positioning },
+        { "notification",   TobiiMex::DataStream::Notification }
     };
 
     // Map string to a Sample Side
@@ -104,7 +109,7 @@ TobiiMex::DataStream TobiiMex::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning")";
+        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification")";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -205,6 +210,14 @@ void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* us
         }
         auto l = lockForWriting<TobiiMex::streamError>();
         TobiiMex::_logMessages->emplace_back(TobiiMex::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
+    }
+}
+void TobiiNotificationCallback(TobiiResearchNotification* notification_, void* user_data)
+{
+    if (user_data)
+    {
+        auto l = lockForWriting<TobiiMex::notification>();
+        static_cast<TobiiMex*>(user_data)->_notification.emplace_back(*notification_);
     }
 }
 
@@ -342,6 +355,7 @@ TobiiMex::~TobiiMex()
     stop(DataStream::ExtSignal,   true);
     stop(DataStream::TimeSync,    true);
     stop(DataStream::Positioning, true);
+    stop(DataStream::Notification,true);
 
     if (_eyetracker.et)
         tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TobiiStreamErrorCallback);
@@ -374,6 +388,7 @@ void TobiiMex::Init()
         // start stream error logging
         tobii_research_subscribe_to_stream_errors(_eyetracker.et, TobiiStreamErrorCallback, _eyetracker.et);
     }
+    start(DataStream::Notification);    // always start notification stream as soon as we're connected
     if (g_allInstances)
         g_allInstances->push_back(this);
 }
@@ -716,6 +731,8 @@ std::vector<T>& TobiiMex::getBuffer()
         return _timeSync;
     if constexpr (std::is_same_v<T, positioning>)
         return _positioning;
+    if constexpr (std::is_same_v<T, notification>)
+        return _notification;
 }
 template <typename T>
 std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator>
@@ -795,6 +812,8 @@ bool TobiiMex::hasStream(DataStream  stream_) const
         case DataStream::TimeSync:
             return true;    // no capability that can be checked for this one
         case DataStream::Positioning:
+            return true;    // no capability that can be checked for this one
+        case DataStream::Notification:
             return true;    // no capability that can be checked for this one
     }
 
@@ -906,6 +925,22 @@ bool TobiiMex::start(DataStream  stream_, std::optional<size_t> initialBufferSiz
             }
             break;
         }
+        case DataStream::Notification:
+        {
+            if (_recordingNotification)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                auto initialBufferSize = initialBufferSize_.value_or(defaults::notificationBufSize);
+                // prepare and start buffer
+                auto l = lockForWriting<notification>();
+                _notification.reserve(initialBufferSize);
+                result = tobii_research_subscribe_to_notifications(_eyetracker.et, TobiiNotificationCallback, this);
+                stateVar = &_recordingNotification;
+            }
+            break;
+        }
     }
 
     if (stateVar)
@@ -940,6 +975,8 @@ bool TobiiMex::isRecording(DataStream  stream_) const
             return _recordingTimeSync;
         case DataStream::Positioning:
             return _recordingPositioning;
+        case DataStream::Notification:
+            return _recordingNotification;
     }
 
     return success;
@@ -1087,6 +1124,9 @@ void TobiiMex::clearTimeRange(DataStream stream_, std::optional<int64_t> timeSta
         case DataStream::Positioning:
             DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
             break;
+        case DataStream::Notification:
+            clearImpl<notification>(timeStart, timeEnd);
+            break;
     }
 }
 
@@ -1123,6 +1163,10 @@ bool TobiiMex::stop(DataStream  stream_, std::optional<bool> clearBuffer_)
         case DataStream::Positioning:
             result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker.et, TobiiPositioningCallback);
             stateVar = &_recordingPositioning;
+            break;
+        case DataStream::Notification:
+            result = !_recordingNotification ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_notifications(_eyetracker.et, TobiiNotificationCallback);
+            stateVar = &_recordingNotification;
             break;
     }
 
@@ -1166,3 +1210,9 @@ template std::vector<TobiiMex::positioning> TobiiMex::consumeN(std::optional<siz
 //template std::vector<TobiiMex::positioning> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<TobiiMex::positioning> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 //template std::vector<TobiiMex::positioning> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+
+// time sync data, instantiate templated functions
+template std::vector<TobiiMex::notification> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
+template std::vector<TobiiMex::notification> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TobiiMex::notification> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
+template std::vector<TobiiMex::notification> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);

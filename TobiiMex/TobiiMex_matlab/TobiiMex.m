@@ -321,13 +321,13 @@ classdef TobiiMex < handle
         
         %% data streams
         function supported = hasStream(this,stream)
-            assert(nargin>1,'TobiiMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
-            assert(nargin>1,'TobiiMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
@@ -338,7 +338,7 @@ classdef TobiiMex < handle
             end
         end
         function status = isRecording(this,stream)
-            assert(nargin>1,'TobiiMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             status = this.cppmethod('isRecording',ensureStringIsChar(stream));
         end
         function data = consumeN(this,stream,NSamp,side)
@@ -346,7 +346,7 @@ classdef TobiiMex < handle
             % - NSamp: how many samples to consume. Default: all
             % -  side: Which side of buffer to consume samples from.
             %          Default: start
-            assert(nargin>1,'TobiiMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
                 data = this.cppmethod('consumeN',stream,uint64(NSamp),ensureStringIsChar(side));
@@ -358,7 +358,7 @@ classdef TobiiMex < handle
         end
         function data = consumeTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'TobiiMex::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
@@ -374,7 +374,7 @@ classdef TobiiMex < handle
             %          ask for inf samples
             % -  side: Which side of buffer to consume samples from.
             %          Default: end
-            assert(nargin>1,'TobiiMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
                 data = this.cppmethod('peekN',stream,uint64(NSamp),ensureStringIsChar(side));
@@ -386,7 +386,7 @@ classdef TobiiMex < handle
         end
         function data = peekTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'TobiiMex::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));
@@ -397,12 +397,12 @@ classdef TobiiMex < handle
             end
         end
         function clear(this,stream)
-            assert(nargin>1,'TobiiMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole buffer
-            assert(nargin>1,'TobiiMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            assert(nargin>1,'TobiiMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
@@ -415,7 +415,7 @@ classdef TobiiMex < handle
         function success = stop(this,stream,doClearBuffer)
             % optional boolean input indicating whether buffer should be
             % cleared out
-            assert(nargin>1,'TobiiMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync" and "positioning"');
+            assert(nargin>1,'TobiiMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(doClearBuffer)
                 success = this.cppmethod('stop',stream,logical(doClearBuffer));

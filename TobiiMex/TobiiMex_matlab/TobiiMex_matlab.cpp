@@ -76,9 +76,13 @@ namespace mxTypes
     // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
     template <>
     struct typeNeedsMxCellStorage<TobiiTypes::CalibrationPoint> { static constexpr bool value = false; };
+    template <>
+    struct typeNeedsMxCellStorage<TobiiMex::notification> { static constexpr bool value = false; };
 
     template <>
     struct typeToMxClass<TobiiTypes::CalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+    template <>
+    struct typeToMxClass<TobiiMex::notification> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
 
     // forward declarations
     template<typename Cont, typename... Fs>
@@ -102,6 +106,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiMex::positioning            >    data_);
     mxArray* ToMatlab(TobiiMex::logMessage                              data_);
     mxArray* ToMatlab(TobiiMex::streamError                             data_);
+    mxArray* ToMatlab(TobiiMex::notification data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(TobiiTypes::CalibrationState                      data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult                 data_);
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkItem                   data_);
@@ -402,7 +407,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::CheckDataStream:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
-                mexErrMsgTxt("checkDataStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("checkDataStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string, check if valid
             char* bufferCstr = mxArrayToString(prhs[1]);
@@ -673,7 +678,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::HasStream:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string, call hasStream() on instance
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -684,7 +689,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get optional input arguments
             std::optional<size_t> bufSize;
@@ -714,7 +719,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::IsRecording:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("isRecording: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("isRecording: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string, call isBuffering() on instance
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -725,7 +730,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::ConsumeN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -770,12 +775,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 case TobiiMex::DataStream::Positioning:
                     plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::positioning>(nSamp, side));
                     return;
+                case TobiiMex::DataStream::Notification:
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeN<TobiiMex::notification>(nSamp, side));
+                    return;
             }
         }
         case Action::ConsumeTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("consumeTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("consumeTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -815,12 +823,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 case TobiiMex::DataStream::Positioning:
                     DoExitWithMsg("consumeTimeRange: not supported for positioning stream.");
                     return;
+                case TobiiMex::DataStream::Notification:
+                    plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TobiiMex::notification>(timeStart, timeEnd));
+                    return;
             }
         }
         case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -865,12 +876,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 case TobiiMex::DataStream::Positioning:
                     plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::positioning>(nSamp, side));
                     return;
+                case TobiiMex::DataStream::Notification:
+                    plhs[0] = mxTypes::ToMatlab(instance->peekN<TobiiMex::notification>(nSamp, side));
+                    return;
             }
         }
         case Action::PeekTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("peekTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("peekTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').");
 
             // get data stream identifier string
             char *bufferCstr = mxArrayToString(prhs[2]);
@@ -910,12 +924,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 case TobiiMex::DataStream::Positioning:
                     DoExitWithMsg("peekTimeRange: not supported for positioning stream.");
                     return;
+                case TobiiMex::DataStream::Notification:
+                    plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TobiiMex::notification>(timeStart, timeEnd));
+                    return;
             }
         }
         case Action::Clear:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get data stream identifier string, clear buffer
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -926,7 +943,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::ClearTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', or 'timeSync').");
+                mexErrMsgTxt("clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').");
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
@@ -953,7 +970,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::Stop:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'positioning').");
+                mexErrMsgTxt("stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').");
 
             // get optional input argument
             std::optional<bool> clearBuffer;
@@ -1352,6 +1369,33 @@ namespace mxTypes
         mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.message));
 
         return out;
+    }
+    mxArray* ToMatlab(TobiiMex::notification data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
+    {
+        if (idx_ == 0)
+        {
+            const char* fieldNames[] = { "systemTimeStamp","notification","explanation","value" };
+            storage_ = mxCreateStructMatrix(size_, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+        }
+
+        auto hasOutputFrequency = data_.output_frequency.has_value();
+        auto hasDisplayArea     = data_.display_area.has_value();
+        auto hasErrorsOrWarnings= data_.errors_or_warnings.has_value();
+
+        // there are four options: (1) neither of the three optionals are available, or
+        // (2-4) one of the three optionals is available
+        mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.system_time_stamp));
+        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(TobiiResearchNotificationToString(data_.notification_type)));
+        mxSetFieldByNumber(storage_, idx_, 2, ToMatlab(TobiiResearchNotificationToExplanation(data_.notification_type)));
+        if (hasOutputFrequency)
+            mxSetFieldByNumber(storage_, idx_, 3, ToMatlab(data_.output_frequency));
+        else if (hasDisplayArea)
+            mxSetFieldByNumber(storage_, idx_, 3, ToMatlab(data_.display_area));
+        else if (hasErrorsOrWarnings)
+            mxSetFieldByNumber(storage_, idx_, 3, ToMatlab(data_.errors_or_warnings));
+        // else don't set value, which yields an empty double, fine
+
+        return storage_;
     }
 
     mxArray* ToMatlab(TobiiTypes::CalibrationState data_)

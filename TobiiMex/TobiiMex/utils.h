@@ -19,6 +19,9 @@ std::string TobiiResearchStreamErrorToExplanation(TobiiResearchStreamError trl_)
 std::string TobiiResearchStreamErrorSourceToString     (TobiiResearchStreamErrorSource trl_);
 std::string TobiiResearchStreamErrorSourceToExplanation(TobiiResearchStreamErrorSource trl_);
 
+std::string TobiiResearchNotificationToString(TobiiResearchNotificationType trl_);
+std::string TobiiResearchNotificationToExplanation(TobiiResearchNotificationType trl_);
+
 std::string TobiiResearchLicenseValidationResultToString     (TobiiResearchLicenseValidationResult trl_);
 std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicenseValidationResult trl_);
 
