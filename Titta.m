@@ -3849,7 +3849,7 @@ classdef Titta < handle
             qUpdatePointHover       = false;
             % 8. snapshot saving and loading
             qSaveSnapShot           = false;
-            snapshots               = zeros(0,2);   % each row is a snapshot, indices indicating 1: which attempt, 2: which cal
+            snapshots               = cell(0,3);    % each row is a snapshot, indices indicating 1: which attempt, 2: which cal, 3: cal history
             % 9. applied calibration status
             qNewCal                 = kCal==0;
             qClearState             = false;
@@ -3976,8 +3976,32 @@ classdef Titta < handle
                     % active
                     toSave                      = [kCal getLastManualCal(out.attempt{kCal})];
                     % check if this snapshot already exists
-                    if isempty(snapshots) || ~any(bsxfun(@eq,snapshots,toSave),2)
-                        snapshots                   = [snapshots; toSave]; %#ok<AGROW>
+                    if isempty(snapshots) || ~any(all([cat(1,snapshots{:,1})==toSave(1) cat(1,snapshots{:,2})==toSave(2)],2))
+                        % collect cal actions that contributed to current
+                        % state
+                        idxs = nan(1,size(cPointsP,1));
+                        count= 0;
+                        % find cal actions for points
+                        for c=toSave(2):-1:1
+                            idx = out.attempt{kCal}.cal{c}.point(1);
+                            if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && out.attempt{kCal}.cal{c}.collectStatus.status==0
+                                idxs(idx)   = c;
+                                count       = count+1;
+                            end
+                        end
+                        % copy over in chronological order
+                        fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus'};
+                        [~,i] = sort(idxs);
+                        cals = cell(1,count);
+                        for c=1:count
+                            for f=1:length(fields)
+                                cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
+                            end
+                        end
+                        % calibration data, etc
+                        cals{end}.computeResult  = out.attempt{kCal}.cal{toSave(2)}.computeResult;
+                        cals{end}.computedCal    = out.attempt{kCal}.cal{toSave(2)}.computedCal;
+                        snapshots = [snapshots; num2cell(toSave) {cals}]; %#ok<AGROW>
                     end
                     qRegenSnapShotMenuListing   = true;
                     qSaveSnapShot               = false;
@@ -3997,17 +4021,20 @@ classdef Titta < handle
                     % text in each rect
                     Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                    currentSnapMenuItem = nan;
                     for c=nElem:-1:1
                         if c==nElem
                             str = '(+): add snapshot';
                         else
-                            whichAttempt    = snapshots(c,1);
-                            whichCal        = snapshots(c,2);
+                            whichAttempt    = snapshots{c,1};
+                            whichCal        = snapshots{c,2};
+                            if whichAttempt==kCal && whichCal==getLastManualCal(out.attempt{kCal})
+                                currentSnapMenuItem = c;
+                            end
                             
                             % get which calibration points used for cal
                             if whichCal>0
-                                cal = out.attempt{whichAttempt}.cal{whichCal};
-                                whichCalPoints  = sort(getWhichCalibrationPoints(cPointsP(:,1:2),cal.computeResult.points));
+                                whichCalPoints  = sort(getWhichCalibrationPoints(cPointsP(:,1:2),snapshots{c,3}{end}.computeResult.points));
                                 calStr          = sprintf('%d ',whichCalPoints);
                             else
                                 calStr          = '';
@@ -4049,8 +4076,11 @@ classdef Titta < handle
                     currentMenuBackRect         = snapMenuBackRect;
                     currentMenuRects            = snapMenuRects;
                     currentMenuTextCache        = snapMenuTextCache;
-                    menuActiveItem              = [false(1,nElem-1) true];
-                    currentMenuSel              = find(menuActiveItem);
+                    currentMenuSel              = currentSnapMenuItem;
+                    menuActiveItem              = currentSnapMenuItem==[1:size(snapshots,1)+1]; %#ok<NBRAK>
+                    if isnan(currentMenuSel)
+                        currentMenuSel          = size(snapshots,1)+1;
+                    end
                     qChangeMenuArrow            = true;
                     qRegenSnapShotMenuListing   = false;
                     qUpdateCursors              = true;
@@ -4675,7 +4705,9 @@ classdef Titta < handle
                         if any(~menuActiveItem)
                             Screen('FillRect',wpnt(end),menuItemClr      ,currentMenuRects(~menuActiveItem,:).');
                         end
-                        Screen('FillRect',wpnt(end),menuItemClrActive,currentMenuRects( menuActiveItem,:).');
+                        if any(menuActiveItem)
+                            Screen('FillRect',wpnt(end),menuItemClrActive,currentMenuRects( menuActiveItem,:).');
+                        end
                         % text in each rect
                         for c=1:length(currentMenuTextCache)
                             obj.drawCachedText(currentMenuTextCache(c));
@@ -5009,7 +5041,10 @@ classdef Titta < handle
                                         qSaveSnapShot = true;
                                     else
                                         % load another snapshot
-                                        % TODO
+                                        currentMenuSel          = iIn;
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
                                         qToggleSelectSnapMenu   = true;
                                     end
                                     break;
@@ -5137,7 +5172,10 @@ classdef Titta < handle
                                         qSaveSnapShot = true;
                                     elseif requested<=size(snapshots,1)
                                         % load another snapshot
-                                        % TODO
+                                        currentMenuSel          = requested;
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
                                         qToggleSelectSnapMenu   = true;
                                     end
                                     break;
@@ -5155,7 +5193,9 @@ classdef Titta < handle
                                         qSaveSnapShot = true;
                                     else
                                         % load another snapshot
-                                        % TODO
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
                                         qToggleSelectSnapMenu   = true;
                                     end
                                 end
