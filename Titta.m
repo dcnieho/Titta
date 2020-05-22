@@ -3953,7 +3953,8 @@ classdef Titta < handle
                     if qSelectSnapMenuOpen
                         qRegenSnapShotMenuListing = true;
                     end
-                    qToggleSelectSnapMenu = false;
+                    qToggleSelectSnapMenu   = false;
+                    qUpdateCursors          = true;
                 elseif qToggleSelectEyeMenu
                     qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
                     if qSelectEyeMenuOpen
@@ -3964,7 +3965,8 @@ classdef Titta < handle
                         menuActiveItem      = currentEyeMenuItem==[1:3]; %#ok<NBRAK>
                         qChangeMenuArrow    = true;
                     end
-                    qToggleSelectEyeMenu = false;
+                    qToggleSelectEyeMenu= false;
+                    qUpdateCursors      = true;
                 end
                 
                 if qRegenSnapShotMenuListing
@@ -4015,6 +4017,7 @@ classdef Titta < handle
                     currentMenuSel              = find(menuActiveItem);
                     qChangeMenuArrow            = true;
                     qRegenSnapShotMenuListing   = false;
+                    qUpdateCursors              = true;
                 end
                 
                 % switch on/off eye images
@@ -5244,9 +5247,10 @@ classdef Titta < handle
                         qUpdatePointHover       = true;
                         break;
                     end
-                    % check if hovering over point for which we have info
+                    % check if hovering over point for which we have info,
+                    % and no menus open
                     iIn = find(inRect(mousePos,calValRectsHover));
-                    if ~isempty(iIn)
+                    if ~isempty(iIn) && ~qSelectSnapMenuOpen && ~qSelectEyeMenuOpen
                         % see if new point
                         if pointToShowInfoFor~=iIn
                             openInfoForPoint = iIn;
