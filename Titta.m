@@ -3999,8 +3999,10 @@ classdef Titta < handle
                             end
                         end
                         % calibration data, etc
-                        cals{end}.computeResult  = out.attempt{kCal}.cal{toSave(2)}.computeResult;
-                        cals{end}.computedCal    = out.attempt{kCal}.cal{toSave(2)}.computedCal;
+                        if count
+                            cals{end}.computeResult  = out.attempt{kCal}.cal{toSave(2)}.computeResult;
+                            cals{end}.computedCal    = out.attempt{kCal}.cal{toSave(2)}.computedCal;
+                        end
                         snapshots = [snapshots; num2cell(toSave) {cals}]; %#ok<AGROW>
                     end
                     qRegenSnapShotMenuListing   = true;
@@ -4206,7 +4208,105 @@ classdef Titta < handle
                                 end
                             end
                         case 'load'
-                            % TODO
+                            if calibrationStatus~=3
+                                whichAttempt    = snapshots{currentMenuSel,1};
+                                whichCal        = snapshots{currentMenuSel,2};
+                                % start new cal
+                                kCal = length(out.attempt)+1;
+                                out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                                out.attempt{kCal}.device    = obj.settings.tracker;
+                                out.attempt{kCal}.eye       = obj.settings.calibrateEye;
+                                % copy over old calibration, set state
+                                % accordingly
+                                % 1. calibration points
+                                if whichCal>0
+                                    out.attempt{kCal}.cal = cals;
+                                    calAction = length(out.attempt{kCal}.cal);
+                                else
+                                    calAction = 0;
+                                end
+                                % 2. validation points
+                                if isfield(out.attempt{whichAttempt},'val')
+                                    qFound  = false(1,size(pointsP,1));
+                                    vals    = out.attempt{whichAttempt}.val;
+                                    oidx    = nan;
+                                    for p=length(vals):-1:1
+                                        idx = vals{p}.point(1);
+                                        if ~isnan(idx) && vals{p}.whichCal==whichCal && ~vals{p}.wasCancelled && ~vals{p}.wasDiscarded
+                                            % we don't yet have validation data for
+                                            % this point, and it is for the current
+                                            % calibration -> collect
+                                            qFound(idx) = true;
+                                            if isnan(oidx)
+                                                oidx = size(vals{p}.allPoints.pointPos,1);
+                                                qKeepAll = true;
+                                            end
+                                            % copy over all fields
+                                            out.attempt{kCal}.val{oidx} = vals{p};
+                                            out.attempt{kCal}.val{oidx}.whichCal = calAction;
+                                            if ~qKeepAll
+                                                out.attempt{kCal}.val{oidx} = rmfield(out.attempt{kCal}.val{oidx},'allPoints');
+                                            end
+                                            oidx = oidx-1;
+                                            qKeepAll = false;
+                                        end
+                                    end
+                                end
+                                if isfield(out.attempt{kCal},'val')
+                                    valAction = length(out.attempt{kCal}.val);
+                                else
+                                    valAction = 0;
+                                end
+                                % 3. extra info
+                                out.attempt{kCal}.loadedFrom.whichAttempt   = whichAttempt;
+                                out.attempt{kCal}.loadedFrom.whichCal       = whichCal;
+                                out.attempt{kCal}.loadedFrom.timestamp      = out.attempt{whichAttempt}.timestamp;
+                                % 4. further state updates
+                                if whichCal>0
+                                    usedCalibrationPoints = getWhichCalibrationPoints(cPointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
+                                else
+                                    usedCalibrationPoints = [];
+                                end
+                                cPointsP(:,end-[1 0]) = 0;
+                                cPointsP(usedCalibrationPoints,end) = 1;
+                                vPointsP(:,end-[1 0]) = 0;
+                                if isfield(out.attempt{kCal},'val')
+                                    vPointsP(out.attempt{kCal}.val{end}.allPoints.pointPos(:,1)) = 1;
+                                end
+                                if strcmp(stage,'cal')
+                                    pointsP = cPointsP;
+                                else
+                                    pointsP = vPointsP;
+                                end
+                                % apply
+                                if whichCal==0
+                                    % there was no calibration, so clear
+                                    % it. We do that by leaving and
+                                    % reentering calibration mode
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    calibrationStatus = 0;      % status: not calibrated
+                                else
+                                    obj.buffer.calibrationApplyData(out.attempt{kCal}.cal{calAction}.computedCal);
+                                    calibrationStatus = 3;      % status: loading
+                                end
+                                % done
+                                qUpdateLineDisplay      = true;
+                                qUpdateCalStatusText    = true;
+                            else
+                                % check we've loaded yet
+                                % computed succesfully, waiting for
+                                % calibration data retrieval
+                                calData = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(calData) && strcmp(calData.workItem.action,'ApplyCalibrationData')
+                                    qUpdatePointHover       = true;
+                                    qUpdateLineDisplay      = true;
+                                    qUpdateCalStatusText    = true;
+                                    calibrationStatus       = 3;    % status: calibrated
+                                    awaitingCalChangeType   = '';   % done with loading calibration
+                                end
+                            end
                     end
                 end
                     
@@ -4216,31 +4316,32 @@ classdef Titta < handle
                     % quality info, which is used below for various other
                     % things
                     linesForPoints = cell(1,size(pointsP,1));
+                    valInfoTopTextCache = [];
                     
-                    % prep to draw captured data in characteristic tobii plot
-                    if strcmp(stage,'cal')
-                        if isfield(out.attempt{kCal},'cal') && isfield(out.attempt{kCal}.cal{calAction},'computeResult')
-                            myCal       = out.attempt{kCal}.cal{calAction}.computeResult;
-                            pointIdxs   = getWhichCalibrationPoints(pointsP(:,1:2),myCal.points);
-                            for p=1:length(myCal.points)
-                                point.left = [];
-                                point.right= [];
-                                % left eye
-                                if ismember(out.attempt{kCal}.eye,{'both','left'})
-                                    qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
-                                    point.left  = myCal.points(p).samples.left.position(:,qVal);
+                    % prep to draw captured data in characteristic Tobii
+                    % plot
+                    if calibrationStatus~=3  % no lines when loading cal
+                        if strcmp(stage,'cal')
+                            if isfield(out.attempt{kCal},'cal') && isfield(out.attempt{kCal}.cal{calAction},'computeResult')
+                                myCal       = out.attempt{kCal}.cal{calAction}.computeResult;
+                                pointIdxs   = getWhichCalibrationPoints(pointsP(:,1:2),myCal.points);
+                                for p=1:length(myCal.points)
+                                    point.left = [];
+                                    point.right= [];
+                                    % left eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                        qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                        point.left  = myCal.points(p).samples.left.position(:,qVal);
+                                    end
+                                    % right eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                        qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                        point.right = myCal.points(p).samples.right.position(:,qVal);
+                                    end
+                                    linesForPoints{pointIdxs(p)} = point;
                                 end
-                                % right eye
-                                if ismember(out.attempt{kCal}.eye,{'both','right'})
-                                    qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
-                                    point.right = myCal.points(p).samples.right.position(:,qVal);
-                                end
-                                linesForPoints{pointIdxs(p)} = point;
                             end
-                        end
-                        valInfoTopTextCache = [];
-                    else
-                        if isfield(out.attempt{kCal},'val')
+                        elseif isfield(out.attempt{kCal},'val')
                             % collect latest gaze data for each point
                             strSetup        = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
                             [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));
@@ -4312,8 +4413,6 @@ classdef Titta < handle
                                 end
                                 valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
                                 valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.mancal.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.mancal.avg.text.color);
-                            else
-                                valInfoTopTextCache = [];
                             end
                         end
                     end
