@@ -3969,6 +3969,11 @@ classdef Titta < handle
                     qUpdateCursors      = true;
                 end
                 
+                if qSaveSnapShot
+                    qRegenSnapShotMenuListing   = true;
+                    qSaveSnapShot               = false;
+                end
+                
                 if qRegenSnapShotMenuListing
                     % TODO: text format: N calibration points,
                     % validation accuracy/no validation available
@@ -4961,8 +4966,16 @@ classdef Titta < handle
                                         break;
                                     end
                                 elseif qSelectSnapMenuOpen
-                                    % TODO
-                                    qToggleSelectSnapMenu   = true;
+                                    if iIn==size(snapshots,1)+1
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    else
+                                        % load another snapshot
+                                        % TODO
+                                        qToggleSelectSnapMenu   = true;
+                                    end
                                     break;
                                 end
                             else
@@ -5053,6 +5066,15 @@ classdef Titta < handle
                         end
                     elseif any(keyPress)
                         keys = KbName(keyPress);
+                        if iscell(keys)
+                            % multiple keys pressed at exactly the same
+                            % time. We're handling only the first, else
+                            % logic below becomes impossible (what if
+                            % 'shift' and '+=' pressed at the same time?,
+                            % should be processed as {'shift','+','='}, but
+                            % i can't write the logic to pull that appart..
+                            keys = keys{1};
+                        end
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
                             if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)))
                                 if qSelectEyeMenuOpen
@@ -5061,8 +5083,9 @@ classdef Titta < handle
                                     qToggleSelectSnapMenu   = true;
                                 end
                                 break;
-                            elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                requested           = str2double(keys(1));
+                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'});
+                                requested   = str2double(keys(qWhich));
                                 if qSelectEyeMenuOpen
                                     if requested<=3
                                         currentMenuSel      = requested;
@@ -5071,8 +5094,16 @@ classdef Titta < handle
                                         break;
                                     end
                                 elseif qSelectSnapMenuOpen
-                                    % TODO
-                                    qToggleSelectSnapMenu   = true;
+                                    if isnan(requested) && strcmp(keys(qWhich),'+')
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    elseif requested<=size(snapshots,1)
+                                        % load another snapshot
+                                        % TODO
+                                        qToggleSelectSnapMenu   = true;
+                                    end
                                     break;
                                 end
                                 break;
@@ -5081,7 +5112,16 @@ classdef Titta < handle
                                     qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
                                     qToggleSelectEyeMenu= true;
                                 elseif qSelectSnapMenuOpen
-                                    % TODO
+                                    if currentMenuSel==size(snapshots,1)+1
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    else
+                                        % load another snapshot
+                                        % TODO
+                                        qToggleSelectSnapMenu   = true;
+                                    end
                                 end
                                 break;
                             else
@@ -5139,9 +5179,10 @@ classdef Titta < handle
                                         break;
                                     end
                                 end
-                            elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
                                 % calibration/validation point
-                                requested           = str2double(keys(1));
+                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'});
+                                requested   = str2double(keys(qWhich));
                                 if requested<=size(pointsP,1)
                                     if shiftIsDown
                                         qDoneSomething = false;
