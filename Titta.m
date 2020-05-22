@@ -3944,6 +3944,7 @@ classdef Titta < handle
                     qToggleStage        = false;
                     qUpdateLineDisplay  = true;
                     qUpdatePointHover   = true;
+                    qUpdateCalStatusText= true;
                 end
                 
                 % setup menu, if any
