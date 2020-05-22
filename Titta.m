@@ -3972,14 +3972,18 @@ classdef Titta < handle
                 end
                 
                 if qSaveSnapShot
+                    % find last successful cal, thats the one that is
+                    % active
+                    toSave                      = [kCal getLastManualCal(out.attempt{kCal})];
+                    % check if this snapshot already exists
+                    if isempty(snapshots) || ~any(bsxfun(@eq,snapshots,toSave),2)
+                        snapshots                   = [snapshots; toSave]; %#ok<AGROW>
+                    end
                     qRegenSnapShotMenuListing   = true;
                     qSaveSnapShot               = false;
                 end
                 
                 if qRegenSnapShotMenuListing
-                    % TODO: text format: N calibration points,
-                    % validation accuracy/no validation available
-                    
                     % this menu's length may change, have to generate
                     % each time it opens
                     nElem           = size(snapshots,1)+1;  % always have the "add snapshot" button at the end
@@ -3997,22 +4001,47 @@ classdef Titta < handle
                         if c==nElem
                             str = '(+): add snapshot';
                         else
+                            whichAttempt    = snapshots(c,1);
+                            whichCal        = snapshots(c,2);
+                            
+                            % get which calibration points used for cal
+                            if whichCal>0
+                                cal = out.attempt{whichAttempt}.cal{whichCal};
+                                whichCalPoints  = sort(getWhichCalibrationPoints(cPointsP(:,1:2),cal.computeResult.points));
+                                calStr          = sprintf('%d ',whichCalPoints);
+                            else
+                                calStr          = '';
+                            end
+                            
                             % find the active/last valid validation for this
-                            % calibration
-                            aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
-                            % acc field is [lx rx; ly ry]
-                            [strl,strr,strsep] = deal('');
-                            if ismember(cal{iValid(c)}.eye,{'both','left'})
-                                strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(1, 1 ),cal{iValid(c)}.val{aVal}.acc(2, 1 ),char(176));
+                            % calibration, if any
+                            valStr = 'no validation available';
+                            if isfield(out.attempt{whichAttempt},'val')
+                                idx = nan;
+                                for p=length(out.attempt{whichAttempt}.val):-1:1
+                                    if ~isnan(out.attempt{whichAttempt}.val{p}.point(1)) && out.attempt{whichAttempt}.val{p}.whichCal==whichCal && ~out.attempt{whichAttempt}.val{p}.wasCancelled && ~out.attempt{whichAttempt}.val{p}.wasDiscarded
+                                        idx = p;
+                                        break;
+                                    end
+                                end
+                                if ~isnan(idx)
+                                    myVal = out.attempt{whichAttempt}.val{idx}.allPoints;
+                                    % acc field is [lx rx; ly ry]
+                                    [strl,strr,strsep] = deal('');
+                                    if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
+                                        strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),char(176));
+                                    end
+                                    if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
+                                        idx = 1+strcmp(out.attempt{whichAttempt}.eye,'both');
+                                        strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),char(176));
+                                    end
+                                    if strcmp(out.attempt{whichAttempt}.eye,'both')
+                                        strsep = ', ';
+                                    end
+                                    valStr = sprintf('val: %s%s%s',strl,strsep,strr);
+                                end
                             end
-                            if ismember(cal{iValid(c)}.eye,{'both','right'})
-                                idx = 1+strcmp(cal{iValid(c)}.eye,'both');
-                                strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(1,idx),cal{iValid(c)}.val{aVal}.acc(2,idx),char(176));
-                            end
-                            if strcmp(cal{iValid(c)}.eye,'both')
-                                strsep = ', ';
-                            end
-                            str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
+                            str = sprintf('(%d): cal points: [%s], %s',c,calStr(1:end-1),valStr);
                         end
                         snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
                     end
@@ -4151,7 +4180,11 @@ classdef Titta < handle
                     end
                 end
                     
-                if qUpdateLineDisplay   % status just changed: we have something to update
+                if qUpdateLineDisplay
+                    % updates calibration/validation line displays
+                    % if in validation mode, also updates validation data
+                    % quality info, which is used below for various other
+                    % things
                     linesForPoints = cell(1,size(pointsP,1));
                     
                     % prep to draw captured data in characteristic tobii plot
@@ -5715,6 +5748,7 @@ function pointIdxs = getWhichCalibrationPoints(allPointsNormPos,calResultPoints)
 pointIdxs = [];
 for p=1:length(calResultPoints)
     qPoint      = sum(abs(bsxfun(@minus,allPointsNormPos,calResultPoints(p).position(:).'))<0.0001,2)==2;
+    assert(sum(qPoint)==1,'unknown or not unique calibration point: [%s]',num2str(calResultPoints(p).position(:).'));
     pointIdxs   = [pointIdxs find(qPoint)]; %#ok<AGROW>
 end
 end
