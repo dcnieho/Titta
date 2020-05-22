@@ -3878,7 +3878,9 @@ classdef Titta < handle
             qCancelPointCollect     = false;
             qRegenSnapShotMenuListing = false;
             while ~qDoneWithManualCalib
-                % start new calibration, if wanted
+                % start new calibration, if wanted (e.g. eye changed, last
+                % calibration point discarded). New cal also started when a
+                % snapshot is loaded, but this is done elsewhere
                 if qNewCal
                     if ~kCal
                         kCal = 1;
@@ -4702,6 +4704,7 @@ classdef Titta < handle
                                     if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
                                         obj.doEnterCalibrationMode();
                                     end
+                                    qNewCal     = true;
                                     qClearState = true;
                                 else
                                     % data for some points left: issue
