@@ -4491,7 +4491,7 @@ classdef Titta < handle
                     if qChangeMenuArrow
                         % setup arrow that can be moved with arrow keys
                         rect = currentMenuRects(currentMenuSel,:);
-                        rect(3) = rect(1)+RectWidth(rect)*.07;
+                        rect(3) = rect(1)+menuMargin+20;
                         menuActiveCache = obj.getTextCache(wpnt(end),' <color=ff0000>-><color>',rect);
                         qChangeMenuArrow = false;
                     end
