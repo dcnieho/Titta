@@ -4196,6 +4196,7 @@ classdef Titta < handle
                             % compute data quality for these
                             if ~isempty(val.pointPos)
                                 out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
+                                qUpdatePointHover = true;   % may need to update point hover
                                 
                                 % prep displaying
                                 myVal = out.attempt{kCal}.val{valAction}.allPoints;
@@ -4364,71 +4365,63 @@ classdef Titta < handle
                         openInfoForPoint   = nan;
                     end
                     qUpdatePointHover   = false;
-                    txtbounds           = [];
-                    if strcmp(stage,'cal')
-                        switch pointsP(pointToShowInfoFor,end)
-                            case -1
-                                % failed
-                                clr = [255 0 0];
-                                txt = 'collection failed';
-                            case 0
-                                % not collected
-                                clr = [200 200 200];
-                                txt = 'not collected';
-                            case 1
-                                % collected
-                                clr = [0 255 0];
-                                txt = 'collected successfully';
-                            case 2
-                                % displaying
-                                clr = [131 177 255];
-                                txt = 'being shown to subject';
-                            case 3
-                                % collecting
-                                clr = [0 0 255];
-                                txt = 'data is being collected';
-                            case 4
-                                % enqueued
-                                clr = [0 255 255];
-                                txt = 'enqueued to be shown to participant';
-                            case 5
-                                % discarding
-                                clr = [188 61 18];
-                                txt = 'data is being discarded';
-                        end
-                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
-                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
-                        [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),sprintf('status: <color=%s>%s',clr2hex(clr),txt),[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
-                    elseif strcmp(stage,'val') && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
+                    switch pointsP(pointToShowInfoFor,end)
+                        case -1
+                            % failed
+                            clr = [255 0 0];
+                            txt = 'collection failed';
+                        case 0
+                            % not collected
+                            clr = [200 200 200];
+                            txt = 'not collected';
+                        case 1
+                            % collected
+                            clr = [0 255 0];
+                            txt = 'collected successfully';
+                        case 2
+                            % displaying
+                            clr = [131 177 255];
+                            txt = 'being shown to subject';
+                        case 3
+                            % collecting
+                            clr = [0 0 255];
+                            txt = 'data is being collected';
+                        case 4
+                            % enqueued
+                            clr = [0 255 255];
+                            txt = 'enqueued to be shown to participant';
+                        case 5
+                            % discarding
+                            clr = [188 61 18];
+                            txt = 'data is being discarded';
+                    end
+                    txt = sprintf('status: <color=%s>%s',clr2hex(clr),txt);
+                    % prepare text
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                    if strcmp(stage,'val') && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
                         myVal = out.attempt{kCal}.val{valAction}.allPoints;
                         % see if we have info for the requested point
                         idx = find(myVal.pointPos(:,1)==pointToShowInfoFor,1);
-                        if isempty(idx)
-                            pointToShowInfoFor = nan;
-                        else
-                            % prepare text
-                            Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
-                            Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                        if ~isempty(idx)
                             if strcmp(out.attempt{kCal}.eye,'both')
                                 lE = myVal.quality(idx).left;
                                 rE = myVal.quality(idx).right;
-                                str = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                                txt = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
                             elseif strcmp(out.attempt{kCal}.eye,'left')
                                 lE = myVal.quality(idx).left;
-                                str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
+                                txt = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
                             elseif strcmp(out.attempt{kCal}.eye,'right')
                                 rE = myVal.quality(idx).right;
-                                str = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                                txt = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
                             end
-                            [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
                         end
                     end
-                    if ~isempty(txtbounds)
-                        % get box around text
-                        margin = 10;
-                        infoBoxRect = GrowRect(txtbounds,margin,margin);
-                        infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
-                    end
+                    [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),txt,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
+                    % get box around text
+                    margin = 10;
+                    infoBoxRect = GrowRect(txtbounds,margin,margin);
+                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
                 end
                 
                 % draw loop
@@ -5253,10 +5246,7 @@ classdef Titta < handle
                     end
                     % check if hovering over point for which we have info
                     iIn = find(inRect(mousePos,calValRectsHover));
-                    if ~isempty(iIn) && ((strcmp(stage,'val') && ...
-                                isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints') && ...
-                                any(out.attempt{kCal}.val{valAction}.allPoints.pointPos(:,1)==iIn)) || ...
-                                strcmp(stage,'cal'))
+                    if ~isempty(iIn)
                         % see if new point
                         if pointToShowInfoFor~=iIn
                             openInfoForPoint = iIn;
