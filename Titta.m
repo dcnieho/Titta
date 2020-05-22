@@ -5174,7 +5174,7 @@ classdef Titta < handle
                                     end
                                 elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
                                     % down key
-                                    if (qSelectEyeMenuOpen && currentMenuSel<3) || (qSelectSnapMenuOpen && false)  % TODO
+                                    if (qSelectEyeMenuOpen && currentMenuSel<3) || (qSelectSnapMenuOpen && currentMenuSel<=size(snapshots,1))   % NB: snapshots menu goes to number of snapshots+1
                                         currentMenuSel   = currentMenuSel+1;
                                         qChangeMenuArrow = true;
                                         break;
