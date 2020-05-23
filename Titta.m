@@ -915,7 +915,7 @@ classdef Titta < handle
                             sca
                             ListenChar(0); Priority(0);
                         end
-                        error('Titta: run ended from Tobii routine')
+                        error('Titta: run ended from calibration routine')
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
                 end
