@@ -4040,13 +4040,13 @@ classdef Titta < handle
                             % denote which eye
                             eyeStr = '';
                             if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
-                                eyeStr = sprintf('<color=%s>L<color>',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}));
+                                eyeStr = sprintf('<color=%s>L<color>',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{1}));
                             end
                             if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
                                 if strcmp(out.attempt{whichAttempt}.eye,'both')
                                     eyeStr = [eyeStr '+']; %#ok<AGROW>
                                 end
-                                eyeStr = [eyeStr sprintf('<color=%s>R<color>',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}))]; %#ok<AGROW>
+                                eyeStr = [eyeStr sprintf('<color=%s>R<color>',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{2}))]; %#ok<AGROW>
                             end
                             
                             % get which calibration points used for cal
@@ -4073,11 +4073,11 @@ classdef Titta < handle
                                     % acc field is [lx rx; ly ry]
                                     [strl,strr,strsep] = deal('');
                                     if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
-                                        strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),char(176));
+                                        strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),char(176));
                                     end
                                     if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
                                         idx = 1+strcmp(out.attempt{whichAttempt}.eye,'both');
-                                        strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),char(176));
+                                        strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),char(176));
                                     end
                                     if strcmp(out.attempt{whichAttempt}.eye,'both')
                                         strsep = ', ';
@@ -4311,6 +4311,10 @@ classdef Titta < handle
                                     obj.buffer.calibrationApplyData(out.attempt{kCal}.cal{calAction}.computedCal);
                                     calibrationStatus = 3;      % status: loading
                                 end
+                                % adjust this item in snapshot menu to the
+                                % current one (only first two items, cals
+                                % still fine)
+                                % TODO
                                 % done
                                 qUpdateLineDisplay      = true;
                                 qUpdateCalStatusText    = true;
