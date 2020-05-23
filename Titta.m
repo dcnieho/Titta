@@ -4328,7 +4328,8 @@ classdef Titta < handle
                                 % adjust this item in snapshot menu to the
                                 % current one (only first two items, cals
                                 % still fine)
-                                % TODO
+                                snapshots{currentMenuSel,1} = kCal;
+                                snapshots{currentMenuSel,2} = calAction;
                                 % done
                                 qUpdateLineDisplay      = true;
                                 qUpdateCalStatusText    = true;
