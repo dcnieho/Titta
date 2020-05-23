@@ -1103,6 +1103,17 @@ classdef Titta < handle
             % log whole process in calibrateHistory and log to messages
             % which calibration was selected
             obj.logCalib(out);
+            
+            % also log information about data quality from validation, if
+            % any
+            if isfield(out.attempt{out.selectedCal(1)},'val')
+                whichCals = cellfun(@(x) x.whichCal, out.attempt{out.selectedCal(1)}.val);
+                idx = find(whichCals==out.selectedCal(2),1,'last');
+                if ~isempty(idx)
+                    message = obj.getValidationQualityMessage(out.attempt{out.selectedCal(1)}.val{idx}.allPoints);
+                    obj.sendMessage(message);
+                end
+            end
         end
         
         function time = sendMessage(obj,str,time)
@@ -1723,9 +1734,10 @@ classdef Titta < handle
             %    informing about achieved data quality.
             %
             %    If CAL is a struct with an array of calibration attemps,
-            %    in which case information about the CAL.selectedCal is
-            %    output. If CAL is a specific calibration attempt, the
-            %    message is formatted for this calibration.
+            %    information about the CAL.selectedCal is output. If CAL is
+            %    a specific calibration attempt, the message is formatted
+            %    for this calibration. CAL may also be the data quality
+            %    information for a specific validation session.
             % 
             %    MESSAGE = Titta.getValidationQualityMessage(CAL,KCAL)
             %    formats the calibration information for specific
@@ -1733,18 +1745,26 @@ classdef Titta < handle
             %
             %    See also TITTA.CALIBRATE
             
-            if isfield(cal,'attempt')
-                % find selected calibration, make sure we output quality
-                % info for that
-                if nargin<2 || isempty(kCal)
-                    assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
-                    kCal    = cal.selectedCal;
+            if isfield(cal,'quality')
+                % direct validation quality struct passed in, process
+                % directly
+                val = cal;
+                str = 'Data Quality (computed from validation)';
+            else
+                if isfield(cal,'attempt')
+                    % find selected calibration, make sure we output quality
+                    % info for that
+                    if nargin<2 || isempty(kCal)
+                        assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
+                        kCal    = cal.selectedCal;
+                    end
+                    cal     = cal.attempt{kCal};
                 end
-                cal     = cal.attempt{kCal};
+                % find last valid validation
+                iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
+                val     = cal.val{iVal};
+                str     = sprintf('%d Data Quality (computed from validation %d)',kCal,iVal);
             end
-            % find last valid validation
-            iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
-            val     = cal.val{iVal};
             % get data to put in message, output per eye separately.
             eyes    = fieldnames(val.quality);
             nPoint  = length(val.quality);
@@ -1760,7 +1780,7 @@ classdef Titta < handle
                 msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
             end
             msg = [msg{:}]; msg(end) = [];
-            message = sprintf('CALIBRATION %1$d Data Quality (computed from validation %2$d):\npoint\tacc2D (%4$c)\taccX (%4$c)\taccY (%4$c)\tSTD2D (%4$c)\tRMS2D (%4$c)\tdata loss (%%)\n%3$s',kCal,iVal,msg,char(176));
+            message = sprintf('CALIBRATION %1$s:\npoint\tacc2D (%3$c)\taccX (%3$c)\taccY (%3$c)\tSTD2D (%3$c)\tRMS2D (%3$c)\tdata loss (%%)\n%2$s',str,msg,char(176));
         end
         
         function filename = getFileName(filename, doAppendVersion)
