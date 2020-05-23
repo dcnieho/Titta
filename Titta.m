@@ -4294,9 +4294,15 @@ classdef Titta < handle
                                     pointsP = vPointsP;
                                 end
                                 % apply
+                                % log message
+                                pointStr = sprintf('%d ',sort(usedCalibrationPoints));
+                                obj.sendMessage(sprintf('LOAD CALIBRATION (%s), attempt %d, cal %d, points [%s]',getEyeLbl(out.attempt{kCal}.eye),whichAttempt,whichCal,pointStr(1:end-1)));
+                                % change eye if needed
                                 if ~strcmp(obj.settings.calibrateEye,out.attempt{kCal}.eye)
-                                    % first, if needed, change eye. can't
-                                    % use code from above sadly
+                                    % can't use code from above sadly as
+                                    % these actions need to occur exactly
+                                    % here. so some code duplication
+                                    % follows...
                                     obj.changeAndCheckCalibEyeMode(out.attempt{kCal}.eye);
                                     obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
                                     % exit and reenter calibration mode, if
