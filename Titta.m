@@ -4230,7 +4230,7 @@ classdef Titta < handle
                                 kCal = length(out.attempt)+1;
                                 out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                                 out.attempt{kCal}.device    = obj.settings.tracker;
-                                out.attempt{kCal}.eye       = obj.settings.calibrateEye;
+                                out.attempt{kCal}.eye       = out.attempt{whichAttempt}.eye;
                                 % copy over old calibration, set state
                                 % accordingly
                                 % 1. calibration points
@@ -4295,9 +4295,23 @@ classdef Titta < handle
                                 end
                                 % apply
                                 if ~strcmp(obj.settings.calibrateEye,out.attempt{kCal}.eye)
-                                    % TODO. Ideally would use the code
-                                    % above for changing eye once. but
-                                    % can't do that from here...
+                                    % first, if needed, change eye. can't
+                                    % use code from above sadly
+                                    obj.changeAndCheckCalibEyeMode(out.attempt{kCal}.eye);
+                                    obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                                    % exit and reenter calibration mode, if
+                                    % needed
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    extraInp = {};
+                                    if ~strcmp(obj.settings.calibrateEye,'both')
+                                        extraInp        = {obj.settings.calibrateEye};
+                                    end
+                                    % update states of this screen
+                                    currentEyeMenuItem  = find(ismember({'both','left','right'},obj.settings.calibrateEye));
+                                    headP.crossEye      = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                                    headO.crossEye      = headP.crossEye;
                                 end
                                 if whichCal==0
                                     % there was no calibration, so clear
