@@ -981,20 +981,6 @@ classdef Titta < handle
             %                     the functionality's hotkey (g by
             %                     default), real-time gaze will also be
             %                     shown on the participant's screen.
-            %
-            %    In addition to these, during the calibration and
-            %    validation displays, the following keys are available:
-            %      escape    - return to setup screen.
-            %      r         - restart calibration sequence from the
-            %                  beginning
-            %      backspace - redo the current calibration/validation
-            %                  point. Using the AnimatedCalibrationDisplay
-            %                  class, this causes the currently displayed
-            %                  point to blink.
-            %      spacebar  - accept current calibration/validation point.
-            %                  Whether it is needed to press spacebar to
-            %                  collect data for a point depends on the
-            %                  settings.cal.autoPace setting.
             
             % this function does all setup, draws the interface, etc
             assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
