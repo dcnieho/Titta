@@ -4235,7 +4235,7 @@ classdef Titta < handle
                                 % accordingly
                                 % 1. calibration points
                                 if whichCal>0
-                                    out.attempt{kCal}.cal = cals;
+                                    out.attempt{kCal}.cal = snapshots{currentMenuSel,3};
                                     calAction = length(out.attempt{kCal}.cal);
                                 else
                                     calAction = 0;
