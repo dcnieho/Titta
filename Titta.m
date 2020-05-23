@@ -4286,7 +4286,7 @@ classdef Titta < handle
                                 cPointsP(usedCalibrationPoints,end) = 1;
                                 vPointsP(:,end-[1 0]) = 0;
                                 if isfield(out.attempt{kCal},'val')
-                                    vPointsP(out.attempt{kCal}.val{end}.allPoints.pointPos(:,1)) = 1;
+                                    vPointsP(out.attempt{kCal}.val{end}.allPoints.pointPos(:,1),end) = 1;
                                 end
                                 if strcmp(stage,'cal')
                                     pointsP = cPointsP;
