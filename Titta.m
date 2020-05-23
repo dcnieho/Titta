@@ -4030,8 +4030,23 @@ classdef Titta < handle
                         else
                             whichAttempt    = snapshots{c,1};
                             whichCal        = snapshots{c,2};
-                            if whichAttempt==kCal && whichCal==getLastManualCal(out.attempt{kCal})
+                            currCal         = getLastManualCal(out.attempt{kCal});
+                            if whichAttempt==kCal && whichCal==currCal
+                                % currently active calibration is equal to
+                                % this snapshot, mark for highlight
                                 currentSnapMenuItem = c;
+                            end
+                            
+                            % denote which eye
+                            eyeStr = '';
+                            if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
+                                eyeStr = sprintf('<color=%s>L<color>',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}));
+                            end
+                            if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
+                                if strcmp(out.attempt{whichAttempt}.eye,'both')
+                                    eyeStr = [eyeStr '+']; %#ok<AGROW>
+                                end
+                                eyeStr = [eyeStr sprintf('<color=%s>R<color>',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}))]; %#ok<AGROW>
                             end
                             
                             % get which calibration points used for cal
@@ -4070,7 +4085,7 @@ classdef Titta < handle
                                     valStr = sprintf('val: %s%s%s',strl,strsep,strr);
                                 end
                             end
-                            str = sprintf('(%d): cal points: [%s], %s',c,calStr(1:end-1),valStr);
+                            str = sprintf('(%d): %s, cal points: [%s], %s',c,eyeStr,calStr(1:end-1),valStr);
                         end
                         snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
                     end
@@ -4279,6 +4294,11 @@ classdef Titta < handle
                                     pointsP = vPointsP;
                                 end
                                 % apply
+                                if ~strcmp(obj.settings.calibrateEye,out.attempt{kCal}.eye)
+                                    % TODO. Ideally would use the code
+                                    % above for changing eye once. but
+                                    % can't do that from here...
+                                end
                                 if whichCal==0
                                     % there was no calibration, so clear
                                     % it. We do that by leaving and
