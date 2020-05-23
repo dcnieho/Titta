@@ -4342,7 +4342,7 @@ classdef Titta < handle
                                     qUpdatePointHover       = true;
                                     qUpdateLineDisplay      = true;
                                     qUpdateCalStatusText    = true;
-                                    calibrationStatus       = 3;    % status: calibrated
+                                    calibrationStatus       = 1;    % status: calibrated
                                     awaitingCalChangeType   = '';   % done with loading calibration
                                 end
                             end
