@@ -629,7 +629,7 @@ classdef Titta < handle
             %    WPNT can also be an array of two window pointers.
             %    In this case, the first window pointer is taken to refer
             %    to the participant screen, and the second to an operator
-            %    screen. Aminimal interface is then presented on the
+            %    screen. A minimal interface is then presented on the
             %    participant screen, while full information is shown on the
             %    operator screen, including a live view of gaze data and
             %    eye images (if available) during calibration and
@@ -938,39 +938,18 @@ classdef Titta < handle
             obj.logCalib(out);
         end
         
-        function out = calibrateManual(obj,wpnt,flag,previousCalibs)
+        function out = calibrateManual(obj,wpnt,previousCalibs)
             % Do participant setup and calibration for non-compliant subjects
             %
-            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT) displays the
-            %    participant setup and calibration interface on the
-            %    PsychToolbox window specified by WPNT.
+            %    CALIBRATION = Titta.calibrate(WPNT) displays the
+            %    participant and operator screens of the participant setup
+            %    and calibration interface on the PsychToolbox windows
+            %    specified by WPNT, an array of two window pointers. The
+            %    first window pointer is taken to refer to the participant
+            %    screen, and the second to an operator screen. 
             %
-            %    WPNT can also be an array of two window pointers.
-            %    In this case, the first window pointer is taken to refer
-            %    to the participant screen, and the second to an operator
-            %    screen. Aminimal interface is then presented on the
-            %    participant screen, while full information is shown on the
-            %    operator screen, including a live view of gaze data and
-            %    eye images (if available) during calibration and
-            %    validation.
-            %
-            %    CALIBRATIONATTEMPT is a struct containing information
-            %    about the calibration/validation run.
-            %
-            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT,FLAG) provides
-            %    control over whether the call causes the eye tracker's
-            %    calibration mode to be entered or left. The available
-            %    flags are:
-            %      1 - enter calibration mode when starting calibration
-            %      2 - exit calibration mode when calibration finished
-            %      3 - (default) both enter and exit calibration mode
-            %
-            %    FLAG is used for bimonocular calibrations, when
-            %    Titta.calibrate() is called twice in a row, first to
-            %    calibrate the first eye (use FLAG=1 to enter calibration
-            %    mode here but not exit), and then a second time to
-            %    calibrate the other eye (use FLAG=2 to exit calibration
-            %    mode when done).
+            %    CALIBRATION is a struct containing information about the
+            %    calibration/validation run.
             %
             %    INTERFACE
             %    During anywhere on the participant setup and calibration
@@ -1018,18 +997,8 @@ classdef Titta < handle
             %                  settings.cal.autoPace setting.
             
             % this function does all setup, draws the interface, etc
-            % flag is for if you want to calibrate the two eyes separately,
-            % monocularly. When doing first eye, set flag to 1, when second
-            % eye set flag to 2. Internally for Titta flag 1 has the
-            % meaning "first calibration" and flag 2 "final calibration".
-            % This is checked against with bitand, so when user didn't
-            % specify we assume a single calibration will be done (which is
-            % thus both first and final) and thus set flag to 3.
             assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
-            if nargin<3 || isempty(flag)
-                flag = 3;
-            end
-            if nargin<4 || isempty(previousCalibs)
+            if nargin<3 || isempty(previousCalibs)
                 previousCalibs = [];
             end
             
@@ -1039,12 +1008,8 @@ classdef Titta < handle
             % some preliminary setup, to make sure we are in known state
             % NB: in contrast to calibrate() above, this function always
             % wipes calibration state upon entry
-            qHasEnteredCalMode = false;
-            if bitand(flag,1)
-                obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
-                obj.doEnterCalibrationMode();
-                qHasEnteredCalMode = true;
-            end
+            obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
+            obj.doEnterCalibrationMode();
             obj.StopRecordAll();
             
             % setup the setup/calibration screens
@@ -1091,12 +1056,9 @@ classdef Titta < handle
             % clean up and reset PTB state
             obj.resetScreen(wpnt,screenState);
             
-            % if we want to exit calibration mode because:
-            % 1. user requests it (flag bit 2 is set)
-            % 2. user didn't request it, but we entered calibration mode
-            %    and operator skipped calibration,
-            % then issue a leave here now and wait for it to complete
-            if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
+            % leave calibration mode: issue a leave here now and wait for
+            % it to complete
+            if obj.buffer.isInCalibrationMode()
                 obj.doLeaveCalibrationMode();
             end
             
