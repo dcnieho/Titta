@@ -3558,7 +3558,7 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator))
+                            if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneCalibSelection = true;
                                 break;
@@ -3566,7 +3566,7 @@ classdef Titta < handle
                                 status = -1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator)) && ~shiftIsDown
                                 status = -2;
                                 qDoneCalibSelection = true;
                                 break;
@@ -3574,14 +3574,14 @@ classdef Titta < handle
                                 status = -3;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && qHaveMultipleValidVals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator)) && ~shiftIsDown
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && qHasCal
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && ~shiftIsDown && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
                                 break;
@@ -5444,28 +5444,28 @@ classdef Titta < handle
                                         break;
                                     end
                                 end
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneWithManualCalib= true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator)) && qCanDoMonocularCalib
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator)) && qCanDoMonocularCalib && ~shiftIsDown
                                 qToggleSelectEyeMenu= true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggEyeIm.accelerator)) && qHasEyeIm
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggEyeIm.accelerator)) && qHasEyeIm && ~shiftIsDown
                                 qToggleEyeImage     = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calval.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calval.accelerator)) && ~shiftIsDown
                                 qToggleStage        = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)) && ~shiftIsDown
                                 qToggleSelectSnapMenu = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator)) && ~shiftIsDown
                                 qShowHead           = ~qShowHead;
                                 qShowHeadToAll      = shiftIsDown;
                                 qUpdateCursors      = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator)) && ~shiftIsDown
                                 qShowGaze           = ~qShowGaze;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
