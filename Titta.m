@@ -4247,7 +4247,7 @@ classdef Titta < handle
                                     oidx    = nan;
                                     for p=length(vals):-1:1
                                         idx = vals{p}.point(1);
-                                        if ~isnan(idx) && vals{p}.whichCal==whichCal && ~vals{p}.wasCancelled && ~vals{p}.wasDiscarded
+                                        if ~isnan(idx) && ~qFound(idx) && vals{p}.whichCal==whichCal && ~vals{p}.wasCancelled && ~vals{p}.wasDiscarded
                                             % we don't yet have validation data for
                                             % this point, and it is for the current
                                             % calibration -> collect
@@ -4259,7 +4259,7 @@ classdef Titta < handle
                                             % copy over all fields
                                             out.attempt{kCal}.val{oidx} = vals{p};
                                             out.attempt{kCal}.val{oidx}.whichCal = calAction;
-                                            if ~qKeepAll
+                                            if ~qKeepAll && isfield(out.attempt{kCal}.val{oidx},'allPoints')
                                                 out.attempt{kCal}.val{oidx} = rmfield(out.attempt{kCal}.val{oidx},'allPoints');
                                             end
                                             oidx = oidx-1;
