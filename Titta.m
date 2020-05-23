@@ -1049,6 +1049,8 @@ classdef Titta < handle
             
             % setup the setup/calibration screens
             if ~isempty(previousCalibs)
+                % TODO: do prepopulating and loading inside doManualCalib,
+                % copy over only the needed cals and vals, nothing else
                 % prepopulate with previous calibrations passed by user
                 out                 = previousCalibs;
                 % preload the one previously selected by user
@@ -1057,14 +1059,34 @@ classdef Titta < handle
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
             else
                 kCal                = 0;                    % index into list of calibration attempts
-                currentSelection    = nan;                  % keeps track of calibration that is currently applied
+                currentSelection    = [nan nan];            % keeps track of calibration that is currently applied
             end
             out.type            = 'manual';
-            out.selectedCal     = nan;
+            out.selectedCal     = [nan nan];
             out.wasSkipped      = false;
             
             % run the setup/calibration process
             out = obj.doManualCalib(wpnt,out,kCal,currentSelection);
+            switch out.status
+                case 1
+                    % all good, we're done
+                case 2
+                    % skip setup
+                    out.wasSkipped  = true;
+                    % NB: even though skipped, if done so at this stage, we
+                    % may still have a calibration applied, so that is
+                    % still logged in the output of doManualCalib()
+                case -5
+                    % full stop
+                    obj.buffer.leaveCalibrationMode();
+                    if obj.settings.UI.hardExitClosesPTB
+                        sca
+                        ListenChar(0); Priority(0);
+                    end
+                    error('Titta: run ended from manual calibration routine')
+                otherwise
+                    error('Titta: status %d not implemented',out.status);
+            end
             
             % clean up and reset PTB state
             obj.resetScreen(wpnt,screenState);
@@ -5531,6 +5553,10 @@ classdef Titta < handle
                 end
             end
             
+            % return selected cal
+            out.status      = status;
+            out.selectedCal = [kCal getLastManualCal(out.attempt{kCal})];
+            
             % clean up
             HideCursor;
             obj.buffer.stop('positioning');
@@ -5648,10 +5674,21 @@ classdef Titta < handle
                 if out.wasSkipped
                     add = ' (note that operator skipped instead of accepted calibration)';
                 end
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
+                if strcmp(out.type,'manual')
+                    if out.selectedCal(2)==0
+                        calStr  = 'none';
+                        add     = '';   % note not relevant (in case there is any) if no calibration
+                    else
+                        calStr = sprintf('attempt %d, cal %d',out.selectedCal);
+                    end
+                else
+                    calStr = sprintf('no. %d',out.selectedCal);
+                end
+                str = sprintf('%s%s',calStr,add);
             else
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: none',getEyeLbl(obj.settings.calibrateEye)));
+                str = 'none';
             end
+            obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: %s',getEyeLbl(obj.settings.calibrateEye),str));
             
             % store calibration info in calibration history, for later
             % retrieval if wanted
