@@ -4277,7 +4277,7 @@ classdef Titta < handle
                                 out.attempt{kCal}.loadedFrom.whichCal       = whichCal;
                                 out.attempt{kCal}.loadedFrom.timestamp      = out.attempt{whichAttempt}.timestamp;
                                 % 4. further state updates
-                                if whichCal>0
+                                if calAction>0
                                     usedCalibrationPoints = getWhichCalibrationPoints(cPointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
                                 else
                                     usedCalibrationPoints = [];
@@ -4320,7 +4320,8 @@ classdef Titta < handle
                                     if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
                                         obj.doEnterCalibrationMode();
                                     end
-                                    calibrationStatus = 0;      % status: not calibrated
+                                    calibrationStatus       = 0;        % status: not calibrated
+                                    awaitingCalChangeType   = '';       % done with loading calibration
                                 else
                                     obj.buffer.calibrationApplyData(out.attempt{kCal}.cal{calAction}.computedCal);
                                     calibrationStatus = 3;      % status: loading
