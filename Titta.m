@@ -656,17 +656,19 @@ classdef Titta < handle
             %    INTERFACE
             %    During anywhere on the participant setup and calibration
             %    screens, the following key combinations are available:
-            %      shift-escape - hard exit from the calibration mode
-            %                     (causes en error to be thrown and script
+            %      shift-escape - hard exit from the calibration mode. By
+            %                     default (see
+            %                     settings.UI.hardExitClosesPTB), this
+            %                     causes en error to be thrown and script
             %                     execution to stop if that error is not
-            %                     caught).
+            %                     caught.
             %      shift-s      - skip calibration. If still at setup
             %                     screen for the first time, the last
             %                     calibration (perhaps of a previous
             %                     session) remains active. To clear any
-            %                     calibration, enter the calibration screen
-            %                     and immediately then skip with this key
-            %                     combination.
+            %                     calibration, first enter the calibration
+            %                     screen and immediately then skip with
+            %                     this key combination.
             %      shift-d      - take screenshot of the participant
             %                     display, which will be stored to the
             %                     current active directory (cd).
@@ -681,22 +683,82 @@ classdef Titta < handle
             %                     key is held down while clicking the
             %                     button with the mouse, or when pressing
             %                     the functionality's hotkey (g by
-            %                     default), real-time gaze will also be
-            %                     shown on the participant's screen.
+            %                     default, see documentation of validation
+            %                     results screen interface below),
+            %                     real-time gaze will also be shown on the
+            %                     participant's screen.
             %
-            %    In addition to these, during the calibration and
-            %    validation displays, the following keys are available:
+            %    In addition to these, the three different screens that
+            %    make up this procedure each have their own keys available.
+            %    Some of these are hardcoded, others can be changed through
+            %    Titta's settings. In the latter case, their default value
+            %    is listed here, and the settings name is indicated in
+            %    abbreviated form (e.g. `setup.toggEyeIm` refers to the
+            %    setting `settings.UI.button.setup.toggEyeIm.accelerator`,
+            %    gotten from Titta.getDefaults() or Titta.getOptions()).
+            %    For the setup and validation result displays, these keys
+            %    have a clickable button in the interface associated with
+            %    them. Most of these buttons are visible by default, but
+            %    some are not. You can change button visibility by
+            %    changing, e.g.,
+            %    `settings.UI.button.setup.toggEyeIm.visible`. Invisible
+            %    buttons can still be activated or deactivated by means of
+            %    the configured keys.
+            %
+            %    Setup display:
+            %      spacebar  - start a calibration (setup.cal)
+            %      e         - toggle eye images, if available
+            %                  (setup.toggEyeIm)
+            %      p         - return to validation result display,
+            %                  available if there are any previous
+            %                  calibrations (setup.prevcal)
+            %      c         - open menu to change which eye will be
+            %                  calibrated (both, left, right). The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the number to press
+            %                  to activate that option. Available only if
+            %                  the eye tracker supports monocular
+            %                  calibration (setup.changeeye)
+            %   
+            %    Calibration and validation display:
             %      escape    - return to setup screen.
             %      r         - restart calibration sequence from the
             %                  beginning
             %      backspace - redo the current calibration/validation
-            %                  point. Using the AnimatedCalibrationDisplay
-            %                  class, this causes the currently displayed
-            %                  point to blink.
+            %                  point. When using the
+            %                  AnimatedCalibrationDisplay class
+            %                  (settings.cal.drawFunction), this causes the
+            %                  currently displayed point to blink.
             %      spacebar  - accept current calibration/validation point.
             %                  Whether it is needed to press spacebar to
             %                  collect data for a point depends on the
             %                  settings.cal.autoPace setting.
+            %   
+            %    Validation result display:
+            %      spacebar  - select currently displayed calibration and
+            %                  exit the interface/continue experiment
+            %                  (val.continue)
+            %      escape    - start a new calibration (val.recal)
+            %      v         - revalidate the current calibration
+            %                  (val.reval)
+            %      s         - return to the setup screen (val.setup)
+            %      c         - bring up a menu from which other
+            %                  calibrations performed in the same session
+            %                  can be selected (val.selcal)
+            %      g         - toggle whether online gaze position is
+            %                  visualized on the screen. When in dual
+            %                  screen mode, gaze will only be visualized to
+            %                  the operator. Press shift-g (or hold down
+            %                  shift while pressing the interface button
+            %                  with the mouse) to also show the online
+            %                  gaze position on the participant screen
+            %                  (val.toggGaze)
+            %      t         - toggle between whether gaze data collected
+            %                  during validation or during calibration is
+            %                  shown in the interface (val.toggCal)
+            %
+            %    See also TITTA.CALIBRATEMANUAL, TITTA.GETOPTIONS,
+            %    TITTA.GETDEFAULTS
             
             % this function does all setup, draws the interface, etc
             % flag is for if you want to calibrate the two eyes separately,
@@ -952,35 +1014,90 @@ classdef Titta < handle
             %    calibration/validation run.
             %
             %    INTERFACE
-            %    During anywhere on the participant setup and calibration
-            %    screens, the following key combinations are available:
-            %      shift-escape - hard exit from the calibration mode
-            %                     (causes en error to be thrown and script
+            %    The interface can be fully controlled by key combinations.
+            %    Some key combinations are hardcoded, others can be changed through
+            %    Titta's settings. In the latter case, their default value
+            %    is listed here, and the settings name is indicated in
+            %    abbreviated form (e.g. `toggEyeIm` refers to the setting
+            %    `settings.UI.button.mancal.toggEyeIm.accelerator`, gotten
+            %    from Titta.getDefaults() or Titta.getOptions()). Some of
+            %    these keys have a clickable button in the interface
+            %    associated with them. Most of these buttons are visible by
+            %    default, but some are not. You can change button
+            %    visibility by changing, e.g.,
+            %    `settings.UI.button.mancal.toggEyeIm.visible`. Invisible
+            %    buttons can still be activated or deactivated by means of
+            %    the configured keys.
+            % 
+            %    The following hardcoded key combinations are available:
+            %      shift-escape - hard exit from the calibration mode. By
+            %                     default (see
+            %                     settings.UI.hardExitClosesPTB), this
+            %                     causes en error to be thrown and script
             %                     execution to stop if that error is not
-            %                     caught).
-            %      shift-s      - skip calibration. If still at setup
-            %                     screen for the first time, the last
-            %                     calibration (perhaps of a previous
-            %                     session) remains active. To clear any
-            %                     calibration, enter the calibration screen
-            %                     and immediately then skip with this key
-            %                     combination.
+            %                     caught.
+            %      shift-s      - skip calibration. The currently active
+            %                     calibration (as shown in the interface at
+            %                     the time of skipping) will remain active.
             %      shift-d      - take screenshot of the participant
             %                     display, which will be stored to the
             %                     current active directory (cd).
-            %      shift-o      - when in dual-screen mode, take a
-            %                     screenshot of the operator display, which
-            %                     will be stored to the current active
-            %                     directory (cd).
-            %      shift-g      - when in dual screen mode, by default the
-            %                     show gaze button on the validation result
-            %                     screen only shows real-time gaze position
-            %                     on the operator's screen. If the shift
-            %                     key is held down while clicking the
-            %                     button with the mouse, or when pressing
-            %                     the functionality's hotkey (g by
-            %                     default), real-time gaze will also be
-            %                     shown on the participant's screen.
+            %      shift-o      - take a screenshot of the operator
+            %                     display, which will be stored to the
+            %                     current active directory (cd).
+            %
+            %    Calibration or validation data (depending on current mode)
+            %    for a specific point is collected by either clicking on a
+            %    fixation target on the operator screen, or by pressing the
+            %    fixation target's corresponding number key on the
+            %    keyboard. Already collected data is discarded by holding
+            %    down the shift key while clicking the target or pressing
+            %    its corresponding key. If a calibration/validation point
+            %    collection or discarding is currently ongoing, clicking a
+            %    fixation target or pressing its corresponding key enqueues
+            %    this action, which will cause it to execute directly when
+            %    the previous action is finished. E.g., rapidly pressing 3,
+            %    1, 5 while in calibration mode will cause calibration data
+            %    to be acquired for points 3, 1 and 5 in one sequence.
+            %
+            %    The following configurable key combinations are available:
+            %      e         - toggle eye images, if available
+            %                  (toggEyeIm)
+            %      m         - change between calibration and validation
+            %                  modes (calval)
+            %      c         - open menu to change which eye will be
+            %                  calibrated (both, left, right). The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the number to press
+            %                  to activate that option. Available only if
+            %                  the eye tracker supports monocular
+            %                  calibration (changeeye)
+            %      spacebar  - select currently active calibration and
+            %                  exit the interface/continue experiment
+            %                  (continue)
+            %      s         - opens a menu that allows the current
+            %                  calibration state to be snapshotted, and any
+            %                  existing snapshots to be loaded. The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the key to press
+            %                  to activate that option (snapshot)
+            %      g         - toggle whether online gaze position is
+            %                  visualized on the screen. Gaze will only be
+            %                  visualized to the operator. Press shift-g
+            %                  (or hold down shift while pressing the
+            %                  interface button with the mouse) to also
+            %                  show the online gaze position on the
+            %                  participant screen (toggGaze)
+            %      h         - toggle whether online head position
+            %                  visualization is shown on the screen. It
+            %                  will only be shown to the operator. Press
+            %                  shift-h (or hold down shift while pressing
+            %                  the interface button with the mouse) to also
+            %                  show the head position visualization on the
+            %                  participant screen (toggHead)
+            %
+            %    See also TITTA.CALIBRATE, TITTA.GETOPTIONS,
+            %    TITTA.GETDEFAULTS
             
             % this function does all setup, draws the interface, etc
             assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
