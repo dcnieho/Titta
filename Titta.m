@@ -653,6 +653,20 @@ classdef Titta < handle
             %    calibrate the other eye (use FLAG=2 to exit calibration
             %    mode when done).
             %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT,FLAG,PREVIOUSCALIBS)
+            %    allows to prepopulate the interface with previous
+            %    calibration(s). The previously selected calibration is
+            %    made active and it can then be revalidated and used, or
+            %    replaced. PREVIOUSCALIBS is expected to be a
+            %    CALIBRATIONATTEMPT output from a previous run of
+            %    Titta.calibrate. Note that the PREVIOUSCALIBS
+            %    functionality should be used together with bimonocular
+            %    calibration _only_ when the calibration of the first eye
+            %    is not replaced (validating it is ok, and recommended).
+            %    This because prepopulating calibrations for the second eye
+            %    will load this previous calibration, and thus undo any new
+            %    calibration for the first eye.
+            %
             %    INTERFACE
             %    During anywhere on the participant setup and calibration
             %    screens, the following key combinations are available:
