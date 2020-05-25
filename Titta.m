@@ -4095,18 +4095,20 @@ classdef Titta < handle
                         % find cal actions for points
                         for c=toSave(2):-1:1
                             idx = out.attempt{kCal}.cal{c}.point(1);
-                            if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && out.attempt{kCal}.cal{c}.collectStatus.status==0
+                            if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && ((isfield(out.attempt{kCal}.cal{c},'collectStatus') && out.attempt{kCal}.cal{c}.collectStatus.status==0) || (isfield(out.attempt{kCal}.cal{c},'discardStatus') && out.attempt{kCal}.cal{c}.discardStatus.status==0))
                                 idxs(idx)   = c;
                                 count       = count+1;
                             end
                         end
                         % copy over in chronological order
-                        fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus'};
+                        fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus','discardStatus'};
                         [~,i] = sort(idxs);
                         cals = cell(1,count);
                         for c=1:count
                             for f=1:length(fields)
-                                cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
+                                if isfield(out.attempt{kCal}.cal{idxs(i(c))},fields{f})
+                                    cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
+                                end
                             end
                         end
                         % calibration data, etc
