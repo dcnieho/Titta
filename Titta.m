@@ -3075,6 +3075,13 @@ classdef Titta < handle
         end
         
         function val = ProcessValData(obj,val)
+            % remove unneeded data
+            if ~obj.calibrateLeftEye
+                val.gazeData = rmfield(val.gazeData,'left');
+            end
+            if ~obj.calibrateRightEye
+                val.gazeData = rmfield(val.gazeData,'right');
+            end
             % compute validation accuracy per point, noise levels, %
             % missing
             for p=length(val.gazeData):-1:1
