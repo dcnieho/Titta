@@ -825,7 +825,7 @@ classdef Titta < handle
                     obj.doEnterCalibrationMode();
                     qHasEnteredCalMode = true;
                 end
-                obj.loadOtherCal(out.attempt{kCal});
+                obj.loadOtherCal(out.attempt{kCal},[],true);
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
                 % NB: qNewCal should also in this case be true, as the
                 % setup screen shown first is the start of a potential new
@@ -959,23 +959,6 @@ classdef Titta < handle
                         % -2: redo validation only, so add a validation to
                         %     the current calibration
                         startScreen = 0;
-                        % check that current calibration mode matches that
-                        % of the calibration selected to be revalidated
-                        % if not exit calibration mode and reenter the
-                        % correct one
-                        next    = out.attempt{kCal}.eye;
-                        current = obj.settings.calibrateEye;
-                        if ~strcmp(next,current)
-                            % first change eye to be calibrated
-                            obj.changeAndCheckCalibEyeMode(next);
-                            % now also change mode in all cases (as this
-                            % also wipes state clean, so also wanted when
-                            % we remain monocular, but switch from left to
-                            % right eye)
-                            obj.doLeaveCalibrationMode();
-                            obj.doEnterCalibrationMode();
-                            currentSelection = nan;         % since calibration state cleared, this means there is no calibration applied right now
-                        end
                         % indicate if redo cal or redo val
                         qNewCal     = out.attempt{kCal}.valReviewStatus==-1;    % true if redo calibration, false if only redo validation
                         continue;
@@ -1137,7 +1120,7 @@ classdef Titta < handle
                 out                 = previousCalibs;
                 % preload the one previously selected by user
                 kCal                = out.selectedCal;      % index into list of calibration attempts
-                obj.loadOtherCal(out.attempt{kCal});
+                obj.loadOtherCal(out.attempt{kCal},[],true);
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
             else
                 kCal                = 0;                    % index into list of calibration attempts
@@ -3172,7 +3155,7 @@ classdef Titta < handle
                 % viewer
                 % select and load last successful calibration
                 selection = iValid(end);
-                obj.loadOtherCal(cal{selection});
+                obj.loadOtherCal(cal{selection},true,true);
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
             qHaveMultipleValidVals  = ~isempty(iValid) && ~isscalar(iValid);
@@ -3330,7 +3313,7 @@ classdef Titta < handle
                     qUpdateNow = false;
                     if qSelectedCalChanged
                         % load requested cal
-                        obj.loadOtherCal(cal{newSelection},true);
+                        obj.loadOtherCal(cal{newSelection},true,true);
                         qSelectedCalChanged = false;
                         qAwaitingCalChange = true;
                     else
@@ -3956,9 +3939,9 @@ classdef Titta < handle
             currentMenuSel          = 0;
             % 4. eye selection
             qSelectedEyeChanged     = false;
-            extraInp = {};
+            extraInp                = {};
             if ~strcmp(obj.settings.calibrateEye,'both')
-                extraInp        = {obj.settings.calibrateEye};
+                extraInp            = {obj.settings.calibrateEye};
             end
             % 5. eye images
             qToggleEyeImage         = true;     % eye images default on
@@ -5747,13 +5730,30 @@ classdef Titta < handle
             end
         end
         
-        function loadOtherCal(obj,cal,skipCheck)
+        function loadOtherCal(obj,cal,skipCheck,alsoSwitchMode)
             if ~isempty(cal.cal.computedCal)    % empty when doing zero-point calibration. There is nothing to laod or change then anyway, so is ok to skip. NB: rethink if user ever gains interface for changing number of calibration points
+                % first check we're in right calibration mode
+                if nargin>3 && ~isempty(alsoSwitchMode) && alsoSwitchMode
+                    % check that current calibration mode matches that
+                    % of the calibration selected to be loaded.
+                    % If not exit, calibration mode and reenter the
+                    % correct one
+                    if ~strcmp(cal.eye,obj.settings.calibrateEye)
+                        % first change eye to be calibrated
+                        obj.changeAndCheckCalibEyeMode(cal.eye);
+                        % now also change mode in all cases (as this
+                        % also wipes state clean, so also wanted when
+                        % we remain monocular, but switch from left to
+                        % right eye)
+                        obj.doLeaveCalibrationMode();
+                        obj.doEnterCalibrationMode();
+                    end
+                end
                 
                 % load previous calibration
                 obj.buffer.calibrationApplyData(cal.cal.computedCal);
                 
-                if nargin>2 && skipCheck
+                if nargin>2 && ~isempty(skipCheck) && skipCheck
                     % return immediately
                     return
                 end
