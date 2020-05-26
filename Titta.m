@@ -3688,7 +3688,7 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator)) && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
@@ -5573,12 +5573,12 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)) && ~shiftIsDown
                                 qToggleSelectSnapMenu = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator)) && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator))
                                 qShowHead           = ~qShowHead;
                                 qShowHeadToAll      = shiftIsDown;
                                 qUpdateCursors      = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator)) && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
                                 qShowGaze           = ~qShowGaze;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
