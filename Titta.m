@@ -1169,11 +1169,11 @@ classdef Titta < handle
             % also log information about data quality from validation, if
             % any
             if isfield(out.attempt{out.selectedCal(1)},'val')
-                whichCals = cellfun(@(x) x.whichCal, out.attempt{out.selectedCal(1)}.val);
-                idx = find(whichCals==out.selectedCal(2),1,'last');
-                if ~isempty(idx)
-                    message = obj.getValidationQualityMessage(out.attempt{out.selectedCal(1)}.val{idx}.allPoints);
+                message = obj.getValidationQualityMessage(out);
+                if ~isempty(message)
                     obj.sendMessage(message);
+                else
+                    obj.sendMessage('not validated');
                 end
             end
         end
@@ -1788,7 +1788,7 @@ classdef Titta < handle
             systemTime = int64(PTBtime*1000*1000);
         end
         
-        function message = getValidationQualityMessage(cal,kCal)
+        function message = getValidationQualityMessage(cal,selectedCal)
             % Get a formatted message about data quality during validation
             %
             %    MESSAGE = Titta.getValidationQualityMessage(CAL) formats
@@ -1801,12 +1801,14 @@ classdef Titta < handle
             %    for this calibration. CAL may also be the data quality
             %    information for a specific validation session.
             % 
-            %    MESSAGE = Titta.getValidationQualityMessage(CAL,KCAL)
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL,SELECTEDCAL)
             %    formats the calibration information for specific
-            %    calibration KCAL in the calibration attempt array CAL.
+            %    calibration SELECTEDCAL in the calibration attempt array
+            %    CAL.
             %
-            %    See also TITTA.CALIBRATE
+            %    See also TITTA.CALIBRATE TITTA.CALIBRATEMANUAL
             
+            message = '';
             if isfield(cal,'quality')
                 % direct validation quality struct passed in, process
                 % directly
@@ -1816,16 +1818,29 @@ classdef Titta < handle
                 if isfield(cal,'attempt')
                     % find selected calibration, make sure we output quality
                     % info for that
-                    if nargin<2 || isempty(kCal)
+                    if nargin<2 || isempty(selectedCal)
                         assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
-                        kCal    = cal.selectedCal;
+                        selectedCal    = cal.selectedCal;
                     end
-                    cal     = cal.attempt{kCal};
+                    if isscalar(selectedCal)
+                        cal     = cal.attempt{selectedCal};
+                    end
                 end
-                % find last valid validation
-                iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
-                val     = cal.val{iVal};
-                str     = sprintf('%d Data Quality (computed from validation %d)',kCal,iVal);
+                if nargin<2 || isscalar(selectedCal)
+                    % find last valid validation
+                    iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
+                    val     = cal.val{iVal};
+                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal,iVal);
+                else
+                    % get val belonging to this cal
+                    whichCals = cellfun(@(x) x.whichCal, cal.attempt{selectedCal(1)}.val);
+                    idx     = find(whichCals==selectedCal(2),1,'last');
+                    if isempty(idx)
+                        return;
+                    end
+                    val     = out.attempt{cal.selectedCal(1)}.val{idx}.allPoints;
+                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
+                end
             end
             % get data to put in message, output per eye separately.
             eyes    = fieldnames(val.quality);
