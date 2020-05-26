@@ -1,6 +1,5 @@
 #include "TobiiMex/TobiiMex.h"
 #include <vector>
-#include <shared_mutex>
 #include <algorithm>
 #include <string_view>
 #include <sstream>
@@ -11,38 +10,6 @@
 
 namespace
 {
-    using mutex_type = std::shared_timed_mutex;
-    using read_lock  = std::shared_lock<mutex_type>;
-    using write_lock = std::unique_lock<mutex_type>;
-
-    mutex_type g_mSamp, g_mEyeImage, g_mExtSignal, g_mTimeSync, g_mPositioning, g_mLogs, g_mNotification;
-
-    template <typename T>
-    mutex_type& getMutex()
-    {
-        if constexpr (std::is_same_v<T, TobiiMex::gaze>)
-            return g_mSamp;
-        if constexpr (std::is_same_v<T, TobiiMex::eyeImage>)
-            return g_mEyeImage;
-        if constexpr (std::is_same_v<T, TobiiMex::extSignal>)
-            return g_mExtSignal;
-        if constexpr (std::is_same_v<T, TobiiMex::timeSync>)
-            return g_mTimeSync;
-        if constexpr (std::is_same_v<T, TobiiMex::positioning>)
-            return g_mPositioning;
-        if constexpr (std::is_same_v<T, TobiiMex::logMessage>)
-            return g_mLogs;
-        if constexpr (std::is_same_v<T, TobiiMex::streamError>)
-            return g_mLogs;
-        if constexpr (std::is_same_v<T, TobiiMex::notification>)
-            return g_mNotification;
-    }
-
-    template <typename T>
-    read_lock  lockForReading() { return  read_lock(getMutex<T>()); }
-    template <typename T>
-    write_lock lockForWriting() { return write_lock(getMutex<T>()); }
-
     // default argument values
     namespace defaults
     {
@@ -144,55 +111,61 @@ void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::gaze>();
-        static_cast<TobiiMex*>(user_data)->_gaze.push_back(*gaze_data_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::gaze>();
+        instance->_gaze.push_back(*gaze_data_);
     }
 }
 void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::eyeImage>();
-        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::eyeImage>();
+        instance->_eyeImages.emplace_back(eye_image_);
     }
 }
 void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::eyeImage>();
-        static_cast<TobiiMex*>(user_data)->_eyeImages.emplace_back(eye_image_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::eyeImage>();
+        instance->_eyeImages.emplace_back(eye_image_);
     }
 }
 void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::extSignal>();
-        static_cast<TobiiMex*>(user_data)->_extSignal.push_back(*ext_signal_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::extSignal>();
+        instance->_extSignal.push_back(*ext_signal_);
     }
 }
 void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::timeSync>();
-        static_cast<TobiiMex*>(user_data)->_timeSync.push_back(*time_sync_data_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::timeSync>();
+        instance->_timeSync.push_back(*time_sync_data_);
     }
 }
 void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::positioning>();
-        static_cast<TobiiMex*>(user_data)->_positioning.push_back(*position_data_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::positioning>();
+        instance->_positioning.push_back(*position_data_);
     }
 }
 void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
     if (TobiiMex::_logMessages)
     {
-        auto l = lockForWriting<TobiiMex::logMessage>();
+        auto l = write_lock(TobiiMex::_logsMutex);
         TobiiMex::_logMessages->emplace_back(TobiiMex::logMessage(system_time_stamp_, source_, level_, message_));
     }
 }
@@ -208,7 +181,7 @@ void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* us
             serial = serial_number;
             tobii_research_free_string(serial_number);
         }
-        auto l = lockForWriting<TobiiMex::streamError>();
+        auto l = write_lock(TobiiMex::_logsMutex);
         TobiiMex::_logMessages->emplace_back(TobiiMex::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
     }
 }
@@ -216,8 +189,9 @@ void TobiiNotificationCallback(TobiiResearchNotification* notification_, void* u
 {
     if (user_data)
     {
-        auto l = lockForWriting<TobiiMex::notification>();
-        static_cast<TobiiMex*>(user_data)->_notification.emplace_back(*notification_);
+        auto instance = static_cast<TobiiMex*>(user_data);
+        auto l = instance->lockForWriting<TobiiMex::notification>();
+        instance->_notification.emplace_back(*notification_);
     }
 }
 
@@ -261,7 +235,7 @@ bool TobiiMex::startLogging(std::optional<size_t> initialBufferSize_)
     // deal with default arguments
     auto initialBufferSize = initialBufferSize_.value_or(defaults::logBufSize);
 
-    auto l = lockForWriting<logMessage>();
+    auto l = write_lock(TobiiMex::_logsMutex);
     _logMessages->reserve(initialBufferSize);
     auto result = tobii_research_logging_subscribe(TobiiLogCallback);
 
@@ -283,7 +257,7 @@ std::vector<TobiiMex::allLogTypes> TobiiMex::getLog(std::optional<bool> clearLog
     // deal with default arguments
     auto clearLog = clearLog_.value_or(defaults::logBufClear);
 
-    auto l = lockForWriting<logMessage>();
+    auto l = write_lock(TobiiMex::_logsMutex);
     if (clearLog)
         return std::vector<allLogTypes>(std::move(*_logMessages));
     else
@@ -719,6 +693,32 @@ std::optional<TobiiTypes::CalibrationWorkResult> TobiiMex::calibrationRetrieveRe
 
 // helpers to make the below generic
 template <typename T>
+mutex_type& TobiiMex::getMutex()
+{
+    if constexpr (std::is_same_v<T, TobiiMex::gaze>)
+        return _gazeMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::eyeImage>)
+        return _extSignalMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::extSignal>)
+        return _extSignalMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::timeSync>)
+        return _timeSyncMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::positioning>)
+        return _positioningMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::logMessage>)
+        return _logsMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::streamError>)
+        return _logsMutex;
+    if constexpr (std::is_same_v<T, TobiiMex::notification>)
+        return _notificationMutex;
+}
+
+template <typename T>
+read_lock  TobiiMex::lockForReading() { return  read_lock(getMutex<T>()); }
+template <typename T>
+write_lock TobiiMex::lockForWriting() { return write_lock(getMutex<T>()); }
+
+template <typename T>
 std::vector<T>& TobiiMex::getBuffer()
 {
     if constexpr (std::is_same_v<T, gaze>)
@@ -1008,8 +1008,8 @@ std::vector<T> TobiiMex::consumeN(std::optional<size_t> NSamp_, std::optional<Bu
     auto N      = NSamp_.value_or(defaults::consumeNSamp);
     auto side   = side_.value_or(defaults::consumeSide);
 
-    auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-    auto& buf    = getBuffer<T>();
+    auto l      = lockForWriting<T>();  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+    auto& buf   = getBuffer<T>();
 
     auto [startIt, endIt] = getIteratorsFromSampleAndSide<T>(N, side);
     return consumeFromVec(buf, startIt, endIt);
@@ -1018,11 +1018,11 @@ template <typename T>
 std::vector<T> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     // deal with default arguments
-    auto timeStart = timeStart_.value_or(defaults::consumeTimeRangeStart);
-    auto timeEnd   = timeEnd_  .value_or(defaults::consumeTimeRangeEnd);
+    auto timeStart  = timeStart_.value_or(defaults::consumeTimeRangeStart);
+    auto timeEnd    = timeEnd_  .value_or(defaults::consumeTimeRangeEnd);
 
-    auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-    auto& buf = getBuffer<T>();
+    auto l          = lockForWriting<T>();  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+    auto& buf       = getBuffer<T>();
 
     auto [startIt, endIt, whole] = getIteratorsFromTimeRange<T>(timeStart, timeEnd);
     return consumeFromVec(buf, startIt, endIt);
@@ -1044,8 +1044,8 @@ std::vector<T> TobiiMex::peekN(std::optional<size_t> NSamp_, std::optional<Buffe
     auto N      = NSamp_.value_or(defaults::peekNSamp);
     auto side   = side_.value_or(defaults::peekSide);
 
-    auto l = lockForReading<T>();
-    auto& buf = getBuffer<T>();
+    auto l      = lockForReading<T>();
+    auto& buf   = getBuffer<T>();
 
     auto [startIt, endIt] = getIteratorsFromSampleAndSide<T>(N, side);
     return peekFromVec(buf, startIt, endIt);
@@ -1054,11 +1054,11 @@ template <typename T>
 std::vector<T> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
     // deal with default arguments
-    auto timeStart = timeStart_.value_or(defaults::peekTimeRangeStart);
-    auto timeEnd   = timeEnd_  .value_or(defaults::peekTimeRangeEnd);
+    auto timeStart  = timeStart_.value_or(defaults::peekTimeRangeStart);
+    auto timeEnd    = timeEnd_  .value_or(defaults::peekTimeRangeEnd);
 
-    auto l = lockForReading<T>();
-    auto& buf = getBuffer<T>();
+    auto l          = lockForReading<T>();
+    auto& buf       = getBuffer<T>();
 
     auto [startIt, endIt, whole] = getIteratorsFromTimeRange<T>(timeStart, timeEnd);
     return peekFromVec(buf, startIt, endIt);
@@ -1067,8 +1067,8 @@ std::vector<T> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::o
 template <typename T>
 void TobiiMex::clearImpl(int64_t timeStart_, int64_t timeEnd_)
 {
-    auto l = lockForWriting<T>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-    auto& buf = getBuffer<T>();
+    auto l      = lockForWriting<T>();  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+    auto& buf   = getBuffer<T>();
     if (std::empty(buf))
         return;
 
@@ -1088,8 +1088,8 @@ void TobiiMex::clear(DataStream stream_)
 {
     if (stream_ == DataStream::Positioning)
     {
-        auto l = lockForWriting<positioning>(); // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-        auto& buf = getBuffer<positioning>();
+        auto l      = lockForWriting<positioning>();    // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+        auto& buf   = getBuffer<positioning>();
         if (std::empty(buf))
             return;
         buf.clear();

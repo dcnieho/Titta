@@ -6,7 +6,6 @@
 #include <tuple>
 #include <optional>
 #include <thread>
-#include <mutex>
 #include <atomic>
 #include <variant>
 #include <tobii_research.h>
@@ -163,6 +162,9 @@ private:
     void calibrationThread();
     //// generic functions for internal use
     // helpers
+    template <typename T>  mutex_type&      getMutex();
+    template <typename T>  read_lock        lockForReading();
+    template <typename T>  write_lock       lockForWriting();
     template <typename T>  std::vector<T>&  getBuffer();
     template <typename T>
                            std::tuple<typename std::vector<T>::iterator, typename std::vector<T>::iterator>
@@ -178,27 +180,33 @@ private:
 
     bool                        _recordingGaze          = false;
     std::vector<gaze>           _gaze;
-    // TODO: make mutexes class members instead of globals so that we can have multiple instances of this class
+    mutex_type                  _gazeMutex;
 
     bool                        _recordingEyeImages     = false;
     std::vector<eyeImage>       _eyeImages;
     bool                        _eyeImIsGif             = false;
+    mutex_type                  _eyeImagesMutex;
 
     bool                        _recordingExtSignal     = false;
     std::vector<extSignal>      _extSignal;
+    mutex_type                  _extSignalMutex;
 
     bool                        _recordingTimeSync      = false;
     std::vector<timeSync>       _timeSync;
+    mutex_type                  _timeSyncMutex;
 
     bool                        _recordingPositioning   = false;
     std::vector<positioning>    _positioning;
+    mutex_type                  _positioningMutex;
 
     bool                        _recordingNotification  = false;
     std::vector<notification>   _notification;
+    mutex_type                  _notificationMutex;
 
     static inline bool          _isLogging              = false;
     static inline std::unique_ptr<
         std::vector<allLogTypes>> _logMessages          = nullptr;
+    static inline mutex_type    _logsMutex;
 
     // calibration
     bool                                        _calibrationIsMonocular = false;
