@@ -1822,23 +1822,21 @@ classdef Titta < handle
                         assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
                         selectedCal    = cal.selectedCal;
                     end
-                    if isscalar(selectedCal)
-                        cal     = cal.attempt{selectedCal};
-                    end
+                    cal     = cal.attempt{selectedCal(1)};
                 end
-                if nargin<2 || isscalar(selectedCal)
+                if isscalar(selectedCal)
                     % find last valid validation
                     iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
                     val     = cal.val{iVal};
                     str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal,iVal);
                 else
                     % get val belonging to this cal
-                    whichCals = cellfun(@(x) x.whichCal, cal.attempt{selectedCal(1)}.val);
+                    whichCals = cellfun(@(x) x.whichCal, cal.val);
                     idx     = find(whichCals==selectedCal(2),1,'last');
                     if isempty(idx)
                         return;
                     end
-                    val     = out.attempt{cal.selectedCal(1)}.val{idx}.allPoints;
+                    val     = cal.val{idx}.allPoints;
                     str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
                 end
             end
