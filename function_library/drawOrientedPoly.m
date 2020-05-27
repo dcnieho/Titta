@@ -2,7 +2,15 @@ function drawOrientedPoly(wpnt,verts,isConvex,depthOri,rotMat,scaleFac,pos,fillC
 persistent minSmoothLineWidth
 persistent maxSmoothLineWidth
 if isempty(minSmoothLineWidth)
-    [minSmoothLineWidth, maxSmoothLineWidth] = Screen('DrawLines',wpnt);
+    [~,b] = PsychtoolboxVersion();
+    if b.major==3 && b.point<16
+        % some conservative/reasonable defaults (old PTB doesn't support
+        % this)
+        minSmoothLineWidth = 1;
+        maxSmoothLineWidth = 5;
+    else
+        [minSmoothLineWidth, maxSmoothLineWidth] = Screen('DrawLines',wpnt);
+    end
 end
 
 if isempty(verts)
