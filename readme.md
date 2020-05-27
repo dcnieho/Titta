@@ -10,7 +10,7 @@ Please cite:
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
 
-Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TobiiMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TobiiMex/deps/TobiiProSDK_EndUserLicenseAgreement.pdf) for more information.
+Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TittaMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TittaMex/deps/TobiiProSDK_EndUserLicenseAgreement.pdf) for more information.
 
 `demos/readme.m` shows a minimal example of using the toolbox's
 functionality.
@@ -53,9 +53,9 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
 ## Contents
 The toolbox consists of multiple parts:
 ### The `Titta` class
-The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TobiiMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
-### The `TobiiMex` class
-The `TobiiMex` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). Besides providing access to the same tracker functionality as the Tobii Pro MATLAB SDK, it has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive. For the rest, other function implemented in `TobiiMex` provide return values that are a bit friendlier to use in MATLAB, in the author's opinion (e.g. `double`s instead of `single`s) and no use of MATLAB classes to just hold plain data.
+The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TittaMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
+### The `TittaMex` class
+The `TittaMex` class is an alternative to the Tobii Pro MATLAB SDK for handling data streams and calibration, and can be used without making use of the Titta interface. It is used by Titta under the hood (accessed directly through `Titta.buffer`). Besides providing access to the same tracker functionality as the Tobii Pro MATLAB SDK, it has two main features: (1) more complete an granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive. For the rest, other function implemented in `TittaMex` provide return values that are a bit friendlier to use in MATLAB, in the author's opinion (e.g. `double`s instead of `single`s) and no use of MATLAB classes to just hold plain data.
 ### The `TalkToProLab` class
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
@@ -128,7 +128,7 @@ The following read-only properties are available for a Titta instance:
 | --- | --- |
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
-|`buffer`|Initialized by call to `init()`. Returns handle to [`TobiiMex`](#tobiimex-class) instance for interaction with the eye tracker's data streams, or for directly interacting with the eye tracker through the Tobii Pro SDK. Note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
+|`buffer`|Initialized by call to `init()`. Returns handle to [`TittaMex`](#tittamex-class) instance for interaction with the eye tracker's data streams, or for directly interacting with the eye tracker through the Tobii Pro SDK. Note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
 |`deviceName`|Get connected eye tracker's device name.|
 |`serialNumber`|Get connected eye tracker's serial number.|
 |`model`|Get connected eye tracker's model name.|
@@ -152,7 +152,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.calibrateEye`|Which eye to calibrate: 'both', also possible if supported by eye tracker: 'left' and 'right'.|
 |`settings.serialNumber`|If looking to connect to a specific eye tracker when multiple are available on the network, provide its serial number here.|
 |`settings.licenseFile`|If you tracker needs a license file applied (e.g. Tobii 4C), provide the full path to the license file here, or a cell array of full paths if there are multiple licenses to apply.|
-|`settings.nTryReConnect`|How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to `TobiiMex.findAllEyeTrackers()` for network eye trackers to be found.|
+|`settings.nTryReConnect`|How many times to retry connecting before giving up? Something larger than zero is good as it may take more time than the first call to `TittaMex.findAllEyeTrackers()` for network eye trackers to be found.|
 |`settings.connectRetryWait`|Seconds: time to wait between connection retries.|
 |`settings.debugMode`|Only for Titta developer use. Prints some debug output to command window.|
 |  |  |
@@ -286,7 +286,7 @@ Each button takes the below options:
 
 The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entries, 2-element cell array or 3-element cell arrays. This is used to specify different looks for the button when in inactive state, hovered state, and activated state. If a single text or color is provided, this text/look applies to all three button states. If two are provided, the first text/color applies to both the inactive and hovered button states and the second to the activated state. If three are provided, they apply to the inactive, hovered and activated states, respectively. The `string`, `fillColor`, `edgeColor` and `textColor` can have these properties set independently from each other (you could thus provide different strings for the three states, while keeping colors constant over them).
 
-### `TobiiMex` class
+### `TittaMex` class
 #### Static methods
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
@@ -297,16 +297,16 @@ The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entr
 |`stopLogging()`|||Stop listening to the eye tracker's log stream.|
 
 #### Construction and initialization
-An instance of TobiiMex is constructed by calling `TobiiMex()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to. A list of connected eye trackers is provided by calling the static function `TobiiMex.findAllEyeTrackers()`.
+An instance of TittaMex is constructed by calling `TittaMex()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to. A list of connected eye trackers is provided by calling the static function `TittaMex.findAllEyeTrackers()`.
 
 #### Methods
-The following method calls are available on a TobiiMex instance:
+The following method calls are available on a TittaMex instance:
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TobiiMex class instance to the Tobii eye tracker and prepare it for use.|
+|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TittaMex class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TobiiMex` is connected to.</li></ol>|Get information about the eye tracker that the `TobiiMex` instance is connected to.|
+|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TittaMex` is connected to.</li></ol>|Get information about the eye tracker that the `TittaMex` instance is connected to.|
 |`getTrackBox()`||<ol><li>`trackBox`: track box of the connected eye tracker.</li></ol>|Get the track box of the connected eye tracker.|
 |`getDisplayArea()`||<ol><li>`displayArea`: display area of the connected eye tracker.</li></ol>|Get the display area of the connected eye tracker.|
 |`applyLicenses()`|<ol><li>`licenses`: a cell array of licenses (`char` of `uint8` representations of the license file read in binary mode).</li></ol>||Apply license(s) to the connected eye tracker.|
@@ -331,15 +331,15 @@ The following method calls are available on a TobiiMex instance:
 |`calibrationComputeAndApply()`|||Queue request for the tracker to compute the calibration function and start using it.|
 |`calibrationGetData()`|||Request retrieval of the computed calibration as an (uninterpretable) binary stream.|
 |`calibrationApplyData()`|<ol><li>`cal`: a binary stream as gotten through `calibrationGetData()`</li></ol>||Apply the provided calibration data.|
-|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TobiiMex's calibration mechanism.|
-|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TobiiMex's calibration mechanism.|
+|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TittaMex's calibration mechanism.|
+|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TittaMex's calibration mechanism.|
 
 #### Properties
-The following read-only properties are available for a TobiiMex instance:
+The following read-only properties are available for a TittaMex instance:
 
 |Property|Description|
 | --- | --- |
-|`getSDKVersion`|Get the version of the Tobii Pro SDK dynamic library that is used by `TobiiMex`.|
+|`getSDKVersion`|Get the version of the Tobii Pro SDK dynamic library that is used by `TittaMex`.|
 |`getSystemTimestamp`|Get the current system time through the Tobii Pro SDK. Returns an int64 scalar denoting Tobii system time in microseconds.|
 |`deviceName`|Get or set connected eye tracker's device name.|
 |`serialNumber`|Get connected eye tracker's serial number.|
