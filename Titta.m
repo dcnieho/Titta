@@ -86,9 +86,9 @@ classdef Titta < handle
         %    all calibration attempts during the current session.
         calibrateHistory;
         
-        % Handle to TobiiMex instance for interaction with eye tracker
+        % Handle to TittaMex instance for interaction with eye tracker
         %
-        %    Titta.buffer is a handle to TobiiMex instance for interaction
+        %    Titta.buffer is a handle to TittaMex instance for interaction
         %    with the eye tracker's data streams, or for directly
         %    interacting with the eye tracker through the Tobii Pro SDK.
         %    Note that this is at your own risk. Titta should have minimal
@@ -470,7 +470,7 @@ classdef Titta < handle
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
             
             % Load in our callback buffer mex
-            obj.buffer = TobiiMex();
+            obj.buffer = TittaMex();
             obj.buffer.startLogging();
             
             % Connect to eyetracker

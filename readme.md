@@ -2,6 +2,7 @@ Titta is a toolbox for using eye trackers from Tobii Pro AB with MATLAB,
 specifically offering integration with [PsychToolbox](http://psychtoolbox.org/). A Python version
 that integrates with PsychoPy is also available from
 https://github.com/marcus-nystrom/Titta. For a similar toolbox for SMI eye trackers, please see www.github.com/dcnieho/SMITE.
+The current repository furthermore offers a C++ wrapper around the Tobii SDK, which is in turn used as a basis for the MATLAB MEX file `TittaMex` providing MATLAB Titta with connectivity to the Tobii eye trackers. This C++ wrapper can be consumed by your own C++ projects as well, or be wrapped for other programming languages (a wrapper to Python is also provided).
 
 Please cite:
 [Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
