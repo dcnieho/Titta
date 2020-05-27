@@ -26,7 +26,7 @@
 clear all
 sca
 
-DEBUGlevel              = 2;
+DEBUGlevel              = 0;
 fixClrs                 = [0 255];
 bgClr                   = 127;
 eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
