@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TobiiMex_matlab\32\tobii_research.dll . /Y</Command>
+      <Command>xcopy ..\TittaMex_matlab\32\tobii_research.dll . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
@@ -157,7 +157,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)output\$(Platform);../deps/lib;$(PYTHON32_ROOT)\libs</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TobiiMex_matlab\32\tobii_research.dll . /Y</Command>
+      <Command>xcopy ..\TittaMex_matlab\32\tobii_research.dll . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>

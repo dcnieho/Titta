@@ -330,7 +330,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::New:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
-                mexErrMsgTxt("TobiiMex: Second argument must be a string.");
+                mexErrMsgTxt("TittaMex: Second argument must be a string.");
 
             char* address = mxArrayToString(prhs[1]);
             auto insResult = instanceTab.insert({++handleVal, std::make_shared<ClassType>(address)});

@@ -12,9 +12,9 @@ __version__ = '1.0.0-rc1'
 
 # choose right version of dll to install along with built module
 if platform.architecture()[0]=="64bit":
-    data_files = [('lib\\site-packages\\',["./TobiiMex_matlab/64/tobii_research.dll"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex_matlab/64/tobii_research.dll"])]
 else:
-    data_files = [('lib\\site-packages\\',["./TobiiMex_matlab/32/tobii_research.dll"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex_matlab/32/tobii_research.dll"])]
 
 
 class get_pybind_include(object):
@@ -35,7 +35,7 @@ class get_pybind_include(object):
 ext_modules = [
     Extension(
         'TobiiWrapper',
-        ['src/TobiiMex.cpp','src/types.cpp','src/utils.cpp','TobiiWrapper/TobiiWrapper.cpp'],
+        ['src/TittaMex.cpp','src/types.cpp','src/utils.cpp','TobiiWrapper/TobiiWrapper.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),

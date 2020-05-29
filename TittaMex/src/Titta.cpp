@@ -752,7 +752,7 @@ Titta::getIteratorsFromSampleAndSide(size_t NSamp_, Titta::BufferSide side_)
         startIt = std::prev(endIt  , nSamp);
         break;
     default:
-        DoExitWithMsg("Titta::cpp::getIteratorsFromSampleAndSide: unknown TobiiMex::BufferSide provided.");
+        DoExitWithMsg("Titta::cpp::getIteratorsFromSampleAndSide: unknown TittaMex::BufferSide provided.");
         break;
     }
     return { startIt, endIt };
@@ -1207,9 +1207,9 @@ template std::vector<Titta::timeSync> Titta::peekTimeRange(std::optional<int64_t
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
 template std::vector<Titta::positioning> Titta::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
-//template std::vector<TobiiMex::positioning> TobiiMex::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+//template std::vector<Titta::positioning> Tobii::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<Titta::positioning> Titta::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
-//template std::vector<TobiiMex::positioning> TobiiMex::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+//template std::vector<Titta::positioning> Tobii::peekTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 
 // time sync data, instantiate templated functions
 template std::vector<Titta::notification> Titta::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
