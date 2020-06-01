@@ -1712,7 +1712,7 @@ classdef Titta < handle
             settings.UI.mancal.headScale            = .5;
             settings.UI.mancal.headPos              = [];                       % if empty, centered
             settings.UI.mancal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
-            settings.UI.mancal.bgColor              = 127;                      % background color for validation output screen
+            settings.UI.mancal.bgColor              = 127;                      % background color for operator screen
             settings.UI.mancal.fixBackSize          = 20;
             settings.UI.mancal.fixFrontSize         = 5;
             settings.UI.mancal.fixBackColor         = 0;
@@ -1721,9 +1721,7 @@ classdef Titta < handle
             settings.UI.mancal.fixPoint.text.size   = 12*textFac;
             settings.UI.mancal.fixPoint.text.color  = 255;
             settings.UI.mancal.fixPoint.text.style  = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
-            settings.mancal.paceDuration            = 0.8;                      % minimum duration (s) that each point is shown
-            settings.mancal.bgColor                 = 127;
+            settings.mancal.bgColor                 = 127;                      % background color for calibration screen (can be overridden by settings.mancal.drawFunction())
             settings.mancal.fixBackSize             = 20;
             settings.mancal.fixFrontSize            = 5;
             settings.mancal.fixBackColor            = 0;
@@ -1731,7 +1729,9 @@ classdef Titta < handle
             settings.mancal.drawFunction            = [];
             settings.mancal.doRecordEyeImages       = false;
             settings.mancal.doRecordExtSignal       = false;
-            settings.mancal.pointNotifyFunction     = [];                       % function that is called upon each calibration point completing
+            settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.mancal.cal.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
+            settings.mancal.cal.pointNotifyFunction = [];                       % function that is called upon each calibration point completing
             settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.val.collectDuration     = 0.5;
@@ -4044,7 +4044,7 @@ classdef Titta < handle
                             pointsP         = cPointsP;
                             pointsO         = cPointsO;
                             pointTextCache  = cPointTextCache;
-                            paceIntervalTicks   = ceil(obj.settings.mancal.paceDuration    *fs);
+                            paceIntervalTicks   = ceil(obj.settings.mancal.cal.paceDuration*fs);
                             obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
@@ -5125,7 +5125,7 @@ classdef Titta < handle
                                     % failure
                                     frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
                                 end
-                                fun = obj.settings.mancal.pointNotifyFunction;
+                                fun = obj.settings.mancal.cal.pointNotifyFunction;
                                 extra = {out.attempt{kCal}.cal{calAction}.collectStatus};
                             else
                                 fun = obj.settings.mancal.val.pointNotifyFunction;
