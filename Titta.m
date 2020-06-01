@@ -2632,6 +2632,7 @@ classdef Titta < handle
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
             data.externalSignals= obj.buffer.consumeTimeRange('externalSignal',varargin{:});
             data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
+            data.notifications  = obj.buffer.consumeTimeRange('notification',varargin{:});
             % NB: positioning stream is not consumed as it will be useless
             % for later analysis (it doesn't have timestamps, and is meant
             % for visualization only). It is cleared however, consistent
@@ -2648,6 +2649,7 @@ classdef Titta < handle
             obj.buffer.clearTimeRange('eyeImage',varargin{:});
             obj.buffer.clearTimeRange('externalSignal',varargin{:});
             obj.buffer.clearTimeRange('timeSync',varargin{:});
+            obj.buffer.clearTimeRange('notification',varargin{:});
             if nargin<2
                 % positioning stream doesn't have timestamps, and clear can
                 % thus only be called on it without a time range
@@ -2660,6 +2662,8 @@ classdef Titta < handle
             obj.buffer.stop('externalSignal');
             obj.buffer.stop('timeSync');
             obj.buffer.stop('positioning');
+            % NB: do not notification stream, that is supposed to run for
+            % whole time class is initialized
         end
         
         function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip,qIsFirstCalAttempt)
@@ -3778,7 +3782,7 @@ classdef Titta < handle
             startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
-            if obj.settings.mancal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
+            if obj.settings.mancal.doRecordEyeImages && qHasEyeIm
                 obj.buffer.start('eyeImage');
             end
             if obj.settings.mancal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
@@ -4233,11 +4237,11 @@ classdef Titta < handle
                 if qHasEyeIm
                     % toggle eye images on or off if requested
                     if qToggleEyeImage
-                        if qShowEyeImage
+                        if qShowEyeImage && ~obj.settings.mancal.doRecordEyeImages
                             % switch off
                             obj.buffer.stop('eyeImage');
                             obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
-                        else
+                        elseif ~obj.settings.mancal.doRecordEyeImages
                             % switch on
                             eyeStartTime = obj.getTimeAsSystemTime();
                             obj.buffer.start('eyeImage');
@@ -4807,7 +4811,11 @@ classdef Titta < handle
                     % prep eye image
                     if qHasEyeIm && qShowEyeImage
                         % get eye image
-                        eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        if ~obj.settings.mancal.doRecordEyeImages
+                            eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        else
+                            eyeIm       = obj.buffer.peekN('eyeImage',4);    % peek (up to) last four from end, keep them in buffer
+                        end
                         [eyeTexs,eyeSzs]  = UploadImages(eyeTexs,eyeSzs,wpnt(end),eyeIm);
                         
                         % update eye image locations if size of returned eye image changed
@@ -5669,11 +5677,18 @@ classdef Titta < handle
             obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
             if qHasEyeIm
                 obj.buffer.stop('eyeImage');
-                obj.buffer.clearTimeRange('eyeImage',startT);    % clear buffer from start time until now (now=default third argument)
                 if any(eyeTexs)
                     Screen('Close',eyeTexs(eyeTexs>0));
                 end
+                % NB: buffer is cleared below by the ClearAllBuffers() call
             end
+            if obj.buffer.hasStream('externalSignal')
+                obj.buffer.stop('externalSignal');
+            end
+            
+            out.allData   = obj.ConsumeAllData(startT);
+            obj.StopRecordAll();
+            obj.ClearAllBuffers(startT);                    % clean up data buffers
         end
         
         function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,showYaw,isParticipantScreen)
