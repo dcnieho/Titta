@@ -37,7 +37,13 @@ imageTime               = 4;
 scrPresenter            = 1;
 scrOperator             = 2;
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
+% You can run addTittaToPath once to "install" it, or you can simply add a
+% call to it in your script so each time you want to use Titta, it is
+% ensured it is on path
+home = cd;
+cd ..;
+addTittaToPath;
+cd(home);
 
 try
     eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
@@ -78,7 +84,7 @@ try
         settings.cal.fixFrontColor  = fixClrs(2);
     end
     % callback function for completion of each calibration point
-    settings.mancal.pointNotifyFunction = @demoCalCompletionFun;
+    settings.mancal.cal.pointNotifyFunction = @demoCalCompletionFun;
     settings.mancal.val.pointNotifyFunction = @demoCalCompletionFun;
     
     % init

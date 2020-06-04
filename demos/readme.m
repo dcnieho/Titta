@@ -23,7 +23,13 @@ fixTime                 = .5;
 imageTime               = 4;
 scr                     = max(Screen('Screens'));
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
+% You can run addTittaToPath once to "install" it, or you can simply add a
+% call to it in your script so each time you want to use Titta, it is
+% ensured it is on path
+home = cd;
+cd ..;
+addTittaToPath;
+cd(home);
 
 try
     % get setup struct (can edit that of course):
