@@ -752,7 +752,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
             {
                 if (!mxIsChar(prhs[4]))
-                    mexErrMsgTxt("consumeN: Third input must be a sample side identifier string ('first', or 'last').");
+                    mexErrMsgTxt("consumeN: Third input must be a sample side identifier string ('start', or 'end').");
                 char* bufferCstr = mxArrayToString(prhs[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);
@@ -853,7 +853,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
             {
                 if (!mxIsChar(prhs[4]))
-                    mexErrMsgTxt("peekN: Third input must be a sample side identifier string ('first', or 'last').");
+                    mexErrMsgTxt("peekN: Third input must be a sample side identifier string ('start', or 'end').");
                 char* bufferCstr = mxArrayToString(prhs[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);

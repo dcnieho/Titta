@@ -94,7 +94,7 @@ Titta::BufferSide Titta::stringToBufferSide(std::string bufferSide_)
     if (it == bufferSideMap.end())
     {
         std::stringstream os;
-        os << R"("Titta::cpp: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "first" and "last")";
+        os << R"("Titta::cpp: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "start" and "end")";
         DoExitWithMsg(os.str());
     }
     return it->second;

@@ -345,7 +345,8 @@ classdef TittaMex < handle
             % optional input arguments:
             % - NSamp: how many samples to consume. Default: all
             % -  side: Which side of buffer to consume samples from.
-            %          Default: start
+            %          Values: 'start' or 'end'
+            %          Default: 'start'
             assert(nargin>1,'TittaMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
@@ -373,7 +374,8 @@ classdef TittaMex < handle
             % - NSamp: how many samples to consume. Default: 1. To get all,
             %          ask for inf samples
             % -  side: Which side of buffer to consume samples from.
-            %          Default: end
+            %          Values: 'start' or 'end'
+            %          Default: 'end'
             assert(nargin>1,'TittaMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
