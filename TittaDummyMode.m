@@ -116,7 +116,7 @@ classdef TittaDummyMode < Titta
         function out = init(obj)
             out = [];
             % make dummyMode buffer
-            obj.buffer = TobiiMexDummyMode();
+            obj.buffer = TittaMexDummyMode();
             % mark as inited
             obj.isInitialized = true;
         end

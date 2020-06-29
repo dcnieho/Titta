@@ -27,6 +27,7 @@
 %      <a href="matlab: help Titta.setOptions">help Titta.setOptions</a>
 %      <a href="matlab: help Titta.init">help Titta.init</a>
 %      <a href="matlab: help Titta.calibrate">help Titta.calibrate</a>
+%      <a href="matlab: help Titta.calibrateManual">help Titta.calibrateManual</a>
 %      <a href="matlab: help Titta.sendMessage">help Titta.sendMessage</a>
 %      <a href="matlab: help Titta.getMessages">help Titta.getMessages</a>
 %      <a href="matlab: help Titta.collectSessionData">help Titta.collectSessionData</a>
@@ -85,9 +86,9 @@ classdef Titta < handle
         %    all calibration attempts during the current session.
         calibrateHistory;
         
-        % Handle to TobiiMex instance for interaction with eye tracker
+        % Handle to TittaMex instance for interaction with eye tracker
         %
-        %    Titta.buffer is a handle to TobiiMex instance for interaction
+        %    Titta.buffer is a handle to TittaMex instance for interaction
         %    with the eye tracker's data streams, or for directly
         %    interacting with the eye tracker through the Tobii Pro SDK.
         %    Note that this is at your own risk. Titta should have minimal
@@ -288,9 +289,9 @@ classdef Titta < handle
             obj.settings.cal.fixBackColor               = color2RGBA(obj.settings.cal.fixBackColor);
             obj.settings.cal.fixFrontColor              = color2RGBA(obj.settings.cal.fixFrontColor);
             
-            obj.settings.UI.button.setup.eyeIm.fillColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.fillColor);
-            obj.settings.UI.button.setup.eyeIm.edgeColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.edgeColor);
-            obj.settings.UI.button.setup.eyeIm.textColor    = color2RGBA(obj.settings.UI.button.setup.eyeIm.textColor);
+            obj.settings.UI.button.setup.toggEyeIm.fillColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.fillColor);
+            obj.settings.UI.button.setup.toggEyeIm.edgeColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.edgeColor);
+            obj.settings.UI.button.setup.toggEyeIm.textColor= color2RGBA(obj.settings.UI.button.setup.toggEyeIm.textColor);
             obj.settings.UI.button.setup.cal.fillColor      = color2RGBA(obj.settings.UI.button.setup.cal.fillColor);
             obj.settings.UI.button.setup.cal.edgeColor      = color2RGBA(obj.settings.UI.button.setup.cal.edgeColor);
             obj.settings.UI.button.setup.cal.textColor      = color2RGBA(obj.settings.UI.button.setup.cal.textColor);
@@ -321,6 +322,48 @@ classdef Titta < handle
             obj.settings.UI.button.val.toggCal.fillColor    = color2RGBA(obj.settings.UI.button.val.toggCal.fillColor);
             obj.settings.UI.button.val.toggCal.edgeColor    = color2RGBA(obj.settings.UI.button.val.toggCal.edgeColor);
             obj.settings.UI.button.val.toggCal.textColor    = color2RGBA(obj.settings.UI.button.val.toggCal.textColor);
+            
+            obj.settings.UI.mancal.instruct.color               = color2RGBA(obj.settings.UI.mancal.instruct.color);
+            obj.settings.UI.button.mancal.changeeye.fillColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.fillColor);
+            obj.settings.UI.button.mancal.changeeye.edgeColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.edgeColor);
+            obj.settings.UI.button.mancal.changeeye.textColor   = color2RGBA(obj.settings.UI.button.mancal.changeeye.textColor);
+            obj.settings.UI.button.mancal.toggEyeIm.fillColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.fillColor);
+            obj.settings.UI.button.mancal.toggEyeIm.edgeColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.edgeColor);
+            obj.settings.UI.button.mancal.toggEyeIm.textColor   = color2RGBA(obj.settings.UI.button.mancal.toggEyeIm.textColor);
+            obj.settings.UI.button.mancal.calval.fillColor      = color2RGBA(obj.settings.UI.button.mancal.calval.fillColor);
+            obj.settings.UI.button.mancal.calval.edgeColor      = color2RGBA(obj.settings.UI.button.mancal.calval.edgeColor);
+            obj.settings.UI.button.mancal.calval.textColor      = color2RGBA(obj.settings.UI.button.mancal.calval.textColor);
+            obj.settings.UI.button.mancal.continue.fillColor    = color2RGBA(obj.settings.UI.button.mancal.continue.fillColor);
+            obj.settings.UI.button.mancal.continue.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.continue.edgeColor);
+            obj.settings.UI.button.mancal.continue.textColor    = color2RGBA(obj.settings.UI.button.mancal.continue.textColor);
+            obj.settings.UI.button.mancal.snapshot.fillColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.fillColor);
+            obj.settings.UI.button.mancal.snapshot.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.edgeColor);
+            obj.settings.UI.button.mancal.snapshot.textColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.textColor);
+            obj.settings.UI.button.mancal.toggHead.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.fillColor);
+            obj.settings.UI.button.mancal.toggHead.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.edgeColor);
+            obj.settings.UI.button.mancal.toggHead.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggHead.textColor);
+            obj.settings.UI.button.mancal.toggGaze.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.fillColor);
+            obj.settings.UI.button.mancal.toggGaze.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.edgeColor);
+            obj.settings.UI.button.mancal.toggGaze.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.textColor);
+            obj.settings.UI.mancal.menu.bgColor                 = color2RGBA(obj.settings.UI.mancal.menu.bgColor);
+            obj.settings.UI.mancal.menu.itemColor               = color2RGBA(obj.settings.UI.mancal.menu.itemColor);
+            obj.settings.UI.mancal.menu.itemColorActive         = color2RGBA(obj.settings.UI.mancal.menu.itemColorActive);
+            obj.settings.UI.mancal.menu.text.color              = color2RGBA(obj.settings.UI.mancal.menu.text.color);
+            obj.settings.UI.mancal.menu.text.eyeColors          = color2RGBA(obj.settings.UI.mancal.menu.text.eyeColors);
+            obj.settings.UI.mancal.avg.text.color               = color2RGBA(obj.settings.UI.mancal.avg.text.color);
+            obj.settings.UI.mancal.avg.text.eyeColors           = color2RGBA(obj.settings.UI.mancal.avg.text.eyeColors);
+            obj.settings.UI.mancal.hover.bgColor                = color2RGBA(obj.settings.UI.mancal.hover.bgColor);
+            obj.settings.UI.mancal.hover.text.color             = color2RGBA(obj.settings.UI.mancal.hover.text.color);
+            obj.settings.UI.mancal.hover.text.eyeColors         = color2RGBA(obj.settings.UI.mancal.hover.text.eyeColors);
+            obj.settings.UI.mancal.onlineGaze.eyeColors         = color2RGBA(obj.settings.UI.mancal.onlineGaze.eyeColors);
+            obj.settings.UI.mancal.eyeColors                    = color2RGBA(obj.settings.UI.mancal.eyeColors);
+            obj.settings.UI.mancal.bgColor                      = color2RGBA(obj.settings.UI.mancal.bgColor);
+            obj.settings.UI.mancal.fixBackColor                 = color2RGBA(obj.settings.UI.mancal.fixBackColor);
+            obj.settings.UI.mancal.fixFrontColor                = color2RGBA(obj.settings.UI.mancal.fixFrontColor);
+            obj.settings.UI.mancal.fixPoint.text.color          = color2RGBA(obj.settings.UI.mancal.fixPoint.text.color);
+            obj.settings.mancal.bgColor                         = color2RGBA(obj.settings.mancal.bgColor);
+            obj.settings.mancal.fixBackColor                    = color2RGBA(obj.settings.mancal.fixBackColor);
+            obj.settings.mancal.fixFrontColor                   = color2RGBA(obj.settings.mancal.fixFrontColor);
         end
         
         % getters
@@ -427,7 +470,7 @@ classdef Titta < handle
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
             
             % Load in our callback buffer mex
-            obj.buffer = TobiiMex();
+            obj.buffer = TittaMex();
             obj.buffer.startLogging();
             
             % Connect to eyetracker
@@ -586,7 +629,7 @@ classdef Titta < handle
             %    WPNT can also be an array of two window pointers.
             %    In this case, the first window pointer is taken to refer
             %    to the participant screen, and the second to an operator
-            %    screen. Aminimal interface is then presented on the
+            %    screen. A minimal interface is then presented on the
             %    participant screen, while full information is shown on the
             %    operator screen, including a live view of gaze data and
             %    eye images (if available) during calibration and
@@ -610,20 +653,36 @@ classdef Titta < handle
             %    calibrate the other eye (use FLAG=2 to exit calibration
             %    mode when done).
             %
+            %    CALIBRATIONATTEMPT = Titta.calibrate(WPNT,FLAG,PREVIOUSCALIBS)
+            %    allows to prepopulate the interface with previous
+            %    calibration(s). The previously selected calibration is
+            %    made active and it can then be revalidated and used, or
+            %    replaced. PREVIOUSCALIBS is expected to be a
+            %    CALIBRATIONATTEMPT output from a previous run of
+            %    Titta.calibrate. Note that the PREVIOUSCALIBS
+            %    functionality should be used together with bimonocular
+            %    calibration _only_ when the calibration of the first eye
+            %    is not replaced (validating it is ok, and recommended).
+            %    This because prepopulating calibrations for the second eye
+            %    will load this previous calibration, and thus undo any new
+            %    calibration for the first eye.
+            %
             %    INTERFACE
             %    During anywhere on the participant setup and calibration
             %    screens, the following key combinations are available:
-            %      shift-escape - hard exit from the calibration mode
-            %                     (causes en error to be thrown and script
+            %      shift-escape - hard exit from the calibration mode. By
+            %                     default (see
+            %                     settings.UI.hardExitClosesPTB), this
+            %                     causes en error to be thrown and script
             %                     execution to stop if that error is not
-            %                     caught).
+            %                     caught.
             %      shift-s      - skip calibration. If still at setup
             %                     screen for the first time, the last
             %                     calibration (perhaps of a previous
             %                     session) remains active. To clear any
-            %                     calibration, enter the calibration screen
-            %                     and immediately then skip with this key
-            %                     combination.
+            %                     calibration, first enter the calibration
+            %                     screen and immediately then skip with
+            %                     this key combination.
             %      shift-d      - take screenshot of the participant
             %                     display, which will be stored to the
             %                     current active directory (cd).
@@ -638,22 +697,82 @@ classdef Titta < handle
             %                     key is held down while clicking the
             %                     button with the mouse, or when pressing
             %                     the functionality's hotkey (g by
-            %                     default), real-time gaze will also be
-            %                     shown on the participant's screen.
+            %                     default, see documentation of validation
+            %                     results screen interface below),
+            %                     real-time gaze will also be shown on the
+            %                     participant's screen.
             %
-            %    In addition to these, during the calibration and
-            %    validation displays, the following keys are available:
+            %    In addition to these, the three different screens that
+            %    make up this procedure each have their own keys available.
+            %    Some of these are hardcoded, others can be changed through
+            %    Titta's settings. In the latter case, their default value
+            %    is listed here, and the settings name is indicated in
+            %    abbreviated form (e.g. `setup.toggEyeIm` refers to the
+            %    setting `settings.UI.button.setup.toggEyeIm.accelerator`,
+            %    gotten from Titta.getDefaults() or Titta.getOptions()).
+            %    For the setup and validation result displays, these keys
+            %    have a clickable button in the interface associated with
+            %    them. Most of these buttons are visible by default, but
+            %    some are not. You can change button visibility by
+            %    changing, e.g.,
+            %    `settings.UI.button.setup.toggEyeIm.visible`. Invisible
+            %    buttons can still be activated or deactivated by means of
+            %    the configured keys.
+            %
+            %    Setup display:
+            %      spacebar  - start a calibration (setup.cal)
+            %      e         - toggle eye images, if available
+            %                  (setup.toggEyeIm)
+            %      p         - return to validation result display,
+            %                  available if there are any previous
+            %                  calibrations (setup.prevcal)
+            %      c         - open menu to change which eye will be
+            %                  calibrated (both, left, right). The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the number to press
+            %                  to activate that option. Available only if
+            %                  the eye tracker supports monocular
+            %                  calibration (setup.changeeye)
+            %   
+            %    Calibration and validation display:
             %      escape    - return to setup screen.
             %      r         - restart calibration sequence from the
             %                  beginning
             %      backspace - redo the current calibration/validation
-            %                  point. Using the AnimatedCalibrationDisplay
-            %                  class, this causes the currently displayed
-            %                  point to blink.
+            %                  point. When using the
+            %                  AnimatedCalibrationDisplay class
+            %                  (settings.cal.drawFunction), this causes the
+            %                  currently displayed point to blink.
             %      spacebar  - accept current calibration/validation point.
             %                  Whether it is needed to press spacebar to
             %                  collect data for a point depends on the
             %                  settings.cal.autoPace setting.
+            %   
+            %    Validation result display:
+            %      spacebar  - select currently displayed calibration and
+            %                  exit the interface/continue experiment
+            %                  (val.continue)
+            %      escape    - start a new calibration (val.recal)
+            %      v         - revalidate the current calibration
+            %                  (val.reval)
+            %      s         - return to the setup screen (val.setup)
+            %      c         - bring up a menu from which other
+            %                  calibrations performed in the same session
+            %                  can be selected (val.selcal)
+            %      g         - toggle whether online gaze position is
+            %                  visualized on the screen. When in dual
+            %                  screen mode, gaze will only be visualized to
+            %                  the operator. Press shift-g (or hold down
+            %                  shift while pressing the interface button
+            %                  with the mouse) to also show the online
+            %                  gaze position on the participant screen
+            %                  (val.toggGaze)
+            %      t         - toggle between whether gaze data collected
+            %                  during validation or during calibration is
+            %                  shown in the interface (val.toggCal)
+            %
+            %    See also TITTA.CALIBRATEMANUAL, TITTA.GETOPTIONS,
+            %    TITTA.GETDEFAULTS
             
             % this function does all setup, draws the interface, etc
             % flag is for if you want to calibrate the two eyes separately,
@@ -671,42 +790,7 @@ classdef Titta < handle
             end
             
             % get info about screen
-            obj.wpnts = wpnt;
-            for w=length(wpnt):-1:1
-                obj.scrInfo.resolution{w}  = Screen('Rect',wpnt(w)); obj.scrInfo.resolution{w}(1:2) = [];
-                obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
-                obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
-                % get current PTB state so we can restore when returning
-                % 1. alpha blending
-                [osf{w},odf{w},ocm{w}]     = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                % 2. screen clear color so we can reset that too. There is only
-                % one way to do that annoyingly:
-                % 2.1. clear back buffer by flipping
-                Screen('Flip',wpnt(w));
-                % 2.2. read a pixel, this gets us the background color
-                bgClr{w} = double(reshape(Screen('GetImage',wpnt(w),[1 1 2 2],'backBuffer',obj.qFloatColorRange(w),4),1,4));
-                % 3. text
-                text.style(w)  = Screen('TextStyle', wpnt(w));
-                text.size(w)   = Screen('TextSize' , wpnt(w));
-                text.font{w}   = Screen('TextFont' , wpnt(w));
-                text.color{w}  = Screen('TextColor', wpnt(w));
-            end
-            % if we have multiple screens, figure out scaling factor, in
-            % case operator screen is smaller than experiment screen
-            if length(obj.wpnts)==2
-                obj.scrInfo.sFac    = min(obj.scrInfo.resolution{end}./obj.scrInfo.resolution{1});
-                obj.scrInfo.offset  = (obj.scrInfo.resolution{end}-obj.scrInfo.resolution{1}*obj.scrInfo.sFac)/2;
-            else
-                obj.scrInfo.sFac    = 1;
-                obj.scrInfo.offset  = [0 0];
-            end
-            
-            % see what text renderer to use
-            isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
-            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
-            if ~obj.usingFTGLTextRenderer
-                assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
-            end
+            screenState = obj.getScreenInfo(wpnt);
             
             % init key, mouse state
             [~,~,obj.keyState] = KbCheck();
@@ -741,7 +825,7 @@ classdef Titta < handle
                     obj.doEnterCalibrationMode();
                     qHasEnteredCalMode = true;
                 end
-                obj.loadOtherCal(out.attempt{kCal});
+                obj.loadOtherCal(out.attempt{kCal},kCal,[],true);
                 currentSelection    = kCal;                 % keeps track of calibration that is currently applied
                 % NB: qNewCal should also in this case be true, as the
                 % setup screen shown first is the start of a potential new
@@ -763,6 +847,7 @@ classdef Titta < handle
                 currentSelection    = nan;                  % keeps track of calibration that is currently applied
             end
             qNewCal             = true;
+            out.type            = 'standard';
             out.selectedCal     = nan;
             out.wasSkipped      = false;
             while true
@@ -874,23 +959,6 @@ classdef Titta < handle
                         % -2: redo validation only, so add a validation to
                         %     the current calibration
                         startScreen = 0;
-                        % check that current calibration mode matches that
-                        % of the calibration selected to be revalidated
-                        % if not exit calibration mode and reenter the
-                        % correct one
-                        next    = out.attempt{kCal}.eye;
-                        current = obj.settings.calibrateEye;
-                        if ~strcmp(next,current)
-                            % first change eye to be calibrated
-                            obj.changeAndCheckCalibEyeMode(next);
-                            % now also change mode in all cases (as this
-                            % also wipes state clean, so also wanted when
-                            % we remain monocular, but switch from left to
-                            % right eye)
-                            obj.doLeaveCalibrationMode();
-                            obj.doEnterCalibrationMode();
-                            currentSelection = nan;         % since calibration state cleared, this means there is no calibration applied right now
-                        end
                         % indicate if redo cal or redo val
                         qNewCal     = out.attempt{kCal}.valReviewStatus==-1;    % true if redo calibration, false if only redo validation
                         continue;
@@ -906,21 +974,14 @@ classdef Titta < handle
                             sca
                             ListenChar(0); Priority(0);
                         end
-                        error('Titta: run ended from Tobii routine')
+                        error('Titta: run ended from calibration routine')
                     otherwise
                         error('Titta: status %d not implemented',out.attempt{kCal}.valReviewStatus);
                 end
             end
             
             % clean up and reset PTB state
-            for w=length(wpnt):-1:1
-                Screen('FillRect',      wpnt(w),bgClr{w});                  % reset background color
-                Screen('BlendFunction', wpnt(w),osf{w},odf{w},ocm{w});      % reset blend function
-                Screen('TextFont',      wpnt(w),text.font{w},text.style(w));
-                Screen('TextColor',     wpnt(w),text.color{w});
-                Screen('TextSize',      wpnt(w),text.size(w));
-                Screen('Flip',          wpnt(w));                           % clear screen
-            end
+            obj.resetScreen(wpnt,screenState);
             
             % if we want to exit calibration mode because:
             % 1. user requests it (flag bit 2 is set)
@@ -930,23 +991,190 @@ classdef Titta < handle
             if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
                 obj.doLeaveCalibrationMode();
             end
-            % log to messages which calibration was selected
-            if ~isnan(out.selectedCal)
-                add = '';
-                if out.wasSkipped
-                    add = ' (note that operator skipped instead of accepted calibration)';
-                end
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: no. %d%s',getEyeLbl(obj.settings.calibrateEye),out.selectedCal,add));
-            else
-                obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: none',getEyeLbl(obj.settings.calibrateEye)));
+            
+            % log whole process in calibrateHistory and log to messages
+            % which calibration was selected
+            obj.logCalib(out);
+        end
+        
+        function out = calibrateManual(obj,wpnt,previousCalibs)
+            % Do participant setup and calibration for non-compliant subjects
+            %
+            %    CALIBRATION = Titta.calibrate(WPNT) displays the
+            %    participant and operator screens of the participant setup
+            %    and calibration interface on the PsychToolbox windows
+            %    specified by WPNT, an array of two window pointers. The
+            %    first window pointer is taken to refer to the participant
+            %    screen, and the second to an operator screen. 
+            %
+            %    CALIBRATION is a struct containing information about the
+            %    calibration/validation run.
+            %
+            %    INTERFACE
+            %    The interface can be fully controlled by key combinations.
+            %    Some key combinations are hardcoded, others can be changed through
+            %    Titta's settings. In the latter case, their default value
+            %    is listed here, and the settings name is indicated in
+            %    abbreviated form (e.g. `toggEyeIm` refers to the setting
+            %    `settings.UI.button.mancal.toggEyeIm.accelerator`, gotten
+            %    from Titta.getDefaults() or Titta.getOptions()). Some of
+            %    these keys have a clickable button in the interface
+            %    associated with them. Most of these buttons are visible by
+            %    default, but some are not. You can change button
+            %    visibility by changing, e.g.,
+            %    `settings.UI.button.mancal.toggEyeIm.visible`. Invisible
+            %    buttons can still be activated or deactivated by means of
+            %    the configured keys.
+            % 
+            %    The following hardcoded key combinations are available:
+            %      shift-escape - hard exit from the calibration mode. By
+            %                     default (see
+            %                     settings.UI.hardExitClosesPTB), this
+            %                     causes en error to be thrown and script
+            %                     execution to stop if that error is not
+            %                     caught.
+            %      shift-s      - skip calibration. The currently active
+            %                     calibration (as shown in the interface at
+            %                     the time of skipping) will remain active.
+            %      shift-d      - take screenshot of the participant
+            %                     display, which will be stored to the
+            %                     current active directory (cd).
+            %      shift-o      - take a screenshot of the operator
+            %                     display, which will be stored to the
+            %                     current active directory (cd).
+            %
+            %    Calibration or validation data (depending on current mode)
+            %    for a specific point is collected by either clicking on a
+            %    fixation target on the operator screen, or by pressing the
+            %    fixation target's corresponding number key on the
+            %    keyboard. Already collected data is discarded by holding
+            %    down the shift key while clicking the target or pressing
+            %    its corresponding key. If a calibration/validation point
+            %    collection or discarding is currently ongoing, clicking a
+            %    fixation target or pressing its corresponding key enqueues
+            %    this action, which will cause it to execute directly when
+            %    the previous action is finished. E.g., rapidly pressing 3,
+            %    1, 5 while in calibration mode will cause calibration data
+            %    to be acquired for points 3, 1 and 5 in one sequence.
+            %
+            %    The following configurable key combinations are available:
+            %      e         - toggle eye images, if available
+            %                  (toggEyeIm)
+            %      m         - change between calibration and validation
+            %                  modes (calval)
+            %      c         - open menu to change which eye will be
+            %                  calibrated (both, left, right). The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the number to press
+            %                  to activate that option. Available only if
+            %                  the eye tracker supports monocular
+            %                  calibration (changeeye)
+            %      spacebar  - select currently active calibration and
+            %                  exit the interface/continue experiment
+            %                  (continue)
+            %      s         - opens a menu that allows the current
+            %                  calibration state to be snapshotted, and any
+            %                  existing snapshots to be loaded. The menu can
+            %                  be keyboard-controlled: each of the items in
+            %                  the menu are preceded by the key to press
+            %                  to activate that option (snapshot)
+            %      g         - toggle whether online gaze position is
+            %                  visualized on the screen. Gaze will only be
+            %                  visualized to the operator. Press shift-g
+            %                  (or hold down shift while pressing the
+            %                  interface button with the mouse) to also
+            %                  show the online gaze position on the
+            %                  participant screen (toggGaze)
+            %      h         - toggle whether online head position
+            %                  visualization is shown on the screen. It
+            %                  will only be shown to the operator. Press
+            %                  shift-h (or hold down shift while pressing
+            %                  the interface button with the mouse) to also
+            %                  show the head position visualization on the
+            %                  participant screen (toggHead)
+            %
+            %    See also TITTA.CALIBRATE, TITTA.GETOPTIONS,
+            %    TITTA.GETDEFAULTS
+            
+            % this function does all setup, draws the interface, etc
+            assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
+            if nargin<3 || isempty(previousCalibs)
+                previousCalibs = [];
             end
             
-            % store calibration info in calibration history, for later
-            % retrieval if wanted
-            if isempty(obj.calibrateHistory)
-                obj.calibrateHistory{1} = out;
+            % get info about screen
+            screenState = obj.getScreenInfo(wpnt);
+            
+            % some preliminary setup, to make sure we are in known state
+            % NB: in contrast to calibrate() above, this function always
+            % wipes calibration state upon entry
+            obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
+            obj.doEnterCalibrationMode();
+            obj.StopRecordAll();
+            
+            % setup the setup/calibration screens
+            if ~isempty(previousCalibs)
+                % TODO: do prepopulating and loading inside doManualCalib,
+                % copy over only the needed cals and vals, nothing else
+                % prepopulate with previous calibrations passed by user
+                out                 = previousCalibs;
+                % preload the one previously selected by user
+                kCal                = out.selectedCal;      % index into list of calibration attempts
+                obj.loadOtherCal(out.attempt{kCal},kCal,[],true);
+                currentSelection    = kCal;                 % keeps track of calibration that is currently applied
             else
-                obj.calibrateHistory{end+1} = out;
+                kCal                = 0;                    % index into list of calibration attempts
+                currentSelection    = [nan nan];            % keeps track of calibration that is currently applied
+            end
+            out.type            = 'manual';
+            out.selectedCal     = [nan nan];
+            out.wasSkipped      = false;
+            
+            % run the setup/calibration process
+            out = obj.doManualCalib(wpnt,out,kCal,currentSelection);
+            switch out.status
+                case 1
+                    % all good, we're done
+                case 2
+                    % skip setup
+                    out.wasSkipped  = true;
+                    % NB: even though skipped, if done so at this stage, we
+                    % may still have a calibration applied, so that is
+                    % still logged in the output of doManualCalib()
+                case -5
+                    % full stop
+                    obj.buffer.leaveCalibrationMode();
+                    if obj.settings.UI.hardExitClosesPTB
+                        sca
+                        ListenChar(0); Priority(0);
+                    end
+                    error('Titta: run ended from manual calibration routine')
+                otherwise
+                    error('Titta: status %d not implemented',out.status);
+            end
+            
+            % clean up and reset PTB state
+            obj.resetScreen(wpnt,screenState);
+            
+            % leave calibration mode: issue a leave here now and wait for
+            % it to complete
+            if obj.buffer.isInCalibrationMode()
+                obj.doLeaveCalibrationMode();
+            end
+            
+            % log whole process in calibrateHistory and log to messages
+            % which calibration was selected
+            obj.logCalib(out);
+            
+            % also log information about data quality from validation, if
+            % any
+            if isfield(out.attempt{out.selectedCal(1)},'val')
+                message = obj.getValidationQualityMessage(out);
+                if ~isempty(message)
+                    obj.sendMessage(message);
+                else
+                    obj.sendMessage('not validated');
+                end
             end
         end
         
@@ -1037,8 +1265,9 @@ classdef Titta < handle
             if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
                 dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
             end
-            dat.TobiiLog    = obj.buffer.getLog(false);
-            dat.data        = obj.ConsumeAllData();
+            dat.TobiiLog            = obj.buffer.getLog(false);
+            dat.TobiiNotifications  = obj.buffer.consumeN('notification');
+            dat.data                = obj.ConsumeAllData();
         end
         
         function filename = saveData(obj, filename, doAppendVersion)
@@ -1215,6 +1444,7 @@ classdef Titta < handle
             settings.UI.setup.refCircleClr      = [0 0 255];
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
             settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
+            settings.UI.setup.headCircleEdgeWidth= 5;
             settings.UI.setup.eyeClr            = 255;
             settings.UI.setup.pupilClr          = 0;
             settings.UI.setup.crossClr          = [255 0 0];
@@ -1245,35 +1475,51 @@ classdef Titta < handle
             if streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32'))   % on Windows
                 settings.UI.cursor.normal           = 0;                        % arrow
                 settings.UI.cursor.clickable        = 2;                        % hand
+                settings.UI.cursor.sizetopleft      = 10;
+                settings.UI.cursor.sizetopright     = 9;
+                settings.UI.cursor.sizebottomleft   = 9;
+                settings.UI.cursor.sizebottomright  = 10;
+                settings.UI.cursor.sizetop          = 4;
+                settings.UI.cursor.sizebottom       = 4;
+                settings.UI.cursor.sizeleft         = 5;
+                settings.UI.cursor.sizeright        = 5;
             elseif IsLinux
                 settings.UI.cursor.normal           = 2;                        % arrow
                 settings.UI.cursor.clickable        = 58;                       % hand
+                settings.UI.cursor.sizetopleft      = 134;
+                settings.UI.cursor.sizetopright     = 136;
+                settings.UI.cursor.sizebottomleft   = 12;
+                settings.UI.cursor.sizebottomright  = 14;
+                settings.UI.cursor.sizetop          = 138;
+                settings.UI.cursor.sizebottom       = 16;
+                settings.UI.cursor.sizeleft         = 70;
+                settings.UI.cursor.sizeright        = 96;
             end
             settings.UI.button.margins          = [14 16];
             if qUsingOldWindowsPTBRenderer  % old text PTB renderer on Windows
                 settings.UI.button.textVOff     = 3;                            % amount (pixels) to move single line text so that it is visually centered on requested coordinate
             end
-            settings.UI.button.setup.text.font          = sansFont;
-            settings.UI.button.setup.text.size          = 24*textFac;
-            settings.UI.button.setup.text.style         = 0;
-            settings.UI.button.setup.eyeIm.accelerator  = 'e';
-            settings.UI.button.setup.eyeIm.visible      = true;
-            settings.UI.button.setup.eyeIm.string       = 'eye images (<i>e<i>)';
-            settings.UI.button.setup.eyeIm.fillColor    = toggleButClr.fill;
-            settings.UI.button.setup.eyeIm.edgeColor    = toggleButClr.edge;
-            settings.UI.button.setup.eyeIm.textColor    = toggleButClr.text;
-            settings.UI.button.setup.cal.accelerator    = 'space';
-            settings.UI.button.setup.cal.visible        = true;
-            settings.UI.button.setup.cal.string         = 'calibrate (<i>spacebar<i>)';
-            settings.UI.button.setup.cal.fillColor      = continueButClr.fill;
-            settings.UI.button.setup.cal.edgeColor      = continueButClr.edge;
-            settings.UI.button.setup.cal.textColor      = continueButClr.text;
-            settings.UI.button.setup.prevcal.accelerator= 'p';
-            settings.UI.button.setup.prevcal.visible    = true;
-            settings.UI.button.setup.prevcal.string     = 'previous calibrations (<i>p<i>)';
-            settings.UI.button.setup.prevcal.fillColor  = optionButClr.fill;
-            settings.UI.button.setup.prevcal.edgeColor  = optionButClr.edge;
-            settings.UI.button.setup.prevcal.textColor  = optionButClr.text;
+            settings.UI.button.setup.text.font              = sansFont;
+            settings.UI.button.setup.text.size              = 24*textFac;
+            settings.UI.button.setup.text.style             = 0;
+            settings.UI.button.setup.toggEyeIm.accelerator  = 'e';
+            settings.UI.button.setup.toggEyeIm.visible      = true;
+            settings.UI.button.setup.toggEyeIm.string       = 'eye images (<i>e<i>)';
+            settings.UI.button.setup.toggEyeIm.fillColor    = toggleButClr.fill;
+            settings.UI.button.setup.toggEyeIm.edgeColor    = toggleButClr.edge;
+            settings.UI.button.setup.toggEyeIm.textColor    = toggleButClr.text;
+            settings.UI.button.setup.cal.accelerator        = 'space';
+            settings.UI.button.setup.cal.visible            = true;
+            settings.UI.button.setup.cal.string             = 'calibrate (<i>spacebar<i>)';
+            settings.UI.button.setup.cal.fillColor          = continueButClr.fill;
+            settings.UI.button.setup.cal.edgeColor          = continueButClr.edge;
+            settings.UI.button.setup.cal.textColor          = continueButClr.text;
+            settings.UI.button.setup.prevcal.accelerator    = 'p';
+            settings.UI.button.setup.prevcal.visible        = true;
+            settings.UI.button.setup.prevcal.string         = 'previous calibrations (<i>p<i>)';
+            settings.UI.button.setup.prevcal.fillColor      = optionButClr.fill;
+            settings.UI.button.setup.prevcal.edgeColor      = optionButClr.edge;
+            settings.UI.button.setup.prevcal.textColor      = optionButClr.text;
             settings.UI.button.setup.changeeye.accelerator  = 'c';
             settings.UI.button.setup.changeeye.visible      = false;
             settings.UI.button.setup.changeeye.string       = 'change eye (<i>c<i>)';
@@ -1385,6 +1631,112 @@ classdef Titta < handle
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
             settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
+            
+            settings.UI.mancal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %1$.1f cm, target: %4$.1f cm\nY: %2$.1f cm, target: %5$.1f cm\nDistance: %3$.1f cm, target: %6$.1f cm',x,y,z,rx,ry,rz);
+            settings.UI.mancal.instruct.font    = sansFont;
+            settings.UI.mancal.instruct.size    = 32*textFac;
+            settings.UI.mancal.instruct.color   = 0;                            % only for messages on the screen, doesn't affect buttons
+            settings.UI.mancal.instruct.style   = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.instruct.vSpacing= 1;
+            settings.UI.button.mancal.text.font             = sansFont;
+            settings.UI.button.mancal.text.size             = 24*textFac;
+            settings.UI.button.mancal.text.style            = 0;
+            settings.UI.button.mancal.changeeye.accelerator = 'c';
+            settings.UI.button.mancal.changeeye.visible     = false;
+            settings.UI.button.mancal.changeeye.string      = 'change eye (<i>c<i>)';
+            settings.UI.button.mancal.changeeye.fillColor   = optionButClr.fill;
+            settings.UI.button.mancal.changeeye.edgeColor   = optionButClr.edge;
+            settings.UI.button.mancal.changeeye.textColor   = optionButClr.text;
+            settings.UI.button.mancal.toggEyeIm.accelerator = 'e';
+            settings.UI.button.mancal.toggEyeIm.visible     = true;
+            settings.UI.button.mancal.toggEyeIm.string      = 'eye images (<i>e<i>)';
+            settings.UI.button.mancal.toggEyeIm.fillColor   = toggleButClr.fill;
+            settings.UI.button.mancal.toggEyeIm.edgeColor   = toggleButClr.edge;
+            settings.UI.button.mancal.toggEyeIm.textColor   = toggleButClr.text;
+            settings.UI.button.mancal.calval.accelerator    = 'm';
+            settings.UI.button.mancal.calval.visible        = true;
+            settings.UI.button.mancal.calval.string         = 'change mode (<i>m<i>)';
+            settings.UI.button.mancal.calval.fillColor      = optionButClr.fill;
+            settings.UI.button.mancal.calval.edgeColor      = optionButClr.edge;
+            settings.UI.button.mancal.calval.textColor      = optionButClr.text;
+            settings.UI.button.mancal.continue.accelerator  = 'space';
+            settings.UI.button.mancal.continue.visible      = true;
+            settings.UI.button.mancal.continue.string       = 'continue (<i>space<i>)';
+            settings.UI.button.mancal.continue.fillColor    = continueButClr.fill;
+            settings.UI.button.mancal.continue.edgeColor    = continueButClr.edge;
+            settings.UI.button.mancal.continue.textColor    = continueButClr.text;
+            settings.UI.button.mancal.snapshot.accelerator  = 's';
+            settings.UI.button.mancal.snapshot.visible      = true;
+            settings.UI.button.mancal.snapshot.string       = 'snapshot (<i>s<i>)';
+            settings.UI.button.mancal.snapshot.fillColor    = optionButClr.fill;
+            settings.UI.button.mancal.snapshot.edgeColor    = optionButClr.edge;
+            settings.UI.button.mancal.snapshot.textColor    = optionButClr.text;
+            settings.UI.button.mancal.toggHead.accelerator  = 'h';
+            settings.UI.button.mancal.toggHead.visible      = true;
+            settings.UI.button.mancal.toggHead.string       = 'show head (<i>h<i>)';
+            settings.UI.button.mancal.toggHead.fillColor    = toggleButClr.fill;
+            settings.UI.button.mancal.toggHead.edgeColor    = toggleButClr.edge;
+            settings.UI.button.mancal.toggHead.textColor    = toggleButClr.text;
+            settings.UI.button.mancal.toggGaze.accelerator  = 'g';
+            settings.UI.button.mancal.toggGaze.visible      = true;
+            settings.UI.button.mancal.toggGaze.string       = 'show gaze (<i>g<i>)';
+            settings.UI.button.mancal.toggGaze.fillColor    = toggleButClr.fill;
+            settings.UI.button.mancal.toggGaze.edgeColor    = toggleButClr.edge;
+            settings.UI.button.mancal.toggGaze.textColor    = toggleButClr.text;
+            settings.UI.mancal.menu.bgColor         = 110;
+            settings.UI.mancal.menu.itemColor       = 140;
+            settings.UI.mancal.menu.itemColorActive = 180;
+            settings.UI.mancal.menu.text.font       = sansFont;
+            settings.UI.mancal.menu.text.size       = 24*textFac;
+            settings.UI.mancal.menu.text.color      = 0;
+            settings.UI.mancal.menu.text.eyeColors  = eyeColors;                % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.menu.text.style      = 0;
+            settings.UI.mancal.calState.text.font   = sansFont;
+            settings.UI.mancal.calState.text.size   = 20*textFac;
+            settings.UI.mancal.calState.text.style  = 0;
+            settings.UI.mancal.avg.text.font        = monoFont;
+            settings.UI.mancal.avg.text.size        = 24*textFac;
+            settings.UI.mancal.avg.text.color       = 0;
+            settings.UI.mancal.avg.text.eyeColors   = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.avg.text.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.avg.text.vSpacing    = 1;
+            settings.UI.mancal.hover.bgColor        = 110;
+            settings.UI.mancal.hover.text.font      = monoFont;
+            settings.UI.mancal.hover.text.size      = 20*textFac;
+            settings.UI.mancal.hover.text.color     = 0;
+            settings.UI.mancal.hover.text.eyeColors = eyeColors;                % colors for "left" and "right" in per-point data quality report on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            
+            settings.UI.mancal.showHead             = false;                    % show head display when interface opens? If false, can stil be opened with button
+            settings.UI.mancal.headScale            = .5;
+            settings.UI.mancal.headPos              = [];                       % if empty, centered
+            settings.UI.mancal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.bgColor              = 127;                      % background color for operator screen
+            settings.UI.mancal.fixBackSize          = 20;
+            settings.UI.mancal.fixFrontSize         = 5;
+            settings.UI.mancal.fixBackColor         = 0;
+            settings.UI.mancal.fixFrontColor        = 255;
+            settings.UI.mancal.fixPoint.text.font   = monoFont;
+            settings.UI.mancal.fixPoint.text.size   = 12*textFac;
+            settings.UI.mancal.fixPoint.text.color  = 255;
+            settings.UI.mancal.fixPoint.text.style  = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.mancal.bgColor                 = 127;                      % background color for calibration screen (can be overridden by settings.mancal.drawFunction())
+            settings.mancal.fixBackSize             = 20;
+            settings.mancal.fixFrontSize            = 5;
+            settings.mancal.fixBackColor            = 0;
+            settings.mancal.fixFrontColor           = 255;
+            settings.mancal.drawFunction            = [];
+            settings.mancal.doRecordEyeImages       = false;
+            settings.mancal.doRecordExtSignal       = false;
+            settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.mancal.cal.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
+            settings.mancal.cal.pointNotifyFunction = [];                       % function that is called upon each calibration point completing
+            settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
+            settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
+            settings.mancal.val.collectDuration     = 0.5;
+            settings.mancal.val.pointNotifyFunction = [];                       % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
+            
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
         
@@ -1436,7 +1788,7 @@ classdef Titta < handle
             systemTime = int64(PTBtime*1000*1000);
         end
         
-        function message = getValidationQualityMessage(cal,kCal)
+        function message = getValidationQualityMessage(cal,selectedCal)
             % Get a formatted message about data quality during validation
             %
             %    MESSAGE = Titta.getValidationQualityMessage(CAL) formats
@@ -1444,28 +1796,50 @@ classdef Titta < handle
             %    informing about achieved data quality.
             %
             %    If CAL is a struct with an array of calibration attemps,
-            %    in which case information about the CAL.selectedCal is
-            %    output. If CAL is a specific calibration attempt, the
-            %    message is formatted for this calibration.
+            %    information about the CAL.selectedCal is output. If CAL is
+            %    a specific calibration attempt, the message is formatted
+            %    for this calibration. CAL may also be the data quality
+            %    information for a specific validation session.
             % 
-            %    MESSAGE = Titta.getValidationQualityMessage(CAL,KCAL)
+            %    MESSAGE = Titta.getValidationQualityMessage(CAL,SELECTEDCAL)
             %    formats the calibration information for specific
-            %    calibration KCAL in the calibration attempt array CAL.
+            %    calibration SELECTEDCAL in the calibration attempt array
+            %    CAL.
             %
-            %    See also TITTA.CALIBRATE
+            %    See also TITTA.CALIBRATE TITTA.CALIBRATEMANUAL
             
-            if isfield(cal,'attempt')
-                % find selected calibration, make sure we output quality
-                % info for that
-                if nargin<2 || isempty(kCal)
-                    assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
-                    kCal    = cal.selectedCal;
+            message = '';
+            if isfield(cal,'quality')
+                % direct validation quality struct passed in, process
+                % directly
+                val = cal;
+                str = 'Data Quality (computed from validation)';
+            else
+                if isfield(cal,'attempt')
+                    % find selected calibration, make sure we output quality
+                    % info for that
+                    if nargin<2 || isempty(selectedCal)
+                        assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
+                        selectedCal    = cal.selectedCal;
+                    end
+                    cal     = cal.attempt{selectedCal(1)};
                 end
-                cal     = cal.attempt{kCal};
+                if isscalar(selectedCal)
+                    % find last valid validation
+                    iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
+                    val     = cal.val{iVal};
+                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal,iVal);
+                else
+                    % get val belonging to this cal
+                    whichCals = cellfun(@(x) x.whichCal, cal.val);
+                    idx     = find(whichCals==selectedCal(2),1,'last');
+                    if isempty(idx)
+                        return;
+                    end
+                    val     = cal.val{idx}.allPoints;
+                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
+                end
             end
-            % find last valid validation
-            iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
-            val     = cal.val{iVal};
             % get data to put in message, output per eye separately.
             eyes    = fieldnames(val.quality);
             nPoint  = length(val.quality);
@@ -1481,7 +1855,7 @@ classdef Titta < handle
                 msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
             end
             msg = [msg{:}]; msg(end) = [];
-            message = sprintf('CALIBRATION %1$d Data Quality (computed from validation %2$d):\npoint\tacc2D (%4$c)\taccX (%4$c)\taccY (%4$c)\tSTD2D (%4$c)\tRMS2D (%4$c)\tdata loss (%%)\n%3$s',kCal,iVal,msg,char(176));
+            message = sprintf('CALIBRATION %1$s:\npoint\tacc2D (%3$c)\taccX (%3$c)\taccY (%3$c)\tSTD2D (%3$c)\tRMS2D (%3$c)\tdata loss (%%)\n%2$s',str,msg,char(176));
         end
         
         function filename = getFileName(filename, doAppendVersion)
@@ -1563,6 +1937,56 @@ classdef Titta < handle
             end
         end
         
+        function state = getScreenInfo(obj,wpnt)
+            obj.wpnts = wpnt;
+            for w=length(wpnt):-1:1
+                obj.scrInfo.resolution{w}  = Screen('Rect',wpnt(w)); obj.scrInfo.resolution{w}(1:2) = [];
+                obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
+                obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
+                % get current PTB state so we can restore when returning
+                % 1. alpha blending
+                [state.osf{w},state.odf{w},state.ocm{w}] = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                % 2. screen clear color so we can reset that too. There is only
+                % one way to do that annoyingly:
+                % 2.1. clear back buffer by flipping
+                Screen('Flip',wpnt(w));
+                % 2.2. read a pixel, this gets us the background color
+                state.bgClr{w} = double(reshape(Screen('GetImage',wpnt(w),[1 1 2 2],'backBuffer',obj.qFloatColorRange(w),4),1,4));
+                % 3. text
+                state.text.style(w)  = Screen('TextStyle', wpnt(w));
+                state.text.size(w)   = Screen('TextSize' , wpnt(w));
+                state.text.font{w}   = Screen('TextFont' , wpnt(w));
+                state.text.color{w}  = Screen('TextColor', wpnt(w));
+            end
+            % if we have multiple screens, figure out scaling factor, in
+            % case operator screen is smaller than experiment screen
+            if length(obj.wpnts)==2
+                obj.scrInfo.sFac    = min(obj.scrInfo.resolution{end}./obj.scrInfo.resolution{1});
+                obj.scrInfo.offset  = (obj.scrInfo.resolution{end}-obj.scrInfo.resolution{1}*obj.scrInfo.sFac)/2;
+            else
+                obj.scrInfo.sFac    = 1;
+                obj.scrInfo.offset  = [0 0];
+            end
+            
+            % see what text renderer to use
+            isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
+            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
+            if ~obj.usingFTGLTextRenderer
+                assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
+            end
+        end
+        
+        function resetScreen(~,wpnt,state)
+            for w=length(wpnt):-1:1
+                Screen('FillRect',      wpnt(w),state.bgClr{w});                            % reset background color
+                Screen('BlendFunction', wpnt(w),state.osf{w},state.odf{w},state.ocm{w});    % reset blend function
+                Screen('TextFont',      wpnt(w),state.text.font{w},state.text.style(w));
+                Screen('TextColor',     wpnt(w),state.text.color{w});
+                Screen('TextSize',      wpnt(w),state.text.size(w));
+                Screen('Flip',          wpnt(w));                                           % clear screen
+            end
+        end
+        
         function [status,qCalReset] = showHeadPositioning(obj,wpnt,out)            
             % status output:
             %  1: continue (setup seems good) (space)
@@ -1595,69 +2019,24 @@ classdef Titta < handle
                 Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
             end
             
-            % setup ovals
+            % setup head displays
             ovalVSz     = .15;
-            refSz       = ovalVSz*obj.scrInfo.resolution{1}(2);
-            refClr      = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            bgClr       = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
-            % setup head position visualization
-            head                    = ETHead(wpnt(1),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
-            head.refSz              = refSz;
-            head.rectWH             = obj.scrInfo.resolution{1};
-            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
-            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
-            head.showYaw            = obj.settings.UI.setup.showYaw;
-            head.showEyes           = obj.settings.UI.setup.showEyes;
-            head.eyeClr             = obj.settings.UI.setup.eyeClr;
-            head.showPupils         = obj.settings.UI.setup.showPupils;
-            head.pupilClr           = obj.settings.UI.setup.pupilClr;
-            head.crossClr           = obj.settings.UI.setup.crossClr;
-            head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+            fac         = 1;
+            refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
+            refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
+            bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
             if qHaveOperatorScreen
-                headO                   = ETHead(wpnt(2),obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
-                headO.refSz             = head.refSz;
-                headO.rectWH            = obj.scrInfo.resolution{2};
-                headO.headCircleFillClr = head.headCircleFillClr;
-                headO.headCircleEdgeClr = head.headCircleEdgeClr;
-                headO.showYaw           = obj.settings.UI.setup.showYawToOperator;
-                headO.showEyes          = head.showEyes;
-                headO.eyeClr            = head.eyeClr;
-                headO.showPupils        = head.showPupils;
-                headO.pupilClr          = head.pupilClr;
-                headO.crossClr          = head.crossClr;
-                headO.crossEye          = head.crossEye;
-                refClrO                 = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
-                bgClrO                  = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
+                refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+                bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
+                [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
             end
             
-            % get reference position
-            if isempty(obj.settings.UI.setup.referencePos)
-                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
-            end
-            % position reference circle on screen
-            refPosP = obj.scrInfo.resolution{1}/2;
-            allPosOff = [0 0];
-            if ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
-                scrWidth  = obj.geom.displayArea.width/10;
-                scrHeight = obj.geom.displayArea.height/10;
-                pixPerCm  = mean(obj.scrInfo.resolution{1}./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
-                allPosOff = obj.settings.UI.setup.referencePos(1:2).*pixPerCm;
-            end
-            refPosP = refPosP+allPosOff;
-            
-            head.referencePos   = obj.settings.UI.setup.referencePos;
-            head.allPosOff      = allPosOff;
-            if qHaveOperatorScreen
-                headO.referencePos  = head.referencePos;
-                % NB: no offset on screen for head on operator screen, so
-                % don't use allPosOff
-                refPosO = obj.scrInfo.resolution{2}/2;
-            end
 
             % setup buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
             but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.setup.eyeIm    ,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.setup.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
             
@@ -1736,7 +2115,7 @@ classdef Titta < handle
             headPosLastT        = 0;
             [mx,my]             = deal(0,0);
             while true
-                Screen('FillRect', wpnt(1), bgClr);
+                Screen('FillRect', wpnt(1), bgClrP);
                 if qHaveOperatorScreen
                     Screen('FillRect', wpnt(2), bgClrO);
                 end
@@ -1795,8 +2174,8 @@ classdef Titta < handle
                     end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
-                    head.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
-                    headO.crossEye  = head.crossEye;
+                    headP.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye  = headP.crossEye;
                     qSelectedEyeChanged = false;
                 end
                 
@@ -1807,10 +2186,10 @@ classdef Titta < handle
                     qToggleSelectMenu   = false;
                     currentMenuSel      = currentMenuItem;
                     if qSelectMenuOpen
-                        cursors.rect    = num2cell(menuRects.',1);
+                        cursors.rect    = menuRects.';
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1));     % clickable items
                     else
-                        cursors.rect    = num2cell(butRects,1);
+                        cursors.rect    = butRects;
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));  % clickable items
                     end
                     
@@ -1832,23 +2211,16 @@ classdef Titta < handle
                 % get latest data from eye-tracker
                 eyeData     = obj.buffer.peekN('gaze',1);
                 posGuide    = obj.buffer.peekN('positioning',1);
-                if isempty(eyeData.systemTimeStamp)
-                    head.update([],[],[],[], [],[],[],[]);
-                    if qHaveOperatorScreen
-                        headO.update([],[],[],[], [],[],[],[]);
-                    end
-                else
-                    head.update(...
+                headP.update(...
+                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                if qHaveOperatorScreen
+                    headO.update(...
                         eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                    if qHaveOperatorScreen
-                        headO.update(...
-                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
-                    end
                 end
                 
-                if ~isnan(head.avgDist)
+                if ~isnan(headP.avgDist)
                     headPosLastT = eyeData.systemTimeStamp;
                 end
                 
@@ -1869,16 +2241,16 @@ classdef Titta < handle
                 % and data is missing. But only do so after 200 ms of data
                 % missing, so that these elements don't flicker all the
                 % time when unstable track
-                qHideSetup = qShowEyeImage && isempty(head.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
+                qHideSetup = qShowEyeImage && isempty(headP.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
                 % draw distance info
                 if obj.settings.UI.setup.showInstructionToSubject && ~qHideSetup
-                    str = obj.settings.UI.setup.instruct.strFun(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    str = obj.settings.UI.setup.instruct.strFun(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
                 end
                 if qHaveOperatorScreen
-                    str = obj.settings.UI.setup.instruct.strFunO(head.avgX,head.avgY,head.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                    str = obj.settings.UI.setup.instruct.strFunO(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
@@ -1887,7 +2259,7 @@ classdef Titta < handle
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available (so head not drawn)
                 if obj.settings.UI.setup.showHeadToSubject && ~qHideSetup
-                    drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClr ,5);
+                    drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClrP ,5);
                 end
                 if qHaveOperatorScreen
                     % no vertical/horizontal offset on operator screen
@@ -1895,7 +2267,7 @@ classdef Titta < handle
                 end
                 % stylized head
                 if obj.settings.UI.setup.showHeadToSubject
-                    head.draw();
+                    headP.draw();
                 end
                 if qHaveOperatorScreen
                     headO.draw();
@@ -1996,7 +2368,7 @@ classdef Titta < handle
                     else
                         if any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator)) && qCanDoMonocularCalib
                             qToggleSelectMenu = true;
-                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.eyeIm.accelerator)) && qHasEyeIm
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.toggEyeIm.accelerator)) && qHasEyeIm
                             qToggleEyeImage = true;
                         elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                             status = 1;
@@ -2252,35 +2624,46 @@ classdef Titta < handle
             Screen('Flip',wpnt(1),[],0,0,1);
         end
         
+        % NB: these three functions ignore the notification stream. Since
+        % its auto-started when connecting to tracker, we handle it
+        % separately
         function data = ConsumeAllData(obj,varargin)
             data.gaze           = obj.buffer.consumeTimeRange('gaze',varargin{:});
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
             data.externalSignals= obj.buffer.consumeTimeRange('externalSignal',varargin{:});
             data.timeSync       = obj.buffer.consumeTimeRange('timeSync',varargin{:});
+            data.notifications  = obj.buffer.consumeTimeRange('notification',varargin{:});
             % NB: positioning stream is not consumed as it will be useless
             % for later analysis (it doesn't have timestamps, and is meant
-            % for visualization only).
-        end
-        
-        function ClearAllBuffers(obj,varargin)
-            % clear all buffer, optionally only within specified time range
-            obj.buffer.clearTimeRange('gaze',varargin{:});
-            obj.buffer.clearTimeRange('eyeImage',varargin{:});
-            obj.buffer.clearTimeRange('externalSignal',varargin{:});
-            obj.buffer.clearTimeRange('timeSync',varargin{:});
+            % for visualization only). It is cleared however, consistent
+            % with effect of the above
             if nargin<2
                 % positioning stream doesn't have timestamps, and clear can
                 % thus only be called on it without a time range
                 obj.buffer.clear('positioning');
             end
         end
-        
+        function ClearAllBuffers(obj,varargin)
+            % clear all buffer, optionally only within specified time range
+            obj.buffer.clearTimeRange('gaze',varargin{:});
+            obj.buffer.clearTimeRange('eyeImage',varargin{:});
+            obj.buffer.clearTimeRange('externalSignal',varargin{:});
+            obj.buffer.clearTimeRange('timeSync',varargin{:});
+            obj.buffer.clearTimeRange('notification',varargin{:});
+            if nargin<2
+                % positioning stream doesn't have timestamps, and clear can
+                % thus only be called on it without a time range
+                obj.buffer.clear('positioning');
+            end
+        end
         function StopRecordAll(obj)
             obj.buffer.stop('gaze');
             obj.buffer.stop('eyeImage');
             obj.buffer.stop('externalSignal');
             obj.buffer.stop('timeSync');
             obj.buffer.stop('positioning');
+            % NB: do not notification stream, that is supposed to run for
+            % whole time class is initialized
         end
         
         function [out,tick] = DoCalPointDisplay(obj,wpnt,qCal,tick,lastFlip,qIsFirstCalAttempt)
@@ -2685,11 +3068,20 @@ classdef Titta < handle
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
-            obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
-            qAllowAcceptKey = true;
+            if ~isnan(pos)
+                obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
+                qAllowAcceptKey = true;
+            end
         end
         
         function val = ProcessValData(obj,val)
+            % remove unneeded data
+            if ~obj.calibrateLeftEye
+                val.gazeData = rmfield(val.gazeData,'left');
+            end
+            if ~obj.calibrateRightEye
+                val.gazeData = rmfield(val.gazeData,'right');
+            end
             % compute validation accuracy per point, noise levels, %
             % missing
             for p=length(val.gazeData):-1:1
@@ -2780,7 +3172,7 @@ classdef Titta < handle
                 % viewer
                 % select and load last successful calibration
                 selection = iValid(end);
-                obj.loadOtherCal(cal{selection});
+                obj.loadOtherCal(cal{selection},selection,true,true);
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
             qHaveMultipleValidVals  = ~isempty(iValid) && ~isscalar(iValid);
@@ -2832,6 +3224,10 @@ classdef Titta < handle
                 % position it
                 but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
             end
+            
+            % check shiftable button accelerators do not conflict with
+            % built in ones
+            assert(~qHaveOperatorScreen || ~ismember(obj.settings.UI.button.val.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.val.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
             
             
             % setup menu, if any
@@ -2934,7 +3330,7 @@ classdef Titta < handle
                     qUpdateNow = false;
                     if qSelectedCalChanged
                         % load requested cal
-                        obj.loadOtherCal(cal{newSelection},true);
+                        obj.loadOtherCal(cal{newSelection},newSelection,true,true);
                         qSelectedCalChanged = false;
                         qAwaitingCalChange = true;
                     else
@@ -3033,10 +3429,10 @@ classdef Titta < handle
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
                     if qSelectMenuOpen
-                        cursors.rect    = [num2cell(menuRects.',1) num2cell(butRects(1:3,:).',1)];
+                        cursors.rect    = [menuRects.' butRects(1:3,:).'];
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,size(menuRects,1)+3); % clickable items
                     else
-                        cursors.rect    = num2cell(butRects.',1);
+                        cursors.rect    = butRects.';
                         cursors.cursor  = repmat(obj.settings.UI.cursor.clickable,1,length(cursors.rect));      % clickable items
                     end
                     
@@ -3290,7 +3686,7 @@ classdef Titta < handle
                                 end
                             end
                         else
-                            if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator))
+                            if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneCalibSelection = true;
                                 break;
@@ -3298,7 +3694,7 @@ classdef Titta < handle
                                 status = -1;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator)) && ~shiftIsDown
                                 status = -2;
                                 qDoneCalibSelection = true;
                                 break;
@@ -3306,14 +3702,14 @@ classdef Titta < handle
                                 status = -3;
                                 qDoneCalibSelection = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && qHaveMultipleValidVals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && qHasCal
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && ~shiftIsDown && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
                                 break;
@@ -3366,6 +3762,1970 @@ classdef Titta < handle
             HideCursor;
         end
         
+        function out = doManualCalib(obj,wpnt,out,kCal,currentSelection)
+            % init key, mouse state
+            [~,~,obj.keyState]      = KbCheck();
+            [~,~,obj.mouseState]    = GetMouse();
+            
+            % get eye tracker capabilities
+            qHasEyeIm               = obj.buffer.hasStream('eyeImage');
+            qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
+            
+            % timing is done in ticks (display refreshes) instead of time.
+            % If multiple screens, get lowest fs as that will determine
+            % tick rate
+            for w=length(wpnt):-1:1
+                fs(w) = Screen('NominalFrameRate',wpnt(w));
+            end
+            fs = min(fs);
+            
+            startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
+            obj.buffer.start('gaze');
+            obj.buffer.start('positioning');
+            if obj.settings.mancal.doRecordEyeImages && qHasEyeIm
+                obj.buffer.start('eyeImage');
+            end
+            if obj.settings.mancal.doRecordExtSignal && obj.buffer.hasStream('externalSignal')
+                obj.buffer.start('externalSignal');
+            end
+            obj.buffer.start('timeSync');
+            
+            % setup head position visualization
+            ovalVSz     = .15;
+            facO        = obj.settings.UI.mancal.headScale;
+            refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
+            refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.setup.showYaw,true);
+            [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.setup.showYawToOperator,false);
+            % setup head position screen (centered, can be dragged to move)
+            if isempty(obj.settings.UI.mancal.headPos)
+                headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
+            else
+                headORect       = OffsetRect([0 0 obj.scrInfo.resolution{2}*facO],obj.settings.UI.mancal.headPos(1),obj.settings.UI.mancal.headPos(2));
+            end
+            headO.allPosOff = headORect(1:2);
+            refPosO         = refPosO+headORect(1:2);
+            
+            % setup text for buttons
+            Screen('TextFont',  wpnt(end), obj.settings.UI.button.mancal.text.font, obj.settings.UI.button.mancal.text.style);
+            Screen('TextSize',  wpnt(end), obj.settings.UI.button.mancal.text.size);
+            
+            % set up buttons
+            funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
+            but(1)  = PTBButton(obj.settings.UI.button.mancal.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.mancal.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.mancal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.mancal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(5)  = PTBButton(obj.settings.UI.button.mancal.snapshot ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.mancal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.mancal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            % 1. below screen
+            % position them
+            butRectsBase= cat(1,but([but(1:5).visible]).rect);
+            if ~isempty(butRectsBase)
+                buttonOff   = 80;
+                yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
+                buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
+                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
+                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+                xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{end}(1)/2;
+                butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
+                butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
+                butRects(:,4)     = yposBase;
+                butRects          = num2cell(butRects,2);
+                [but((1:length(but))<=5&[but.visible]).rect] = butRects{:};
+            end
+            
+            % 2. atop screen
+            % position them
+            yPosTop             = .02*obj.scrInfo.resolution{end}(2);
+            buttonOff           = 900;
+            if but(6).visible
+                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(6).rect(3),yPosTop);
+            end
+            if but(7).visible
+                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
+            end
+            % get all butRects, needed below in script
+            butRects        = cat(1,but.rect).';
+            
+            % check shiftable button accelerators do not conflict with
+            % built in ones
+            assert(~ismember(obj.settings.UI.button.mancal.toggHead.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggHead.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~ismember(obj.settings.UI.button.mancal.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            
+            % setup menu, if any
+            menuMargin      = 10;
+            menuPad         = 3;
+            menuElemHeight  = 45;
+            if qCanDoMonocularCalib
+                nElem               = 3;
+                totHeight           = nElem*(menuElemHeight+menuPad)-menuPad;
+                width               = 300;
+                % menu background
+                eyeMenuBackRect     = [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
+                % menuRects
+                eyeMenuRects        = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
+                eyeMenuRects        = eyeMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                % text in each rect
+                Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
+                Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                eyeMenuTextCache(1) = obj.getTextCache(wpnt(end), '(1) both eyes',eyeMenuRects(1,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                eyeMenuTextCache(2) = obj.getTextCache(wpnt(end), '(2) left eye' ,eyeMenuRects(2,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                eyeMenuTextCache(3) = obj.getTextCache(wpnt(end),'(3) right eye' ,eyeMenuRects(3,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                
+                % get current state
+                currentEyeMenuItem  = find(ismember({'both','left','right'},obj.settings.calibrateEye));
+            end
+            
+            % prep fixation targets
+            cPoints             = obj.settings.mancal.cal.pointPos;
+            vPoints             = obj.settings.mancal.val.pointPos;
+            % for each point: [x_norm y_norm x_pix y_pix ID_number prev_status status];
+            % cal status: 0: not collected; -1: failed; 1: collected;
+            % 2: displaying; 3: collecting; 4: enqueued; 5: discarding
+            cPointsP            = [cPoints bsxfun(@times,cPoints,obj.scrInfo.resolution{1}) [1:size(cPoints,1)].' zeros(size(cPoints,1),2)]; %#ok<NBRAK>
+            % val status: 0: not collected; 1: collected; 2: displaying;
+            % 3: collecting; 3: enqueued
+            vPointsP            = [vPoints bsxfun(@times,vPoints,obj.scrInfo.resolution{1}) [1:size(vPoints,1)].' zeros(size(vPoints,1),2)]; %#ok<NBRAK>
+            cPointsO            = bsxfun(@plus,cPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
+            vPointsO            = bsxfun(@plus,vPointsP(:,3:4)*obj.scrInfo.sFac,obj.scrInfo.offset);
+            % make text caches for numbering points
+            off = obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.7/2*[1 1]*sqrt(2)/2;
+            Screen('TextFont', wpnt(end), obj.settings.UI.mancal.fixPoint.text.font, obj.settings.UI.mancal.fixPoint.text.style);
+            Screen('TextSize', wpnt(end), max(round(obj.settings.UI.mancal.fixPoint.text.size*obj.scrInfo.sFac),4));
+            for p=size(cPointsO,1):-1:1
+                r = [cPointsO(p,:) cPointsO(p,:)]+[off off];
+                cPointTextCache(p) = obj.getTextCache(wpnt(end), num2str(p),r,'baseColor',obj.settings.UI.mancal.fixPoint.text.color,'xalign','left','yalign','top');
+            end
+            for p=size(vPointsO,1):-1:1
+                r = [vPointsO(p,:) vPointsO(p,:)]+[off off];
+                vPointTextCache(p) = obj.getTextCache(wpnt(end), num2str(p),r,'baseColor',obj.settings.UI.mancal.fixPoint.text.color,'xalign','left','yalign','top');
+            end
+            
+            % prep point drawer and data collection logic
+            if isa(obj.settings.mancal.drawFunction,'function_handle')
+                drawFunction    = obj.settings.mancal.drawFunction;
+            else
+                drawFunction    = @obj.drawFixationPointDefault;
+            end
+            collectInterval     = ceil(obj.settings.mancal.val.collectDuration*fs);
+            nDataPoint          = ceil(obj.settings.mancal.val.collectDuration*obj.settings.freq);
+            
+            % prep colors
+            bgClrP              = obj.getColorForWindow(obj.settings.UI.mancal.bgColor,wpnt(1));
+            bgClrO              = obj.getColorForWindow(obj.settings.UI.mancal.bgColor,wpnt(2));
+            eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.mancal.eyeColors,'uni',false);
+            menuBgClr           = obj.getColorForWindow(obj.settings.UI.mancal.menu.bgColor,wpnt(end));
+            menuItemClr         = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColor      ,wpnt(end));
+            menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.mancal.menu.itemColorActive,wpnt(end));
+            hoverBgClr          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(end));
+            refClrP             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
+            refClrO             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+            headBgClrO          = obj.getColorForWindow(obj.settings.UI.mancal.hover.bgColor,wpnt(2));
+            for w=length(wpnt):-1:1
+                onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.mancal.onlineGaze.eyeColors,'uni',false);
+            end
+            
+            
+            % outer loop, in which less frequent actions are done
+            % 1. head display
+            qShowHead               = obj.settings.UI.mancal.showHead;
+            qShowHeadToAll          = false;
+            circVerts               = genCircle(200);
+            qDraggingHead           = false;
+            dragPos                 = [];
+            headResizingGrip        = nan;  % denotes which corner/edge is being dragged for resize action, nan if none currently active
+            headOriRect             = [];
+            % 2. calibration/validation state
+            qToggleStage            = true;
+            if kCal
+                % have a previous loaded calibration, start in validation
+                % mode
+                stage                   = 'cal';    % will be set to 'val' below because qToggleStage is true
+            else
+                stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
+            end
+            % 3. selection menus
+            qToggleSelectEyeMenu    = false;
+            qSelectEyeMenuOpen      = false;
+            qToggleSelectSnapMenu   = false;
+            qSelectSnapMenuOpen     = false;
+            qChangeMenuArrow        = false;
+            currentMenuRects        = [];
+            currentMenuSel          = 0;
+            % 4. eye selection
+            qSelectedEyeChanged     = false;
+            extraInp                = {};
+            if ~strcmp(obj.settings.calibrateEye,'both')
+                extraInp            = {obj.settings.calibrateEye};
+            end
+            % 5. eye images
+            qToggleEyeImage         = true;     % eye images default on
+            qShowEyeImage           = false;
+            eyeTexs                 = [0 0];
+            eyeSzs                  = [];
+            eyeImageRect            = repmat({zeros(1,4)},1,2);
+            % 6. online gaze
+            qShowGaze               = false;
+            qShowGazeToAll          = false;
+            % 7. point selection by mouse and info about validated points
+            fixPointRectSzSel       = obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5;
+            fixPointRectSzHover     = 80*obj.scrInfo.sFac;
+            openInfoForPoint        = nan;
+            pointToShowInfoFor      = nan;
+            qUpdatePointHover       = false;
+            % 8. snapshot saving and loading
+            qSaveSnapShot           = false;
+            snapshots               = cell(0,3);    % each row is a snapshot, indices indicating 1: which attempt, 2: which cal, 3: cal history
+            % 9. applied calibration status
+            qNewCal                 = kCal==0;
+            qClearState             = false;
+            pointList               = [];
+            discardList             = [];
+            calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
+            usedCalibrationPoints   = [];
+            pointStateLastCal       = [];
+            awaitingCalChangeType   = '';           % 'compute' or 'load'
+            qUpdateCalStatusText    = true;
+            qUpdateLineDisplay      = true;
+            % 10. cursor drawer state
+            qUpdateCursors          = true;
+            
+            % Refresh internal key-/mouseState to make sure we don't
+            % trigger on already pressed buttons
+            [mx,my]                 = obj.getNewMouseKeyPress(wpnt(end));
+            
+            qDoneWithManualCalib    = false;
+            tick                    = 0;
+            tick0p                  = nan;
+            out.flips               = GetSecs();    % anchor timing
+            frameMsg                = '';
+            whichPoint              = nan;
+            whichPointDiscard       = nan;
+            qCancelPointCollect     = false;
+            qRegenSnapShotMenuListing = false;
+            while ~qDoneWithManualCalib
+                % start new calibration, if wanted (e.g. eye changed, last
+                % calibration point discarded). New cal also started when a
+                % snapshot is loaded, but this is done elsewhere
+                if qNewCal
+                    if ~kCal
+                        kCal = 1;
+                    else
+                        kCal = length(out.attempt)+1;
+                    end
+                    out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    out.attempt{kCal}.device    = obj.settings.tracker;
+                    out.attempt{kCal}.eye       = obj.settings.calibrateEye;
+                    calAction                   = 0;
+                    valAction                   = 0;
+                    qNewCal                     = false;
+                end
+                
+                % clear point, calibration statuses, etc
+                if qClearState
+                    cPointsP(:,end-[1 0])       = 0;
+                    vPointsP(:,end-[1 0])       = 0;
+                    pointsP (:,end-[1 0])       = 0; %#ok<AGROW>
+                    calibrationStatus           = 0;
+                    usedCalibrationPoints       = [];
+                    qUpdateLineDisplay          = true;
+                    qUpdateCalStatusText        = true;
+                    qClearState                 = false;
+                end
+                
+                % toggle stage
+                if qToggleStage
+                    switch stage
+                        case 'val'  % currently 'val', becomes 'cal'
+                            % copy over status of val points to storage
+                            if exist('pointsP','var')
+                                vPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
+                            end
+                            % change to cal
+                            stage           = 'cal';
+                            pointsP         = cPointsP;
+                            pointsO         = cPointsO;
+                            pointTextCache  = cPointTextCache;
+                            paceIntervalTicks   = ceil(obj.settings.mancal.cal.paceDuration*fs);
+                            obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                        case 'cal'  % currently 'cal', becomes 'val'
+                            % copy over status of cal points to storage
+                            if exist('pointsP','var')
+                                cPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
+                            end
+                            % change to val
+                            stage           = 'val';
+                            pointsP         = vPointsP;
+                            pointsO         = vPointsO;
+                            pointTextCache  = vPointTextCache;
+                            paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
+                            obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                    end
+                    % get point rects on operator screen
+                    calValRectsSel  = zeros(4,size(pointsO,1));
+                    calValRectsHover= zeros(4,size(pointsO,1));
+                    for p=1:size(pointsO,1)
+                        calValRectsSel(:,p)     = CenterRectOnPointd([0 0 fixPointRectSzSel   fixPointRectSzSel  ],pointsO(p,1),pointsO(p,2));
+                        calValRectsHover(:,p)   = CenterRectOnPointd([0 0 fixPointRectSzHover fixPointRectSzHover],pointsO(p,1),pointsO(p,2));
+                    end
+                    qUpdateCursors      = true;
+                    qToggleStage        = false;
+                    qUpdateLineDisplay  = true;
+                    qUpdatePointHover   = true;
+                    qUpdateCalStatusText= true;
+                end
+                
+                % setup menu, if any
+                if qToggleSelectSnapMenu
+                    qSelectSnapMenuOpen = ~qSelectSnapMenuOpen;
+                    if qSelectSnapMenuOpen
+                        qRegenSnapShotMenuListing = true;
+                    end
+                    qToggleSelectSnapMenu   = false;
+                    qUpdateCursors          = true;
+                elseif qToggleSelectEyeMenu
+                    qSelectEyeMenuOpen  = ~qSelectEyeMenuOpen;
+                    if qSelectEyeMenuOpen
+                        currentMenuBackRect = eyeMenuBackRect;
+                        currentMenuRects    = eyeMenuRects;
+                        currentMenuTextCache= eyeMenuTextCache;
+                        currentMenuSel      = currentEyeMenuItem;
+                        menuActiveItem      = currentEyeMenuItem==[1:3]; %#ok<NBRAK>
+                        qChangeMenuArrow    = true;
+                    end
+                    qToggleSelectEyeMenu= false;
+                    qUpdateCursors      = true;
+                end
+                
+                if qSaveSnapShot
+                    % find last successful cal, thats the one that is
+                    % active
+                    toSave                      = [kCal getLastManualCal(out.attempt{kCal})];
+                    % check if this snapshot already exists
+                    if isempty(snapshots) || ~any(all([cat(1,snapshots{:,1})==toSave(1) cat(1,snapshots{:,2})==toSave(2)],2))
+                        % collect cal actions that contributed to current
+                        % state
+                        idxs = nan(1,size(cPointsP,1));
+                        count= 0;
+                        % find cal actions for points
+                        for c=toSave(2):-1:1
+                            idx = out.attempt{kCal}.cal{c}.point(1);
+                            if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && ((isfield(out.attempt{kCal}.cal{c},'collectStatus') && out.attempt{kCal}.cal{c}.collectStatus.status==0) || (isfield(out.attempt{kCal}.cal{c},'discardStatus') && out.attempt{kCal}.cal{c}.discardStatus.status==0))
+                                idxs(idx)   = c;
+                                count       = count+1;
+                            end
+                        end
+                        % copy over in chronological order
+                        fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus','discardStatus'};
+                        [~,i] = sort(idxs);
+                        cals = cell(1,count);
+                        for c=1:count
+                            for f=1:length(fields)
+                                if isfield(out.attempt{kCal}.cal{idxs(i(c))},fields{f})
+                                    cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
+                                end
+                            end
+                        end
+                        % calibration data, etc
+                        if count
+                            cals{end}.computeResult  = out.attempt{kCal}.cal{toSave(2)}.computeResult;
+                            cals{end}.computedCal    = out.attempt{kCal}.cal{toSave(2)}.computedCal;
+                        end
+                        snapshots = [snapshots; num2cell(toSave) {cals}]; %#ok<AGROW>
+                    end
+                    qRegenSnapShotMenuListing   = true;
+                    qSaveSnapShot               = false;
+                end
+                
+                if qRegenSnapShotMenuListing
+                    % this menu's length may change, have to generate
+                    % each time it opens
+                    nElem           = size(snapshots,1)+1;  % always have the "add snapshot" button at the end
+                    totHeight       = nElem*(menuElemHeight+menuPad)-menuPad;
+                    width           = 900;
+                    % menu background
+                    snapMenuBackRect= [-.5*width+obj.scrInfo.center{end}(1)-menuMargin -.5*totHeight+obj.scrInfo.center{end}(2)-menuMargin .5*width+obj.scrInfo.center{end}(1)+menuMargin .5*totHeight+obj.scrInfo.center{end}(2)+menuMargin];
+                    % menuRects
+                    snapMenuRects   = repmat([-.5*width+obj.scrInfo.center{end}(1) -menuElemHeight/2+obj.scrInfo.center{end}(2) .5*width+obj.scrInfo.center{end}(1) menuElemHeight/2+obj.scrInfo.center{end}(2)],nElem,1);
+                    snapMenuRects   = snapMenuRects+bsxfun(@times,[menuElemHeight*([0:nElem-1]+.5)+[0:nElem-1]*menuPad-totHeight/2].',[0 1 0 1]); %#ok<NBRAK>
+                    % text in each rect
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.menu.text.font, obj.settings.UI.mancal.menu.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.menu.text.size);
+                    currentSnapMenuItem = nan;
+                    for c=nElem:-1:1
+                        if c==nElem
+                            str = '(+): add snapshot';
+                        else
+                            whichAttempt    = snapshots{c,1};
+                            whichCal        = snapshots{c,2};
+                            currCal         = getLastManualCal(out.attempt{kCal});
+                            if whichAttempt==kCal && whichCal==currCal
+                                % currently active calibration is equal to
+                                % this snapshot, mark for highlight
+                                currentSnapMenuItem = c;
+                            end
+                            
+                            % denote which eye
+                            eyeStr = '';
+                            if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
+                                eyeStr = sprintf('<color=%s>L<color>',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{1}));
+                            end
+                            if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
+                                if strcmp(out.attempt{whichAttempt}.eye,'both')
+                                    eyeStr = [eyeStr '+']; %#ok<AGROW>
+                                end
+                                eyeStr = [eyeStr sprintf('<color=%s>R<color>',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{2}))]; %#ok<AGROW>
+                            end
+                            
+                            % get which calibration points used for cal
+                            if whichCal>0
+                                whichCalPoints  = sort(getWhichCalibrationPoints(cPointsP(:,1:2),snapshots{c,3}{end}.computeResult.points));
+                                calStr          = sprintf('%d ',whichCalPoints);
+                            else
+                                calStr          = '';
+                            end
+                            
+                            % find the active/last valid validation for this
+                            % calibration, if any
+                            valStr = 'no validation available';
+                            if isfield(out.attempt{whichAttempt},'val')
+                                idx = nan;
+                                for p=length(out.attempt{whichAttempt}.val):-1:1
+                                    if ~isnan(out.attempt{whichAttempt}.val{p}.point(1)) && out.attempt{whichAttempt}.val{p}.whichCal==whichCal && ~out.attempt{whichAttempt}.val{p}.wasCancelled && ~out.attempt{whichAttempt}.val{p}.wasDiscarded
+                                        idx = p;
+                                        break;
+                                    end
+                                end
+                                if ~isnan(idx)
+                                    myVal = out.attempt{whichAttempt}.val{idx}.allPoints;
+                                    % acc field is [lx rx; ly ry]
+                                    [strl,strr,strsep] = deal('');
+                                    if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
+                                        strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),char(176));
+                                    end
+                                    if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
+                                        idx = 1+strcmp(out.attempt{whichAttempt}.eye,'both');
+                                        strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.mancal.menu.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),char(176));
+                                    end
+                                    if strcmp(out.attempt{whichAttempt}.eye,'both')
+                                        strsep = ', ';
+                                    end
+                                    valStr = sprintf('val: %s%s%s',strl,strsep,strr);
+                                end
+                            end
+                            str = sprintf('(%d): %s, cal points: [%s], %s',c,eyeStr,calStr(1:end-1),valStr);
+                        end
+                        snapMenuTextCache(c) = obj.getTextCache(wpnt(end),str,snapMenuRects(c,:),'baseColor',obj.settings.UI.mancal.menu.text.color);
+                    end
+                    
+                    currentMenuBackRect         = snapMenuBackRect;
+                    currentMenuRects            = snapMenuRects;
+                    currentMenuTextCache        = snapMenuTextCache;
+                    currentMenuSel              = currentSnapMenuItem;
+                    menuActiveItem              = currentSnapMenuItem==[1:size(snapshots,1)+1]; %#ok<NBRAK>
+                    if isnan(currentMenuSel)
+                        currentMenuSel          = size(snapshots,1)+1;
+                    end
+                    qChangeMenuArrow            = true;
+                    qRegenSnapShotMenuListing   = false;
+                    qUpdateCursors              = true;
+                end
+                
+                % switch on/off eye images
+                if qHasEyeIm
+                    % toggle eye images on or off if requested
+                    if qToggleEyeImage
+                        if qShowEyeImage && ~obj.settings.mancal.doRecordEyeImages
+                            % switch off
+                            obj.buffer.stop('eyeImage');
+                            obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
+                        elseif ~obj.settings.mancal.doRecordEyeImages
+                            % switch on
+                            eyeStartTime = obj.getTimeAsSystemTime();
+                            obj.buffer.start('eyeImage');
+                        end
+                        qShowEyeImage   = ~qShowEyeImage;
+                        qToggleEyeImage = false;
+                    end
+                end
+                
+                % update cursors
+                if qUpdateCursors
+                    headRects   = [];
+                    headCursors = [];
+                    if qShowHead
+                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor);
+                    end
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        otherRects  = currentMenuRects.';
+                    else
+                        otherRects  = [butRects calValRectsSel];
+                    end
+                    otherCursors    = repmat(obj.settings.UI.cursor.clickable,1,size(otherRects,2));    % clickable items
+                    cursors.rect    = [headRects otherRects];
+                    cursors.cursor  = [headCursors otherCursors];      
+                    cursors.other   = obj.settings.UI.cursor.normal;                                    % default
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
+                    qUpdateCursors = false;
+                end
+                
+                % update calibration mode
+                if qSelectedEyeChanged
+                    switch currentMenuSel
+                        case 1
+                            mode = 'both';
+                        case 2
+                            mode = 'left';
+                        case 3
+                            mode = 'right';
+                    end
+                    obj.changeAndCheckCalibEyeMode(mode);
+                    obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                    % exit and reenter calibration mode, if needed
+                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                        obj.doEnterCalibrationMode();
+                    end
+                    extraInp = {};
+                    if ~strcmp(obj.settings.calibrateEye,'both')
+                        extraInp        = {obj.settings.calibrateEye};
+                    end
+                    % update states of this screen
+                    currentEyeMenuItem  = currentMenuSel;
+                    headP.crossEye      = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headO.crossEye      = headP.crossEye;
+                    qSelectedEyeChanged = false;
+                    % reset cal state
+                    qNewCal             = true;
+                    qClearState         = true;
+                    continue;   % execute immediately, restart this update loop from top
+                end
+                
+                % update line displays of calibration/validation data
+                if ~isempty(awaitingCalChangeType)
+                    switch awaitingCalChangeType
+                        case 'compute'
+                            if calibrationStatus==2
+                                % still waiting for computation to complete
+                                computeResult = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(computeResult)
+                                    % store calibration result
+                                    out.attempt{kCal}.cal{calAction}.computeResult = fixupTobiiCalResult(computeResult.calibrationResult,obj.calibrateLeftEye,obj.calibrateRightEye);
+                                    if ~strcmpi(out.attempt{kCal}.cal{calAction}.computeResult.status(1:7),'Success') % 1:7 so e.g. SuccessLeftEye is also supported
+                                        % calibration unsuccessful, we bail now
+                                        calibrationStatus       = -1;
+                                        awaitingCalChangeType   = '';
+                                    else
+                                        % calibration successful
+                                        calibrationStatus       = 1;
+                                        % issue command to get calibration
+                                        % data
+                                        obj.buffer.calibrationGetData();
+                                        % denote all validation points as
+                                        % not collected
+                                        vPointsP(:,end-[1 0]) = 0;
+                                        % calibration output for a
+                                        % successful calibration may show
+                                        % that data for some calibration
+                                        % points was removed, update their
+                                        % state
+                                        usedCalibrationPoints = getWhichCalibrationPoints(pointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
+                                        qNoData   = ~ismember([1:size(pointsP,1)],usedCalibrationPoints); %#ok<NBRAK>
+                                        if any(qNoData)
+                                            pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
+                                            qUpdatePointHover = true;
+                                        end
+                                    end
+                                    qUpdateLineDisplay  = true;
+                                    qUpdateCalStatusText= true;
+                                end
+                            elseif calibrationStatus==1
+                                % computed succesfully, waiting for
+                                % calibration data retrieval
+                                calData = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(calData) && strcmp(calData.workItem.action,'GetCalibrationData')
+                                    out.attempt{kCal}.cal{calAction}.computedCal    = calData.calibrationData;
+                                    awaitingCalChangeType                           = '';   % done with calibration/data acquisition sequence
+                                end
+                            end
+                        case 'load'
+                            if calibrationStatus~=3
+                                whichAttempt    = snapshots{currentMenuSel,1};
+                                whichCal        = snapshots{currentMenuSel,2};
+                                % start new cal
+                                kCal = length(out.attempt)+1;
+                                out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                                out.attempt{kCal}.device    = obj.settings.tracker;
+                                out.attempt{kCal}.eye       = out.attempt{whichAttempt}.eye;
+                                % copy over old calibration, set state
+                                % accordingly
+                                % 1. calibration points
+                                if whichCal>0
+                                    out.attempt{kCal}.cal = snapshots{currentMenuSel,3};
+                                    calAction = length(out.attempt{kCal}.cal);
+                                else
+                                    calAction = 0;
+                                end
+                                % 2. validation points
+                                if isfield(out.attempt{whichAttempt},'val')
+                                    qFound  = false(1,size(pointsP,1));
+                                    vals    = out.attempt{whichAttempt}.val;
+                                    oidx    = nan;
+                                    for p=length(vals):-1:1
+                                        idx = vals{p}.point(1);
+                                        if ~isnan(idx) && ~qFound(idx) && vals{p}.whichCal==whichCal && ~vals{p}.wasCancelled && ~vals{p}.wasDiscarded
+                                            % we don't yet have validation data for
+                                            % this point, and it is for the current
+                                            % calibration -> collect
+                                            qFound(idx) = true;
+                                            if isnan(oidx)
+                                                oidx = size(vals{p}.allPoints.pointPos,1);
+                                                qKeepAll = true;
+                                            end
+                                            % copy over all fields
+                                            out.attempt{kCal}.val{oidx} = vals{p};
+                                            out.attempt{kCal}.val{oidx}.whichCal = calAction;
+                                            if ~qKeepAll && isfield(out.attempt{kCal}.val{oidx},'allPoints')
+                                                out.attempt{kCal}.val{oidx} = rmfield(out.attempt{kCal}.val{oidx},'allPoints');
+                                            end
+                                            oidx = oidx-1;
+                                            qKeepAll = false;
+                                        end
+                                    end
+                                end
+                                if isfield(out.attempt{kCal},'val')
+                                    valAction = length(out.attempt{kCal}.val);
+                                else
+                                    valAction = 0;
+                                end
+                                % 3. extra info
+                                out.attempt{kCal}.loadedFrom.whichAttempt   = whichAttempt;
+                                out.attempt{kCal}.loadedFrom.whichCal       = whichCal;
+                                out.attempt{kCal}.loadedFrom.timestamp      = out.attempt{whichAttempt}.timestamp;
+                                % 4. further state updates
+                                if calAction>0
+                                    usedCalibrationPoints = getWhichCalibrationPoints(cPointsP(:,1:2),out.attempt{kCal}.cal{calAction}.computeResult.points);
+                                else
+                                    usedCalibrationPoints = [];
+                                end
+                                cPointsP(:,end-[1 0]) = 0;
+                                cPointsP(usedCalibrationPoints,end) = 1;
+                                vPointsP(:,end-[1 0]) = 0;
+                                if isfield(out.attempt{kCal},'val')
+                                    vPointsP(out.attempt{kCal}.val{end}.allPoints.pointPos(:,1),end) = 1;
+                                end
+                                if strcmp(stage,'cal')
+                                    pointsP = cPointsP;
+                                else
+                                    pointsP = vPointsP;
+                                end
+                                % apply
+                                % log message
+                                pointStr = sprintf('%d ',sort(usedCalibrationPoints));
+                                obj.sendMessage(sprintf('LOAD CALIBRATION (%s), attempt %d, cal %d, points [%s]',getEyeLbl(out.attempt{kCal}.eye),whichAttempt,whichCal,pointStr(1:end-1)));
+                                % change eye if needed
+                                if ~strcmp(obj.settings.calibrateEye,out.attempt{kCal}.eye)
+                                    % can't use code from above sadly as
+                                    % these actions need to occur exactly
+                                    % here. so some code duplication
+                                    % follows...
+                                    obj.changeAndCheckCalibEyeMode(out.attempt{kCal}.eye);
+                                    obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                                    % exit and reenter calibration mode, if
+                                    % needed
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    extraInp = {};
+                                    if ~strcmp(obj.settings.calibrateEye,'both')
+                                        extraInp        = {obj.settings.calibrateEye};
+                                    end
+                                    % update states of this screen
+                                    currentEyeMenuItem  = find(ismember({'both','left','right'},obj.settings.calibrateEye));
+                                    headP.crossEye      = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                                    headO.crossEye      = headP.crossEye;
+                                end
+                                if whichCal==0
+                                    % there was no calibration, so clear
+                                    % it. We do that by leaving and
+                                    % reentering calibration mode
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    calibrationStatus       = 0;        % status: not calibrated
+                                    awaitingCalChangeType   = '';       % done with loading calibration
+                                else
+                                    obj.buffer.calibrationApplyData(out.attempt{kCal}.cal{calAction}.computedCal);
+                                    calibrationStatus = 3;      % status: loading
+                                end
+                                % adjust this item in snapshot menu to the
+                                % current one (only first two items, cals
+                                % still fine)
+                                snapshots{currentMenuSel,1} = kCal;
+                                snapshots{currentMenuSel,2} = calAction;
+                                % done
+                                qUpdateLineDisplay      = true;
+                                qUpdateCalStatusText    = true;
+                            else
+                                % check we've loaded yet
+                                % computed succesfully, waiting for
+                                % calibration data retrieval
+                                calData = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(calData) && strcmp(calData.workItem.action,'ApplyCalibrationData')
+                                    qUpdatePointHover       = true;
+                                    qUpdateLineDisplay      = true;
+                                    qUpdateCalStatusText    = true;
+                                    calibrationStatus       = 1;    % status: calibrated
+                                    awaitingCalChangeType   = '';   % done with loading calibration
+                                end
+                            end
+                    end
+                end
+                    
+                if qUpdateLineDisplay
+                    % updates calibration/validation line displays
+                    % if in validation mode, also updates validation data
+                    % quality info, which is used below for various other
+                    % things
+                    linesForPoints = cell(1,size(pointsP,1));
+                    valInfoTopTextCache = [];
+                    
+                    % prep to draw captured data in characteristic Tobii
+                    % plot
+                    if calibrationStatus~=3  % no lines when loading cal
+                        if strcmp(stage,'cal')
+                            if isfield(out.attempt{kCal},'cal') && isfield(out.attempt{kCal}.cal{calAction},'computeResult')
+                                myCal       = out.attempt{kCal}.cal{calAction}.computeResult;
+                                pointIdxs   = getWhichCalibrationPoints(pointsP(:,1:2),myCal.points);
+                                for p=1:length(myCal.points)
+                                    point.left = [];
+                                    point.right= [];
+                                    % left eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                        qVal        = strcmp(myCal.points(p).samples.left.validity,'validAndUsed');
+                                        point.left  = myCal.points(p).samples.left.position(:,qVal);
+                                    end
+                                    % right eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                        qVal        = strcmp(myCal.points(p).samples.right.validity,'validAndUsed');
+                                        point.right = myCal.points(p).samples.right.position(:,qVal);
+                                    end
+                                    linesForPoints{pointIdxs(p)} = point;
+                                end
+                            end
+                        elseif isfield(out.attempt{kCal},'val')
+                            % collect latest gaze data for each point
+                            strSetup        = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
+                            [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));
+                            val.gazeData    = struct(strSetup{:});
+                            val.pointPos    = nan(size(pointsP,1),5);
+                            qFound          = false(1,size(pointsP,1));
+                            whichCal        = getLastManualCal(out.attempt{kCal});
+                            for p=length(out.attempt{kCal}.val):-1:1
+                                idx = out.attempt{kCal}.val{p}.point(1);
+                                if ~isnan(idx) && isempty(val.gazeData(idx).(strSetup{1,1})) && out.attempt{kCal}.val{p}.whichCal==whichCal && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
+                                    % we don't yet have validation data for
+                                    % this point, and it is for the current
+                                    % calibration -> collect
+                                    qFound(idx) = true;
+                                    % copy over all fields
+                                    for f=1:size(strSetup,2)
+                                        val.gazeData(idx).(strSetup{1,f}) = out.attempt{kCal}.val{p}.gazeData.(strSetup{1,f});
+                                    end
+                                    % also needs point position
+                                    val.pointPos(idx,:) = out.attempt{kCal}.val{p}.point;
+                                end
+                            end
+                            val.gazeData(~qFound)   = [];
+                            val.pointPos(~qFound,:) = [];
+                            
+                            % compute data quality for these
+                            if ~isempty(val.pointPos)
+                                out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
+                                qUpdatePointHover = true;   % may need to update point hover
+                                
+                                % prep displaying
+                                myVal = out.attempt{kCal}.val{valAction}.allPoints;
+                                for p=1:length(myVal.gazeData)
+                                    point.left = [];
+                                    point.right= [];
+                                    % left eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                        qVal        = myVal.gazeData(p). left.gazePoint.valid;
+                                        point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
+                                    end
+                                    % right eye
+                                    if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                        qVal        = myVal.gazeData(p).right.gazePoint.valid;
+                                        point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
+                                    end
+                                    linesForPoints{myVal.pointPos(p,1)} = point;
+                                end
+                                
+                                % update info text
+                                % acc field is [lx rx; ly ry]
+                                % text only changes when calibration selection changes,
+                                % but putting these lines in the above if makes logic
+                                % more complicated. Now we regenerate the same text
+                                % when switching between viewing calibration and
+                                % validation output, thats an unimportant price to pay
+                                % for simpler logic
+                                Screen('TextFont', wpnt(end), obj.settings.UI.mancal.avg.text.font, obj.settings.UI.mancal.avg.text.style);
+                                Screen('TextSize', wpnt(end), obj.settings.UI.mancal.avg.text.size);
+                                [strl,strr,strsep] = deal('');
+                                if ismember(out.attempt{kCal}.eye,{'both','left'})
+                                    strl = sprintf(' <color=%1$s>Left eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.mancal.avg.text.eyeColors{1}),myVal.acc2D( 1 ),myVal.acc(1, 1 ),myVal.acc(2, 1 ),myVal.STD2D( 1 ),myVal.RMS2D( 1 ),myVal.dataLoss( 1 )*100,char(176));
+                                end
+                                if ismember(out.attempt{kCal}.eye,{'both','right'})
+                                    idx = 1+strcmp(out.attempt{kCal}.eye,'both');
+                                    strr = sprintf('<color=%1$s>Right eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.mancal.avg.text.eyeColors{2}),myVal.acc2D(idx),myVal.acc(1,idx),myVal.acc(2,idx),myVal.STD2D(idx),myVal.RMS2D(idx),myVal.dataLoss(idx)*100,char(176));
+                                end
+                                if strcmp(out.attempt{kCal}.eye,'both')
+                                    strsep = '\n';
+                                end
+                                valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                                valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.mancal.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.mancal.avg.text.color);
+                            end
+                        end
+                    end
+                    for p=1:length(linesForPoints)
+                        if isempty(linesForPoints{p})
+                            continue;
+                        end
+                        if ~isempty(linesForPoints{p}.left)
+                            linesForPoints{p}.left  = bsxfun(@plus,bsxfun(@times,linesForPoints{p}.left,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                        end
+                        if ~isempty(linesForPoints{p}.right)
+                            linesForPoints{p}.right = bsxfun(@plus,bsxfun(@times,linesForPoints{p}.right,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
+                        end
+                    end
+                    qUpdateLineDisplay = false;
+                end
+                
+                if qUpdateCalStatusText
+                    % get color and text
+                    switch calibrationStatus
+                        case -1
+                            % failed
+                            text = 'calibration failed';
+                            clr = [255 0 0];
+                        case 0
+                            % not calibrated
+                            text = 'not calibrated';
+                            clr = [200 200 200];
+                        case 1
+                            % calibrated
+                            text = 'calibration succeeded';
+                            clr = [0 255 0];
+                        case 2
+                            % calibrating
+                            text = 'calibrating';
+                            clr = [0 255 255];
+                        case 3
+                            % calibrating
+                            text = 'loading calibration';
+                            clr = [0 255 255];
+                    end
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.calState.text.size);
+                    if strcmp(stage,'cal')
+                        modetxt = 'calibrating';
+                    else
+                        modetxt = 'validating';
+                    end
+                    pointStr = sprintf('%d ',sort(usedCalibrationPoints));
+                    text = sprintf('<u>%s<u>\n<color=%s>%s<color>\nactive cal based on:\npoints [%s]',modetxt,clr2hex(clr),text,pointStr(1:end-1));
+                    calTextCache = obj.getTextCache(wpnt(end), text,[10 10 10 10],'xalign','left','yalign','top');
+                    qUpdateCalStatusText = false;
+                end
+                
+                % calibration/validation logic variables
+                if ~isempty(discardList) && isnan(whichPoint) && isnan(whichPointDiscard)
+                    % point discard logic
+                    whichPointDiscard               = discardList(1);
+                    if strcmp(stage,'cal')
+                        calAction                                   = calAction+1;
+                        % start discard action
+                        obj.buffer.calibrationDiscardData(pointsP(whichPointDiscard,1:2),extraInp{:});
+                        pointsP(whichPointDiscard,end)              = 5;    %#ok<AGROW> % status: discarding
+                        out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPointDiscard,[5 3 4 1 2]);
+                        out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                        discardList(1)                              = [];
+                        qUpdatePointHover                           = true;
+                    elseif isfield(out.attempt{kCal},'val')
+                        valAction                                   = valAction+1;
+                        % for validation, find the point in question and
+                        % mark it as discarded, done super quick
+                        for p=length(out.attempt{kCal}.val):-1:1
+                            if out.attempt{kCal}.val{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
+                                out.attempt{kCal}.val{p}.wasDiscarded = true;
+                                break;
+                            end
+                        end
+                        pointsP(whichPointDiscard,end-[1 0])        = 0;    %#ok<AGROW> % status: not collected
+                        % need to updating lines display
+                        out.attempt{kCal}.val{valAction}.point      = nan(1,5);         % dummy point
+                        out.attempt{kCal}.val{valAction}.whichCal   = out.attempt{kCal}.val{valAction-1}.whichCal;
+                        out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                        qUpdateLineDisplay                          = true;
+                        discardList(1)                              = [];
+                        whichPointDiscard                           = nan;              % we're done already
+                        qUpdatePointHover                           = true;
+                        continue;
+                    end
+                end
+                if ~isempty(pointList) && isnan(whichPoint) && isnan(whichPointDiscard) && isempty(awaitingCalChangeType)
+                    % point collect logic
+                    whichPoint              = pointList(1);
+                    drawCmd                 = 'new';
+                    nCollectionTries        = 0;
+                    qWaitForAllowAccept     = true;
+                    tick0p                  = nan;
+                    tick0v                  = nan;
+                    frameMsg                = sprintf('POINT ON %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
+                    pointsP(whichPoint,end) = 2;    %#ok<AGROW> % status: displayed
+                    qUpdatePointHover       = true;
+                    pointList(1)            = [];
+                    if strcmp(stage,'cal')
+                        calAction                                   = calAction+1;
+                        out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
+                        out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    else
+                        valAction                                   = valAction+1;
+                        out.attempt{kCal}.val{valAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
+                        % store for which calibration this validation is
+                        % find last successful calibration (a calibration
+                        % was successful if it has points in the result
+                        % field)
+                        out.attempt{kCal}.val{valAction}.whichCal   = getLastManualCal(out.attempt{kCal});
+                        out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
+                    end
+                end
+                
+                % setup overlay with data quality info for specific point
+                if ~isnan(openInfoForPoint) || (qUpdatePointHover && ~isnan(pointToShowInfoFor))
+                    if ~isnan(openInfoForPoint)
+                        pointToShowInfoFor = openInfoForPoint;
+                        openInfoForPoint   = nan;
+                    end
+                    qUpdatePointHover   = false;
+                    switch pointsP(pointToShowInfoFor,end)
+                        case -1
+                            % failed
+                            clr = [255 0 0];
+                            txt = 'collection failed';
+                        case 0
+                            % not collected
+                            clr = [200 200 200];
+                            txt = 'not collected';
+                        case 1
+                            % collected
+                            clr = [0 255 0];
+                            txt = 'collected successfully';
+                        case 2
+                            % displaying
+                            clr = [131 177 255];
+                            txt = 'being shown to subject';
+                        case 3
+                            % collecting
+                            clr = [0 0 255];
+                            txt = 'data is being collected';
+                        case 4
+                            % enqueued
+                            clr = [0 255 255];
+                            txt = 'enqueued to be shown to participant';
+                        case 5
+                            % discarding
+                            clr = [188 61 18];
+                            txt = 'data is being discarded';
+                    end
+                    txt = sprintf('status: <color=%s>%s',clr2hex(clr),txt);
+                    % prepare text
+                    Screen('TextFont', wpnt(end), obj.settings.UI.mancal.hover.text.font, obj.settings.UI.mancal.hover.text.style);
+                    Screen('TextSize', wpnt(end), obj.settings.UI.mancal.hover.text.size);
+                    if strcmp(stage,'val') && isfield(out.attempt{kCal},'val') && isfield(out.attempt{kCal}.val{valAction},'allPoints')
+                        myVal = out.attempt{kCal}.val{valAction}.allPoints;
+                        % see if we have info for the requested point
+                        idx = find(myVal.pointPos(:,1)==pointToShowInfoFor,1);
+                        if ~isempty(idx)
+                            if strcmp(out.attempt{kCal}.eye,'both')
+                                lE = myVal.quality(idx).left;
+                                rE = myVal.quality(idx).right;
+                                txt = sprintf('Offset:       <color=%1$s>%3$.2f%15$c, (%4$.2f%15$c,%5$.2f%15$c)<color>, <color=%2$s>%9$.2f%15$c, (%10$.2f%15$c,%11$.2f%15$c)<color>\nPrecision SD:        <color=%1$s>%6$.2f%15$c<color>                 <color=%2$s>%12$.2f%15$c<color>\nPrecision RMS:       <color=%1$s>%7$.2f%15$c<color>                 <color=%2$s>%13$.2f%15$c<color>\nData loss:            <color=%1$s>%8$3.0f%%<color>                  <color=%2$s>%14$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                            elseif strcmp(out.attempt{kCal}.eye,'left')
+                                lE = myVal.quality(idx).left;
+                                txt = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{1}),lE.acc2D,abs(lE.acc(1)),abs(lE.acc(2)),lE.STD2D,lE.RMS2D,lE.dataLoss*100,char(176));
+                            elseif strcmp(out.attempt{kCal}.eye,'right')
+                                rE = myVal.quality(idx).right;
+                                txt = sprintf('Offset:       <color=%1$s>%2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)<color>\nPrecision SD:        <color=%1$s>%5$.2f%8$c<color>\nPrecision RMS:       <color=%1$s>%6$.2f%8$c<color>\nData loss:            <color=%1$s>%7$3.0f%%<color>',clr2hex(obj.settings.UI.mancal.hover.text.eyeColors{2}),rE.acc2D,abs(rE.acc(1)),abs(rE.acc(2)),rE.STD2D,rE.RMS2D,rE.dataLoss*100,char(176));
+                            end
+                        end
+                    end
+                    [pointInfoTextCache,txtbounds] = obj.getTextCache(wpnt(end),txt,[],'xlayout','left','baseColor',obj.settings.UI.mancal.hover.text.color);
+                    % get box around text
+                    margin = 10;
+                    infoBoxRect = GrowRect(txtbounds,margin,margin);
+                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
+                end
+                
+                % draw loop
+                while true
+                    tick        = tick+1;
+                    nextFlipT   = out.flips(end)+1/1000;
+                    
+                    % get eye data if needed
+                    if qShowGazeToAll || qShowHead
+                        eyeData     = obj.buffer.peekN('gaze',1);
+                    end
+                    % per frame updates
+                    if qShowGazeToAll
+                        % prep gaze data
+                        gazePosP    = nan(2,2);
+                        if ~isempty(eyeData.systemTimeStamp)
+                            if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
+                                gazePosP(:,1) = eyeData. left.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            end
+                            if obj.calibrateRightEye && eyeData.right.gazePoint.valid(end)
+                                gazePosP(:,2) = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
+                            end
+                        end
+                    end
+                    
+                    % prep head
+                    if qShowHead
+                        posGuide    = obj.buffer.peekN('positioning',1);
+                        headO.update(...
+                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                        if qShowHeadToAll
+                            headP.update(...
+                                eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
+                                eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                        end
+                    end
+                    
+                    % prep eye image
+                    if qHasEyeIm && qShowEyeImage
+                        % get eye image
+                        if ~obj.settings.mancal.doRecordEyeImages
+                            eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                        else
+                            eyeIm       = obj.buffer.peekN('eyeImage',4);    % peek (up to) last four from end, keep them in buffer
+                        end
+                        [eyeTexs,eyeSzs]  = UploadImages(eyeTexs,eyeSzs,wpnt(end),eyeIm);
+                        
+                        % update eye image locations if size of returned eye image changed
+                        if (~any(isnan(eyeSzs(:,1))) && any(eyeSzs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(eyeSzs(:,2))) && any(eyeSzs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
+                            margin = 20;
+                            visible = [but(1:5).visible];
+                            if ~any(visible)
+                                basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                            else
+                                basePos = min(butRects(2,[but(1:5).visible]));
+                            end
+                            eyeImageRect{1} = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-margin/2,basePos-margin-eyeSzs(2,1));
+                            eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)            +margin/2,basePos-margin-eyeSzs(2,2));
+                        end
+                    end
+                    
+                    if qChangeMenuArrow
+                        % setup arrow that can be moved with arrow keys
+                        rect = currentMenuRects(currentMenuSel,:);
+                        rect(3) = rect(1)+menuMargin+20;
+                        menuActiveCache = obj.getTextCache(wpnt(end),' <color=ff0000>-><color>',rect);
+                        qChangeMenuArrow = false;
+                    end
+
+                    
+                    % drawing
+                    Screen('FillRect', wpnt(1), bgClrP);
+                    Screen('FillRect', wpnt(2), bgClrO);
+                    % draw text with validation accuracy etc info
+                    if ~isempty(valInfoTopTextCache)
+                        obj.drawCachedText(valInfoTopTextCache);
+                    end
+                    % draw text with calibration status
+                    obj.drawCachedText(calTextCache);
+                    % draw buttons
+                    mousePos = [mx my];
+                    but(1).draw(mousePos,qSelectEyeMenuOpen);
+                    but(2).draw(mousePos,qShowEyeImage);
+                    but(3).draw(mousePos);
+                    but(4).draw(mousePos);
+                    but(5).draw(mousePos,qSelectSnapMenuOpen);
+                    but(6).draw(mousePos,qShowHead);
+                    but(7).draw(mousePos,qShowGaze);
+                    
+                    % draw eye images, if any
+                    if qShowEyeImage
+                        if eyeTexs(1)
+                            Screen('DrawTexture', wpnt(end), eyeTexs(1),[],eyeImageRect{1});
+                        else
+                            Screen('FillRect', wpnt(end), 0, eyeImageRect{1});
+                        end
+                        if eyeTexs(2)
+                            Screen('DrawTexture', wpnt(end), eyeTexs(2),[],eyeImageRect{2});
+                        else
+                            Screen('FillRect', wpnt(end), 0, eyeImageRect{2});
+                        end
+                    end
+                    
+                    % draw calibration/validation points
+                    % 1. first draw circles behind each point, denoting point state
+                    for p=1:size(pointsO,1)
+                        switch pointsP(p,end)
+                            case -1
+                                % failed
+                                clr = [255 0 0];
+                            case 0
+                                % not collected
+                                clr = [200 200 200];
+                            case 1
+                                % collected
+                                clr = [0 255 0];
+                            case 2
+                                % displaying
+                                clr = [131 177 255];
+                            case 3
+                                % collecting
+                                clr = [0 0 255];
+                            case 4
+                                % enqueued
+                                clr = [0 255 255];
+                            case 5
+                                % discarding
+                                clr = [188 61 18];
+                        end
+                        Screen('gluDisk', wpnt(end),obj.getColorForWindow(clr,wpnt(end)), pointsO(p,1), pointsO(p,2), obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac*1.5/2);
+                    end
+                    % 2. then draw points themselves
+                    obj.drawFixPoints(wpnt(end),pointsO,obj.settings.UI.mancal.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.mancal.fixBackColor,obj.settings.UI.mancal.fixFrontColor);
+                    % 3. draw text annotations
+                    for p=size(pointsO,1):-1:1
+                        obj.drawCachedText(pointTextCache(p));
+                    end
+                    
+                    % draw line displays
+                    for p=1:length(linesForPoints)
+                        if isempty(linesForPoints{p})
+                            continue;
+                        end
+                        if ~isempty(linesForPoints{p}.left)
+                            lines  = reshape([repmat(pointsO(p,:).',1,size(linesForPoints{p}.left,2)) ; linesForPoints{p}.left ],2,[]);
+                            Screen('DrawLines',wpnt(end),lines,1,eyeClrs{1},[],2);
+                        end
+                        if ~isempty(linesForPoints{p}.right)
+                            lines  = reshape([repmat(pointsO(p,:).',1,size(linesForPoints{p}.right,2)); linesForPoints{p}.right],2,[]);
+                            Screen('DrawLines',wpnt(end),lines,1,eyeClrs{2},[],2);
+                        end
+                    end
+                    
+                    % if head shown, draw on top
+                    if qShowHead
+                        Screen('FillRect',wpnt(end),headBgClrO,headORect);
+                        drawOrientedPoly(wpnt(end),circVerts,1,[0 0],[0 1; 1 0],refSzO,refPosO,[],refClrO,5*facO);
+                        headO.draw();
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.instruct.font, obj.settings.UI.mancal.instruct.style);
+                        Screen('TextSize', wpnt(end), max(round(obj.settings.UI.mancal.instruct.size*facO),4));
+                        str = obj.settings.UI.mancal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                        if ~isempty(str)
+                            DrawFormattedText2(str,'win',wpnt(2),'sx','center','xalign','center','xlayout','center','sy',.03*RectHeight(headORect),'yalign','top','baseColor',obj.settings.UI.mancal.instruct.color,'vSpacing',obj.settings.UI.mancal.instruct.vSpacing,'winRect',headORect);
+                        end
+                        if qShowHeadToAll
+                            drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSzP,refPosP,[],refClrP,5);
+                            headP.draw();
+                        end
+                    end
+                    
+                    % if showing gaze, draw
+                    if qShowGaze
+                        clrs = {[],[]};
+                        if obj.calibrateLeftEye
+                            clrs{1} = onlineGazeClr{1,end};
+                        end
+                        if obj.calibrateRightEye
+                            clrs{2} = onlineGazeClr{2,end};
+                        end
+                        drawLiveData(wpnt(end),obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+                        if qShowGazeToAll
+                            if ~isnan(gazePosP(1,1))
+                                Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, gazePosP(1,1), gazePosP(2,1), 10);
+                            end
+                            if ~isnan(gazePosP(1,2))
+                                Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, gazePosP(1,2), gazePosP(2,2), 10);
+                            end
+                        end
+                    end
+                    
+                    % if hovering over validation point, show info
+                    if ~isnan(pointToShowInfoFor)
+                        rect = OffsetRect(infoBoxRect,mx,my);
+                        % make sure does not go offscreen
+                        if rect(3)>obj.scrInfo.resolution{end}(1)
+                            rect = OffsetRect(rect,obj.scrInfo.resolution{end}(1)-rect(3),0);
+                        end
+                        if rect(4)>obj.scrInfo.resolution{end}(2)
+                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{end}(2)-rect(4));
+                        end
+                        Screen('FillRect',wpnt(end),hoverBgClr,rect);
+                        obj.drawCachedText(pointInfoTextCache,rect);
+                    end
+                    
+                    
+                    % if selection menu open, draw on top
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        % menu background
+                        Screen('FillRect',wpnt(end),menuBgClr,currentMenuBackRect);
+                        % menuRects, inactive and currently active
+                        if any(~menuActiveItem)
+                            Screen('FillRect',wpnt(end),menuItemClr      ,currentMenuRects(~menuActiveItem,:).');
+                        end
+                        if any(menuActiveItem)
+                            Screen('FillRect',wpnt(end),menuItemClrActive,currentMenuRects( menuActiveItem,:).');
+                        end
+                        % text in each rect
+                        for c=1:length(currentMenuTextCache)
+                            obj.drawCachedText(currentMenuTextCache(c));
+                        end
+                        % arrow
+                        obj.drawCachedText(menuActiveCache);
+                    end
+                    
+                    % on participant screen, draw fixation point if
+                    % currently active
+                    if ~isnan(whichPoint)
+                        qAllowAccept= drawFunction(wpnt(1),drawCmd,whichPoint,pointsP(whichPoint,3:4),tick,stage);
+                        drawCmd     = 'draw';
+                        if qWaitForAllowAccept && qAllowAccept
+                            tick0p              = tick;
+                            qWaitForAllowAccept = false;
+                        end
+                    end
+                    
+                    % drawing done, show
+                    out.flips(end+1) = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
+                    if ~isempty(frameMsg)
+                        obj.sendMessage(frameMsg,out.flips(end));
+                        frameMsg = '';
+                    end
+                    
+                    % calibration logic
+                    % check for status of discarding point
+                    if ~isnan(whichPointDiscard)
+                        % check status
+                        callResult  = obj.buffer.calibrationRetrieveResult();
+                        if ~isempty(callResult) && strcmp(callResult.workItem.action,'DiscardData')
+                            pointsP(whichPointDiscard,end-[1 0]) = 0;        % status: not collected
+                            out.attempt{kCal}.cal{calAction}.discardStatus = callResult;
+                            out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                            out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                            
+                            % find which point we just discarded, mark it
+                            % as such
+                            for p=length(out.attempt{kCal}.cal):-1:1
+                                if out.attempt{kCal}.cal{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.cal{p}.wasCancelled && ~out.attempt{kCal}.cal{p}.wasDiscarded && ~isfield(out.attempt{kCal}.cal{p},'discardStatus')
+                                    out.attempt{kCal}.cal{p}.wasDiscarded = true;
+                                    break;
+                                end
+                            end
+                            
+                            % if in calibration mode and point states have
+                            % changed, and no further calibration points
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
+                                qUpdateCalStatusText    = true;
+                                pointStateLastCal       = pointsP(:,end);
+                                if all(pointsP(:,end)==0)
+                                    % if no points left, user intention is
+                                    % to clear the calibration. We do that
+                                    % by leaving and reentering calibration
+                                    % mode
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    qNewCal     = true;
+                                    qClearState = true;
+                                else
+                                    % data for some points left: issue
+                                    % calibration command
+                                    calibrationStatus       = 2;
+                                    awaitingCalChangeType   = 'compute';
+                                    obj.buffer.calibrationComputeAndApply();
+                                end
+                            end
+                            
+                            whichPointDiscard = nan;
+                            qUpdatePointHover = true;
+                            break;
+                        end
+                    end
+                    % accept point
+                    if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
+                        qPointDone = false;
+                        if strcmp(stage,'cal')
+                            if ~nCollectionTries
+                                % start collection
+                                obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                pointsP(whichPoint,end-[1 0])   = [0 3];            % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointStateLastCal(whichPoint)   = 0; %#ok<AGROW>    % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
+                                nCollectionTries                = 1;
+                                out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                                out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                                qUpdatePointHover               = true;
+                                break;
+                            else
+                                % check status
+                                callResult  = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(callResult)
+                                    if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
+                                        % success, next point
+                                        pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
+                                        qPointDone              = true;
+                                        out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
+                                    else
+                                        % failed
+                                        if nCollectionTries==1
+                                            % if failed first time, immediately try again
+                                            obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                            nCollectionTries = 2;
+                                        else
+                                            % failed again, stop trying
+                                            pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
+                                            qPointDone              = true;
+                                            out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
+                                        end
+                                    end
+                                end
+                            end
+                        else
+                            if isnan(tick0v)
+                                tick0v = tick;
+                                out.attempt{kCal}.val{valAction}.wasCancelled = false;
+                                out.attempt{kCal}.val{valAction}.wasDiscarded = false;
+                                pointsP(whichPoint,end) = 3;        % status: collecting
+                                qUpdatePointHover       = true;
+                                break;
+                            end
+                            if tick>tick0v+collectInterval
+                                dat = obj.buffer.peekN('gaze',nDataPoint);
+                                out.attempt{kCal}.val{valAction}.gazeData = dat;
+                                tick0v              = nan;
+                                qPointDone          = true;
+                                qUpdateLineDisplay  = true;
+                                pointsP(whichPoint,end) = 1;        % status: collected
+                            end
+                        end
+                        % if finished collecting, log, clean up, and if in
+                        % calibration mode, calibrate if collection was
+                        % successful
+                        if qPointDone
+                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
+                            if strcmp(stage,'cal')
+                                if callResult.status==0
+                                    % success
+                                    frameMsg = [frameMsg ', status: ok']; %#ok<AGROW>
+                                else
+                                    % failure
+                                    frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
+                                end
+                                fun = obj.settings.mancal.cal.pointNotifyFunction;
+                                extra = {out.attempt{kCal}.cal{calAction}.collectStatus};
+                            else
+                                fun = obj.settings.mancal.val.pointNotifyFunction;
+                                extra = {};
+                            end
+                            if isa(fun,'function_handle')
+                                fun(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,extra{:});
+                            end
+                            whichPoint = nan;
+                            % if no points enqueued, reset calibration
+                            % point drawer function (if any)
+                            if isempty(pointList)
+                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            end
+                            % if in calibration mode and point states have
+                            % changed, and no further calibration points
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
+                                calibrationStatus       = 2;
+                                qUpdateCalStatusText    = true;
+                                pointStateLastCal       = pointsP(:,end);
+                                awaitingCalChangeType   = 'compute';
+                                obj.buffer.calibrationComputeAndApply();
+                            end
+                            qUpdatePointHover = true;
+                            % done with draw loop
+                            break;
+                        end
+                    end
+
+                    % get user response
+                    [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
+                    mousePos = [mx my];
+                    % if any drag active change head rect position/size
+                    if qDraggingHead || ~isnan(headResizingGrip)
+                        % update headORect
+                        if qDraggingHead
+                            vec         = mousePos-dragPos;
+                            headORect   = OffsetRect(headOriRect,vec(1),vec(2));
+                        else
+                            % get which to check against
+                            switch headResizingGrip
+                                case 1
+                                    % left-upper corner
+                                    rIdx = [1 2];
+                                    mIdx = [1 2];
+                                case 2
+                                    % right-upper corner
+                                    rIdx = [3 2];
+                                    mIdx = [1 2];
+                                case 3
+                                    % left-lower corner
+                                    rIdx = [1 4];
+                                    mIdx = [1 2];
+                                case 4
+                                    % right upper corner
+                                    rIdx = [3 4];
+                                    mIdx = [1 2];
+                                case 5
+                                    % upper edge
+                                    rIdx = 2;
+                                    mIdx = 2;
+                                case 6
+                                    % lower edge
+                                    rIdx = 4;
+                                    mIdx = 2;
+                                case 7
+                                    % left edge
+                                    rIdx = 1;
+                                    mIdx = 1;
+                                case 8
+                                    % right edge
+                                    rIdx = 3;
+                                    mIdx = 1;
+                            end
+                            headORect = headOriRect;
+                            headORect(rIdx) = mousePos(mIdx);
+                            if RectWidth(headORect)~=RectWidth(headOriRect) || RectHeight(headORect)~=RectHeight(headOriRect)
+                                % scale changed, do update
+                                
+                                % first, check rect did not get too small.
+                                % arbitrarily decide rect should be at
+                                % least 100 px high and wide
+                                w = RectWidth(headORect);
+                                if w<100
+                                    add = 100-w;
+                                    % find at which side to add
+                                    if any(rIdx==1)
+                                        % resize involves change of left edge,
+                                        % so add to that
+                                        headORect(1) = headORect(1)-add;
+                                    else
+                                        % right edge instead
+                                        headORect(3) = headORect(3)+add;
+                                    end
+                                end
+                                h = RectHeight(headORect);
+                                if h<100
+                                    add = 100-h;
+                                    % find at which side to add
+                                    if any(rIdx==2)
+                                        % resize involves change of top edge,
+                                        % so add to that
+                                        headORect(2) = headORect(2)-add;
+                                    else
+                                        % bottom edge instead
+                                        headORect(4) = headORect(4)+add;
+                                    end
+                                end
+                                
+                                % next, check if aspect ratio should be
+                                % maintained
+                                scaleFacs = [RectWidth(headORect)/RectWidth(headOriRect) RectHeight(headORect)/RectHeight(headOriRect)];
+                                if ~isscalar(rIdx) && shiftIsDown
+                                    % we are dragging a corner, make
+                                    % non-max dimension consistent with
+                                    % scaling of max dimension
+                                    [scaleFac,i] = max(scaleFacs(mIdx));    % get largest scale fac
+                                    i=mod(i,2)+1;                           % get dimension's scaleFac is smaller
+                                    aspectr = RectWidth(headOriRect)/RectHeight(headOriRect);
+                                    switch i
+                                        case 1
+                                            % horizontal should be adjusted
+                                            newSize = RectHeight(headOriRect)*scaleFac*aspectr;
+                                            if rIdx(i)==1
+                                                % left edge needs changing
+                                                headORect(1) = headORect(3)-newSize;
+                                            else
+                                                % right edge needs changing
+                                                headORect(3) = headORect(1)+newSize;
+                                            end
+                                        case 2
+                                            % vertical
+                                            newSize = RectWidth(headOriRect)*scaleFac/aspectr;
+                                            if rIdx(i)==2
+                                                % top edge needs changing
+                                                headORect(2) = headORect(4)-newSize;
+                                            else
+                                                % bottom edge needs changing
+                                                headORect(4) = headORect(2)+newSize;
+                                            end
+                                    end
+                                end
+                            end
+                            
+                            % now update scale factor of some of the
+                            % visualizations
+                            scaleFacs   = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
+                            facO        = min(scaleFacs);
+                            refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+                        end
+                        refPosO     = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
+                        % also update cursor rects
+                        headRects = getSelectionRects(headORect,3,obj.settings.UI.cursor);
+                        cursor.cursorRects(:,1:size(headRects,2)) = headRects;
+                    end
+                    % update cursor look if needed
+                    cursor.update(mx,my);
+                    if (qDraggingHead || ~isnan(headResizingGrip)) && any(mouseRelease)
+                        % drag/resize finished, headORect already reflects
+                        % correct position/size, just update
+                        % dragging/resizing state
+                        qDraggingHead           = false;
+                        headResizingGrip        = nan;
+                    elseif any(mousePress)
+                        % don't care which button for now. determine if clicked on either
+                        % of the buttons
+                        if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                            iIn = find(inRect(mousePos,[currentMenuRects.' currentMenuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
+                            if ~isempty(iIn)
+                                if qSelectEyeMenuOpen
+                                    if iIn<=3
+                                        currentMenuSel      = iIn;
+                                        qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                        qToggleSelectEyeMenu= true;
+                                        break;
+                                    end
+                                elseif qSelectSnapMenuOpen
+                                    if iIn==size(snapshots,1)+1
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    else
+                                        % load another snapshot
+                                        currentMenuSel          = iIn;
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
+                                        qToggleSelectSnapMenu   = true;
+                                    end
+                                    break;
+                                end
+                            else
+                                if qSelectEyeMenuOpen
+                                    qToggleSelectEyeMenu    = true;
+                                elseif qSelectSnapMenuOpen
+                                    qToggleSelectSnapMenu   = true;
+                                end
+                                break;
+                            end
+                        end
+                        if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
+                            qInBut      = inRect(mousePos,butRects);
+                            qOnHead     = inRect(mousePos,headRects);
+                            qOnFixTarget= inRect(mousePos,calValRectsSel);
+                            if any(qOnHead)
+                                % starting drag/resize of head
+                                if qOnHead(end)
+                                    qDraggingHead       = true;
+                                    dragPos             = mousePos;
+                                else
+                                    headResizingGrip    = find(qOnHead,1);  % sometimes due to rounding, there is slight overlap between corner and edge rects. Corners are first in rects, so this puts preference on corners
+                                end
+                                headOriRect             = headORect;
+                            elseif any(qInBut)
+                                if qInBut(1)
+                                    qToggleSelectEyeMenu= true;
+                                elseif qInBut(2)
+                                    qToggleEyeImage     = true;
+                                elseif qInBut(3)
+                                    qToggleStage        = true;
+                                elseif qInBut(4)
+                                    status              = 1;
+                                    qDoneWithManualCalib= true;
+                                elseif qInBut(5)
+                                    qToggleSelectEyeMenu= true;
+                                elseif qInBut(6)
+                                    qShowHead           = ~qShowHead;
+                                    qShowHeadToAll      = shiftIsDown;
+                                    qUpdateCursors      = true;
+                                elseif qInBut(7)
+                                    qShowGaze           = ~qShowGaze;
+                                    qShowGazeToAll      = shiftIsDown;
+                                end
+                                break;
+                            elseif any(qOnFixTarget)
+                                which                   = find(qOnFixTarget,1);
+                                if shiftIsDown
+                                    qDoneSomething = false;
+                                    % if clicked point is enqueued, cancel
+                                    % it
+                                    qInList = pointList==which;
+                                    if any(qInList)
+                                        % reset to previous state
+                                        pointsP(qInList,end) = pointsP(qInList,end-1);
+                                        qDoneSomething = true;
+                                        % clear from list of enqueued points
+                                        pointList(qInList) = []; %#ok<AGROW>
+                                    end
+                                    
+                                    % if currently showing point but not
+                                    % yet trying to collect, cancel as well
+                                    if ~isnan(whichPoint) && whichPoint==which && pointsP(whichPoint,end)==2
+                                        qCancelPointCollect = true;
+                                    end
+                                    
+                                    % if point already collected, enqueue a
+                                    % discard for it
+                                    if pointsP(which,end)==1
+                                        discardList = [discardList which]; %#ok<AGROW>
+                                        qDoneSomething = true;
+                                    end
+                                    if qDoneSomething
+                                        qUpdatePointHover = true;
+                                        break;
+                                    end
+                                        
+                                elseif ~ismember(pointsP(which,end),[2 3 4])
+                                    % clicked point is not in enqueued,
+                                    % displaying or collecting status:
+                                    % enqueue
+                                    pointList(1,end+1) = which; %#ok<AGROW>
+                                    pointsP(which,end) = 4; % status: enqueued
+                                    qUpdatePointHover  = true;
+                                    break;
+                                end
+                            end
+                        end
+                    elseif any(keyPress)
+                        keys = KbName(keyPress);
+                        if iscell(keys)
+                            % multiple keys pressed at exactly the same
+                            % time. We're handling only the first, else
+                            % logic below becomes impossible (what if
+                            % 'shift' and '+=' pressed at the same time?,
+                            % should be processed as {'shift','+','='}, but
+                            % i can't write the logic to pull that appart..
+                            keys = keys{1};
+                        end
+                        if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                            if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)))
+                                if qSelectEyeMenuOpen
+                                    qToggleSelectEyeMenu    = true;
+                                elseif qSelectSnapMenuOpen
+                                    qToggleSelectSnapMenu   = true;
+                                end
+                                break;
+                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'});
+                                requested   = str2double(keys(qWhich));
+                                if qSelectEyeMenuOpen
+                                    if requested<=3
+                                        currentMenuSel      = requested;
+                                        qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                        qToggleSelectEyeMenu= true;
+                                        break;
+                                    end
+                                elseif qSelectSnapMenuOpen
+                                    if isnan(requested) && strcmp(keys(qWhich),'+')
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    elseif requested<=size(snapshots,1)
+                                        % load another snapshot
+                                        currentMenuSel          = requested;
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
+                                        qToggleSelectSnapMenu   = true;
+                                    end
+                                    break;
+                                end
+                                break;
+                            elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
+                                if qSelectEyeMenuOpen
+                                    qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
+                                    qToggleSelectEyeMenu= true;
+                                elseif qSelectSnapMenuOpen
+                                    if currentMenuSel==size(snapshots,1)+1
+                                        % save current state to new
+                                        % snapshot, don't close menu when
+                                        % doing so
+                                        qSaveSnapShot = true;
+                                    else
+                                        % load another snapshot
+                                        if currentSnapMenuItem~=currentMenuSel
+                                            awaitingCalChangeType   = 'load';
+                                        end
+                                        qToggleSelectSnapMenu   = true;
+                                    end
+                                end
+                                break;
+                            else
+                                if ~iscell(keys), keys = {keys}; end
+                                if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
+                                    % up arrow key (test so round-about
+                                    % because KbName could return both 'up'
+                                    % and 'UpArrow', depending on platform
+                                    % and mode)
+                                    if currentMenuSel>1
+                                        currentMenuSel   = currentMenuSel-1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
+                                    % down key
+                                    if (qSelectEyeMenuOpen && currentMenuSel<3) || (qSelectSnapMenuOpen && currentMenuSel<=size(snapshots,1))   % NB: snapshots menu goes to number of snapshots+1
+                                        currentMenuSel   = currentMenuSel+1;
+                                        qChangeMenuArrow = true;
+                                        break;
+                                    end
+                                end
+                            end
+                        else
+                            if any(strcmpi(keys,'escape'))
+                                if qDraggingHead || ~isnan(headResizingGrip)
+                                    % cancel drag/resize of head display
+                                    qDraggingHead       = false;
+                                    headResizingGrip    = nan;
+                                    headORect           = headOriRect;
+                                    scaleFacs           = [RectWidth(headORect)/obj.scrInfo.resolution{2}(1) RectHeight(headORect)/obj.scrInfo.resolution{2}(2)];
+                                    facO                = min(scaleFacs);
+                                    refSzO              = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
+                                    refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
+                                    qUpdateCursors      = true;
+                                    break;
+                                elseif ~isempty(pointList) || ~isnan(whichPoint)
+                                    qDoneSomething = false;
+                                    % cancel all queued points
+                                    for p=1:length(pointList)
+                                        % reset to previous state
+                                        pointsP(pointList(p),end) = pointsP(pointList(p),end-1);
+                                        qDoneSomething = true;
+                                    end
+                                    % clear list of enqueued points
+                                    pointList = [];
+                                    
+                                    % if currently showing point but not
+                                    % yet trying to collect, cancel as well
+                                    if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
+                                        qCancelPointCollect = true;
+                                    end
+                                    if qDoneSomething
+                                        qUpdatePointHover = true;
+                                        break;
+                                    end
+                                end
+                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                                % calibration/validation point
+                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'});
+                                requested   = str2double(keys(qWhich));
+                                if requested<=size(pointsP,1)
+                                    if shiftIsDown
+                                        qDoneSomething = false;
+                                        % if clicked point is enqueued, cancel
+                                        % it
+                                        qInList = pointList==requested;
+                                        if any(qInList)
+                                            % reset to previous state
+                                            pointsP(qInList,end) = pointsP(qInList,end-1);
+                                            qDoneSomething = true;
+                                            % clear from list of enqueued points
+                                            pointList(qInList) = []; %#ok<AGROW>
+                                        end
+                                        
+                                        % if currently showing point but not
+                                        % yet trying to collect, cancel as well
+                                        if ~isnan(whichPoint) && whichPoint==requested && pointsP(whichPoint,end)==2
+                                            qCancelPointCollect = true;
+                                        end
+                                        
+                                        % if point already collected, enqueue a
+                                        % discard for it
+                                        if pointsP(requested,end)==1
+                                            discardList = [discardList requested]; %#ok<AGROW>
+                                            qDoneSomething = true;
+                                        end
+                                        if qDoneSomething
+                                            qUpdatePointHover = true;
+                                            break;
+                                        end
+                                    elseif ~ismember(pointsP(requested,end),[2 3 4])
+                                        % point is not in enqueued,
+                                        % displaying or collecting status:
+                                        % enqueue
+                                        pointList(1,end+1)      = requested; %#ok<AGROW>
+                                        pointsP(requested,end)  = 4; % status: enqueued
+                                        qUpdatePointHover       = true;
+                                        break;
+                                    end
+                                end
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.continue.accelerator)) && ~shiftIsDown
+                                status = 1;
+                                qDoneWithManualCalib= true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator)) && qCanDoMonocularCalib && ~shiftIsDown
+                                qToggleSelectEyeMenu= true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggEyeIm.accelerator)) && qHasEyeIm && ~shiftIsDown
+                                qToggleEyeImage     = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calval.accelerator)) && ~shiftIsDown
+                                qToggleStage        = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)) && ~shiftIsDown
+                                qToggleSelectSnapMenu = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggHead.accelerator))
+                                qShowHead           = ~qShowHead;
+                                qShowHeadToAll      = shiftIsDown;
+                                qUpdateCursors      = true;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
+                                qShowGaze           = ~qShowGaze;
+                                qShowGazeToAll      = shiftIsDown;
+                                break;
+                            end
+                        end
+                        
+                        % these key combinations should always be available
+                        if any(strcmpi(keys,'escape')) && shiftIsDown
+                            status = -5;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'s')) && shiftIsDown
+                            % skip calibration
+                            status = 2;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'d')) && shiftIsDown
+                            % take screenshot
+                            takeScreenshot(wpnt(1));
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown
+                            % take screenshot of operator screen
+                            takeScreenshot(wpnt(2));
+                        end
+                    end
+                    % check if a point collections needs to be cancelled
+                    if qCancelPointCollect && ~isnan(whichPoint)
+                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                        if strcmp(stage,'cal')
+                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                        else
+                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                        end
+                        % reset to previous state
+                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                        whichPoint = nan;
+                        % reset calibration point drawer
+                        % function
+                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                        % done, break from draw loop
+                        qCancelPointCollect     = false;
+                        qUpdatePointHover       = true;
+                        break;
+                    end
+                    % check if hovering over point for which we have info,
+                    % and no menus open
+                    iIn = find(inRect(mousePos,calValRectsHover));
+                    if ~isempty(iIn) && ~qSelectSnapMenuOpen && ~qSelectEyeMenuOpen
+                        % see if new point
+                        if pointToShowInfoFor~=iIn
+                            openInfoForPoint = iIn;
+                            break;
+                        end
+                    elseif ~isnan(pointToShowInfoFor)
+                        % stop showing info
+                        pointToShowInfoFor = nan;
+                        break;
+                    end
+                    % if awaiting calibration status change, break out of
+                    % draw loop to check for state change
+                    if ~isempty(awaitingCalChangeType)
+                        break;
+                    end
+                end
+            end
+            
+            % return selected cal
+            out.status      = status;
+            out.selectedCal = [kCal getLastManualCal(out.attempt{kCal})];
+            
+            % clean up
+            HideCursor;
+            obj.buffer.stop('positioning');
+            obj.buffer.stop('gaze');
+            obj.sendMessage('STOP MANUAL CALIBRATION ROUTINE');
+            obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
+            if qHasEyeIm
+                obj.buffer.stop('eyeImage');
+                if any(eyeTexs)
+                    Screen('Close',eyeTexs(eyeTexs>0));
+                end
+                % NB: buffer is cleared below by the ClearAllBuffers() call
+            end
+            if obj.buffer.hasStream('externalSignal')
+                obj.buffer.stop('externalSignal');
+            end
+            
+            out.allData   = obj.ConsumeAllData(startT);
+            obj.StopRecordAll();
+            obj.ClearAllBuffers(startT);                    % clean up data buffers
+        end
+        
+        function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,showYaw,isParticipantScreen)
+            % create head and setup looks
+            head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
+            head.refSz              = refSz;
+            head.rectWH             = scrRes*fac;
+            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
+            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
+            head.headCircleEdgeWidth= obj.settings.UI.setup.headCircleEdgeWidth*fac;
+            head.showYaw            = showYaw;
+            head.showEyes           = obj.settings.UI.setup.showEyes;
+            head.eyeClr             = obj.settings.UI.setup.eyeClr;
+            head.showPupils         = obj.settings.UI.setup.showPupils;
+            head.pupilClr           = obj.settings.UI.setup.pupilClr;
+            head.crossClr           = obj.settings.UI.setup.crossClr;
+            head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+            
+            % get reference position
+            if isempty(obj.settings.UI.setup.referencePos)
+                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
+            end
+            head.referencePos       = obj.settings.UI.setup.referencePos;
+            
+            % position reference circle on screen
+            refPos          = scrRes/2*fac;
+            allPosOff       = [0 0];
+            if isParticipantScreen && ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
+                scrWidth        = obj.geom.displayArea.width/10;
+                scrHeight       = obj.geom.displayArea.height/10;
+                pixPerCm        = mean(scrRes./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
+                allPosOff       = obj.settings.UI.setup.referencePos(1:2).*pixPerCm*fac;
+            end
+            refPos          = refPos+allPosOff;
+            head.allPosOff  = allPosOff;
+        end
+        
         function doEnterCalibrationMode(obj)
             qDoMonocular = ismember(obj.settings.calibrateEye,{'left','right'});
             if qDoMonocular
@@ -3400,13 +5760,33 @@ classdef Titta < handle
             end
         end
         
-        function loadOtherCal(obj,cal,skipCheck)
-            if ~isempty(cal.cal.computedCal)    % empty when doing zero-point calibration. There is nothing to laod or change then anyway, so is ok to skip. NB: rethink if user ever gains interface for changing number of calibration points
+        function loadOtherCal(obj,cal,calNo,skipCheck,alsoSwitchMode)
+            if ~isempty(cal.cal.computedCal)    % empty when doing zero-point calibration. There is nothing to load or change then anyway, so is ok to skip. NB: rethink if user ever gains interface for changing number of calibration points
+                obj.sendMessage(sprintf('LOAD CALIBRATION (%s), calibration no. %d',getEyeLbl(cal.eye),calNo));
+                
+                % first check we're in right calibration mode
+                if nargin>4 && ~isempty(alsoSwitchMode) && alsoSwitchMode
+                    % check that current calibration mode matches that
+                    % of the calibration selected to be loaded.
+                    % If not exit, calibration mode and reenter the
+                    % correct one
+                    if ~strcmp(cal.eye,obj.settings.calibrateEye)
+                        % first change eye to be calibrated
+                        obj.changeAndCheckCalibEyeMode(cal.eye);
+                        obj.sendMessage(sprintf('CHANGE SETUP to %s',getEyeLbl(obj.settings.calibrateEye)));
+                        % now also change mode in all cases (as this
+                        % also wipes state clean, so also wanted when
+                        % we remain monocular, but switch from left to
+                        % right eye)
+                        obj.doLeaveCalibrationMode();
+                        obj.doEnterCalibrationMode();
+                    end
+                end
                 
                 % load previous calibration
                 obj.buffer.calibrationApplyData(cal.cal.computedCal);
                 
-                if nargin>2 && skipCheck
+                if nargin>3 && ~isempty(skipCheck) && skipCheck
                     % return immediately
                     return
                 end
@@ -3426,9 +5806,42 @@ classdef Titta < handle
             end
         end
         
-        function [mx,my,mouse,key,shiftIsDown] = getNewMouseKeyPress(obj,win)
+        function logCalib(obj,out)
+            % log to messages which calibration was selected
+            if ~isnan(out.selectedCal)
+                add = '';
+                if out.wasSkipped
+                    add = ' (note that operator skipped instead of accepted calibration)';
+                end
+                if strcmp(out.type,'manual')
+                    if out.selectedCal(2)==0
+                        calStr  = 'none';
+                        add     = '';   % note not relevant (in case there is any) if no calibration
+                    else
+                        calStr = sprintf('attempt %d, cal %d',out.selectedCal);
+                    end
+                else
+                    calStr = sprintf('no. %d',out.selectedCal);
+                end
+                str = sprintf('%s%s',calStr,add);
+            else
+                str = 'none';
+            end
+            obj.sendMessage(sprintf('CALIBRATION (%s) APPLIED: %s',getEyeLbl(obj.settings.calibrateEye),str));
+            
+            % store calibration info in calibration history, for later
+            % retrieval if wanted
+            if isempty(obj.calibrateHistory)
+                obj.calibrateHistory{1} = out;
+            else
+                obj.calibrateHistory{end+1} = out;
+            end
+        end
+        
+        function [mx,my,mouse,key,shiftIsDown,mouseRelease,keyRelease] = getNewMouseKeyPress(obj,win)
             % function that only returns key depress state changes in the
-            % down direction, not keys that are held down or anything else
+            % down and up directions, not keys that are held down or
+            % anything else
             % NB: before using this, make sure internal state is up to
             % date!
             if nargin<2
@@ -3471,8 +5884,11 @@ classdef Titta < handle
             
             % get only fresh mouse and key presses (so change from state
             % "up" to state "down")
-            key     = keyCode & ~obj.keyState;
-            mouse   = buttons & ~obj.mouseState;
+            key         = keyCode & ~obj.keyState;
+            mouse       = buttons & ~obj.mouseState;
+            % check also for key or mouse button releases
+            mouseRelease= ~buttons & obj.mouseState;
+            keyRelease  = ~keyCode & obj.keyState;
             
             % get if shift key is currently down
             if any(keyCode)
@@ -3624,4 +6040,76 @@ end
 fname   = fullfile(dir,[datestr(now,'yyyy-mm-dd HH.MM.SS.FFF') '.png']);
 scrShot = Screen('GetImage',wpnt);
 imwrite(scrShot,fname);
+end
+
+function [headRects,headCursors] = getSelectionRects(headORect,margin,cursors)
+headRects = repmat(headORect.',1,9);
+% add resize handle points
+rs = GrowRect(headORect,-margin,-margin);
+rb = GrowRect(headORect, margin, margin);
+%%% corners
+% left-upper
+headRects(:,1) = [rb(1) rb(2) rs(1) rs(2)];
+% right-upper
+headRects(:,2) = [rs(3) rb(2) rb(3) rs(2)];
+% left-lower
+headRects(:,3) = [rb(1) rs(4) rs(1) rb(4)];
+% right-lower
+headRects(:,4) = [rs(3) rs(4) rb(3) rb(4)];
+%%% edges
+% upper
+headRects(:,5) = [rs(1) rb(2) rs(3) rs(2)];
+% lower
+headRects(:,6) = [rs(1) rs(4) rs(3) rb(4)];
+% left
+headRects(:,7) = [rb(1) rs(2) rs(1) rs(4)];
+% right
+headRects(:,8) = [rs(3) rs(2) rb(3) rs(4)];
+% drag rect should be the smaller rect itself
+headRects(:,9) = rs;
+% corresponding cursors
+headCursors = [cursors.sizetopleft cursors.sizetopright cursors.sizebottomleft cursors.sizebottomright ...
+    cursors.sizetop cursors.sizebottom cursors.sizeleft cursors.sizeright ...
+    cursors.normal];
+end
+
+function refPosO = updateHeadDragResize(headRect,scrRes,fac,headO,refSzO,headCircleEdgeWidth)
+scaleFacs   = [RectWidth(headRect)/scrRes(1) RectHeight(headRect)/scrRes(2)];
+if scaleFacs(1)<=scaleFacs(2)
+    extraOff = (RectHeight(headRect)-scrRes(2)*scaleFacs(1))/2;
+    headO.allPosOff = headRect(1:2)+[0 extraOff];
+else
+    extraOff = (RectWidth(headRect)-scrRes(1)*scaleFacs(2))/2;
+    headO.allPosOff = headRect(1:2)+[extraOff 0];
+end
+
+refPosO         = scrRes/2*fac;
+refPosO         = refPosO+headO.allPosOff;
+
+
+headO.refSz     = refSzO;
+headO.rectWH    = scrRes*fac;
+headO.headCircleEdgeWidth = headCircleEdgeWidth*fac;
+end
+
+function whichCal = getLastManualCal(attempt)
+% no valid calibration: denoted by cal==0
+whichCal = 0;
+if isfield(attempt,'cal')
+    for c=length(attempt.cal):-1:1
+        if isfield(attempt.cal{c},'computeResult') && ~isempty(attempt.cal{c}.computeResult.points)
+            whichCal = c;
+            break;
+        end
+    end
+end
+end
+
+function pointIdxs = getWhichCalibrationPoints(allPointsNormPos,calResultPoints)
+pointIdxs = [];
+for p=1:length(calResultPoints)
+    qPoint      = sum(abs(bsxfun(@minus,allPointsNormPos,calResultPoints(p).position(:).'))<0.0001,2)==2;
+    assert(sum(qPoint)==1,'unknown or not unique calibration point: [%s]',num2str(calResultPoints(p).position(:).'));
+    pointIdxs   = [pointIdxs find(qPoint)]; %#ok<AGROW>
+end
 end

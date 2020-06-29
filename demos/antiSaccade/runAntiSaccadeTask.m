@@ -29,8 +29,12 @@ sca
 clear variables
 
 % add functions folder and Titta folder to path
+% You can run addTittaToPath once to "install" it, or you can simply add a
+% call to it in your script so each time you want to use Titta, it is
+% ensured it is on path
+addTittaToPath;
 myDir = fileparts(mfilename('fullpath'));
-addpath(genpath(myDir),genpath(fullfile(myDir,'..','..')));
+addpath(genpath(myDir));
 
 
 %%% ask user some questions about what they want to run

@@ -27,7 +27,10 @@ TobiiProLabProject      = 'EPTest'; % to use external presenter functionality, p
 TobiiProLabParticipant  = 'tester';
 TobiiProLabRecordingName= 'recording1';
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
+% You can run addTittaToPath once to "install" it, or you can simply add a
+% call to it in your script so each time you want to use Titta, it is
+% ensured it is on path
+addTittaToPath;
 
 try
     % get setup struct (can edit that of course):

@@ -35,7 +35,10 @@ imageTime               = 4;
 scrPresenter            = 1;
 scrOperator             = 2;
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'..')));
+% You can run addTittaToPath once to "install" it, or you can simply add a
+% call to it in your script so each time you want to use Titta, it is
+% ensured it is on path
+addTittaToPath;
 
 try
     eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
