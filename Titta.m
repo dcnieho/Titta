@@ -4362,6 +4362,16 @@ classdef Titta < handle
                                     calAction = 0;
                                 end
                                 % 2. validation points
+                                if strcmp(calLoadSource, 'previousCal')
+                                    % clear old validation, if any, so that
+                                    % it doesn't get copied over. Do here
+                                    % as below we set state according to
+                                    % old val, and deleting after would
+                                    % thus be too late
+                                    if isfield(out.attempt{whichAttempt},'val')
+                                        out.attempt{whichAttempt} = rmfield(out.attempt{whichAttempt},'val');
+                                    end
+                                end
                                 if isfield(out.attempt{whichAttempt},'val')
                                     qFound  = false(1,size(pointsP,1));
                                     vals    = out.attempt{whichAttempt}.val;
@@ -4394,6 +4404,7 @@ classdef Titta < handle
                                     valAction = 0;
                                 end
                                 % 3. extra info
+                                out.attempt{kCal}.loadedFrom.source         = calLoadSource;
                                 out.attempt{kCal}.loadedFrom.whichAttempt   = whichAttempt;
                                 out.attempt{kCal}.loadedFrom.whichCal       = whichCal;
                                 out.attempt{kCal}.loadedFrom.timestamp      = out.attempt{whichAttempt}.timestamp;
@@ -4453,12 +4464,20 @@ classdef Titta < handle
                                     obj.buffer.calibrationApplyData(out.attempt{kCal}.cal{calAction}.computedCal);
                                     calibrationStatus = 3;      % status: loading
                                 end
-                                % adjust this item in snapshot menu to the
-                                % current one (only first two items, cals
-                                % still fine)
-                                if strcmp(calLoadSource,'snapshot')
-                                    snapshots{currentMenuSel,1} = kCal;
-                                    snapshots{currentMenuSel,2} = calAction;
+                                % some final cleanup
+                                switch calLoadSource
+                                    case 'snapshot'
+                                        % adjust this item in snapshot menu to the
+                                        % current one (only first two items, cals
+                                        % still fine)
+                                        snapshots{currentMenuSel,1} = kCal;
+                                        snapshots{currentMenuSel,2} = calAction;
+                                    case 'previousCal'
+                                        % remove all previous calls, just
+                                        % keep the loaded one
+                                        temp        = out.attempt{kCal};
+                                        out.attempt = {temp};
+                                        kCal        = 1;
                                 end
                                 % done
                                 qUpdateLineDisplay      = true;
