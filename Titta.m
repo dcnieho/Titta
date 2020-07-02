@@ -1010,6 +1010,13 @@ classdef Titta < handle
             %    CALIBRATION is a struct containing information about the
             %    calibration/validation run.
             %
+            %    CALIBRATION = Titta.calibrate(WPNT,PREVIOUSCALIBS) allows
+            %    to prepopulate the interface with previous calibration(s).
+            %    The previously selected calibration is made active and it
+            %    can then be revalidated and used, or replaced.
+            %    PREVIOUSCALIBS is expected to be a CALIBRATION output from
+            %    a previous run of Titta.calibrateManual.
+            %
             %    INTERFACE
             %    The interface can be fully controlled by key combinations.
             %    Some key combinations are hardcoded, others can be changed through
@@ -1114,24 +1121,21 @@ classdef Titta < handle
             
             % setup the setup/calibration screens
             if ~isempty(previousCalibs)
-                % TODO: do prepopulating and loading inside doManualCalib,
-                % copy over only the needed cals and vals, nothing else
-                % prepopulate with previous calibrations passed by user
+                % prepopulating and loading is done inside doManualCalib,
+                % here only copy over the previous calibrations passed by
+                % user
                 out                 = previousCalibs;
                 % preload the one previously selected by user
-                kCal                = out.selectedCal;      % index into list of calibration attempts
-                obj.loadOtherCal(out.attempt{kCal},kCal,[],true);
-                currentSelection    = kCal;                 % keeps track of calibration that is currently applied
+                currentSelection    = previousCalibs.selectedCal;
             else
-                kCal                = 0;                    % index into list of calibration attempts
-                currentSelection    = [nan nan];            % keeps track of calibration that is currently applied
+                currentSelection    = [nan nan];
             end
             out.type            = 'manual';
             out.selectedCal     = [nan nan];
             out.wasSkipped      = false;
             
             % run the setup/calibration process
-            out = obj.doManualCalib(wpnt,out,kCal,currentSelection);
+            out = obj.doManualCalib(wpnt,out,currentSelection);
             switch out.status
                 case 1
                     % all good, we're done
@@ -3758,7 +3762,7 @@ classdef Titta < handle
             HideCursor;
         end
         
-        function out = doManualCalib(obj,wpnt,out,kCal,currentSelection)
+        function out = doManualCalib(obj,wpnt,out,currentSelection)
             % init key, mouse state
             [~,~,obj.keyState]      = KbCheck();
             [~,~,obj.mouseState]    = GetMouse();
@@ -3935,12 +3939,18 @@ classdef Titta < handle
             headOriRect             = [];
             % 2. calibration/validation state
             qToggleStage            = true;
-            if kCal
+            if ~all(isnan(currentSelection))
                 % have a previous loaded calibration, start in validation
                 % mode
                 stage                   = 'cal';    % will be set to 'val' below because qToggleStage is true
+                kCal                    = currentSelection(1);
+                awaitingCalChangeType   = 'load';
+                calLoadSource           = 'previousCal';
             else
                 stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
+                kCal                    = 0;
+                awaitingCalChangeType   = '';           % 'compute' or 'load'
+                calLoadSource           = '';
             end
             % 3. selection menus
             qToggleSelectEyeMenu    = false;
@@ -3982,7 +3992,6 @@ classdef Titta < handle
             calibrationStatus       = 0+(kCal~=0);  % 0: not calibrated; -1: failed; 1: calibrated; 2: calibrating; 3: loading. initial state: 0 if new run, 1 if loaded previous
             usedCalibrationPoints   = [];
             pointStateLastCal       = [];
-            awaitingCalChangeType   = '';           % 'compute' or 'load'
             qUpdateCalStatusText    = true;
             qUpdateLineDisplay      = true;
             % 10. cursor drawer state
@@ -4103,32 +4112,7 @@ classdef Titta < handle
                     if isempty(snapshots) || ~any(all([cat(1,snapshots{:,1})==toSave(1) cat(1,snapshots{:,2})==toSave(2)],2))
                         % collect cal actions that contributed to current
                         % state
-                        idxs = nan(1,size(cPointsP,1));
-                        count= 0;
-                        % find cal actions for points
-                        for c=toSave(2):-1:1
-                            idx = out.attempt{kCal}.cal{c}.point(1);
-                            if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && ((isfield(out.attempt{kCal}.cal{c},'collectStatus') && out.attempt{kCal}.cal{c}.collectStatus.status==0) || (isfield(out.attempt{kCal}.cal{c},'discardStatus') && out.attempt{kCal}.cal{c}.discardStatus.status==0))
-                                idxs(idx)   = c;
-                                count       = count+1;
-                            end
-                        end
-                        % copy over in chronological order
-                        fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus','discardStatus'};
-                        [~,i] = sort(idxs);
-                        cals = cell(1,count);
-                        for c=1:count
-                            for f=1:length(fields)
-                                if isfield(out.attempt{kCal}.cal{idxs(i(c))},fields{f})
-                                    cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
-                                end
-                            end
-                        end
-                        % calibration data, etc
-                        if count
-                            cals{end}.computeResult  = out.attempt{kCal}.cal{toSave(2)}.computeResult;
-                            cals{end}.computedCal    = out.attempt{kCal}.cal{toSave(2)}.computedCal;
-                        end
+                        cals = collectCalsForSave(out,toSave,cPointsP);
                         snapshots = [snapshots; num2cell(toSave) {cals}]; %#ok<AGROW>
                     end
                     qRegenSnapShotMenuListing   = true;
@@ -4350,8 +4334,14 @@ classdef Titta < handle
                             end
                         case 'load'
                             if calibrationStatus~=3
-                                whichAttempt    = snapshots{currentMenuSel,1};
-                                whichCal        = snapshots{currentMenuSel,2};
+                                switch calLoadSource
+                                    case 'snapshot'
+                                        whichAttempt    = snapshots{currentMenuSel,1};
+                                        whichCal        = snapshots{currentMenuSel,2};
+                                    case 'previousCal'
+                                        whichAttempt    = kCal;
+                                        whichCal        = currentSelection(2);
+                                end
                                 % start new cal
                                 kCal = length(out.attempt)+1;
                                 out.attempt{kCal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
@@ -4361,7 +4351,12 @@ classdef Titta < handle
                                 % accordingly
                                 % 1. calibration points
                                 if whichCal>0
-                                    out.attempt{kCal}.cal = snapshots{currentMenuSel,3};
+                                    switch calLoadSource
+                                        case 'snapshot'
+                                            out.attempt{kCal}.cal = snapshots{currentMenuSel,3};
+                                        case 'previousCal'
+                                            out.attempt{kCal}.cal = collectCalsForSave(out,currentSelection,cPointsP);
+                                    end
                                     calAction = length(out.attempt{kCal}.cal);
                                 else
                                     calAction = 0;
@@ -4461,8 +4456,10 @@ classdef Titta < handle
                                 % adjust this item in snapshot menu to the
                                 % current one (only first two items, cals
                                 % still fine)
-                                snapshots{currentMenuSel,1} = kCal;
-                                snapshots{currentMenuSel,2} = calAction;
+                                if strcmp(calLoadSource,'snapshot')
+                                    snapshots{currentMenuSel,1} = kCal;
+                                    snapshots{currentMenuSel,2} = calAction;
+                                end
                                 % done
                                 qUpdateLineDisplay      = true;
                                 qUpdateCalStatusText    = true;
@@ -5319,6 +5316,7 @@ classdef Titta < handle
                                         currentMenuSel          = iIn;
                                         if currentSnapMenuItem~=currentMenuSel
                                             awaitingCalChangeType   = 'load';
+                                            calLoadSource           = 'snapshot';
                                         end
                                         qToggleSelectSnapMenu   = true;
                                     end
@@ -5450,6 +5448,7 @@ classdef Titta < handle
                                         currentMenuSel          = requested;
                                         if currentSnapMenuItem~=currentMenuSel
                                             awaitingCalChangeType   = 'load';
+                                            calLoadSource           = 'snapshot';
                                         end
                                         qToggleSelectSnapMenu   = true;
                                     end
@@ -5470,6 +5469,7 @@ classdef Titta < handle
                                         % load another snapshot
                                         if currentSnapMenuItem~=currentMenuSel
                                             awaitingCalChangeType   = 'load';
+                                            calLoadSource           = 'snapshot';
                                         end
                                         qToggleSelectSnapMenu   = true;
                                     end
@@ -6107,5 +6107,36 @@ for p=1:length(calResultPoints)
     qPoint      = sum(abs(bsxfun(@minus,allPointsNormPos,calResultPoints(p).position(:).'))<0.0001,2)==2;
     assert(sum(qPoint)==1,'unknown or not unique calibration point: [%s]',num2str(calResultPoints(p).position(:).'));
     pointIdxs   = [pointIdxs find(qPoint)]; %#ok<AGROW>
+end
+end
+
+function cals = collectCalsForSave(out,toSave,cPointsP)
+kCal    = toSave(1);
+whichCal= toSave(2);
+idxs    = nan(1,size(cPointsP,1));
+count   = 0;
+% find cal actions for points
+for c=whichCal:-1:1
+    idx = out.attempt{kCal}.cal{c}.point(1);
+    if isnan(idxs(idx)) && ~out.attempt{kCal}.cal{c}.wasCancelled && ~out.attempt{kCal}.cal{c}.wasDiscarded && ((isfield(out.attempt{kCal}.cal{c},'collectStatus') && out.attempt{kCal}.cal{c}.collectStatus.status==0) || (isfield(out.attempt{kCal}.cal{c},'discardStatus') && out.attempt{kCal}.cal{c}.discardStatus.status==0))
+        idxs(idx)   = c;
+        count       = count+1;
+    end
+end
+% copy over in chronological order
+fields = {'point','timestamp','wasCancelled','wasDiscarded','collectStatus','discardStatus'};
+[~,i] = sort(idxs);
+cals = cell(1,count);
+for c=1:count
+    for f=1:length(fields)
+        if isfield(out.attempt{kCal}.cal{idxs(i(c))},fields{f})
+            cals{c}.(fields{f}) = out.attempt{kCal}.cal{idxs(i(c))}.(fields{f});
+        end
+    end
+end
+% calibration data, etc
+if count
+    cals{end}.computeResult  = out.attempt{kCal}.cal{whichCal}.computeResult;
+    cals{end}.computedCal    = out.attempt{kCal}.cal{whichCal}.computedCal;
 end
 end
