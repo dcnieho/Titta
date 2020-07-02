@@ -1266,7 +1266,6 @@ classdef Titta < handle
                 dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
             end
             dat.TobiiLog            = obj.buffer.getLog(false);
-            dat.TobiiNotifications  = obj.buffer.consumeN('notification');
             dat.data                = obj.ConsumeAllData();
         end
         
@@ -2624,9 +2623,6 @@ classdef Titta < handle
             Screen('Flip',wpnt(1),[],0,0,1);
         end
         
-        % NB: these three functions ignore the notification stream. Since
-        % its auto-started when connecting to tracker, we handle it
-        % separately
         function data = ConsumeAllData(obj,varargin)
             data.gaze           = obj.buffer.consumeTimeRange('gaze',varargin{:});
             data.eyeImages      = obj.buffer.consumeTimeRange('eyeImage',varargin{:});
