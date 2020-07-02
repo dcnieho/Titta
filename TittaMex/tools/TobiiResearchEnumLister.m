@@ -12,6 +12,7 @@ file = fullfile(cd,'..','deps','include','tobii_research_streams.h');
 impl(file,'Defines error types','TOBII_RESEARCH_STREAM_ERROR_','TobiiResearchStreamErrorInfo');
 impl(file,'Defines error sources','TOBII_RESEARCH_STREAM_ERROR_SOURCE_','TobiiResearchStreamErrorSourceInfo');
 impl(file,'Defines notification types','TOBII_RESEARCH_NOTIFICATION_','TobiiResearchNotificationTypeInfo');
+impl(file,'Defines eye image type','TOBII_RESEARCH_EYE_IMAGE_TYPE_','TobiiResearchEyeImageTypeInfo');
 
 file = fullfile(cd,'..','deps','include','tobii_research_eyetracker.h');
 impl(file,'Specifies license validation result.','TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_','TobiiResearchLicenseValidationResultInfo');

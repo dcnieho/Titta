@@ -1075,9 +1075,19 @@ namespace mxTypes
         else
         {
             using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields...));
-            auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass_v<U>, mxREAL)));
-            for (auto &samp : data_)
-                storage[i++] = mxTypes::getFieldWrapper(samp, fields...);
+            if constexpr (typeNeedsMxCellStorage_v<U>)
+            {
+                temp = mxCreateCellMatrix(1, static_cast<mwSize>(data_.size()));
+                mwIndex i = 0;
+                for (auto& item : data_)
+                    mxSetCell(temp, i++, ToMatlab(mxTypes::getFieldWrapper(item, fields...)));
+            }
+            else
+            {
+                auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, data_.size(), typeToMxClass_v<U>, mxREAL)));
+                for (auto& samp : data_)
+                    storage[i++] = mxTypes::getFieldWrapper(samp, fields...);
+            }
         }
         return temp;
     }
@@ -1086,7 +1096,7 @@ namespace mxTypes
     {
         std::stringstream ss;
         ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build;
-        return mxCreateString(ss.str().c_str());
+        return ToMatlab(ss.str());
     }
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
     {
@@ -1095,14 +1105,14 @@ namespace mxTypes
 
         for (size_t i = 0; i!=data_.size(); i++)
         {
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  0, mxCreateString(data_[i].deviceName.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  1, mxCreateString(data_[i].serialNumber.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  2, mxCreateString(data_[i].model.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  3, mxCreateString(data_[i].firmwareVersion.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  4, mxCreateString(data_[i].runtimeVersion.c_str()));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  5, mxCreateString(data_[i].address.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  0, ToMatlab(data_[i].deviceName));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  1, ToMatlab(data_[i].serialNumber));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  2, ToMatlab(data_[i].model));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  3, ToMatlab(data_[i].firmwareVersion));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  4, ToMatlab(data_[i].runtimeVersion));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  5, ToMatlab(data_[i].address));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i),  6, ToMatlab(static_cast<double>(data_[i].frequency)));    // output as double, not single
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  7, mxCreateString(data_[i].trackingMode.c_str()));
+            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  7, ToMatlab(data_[i].trackingMode));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i),  8, ToMatlab(data_[i].capabilities));
             mxSetFieldByNumber(out, static_cast<mwIndex>(i),  9, ToMatlab(std::vector<double>(data_[i].supportedFrequencies.begin(), data_[i].supportedFrequencies.end()))); // return frequencies as double, not single, precision
             mxSetFieldByNumber(out, static_cast<mwIndex>(i), 10, ToMatlab(data_[i].supportedModes));
@@ -1178,7 +1188,7 @@ namespace mxTypes
     }
     mxArray* ToMatlab(TobiiResearchLicenseValidationResult data_)
     {
-        return mxCreateString(TobiiResearchLicenseValidationResultToString(data_).c_str());
+        return ToMatlab(TobiiResearchLicenseValidationResultToString(data_));
     }
 
     mxArray* ToMatlab(std::vector<Titta::gaze> data_)
@@ -1243,30 +1253,33 @@ namespace mxTypes
         mxArray* out;
         if (allGif)
         {
-            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","isCropped","cameraID","isGif","image"};
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","region_id","region_top","region_left","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
         else
         {
-            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","bitsPerPixel","paddingPerPixel","width","height","isCropped","cameraID","isGif","image"};
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","region_id","region_top","region_left","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
 
         // all simple fields
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &Titta::eyeImage::device_time_stamp));
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &Titta::eyeImage::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::region_id));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::region_top));
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::region_left));
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel));
-            mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel));
-            mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));		// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel));
+            mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel));
+            mxSetFieldByNumber(out, 0, 7, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 8, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));		// 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0, 2 + off, FieldToMatlab(data_, &Titta::eyeImage::type, TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED));
-        mxSetFieldByNumber(out, 0, 3 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id));
-        mxSetFieldByNumber(out, 0, 4 + off, FieldToMatlab(data_, &Titta::eyeImage::isGif));
-        mxSetFieldByNumber(out, 0, 5 + off, eyeImagesToMatlab(data_));
+        mxSetFieldByNumber(out, 0, 5 + off, FieldToMatlab(data_, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
+        mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id));
+        mxSetFieldByNumber(out, 0, 7 + off, FieldToMatlab(data_, &Titta::eyeImage::isGif));
+        mxSetFieldByNumber(out, 0, 8 + off, eyeImagesToMatlab(data_));
 
         return out;
     }
@@ -1376,6 +1389,8 @@ namespace mxTypes
         {
             const char* fieldNames[] = { "systemTimeStamp","notification","explanation","value" };
             storage_ = mxCreateStructMatrix(size_, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            if (size_ == 0)
+                return storage_;
         }
 
         auto hasOutputFrequency = data_.output_frequency.has_value();
@@ -1431,7 +1446,7 @@ namespace mxTypes
             str = "!!unknown";
             break;
         }
-        return mxCreateString(str.c_str());
+        return ToMatlab(str);
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationWorkResult data_)
     {
@@ -1552,7 +1567,7 @@ namespace mxTypes
             str = "!!unknown";
             break;
         }
-        return mxCreateString(str.c_str());
+        return ToMatlab(str);
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationResult data_)
     {
@@ -1584,7 +1599,7 @@ namespace mxTypes
             str = "successRightEye";
             break;
         }
-        return mxCreateString(str.c_str());
+        return ToMatlab(str);
     }
     mxArray* ToMatlab(TobiiTypes::CalibrationPoint data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
@@ -1592,6 +1607,8 @@ namespace mxTypes
         {
             const char* fieldNames[] = { "position","samples" };
             storage_ = mxCreateStructMatrix(size_, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
+            if (size_ == 0)
+                return storage_;
         }
 
         mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.position_on_display_area));
@@ -1649,7 +1666,7 @@ namespace mxTypes
             str = "unknown";
             break;
         }
-        return mxCreateString(str.c_str());
+        return ToMatlab(str);
     }
 }
 

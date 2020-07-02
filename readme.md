@@ -11,7 +11,7 @@ Please cite:
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
 
-Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TittaMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TittaMex/deps/TobiiProSDK_EndUserLicenseAgreement.pdf) for more information.
+Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TittaMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TittaMex/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
 
 `demos/readme.m` shows a minimal example of using the toolbox's
 functionality.

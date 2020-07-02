@@ -716,6 +716,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
     py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
         .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
         .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
+        .value("multi_roi_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_MULTI_ROI)
         .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
         .export_values();
     py::class_<TobiiTypes::eyeImage>(m, "eye_image")
@@ -726,15 +727,18 @@ PYBIND11_MODULE(TobiiWrapper, m)
         .def_readwrite("padding_per_pixel", &TobiiTypes::eyeImage::padding_per_pixel)
         .def_readwrite("width", &TobiiTypes::eyeImage::width)
         .def_readwrite("height", &TobiiTypes::eyeImage::height)
+        .def_readwrite("region_id", &TobiiTypes::eyeImage::region_id)
+        .def_readwrite("region_top", &TobiiTypes::eyeImage::region_top)
+        .def_readwrite("region_left", &TobiiTypes::eyeImage::region_left)
         .def_readwrite("type", &TobiiTypes::eyeImage::type)
         .def_readwrite("camera_id", &TobiiTypes::eyeImage::camera_id)
         .def_property_readonly("image", &imageToNumpy)
         .def(py::pickle(
             [](const TobiiTypes::eyeImage& p) { // __getstate__
-                return py::make_tuple(p.isGif, p.device_time_stamp, p.system_time_stamp, p.bits_per_pixel, p.padding_per_pixel, p.width, p.height, p.type, p.camera_id, imageToNumpy(p));
+                return py::make_tuple(p.isGif, p.device_time_stamp, p.system_time_stamp, p.bits_per_pixel, p.padding_per_pixel, p.width, p.height, p.region_id, p.region_top, p.region_left, p.type, p.camera_id, imageToNumpy(p));
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 10)
+                if (t.size() != 13)
                     throw std::runtime_error("Invalid state!");
 
                 TobiiTypes::eyeImage p;
@@ -745,9 +749,12 @@ PYBIND11_MODULE(TobiiWrapper, m)
                 p.padding_per_pixel = t[4].cast<int>();
                 p.width = t[5].cast<int>();
                 p.height = t[6].cast<int>();
-                p.type = t[7].cast<TobiiResearchEyeImageType>();
-                p.camera_id = t[8].cast<int>();
-                auto im = t[9].cast<py::array_t<uint8_t>>();
+                p.region_id = t[7].cast<int>();
+                p.region_top = t[8].cast<int>();
+                p.region_left = t[9].cast<int>();
+                p.type = t[10].cast<TobiiResearchEyeImageType>();
+                p.camera_id = t[11].cast<int>();
+                auto im = t[12].cast<py::array_t<uint8_t>>();
                 p.setData(im.data(), im.nbytes());
                 return p;
             }

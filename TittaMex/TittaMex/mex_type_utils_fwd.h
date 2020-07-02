@@ -27,15 +27,20 @@ namespace mxTypes {
     mxArray* ToMatlab(std::string str_);
 
     template<class T>
-    typename std::enable_if_t<!is_container_v<T>, mxArray*>
+    typename std::enable_if_t<std::is_arithmetic_v<T>, mxArray*>
         ToMatlab(T val_);
 
-    template<class Cont>
+    template<class Cont, typename... Extras>
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        ToMatlab(Cont data_);
+        ToMatlab(Cont data_, Extras&& ...extras_);
     template <class... Types>  mxArray* ToMatlab(std::variant<Types...> val_);
     template <class T>         mxArray* ToMatlab(std::optional<T> val_);
     template <class T>         mxArray* ToMatlab(std::shared_ptr<T> val_);
+
+    // generic ToMatlab that converts provided data
+    template <class T, class U>
+    typename std::enable_if_t<!is_container_v<T>, mxArray*>
+        ToMatlab(T val_, U);
 
     //// struct of arrays
     // machinery to turn a container of objects into a single struct with an array per object field

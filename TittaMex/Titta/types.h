@@ -50,6 +50,9 @@ namespace TobiiTypes
             padding_per_pixel(0),
             width(0),
             height(0),
+            region_id(0),
+            region_top(0),
+            region_left(0),
             type(TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN),
             camera_id(0),
             data_size(0),
@@ -63,6 +66,9 @@ namespace TobiiTypes
             padding_per_pixel(e_->padding_per_pixel),
             width(e_->width),
             height(e_->height),
+            region_id(e_->region_id),
+            region_top(e_->top),
+            region_left(e_->left),
             type(e_->type),
             camera_id(e_->camera_id),
             data_size(e_->data_size),
@@ -78,6 +84,9 @@ namespace TobiiTypes
             padding_per_pixel(0),
             width(0),
             height(0),
+            region_id(e_->region_id),
+            region_top(e_->top),
+            region_left(e_->left),
             type(e_->type),
             camera_id(e_->camera_id),
             data_size(e_->image_size),
@@ -94,6 +103,9 @@ namespace TobiiTypes
             padding_per_pixel(other_.padding_per_pixel),
             width(other_.width),
             height(other_.height),
+            region_id(other_.region_id),
+            region_top(other_.region_top),
+            region_left(other_.region_left),
             type(other_.type),
             camera_id(other_.camera_id),
             data_size(other_.data_size),
@@ -132,6 +144,9 @@ namespace TobiiTypes
             swap(first.padding_per_pixel, second.padding_per_pixel);
             swap(first.width, second.width);
             swap(first.height, second.height);
+            swap(first.region_id, second.region_id);
+            swap(first.region_top, second.region_top);
+            swap(first.region_left, second.region_left);
             swap(first.type, second.type);
             swap(first.camera_id, second.camera_id);
             swap(first.data_size, second.data_size);
@@ -146,6 +161,9 @@ namespace TobiiTypes
         int                         padding_per_pixel;
         int                         width;
         int                         height;
+        int                         region_id;
+        int                         region_top;
+        int                         region_left;
         TobiiResearchEyeImageType   type;
         int                         camera_id;
         size_t                      data_size;

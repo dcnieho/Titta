@@ -6,7 +6,7 @@
 
 namespace mxTypes
 {
-    // needed helper to be able to do static_assert(false,...) in some constexpr if branches below, e.g. to mark them as todo TODO
+    // needed helper to be able to do static_assert(false,...) in some constexpr if branches below, e.g. to mark them as todo
     template <class...> constexpr std::false_type always_false{};
 
     // functionality to convert C++ types to MATLAB ClassIDs and back
@@ -62,65 +62,55 @@ namespace mxTypes
 
     //// converters of generic data types to MATLAB variables
     //// to simple variables
-    // forward declarations
-    mxArray* ToMatlab(std::string str_);
-
-    template<class T>
-    typename std::enable_if_t<!is_container_v<T>, mxArray*>
-        ToMatlab(T val_);
-
-    template<class Cont>
-    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        ToMatlab(Cont data_);
-    template <class... Types>  mxArray* ToMatlab(std::variant<Types...> val_);
-    template <class T>         mxArray* ToMatlab(std::optional<T> val_);
-    template <class T>         mxArray* ToMatlab(std::shared_ptr<T> val_);
-
-    // implementations
     mxArray* ToMatlab(std::string str_)
     {
         return mxCreateString(str_.c_str());
     }
 
     template<class T>
-    typename std::enable_if_t<!is_container_v<T>, mxArray*>
+    typename std::enable_if_t<std::is_arithmetic_v<T>, mxArray*>
         ToMatlab(T val_)
     {
-        static_assert(!typeNeedsMxCellStorage_v<T>, "T must be arithmetic. Implement a specialization of ToMxArray for your type");
         mxArray* temp;
         auto storage = static_cast<T*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, 1, typeToMxClass_v<T>, mxREAL)));
         *storage = val_;
         return temp;
     }
 
-    template<class Cont>
+    template<class Cont, typename... Extras>
     typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        ToMatlab(Cont data_)
+        ToMatlab(Cont data_, Extras&& ...extras_)
     {
         mxArray* temp = nullptr;
         using V = typename Cont::value_type;
         if constexpr (typeNeedsMxCellStorage_v<V>)
         {
+            // output cell array
             temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1);
             mwIndex i = 0;
             for (auto& item : data_)
-                mxSetCell(temp, i++, ToMatlab(item));
+                mxSetCell(temp, i++, ToMatlab(item, std::forward<Extras>(extras_)...));
         }
-        else if constexpr (is_guaranteed_contiguous_v<Cont>&& typeToMxClass_v<V> != mxSTRUCT_CLASS)
+        else if constexpr (is_guaranteed_contiguous_v<Cont> && typeToMxClass_v<V> != mxSTRUCT_CLASS)
         {
+            // output array
             auto storage = static_cast<V*>(mxGetData(temp = mxCreateUninitNumericMatrix(static_cast<mwSize>(data_.size()), 1, typeToMxClass_v<V>, mxREAL)));
             // contiguous storage, can memcopy
             if (data_.size())
-                memcpy(storage, &data_[0], data_.size()*sizeof(data_[0]));
+                memcpy(storage, &data_[0], data_.size() * sizeof(data_[0]));
         }
         else if constexpr (typeToMxClass_v<V> == mxSTRUCT_CLASS)
         {
+            // output array of structs
             mwIndex i = 0;
             if (!data_.size())
-                temp = mxCreateDoubleMatrix(0, 0, mxREAL);
+                if constexpr (std::is_default_constructible_v<V>)   // try hard to produce struct with empty fields
+                    temp = ToMatlab(V{}, i++, 0, temp, std::forward<Extras>(extras_)...);
+                else    // fall back to just empty
+                    temp = mxCreateDoubleMatrix(0, 0, mxREAL);
             else
                 for (auto& item : data_)
-                    temp = ToMatlab(item, i++, static_cast<mwSize>(data_.size()), temp);
+                    temp = ToMatlab(item, i++, static_cast<mwSize>(data_.size()), temp, std::forward<Extras>(extras_)...);
         }
         else
         {
@@ -128,6 +118,11 @@ namespace mxTypes
             // some range based for-loop, copy elements one at a time
         }
         return temp;
+    }
+
+    mxArray* ToMatlab(std::monostate)
+    {
+        return mxCreateDoubleMatrix(0, 0, mxREAL);
     }
 
     template <class... Types>
@@ -154,12 +149,20 @@ namespace mxTypes
             return ToMatlab(*val_);
     }
 
+    // generic ToMatlab that converts provided data
+    template <class T, class U>
+    typename std::enable_if_t<!is_container_v<T>, mxArray*>
+        ToMatlab(T val_, U)
+    {
+        return ToMatlab(static_cast<U>(val_));
+    }
+
 
     //// struct of arrays
     // machinery to turn a container of objects into a single struct with an array per object field
     // get field indicated by list of pointers-to-member-variable in fields
     template <typename O, typename T, typename... Os, typename... Ts>
-    constexpr auto getField(const O& obj, T O::*field1, Ts Os::*...fields)
+    constexpr auto getField(const O& obj, T O::* field1, Ts Os::*...fields)
     {
         if constexpr (!sizeof...(fields))
             return obj.*field1;

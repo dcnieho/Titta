@@ -808,6 +808,10 @@ typedef enum {
     */
     TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED,
     /**
+    The eye image is part of a group of regions of interest.
+    */
+    TOBII_RESEARCH_EYE_IMAGE_TYPE_MULTI_ROI,
+    /**
     The eye image has an unexpected type.
     */
     TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN
@@ -857,6 +861,18 @@ typedef struct {
     The data blob sent by the eye tracker.
     */
     void* data;
+    /**
+    The region id for the eye image.
+    */
+    int region_id;
+    /**
+    The top position in pixels for the eye image.
+    */
+    int top;
+    /**
+    The left position in pixels for the eye image.
+    */
+    int left;
 } TobiiResearchEyeImage;
 
 /**
@@ -887,6 +903,18 @@ typedef struct {
     The GIF image data.
     */
     void* image_data;
+    /**
+    The region id for the eye image.
+    */
+    int region_id;
+    /**
+    The top position in pixels for the eye image.
+    */
+    int top;
+    /**
+    The left position in pixels for the eye image.
+    */
+    int left;
 } TobiiResearchEyeImageGif;
 
 /**
