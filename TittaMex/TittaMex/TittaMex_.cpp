@@ -1265,19 +1265,19 @@ namespace mxTypes
         // all simple fields
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &Titta::eyeImage::device_time_stamp));
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &Titta::eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::region_id));
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::region_top));
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::region_left));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::region_id, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::region_top, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::region_left, 0.));			// 0. causes values to be stored as double
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel));
-            mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel));
-            mxSetFieldByNumber(out, 0, 7, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));		// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 8, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel, 0.));		// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel, 0.));	// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 7, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));			// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 8, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));			// 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
         mxSetFieldByNumber(out, 0, 5 + off, FieldToMatlab(data_, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
-        mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id));
+        mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id, 0.));		// 0. causes values to be stored as double
         mxSetFieldByNumber(out, 0, 7 + off, FieldToMatlab(data_, &Titta::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 8 + off, eyeImagesToMatlab(data_));
 
