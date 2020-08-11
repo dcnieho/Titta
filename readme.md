@@ -294,7 +294,7 @@ The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entr
 |`findAllEyeTrackers()`||<ol><li>`eyeTrackerList`: An array of structs with information about the connected eye trackers.</li></ol>|Gets the eye trackers that are connected to the system, as listed by the Tobii Pro SDK.|
 |||||
 |`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
-|`stop()`|<ol><li>`getLog`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
+|`getLog()`|<ol><li>`getLog`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
 |`stopLogging()`|||Stop listening to the eye tracker's log stream.|
 
 #### Construction and initialization
