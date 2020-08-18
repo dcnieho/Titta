@@ -125,6 +125,14 @@ classdef TittaDummyMode < Titta
             out = [];
         end
         
+        function out = calibrateManual(~,~,~)
+            out = [];
+        end
+        
+        function dat = collectSessionData(~)
+            dat = [];
+        end
+        
         function out = deInit(obj)
             out = [];
             % mark as deinited
