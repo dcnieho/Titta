@@ -4,9 +4,7 @@ function drawfixpoint(wpnt,fp,eye)
 % DRAWFIXCROSS(wpnt,xs,ys,lclr,lw,bgclr), with
 % WPNT : PTB pointer produced by Screen('OpenWindow')
 % TYPE : fixation cross '+' or dot '.'
-% SZ   : point: diameter, cross: length of [horizontal vertical] legs,
-%        Nonius square: square width, line length, square's line widht,
-%        line's line width
+% SZ   : length of [horizontal vertical] legs
 % LCLR : cross color (scalar, [r g b] triplet or [r g b a] quadruple)
 % LW   : cross legs' (line) width
 
@@ -26,6 +24,10 @@ switch type
         ys = sz(2); % sz(3) is line width
     case 'nsq'
         assert(isequal(sort(size(sz)),[1 4]),'if drawing fixation type ''nsq'', size should be 1x4')
+    case 'thaler'
+        % Thaler et al. 2012's ABC
+        assert(isequal(sort(size(sz)),[1 2]),'if drawing fixation type ''thaler'', size should be 1x2')
+        assert(iscell(lclr) && isequal(sort(size(lclr)),[1 2]),'if drawing fixation type ''thaler'', color should be a 1x2 cell')
     otherwise
         error('Fixation point type ''%s'' unknown',type);
 end
@@ -49,4 +51,11 @@ switch type
             % draw right and upper Nonius lines
             Screen('DrawLines', wpnt, [ (sz(1)-sz(2))/2  (sz(1)+sz(2))/2 0 0; 0 0 -(sz(1)+sz(2))/2 -(sz(1)-sz(2))/2], sz(4), lclr, fixPos,2);
         end
+    case 'thaler'
+        Screen('gluDisk', wpnt, lclr{1}, fixPos(1), fixPos(2), sz(1)/2);
+        rect = CenterRectOnPointd([0 0 sz(1:2)], fixPos(1), fixPos(2));
+        Screen('FillRect',wpnt,lclr{2},rect);
+        rect = CenterRectOnPointd([0 0 fliplr(sz(1:2))], fixPos(1), fixPos(2));
+        Screen('FillRect',wpnt,lclr{2},rect);
+        Screen('gluDisk', wpnt, lclr{1}, fixPos(1), fixPos(2), sz(2)/2);
 end
