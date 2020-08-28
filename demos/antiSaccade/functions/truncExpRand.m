@@ -1,20 +1,14 @@
-function [y,usedmu] = truncExpRandDiscrete(s,mu,vals,doFixUpMean)
-% [y,usedmu] = truncExpRandDiscrete(s,mu,vals,doFixUpMean)
+function [y,usedmu] = truncExpRand(s,mu,lower,upper,doFixUpMean)
+% [y,usedmu] = truncExpRand(s,mu,lower,upper,doFixUpMean)
 % generate random numbers from a truncated exponential distribution
-% sampled at the provided values. So output only contains values in vals
 % s is the shape of the output, [M N ...]
 %
-% See also truncExpRand
+% See also truncExpRandDiscrete
 %
 % example:
-% isi = 1000/60;
-% vals= [1000:isi:3500];
-% [s,usedmu] = truncExpRandDiscrete([1,10000000],1500,vals);
-% n   = histc(s,vals);
-% p   = exppdf(vals,1500);
-% bar(vals,n./sum(n),'histc')
-% hold on, plot(vals+isi/2,p./sum(p),'r')
-% mean(s)
+% [a,usedmu]=truncExpRand([1,10000000],500,200,5000);
+% hist(a,1000)
+% mean(a)
 %
 % NB: due to truncation, the mean of the sample does not equal the
 % requested mean. This can be fixed up through a quick optimization
@@ -22,11 +16,9 @@ function [y,usedmu] = truncExpRandDiscrete(s,mu,vals,doFixUpMean)
 % https://www.jiscmail.ac.uk/cgi-bin/wa-jisc.exe?A2=ind2008&L=EYE-MOVEMENT&O=D&P=2504).
 % This changes the rate parameter (1/mu) of the exponential distribution so
 % that the requested mean is achieved:
-% [s,usedmu]=truncExpRandDiscrete([1,1000000],1500,vals,true);
-% mean(s)
-% Note that this is still not perfect due to discretization of the output
-% (correction is done for an continuous distribution), but close (for the
-% parameters of this example).
+% [a,usedmu]=truncExpRand([1,10000000],500,200,5000,true);
+% hist(a,1000)
+% mean(a)
 %
 % NB further that while this distribution is used to e.g. create a constant
 % Hazard function (constant conditional probability that stimulus appears
@@ -35,6 +27,7 @@ function [y,usedmu] = truncExpRandDiscrete(s,mu,vals,doFixUpMean)
 % probabilities:
 %
 % exppdf = @(x,mu) exp(-x ./ mu) ./ mu;
+% vals= 200:5000;
 % p   = exppdf(vals,usedmu);
 % cumprob = fliplr(cumsum(fliplr(p)));
 % condprob = p./cumprob;
@@ -52,14 +45,12 @@ function [y,usedmu] = truncExpRandDiscrete(s,mu,vals,doFixUpMean)
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
 
-exppdf = @(x,mu) exp(-x ./ mu) ./ mu;
+expcdf = @(x,mu) -expm1(-(x./mu));
+expinv = @(p,mu) mu .* -log1p(-p);
 
-if nargin>3 && doFixUpMean
+if nargin>4 && doFixUpMean
     % because of truncation, mean of sample is not equal to requested mean.
     % correct for this so that sample has wanted mean
-    lower       = min(vals);
-    upper       = max(vals);
-    expcdf      = @(x,mu) -expm1(-(x./mu));
     currentmean = @(mu) (exp(-lower/mu)*(lower+mu)-exp(-upper/mu)*(upper+mu))/(expcdf(upper,mu)-expcdf(lower,mu));
     targetmean  = mu;
     usedmu      = fminsearch(@(mu) abs(targetmean-currentmean(mu)),mu);
@@ -67,12 +58,11 @@ else
     usedmu      = mu;
 end
 
-ps     = exppdf(vals,usedmu);
-cdf    = cumsum(ps(:))./sum(ps);
+plower =expcdf(lower,usedmu);
+pupper =expcdf(upper,usedmu);
 
-% do inverse transform sampling, using emperical cdf
-pin    = rand(s);
+pin = rand(s);
 
-% now use the cdf to look up the corresponding value from vals for each
-% sample
-y      = interp1(cdf,vals,pin,'next','extrap'); % extrap needed as interval (0, cdf(1)] is outside the input range and would map to nan otherwise
+% go through invCDF: inverse transform sampling
+p = plower + pin*(pupper-plower);   % truncate and scale so that integral of truncated distribution is 1
+y = expinv(p,usedmu);
