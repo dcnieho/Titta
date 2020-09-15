@@ -1779,7 +1779,7 @@ classdef Titta < handle
                 % adjustments, and the two clocks may thus drift.
                 [PTBgs,~,~,PTBmono] = GetSecs('AllClocks');
                 if nargin<1
-                    PTBtime = PTBmono;                  % not PTB time specified, just get CLOCK_MONOTONIC timestamp
+                    PTBtime = PTBmono;                  % no PTB time specified, just get CLOCK_MONOTONIC timestamp
                 else
                     PTBtime = PTBtime-PTBgs+PTBmono;    % PTBgs-PTBmono is offset required to remap from PTB time to CLOCK_MONOTONIC/Tobii Pro SDK system time
                 end
