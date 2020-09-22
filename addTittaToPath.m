@@ -12,7 +12,7 @@ opaths			= genpath(opath);
 opaths			= strsplit(opaths,pathsep);
 newpaths		= {};
 sep             = regexptranslate('escape',filesep);
-pathExceptions  = [sep '\.git|' sep 'src|' sep 'deps'];
+pathExceptions  = [sep '\.git|' sep 'deps'];
 for i=1:length(opaths)
 	if isempty(regexpi(opaths{i},pathExceptions))
 		newpaths{end+1}=opaths{i};
