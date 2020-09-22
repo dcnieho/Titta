@@ -50,6 +50,14 @@ classdef TalkToProLab < handle
             if nargin<3
                 IPorFQDN = 'localhost';
             end
+            
+            % check WebSocketClient java class required for SimpleWSClient
+            % is available
+            if exist('matlab-websocket-1.4.jar','file')==0
+                p = fileparts(mfilename('fullpath'));
+                error('The WebSocketClient required for TalkToProLab to function cannot be found. The folder ''%s'' is likely empty. If so, follow the install instructions provided here: https://github.com/dcnieho/Titta/#how-to-acquire to ensure that the right files are in the right place.',fullfile(p,'MatlabWebSocket'))
+            end
+            
             % connect to needed Lab services
             this.clientClock    = SimpleWSClient(['ws://' IPorFQDN ':8080/clock?client_id=TittaMATLAB']);
             assert(this.clientClock.Status==1,'TalkToProLab: Could not connect to clock service, did you start Tobii Pro Lab and open a project?');
