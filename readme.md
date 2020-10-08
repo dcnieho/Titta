@@ -79,9 +79,11 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
     |Tobii Pro X120|`Tobii X120`|
     |Tobii Pro T60|`Tobii T60`|
     |Tobii Pro T120|`Tobii T120`|
-    |Tobii 4C|`IS4_Large_Peripheral`|
+    |Tobii 4C<sup>*</sup>|`IS4_Large_Peripheral`|
   
     Note that the VR eye trackers are not supported by Titta.
+    
+    <sup>*</sup>Note that a Pro upgrade license key is required to be able to use the Tobii 4C for research purposes, and for it to function with Titta. Unfortunately, the Pro upgrade license key is no longer sold by Tobii Pro. If you try to use a 4C without upgrade key with Titta, you will not receive data streams, and some calls, such as `calibrate()` will yield `error 201: TOBII_RESEARCH_STATUS_SE_INSUFFICIENT_LICENSE`.
   
 2. Change settings from their defaults if wanted (see [supported options](#supported-options) section below)
 3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
