@@ -606,8 +606,8 @@ classdef Titta < handle
             try
                 obj.geom.trackBox       = obj.buffer.getTrackBox();
                 % get width and height of trackbox at middle depth
-                obj.geom.trackBox.halfWidth   = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
-                obj.geom.trackBox.halfHeight  = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
+                obj.geom.trackBox.halfWidth     = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
+                obj.geom.trackBox.halfHeight    = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
             catch
                 % tracker does not support trackbox
                 obj.geom.trackBox.halfWidth     = [];
