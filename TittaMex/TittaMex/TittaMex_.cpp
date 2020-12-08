@@ -117,7 +117,6 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchNormalizedPoint2D                    data_);
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample>       data_);
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
-    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
 }
 #include "cpp_mex_helpers/mex_type_utils.h"
 #include "cpp_mex_helpers/get_mem_var_type.h"
@@ -1041,6 +1040,23 @@ namespace
 
         return out;
     }
+
+    std::string TobiiResearchCalibrationEyeValidityToString(TobiiResearchCalibrationEyeValidity data_)
+    {
+        switch (data_)
+        {
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED:
+            return "invalidAndNotUsed";
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED:
+            return "validButNotUsed";
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED:
+            return "validAndUsed";
+        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN:
+            return "unknown";
+        }
+
+        return "unknown";
+    }
 }
 namespace mxTypes
 {
@@ -1618,33 +1634,9 @@ namespace mxTypes
         // 1 position on display area
         mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));			    // 0. causes values to be stored as double
         // 2 validity
-        mxArray* temp;
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
-        mwIndex i = 0;
-        for (auto &msg : data_)
-            mxSetCell(temp, i++, ToMatlab((msg.*field_).validity));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::validity, [](auto in_) {return TobiiResearchCalibrationEyeValidityToString(in_); }));
 
         return out;
-    }
-    mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity data_)
-    {
-        std::string str;
-        switch (data_)
-        {
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED:
-            str = "invalidAndNotUsed";
-            break;
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED:
-            str = "validButNotUsed";
-            break;
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED:
-            str = "validAndUsed";
-            break;
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN:
-            str = "unknown";
-            break;
-        }
-        return ToMatlab(str);
     }
 }
 

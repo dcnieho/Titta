@@ -19,10 +19,10 @@ std::string TobiiResearchStreamErrorToExplanation(TobiiResearchStreamError trl_)
 std::string TobiiResearchStreamErrorSourceToString     (TobiiResearchStreamErrorSource trl_);
 std::string TobiiResearchStreamErrorSourceToExplanation(TobiiResearchStreamErrorSource trl_);
 
-std::string TobiiResearchNotificationToString(TobiiResearchNotificationType trl_);
+std::string TobiiResearchNotificationToString     (TobiiResearchNotificationType trl_);
 std::string TobiiResearchNotificationToExplanation(TobiiResearchNotificationType trl_);
 
-std::string TobiiResearchEyeImageToString(TobiiResearchEyeImageType trl_);
+std::string TobiiResearchEyeImageToString     (TobiiResearchEyeImageType trl_);
 std::string TobiiResearchEyeImageToExplanation(TobiiResearchEyeImageType trl_);
 
 std::string TobiiResearchLicenseValidationResultToString     (TobiiResearchLicenseValidationResult trl_);

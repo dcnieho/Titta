@@ -1,4 +1,5 @@
 function TobiiResearchEnumLister
+cd(fileparts(mfilename('fullpath')))
 
 file = fullfile(cd,'..','deps','include','tobii_research.h');
 impl(file,'Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo');
@@ -16,6 +17,9 @@ impl(file,'Defines eye image type','TOBII_RESEARCH_EYE_IMAGE_TYPE_','TobiiResear
 
 file = fullfile(cd,'..','deps','include','tobii_research_eyetracker.h');
 impl(file,'Specifies license validation result.','TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_','TobiiResearchLicenseValidationResultInfo');
+
+file = fullfile(cd,'..','deps','include','tobii_research_calibration.h');
+impl(file,'Defines the validity of calibration eye data.','TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_','TobiiResearchCalibrationEyeValidity');
 
 end
 
