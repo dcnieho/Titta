@@ -169,11 +169,6 @@
     <None Include="TittaMexDummyMode.m" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include_matlab.h" />
-    <ClInclude Include="is_container_trait.h" />
-    <ClInclude Include="mex_type_utils.h" />
-    <ClInclude Include="mex_type_utils_fwd.h" />
-    <ClInclude Include="pack_utils.h" />
     <ClInclude Include="tobii_to_matlab.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,9 +57,9 @@
 #include <cstring>
 #include <cinttypes>
 
-#include "include_matlab.h"
+#include "cpp_mex_helpers/include_matlab.h"
 
-#include "pack_utils.h"
+#include "cpp_mex_helpers/pack_utils.h"
 #include "tobii_to_matlab.h"
 
 #include "Titta/Titta.h"
@@ -67,7 +67,7 @@
 
 // converting data to matlab. First here user extensions, then include with generic code driving this
 // extend set of function to convert C++ data to matlab
-#include "mex_type_utils_fwd.h"
+#include "cpp_mex_helpers/mex_type_utils_fwd.h"
 namespace mxTypes
 {
     // template specializations
@@ -75,19 +75,18 @@ namespace mxTypes
     // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
     // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
     template <>
-    struct typeNeedsMxCellStorage<TobiiTypes::CalibrationPoint> { static constexpr bool value = false; };
-    template <>
-    struct typeNeedsMxCellStorage<Titta::notification> { static constexpr bool value = false; };
-
-    template <>
     struct typeToMxClass<TobiiTypes::CalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
     template <>
     struct typeToMxClass<Titta::notification> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
 
+    template <>
+    struct typeNeedsMxCellStorage<TobiiTypes::CalibrationPoint> { static constexpr bool value = false; };
+    template <>
+    struct typeNeedsMxCellStorage<Titta::notification> { static constexpr bool value = false; };
+
     // forward declarations
     template<typename Cont, typename... Fs>
-    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        FieldToMatlab(const Cont& data_, Fs... fields);
+    mxArray* TobiiFieldToMatlab(const Cont& data_, Fs... fields);
 
     mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
@@ -120,7 +119,8 @@ namespace mxTypes
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample>  data_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_);
     mxArray* ToMatlab(TobiiResearchCalibrationEyeValidity               data_);
 }
-#include "mex_type_utils.h"
+#include "cpp_mex_helpers/mex_type_utils.h"
+#include "cpp_mex_helpers/get_mem_var_type.h"
 
 namespace {
     using ClassType         = Titta;
@@ -1046,8 +1046,7 @@ namespace mxTypes
 {
     // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
     template<typename Cont, typename... Fs>
-    typename std::enable_if_t<is_container_v<Cont>, mxArray*>
-        FieldToMatlab(const Cont& data_, Fs... fields)
+    mxArray* TobiiFieldToMatlab(const Cont& data_, Fs... fields)
     {
         mxArray* temp;
         using V = typename Cont::value_type;
@@ -1056,9 +1055,6 @@ namespace mxTypes
         // based on type, get number of rows for output
         constexpr auto numRows = getNumRows<retT>();
 
-        size_t i = 0;
-        if constexpr (numRows > 1)
-        {
             // this is one of the 2D/3D point types
             // determine what return type we get
             // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
@@ -1066,29 +1062,11 @@ namespace mxTypes
             auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass_v<U>, mxREAL)));
             for (auto &samp : data_)
             {
-                storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::x);
-                storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::y);
+                (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::x);
+                (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::y);
                 if constexpr (numRows == 3)
-                    storage[i++] = mxTypes::getFieldWrapper(samp, fields..., &retT::z);
+                    (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::z);
             }
-        }
-        else
-        {
-            using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields...));
-            if constexpr (typeNeedsMxCellStorage_v<U>)
-            {
-                temp = mxCreateCellMatrix(1, static_cast<mwSize>(data_.size()));
-                mwIndex i = 0;
-                for (auto& item : data_)
-                    mxSetCell(temp, i++, ToMatlab(mxTypes::getFieldWrapper(item, fields...)));
-            }
-            else
-            {
-                auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, data_.size(), typeToMxClass_v<U>, mxREAL)));
-                for (auto& samp : data_)
-                    storage[i++] = mxTypes::getFieldWrapper(samp, fields...);
-            }
-        }
         return temp;
     }
 
@@ -1219,25 +1197,25 @@ namespace mxTypes
         // 1. gazePoint
         mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGP) / sizeof(*fieldNamesGP), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));					// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));				// 0. causes values to be stored as double
         // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));				// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
         // 1.3 gazePoint.validity
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));									// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));		                        // 0. causes values to be stored as double
         // 2.2 pupil.validity
         mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 3. gazePoint
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
         // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
@@ -1322,7 +1300,7 @@ namespace mxTypes
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1 user_position
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));				// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));		    // 0. causes values to be stored as double
         // 2 validity
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
@@ -1638,7 +1616,7 @@ namespace mxTypes
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1 position on display area
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));					// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));			    // 0. causes values to be stored as double
         // 2 validity
         mxArray* temp;
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateCellMatrix(static_cast<mwSize>(data_.size()), 1));
