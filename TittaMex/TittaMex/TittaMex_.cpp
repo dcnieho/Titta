@@ -274,9 +274,10 @@ namespace {
     // getHandle pulls the integer handle out of prhs[1]
     HandleType getHandle(int nrhs, const mxArray *prhs[])
     {
-        if (nrhs < 2 || !mxIsScalar(prhs[1]))
-            mexErrMsgTxt("Specify an instance with an integer handle.");
-        return static_cast<HandleType>(mxGetScalar(prhs[1]));
+        static_assert(std::is_same_v<HandleType, unsigned int>);   // to check next line is valid (we didn't change the handle type)
+        if (nrhs < 2 || !mxIsScalar(prhs[1]) || !mxIsUint32(prhs[1]))
+            mexErrMsgTxt("Specify an instance with an integer (uint32) handle.");
+        return *static_cast<HandleType*>(mxGetData(prhs[1]));
     }
 
     // checkHandle gets the position in the instance table
@@ -341,7 +342,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 mexLock(); // add to the lock count
 
             // return the handle
-            plhs[0] = mxCreateDoubleScalar(insResult.first->first);
+            plhs[0] = mxTypes::ToMatlab(insResult.first->first);
 
             break;
         }
