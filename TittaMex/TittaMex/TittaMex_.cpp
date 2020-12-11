@@ -200,21 +200,21 @@ namespace {
     const std::map<std::string, Action> actionTypeMap =
     {
         // MATLAB interface
-        { "touch",				            Action::Touch },
-        { "new",				            Action::New },
-        { "delete",				            Action::Delete },
+        { "touch",                          Action::Touch },
+        { "new",                            Action::New },
+        { "delete",                         Action::Delete },
 
         //// global SDK functions
-        { "getSDKVersion",		            Action::GetSDKVersion },
-        { "getSystemTimestamp",	            Action::GetSystemTimestamp },
-        { "findAllEyeTrackers",	            Action::FindAllEyeTrackers },
+        { "getSDKVersion",                  Action::GetSDKVersion },
+        { "getSystemTimestamp",             Action::GetSystemTimestamp },
+        { "findAllEyeTrackers",             Action::FindAllEyeTrackers },
         // logging
-        { "startLogging",		            Action::StartLogging },
-        { "getLog",				            Action::GetLog },
-        { "stopLogging",		            Action::StopLogging },
+        { "startLogging",                   Action::StartLogging },
+        { "getLog",                         Action::GetLog },
+        { "stopLogging",                    Action::StopLogging },
         // check functions for dummy mode
-        { "checkDataStream",		        Action::CheckDataStream },
-        { "checkBufferSide",		        Action::CheckBufferSide },
+        { "checkDataStream",                Action::CheckDataStream },
+        { "checkBufferSide",                Action::CheckBufferSide },
 
         //// eye-tracker specific getters and setters
         // getters
@@ -230,39 +230,39 @@ namespace {
         { "getSupportedModes",              Action::GetSupportedModes },
         { "getFrequency",                   Action::GetFrequency },
         { "getTrackingMode",                Action::GetTrackingMode },
-        { "getTrackBox",			        Action::GetTrackBox },
-        { "getDisplayArea",			        Action::GetDisplayArea },
+        { "getTrackBox",                    Action::GetTrackBox },
+        { "getDisplayArea",                 Action::GetDisplayArea },
         // setters
         { "setDeviceName",                  Action::SetDeviceName },
         { "setFrequency",                   Action::SetFrequency },
         { "setTrackingMode",                Action::SetTrackingMode },
         // modifiers
-        { "applyLicenses",		    	    Action::ApplyLicenses },
-        { "clearLicenses",		    	    Action::ClearLicenses },
+        { "applyLicenses",                  Action::ApplyLicenses },
+        { "clearLicenses",                  Action::ClearLicenses },
 
         //// calibration
-        { "enterCalibrationMode",			Action::EnterCalibrationMode },
+        { "enterCalibrationMode",           Action::EnterCalibrationMode },
         { "isInCalibrationMode",            Action::IsInCalibrationMode },
-        { "leaveCalibrationMode",			Action::LeaveCalibrationMode },
-        { "calibrationCollectData",		    Action::CalibrationCollectData },
-        { "calibrationDiscardData",			Action::CalibrationDiscardData },
-        { "calibrationComputeAndApply",		Action::CalibrationComputeAndApply },
-        { "calibrationGetData",		        Action::CalibrationGetData },
-        { "calibrationApplyData",		    Action::CalibrationApplyData },
-        { "calibrationGetStatus",			Action::CalibrationGetStatus },
+        { "leaveCalibrationMode",           Action::LeaveCalibrationMode },
+        { "calibrationCollectData",         Action::CalibrationCollectData },
+        { "calibrationDiscardData",         Action::CalibrationDiscardData },
+        { "calibrationComputeAndApply",     Action::CalibrationComputeAndApply },
+        { "calibrationGetData",             Action::CalibrationGetData },
+        { "calibrationApplyData",           Action::CalibrationApplyData },
+        { "calibrationGetStatus",           Action::CalibrationGetStatus },
         { "calibrationRetrieveResult",      Action::CalibrationRetrieveResult },
 
         //// data streams
         { "hasStream",                      Action::HasStream },
-        { "start",		                    Action::Start },
+        { "start",                          Action::Start },
         { "isRecording",                    Action::IsRecording },
-        { "consumeN",			            Action::ConsumeN },
+        { "consumeN",                       Action::ConsumeN },
         { "consumeTimeRange",               Action::ConsumeTimeRange },
-        { "peekN",				            Action::PeekN },
-        { "peekTimeRange",		            Action::PeekTimeRange },
-        { "clear",				            Action::Clear },
-        { "clearTimeRange",		            Action::ClearTimeRange },
-        { "stop",		                    Action::Stop },
+        { "peekN",                          Action::PeekN },
+        { "peekTimeRange",                  Action::PeekTimeRange },
+        { "clear",                          Action::Clear },
+        { "clearTimeRange",                 Action::ClearTimeRange },
+        { "stop",                           Action::Stop },
     };
 
 
@@ -1213,25 +1213,25 @@ namespace mxTypes
         // 1. gazePoint
         mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGP) / sizeof(*fieldNamesGP), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));				// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_on_display_area, 0.));            // 0. causes values to be stored as double
         // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
         // 1.3 gazePoint.validity
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_point, &TobiiResearchGazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));		                        // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::diameter, 0.));                                 // 0. causes values to be stored as double
         // 2.2 pupil.validity
         mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeData::pupil_data, &TobiiResearchPupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         // 3. gazePoint
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_user_coordinates, 0.));      // 0. causes values to be stored as double
         // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.));		// 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::position_in_track_box_coordinates, 0.)); // 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiResearchEyeData::gaze_origin, &TobiiResearchGazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
@@ -1259,19 +1259,19 @@ namespace mxTypes
         // all simple fields
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, &Titta::eyeImage::device_time_stamp));
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, &Titta::eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::region_id, 0.));			// 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::region_top, 0.));			// 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::region_left, 0.));			// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &Titta::eyeImage::region_id, 0.));               // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &Titta::eyeImage::region_top, 0.));              // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, &Titta::eyeImage::region_left, 0.));             // 0. causes values to be stored as double
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel, 0.));		// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel, 0.));	// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 7, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));			// 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 8, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));			// 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, &Titta::eyeImage::bits_per_pixel, 0.));      // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, &Titta::eyeImage::padding_per_pixel, 0.));   // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 7, FieldToMatlab(data_, &Titta::eyeImage::width, 0.));               // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 8, FieldToMatlab(data_, &Titta::eyeImage::height, 0.));              // 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
         mxSetFieldByNumber(out, 0, 5 + off, FieldToMatlab(data_, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
-        mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id, 0.));		// 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, &Titta::eyeImage::camera_id, 0.));         // 0. causes values to be stored as double
         mxSetFieldByNumber(out, 0, 7 + off, FieldToMatlab(data_, &Titta::eyeImage::isGif));
         mxSetFieldByNumber(out, 0, 8 + off, eyeImagesToMatlab(data_));
 
@@ -1290,7 +1290,7 @@ namespace mxTypes
         // 3. external signal values
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, &TobiiResearchExternalSignalData::value));
         // 4. value change type
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchExternalSignalData::change_type, uint8_t{}));	// cast enum values
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, &TobiiResearchExternalSignalData::change_type, uint8_t{}));      // cast enum values to uint8
 
         return out;
     }
@@ -1316,7 +1316,7 @@ namespace mxTypes
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1 user_position
-        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));		    // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
         // 2 validity
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
@@ -1632,7 +1632,7 @@ namespace mxTypes
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1 position on display area
-        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));			    // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));                // 0. causes values to be stored as double
         // 2 validity
         mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, field_, &TobiiResearchCalibrationEyeData::validity, [](auto in_) {return TobiiResearchCalibrationEyeValidityToString(in_); }));
 
