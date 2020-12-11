@@ -291,10 +291,22 @@ namespace {
         }
         return it;
     }
+
+    bool registeredAtExit = false;
+    void atExitCleanUp()
+    {
+        instanceTab.clear();
+    }
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    if (!registeredAtExit)
+    {
+        mexAtExit(&atExitCleanUp);
+        registeredAtExit = true;
+    }
+
     if (nrhs < 1 || !mxIsChar(prhs[0]))
         mexErrMsgTxt("First input must be an action string ('new', 'delete', or a method name).");
 
