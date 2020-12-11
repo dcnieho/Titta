@@ -1247,12 +1247,12 @@ namespace mxTypes
         mxArray* out;
         if (allGif)
         {
-            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","region_id","region_top","region_left","type","cameraID","isGif","image"};
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
         else
         {
-            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","region_id","region_top","region_left","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
+            const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
         }
 
