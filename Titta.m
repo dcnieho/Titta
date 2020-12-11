@@ -65,6 +65,7 @@ classdef Titta < handle
         calibrateLeftEye    = true;
         calibrateRightEye   = true;
         wpnts;
+        eyeImageCanvasSize  = [];
         
         % settings and external info
         settings;
@@ -571,6 +572,12 @@ classdef Titta < handle
                 % applying license may have changed eye tracker's
                 % capabilities or other info. get a fresh copy
                 theTracker = obj.buffer.getEyeTrackerInfo();
+            end
+            
+            % set tracker specific internal paramters
+            switch obj.settings.tracker
+                case 'Tobii Pro Fusion'
+                    obj.eyeImageCanvasSize = [600 300];    % width x height
             end
             
             % set tracker to operate at requested tracking frequency
@@ -1372,6 +1379,8 @@ classdef Titta < handle
                 case 'Tobii T60 XL'
                     settings.freq                   = 60;
                     
+                case 'Tobii Pro Fusion'
+                    settings.freq                   = 120;
                 case 'Tobii Pro Nano'
                     settings.freq                   = 60;
                 case {'Tobii Pro X3-120','Tobii Pro X3-120 EPU'}
@@ -2108,10 +2117,28 @@ classdef Titta < handle
             qSelectedEyeChanged = false;
             qToggleEyeImage     = qHaveOperatorScreen;  % eye images default off if single screen, default on if have operator screen
             qShowEyeImage       = false;
-            texs                = [0 0];
-            szs                 = [];
-            eyeImageRect        = repmat({zeros(1,4)},1,2);
+            texs                = zeros(1,4);
+            szs                 = zeros(2,4);
+            poss                = zeros(2,4);
+            eyeImageRectLocal   = zeros(4,4);
+            eyeImageRect        = zeros(4,4);
+            canvasPoss          = zeros(4,2);
             circVerts           = genCircle(200);
+            % setup canvas positions if needed
+            eyeImageMargin      = 20;
+            qDrawEyeValidity    = false;
+            if ~isempty(obj.eyeImageCanvasSize)
+                visible = [but.visible];
+                if ~any(visible)
+                    basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                else
+                    basePos = min(butRects(2,[but.visible]));
+                end
+                canvasPoss(:,1) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)-obj.eyeImageCanvasSize(1)-eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
+                canvasPoss(:,2) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)                          +eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
+                % NB: we have a canvas only for eye trackers 
+                qDrawEyeValidity= true;
+            end
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
@@ -2141,19 +2168,35 @@ classdef Titta < handle
                     if qShowEyeImage
                         % get eye image
                         eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
-                        [texs,szs]  = UploadImages(texs,szs,wpnt(end),eyeIm);
+                        [texs,szs,poss,eyeImageRectLocal]  = ...
+                            UploadImages(eyeIm,texs,szs,poss,eyeImageRectLocal,wpnt(end),obj.eyeImageCanvasSize);
                         
-                        % update eye image locations if size of returned eye image changed
-                        if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
-                            margin = 20;
+                        % if we don't have a canvas to draw eye images on,
+                        % update eye image locations if size of returned
+                        % eye image changed. NB: For Titta to function
+                        % properly, any eye tracker that provides multiple
+                        % images per camera (e.g. Tobii Pro Fusion), a
+                        % canvas needs to be set up in the init() function
+                        % if an eye tracker only provides a single image
+                        % per camera, these are then found at indices 1 and
+                        % 3
+                        if isempty(obj.eyeImageCanvasSize) && (any(szs(:,1).'~=diff(reshape(eyeImageRect(:,1),2,2))) || any(szs(:,3).'~=diff(reshape(eyeImageRect(:,3),2,2))))
                             visible = [but.visible];
                             if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution{1}(2)*.95);
                             else
                                 basePos = min(butRects(2,[but.visible]));
                             end
-                            eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{end}(1)-szs(1,1)-margin/2,basePos-margin-szs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{end}(1)         +margin/2,basePos-margin-szs(2,2));
+                            eyeImageRect(:,1) = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{end}(1)-szs(1,1)-eyeImageMargin/2,basePos-eyeImageMargin-szs(2,1)).';
+                            eyeImageRect(:,3) = OffsetRect([0 0 szs(:,3).'],obj.scrInfo.center{end}(1)         +eyeImageMargin/2,basePos-eyeImageMargin-szs(2,3)).';
+                            canvasPoss = eyeImageRect(:,[1 3]);
+                        elseif ~isempty(obj.eyeImageCanvasSize)
+                            % turn canvas-local eye image locations into
+                            % screen locations
+                            for p=1:size(eyeImageRectLocal,2)
+                                camIdx = abs(ceil(p/2)-3);  % [1 2] -> 1 -> 2, [3 4] -> 2 -> 1: flip operation because cam 1 is right camera, cam 2 left camera
+                                eyeImageRect(:,p) = eyeImageRectLocal(:,p)+canvasPoss([1 2 1 2],camIdx);
+                            end
                         end
                     end
                 end
@@ -2177,7 +2220,7 @@ classdef Titta < handle
                     end
                     % update states of this screen
                     currentMenuItem = currentMenuSel;
-                    headP.crossEye   = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
+                    headP.crossEye  = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
                     headO.crossEye  = headP.crossEye;
                     qSelectedEyeChanged = false;
                 end
@@ -2229,15 +2272,19 @@ classdef Titta < handle
                 
                 % draw eye images, if any
                 if qShowEyeImage
-                    if texs(1)
-                        Screen('DrawTexture', wpnt(end), texs(1),[],eyeImageRect{1});
-                    else
-                        Screen('FillRect', wpnt(end), 0, eyeImageRect{1});
-                    end
-                    if texs(2)
-                        Screen('DrawTexture', wpnt(end), texs(2),[],eyeImageRect{2});
-                    else
-                        Screen('FillRect', wpnt(end), 0, eyeImageRect{2});
+                    Screen('FillRect', wpnt(end), 0, canvasPoss);
+                    qTex = ~~texs;
+                    if any(qTex)
+                        if qDrawEyeValidity
+                            validityRects   = GrowRect(eyeImageRect.',3,3).';
+                            qValid          = [eyeData.left.gazeOrigin.valid eyeData.right.gazeOrigin.valid];
+                            qValid          = qValid([2 1 2 1]); % first and third are right eye, second and fourth left eye
+                            clrs            = zeros(3,4);
+                            clrs(:,qValid)  = repmat([0 120 0].',1,sum( qValid));
+                            clrs(:,~qValid) = repmat([150 0 0].',1,sum(~qValid));
+                            Screen('FillRect', wpnt(end), clrs(:,qTex), validityRects(:,qTex));
+                        end
+                        Screen('DrawTextures', wpnt(end), texs(qTex),[],eyeImageRect(:,qTex));
                     end
                 end
                 % for distance info and ovals: hide when eye image is shown
@@ -5964,34 +6011,92 @@ function hex = clr2hex(clr)
 hex = reshape(dec2hex(clr(1:3),2).',1,[]);
 end
 
-function [texs,szs] = UploadImages(texs,szs,wpnt,image)
+function [texs,szs,poss,eyeImageRect] = UploadImages(image,texs,szs,poss,eyeImageRect,wpnt,canvasSize)
 if isempty(image)
     return;
 end
-qHave = [false false];
-if isempty(szs)
-    szs   = nan(2,2);
-end
+qHave = false(1,4);
 for p=length(image.cameraID):-1:1
-    % get which camera, 0 is right, 1 is left
-    which = image.cameraID(p);
-    if which==0
-        which = 2;
+    % use cameraID and regionID to get index into our arrays
+    % coding:
+    % for camera, 0 is right, 1 is left
+    % for region, 0 is right eye, 1 is left eye
+    % 0: cameraID: 0, regionID: 0 -> right camera, right eye
+    % 1: cameraID: 0, regionID: 1 -> right camera,  left eye
+    % 2: cameraID: 1, regionID: 0 ->  left camera, right eye
+    % 3: cameraID: 1, regionID: 1 ->  left camera,  left eye
+    idx = image.regionID(p)+bitshift(image.cameraID(p),1)+1;      % add 1 as matlab indices are one-based
+    
+    % if we have already uploaded an image for this camera/region, skip
+    % NB: we run from back to front over this array, and thus encounter
+    % latest images first. Later encounters in this loop (earlier images)
+    % should thus be skipped
+    if qHave(idx)
+        continue;
     end
-    % if we haven't uploaded an image for this camera yet, do
-    % so now
-    if ~qHave(which)
-        [w,h] = deal(image.width(p),image.height(p));
-        if iscell(image.image)
-            im = image.image{p};
-        else
-            im = image.image(:,p);
+    
+    otherRegionIdx = bitxor(idx-1,1)+1; % flip regionID bit to get other region for same camera
+    
+    % if we have a full image (not cropped), for the camera from which it
+    % was received we will: reset szs and poss, and dump any textures we
+    % may have
+    if strcmp(image.type{p},'TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL')
+        idxs = [idx otherRegionIdx];
+        tex = texs(idxs);
+        if any(tex)
+            Screen('Close',tex(~~tex));
         end
-        im = reshape(im,w,h).';
-        texs (which) = UploadImage(texs(which),wpnt,im);
-        qHave(which) = true;
-        szs(:,which) = [w h].';
+        texs  (idxs)= 0;
+        szs (:,idxs)= 0;
+        poss(:,idxs)= 0;
     end
+    
+    % if we're here we, haven't encountered this image for this update
+    % cycle yet. So upload it now
+    w = image.width(p);
+    h = image.height(p);
+    if iscell(image.image)
+        im = image.image{p};
+    else
+        im = image.image(:,p);
+    end
+    im = reshape(im,w,h).';
+    texs (idx) = UploadImage(texs(idx),wpnt,im);
+    qHave(idx) = true;
+    szs(:,idx) = [w h].';
+    poss(:,idx)= [image.regionLeft(p) image.regionTop(p)].';    % store position of eye image on sensor
+    
+    % update image rects
+    % position eye image
+    if any(poss(:,otherRegionIdx))
+        % if we have a position for other region of same camera, update
+        % position of both to center the constellation on the canvas
+        minX    = min(poss(1,[idx otherRegionIdx]));
+        rangeX  = max(poss(1,[idx otherRegionIdx])+szs(1,[idx otherRegionIdx]))-minX;
+        minY    = min(poss(2,[idx otherRegionIdx]));
+        rangeY  = max(poss(2,[idx otherRegionIdx])+szs(2,[idx otherRegionIdx]))-minY;
+        for r=[idx otherRegionIdx]
+            x = poss(1,r)-minX + (canvasSize(1)-rangeX)/2;
+            y = poss(2,r)-minY + (canvasSize(2)-rangeY)/2;
+            eyeImageRect(:,r) = [x y x+szs(1,r) y+szs(2,r)].';
+        end
+        % since leftmost on sensor is right eye (looking from other
+        % perspective), flip image positions. We want the screen to be like
+        % a mirror, with left eye displayed left of the right eye on both
+        % canvasses
+        eyeImageRect([1 3],[idx otherRegionIdx]) = fliplr(eyeImageRect([1 3],[idx otherRegionIdx]));
+    else
+        % if this is the only image, simply center it on canvas
+        if isempty(canvasSize)
+            % no canvas
+            eyeImageRect(:,idx) = [0 0 w h].';
+        else
+            eyeImageRect(:,idx) = CenterRectOnPointd([0 0 w h],canvasSize(1)/2,canvasSize(2)/2);
+        end
+    end
+    
+    % if we have now found images for all, we don't have to continue
+    % backwards into the array
     if all(qHave)
         break;
     end
