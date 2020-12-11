@@ -3,22 +3,19 @@ function addTittaToPath()
 mpath           = path;
 mpath           = strsplit(mpath, pathsep);
 opath           = fileparts(mfilename('fullpath'));
+
+% remove any old path values
 opathesc        = regexptranslate('escape',opath);
-for i = 1:length(mpath)
-    if ~isempty(regexpi(mpath{i},opathesc))
-        rmpath(mpath{i}); % remove any old path values
-    end
+qTittaPath      = ~cellfun(@isempty,regexpi(mpath,opathesc));
+if any(qTittaPath)
+    rmpath(mpath{qTittaPath});
 end
+
+% add new paths
 opaths          = genpath(opath);
 opaths          = strsplit(opaths,pathsep);
-newpaths        = {};
 sep             = regexptranslate('escape',filesep);
-pathExceptions  = [sep '\.git|' sep 'deps'];
-for i=1:length(opaths)
-    if isempty(regexpi(opaths{i},pathExceptions))
-        newpaths{end+1}=opaths{i};
-    end
-end
-newpaths = strjoin(newpaths,pathsep);
-addpath(newpaths); savepath;
+pathExceptions  = [sep '\.git|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build'];
+qAdd            = cellfun(@isempty,regexpi(opaths,pathExceptions)); % true where regexp _didn't_ match
+addpath(opaths{qAdd}); savepath;
 disp('--->>> Added Titta to the path...')
