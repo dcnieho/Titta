@@ -2760,9 +2760,6 @@ classdef Titta < handle
                     eyeStartTime    = obj.getTimeAsSystemTime();
                     obj.buffer.start('eyeImage');
                 end
-                eyeImageState   = {texs,szs,poss,eyeImageRect,eyeImageRectLocal};
-            else
-                eyeImageState   = {};
             end
             
             % setup
@@ -2899,7 +2896,8 @@ classdef Titta < handle
                     Screen('FillRect', wpnt(w), bgClr{w});   % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
                 end
                 if qHaveOperatorScreen
-                    [eyeImageState{:}] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,eyeImageState{:});
+                    [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
+                        drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                 end
                 qAllowAccept        = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
                 drawCmd             = 'draw';   % clear any command other than 'draw'
@@ -3033,7 +3031,8 @@ classdef Titta < handle
                         Screen('FillRect', wpnt(w), bgClr{w});
                     end
                     if qHaveOperatorScreen
-                        [eyeImageState{:}] = drawOperatorScreenFun([],eyeStartTime,eyeImageState{:});
+                        [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
+                            drawOperatorScreenFun([],eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                     end
                     drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
