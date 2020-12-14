@@ -2189,7 +2189,6 @@ classdef Titta < handle
                             end
                             eyeImageRect(:,1) = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{end}(1)-szs(1,1)-eyeImageMargin/2,basePos-eyeImageMargin-szs(2,1)).';
                             eyeImageRect(:,3) = OffsetRect([0 0 szs(:,3).'],obj.scrInfo.center{end}(1)         +eyeImageMargin/2,basePos-eyeImageMargin-szs(2,3)).';
-                            canvasPoss = eyeImageRect(:,[1 3]);
                         elseif ~isempty(obj.eyeImageCanvasSize)
                             % turn canvas-local eye image locations into
                             % screen locations
@@ -2272,7 +2271,6 @@ classdef Titta < handle
                 
                 % draw eye images, if any
                 if qShowEyeImage
-                    Screen('FillRect', wpnt(end), 0, canvasPoss);
                     qTex = ~~texs;
                     if any(qTex)
                         if qDrawEyeValidity
