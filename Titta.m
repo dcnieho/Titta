@@ -2193,7 +2193,7 @@ classdef Titta < handle
                             % turn canvas-local eye image locations into
                             % screen locations
                             for p=1:size(eyeImageRectLocal,2)
-                                camIdx = abs(ceil(p/2)-3);  % [1 2] -> 1 -> 2, [3 4] -> 2 -> 1: flip operation because cam 1 is right camera, cam 2 left camera
+                                camIdx = abs(ceil(p/2)-3);  % [1 2] -> 1 -> 2, [3 4] -> 2 -> 1: flip 1<->2 at end because cam 1 is right camera, cam 2 left camera
                                 eyeImageRect(:,p) = eyeImageRectLocal(:,p)+canvasPoss([1 2 1 2],camIdx);
                             end
                         end
@@ -2745,15 +2745,20 @@ classdef Titta < handle
             fs = min(fs);
             
             % start recording eye images if not already started
-            eyeStartTime    = [];
-            texs            = [0 0];
-            szs             = [];
-            eyeImageRect    = repmat({zeros(1,4)},1,2);
+            eyeStartTime        = [];
+            texs                = zeros(1,4);
+            szs                 = zeros(2,4);
+            poss                = zeros(2,4);
+            eyeImageRectLocal   = zeros(4,4);
+            eyeImageRect        = zeros(4,4);
             if qShowEyeImage
                 if ~obj.settings.cal.doRecordEyeImages
                     eyeStartTime    = obj.getTimeAsSystemTime();
                     obj.buffer.start('eyeImage');
                 end
+                eyeImageState   = {texs,szs,poss,eyeImageRect,eyeImageRectLocal};
+            else
+                eyeImageState   = {};
             end
             
             % setup
@@ -2782,7 +2787,7 @@ classdef Titta < handle
             end
             if qHaveOperatorScreen
                 oPoints = bsxfun(@plus,bsxfun(@times,points,obj.scrInfo.resolution{1})*obj.scrInfo.sFac,obj.scrInfo.offset);
-                drawOperatorScreenFun = @(idx,eS,t,s,eI) obj.drawOperatorScreen(wpnt(2),oPoints,idx,eS,t,s,eI);
+                drawOperatorScreenFun = @(idx,eS,t,s,ps,eI,eIL) obj.drawOperatorScreen(wpnt(2),oPoints,idx,eS,t,s,ps,eI,eIL);
             end
             
             points = [points bsxfun(@times,points,obj.scrInfo.resolution{1}) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
@@ -2890,7 +2895,7 @@ classdef Titta < handle
                     Screen('FillRect', wpnt(w), bgClr{w});   % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
                 end
                 if qHaveOperatorScreen
-                    [texs,szs,eyeImageRect] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,eyeImageRect);
+                    [eyeImageState{:}] = drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,eyeImageState{:});
                 end
                 qAllowAccept        = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
                 drawCmd             = 'draw';   % clear any command other than 'draw'
@@ -3024,7 +3029,7 @@ classdef Titta < handle
                         Screen('FillRect', wpnt(w), bgClr{w});
                     end
                     if qHaveOperatorScreen
-                        [texs,szs,eyeImageRect] = drawOperatorScreenFun([],eyeStartTime,texs,szs,eyeImageRect);
+                        [eyeImageState{:}] = drawOperatorScreenFun([],eyeStartTime,eyeImageState{:});
                     end
                     drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,3:4),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
@@ -3073,27 +3078,58 @@ classdef Titta < handle
             end
         end
         
-        function [texs,szs,eyeImageRect] = drawOperatorScreen(obj,wpnt,pos,highlight,eyeStartTime,texs,szs,eyeImageRect)
+        function [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = drawOperatorScreen(obj,wpnt,pos,highlight,eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal)
+            % get live gaze data
+            dataWindowLength= 500;  % ms
+            nDataPoint      = ceil(dataWindowLength/1000*obj.settings.freq);
+            gazeData        = obj.buffer.peekN('gaze',nDataPoint);
             % draw eye image
-            if nargin>4
+            if nargin>5
                 % get eye image
                 eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
-                [texs,szs]  = UploadImages(texs,szs,wpnt,eyeIm);
+                [texs,szs,poss,eyeImageRectLocal]  = ...
+                            UploadImages(eyeIm,texs,szs,poss,eyeImageRectLocal,wpnt,obj.eyeImageCanvasSize);
                 
-                % update eye image locations if size of returned eye image changed
-                if (~any(isnan(szs(:,1))) && any(szs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(szs(:,2))) && any(szs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
-                    margin = 20;
-                    eyeImageRect{1} = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-margin/2,obj.scrInfo.center{2}(2)-szs(2,1)/2);
-                    eyeImageRect{2} = OffsetRect([0 0 szs(:,2).'],obj.scrInfo.center{2}(1)         +margin/2,obj.scrInfo.center{2}(2)-szs(2,2)/2);
+                % position eye images
+                eyeImageMargin = 20;
+                if isempty(obj.eyeImageCanvasSize) && (any(szs(:,1).'~=diff(reshape(eyeImageRect(:,1),2,2))) || any(szs(:,3).'~=diff(reshape(eyeImageRect(:,3),2,2))))
+                    % if we don't have a canvas to draw eye images on, update eye image locations if size of returned eye image changed
+                    eyeImageRect(:,1) = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-eyeImageMargin/2,obj.scrInfo.center{2}(2)-szs(2,1)/2);
+                    eyeImageRect(:,3) = OffsetRect([0 0 szs(:,3).'],obj.scrInfo.center{2}(1)         +eyeImageMargin/2,obj.scrInfo.center{2}(2)-szs(2,3)/2);
+                    qDrawEyeValidity = false;
+                elseif ~isempty(obj.eyeImageCanvasSize)
+                    % turn canvas-local eye image locations into screen locations
+                    for p=1:size(eyeImageRectLocal,2)
+                        camIdx = abs(ceil(p/2)-3);  % [1 2] -> 1 -> 2, [3 4] -> 2 -> 1: flip 1<->2 at end because cam 1 is right camera, cam 2 left camera
+                        
+                        if camIdx==1
+                            canvasPossUL = [obj.scrInfo.center{2}(1)-obj.eyeImageCanvasSize(1)-eyeImageMargin/2, obj.scrInfo.center{2}(2)-obj.eyeImageCanvasSize(2)/2].';
+                        else
+                            canvasPossUL = [obj.scrInfo.center{2}(1)+eyeImageMargin/2                          , obj.scrInfo.center{2}(2)-obj.eyeImageCanvasSize(2)/2].';
+                        end
+                        
+                        eyeImageRect(:,p) = eyeImageRectLocal(:,p)+canvasPossUL([1 2 1 2]);
+                    end
+                    qDrawEyeValidity = true;
                 end
-                if texs(1)
-                    Screen('DrawTexture', wpnt(end), texs(1),[],eyeImageRect{1});
-                end
-                if texs(2)
-                    Screen('DrawTexture', wpnt(end), texs(2),[],eyeImageRect{2});
-                end
-            else
-                [texs,szs,eyeImageRect] = deal([]);
+                % draw eye images
+                qTex = ~~texs;
+                    if any(qTex)
+                        if qDrawEyeValidity
+                            validityRects   = GrowRect(eyeImageRect.',3,3).';
+                            if ~isempty(gazeData.systemTimeStamp)
+                                qValid          = [gazeData.left.gazeOrigin.valid(end) gazeData.right.gazeOrigin.valid(end)];
+                            else
+                                qValid          = [false false];
+                            end
+                            qValid          = qValid([2 1 2 1]); % first and third are right eye, second and fourth left eye
+                            clrs            = zeros(3,4);
+                            clrs(:,qValid)  = repmat([0 120 0].',1,sum( qValid));
+                            clrs(:,~qValid) = repmat([150 0 0].',1,sum(~qValid));
+                            Screen('FillRect', wpnt(end), clrs(:,qTex), validityRects(:,qTex));
+                        end
+                        Screen('DrawTextures', wpnt(end), texs(qTex),[],eyeImageRect(:,qTex));
+                    end
             end
             % draw indicator which point is being shown
             if ~isempty(highlight)
@@ -3109,7 +3145,7 @@ classdef Titta < handle
             if obj.calibrateRightEye
                 clrs{2} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt);
             end
-            drawLiveData(wpnt,obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+            drawLiveData(wpnt,gazeData,dataWindowLength,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
@@ -3834,6 +3870,10 @@ classdef Titta < handle
                 obj.buffer.start('externalSignal');
             end
             obj.buffer.start('timeSync');
+            
+            % setup live data visualization
+            dataWindowLength    = 500; % ms
+            nDataPointLiveView  = ceil(dataWindowLength/1000*obj.settings.freq);
             
             % setup head position visualization
             ovalVSz     = .15;
@@ -4835,12 +4875,16 @@ classdef Titta < handle
                     nextFlipT   = out.flips(end)+1/1000;
                     
                     % get eye data if needed
-                    if qShowGazeToAll || qShowHead
-                        eyeData     = obj.buffer.peekN('gaze',1);
+                    if qShowGaze || qShowHead || qShowGazeToAll
+                        if ~qShowGaze
+                            eyeData     = obj.buffer.peekN('gaze',1);
+                        else
+                            eyeData     = obj.buffer.peekN('gaze',nDataPointLiveView);
+                        end
                     end
                     % per frame updates
                     if qShowGazeToAll
-                        % prep gaze data
+                        % prep to show gaze data on participant screen
                         gazePosP    = nan(2,2);
                         if ~isempty(eyeData.systemTimeStamp)
                             if obj.calibrateLeftEye  && eyeData. left.gazePoint.valid(end)
@@ -4855,13 +4899,20 @@ classdef Titta < handle
                     % prep head
                     if qShowHead
                         posGuide    = obj.buffer.peekN('positioning',1);
-                        headO.update(...
-                            eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                            eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                        if ~isempty(eyeData.systemTimeStamp)
+                            inp = {
+                                eyeData. left.gazeOrigin.valid(end), eyeData. left.gazeOrigin.inUserCoords(end), posGuide. left.user_position, eyeData. left.pupil.diameter(end),...
+                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(end), posGuide.right.user_position, eyeData.right.pupil.diameter(end)
+                                };
+                        else
+                            inp = {
+                                [], [], posGuide. left.user_position, [],...
+                                [], [], posGuide.right.user_position, []
+                                };
+                        end
+                        headO.update(inp{:});
                         if qShowHeadToAll
-                            headP.update(...
-                                eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                                eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                            headP.update(inp{:});
                         end
                     end
                     
@@ -5007,7 +5058,7 @@ classdef Titta < handle
                         if obj.calibrateRightEye
                             clrs{2} = onlineGazeClr{2,end};
                         end
-                        drawLiveData(wpnt(end),obj.buffer,500,obj.settings.freq,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+                        drawLiveData(wpnt(end),eyeData,dataWindowLength,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
                         if qShowGazeToAll
                             if ~isnan(gazePosP(1,1))
                                 Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, gazePosP(1,1), gazePosP(2,1), 10);
