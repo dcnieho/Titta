@@ -2275,8 +2275,8 @@ classdef Titta < handle
                     if any(qTex)
                         if qDrawEyeValidity
                             validityRects   = GrowRect(eyeImageRect.',3,3).';
-                            if ~isempty(gazeData.systemTimeStamp)
-                                qValid          = [gazeData.left.gazeOrigin.valid(end) gazeData.right.gazeOrigin.valid(end)];
+                            if ~isempty(eyeData.systemTimeStamp)
+                                qValid          = [eyeData.left.gazeOrigin.valid(end) eyeData.right.gazeOrigin.valid(end)];
                             else
                                 qValid          = [false false];
                             end
