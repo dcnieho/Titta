@@ -2130,7 +2130,7 @@ classdef Titta < handle
             if ~isempty(obj.eyeImageCanvasSize)
                 visible = [but.visible];
                 if ~any(visible)
-                    basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                    basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                 else
                     basePos = min(butRects(2,[but.visible]));
                 end
@@ -2183,7 +2183,7 @@ classdef Titta < handle
                         if isempty(obj.eyeImageCanvasSize) && (any(szs(:,1).'~=diff(reshape(eyeImageRect(:,1),2,2))) || any(szs(:,3).'~=diff(reshape(eyeImageRect(:,3),2,2))))
                             visible = [but.visible];
                             if ~any(visible)
-                                basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                                basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                             else
                                 basePos = min(butRects(2,[but.visible]));
                             end
@@ -2275,7 +2275,11 @@ classdef Titta < handle
                     if any(qTex)
                         if qDrawEyeValidity
                             validityRects   = GrowRect(eyeImageRect.',3,3).';
-                            qValid          = [eyeData.left.gazeOrigin.valid eyeData.right.gazeOrigin.valid];
+                            if ~isempty(gazeData.systemTimeStamp)
+                                qValid          = [gazeData.left.gazeOrigin.valid(end) gazeData.right.gazeOrigin.valid(end)];
+                            else
+                                qValid          = [false false];
+                            end
                             qValid          = qValid([2 1 2 1]); % first and third are right eye, second and fourth left eye
                             clrs            = zeros(3,4);
                             clrs(:,qValid)  = repmat([0 120 0].',1,sum( qValid));
@@ -4058,9 +4062,14 @@ classdef Titta < handle
             % 5. eye images
             qToggleEyeImage         = true;     % eye images default on
             qShowEyeImage           = false;
-            eyeTexs                 = [0 0];
-            eyeSzs                  = [];
-            eyeImageRect            = repmat({zeros(1,4)},1,2);
+            eyeImageMargin          = 20;
+            eyeTexs                 = zeros(1,4);
+            eyeSzs                  = zeros(2,4);
+            eyePoss                 = zeros(2,4);
+            eyeImageRectLocal       = zeros(4,4);
+            eyeImageRect            = zeros(4,4);
+            eyeCanvasPoss           = zeros(4,2);
+            
             % 6. online gaze
             qShowGaze               = false;
             qShowGazeToAll          = false;
@@ -4085,6 +4094,21 @@ classdef Titta < handle
             qUpdateLineDisplay      = true;
             % 10. cursor drawer state
             qUpdateCursors          = true;
+            
+            % setup canvas positions if needed
+            qDrawEyeValidity    = false;
+            if ~isempty(obj.eyeImageCanvasSize)
+                visible = [but.visible];
+                if ~any(visible)
+                    basePos = round(obj.scrInfo.resolution{end}(2)*.95);
+                else
+                    basePos = min(butRects(2,[but(1:5).visible]));
+                end
+                eyeCanvasPoss(:,1) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)-obj.eyeImageCanvasSize(1)-eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
+                eyeCanvasPoss(:,2) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)                          +eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
+                % NB: we have a canvas only for eye trackers 
+                qDrawEyeValidity= true;
+            end
             
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
@@ -4879,7 +4903,7 @@ classdef Titta < handle
                     nextFlipT   = out.flips(end)+1/1000;
                     
                     % get eye data if needed
-                    if qShowGaze || qShowHead || qShowGazeToAll
+                    if qShowGaze || qShowHead || qShowGazeToAll || (qShowEyeImage && qDrawEyeValidity)
                         if ~qShowGaze
                             eyeData     = obj.buffer.peekN('gaze',1);
                         else
@@ -4905,8 +4929,8 @@ classdef Titta < handle
                         posGuide    = obj.buffer.peekN('positioning',1);
                         if ~isempty(eyeData.systemTimeStamp)
                             inp = {
-                                eyeData. left.gazeOrigin.valid(end), eyeData. left.gazeOrigin.inUserCoords(end), posGuide. left.user_position, eyeData. left.pupil.diameter(end),...
-                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(end), posGuide.right.user_position, eyeData.right.pupil.diameter(end)
+                                eyeData. left.gazeOrigin.valid(end), eyeData. left.gazeOrigin.inUserCoords(:,end), posGuide. left.user_position, eyeData. left.pupil.diameter(end),...
+                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(:,end), posGuide.right.user_position, eyeData.right.pupil.diameter(end)
                                 };
                         else
                             inp = {
@@ -4926,21 +4950,28 @@ classdef Titta < handle
                         if ~obj.settings.mancal.doRecordEyeImages
                             eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
                         else
-                            eyeIm       = obj.buffer.peekN('eyeImage',4);    % peek (up to) last four from end, keep them in buffer
+                            eyeIm       = obj.buffer.peekN('eyeImage',8);    % peek (up to) last eight from end (so we certainly have some for each camera and region), keep them in buffer
                         end
-                        [eyeTexs,eyeSzs]  = UploadImages(eyeTexs,eyeSzs,wpnt(end),eyeIm);
+                        [eyeTexs,eyeSzs,eyePoss,eyeImageRectLocal]  = ...
+                            UploadImages(eyeIm,eyeTexs,eyeSzs,eyePoss,eyeImageRectLocal,wpnt(end),obj.eyeImageCanvasSize);
                         
                         % update eye image locations if size of returned eye image changed
-                        if (~any(isnan(eyeSzs(:,1))) && any(eyeSzs(:,1).'~=diff(reshape(eyeImageRect{1},2,2)))) || (~any(isnan(eyeSzs(:,2))) && any(eyeSzs(:,2).'~=diff(reshape(eyeImageRect{1},2,2))))
-                            margin = 20;
-                            visible = [but(1:5).visible];
+                        if isempty(obj.eyeImageCanvasSize) && (any(eyeSzs(:,1).'~=diff(reshape(eyeImageRect(:,1),2,2))) || any(eyeSzs(:,3).'~=diff(reshape(eyeImageRect(:,3),2,2))))
+                            visible = [but.visible];
                             if ~any(visible)
-                                basePos = round(obj.scrInfo.resolution{1}(2)*.95);
+                                basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                             else
                                 basePos = min(butRects(2,[but(1:5).visible]));
                             end
-                            eyeImageRect{1} = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-margin/2,basePos-margin-eyeSzs(2,1));
-                            eyeImageRect{2} = OffsetRect([0 0 eyeSzs(:,2).'],obj.scrInfo.center{end}(1)            +margin/2,basePos-margin-eyeSzs(2,2));
+                            eyeImageRect(:,1) = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,1)).';
+                            eyeImageRect(:,3) = OffsetRect([0 0 eyeSzs(:,3).'],obj.scrInfo.center{end}(1)            +eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,3)).';
+                        elseif ~isempty(obj.eyeImageCanvasSize)
+                            % turn canvas-local eye image locations into
+                            % screen locations
+                            for p=1:size(eyeImageRectLocal,2)
+                                camIdx = abs(ceil(p/2)-3);  % [1 2] -> 1 -> 2, [3 4] -> 2 -> 1: flip 1<->2 at end because cam 1 is right camera, cam 2 left camera
+                                eyeImageRect(:,p) = eyeImageRectLocal(:,p)+eyeCanvasPoss([1 2 1 2],camIdx);
+                            end
                         end
                     end
                     
@@ -4974,15 +5005,22 @@ classdef Titta < handle
                     
                     % draw eye images, if any
                     if qShowEyeImage
-                        if eyeTexs(1)
-                            Screen('DrawTexture', wpnt(end), eyeTexs(1),[],eyeImageRect{1});
-                        else
-                            Screen('FillRect', wpnt(end), 0, eyeImageRect{1});
-                        end
-                        if eyeTexs(2)
-                            Screen('DrawTexture', wpnt(end), eyeTexs(2),[],eyeImageRect{2});
-                        else
-                            Screen('FillRect', wpnt(end), 0, eyeImageRect{2});
+                        qTex = ~~eyeTexs;
+                        if any(qTex)
+                            if qDrawEyeValidity
+                                validityRects   = GrowRect(eyeImageRect.',3,3).';
+                                if ~isempty(eyeData.systemTimeStamp)
+                                    qValid          = [eyeData.left.gazeOrigin.valid(end) eyeData.right.gazeOrigin.valid(end)];
+                                else
+                                    qValid          = [false false];
+                                end
+                                qValid          = qValid([2 1 2 1]); % first and third are right eye, second and fourth left eye
+                                clrs            = zeros(3,4);
+                                clrs(:,qValid)  = repmat([0 120 0].',1,sum( qValid));
+                                clrs(:,~qValid) = repmat([150 0 0].',1,sum(~qValid));
+                                Screen('FillRect', wpnt(end), clrs(:,qTex), validityRects(:,qTex));
+                            end
+                            Screen('DrawTextures', wpnt(end), eyeTexs(qTex),[],eyeImageRect(:,qTex));
                         end
                     end
                     
