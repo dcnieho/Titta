@@ -3086,7 +3086,11 @@ classdef Titta < handle
             % draw eye image
             if nargin>5
                 % get eye image
-                eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                if ~obj.settings.cal.doRecordEyeImages
+                    eyeIm       = obj.buffer.consumeTimeRange('eyeImage',eyeStartTime);  % from start time onward (default third argument: now)
+                else
+                    eyeIm       = obj.buffer.peekN('eyeImage',4);    % peek (up to) last four from end, keep them in buffer
+                end
                 [texs,szs,poss,eyeImageRectLocal]  = ...
                             UploadImages(eyeIm,texs,szs,poss,eyeImageRectLocal,wpnt,obj.eyeImageCanvasSize);
                 
