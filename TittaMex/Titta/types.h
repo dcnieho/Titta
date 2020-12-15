@@ -11,7 +11,7 @@
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
 
-using mutex_type = std::shared_timed_mutex;
+using mutex_type = std::shared_mutex;
 using read_lock = std::shared_lock<mutex_type>;
 using write_lock = std::unique_lock<mutex_type>;
 
