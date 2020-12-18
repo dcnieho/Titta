@@ -165,7 +165,7 @@ try
     % read in konijntjes image (may want to preload this before the trial
     % to ensure good timing)
     stimFName   = 'konijntjes1024x768.jpg';
-    stimDir     = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos');
+    stimDir     = fullfile(PsychtoolboxRoot,'PsychDemos');
     stimFullName= fullfile(stimDir,stimFName);
     im          = imread(stimFullName);
     tex         = Screen('MakeTexture',wpnt,im);

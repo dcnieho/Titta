@@ -49,7 +49,7 @@ try
     
     % read in stimuli
     stimFName   = {'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'};
-    stimDir     = fullfile(PsychtoolboxRoot,'PsychHardware','EyelinkToolbox','EyelinkDemos','GazeContingentDemos');
+    stimDir     = fullfile(PsychtoolboxRoot,'PsychDemos');
     for p=length(stimFName):-1:1
         im          = imread(fullfile(stimDir,stimFName{p}));
         tex(p)      = Screen('MakeTexture',wpnt,im);
