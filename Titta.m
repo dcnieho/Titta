@@ -245,9 +245,6 @@ classdef Titta < handle
                 obj.settings = settings;
             end
             
-            % check validation point setup
-            assert(~isempty(obj.settings.val.pointPos),'Titta: having zero validation points is not allowed (you must report empirical calibration quality in your paper!)')
-            
             % check requested eye calibration mode
             obj.changeAndCheckCalibEyeMode();
             
@@ -1853,21 +1850,25 @@ classdef Titta < handle
                 end
             end
             % get data to put in message, output per eye separately.
-            eyes    = fieldnames(val.quality);
-            nPoint  = length(val.quality);
-            msg     = cell(1,length(eyes));
-            for e=1:length(eyes)
-                dat = cell(7,nPoint+1);
-                for k=1:nPoint
-                    valq = val.quality(k).(eyes{e});
-                    dat(:,k) = {sprintf('%d @ (%.0f,%.0f)',k,val.pointPos(k,2:3)),valq.acc2D,valq.acc(1),valq.acc(2),valq.STD2D,valq.RMS2D,valq.dataLoss*100};
+            if isfield(val,'quality')
+                eyes    = fieldnames(val.quality);
+                nPoint  = length(val.quality);
+                msg     = cell(1,length(eyes));
+                for e=1:length(eyes)
+                    dat = cell(7,nPoint+1);
+                    for k=1:nPoint
+                        valq = val.quality(k).(eyes{e});
+                        dat(:,k) = {sprintf('%d @ (%.0f,%.0f)',k,val.pointPos(k,2:3)),valq.acc2D,valq.acc(1),valq.acc(2),valq.STD2D,valq.RMS2D,valq.dataLoss*100};
+                    end
+                    % also get average
+                    dat(:,end) = {'average',val.acc2D(e),val.acc(1,e),val.acc(2,e),val.STD2D(e),val.RMS2D(e),val.dataLoss(e)*100};
+                    msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
                 end
-                % also get average
-                dat(:,end) = {'average',val.acc2D(e),val.acc(1,e),val.acc(2,e),val.STD2D(e),val.RMS2D(e),val.dataLoss(e)*100};
-                msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
+                msg = [msg{:}]; msg(end) = [];
+                message = sprintf('CALIBRATION %1$s:\npoint\tacc2D (%3$c)\taccX (%3$c)\taccY (%3$c)\tSTD2D (%3$c)\tRMS2D (%3$c)\tdata loss (%%)\n%2$s',str,msg,char(176));
+            else
+                message = sprintf('CALIBRATION %1$s: no validation was performed',str);
             end
-            msg = [msg{:}]; msg(end) = [];
-            message = sprintf('CALIBRATION %1$s:\npoint\tacc2D (%3$c)\taccX (%3$c)\taccY (%3$c)\tSTD2D (%3$c)\tRMS2D (%3$c)\tdata loss (%%)\n%2$s',str,msg,char(176));
         end
         
         function filename = getFileName(filename, doAppendVersion)
@@ -3170,6 +3171,11 @@ classdef Titta < handle
             if ~obj.calibrateRightEye
                 val.gazeData = rmfield(val.gazeData,'right');
             end
+            if isempty(val.gazeData)
+                % no validation performed, nothing to do here, return
+                return
+            end
+            
             % compute validation accuracy per point, noise levels, %
             % missing
             for p=length(val.gazeData):-1:1
@@ -3338,19 +3344,23 @@ classdef Titta < handle
                     % find the active/last valid validation for this
                     % calibration
                     aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
-                    % acc field is [lx rx; ly ry]
-                    [strl,strr,strsep] = deal('');
-                    if ismember(cal{iValid(c)}.eye,{'both','left'})
-                        strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(1, 1 ),cal{iValid(c)}.val{aVal}.acc(2, 1 ),char(176));
+                    if isfield(cal{iValid(c)}.val{aVal},'acc2D')
+                        % acc field is [lx rx; ly ry]
+                        [strl,strr,strsep] = deal('');
+                        if ismember(cal{iValid(c)}.eye,{'both','left'})
+                            strl = sprintf( '<color=%1$s>Left<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc2D( 1 ),cal{iValid(c)}.val{aVal}.acc(1, 1 ),cal{iValid(c)}.val{aVal}.acc(2, 1 ),char(176));
+                        end
+                        if ismember(cal{iValid(c)}.eye,{'both','right'})
+                            idx = 1+strcmp(cal{iValid(c)}.eye,'both');
+                            strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(1,idx),cal{iValid(c)}.val{aVal}.acc(2,idx),char(176));
+                        end
+                        if strcmp(cal{iValid(c)}.eye,'both')
+                            strsep = ', ';
+                        end
+                        str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
+                    else
+                        str = sprintf('(%d): no validation was performed',c);
                     end
-                    if ismember(cal{iValid(c)}.eye,{'both','right'})
-                        idx = 1+strcmp(cal{iValid(c)}.eye,'both');
-                        strr = sprintf('<color=%1$s>Right<color>: %2$.2f%5$c, (%3$.2f%5$c,%4$.2f%5$c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc2D(idx),cal{iValid(c)}.val{aVal}.acc(1,idx),cal{iValid(c)}.val{aVal}.acc(2,idx),char(176));
-                    end
-                    if strcmp(cal{iValid(c)}.eye,'both')
-                        strsep = ', ';
-                    end
-                    str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
                     menuTextCache(c) = obj.getTextCache(wpnt(end),str,menuRects(c,:),'baseColor',obj.settings.UI.val.menu.text.color);
                 end
             end
@@ -3464,17 +3474,22 @@ classdef Titta < handle
                             Screen('TextFont', wpnt(end), obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
                             Screen('TextSize', wpnt(end), obj.settings.UI.val.avg.text.size);
                             [strl,strr,strsep] = deal('');
-                            if ismember(cal{selection}.eye,{'both','left'})
-                                strl = sprintf(' <color=%1$s>Left eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(1, 1 ),cal{selection}.val{iVal}.acc(2, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100,char(176));
+                            if isfield(cal{selection}.val{iVal},'acc2D')
+                                if ismember(cal{selection}.eye,{'both','left'})
+                                    strl = sprintf(' <color=%1$s>Left eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc2D( 1 ),cal{selection}.val{iVal}.acc(1, 1 ),cal{selection}.val{iVal}.acc(2, 1 ),cal{selection}.val{iVal}.STD2D( 1 ),cal{selection}.val{iVal}.RMS2D( 1 ),cal{selection}.val{iVal}.dataLoss( 1 )*100,char(176));
+                                end
+                                if ismember(cal{selection}.eye,{'both','right'})
+                                    idx = 1+strcmp(cal{selection}.eye,'both');
+                                    strr = sprintf('<color=%1$s>Right eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(1,idx),cal{selection}.val{iVal}.acc(2,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100,char(176));
+                                end
+                                if strcmp(cal{selection}.eye,'both')
+                                    strsep = '\n';
+                                end
+                                valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                            else
+                                valText = sprintf('no validation was performed');
+                                qShowCal = true;
                             end
-                            if ismember(cal{selection}.eye,{'both','right'})
-                                idx = 1+strcmp(cal{selection}.eye,'both');
-                                strr = sprintf('<color=%1$s>Right eye<color>:  %2$.2f%8$c, (%3$.2f%8$c,%4$.2f%8$c)   %5$.2f%8$c   %6$.2f%8$c  %7$3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc2D(idx),cal{selection}.val{iVal}.acc(1,idx),cal{selection}.val{iVal}.acc(2,idx),cal{selection}.val{iVal}.STD2D(idx),cal{selection}.val{iVal}.RMS2D(idx),cal{selection}.val{iVal}.dataLoss(idx)*100,char(176));
-                            end
-                            if strcmp(cal{selection}.eye,'both')
-                                strsep = '\n';
-                            end
-                            valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
                             valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.val.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.val.avg.text.color);
                             
                             % get info about where points were on screen

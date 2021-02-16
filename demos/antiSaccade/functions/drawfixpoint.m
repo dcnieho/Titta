@@ -54,8 +54,8 @@ switch type
     case 'thaler'
         Screen('gluDisk', wpnt, lclr{1}, fixPos(1), fixPos(2), sz(1)/2);
         rect = CenterRectOnPointd([0 0 sz(1:2)], fixPos(1), fixPos(2));
-        Screen('FillRect',wpnt,lclr{2},rect);
+        Screen('FillRect',wpnt, lclr{2}, rect);
         rect = CenterRectOnPointd([0 0 fliplr(sz(1:2))], fixPos(1), fixPos(2));
-        Screen('FillRect',wpnt,lclr{2},rect);
+        Screen('FillRect',wpnt, lclr{2}, rect);
         Screen('gluDisk', wpnt, lclr{1}, fixPos(1), fixPos(2), sz(2)/2);
 end
