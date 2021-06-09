@@ -176,7 +176,7 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
@@ -195,7 +195,7 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,tex);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
@@ -210,7 +210,7 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
@@ -225,7 +225,7 @@ try
     startT      = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage('FIX ON',startT);
     nextFlipT   = startT+fixTime-1/hz/2;
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
@@ -239,7 +239,7 @@ try
     imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,tex);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
