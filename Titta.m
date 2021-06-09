@@ -3084,8 +3084,8 @@ classdef Titta < handle
         
         function [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = drawOperatorScreen(obj,wpnt,pos,highlight,eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal)
             % get live gaze data
-            dataWindowLength= 500;  % ms
-            nDataPoint      = ceil(dataWindowLength/1000*obj.settings.freq);
+            dataWindowDur   = 500;  % ms
+            nDataPoint      = ceil(dataWindowDur/1000*obj.settings.freq);
             gazeData        = obj.buffer.peekN('gaze',nDataPoint);
             % draw eye image
             if nargin>5
@@ -3153,7 +3153,7 @@ classdef Titta < handle
             if obj.calibrateRightEye
                 clrs{2} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt);
             end
-            drawLiveData(wpnt,gazeData,dataWindowLength,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+            drawLiveData(wpnt,gazeData,dataWindowDur,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
