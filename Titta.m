@@ -1957,7 +1957,7 @@ classdef Titta < handle
                 obj.scrInfo.center{w}      = obj.scrInfo.resolution{w}/2;
                 obj.qFloatColorRange(w)    = Screen('ColorRange',wpnt(w))==1;
                 % get current PTB state so we can restore when returning
-                % 1. alpha blending
+                % 1. alpha blending (switch it on in the process)
                 [state.osf{w},state.odf{w},state.ocm{w}] = Screen('BlendFunction', wpnt(w), GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 % 2. screen clear color so we can reset that too. There is only
                 % one way to do that annoyingly:
