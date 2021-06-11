@@ -2353,7 +2353,10 @@ classdef Titta < handle
                 end
                 
                 % drawing done, show
-                Screen('Flip',wpnt(1),[],0,0,1);
+                Screen('Flip',wpnt(1),[]);
+                if qHaveOperatorScreen
+                    Screen('Flip',wpnt(2),[],[],2);
+                end
                 
                 
                 % get user response
@@ -2596,7 +2599,10 @@ classdef Titta < handle
                                 Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
                             end
                             DrawFormattedText(wpnt(end),obj.settings.UI.cal.errMsg.string,'center','center',obj.getColorForWindow(obj.settings.UI.cal.errMsg.color,wpnt(end)));
-                            Screen('Flip',wpnt(1),[],0,0,1);
+                            Screen('Flip',wpnt(1),[]);
+                            if length(wpnt)>1
+                                Screen('Flip',wpnt(2),[],[],2);
+                            end
                             obj.getNewMouseKeyPress();
                             keyCode = false;
                             while ~any(keyCode)
@@ -2634,7 +2640,10 @@ classdef Titta < handle
                         for w=wpnt
                             Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
                         end
-                        Screen('Flip',wpnt(1),[],0,0,1);
+                        Screen('Flip',wpnt(1),[]);
+                        if length(wpnt)>1
+                            Screen('Flip',wpnt(2),[],[],2);
+                        end
                     end
                     out.status = out.cal.status;
                     return;
@@ -2674,7 +2683,10 @@ classdef Titta < handle
             for w=wpnt
                 Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
             end
-            Screen('Flip',wpnt(1),[],0,0,1);
+            Screen('Flip',wpnt(1),[]);
+            if length(wpnt)>1
+                Screen('Flip',wpnt(2),[],[],2);
+            end
         end
         
         function data = ConsumeAllData(obj,varargin)
@@ -2907,7 +2919,10 @@ classdef Titta < handle
                     qWaitForAllowAccept = false;
                 end
                 
-                out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
+                out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT);
+                if qHaveOperatorScreen
+                    Screen('Flip',wpnt(2),[],[],2);
+                end
                 if qNewPoint
                     obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
                     nCollecting     = 0;
@@ -3036,7 +3051,10 @@ classdef Titta < handle
                             drawOperatorScreenFun([],eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                     end
                     drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,3:4),tick,stage);
-                    flipT   = Screen('Flip',wpnt(1),flipT+1/1000,0,0,1);
+                    flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
+                    if qHaveOperatorScreen
+                        Screen('Flip',wpnt(2),[],[],2);
+                    end
                     
                     % first get computeAndApply result, then get
                     % calibration data
@@ -3696,7 +3714,10 @@ classdef Titta < handle
                         end
                     end
                     % drawing done, show
-                    Screen('Flip',wpnt(1),[],0,0,1);
+                    Screen('Flip',wpnt(1),[]);
+                    if qHaveOperatorScreen
+                        Screen('Flip',wpnt(2),[],[],2);
+                    end
                     if qAwaitingCalChange
                         % break out of draw loop
                         break;
@@ -5171,7 +5192,8 @@ classdef Titta < handle
                     end
                     
                     % drawing done, show
-                    out.flips(end+1) = Screen('Flip',wpnt(1),nextFlipT,0,0,1);
+                    out.flips(end+1) = Screen('Flip',wpnt(1),nextFlipT);
+                                       Screen('Flip',wpnt(2),[],[],2);
                     if ~isempty(frameMsg)
                         obj.sendMessage(frameMsg,out.flips(end));
                         frameMsg = '';
