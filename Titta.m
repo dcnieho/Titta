@@ -1273,6 +1273,9 @@ classdef Titta < handle
             if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
                 dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
             end
+            if isa(dat.settings.UI.mancal.instruct.strFun,'function_handle')
+                dat.settings.UI.mancal.instruct.strFun = func2str(dat.settings.UI.mancal.instruct.strFun);
+            end
             dat.TobiiLog            = obj.buffer.getLog(false);
             dat.data                = obj.ConsumeAllData();
         end
