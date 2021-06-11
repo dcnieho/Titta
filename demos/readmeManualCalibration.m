@@ -36,6 +36,8 @@ fixTime                 = .5;
 imageTime               = 4;
 scrPresenter            = 1;
 scrOperator             = 2;
+% live view parameters
+dataWindowDur           = 500;  % ms
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
@@ -91,6 +93,7 @@ try
     EThndl          = Titta(settings);
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
+    nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
     
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
@@ -110,6 +113,7 @@ try
     hz=Screen('NominalFrameRate', wpntP);
     Priority(1);
     Screen('BlendFunction', wpntP, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    Screen('BlendFunction', wpntO, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Screen('Preference', 'TextAlphaBlending', 1);
     Screen('Preference', 'TextAntiAliasing', 2);
     % This preference setting selects the high quality text renderer on
@@ -158,9 +162,9 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
-        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
         
@@ -177,9 +181,9 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,tex);
-        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
     
@@ -192,8 +196,8 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
-        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
+        drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
     
@@ -207,9 +211,9 @@ try
     startT      = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage('FIX ON',startT);
     nextFlipT   = startT+fixTime-1/hz/2;
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
-        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
     % 2. image
@@ -221,9 +225,9 @@ try
     imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
     EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
-    while nextFlipT-GetSecs()>.08   % arbitrarily decide 80ms is enough headway
+    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,tex);
-        drawLiveData(wpntO,EThndl.buffer,500,settings.freq,eyeColors{:},4,winRectO(3:4));
+        drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
     
