@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "titta-websocket",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "uwebsockets",
+      "platform": "windows & x64"
+    },
+    {
+      "name": "nlohmann-json",
+      "platform": "windows & x64"
+    }
+  ],
+  "builtin-baseline": "183a12585a95b36bfdda342eb6d302d3ab3ad466",
+  "overrides": [
+    {
+      "name": "uwebsockets",
+      "version-string": "0.14.8-2"
+    }
+  ]
+}
