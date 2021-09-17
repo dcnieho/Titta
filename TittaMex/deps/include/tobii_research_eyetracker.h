@@ -326,7 +326,7 @@ TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_get_fi
 @brief Gets the runtime build version of the eye tracker.
 
 @param eyetracker: Eye tracker object.
-@param fw_version: Runtime build version as string, should be freed when not in use by @ref tobii_research_free_string.
+@param runtime_version: Runtime build version as string, should be freed when not in use by @ref tobii_research_free_string.
 @returns A @ref TobiiResearchStatus code.
  */
 TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_get_runtime_version(
@@ -405,7 +405,7 @@ TOBII_RESEARCH_API void TOBII_RESEARCH_CALL tobii_research_free_gaze_output_freq
 /**
 @brief Gets the gaze output frequency of the eye tracker.
 
-\snippet gaze_output_frequencies.c GetOutputFrequencie
+\snippet gaze_output_frequencies.c GetOutputFrequency
 
 @param eyetracker: Eye tracker object.
 @param gaze_output_frequency: The current gaze output frequency.
@@ -418,7 +418,7 @@ TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_get_ga
 /**
 @brief Sets the gaze output frequency of the eye tracker.
 
-\snippet gaze_output_frequencies.c SetOutputFrequencie
+\snippet gaze_output_frequencies.c SetOutputFrequency
 
 @param eyetracker: Eye tracker object.
 @param gaze_output_frequency: The gaze output frequency.
@@ -523,7 +523,7 @@ TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_clear_
 /**
 @brief Gets the size and corners of the display area.
 
-\snippet get_display_area.c Example
+\snippet get_and_set_display_area.c Example
 
 @param eyetracker: Eye tracker object.
 @param display_area: The eye tracker's display area.
@@ -538,7 +538,7 @@ TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_get_di
 Eye Tracker Manager to calculate the display area coordinates as the origin of the
 User Coordinate System differs between eye tracker models.
 
-\snippet get_display_area.c Example
+\snippet get_and_set_display_area.c Example
 
 @param eyetracker: Eye tracker object.
 @param display_area: The eye tracker's desired display area.

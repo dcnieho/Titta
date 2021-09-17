@@ -1709,8 +1709,8 @@ classdef Titta < handle
             settings.UI.mancal.avg.text.font        = monoFont;
             settings.UI.mancal.avg.text.size        = 24*textFac;
             settings.UI.mancal.avg.text.color       = 0;
-            settings.UI.mancal.avg.text.eyeColors   = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
-            settings.UI.mancal.avg.text.style       = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.mancal.avg.text.eyeColors   = eyeColors;                % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.mancal.avg.text.style       = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.mancal.avg.text.vSpacing    = 1;
             settings.UI.mancal.hover.bgColor        = 110;
             settings.UI.mancal.hover.text.font      = monoFont;
@@ -1986,7 +1986,7 @@ classdef Titta < handle
             
             % see what text renderer to use
             isWin = streq(computer,'PCWIN') || streq(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<*STREMP>
-            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that we the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit)
+            obj.usingFTGLTextRenderer = (~isWin || ~~exist('libptbdrawtext_ftgl64.dll','file')) && Screen('Preference','TextRenderer')==1;    % check if we're not on Windows, or if on Windows that the high quality text renderer is used (was never supported for 32bit PTB, so check only for 64bit dll)
             if ~obj.usingFTGLTextRenderer
                 assert(isfield(obj.settings.UI.button,'textVOff'),'Titta: PTB''s TextRenderer changed between calls to getDefaults and the Titta constructor. If you force the legacy text renderer by calling ''''Screen(''Preference'', ''TextRenderer'',0)'''' (not recommended) make sure you do so before you call Titta.getDefaults(), as it has different settings than the recommended TextRenderer number 1')
             end

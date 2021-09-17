@@ -287,7 +287,7 @@ applied to the eye tracker. If there is insufficient data to compute a new calib
 not good enough then calibration is failed and will not be applied.
 
 @param eyetracker: Eye tracker object.
-@param calibrated_eyes: TobiiResearchSelectedEye instance with the calibrated eyes in the monocular calibration.
+@param result: @ref TobiiResearchCalibrationResult instance the calibration result.
 @returns A @ref TobiiResearchStatus code.
 */
 TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL

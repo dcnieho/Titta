@@ -12,11 +12,7 @@
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
-#ifdef _WIN64
-#   pragma comment(lib, "tobii_research64.lib")
-#else
-#   pragma comment(lib, "tobii_research32.lib")
-#endif
+#pragma comment(lib, "tobii_research.lib")
 #ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
 #       pragma comment(lib, "Titta_d.lib")
