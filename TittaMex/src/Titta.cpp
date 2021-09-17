@@ -577,9 +577,7 @@ void Titta::calibrationThread()
 bool Titta::enterCalibrationMode(bool doMonocular_)
 {
     if (_calibrationThread.joinable())
-    {
-        DoExitWithMsg("Titta::cpp::enterCalibrationMode: Calibration mode already entered");
-    }
+        return false; // Calibration mode already entered
 
     _calibrationIsMonocular = doMonocular_;
 
@@ -606,7 +604,7 @@ bool Titta::leaveCalibrationMode(std::optional<bool> force_)
     bool issuedLeave = false;
     if (forceIt)
     {
-        // call leave calibration mode on Tobii SDK, ignore error
+        // call leave calibration mode on Tobii SDK, ignore error if any
         // this is provided as user code may need to ensure we're not in
         // calibration mode, e.g. after a previous crash
         tobii_research_screen_based_calibration_leave_calibration_mode(_eyetracker.et);
@@ -622,7 +620,7 @@ bool Titta::leaveCalibrationMode(std::optional<bool> force_)
     }
 
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
-    return issuedLeave; // we indicate if a leave action has been enqueued. direct force-leave above thus does not lead us to return true
+    return issuedLeave; // we indicate if a leave action had been enqueued. direct force-leave above thus does not lead us to return true
 }
 void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::array<double, 2> coordinates_, std::optional<std::string> eye_)
 {
