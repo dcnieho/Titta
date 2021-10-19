@@ -17,7 +17,7 @@ sca
 fixTime                 = .5;   % duration fixation point shown (s)
 imageTime               = 4;    % duration image shown (s)
 ITI                     = 1;    % inter-trial-interval (s)
-scr                     = 1;max(Screen('Screens'));
+scr                     = max(Screen('Screens'));
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
