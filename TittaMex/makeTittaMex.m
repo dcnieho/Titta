@@ -14,6 +14,9 @@ if isWin
     if isOctave
         inpArgs = {'-v'
             '-O'
+            '-ffunction-sections'
+            '-fdata-sections'
+            '-flto'
             '--output'
             fullfile(myDir,'TittaMex','64',sprintf('TittaMex_.%s',mexext))
             '-DBUILD_FROM_SCRIPT'
@@ -37,6 +40,8 @@ if isWin
         if isempty(strfind(flags,'-std=c++2a')) %#ok<STREMP>
             setenv('CXXFLAGS',[flags ' -std=c++2a']);
         end
+        flags = regexprep(mkoctfile('-p','LDFLAGS'),'\r|\n','');   % strip newlines
+        setenv('LDFLAGS',[flags ' -Wl,--gc-sections -flto']);
         mex(inpArgs{:});
         cd(myDir);
     else
