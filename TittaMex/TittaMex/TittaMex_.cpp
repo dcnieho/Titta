@@ -1106,9 +1106,9 @@ namespace mxTypes
             // this is one of the 2D/3D point types
             // determine what return type we get
             // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
-            using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), fields..., &retT::x));
+            using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), std::forward<Fs>(fields)..., &retT::x));
             auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(numRows, data_.size(), typeToMxClass_v<U>, mxREAL)));
-            for (auto &samp : data_)
+            for (auto&& samp : data_)
             {
                 (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::x);
                 (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::y);
