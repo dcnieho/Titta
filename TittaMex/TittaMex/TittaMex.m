@@ -14,7 +14,7 @@ classdef TittaMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
-    properties (GetAccess = protected, SetAccess = immutable, Hidden = false)
+    properties (GetAccess = protected, SetAccess = private, Hidden = false)
         mexClassWrapperFnc;     % the MEX function owning the class instances
     end
     properties (Dependent, SetAccess=private)

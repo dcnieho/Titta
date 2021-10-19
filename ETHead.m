@@ -219,9 +219,9 @@ classdef ETHead < handle
                 % have the position guide to go on
                 % this is not perfectly jump-proof when one eye is lost. So
                 % be it
-                avgXtb  = 1-mean([leftGuidePos(1) rightGuidePos(1)],'omitnan');
-                avgYtb  =   mean([leftGuidePos(2) rightGuidePos(2)],'omitnan');
-                avgZtb  =   mean([leftGuidePos(3) rightGuidePos(3)],'omitnan');
+                avgXtb  = 1-mynanmean([leftGuidePos(1) rightGuidePos(1)]);
+                avgYtb  =   mynanmean([leftGuidePos(2) rightGuidePos(2)]);
+                avgZtb  =   mynanmean([leftGuidePos(3) rightGuidePos(3)]);
                 fac     = avgZtb+.5;    % make 1 the ideal position, less than 1 too close, more too far
                 dGain   = this.distGainGP;
                 if this.showYaw
