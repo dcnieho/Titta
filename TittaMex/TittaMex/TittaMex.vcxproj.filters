@@ -16,10 +16,43 @@
     <Filter Include="m-files">
       <UniqueIdentifier>{ef56dcaa-ea4e-463b-ae32-1742c2ce7016}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\cpp_mex_helpers">
+      <UniqueIdentifier>{8c3aa2b8-6d27-4e0f-bca0-22fe5efa4700}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tobii_to_matlab.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_mem_var_type.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\replace_specialization_type.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\always_false.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

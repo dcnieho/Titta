@@ -96,6 +96,16 @@
     <None Include="TittaMexDummyMode.m" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\always_false.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_mem_var_type.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\replace_specialization_type.h" />
     <ClInclude Include="tobii_to_matlab.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
