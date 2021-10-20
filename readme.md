@@ -1,9 +1,9 @@
-Titta is a toolbox for using eye trackers from Tobii Pro AB with MATLAB,
+Titta is a toolbox for using eye trackers from Tobii Pro AB with MATLAB or GNU Octave,
 specifically offering integration with [PsychToolbox](http://psychtoolbox.org/). A Python version
 that integrates with PsychoPy is also available from
 https://github.com/marcus-nystrom/Titta. For a similar toolbox for SMI eye trackers, please see www.github.com/dcnieho/SMITE.
 
-The current repository furthermore offers a C++ wrapper around the Tobii SDK, which is in turn used as a basis for the MATLAB MEX file `TittaMex` providing MATLAB Titta with connectivity to the Tobii eye trackers. This C++ wrapper can be consumed by your own C++ projects as well, or be wrapped for other programming languages (a wrapper to Python is also provided).
+The current repository furthermore offers a C++ wrapper around the Tobii SDK, which is in turn used as a basis for the MEX file `TittaMex` providing Titta with connectivity to the Tobii eye trackers. This C++ wrapper can be consumed by your own C++ projects as well, or be wrapped for other programming languages (a wrapper to Python is also provided).
 
 Please cite:
 [Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
@@ -18,16 +18,20 @@ functionality.
 
 Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobiipro.com/product-listing/eye-tracker-manager/) before trying to use it with Titta. Note also that some of the supported eye trackers require several setup steps before they are ready for use (e.g. do a display setup in Eye Tracker Manager). If these steps have not been performed, Titta will throw strange error messages.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended. At minimum, [3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required.
+To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended. 
 
-Only the `Titta.calibrate()` and `Titta.calibrateManual()` functions and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB without having PsychToolbox installed.
+Only the `Titta.calibrate()` and `Titta.calibrateManual()` functions and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB/Octave without having PsychToolbox installed.
 
 ## Supported platforms
-Currently the toolbox is only supported on Windows (tested on Windows 10, has previously worked on Windows 7 but this is not regularly tested) and Linux. OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
+Currently the toolbox is only supported on Windows 10 (Windows 7 may continue to work but is not tested) and Linux. OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
 
-Only 64-bit MATLAB is supported. 32-bit support was previously available but has been discontinued when the Tobii SDK dropped support for 32-bit platform. The last version of Titta supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
+Only 64-bit MATLAB and GNU Octave are supported. 32-bit MATLAB support was previously available for Windows, but has been discontinued when the Tobii SDK dropped support for 32-bit platforms. The last version of Titta supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
 
-Tested on MATLAB R2019a & R2021a (has previously been tested to work on MATLAB R2015b). The mex file builds on Octave, but Octave can currently not be supported due to [this (now solved) bug](https://savannah.gnu.org/bugs/?45351) that has not yet been included in a release that is also supported by PsychToolbox.
+### Windows
+For use with Matlab, at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB versions R2019a and R2021a (has previously been tested to work on MATLAB R2015b). To use Titta with GNU Octave at minimum Octave version 6.3 is required, which also entails at minimum [PsychToolbox version 3.0.18, "Ode to the slacktivists", released on 2021-10-14](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/3.0.18.0). The main Titta class, Titta mex and the readme demos have been tested to work on Octave. The breakOut demo does not work due to incomplete classdef support in Octave.
+
+### Linux
+For use with Matlab, at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB version R2021b. GNU Octave support has been tested with Octave version 6.1.1.
 
 ## How to acquire
 The recommended way to acquire Titta is to use the `git` tool to download it. Alternatively you can download the components separately and place them in the right locations. Here are instructions for these two routes:
