@@ -67,8 +67,8 @@ else
     inpArgs = {'-R2017b'
         '-v'
         '-O'
-        'CXXFLAGS="$CXXFLAGS -std=c++17"'
-        'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN''"'
+        'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto"'
+        'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
         '-outdir'
         fullfile(myDir,'TittaMex','64')
         '-DBUILD_FROM_SCRIPT'
