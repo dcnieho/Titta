@@ -23,7 +23,7 @@ if IsLinux
     qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Windows'));
 else
     % exclude Linux mex folder
-    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Linux'));
+    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex\64\Linux'));
 end
 addpath(opaths{qAdd}); savepath;
 disp('--->>> Added Titta to the path...')
