@@ -17,5 +17,13 @@ opaths          = strsplit(opaths,pathsep);
 sep             = regexptranslate('escape',filesep);
 pathExceptions  = [sep '\.git|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build'];
 qAdd            = cellfun(@isempty,regexpi(opaths,pathExceptions)); % true where regexp _didn't_ match
+% also exclude either Windows or Linux mex folder
+if IsLinux
+    % exclude Windows mex folder
+    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Windows'));
+else
+    % exclude Linux mex folder
+    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Linux'));
+end
 addpath(opaths{qAdd}); savepath;
 disp('--->>> Added Titta to the path...')
