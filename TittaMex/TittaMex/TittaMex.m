@@ -255,7 +255,7 @@ classdef TittaMex < handle
             end
         end
         % modifiers
-        function applyLicenses(this,licenses)
+        function applyResults = applyLicenses(this,licenses)
             assert(nargin>1,'TittaMex::applyLicenses: provide licenses argument.');
             if ~iscell(licenses)
                 licenses = {licenses};
@@ -265,7 +265,7 @@ classdef TittaMex < handle
             % convert all to uint8 to make C++-side simpler (not sure if
             % absolutely safe to just use uint8 there in all cases)
             licenses = cellfun(@uint8,licenses,'uni',false);
-            this.cppmethod('applyLicenses',licenses);
+            applyResults = this.cppmethod('applyLicenses',licenses);
         end
         function clearLicenses(this)
             this.cppmethod('clearLicenses');
