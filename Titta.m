@@ -6196,7 +6196,7 @@ for p=length(image.cameraID):-1:1
         poss(:,idxs)= 0;
     end
     
-    % if we're here we, haven't encountered this image for this update
+    % if we're here, we haven't encountered this image for this update
     % cycle yet. So upload it now
     w = image.width(p);
     h = image.height(p);
