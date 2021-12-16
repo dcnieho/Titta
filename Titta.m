@@ -3247,11 +3247,11 @@ classdef Titta < handle
             
             % 2. RMS
             out.RMS2D   = sqrt(mynanmean(diff(out.offs,[],2).^2,2));
-            out.RMS1D   = hypot(out.RMS(1),out.RMS(2));
+            out.RMS1D   = hypot(out.RMS2D(1),out.RMS2D(2));
             
             % 3. STD
             out.STD2D   = mynanstd(out.offs,[],2);
-            out.STD1D   = hypot(out.STD(1),out.STD(2));
+            out.STD1D   = hypot(out.STD2D(1),out.STD2D(2));
             
             % 4. data loss
             out.dataLoss  = 1-sum(gazeData.gazePoint.valid)/length(gazeData.gazePoint.valid);
