@@ -15,7 +15,10 @@ classdef cursorUpdater < handle
         usingPoly
         cursorPolys
         cursorRects
+        nAOI
+        nElemPerAOI
         cursorLooks
+        cursorIdxs
         qCursorReset    = true;
         cursorReset
         
@@ -44,9 +47,9 @@ classdef cursorUpdater < handle
                 if isempty(this.cursorRects)
                     idx = [];
                 else
-                    % get in which rect, if any. If rects overlap, first in the list is
-                    % used
-                    idx = find(inRect([x y],this.cursorRects),1);
+                    % get in which rect, if any. If rects overlap, first in
+                    % the list is used
+                    idx = find(inRect([x y],[this.cursorRects{:}]),1);
                 end
             end
             
@@ -54,7 +57,7 @@ classdef cursorUpdater < handle
             if isempty(idx)
                 curr = this.cursorLooks(end);
             else
-                curr = this.cursorLooks(idx);
+                curr = this.cursorLooks(this.cursorIdxs(idx));
             end
             
             % see if need to change
@@ -65,6 +68,42 @@ classdef cursorUpdater < handle
                     ShowCursor(curr);
                 end
                 this.currCursor = curr;
+            end
+        end
+        
+        function updateCursors(this,cursors)
+            % process rects/polys
+            this.usingPoly = isfield(cursors,'poly');
+            if this.usingPoly
+                this.cursorPolys = cursors.poly;
+                this.nAOI        = length(this.cursorPolys);
+                this.nElemPerAOI = ones(1,this.nAOI);
+            else
+                if ~iscell(cursors.rect)
+                    cursors.rect = num2cell(cursors.rect,1);
+                end
+                this.cursorRects = cursors.rect;
+                this.nAOI        = size(cursors.rect,2);
+                this.nElemPerAOI = cellfun(@(x) size(x,2),cursors.rect);
+            end
+            % cursor looks are numbered IDs as eaten by ShowMouse. -1 means
+            % hide cursor
+            this.cursorLooks = [cursors.cursor cursors.other];
+            this.cursorIdxs  = SmartVec(1:this.nAOI,this.nElemPerAOI,0);
+            
+            % optional (default on) reset of cursor when calling reset().
+            % Have it as an option as some function out of the reach of the
+            % user always call reset upon exit, user can here configure if
+            % it actually does something
+            this.qCursorReset = true;
+            if isfield(cursors,'qReset')
+                this.qCursorReset = cursors.qReset;
+            end
+            % if resetting, indicate what cursor to reset to. if empty, we
+            % reset to cursors.other.
+            this.cursorReset = [];
+            if isfield(cursors,'reset')
+                this.cursorReset = cursors.reset;
             end
         end
         
@@ -82,33 +121,6 @@ classdef cursorUpdater < handle
                 HideCursor();
             else
                 ShowCursor(curr);
-            end
-        end
-    end
-    
-    methods (Access=private, Hidden=true)
-        function updateCursors(this,cursors)
-            % process rects/polys
-            this.usingPoly = isfield(cursors,'poly');
-            if this.usingPoly
-                this.cursorPolys = cursors.poly;
-            else
-                this.cursorRects = cursors.rect;
-            end
-            % cursor looks are numbered IDs as eaten by ShowMouse. -1 means hide cursor
-            this.cursorLooks = [cursors.cursor cursors.other];
-            
-            % optional (default on) reset of cursor when calling reset(). Have it as an
-            % option as some function out of the reach of the user always call reset
-            % upon exit, user can here configure if it actually does something
-            if isfield(cursors,'qReset')
-                this.qCursorReset = cursors.qReset;
-            end
-            % if resetting, indicate what cursor to reset to. if empty, we reset to
-            % cursors.other.
-            this.cursorReset = [];
-            if isfield(cursors,'reset')
-                this.cursorReset = cursors.reset;
             end
         end
     end
