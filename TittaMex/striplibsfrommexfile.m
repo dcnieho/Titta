@@ -58,19 +58,20 @@ if exist(filename, 'file')
         % around via mwSize*, this ends badly if one tries to use a mex file built
         % for < 4.4 with a >= 4.4 Octave and vice versa. But other than that, the
         % general principle still holds.
-        if str2num(version ()(1)) == 6 && str2num(version ()(3)) >= 1
+		rtver = version;
+        if str2num(rtver(1)) == 6 && str2num(rtver(3)) >= 1
             % Octave 6.1 - liboctinterp.so.8:
             image = renameLibrary(image, 'liboctinterp.so.8', 'liboctinterp.so');
-        elseif str2num(version ()(1)) == 5 && str2num(version ()(3)) == 2
+        elseif str2num(rtver(1)) == 5 && str2num(rtver(3)) == 2
             % Octave 5.2 - liboctinterp.so.7:
             image = renameLibrary(image, 'liboctinterp.so.7', 'liboctinterp.so');
-        elseif str2num(version ()(1)) == 4 && str2num(version ()(3)) == 4
+        elseif str2num(rtver(1)) == 4 && str2num(rtver(3)) == 4
             % Octave 4.4.1 - liboctinterp.so.6:
             image = renameLibrary(image, 'liboctinterp.so.6', 'liboctinterp.so');
-        elseif str2num(version ()(1)) == 4 && str2num(version ()(3)) == 2
+        elseif str2num(rtver(1)) == 4 && str2num(rtver(3)) == 2
             % Octave 4.2 - liboctinterp.so.4:
             image = renameLibrary(image, 'liboctinterp.so.4', 'liboctinterp.so');
-        elseif str2num(version ()(1)) == 4 && str2num(version ()(3)) == 0
+        elseif str2num(rtver(1)) == 4 && str2num(rtver(3)) == 0
             % Octave 4.0 - liboctinterp.so.3:
             image = renameLibrary(image, 'liboctinterp.so.3', 'liboctinterp.so');
         else
