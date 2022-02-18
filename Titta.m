@@ -3437,6 +3437,8 @@ classdef Titta < handle
             fixPointRectSz      = 80*obj.scrInfo.sFac;
             openInfoForPoint    = nan;
             pointToShowInfoFor  = nan;
+            infoShowRect        = [];
+            qStickyShowPointInfo= false;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress(wpnt(end));
@@ -3689,16 +3691,18 @@ classdef Titta < handle
                     end
                     % if hovering over validation point, show info
                     if ~isnan(pointToShowInfoFor)
-                        rect = OffsetRect(infoBoxRect,mx,my);
-                        % make sure does not go offscreen
-                        if rect(3)>obj.scrInfo.resolution{end}(1)
-                            rect = OffsetRect(rect,obj.scrInfo.resolution{end}(1)-rect(3),0);
+                        if isempty(infoShowRect) || ~qStickyShowPointInfo
+                            infoShowRect = OffsetRect(infoBoxRect,mx,my);
+                            % make sure does not go offscreen
+                            if infoShowRect(3)>obj.scrInfo.resolution{end}(1)
+                                infoShowRect = OffsetRect(infoShowRect,obj.scrInfo.resolution{end}(1)-infoShowRect(3),0);
+                            end
+                            if infoShowRect(4)>obj.scrInfo.resolution{end}(2)
+                                infoShowRect = OffsetRect(infoShowRect,0,obj.scrInfo.resolution{end}(2)-infoShowRect(4));
+                            end
                         end
-                        if rect(4)>obj.scrInfo.resolution{end}(2)
-                            rect = OffsetRect(rect,0,obj.scrInfo.resolution{end}(2)-rect(4));
-                        end
-                        Screen('FillRect',wpnt(end),hoverBgClr,rect);
-                        obj.drawCachedText(pointTextCache,rect);
+                        Screen('FillRect',wpnt(end),hoverBgClr,infoShowRect);
+                        obj.drawCachedText(pointTextCache,infoShowRect);
                     end
                     % if have operator screen, show message to wait to
                     % participant (if any)
@@ -3785,7 +3789,10 @@ classdef Titta < handle
                                     qUpdateCalDisplay   = true;
                                     qShowCal            = ~qShowCal;
                                 end
+                                qStickyShowPointInfo = false;
                                 break;
+                            elseif ~isnan(pointToShowInfoFor)
+                                qStickyShowPointInfo = ~qStickyShowPointInfo;
                             end
                         end
                     elseif any(keyCode)
@@ -3832,29 +3839,36 @@ classdef Titta < handle
                             if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneCalibSelection = true;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.recal.accelerator)) && ~shiftIsDown
                                 status = -1;
                                 qDoneCalibSelection = true;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator)) && ~shiftIsDown
                                 status = -2;
                                 qDoneCalibSelection = true;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.setup.accelerator)) && ~shiftIsDown
                                 status = -3;
                                 qDoneCalibSelection = true;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
+                                qStickyShowPointInfo= false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && ~shiftIsDown && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
+                                qStickyShowPointInfo= false;
                                 break;
                             end
                         end
@@ -3872,15 +3886,17 @@ classdef Titta < handle
                         elseif any(strcmpi(keys,'d')) && shiftIsDown
                             % take screenshot
                             takeScreenshot(wpnt(1));
+                            qStickyShowPointInfo = false;
                         elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
                             % take screenshot of operator screen
                             takeScreenshot(wpnt(2));
+                            qStickyShowPointInfo = false;
                         end
                     end
                     % check if hovering over point for which we have info
-                    if ~isempty(calValRects)
+                    if ~isempty(calValRects) && ~qStickyShowPointInfo
                         iIn = find(inRect([mx my],calValRects.'));
-                        if ~isempty(iIn)
+                        if ~isempty(iIn) && ~qSelectMenuOpen
                             % see if new point
                             if pointToShowInfoFor~=iIn
                                 openInfoForPoint = iIn;
@@ -3889,6 +3905,7 @@ classdef Titta < handle
                         elseif ~isnan(pointToShowInfoFor)
                             % stop showing info
                             pointToShowInfoFor = nan;
+                            infoShowRect = [];
                             break;
                         end
                     end
