@@ -41,6 +41,12 @@ for p=1:nfiles
     dat     = load(fullfile(dirs.mat,files(p).name));
     scrRes  = dat.expt.winRect(3:4);
     ts      = dat.data.gaze.systemTimeStamp;
+    % the Pro SDK does not guarantee invalid data is nan. Set to nan if
+    % invalid
+    dat.data.gaze. left.gazePoint.onDisplayArea(:,~dat.data.gaze. left.gazePoint.valid) = nan;
+    dat.data.gaze.right.gazePoint.onDisplayArea(:,~dat.data.gaze.right.gazePoint.valid) = nan;
+    dat.data.gaze. left.pupil.diameter(~dat.data.gaze. left.pupil.valid) = nan;
+    dat.data.gaze.right.pupil.diameter(~dat.data.gaze.right.pupil.valid) = nan;
     samp    = [bsxfun(@times,dat.data.gaze.left.gazePoint.onDisplayArea,scrRes.'); bsxfun(@times,dat.data.gaze.right.gazePoint.onDisplayArea,scrRes.'); dat.data.gaze.left.pupil.diameter; dat.data.gaze.right.pupil.diameter];
     header  = {'t','gLX','gLY','gRX','gRY','pL','pR'};
     [timest,what,msgs] = parseMsgs(dat.messages);

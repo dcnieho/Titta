@@ -3231,6 +3231,14 @@ classdef Titta < handle
         end
         
         function out = getDataQuality(obj,gazeData,valPointPos)
+            % prep: ensure invalid data is nan. This is not fully
+            % guaranteed by the Pro SDK
+            qInvalid = ~gazeData.gazeOrigin.valid;
+            gazeData.gazeOrigin.inUserCoords(:,qInvalid) = nan;
+            qInvalid = ~gazeData.gazePoint.valid;
+            gazeData.gazePoint.onDisplayArea(:,qInvalid) = nan;
+            gazeData.gazePoint.inUserCoords (:,qInvalid) = nan;
+            
             % 1. accuracy
             pointOnScreenDA  = (valPointPos./obj.scrInfo.resolution{1}).';
             pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
@@ -3254,7 +3262,7 @@ classdef Titta < handle
             out.STD1D   = hypot(out.STD2D(1),out.STD2D(2));
             
             % 4. data loss
-            out.dataLoss  = 1-sum(gazeData.gazePoint.valid)/length(gazeData.gazePoint.valid);
+            out.dataLoss  = sum(qInvalid)/length(qInvalid);
         end
         
         function out = ADCSToUCS(obj,data)
