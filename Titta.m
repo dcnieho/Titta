@@ -3436,9 +3436,10 @@ classdef Titta < handle
             qShowCal            = false;
             fixPointRectSz      = 80*obj.scrInfo.sFac;
             openInfoForPoint    = nan;
-            pointToShowInfoFor  = nan;
-            infoShowRect        = [];
-            qStickyShowPointInfo= false;
+            infoBoxRects        = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
+            infoShowRects       = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
+            qStickyShowPointInfo= false(size(cal{selection}.val{iVal}.pointPos,1),1);
+            pointTextCache      = cell( size(cal{selection}.val{iVal}.pointPos,1),1);
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress(wpnt(end));
@@ -3554,7 +3555,7 @@ classdef Titta < handle
                                 end
                             end
                             qUpdateCalDisplay   = false;
-                            pointToShowInfoFor  = nan;      % close info display, if any
+                            infoShowRects(:)    = nan;      % close info displays, if any
                         end
                     end
                 end
@@ -3590,31 +3591,32 @@ classdef Titta < handle
                 
                 % setup overlay with data quality info for specific point
                 if ~isnan(openInfoForPoint)
-                    pointToShowInfoFor = openInfoForPoint;
-                    openInfoForPoint   = nan;
+                    ip                  = openInfoForPoint;
+                    infoShowRects(ip,:) = -999;
+                    openInfoForPoint    = nan;
                     % 1. prepare text
                     Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
                     if strcmp(cal{selection}.eye,'both')
-                        lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
-                        rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
+                        lE = cal{selection}.val{iVal}.quality(ip).left;
+                        rE = cal{selection}.val{iVal}.quality(ip).right;
                         c1 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
                         c2 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
                         str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>, <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c2,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c1,lE.STD1D,char(176), c2,rE.STD1D,char(176), c1,lE.RMS1D,char(176), c2,rE.RMS1D,char(176), c1,lE.dataLoss*100, c2,rE.dataLoss*100);
                     elseif strcmp(cal{selection}.eye,'left')
-                        lE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).left;
+                        lE = cal{selection}.val{iVal}.quality(ip).left;
                         c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
                         str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c,lE.STD1D,char(176), c,lE.RMS1D,char(176), c,lE.dataLoss*100);
                     elseif strcmp(cal{selection}.eye,'right')
-                        rE = cal{selection}.val{iVal}.quality(pointToShowInfoFor).right;
+                        rE = cal{selection}.val{iVal}.quality(ip).right;
                         c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
                         str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c,rE.STD1D,char(176), c,rE.RMS1D,char(176), c,rE.dataLoss*100);
                     end
-                    [pointTextCache,txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
+                    [pointTextCache{ip},txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
                     % get box around text
                     margin = 10;
-                    infoBoxRect = GrowRect(txtbounds,margin,margin);
-                    infoBoxRect = OffsetRect(infoBoxRect,-infoBoxRect(1),-infoBoxRect(2));  % make sure rect is [0 0 w h]
+                    infoBoxRects(ip,:) = GrowRect(txtbounds,margin,margin);
+                    infoBoxRects(ip,:) = OffsetRect(infoBoxRects(ip,:),-infoBoxRects(ip,1),-infoBoxRects(ip,2));    % make sure rect is [0 0 w h]
                 end
                 
                 while true % draw loop
@@ -3689,20 +3691,22 @@ classdef Titta < handle
                         end
                         obj.drawCachedText(menuActiveCache);
                     end
-                    % if hovering over validation point, show info
-                    if ~isnan(pointToShowInfoFor)
-                        if isempty(infoShowRect) || ~qStickyShowPointInfo
-                            infoShowRect = OffsetRect(infoBoxRect,mx,my);
-                            % make sure does not go offscreen
-                            if infoShowRect(3)>obj.scrInfo.resolution{end}(1)
-                                infoShowRect = OffsetRect(infoShowRect,obj.scrInfo.resolution{end}(1)-infoShowRect(3),0);
+                    % show info for validation point, if wanted
+                    if any(~isnan(infoShowRects(:,1)))
+                        for ip = 1:size(infoShowRects,1)
+                            if ~isnan(infoShowRects(ip,1)) && ~qStickyShowPointInfo(ip) && ismember(ip,find(inRect([mx my],calValRects.')))
+                                infoShowRects(ip,:) = OffsetRect(infoBoxRects(ip,:),mx,my);
+                                % make sure does not go offscreen
+                                if infoShowRects(ip,3)>obj.scrInfo.resolution{end}(1)
+                                    infoShowRects(ip,:) = OffsetRect(infoShowRects(ip,:),obj.scrInfo.resolution{end}(1)-infoShowRects(ip,3),0);
+                                end
+                                if infoShowRects(4)>obj.scrInfo.resolution{end}(2)
+                                    infoShowRects(ip,:) = OffsetRect(infoShowRects(ip,:),0,obj.scrInfo.resolution{end}(2)-infoShowRects(ip,4));
+                                end
                             end
-                            if infoShowRect(4)>obj.scrInfo.resolution{end}(2)
-                                infoShowRect = OffsetRect(infoShowRect,0,obj.scrInfo.resolution{end}(2)-infoShowRect(4));
-                            end
+                            Screen('FillRect',wpnt(end),hoverBgClr,infoShowRects(ip,:));
+                            obj.drawCachedText(pointTextCache{ip},infoShowRects(ip,:));
                         end
-                        Screen('FillRect',wpnt(end),hoverBgClr,infoShowRect);
-                        obj.drawCachedText(pointTextCache,infoShowRect);
                     end
                     % if have operator screen, show message to wait to
                     % participant (if any)
@@ -3789,10 +3793,8 @@ classdef Titta < handle
                                     qUpdateCalDisplay   = true;
                                     qShowCal            = ~qShowCal;
                                 end
-                                qStickyShowPointInfo = false;
+                                qStickyShowPointInfo(:)  = false;
                                 break;
-                            elseif ~isnan(pointToShowInfoFor)
-                                qStickyShowPointInfo = ~qStickyShowPointInfo;
                             end
                         end
                     elseif any(keyCode)
@@ -3839,36 +3841,36 @@ classdef Titta < handle
                             if any(strcmpi(keys,obj.settings.UI.button.val.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneCalibSelection = true;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.recal.accelerator)) && ~shiftIsDown
                                 status = -1;
                                 qDoneCalibSelection = true;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.reval.accelerator)) && ~shiftIsDown
                                 status = -2;
                                 qDoneCalibSelection = true;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.setup.accelerator)) && ~shiftIsDown
                                 status = -3;
                                 qDoneCalibSelection = true;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
                                 qToggleSelectMenu   = true;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && ~shiftIsDown && qHasCal
                                 qUpdateCalDisplay   = true;
                                 qShowCal            = ~qShowCal;
-                                qStickyShowPointInfo= false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             end
                         end
@@ -3886,27 +3888,35 @@ classdef Titta < handle
                         elseif any(strcmpi(keys,'d')) && shiftIsDown
                             % take screenshot
                             takeScreenshot(wpnt(1));
-                            qStickyShowPointInfo = false;
+                            qStickyShowPointInfo(:) = false;
                         elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
                             % take screenshot of operator screen
                             takeScreenshot(wpnt(2));
-                            qStickyShowPointInfo = false;
+                            qStickyShowPointInfo(:) = false;
                         end
                     end
                     % check if hovering over point for which we have info
-                    if ~isempty(calValRects) && ~qStickyShowPointInfo
+                    if ~isempty(calValRects)
                         iIn = find(inRect([mx my],calValRects.'));
                         if ~isempty(iIn) && ~qSelectMenuOpen
                             % see if new point
-                            if pointToShowInfoFor~=iIn
+                            if isnan(infoShowRects(iIn,1))
                                 openInfoForPoint = iIn;
                                 break;
                             end
-                        elseif ~isnan(pointToShowInfoFor)
-                            % stop showing info
-                            pointToShowInfoFor = nan;
-                            infoShowRect = [];
-                            break;
+                            if any(buttons)
+                                qStickyShowPointInfo(iIn) = true;
+                            end
+                        else
+                            if any(buttons)
+                                qStickyShowPointInfo(:) = false;
+                            end
+                            q = ~isnan(infoShowRects(:,1)) & ~qStickyShowPointInfo;
+                            if any(q)
+                                % stop showing info
+                                infoShowRects(q,:) = nan;
+                                break;
+                            end
                         end
                     end
                 end
