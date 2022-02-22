@@ -4010,7 +4010,6 @@ classdef Titta < handle
                 for b=1:length(idx)
                     but(idx(b)).rect = butRects(b,:);
                 end
-                butRects          = num2cell(butRects,2);
             end
             
             % 2. atop screen
