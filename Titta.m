@@ -2025,7 +2025,7 @@ classdef Titta < handle
             obj.buffer.start('positioning');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
-            qHaveValidValidations   = isfield(out,'attempt') && ~isempty(getValidValidations(out.attempt));
+            qHaveValidValidations   = isfield(out,'attempt') && ~isempty(getCalsWithValidValidations(out.attempt));
             qHaveOperatorScreen     = ~isscalar(wpnt);
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
@@ -3291,17 +3291,18 @@ classdef Titta < handle
             qHaveOperatorScreen     = ~isscalar(wpnt);
             
             % find how many valid calibrations we have:
-            iValid = getValidValidations(cal);
-            if ~isempty(iValid) && ~ismember(selection,iValid)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
-                % this happens if setup cancelled to go directly to this validation
-                % viewer
+            iValidCals = getCalsWithValidValidations(cal);
+            if ~isempty(iValidCals) && ~ismember(selection,iValidCals)  % exception, when we have no valid calibrations at all (happens when using zero-point calibration)
+                % this happens if setup cancelled to go directly to this
+                % validation viewer
                 % select and load last successful calibration
-                selection = iValid(end);
+                selection = iValidCals(end);
                 obj.loadOtherCal(cal{selection},selection,true,true);
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
-            qHaveMultipleValidVals  = ~isempty(iValid) && ~isscalar(iValid);
+            qHaveMultipleValidCals  = ~isempty(iValidCals) && ~isscalar(iValidCals);
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
+            qHasValData             = isfield(cal{selection}.val{iVal},'pointPos');
             
             % setup text for buttons
             Screen('TextFont',  wpnt(end), obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
@@ -3312,7 +3313,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.val.recal   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.val.reval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.val.continue,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidVals, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt(end), funs, obj.settings.UI.button.margins);
             but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
@@ -3358,11 +3359,11 @@ classdef Titta < handle
             
             
             % setup menu, if any
-            if qHaveMultipleValidVals
+            if qHaveMultipleValidCals
                 margin          = 10;
                 pad             = 3;
                 height          = 45;
-                nElem           = length(iValid);
+                nElem           = length(iValidCals);
                 totHeight       = nElem*(height+pad)-pad;
                 width           = 900;
                 % menu background
@@ -3376,18 +3377,18 @@ classdef Titta < handle
                 for c=nElem:-1:1
                     % find the active/last valid validation for this
                     % calibration
-                    aVal = find(cellfun(@(x) x.status, cal{iValid(c)}.val)==1,1,'last');
-                    if isfield(cal{iValid(c)}.val{aVal},'acc1D')
+                    aVal = find(cellfun(@(x) x.status, cal{iValidCals(c)}.val)==1,1,'last');
+                    if isfield(cal{iValidCals(c)}.val{aVal},'acc1D')
                         % acc field is [lx rx; ly ry]
                         [strl,strr,strsep] = deal('');
-                        if ismember(cal{iValid(c)}.eye,{'both','left'})
-                            strl = sprintf( '<color=%s>Left<color>: %.2f%c, (%.2f%c,%.2f%c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValid(c)}.val{aVal}.acc1D( 1 ),char(176),cal{iValid(c)}.val{aVal}.acc2D(1, 1 ),char(176),cal{iValid(c)}.val{aVal}.acc2D(2, 1 ),char(176));
+                        if ismember(cal{iValidCals(c)}.eye,{'both','left'})
+                            strl = sprintf( '<color=%s>Left<color>: %.2f%c, (%.2f%c,%.2f%c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValidCals(c)}.val{aVal}.acc1D( 1 ),char(176),cal{iValidCals(c)}.val{aVal}.acc2D(1, 1 ),char(176),cal{iValidCals(c)}.val{aVal}.acc2D(2, 1 ),char(176));
                         end
-                        if ismember(cal{iValid(c)}.eye,{'both','right'})
-                            idx = 1+strcmp(cal{iValid(c)}.eye,'both');
-                            strr = sprintf('<color=%s>Right<color>: %.2f%c, (%.2f%c,%.2f%c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValid(c)}.val{aVal}.acc1D(idx),char(176),cal{iValid(c)}.val{aVal}.acc2D(1,idx),char(176),cal{iValid(c)}.val{aVal}.acc2D(2,idx),char(176));
+                        if ismember(cal{iValidCals(c)}.eye,{'both','right'})
+                            idx = 1+strcmp(cal{iValidCals(c)}.eye,'both');
+                            strr = sprintf('<color=%s>Right<color>: %.2f%c, (%.2f%c,%.2f%c)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValidCals(c)}.val{aVal}.acc1D(idx),char(176),cal{iValidCals(c)}.val{aVal}.acc2D(1,idx),char(176),cal{iValidCals(c)}.val{aVal}.acc2D(2,idx),char(176));
                         end
-                        if strcmp(cal{iValid(c)}.eye,'both')
+                        if strcmp(cal{iValidCals(c)}.eye,'both')
                             strsep = ', ';
                         end
                         str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
@@ -3436,10 +3437,7 @@ classdef Titta < handle
             qShowCal            = false;
             fixPointRectSz      = 80*obj.scrInfo.sFac;
             openInfoForPoint    = nan;
-            infoBoxRects        = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
-            infoShowRects       = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
-            qStickyShowPointInfo= false(size(cal{selection}.val{iVal}.pointPos,1),1);
-            pointTextCache      = cell( size(cal{selection}.val{iVal}.pointPos,1),1);
+            qShowPlotOverlay    = false;
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             [mx,my] = obj.getNewMouseKeyPress(wpnt(end));
@@ -3481,10 +3479,11 @@ classdef Titta < handle
                             if qAwaitingCalChange
                                 % calibration change has come through, make
                                 % needed updates
-                                selection = newSelection;
-                                qAwaitingCalChange = false;
-                                qHasCal = ~isempty(cal{selection}.cal.result);
-                                iVal    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
+                                selection           = newSelection;
+                                qAwaitingCalChange  = false;
+                                qHasCal             = ~isempty(cal{selection}.cal.result);
+                                iVal                = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
+                                qHasValData         = isfield(cal{selection}.val{iVal},'pointPos');
                                 if ~qHasCal && qShowCal
                                     qShowCal            = false;
                                     % toggle selection menu to trigger updating of
@@ -3555,7 +3554,16 @@ classdef Titta < handle
                                 end
                             end
                             qUpdateCalDisplay   = false;
-                            infoShowRects(:)    = nan;      % close info displays, if any
+                            
+                            % update info displays
+                            if qHasValData
+                                infoBoxRects        = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
+                                infoShowRects       = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
+                                qStickyShowPointInfo= false(size(cal{selection}.val{iVal}.pointPos,1),1);
+                                pointTextCache      = cell( size(cal{selection}.val{iVal}.pointPos,1),1);
+                            else
+                                infoShowRects = [];
+                            end
                         end
                     end
                 end
@@ -3563,7 +3571,7 @@ classdef Titta < handle
                 % setup cursors
                 if qToggleSelectMenu
                     butRects            = cat(1,but.rect);
-                    currentMenuSel      = find(selection==iValid);
+                    currentMenuSel      = find(selection==iValidCals);
                     qSelectMenuOpen     = ~qSelectMenuOpen;
                     qChangeMenuArrow    = qSelectMenuOpen;  % if opening, also set arrow, so this should also be true
                     qToggleSelectMenu   = false;
@@ -3682,17 +3690,17 @@ classdef Titta < handle
                         % menu background
                         Screen('FillRect',wpnt(end),menuBgClr,menuBackRect);
                         % menuRects, inactive and currently active
-                        qActive = iValid==selection;
+                        qActive = iValidCals==selection;
                         Screen('FillRect',wpnt(end),menuItemClr,menuRects(~qActive,:).');
                         Screen('FillRect',wpnt(end),menuItemClrActive,menuRects( qActive,:).');
                         % text in each rect
-                        for c=1:length(iValid)
+                        for c=1:length(iValidCals)
                             obj.drawCachedText(menuTextCache(c));
                         end
                         obj.drawCachedText(menuActiveCache);
                     end
                     % show info for validation point, if wanted
-                    if any(~isnan(infoShowRects(:,1)))
+                    if ~isempty(infoShowRects) && any(~isnan(infoShowRects(:,1)))
                         for ip = 1:size(infoShowRects,1)
                             if ~isnan(infoShowRects(ip,1)) && ~qStickyShowPointInfo(ip) && ismember(ip,find(inRect([mx my],calValRects.')))
                                 infoShowRects(ip,:) = OffsetRect(infoBoxRects(ip,:),mx,my);
@@ -3700,7 +3708,7 @@ classdef Titta < handle
                                 if infoShowRects(ip,3)>obj.scrInfo.resolution{end}(1)
                                     infoShowRects(ip,:) = OffsetRect(infoShowRects(ip,:),obj.scrInfo.resolution{end}(1)-infoShowRects(ip,3),0);
                                 end
-                                if infoShowRects(4)>obj.scrInfo.resolution{end}(2)
+                                if infoShowRects(ip,4)>obj.scrInfo.resolution{end}(2)
                                     infoShowRects(ip,:) = OffsetRect(infoShowRects(ip,:),0,obj.scrInfo.resolution{end}(2)-infoShowRects(ip,4));
                                 end
                             end
@@ -3759,8 +3767,8 @@ classdef Titta < handle
                         % of the buttons
                         if qSelectMenuOpen
                             iIn = find(inRect([mx my],[menuRects.' menuBackRect.']),1);   % press on button is also in rect of whole menu, so we get multiple returns here in this case. ignore all but first, which is the actual menu button pressed
-                            if ~isempty(iIn) && iIn<=length(iValid)
-                                newSelection        = iValid(iIn);
+                            if ~isempty(iIn) && iIn<=length(iValidCals)
+                                newSelection        = iValidCals(iIn);
                                 qSelectedCalChanged = selection~=newSelection;
                                 qToggleSelectMenu   = true;
                                 break;
@@ -3805,14 +3813,14 @@ classdef Titta < handle
                                 break;
                             elseif ismember(keys(1),{'1','2','3','4','5','6','7','8','9'})  % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
                                 requested           = str2double(keys(1));
-                                if requested<=length(iValid)
-                                    newSelection        = iValid(requested);
+                                if requested<=length(iValidCals)
+                                    newSelection        = iValidCals(requested);
                                     qSelectedCalChanged = selection~=newSelection;
                                     qToggleSelectMenu   = true;
                                 end
                                 break;
                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
-                                newSelection        = iValid(currentMenuSel);
+                                newSelection        = iValidCals(currentMenuSel);
                                 qSelectedCalChanged = selection~=newSelection;
                                 qToggleSelectMenu   = true;
                                 break;
@@ -3830,7 +3838,7 @@ classdef Titta < handle
                                     end
                                 elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys)) 
                                     % down key
-                                    if currentMenuSel<length(iValid)
+                                    if currentMenuSel<length(iValidCals)
                                         currentMenuSel   = currentMenuSel+1;
                                         qChangeMenuArrow = true;
                                         break;
@@ -3858,7 +3866,7 @@ classdef Titta < handle
                                 qDoneCalibSelection = true;
                                 qStickyShowPointInfo(:) = false;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidVals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidCals
                                 qToggleSelectMenu   = true;
                                 qStickyShowPointInfo(:) = false;
                                 break;
@@ -6164,7 +6172,7 @@ function angle = AngleBetweenVectors(a,b)
 angle = atan2(sqrt(sum(cross(a,b,1).^2,1)),dot(a,b,1))*180/pi;
 end
 
-function iValid = getValidValidations(cal)
+function iValid = getCalsWithValidValidations(cal)
 iValid = find(cellfun(@(x) isfield(x,'val') && any(cellfun(@(y) y.status, x.val)==1),cal));
 end
 
