@@ -3349,7 +3349,7 @@ classdef Titta < handle
             % 3. left side
             if but(7).visible
                 % position it
-                but(7).rect     = OffsetRect(but(7).rect,0,yPosTop);
+                but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+5,yPosTop);
             end
             
             % check shiftable button accelerators do not conflict with
