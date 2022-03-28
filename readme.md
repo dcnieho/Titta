@@ -6,7 +6,7 @@ https://github.com/marcus-nystrom/Titta. For a similar toolbox for SMI eye track
 The current repository furthermore offers a C++ wrapper around the Tobii SDK, which is in turn used as a basis for the MEX file `TittaMex` providing Titta with connectivity to the Tobii eye trackers. This C++ wrapper can be consumed by your own C++ projects as well, or be wrapped for other programming languages (a wrapper to Python is also provided).
 
 Please cite:
-[Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox for creating Psychtoolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
+[Niehorster, D.C., Andersson, R. & Nyström, M. (2020). Titta: A toolbox for creating PsychToolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
 
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
