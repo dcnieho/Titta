@@ -2864,6 +2864,7 @@ classdef Titta < handle
             % clear screen, anchor timing, get ready for displaying calibration points
             out.flips    = flipT;
             out.pointPos = [];
+            out.pointTs  = [];
             
             currentPoint    = 0;
             needManualAccept= @(cp) obj.settings.cal.autoPace==0 || (obj.settings.cal.autoPace==1 && qStartOfSequence && cp==1);
@@ -2897,16 +2898,22 @@ classdef Titta < handle
                         pointOff = 1;
                         break;
                     end
-                    out.pointPos(end+1,1:3) = points(currentPoint,[5 3 4]);
+                    out.pointPos(end+1,1:3) =  points(currentPoint,[5 3 4]);
+                    if ~isempty(out.pointTs)
+                        % log end of previous point
+                        out.pointTs(end,3) = out.flips(end);
+                    end
+                    out.pointTs (end+1,1:3) = [points(currentPoint, 5) nan nan];
                     % check if manual acceptance needed for this point
                     haveAccepted = ~needManualAccept(currentPoint);     % if not needed, we already have it
                     
                     % get ready for next point
                     qWaitForAllowAccept = true;
-                    advancePoint    = false;
-                    qNewPoint       = true;
-                    tick0p          = nan;
-                    drawCmd         = 'new';
+                    qLoggedAccept       = false;
+                    advancePoint        = false;
+                    qNewPoint           = true;
+                    tick0p              = nan;
+                    drawCmd             = 'new';
                 end
                 
                 % call drawer function
@@ -2933,6 +2940,13 @@ classdef Titta < handle
                     nCollecting     = 0;
                     qNewPoint       = false;
                 end
+                if ~qLoggedAccept && ~qWaitForAllowAccept
+                    obj.sendMessage(sprintf('POINT READY %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
+                    qLoggedAccept = true;
+                    % log when point is in place according to drawer
+                    % function
+                    out.pointTs(end,2) = out.flips(end);
+                end
                 
                 % get user response
                 [~,~,~,keyCode,shiftIsDown] = obj.getNewMouseKeyPress();
@@ -2943,6 +2957,7 @@ classdef Titta < handle
                         % manual and any point, space bars triggers
                         % accepting calibration point
                         haveAccepted    = true;
+                        obj.sendMessage(sprintf('POINT MANUALACCEPT %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
                     elseif any(strcmpi(keys,'r'))
                         out.status = -1;
                         break;
@@ -2965,6 +2980,8 @@ classdef Titta < handle
                         % will start data collection
                         tick0p              = nan;
                         qWaitForAllowAccept = true;
+                        qLoggedAccept       = false;
+                        obj.sendMessage(sprintf('POINT REDO %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         out.status = 2;
@@ -2992,6 +3009,7 @@ classdef Titta < handle
                                 if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
+                                    obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
                                 else
                                     % failed
                                     if nCollecting==1
@@ -3008,6 +3026,7 @@ classdef Titta < handle
                                         end
                                         % next point
                                         advancePoint = true;
+                                        obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
                                     end
                                 end
                             end
@@ -3029,6 +3048,7 @@ classdef Titta < handle
                             tick0v = nan;
                             % next point
                             advancePoint = true;
+                            obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
                         end
                     end
                 end
@@ -3036,7 +3056,6 @@ classdef Titta < handle
             
             % calibration/validation finished
             lastPoint = currentPoint-pointOff;
-            obj.sendMessage(sprintf('POINT OFF %d',lastPoint),out.flips(end));
             
             % get calibration result while keeping animation on the screen
             % alive for a smooth experience
@@ -3046,6 +3065,7 @@ classdef Titta < handle
                 computeResult   = [];
                 calData         = [];
                 flipT           = out.flips(end);
+                qLogPointOff    = true;
                 while true
                     tick    = tick+1;
                     for w=1:length(wpnt)
@@ -3059,6 +3079,11 @@ classdef Titta < handle
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
                     if qHaveOperatorScreen
                         Screen('Flip',wpnt(2),[],[],2);
+                    end
+                    if qLogPointOff
+                        obj.sendMessage(sprintf('POINT OFF %d',lastPoint),flipT);
+                        out.pointTs(end,3) = flipT;
+                        qLogPointOff = false;
                     end
                     
                     % first get computeAndApply result, then get
@@ -3094,6 +3119,17 @@ classdef Titta < handle
                 if ~isempty(calData)
                     out.computedCal = calData.calibrationData;
                 end
+            else
+                % clear screen
+                for w=1:length(wpnt)
+                    Screen('FillRect', wpnt(w), bgClr{w});
+                end
+                flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
+                if qHaveOperatorScreen
+                    Screen('Flip',wpnt(2),[],[],2);
+                end
+                obj.sendMessage(sprintf('POINT OFF %d',lastPoint),flipT);
+                out.pointTs(end,3) = flipT;
             end
             
             if qShowEyeImage && ~obj.settings.cal.doRecordEyeImages
