@@ -3231,24 +3231,10 @@ classdef Titta < handle
         end
         
         function out = getDataQuality(obj,gazeData,valPointPos)
-            % prep: ensure invalid data is nan. This is not fully
-            % guaranteed by the Pro SDK
-            qInvalid = ~gazeData.gazeOrigin.valid;
-            gazeData.gazeOrigin.inUserCoords(:,qInvalid) = nan;
-            qInvalid = ~gazeData.gazePoint.valid;
-            gazeData.gazePoint.onDisplayArea(:,qInvalid) = nan;
-            gazeData.gazePoint.inUserCoords (:,qInvalid) = nan;
+            % do data prep, and get offsets from validation target
+            [angs1D,offOnScreenDir,qInvalid] = obj.getOffsetFromPoint(gazeData,valPointPos);
             
             % 1. accuracy
-            pointOnScreenDA  = (valPointPos./obj.scrInfo.resolution{1}).';
-            pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
-            offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA);
-            offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.displayArea.width,obj.geom.displayArea.height].');
-            offOnScreenDir   = atan2(offOnScreenCm(2,:),offOnScreenCm(1,:));
-            
-            vecToPoint  = bsxfun(@minus,pointOnScreenUCS,gazeData.gazeOrigin.inUserCoords);
-            gazeVec     = gazeData.gazePoint.inUserCoords-gazeData.gazeOrigin.inUserCoords;
-            angs1D      = AngleBetweenVectors(vecToPoint,gazeVec);
             out.offs    = bsxfun(@times,angs1D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
             out.acc2D   = mynanmean(abs(out.offs),2);
             out.acc1D   = mynanmean(    angs1D   ,2);
@@ -3263,6 +3249,26 @@ classdef Titta < handle
             
             % 4. data loss
             out.dataLoss  = sum(qInvalid)/length(qInvalid);
+        end
+        
+        function [angs1D,offOnScreenDir,qInvalid] = getOffsetFromPoint(obj,gazeData,pointPos)
+            % prep: ensure invalid data is nan. This is not fully
+            % guaranteed by the Pro SDK
+            qInvalid = ~gazeData.gazeOrigin.valid;
+            gazeData.gazeOrigin.inUserCoords(:,qInvalid) = nan;
+            qInvalid = ~gazeData.gazePoint.valid;
+            gazeData.gazePoint.onDisplayArea(:,qInvalid) = nan;
+            gazeData.gazePoint.inUserCoords (:,qInvalid) = nan;
+            
+            pointOnScreenDA  = (pointPos./obj.scrInfo.resolution{1}).';
+            pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
+            offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA);
+            offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.displayArea.width,obj.geom.displayArea.height].');
+            offOnScreenDir   = atan2(offOnScreenCm(2,:),offOnScreenCm(1,:));
+            
+            vecToPoint  = bsxfun(@minus,pointOnScreenUCS,gazeData.gazeOrigin.inUserCoords);
+            gazeVec     = gazeData.gazePoint.inUserCoords-gazeData.gazeOrigin.inUserCoords;
+            angs1D      = AngleBetweenVectors(vecToPoint,gazeVec);
         end
         
         function out = ADCSToUCS(obj,data)
