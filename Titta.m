@@ -5534,8 +5534,8 @@ classdef Titta < handle
                         end
                         refPosO     = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                         % also update cursor rects
-                        headRects = getSelectionRects(headORect,3,obj.settings.UI.cursor);
-                        cursor.cursorRects(:,1:size(headRects,2)) = headRects;
+                        headRects   = getSelectionRects(headORect,3,obj.settings.UI.cursor);
+                        cursor.cursorRects(1:size(headRects,2)) = num2cell(headRects,1);
                     end
                     % update cursor look if needed
                     cursor.update(mx,my);
