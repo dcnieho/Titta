@@ -3691,7 +3691,7 @@ classdef Titta < handle
                         Screen('FillRect',wpnt(end),menuBgClr,menuBackRect);
                         % menuRects, inactive and currently active
                         qActive = iValidCals==selection;
-                        Screen('FillRect',wpnt(end),menuItemClr,menuRects(~qActive,:).');
+                        Screen('FillRect',wpnt(end),menuItemClr      ,menuRects(~qActive,:).');
                         Screen('FillRect',wpnt(end),menuItemClrActive,menuRects( qActive,:).');
                         % text in each rect
                         for c=1:length(iValidCals)
