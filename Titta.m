@@ -3313,10 +3313,12 @@ classdef Titta < handle
         function val = ProcessValData(obj,val)
             % remove unneeded data
             if ~obj.calibrateLeftEye
-                val.gazeData = rmfield(val.gazeData,'left');
+                val.gazeData    = rmfield(val.gazeData    ,'left');
+                val.allData.gaze= rmfield(val.allData.gaze,'left');
             end
             if ~obj.calibrateRightEye
-                val.gazeData = rmfield(val.gazeData,'right');
+                val.gazeData    = rmfield(val.gazeData    ,'right');
+                val.allData.gaze= rmfield(val.allData.gaze,'right');
             end
             if isempty(val.gazeData)
                 % no validation performed, nothing to do here, return
