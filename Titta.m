@@ -1644,7 +1644,7 @@ classdef Titta < handle
             settings.UI.plot.but.exit.fillColor     = optionButClr.fill;
             settings.UI.plot.but.exit.edgeColor     = optionButClr.edge;
             settings.UI.plot.but.exit.textColor     = optionButClr.text;
-            settings.UI.plot.but.valSel.accelerator = 'a';
+            settings.UI.plot.but.valSel.accelerator = 'c';
             settings.UI.plot.but.valSel.visible     = true;
             settings.UI.plot.but.valSel.string      = 'show context (<i>c<i>)';
             settings.UI.plot.but.valSel.fillColor   = toggleButClr.fill;
