@@ -436,6 +436,7 @@ if nargout>3
     cache.disableClip = disableClip;
     cache.px = px;
     cache.py = py;
+    cache.bbox = textbounds;
     cache.subStrings = subStrings;
     cache.switches = switches;
     cache.fmts = fmts;
