@@ -91,6 +91,8 @@ for p=1:nfiles
             % for some weird reason the X2-30 reports 40Hz even though it is 30
             opt.freq = 30;
         end
+    end
+    if opt.freq==30
         warning('Be careful about using I2MC with data that is only 30 Hz. In a brief test, this did not appear to work well with the settings in this file.')
     end
     if (~isfield(opt,'downsampFilter') || opt.downsampFilter) && ~exist('cheby1','file')
