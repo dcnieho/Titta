@@ -2464,6 +2464,25 @@ classdef Titta < handle
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
+                    
+                    % these key combinations should always be available,
+                    % and override anything the user has set
+                    if any(strcmpi(keys,'escape')) && shiftIsDown
+                        status = -5;
+                        break;
+                    elseif any(strcmpi(keys,'s')) && shiftIsDown
+                        % skip calibration
+                        status = 2;
+                        break;
+                    elseif any(strcmpi(keys,'d')) && shiftIsDown
+                        % take screenshot
+                        takeScreenshot(wpnt(1));
+                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                        % take screenshot of operator screen
+                        takeScreenshot(wpnt(2));
+                    end
+
+                    % user-defined accelerators
                     if qSelectMenuOpen
                         if any(strcmpi(keys,'escape')) || any(strcmpi(keys,obj.settings.UI.button.setup.changeeye.accelerator))
                             qToggleSelectMenu = true;
@@ -2505,23 +2524,6 @@ classdef Titta < handle
                             status = -4;
                             break;
                         end
-                    end
-                    
-                    
-                    % these key combinations should always be available
-                    if any(strcmpi(keys,'escape')) && shiftIsDown
-                        status = -5;
-                        break;
-                    elseif any(strcmpi(keys,'s')) && shiftIsDown
-                        % skip calibration
-                        status = 2;
-                        break;
-                    elseif any(strcmpi(keys,'d')) && shiftIsDown
-                        % take screenshot
-                        takeScreenshot(wpnt(1));
-                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
-                        % take screenshot of operator screen
-                        takeScreenshot(wpnt(2));
                     end
                 end
             end
@@ -3965,6 +3967,29 @@ classdef Titta < handle
                         end
                     elseif any(keyCode)
                         keys = KbName(keyCode);
+                        
+                        % these key combinations should always be
+                        % available, and override anything the user has set
+                        if any(strcmpi(keys,'escape')) && shiftIsDown
+                            status = -5;
+                            qDoneCalibSelection = true;
+                            break;
+                        elseif any(strcmpi(keys,'s')) && shiftIsDown
+                            % skip calibration
+                            status = 2;
+                            qDoneCalibSelection = true;
+                            break;
+                        elseif any(strcmpi(keys,'d')) && shiftIsDown
+                            % take screenshot
+                            takeScreenshot(wpnt(1));
+                            qStickyShowPointInfo(:) = false;
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                            % take screenshot of operator screen
+                            takeScreenshot(wpnt(2));
+                            qStickyShowPointInfo(:) = false;
+                        end
+
+                        % user-defined accelerators
                         if qSelectMenuOpen
                             if any(strcmpi(keys,'escape')) || any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator))
                                 qToggleSelectMenu = true;
@@ -4043,26 +4068,6 @@ classdef Titta < handle
                                 qStickyShowPointInfo(:) = false;
                                 break;
                             end
-                        end
-                        
-                        % these key combinations should always be available
-                        if any(strcmpi(keys,'escape')) && shiftIsDown
-                            status = -5;
-                            qDoneCalibSelection = true;
-                            break;
-                        elseif any(strcmpi(keys,'s')) && shiftIsDown
-                            % skip calibration
-                            status = 2;
-                            qDoneCalibSelection = true;
-                            break;
-                        elseif any(strcmpi(keys,'d')) && shiftIsDown
-                            % take screenshot
-                            takeScreenshot(wpnt(1));
-                            qStickyShowPointInfo(:) = false;
-                        elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
-                            % take screenshot of operator screen
-                            takeScreenshot(wpnt(2));
-                            qStickyShowPointInfo(:) = false;
                         end
                     end
                     % check if hovering over point for which we have info
@@ -5834,6 +5839,28 @@ classdef Titta < handle
                             % i can't write the logic to pull that appart..
                             keys = keys{1};
                         end
+                        
+                        % these key combinations should always be
+                        % available, and override anything the user has set
+                        % or other logic below
+                        if any(strcmpi(keys,'escape')) && shiftIsDown
+                            status = -5;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'s')) && shiftIsDown
+                            % skip calibration
+                            status = 2;
+                            qDoneWithManualCalib = true;
+                            break;
+                        elseif any(strcmpi(keys,'d')) && shiftIsDown
+                            % take screenshot
+                            takeScreenshot(wpnt(1));
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown
+                            % take screenshot of operator screen
+                            takeScreenshot(wpnt(2));
+                        end
+                        
+                        % user-defined accelerators and other logic
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
                             if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.mancal.snapshot.accelerator)))
                                 if qSelectEyeMenuOpen
@@ -6015,24 +6042,6 @@ classdef Titta < handle
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
                             end
-                        end
-                        
-                        % these key combinations should always be available
-                        if any(strcmpi(keys,'escape')) && shiftIsDown
-                            status = -5;
-                            qDoneWithManualCalib = true;
-                            break;
-                        elseif any(strcmpi(keys,'s')) && shiftIsDown
-                            % skip calibration
-                            status = 2;
-                            qDoneWithManualCalib = true;
-                            break;
-                        elseif any(strcmpi(keys,'d')) && shiftIsDown
-                            % take screenshot
-                            takeScreenshot(wpnt(1));
-                        elseif any(strcmpi(keys,'o')) && shiftIsDown
-                            % take screenshot of operator screen
-                            takeScreenshot(wpnt(2));
                         end
                     end
                     % check if a point collections needs to be cancelled
@@ -6567,17 +6576,9 @@ classdef Titta < handle
                     end
                 elseif any(keyCode)
                     keys = KbName(keyCode);
-                    if any(strcmpi(keys,obj.settings.UI.plot.but.exit.accelerator))
-                        break;
-                    elseif any(strcmpi(keys,obj.settings.UI.plot.but.valSel.accelerator))
-                        if strcmp(plotWhich,'off')
-                            plotWhich = 'all';
-                        else
-                            plotWhich = 'off';
-                        end
-                    end
                     
-                    % these key combinations should always be available
+                    % these key combinations should always be available,
+                    % and override anything the user has set
                     if any(strcmpi(keys,'escape')) && shiftIsDown
                         status = -5;
                         break;
@@ -6591,6 +6592,17 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
                         % take screenshot of operator screen
                         takeScreenshot(wpnt(2));
+                    end
+
+                    % user-defined accelerators
+                    if any(strcmpi(keys,obj.settings.UI.plot.but.exit.accelerator))
+                        break;
+                    elseif any(strcmpi(keys,obj.settings.UI.plot.but.valSel.accelerator))
+                        if strcmp(plotWhich,'off')
+                            plotWhich = 'all';
+                        else
+                            plotWhich = 'off';
+                        end
                     end
                 end
             end
