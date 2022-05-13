@@ -247,6 +247,9 @@ classdef Titta < handle
             
             % check requested eye calibration mode
             obj.changeAndCheckCalibEyeMode();
+
+            % calibration point setup
+            assert(isempty(settings.cal.pointPosToTobii       ) || isequal(size(settings.cal.pointPosToTobii       ),size(settings.cal.pointPos))       ,'settings.cal.pointPosToTobii should either be empty or the same size as settings.cal.pointPos')
             
             % setup colors
             obj.settings.UI.val.eyeColors               = color2RGBA(obj.settings.UI.val.eyeColors);
@@ -1693,6 +1696,7 @@ classdef Titta < handle
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
+            settings.cal.pointPosToTobii        = [];                           % if not empty, send these coordinates to the Tobii calibration routines, instead of those in settings.cal.pointPos. Useful if, e.g., you want to mirror the coordinates because participants view the screen through a mirror.
             settings.cal.autoPace               = 2;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration           = 0.8;                          % minimum duration (s) that each point is shown
             settings.cal.doRandomPointOrder     = true;
@@ -2870,6 +2874,11 @@ classdef Titta < handle
             % setup
             if qCal
                 points              = obj.settings.cal.pointPos;
+                if ~isempty(obj.settings.cal.pointPosToTobii)
+                    pointsSDK = obj.settings.cal.pointPosToTobii;
+                else
+                    pointsSDK = points;
+                end
                 paceIntervalTicks   = ceil(obj.settings.cal.paceDuration   *fs);
                 out.pointStatus     = {};
                 extraInp            = {};
@@ -2879,6 +2888,7 @@ classdef Titta < handle
                 stage               = 'cal';
             else
                 points              = obj.settings.val.pointPos;
+                pointsSDK           = points;
                 paceIntervalTicks   = ceil(obj.settings.val.paceDuration   *fs);
                 collectInterval     = ceil(obj.settings.val.collectDuration*fs);
                 nDataPoint          = ceil(obj.settings.val.collectDuration*obj.settings.freq);
@@ -2896,7 +2906,7 @@ classdef Titta < handle
                 drawOperatorScreenFun = @(idx,eS,t,s,ps,eI,eIL) obj.drawOperatorScreen(wpnt(2),oPoints,idx,eS,t,s,ps,eI,eIL);
             end
             
-            points = [points bsxfun(@times,points,obj.scrInfo.resolution{1}) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
+            points = [points pointsSDK bsxfun(@times,points,obj.scrInfo.resolution{1}) [1:nPoint].' ones(nPoint,1)]; %#ok<NBRAK>
             if (qCal && obj.settings.cal.doRandomPointOrder) || (~qCal && obj.settings.val.doRandomPointOrder)
                 points = points(randperm(nPoint),:);
             end
@@ -2922,7 +2932,7 @@ classdef Titta < handle
             if qCal && ~qIsFirstCalAttempt
                 for p=1:size(points,1)
                     % queue up all the discard actions quickly
-                    obj.buffer.calibrationDiscardData(points(p,1:2),extraInp{:});
+                    obj.buffer.calibrationDiscardData(points(p,3:4),extraInp{:});
                 end
                 % now we expect size(points,1) completed DiscardData
                 % reports as well
@@ -2974,7 +2984,7 @@ classdef Titta < handle
                             extra = {};
                         end
                         if isa(fun,'function_handle')
-                            fun(obj,currentPoint,points(currentPoint,1:2),points(currentPoint,3:4),stage,extra{:});
+                            fun(obj,currentPoint,points(currentPoint,1:2),points(currentPoint,5:6),stage,extra{:});
                         end
                     end
                     
@@ -2985,12 +2995,16 @@ classdef Titta < handle
                         pointOff = 1;
                         break;
                     end
-                    out.pointPos(end+1,1:3) =  points(currentPoint,[5 3 4]);
+                    if qCal
+                        out.pointPos(end+1,1:5) =  points(currentPoint,[7 5 6 3 4]);
+                    else
+                        out.pointPos(end+1,1:3) =  points(currentPoint,[7 5 6]);
+                    end
                     if ~isempty(out.pointTs)
                         % log end of previous point
                         out.pointTs(end,3) = out.flips(end);
                     end
-                    out.pointTs (end+1,1:3) = [points(currentPoint, 5) nan nan];
+                    out.pointTs (end+1,1:3) = [points(currentPoint, 7) nan nan];
                     % check if manual acceptance needed for this point
                     haveAccepted = ~needManualAccept(currentPoint);     % if not needed, we already have it
                     
@@ -3009,9 +3023,9 @@ classdef Titta < handle
                 end
                 if qHaveOperatorScreen
                     [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
-                        drawOperatorScreenFun(points(currentPoint,5),eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
+                        drawOperatorScreenFun(points(currentPoint,7),eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                 end
-                qAllowAccept        = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,3:4),tick,stage);
+                qAllowAccept        = drawFunction(wpnt(1),drawCmd,currentPoint,points(currentPoint,5:6),tick,stage);
                 drawCmd             = 'draw';   % clear any command other than 'draw'
                 if qWaitForAllowAccept && qAllowAccept
                     tick0p              = tick;
@@ -3023,12 +3037,12 @@ classdef Titta < handle
                     Screen('Flip',wpnt(2),[],[],2);
                 end
                 if qNewPoint
-                    obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
+                    obj.sendMessage(sprintf('POINT ON %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)),out.flips(end));
                     nCollecting     = 0;
                     qNewPoint       = false;
                 end
                 if ~qLoggedAccept && ~qWaitForAllowAccept
-                    obj.sendMessage(sprintf('POINT READY %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)),out.flips(end));
+                    obj.sendMessage(sprintf('POINT READY %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)),out.flips(end));
                     qLoggedAccept = true;
                     % log when point is in place according to drawer
                     % function
@@ -3044,7 +3058,7 @@ classdef Titta < handle
                         % manual and any point, space bars triggers
                         % accepting calibration point
                         haveAccepted    = true;
-                        obj.sendMessage(sprintf('POINT MANUALACCEPT %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                        obj.sendMessage(sprintf('POINT MANUALACCEPT %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
                     elseif any(strcmpi(keys,'r'))
                         out.status = -1;
                         break;
@@ -3068,7 +3082,7 @@ classdef Titta < handle
                         tick0p              = nan;
                         qWaitForAllowAccept = true;
                         qLoggedAccept       = false;
-                        obj.sendMessage(sprintf('POINT REDO %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                        obj.sendMessage(sprintf('POINT REDO %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
                     elseif any(strcmpi(keys,'s')) && shiftIsDown
                         % skip calibration
                         out.status = 2;
@@ -3087,9 +3101,9 @@ classdef Titta < handle
                     if qCal
                         if ~nCollecting
                             % start collection
-                            obj.buffer.calibrationCollectData(points(currentPoint,1:2),extraInp{:});
+                            obj.buffer.calibrationCollectData(points(currentPoint,3:4),extraInp{:});
                             nCollecting = 1;
-                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                         else
                             % check status
                             callResult  = obj.buffer.calibrationRetrieveResult();
@@ -3097,22 +3111,22 @@ classdef Titta < handle
                                 if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
-                                    obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                                    obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                 else
                                     % failed
-                                    obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                                    obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                     if nCollecting==1
                                         % if failed first time, immediately try again
-                                        obj.buffer.calibrationCollectData(points(currentPoint,1:2),extraInp{:});
+                                        obj.buffer.calibrationCollectData(points(currentPoint,3:4),extraInp{:});
                                         nCollecting = 2;
-                                        obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                                        obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                     else
                                         % if still fails, retry one more time at end of
                                         % point sequence (if this is not already a retried
                                         % point)
-                                        if points(currentPoint,6)
+                                        if points(currentPoint,8)
                                             points = [points; points(currentPoint,:)]; %#ok<AGROW>
-                                            points(end,6) = 0;  % indicate this is a point that is being retried so we don't try forever
+                                            points(end,8) = 0;  % indicate this is a point that is being retried so we don't try forever
                                         end
                                         % next point
                                         advancePoint = true;
@@ -3126,7 +3140,7 @@ classdef Titta < handle
                     else
                         if isnan(tick0v)
                             tick0v = tick;
-                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
                         end
                         if tick>tick0v+collectInterval
                             dat = obj.buffer.peekN('gaze',nDataPoint);
@@ -3138,7 +3152,7 @@ classdef Titta < handle
                             tick0v = nan;
                             % next point
                             advancePoint = true;
-                            obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,3:4)));
+                            obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
                         end
                     end
                 end
@@ -3165,7 +3179,7 @@ classdef Titta < handle
                         [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
                             drawOperatorScreenFun([],eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                     end
-                    drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,3:4),tick,stage);
+                    drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,5:6),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
                     if qHaveOperatorScreen
                         Screen('Flip',wpnt(2),[],[],2);
@@ -3686,41 +3700,38 @@ classdef Titta < handle
                             
                             % get info about where points were on screen
                             if qShowCal
-                                nPoints  = length(cal{selection}.cal.result.points);
-                            else
-                                nPoints  = size(cal{selection}.val{iVal}.pointPos,1);
-                            end
-                            calValPos   = zeros(nPoints,2);
-                            if qShowCal
-                                for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.cal.result.points(p).position.'.*obj.scrInfo.resolution{1};
+                                pointPosTemp    = cal{selection}.cal.pointPos;
+                                tobiiPoints     = cat(2,cal{selection}.cal.result.points.position).'; % these are in some order different from presentation, we need to reorder pointPos to match
+                                pointPos        = zeros(size(tobiiPoints,1),5);
+                                for p=1:size(tobiiPoints,1)
+                                    [~,i] = min(hypot(pointPosTemp(:,4)-tobiiPoints(p,1),pointPosTemp(:,5)-tobiiPoints(p,2)));
+                                    pointPos(p,:) = pointPosTemp(i,:);
                                 end
                             else
-                                for p=1:nPoints
-                                    calValPos(p,:)  = cal{selection}.val{iVal}.pointPos(p,2:3);
-                                end
+                                pointPos = cal{selection}.val{iVal}.pointPos;
                             end
-                            calValPos = bsxfun(@plus,calValPos*obj.scrInfo.sFac,obj.scrInfo.offset);
+                            nPoints     = size(pointPos,1);
+                            calValPos   = bsxfun(@plus,pointPos(:,2:3)*obj.scrInfo.sFac,obj.scrInfo.offset);
                             % get rects around validation points
-                            if qShowCal
-                                calValRects         = [];
-                            else
-                                calValRects = zeros(size(cal{selection}.val{iVal}.pointPos,1),4);
-                                for p=1:size(cal{selection}.val{iVal}.pointPos,1)
+                            
+                            qHasDifferentSDKPositions = ~isempty(obj.settings.cal.pointPosToTobii) && ~isequal(obj.settings.cal.pointPosToTobii,obj.settings.cal.pointPos);
+                            if (qShowCal && qHasDifferentSDKPositions) || (~qShowCal && qHasValData)
+                                calValRects = zeros(nPoints,4);
+                                for p=1:nPoints
                                     calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
                                 end
-                            end
-                            qUpdateCalDisplay   = false;
-                            
-                            % update info displays
-                            if qHasValData
-                                infoBoxRects        = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
-                                infoShowRects       = nan(  size(cal{selection}.val{iVal}.pointPos,1),4);
-                                qStickyShowPointInfo= false(size(cal{selection}.val{iVal}.pointPos,1),1);
-                                pointTextCache      = cell( size(cal{selection}.val{iVal}.pointPos,1),1);
+
+                                % update info displays
+                                infoBoxRects        = nan(  nPoints,4);
+                                infoShowRects       = nan(  nPoints,4);
+                                qStickyShowPointInfo= false(nPoints,1);
+                                pointTextCache      = cell( nPoints,1);
                             else
+                                calValRects   = [];
                                 infoShowRects = [];
                             end
+                            
+                            qUpdateCalDisplay   = false;
                         end
                     end
                 end
@@ -3762,20 +3773,24 @@ classdef Titta < handle
                     % 1. prepare text
                     Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
-                    if strcmp(cal{selection}.eye,'both')
-                        lE = cal{selection}.val{iVal}.quality(ip).left;
-                        rE = cal{selection}.val{iVal}.quality(ip).right;
-                        c1 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
-                        c2 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
-                        str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>, <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c2,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c1,lE.STD1D,char(176), c2,rE.STD1D,char(176), c1,lE.RMS1D,char(176), c2,rE.RMS1D,char(176), c1,lE.dataLoss*100, c2,rE.dataLoss*100);
-                    elseif strcmp(cal{selection}.eye,'left')
-                        lE = cal{selection}.val{iVal}.quality(ip).left;
-                        c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
-                        str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c,lE.STD1D,char(176), c,lE.RMS1D,char(176), c,lE.dataLoss*100);
-                    elseif strcmp(cal{selection}.eye,'right')
-                        rE = cal{selection}.val{iVal}.quality(ip).right;
-                        c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
-                        str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c,rE.STD1D,char(176), c,rE.RMS1D,char(176), c,rE.dataLoss*100);
+                    if qShowCal
+                        str = sprintf('Screen position: %.0f,%.0f (norm: %.3f,%.3f)\nPosition sent to SDK: %.3f,%.3f',pointPos(ip,2:3),pointPos(ip,2:3)./obj.scrInfo.resolution{1},pointPos(ip,4:5));
+                    else
+                        if strcmp(cal{selection}.eye,'both')
+                            lE = cal{selection}.val{iVal}.quality(ip).left;
+                            rE = cal{selection}.val{iVal}.quality(ip).right;
+                            c1 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
+                            c2 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
+                            str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>, <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>                 <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c2,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c1,lE.STD1D,char(176), c2,rE.STD1D,char(176), c1,lE.RMS1D,char(176), c2,rE.RMS1D,char(176), c1,lE.dataLoss*100, c2,rE.dataLoss*100);
+                        elseif strcmp(cal{selection}.eye,'left')
+                            lE = cal{selection}.val{iVal}.quality(ip).left;
+                            c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
+                            str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,char(176),abs(lE.acc2D(1)),char(176),abs(lE.acc2D(2)),char(176), c,lE.STD1D,char(176), c,lE.RMS1D,char(176), c,lE.dataLoss*100);
+                        elseif strcmp(cal{selection}.eye,'right')
+                            rE = cal{selection}.val{iVal}.quality(ip).right;
+                            c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
+                            str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c,rE.STD1D,char(176), c,rE.RMS1D,char(176), c,rE.dataLoss*100);
+                        end
                     end
                     [pointTextCache{ip},txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
                     % get box around text
