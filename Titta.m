@@ -3707,6 +3707,16 @@ classdef Titta < handle
                                     [~,i] = min(hypot(pointPosTemp(:,4)-tobiiPoints(p,1),pointPosTemp(:,5)-tobiiPoints(p,2)));
                                     pointPos(p,:) = pointPosTemp(i,:);
                                 end
+                                % we want to draw calibration points in
+                                % eye-tracker/SDK space, not screen space,
+                                % as that is the only logical output. So
+                                % swap around and make all norm here
+                                pointPos = [pointPos(:,1) bsxfun(@times,pointPos(:,4:5),obj.scrInfo.resolution{1}) bsxfun(@rdivide,pointPos(:,2:3),obj.scrInfo.resolution{1})];
+                                % NB: first column is point ID, 2-3
+                                % position of point to show on screen (in
+                                % eye tracker space, but in pixels), 4-5
+                                % normpos of where point was actually
+                                % shown on screen.
                             else
                                 pointPos = cal{selection}.val{iVal}.pointPos;
                             end
@@ -3774,7 +3784,7 @@ classdef Titta < handle
                     Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
                     if qShowCal
-                        str = sprintf('Screen position: %.0f,%.0f (norm: %.3f,%.3f)\nPosition sent to SDK: %.3f,%.3f',pointPos(ip,2:3),pointPos(ip,2:3)./obj.scrInfo.resolution{1},pointPos(ip,4:5));
+                        str = sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition sent to SDK: %.3f,%.3f',pointPos(ip,4:5).*obj.scrInfo.resolution{1},pointPos(ip,4:5),pointPos(ip,2:3)./obj.scrInfo.resolution{1});
                     else
                         if strcmp(cal{selection}.eye,'both')
                             lE = cal{selection}.val{iVal}.quality(ip).left;
