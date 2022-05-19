@@ -166,7 +166,8 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.connectRetryWait`|Seconds: time to wait between connection retries.|
 |`settings.debugMode`|Only for Titta developer use. Prints some debug output to command window.|
 |  |  |
-|`settings.cal.pointPos`|Nx2 matrix of screen positions ([0,1] range) of calibration points, leave empty to do a zero-point calibration, i.e., use the tracker's default calibration.|
+|`settings.cal.pointPos`|Nx2 matrix of screen positions (`[0,1]` range) of calibration points, leave empty to do a zero-point calibration, i.e., use the tracker's default calibration.|
+|`settings.cal.pointPosTrackerSpace`|Nx2 matrix of screen positions (`[0,1]` range) of calibration points to be sent to the Tobii SDK during calibration. Use when the screen shown to the participant does not match the plane to which the eye tracker is calibrated (e.g. because it is flipped because it is viewed through a mirror). Should be the same size as `settings.cal.pointPos`. See also `settings.val.pointPosTrackerSpace`.|
 |`settings.cal.autoPace`|0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted. Applies also to validation points since calibration and validation points are shown as one continuous stream.|
 |`settings.cal.paceDuration`|Minimum duration (s) that each calibration point is shown.|
 |`settings.cal.doRandomPointOrder`|If true, the calibration points are shown in random order. If false, each row in `settings.cal.pointPos` is worked through in order.|
@@ -181,6 +182,7 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.cal.pointNotifyFunction`|If provided, this callback is called for each calibration point when collecting data for the point completes (either successfully or failed).|
 |  |  |
 |`settings.val.pointPos`|Nx2 matrix of screen positions ([0,1] range) of validation points.|
+|`settings.val.pointPosTrackerSpace`|Nx2 matrix of screen positions ([0,1] range) of validation points in tracker space. Only needed when `settings.cal.pointPosTrackerSpace` is specified.|
 |`settings.val.paceDuration`|Minimum duration (s) that each validation point is shown.|
 |`settings.val.collectDuration`|Amount of validation data (seconds) to collect for each validation point.|
 |`settings.val.doRandomPointOrder`|If true, the calibration points are shown in random order. If false, each row in `settings.val.pointPos` is worked through in order.|
@@ -230,6 +232,28 @@ Which of the below options are available depends on the eye tracker model. The `
 |`settings.UI.button.val.setup`|Button for returning to the setup screen. See [Button options](#button-options). Default hotkey: `s`.|
 |`settings.UI.button.val.toggGaze`|Toggle button switching on/off an online visualization of current gaze location. See [Button options](#button-options). Default hotkey: `g`. When in dual screen mode, by default the online gaze visualization is only shown on the operator screen. To also show it on the participant screen, hold down the `shift` key while pressing this hotkey.|
 |`settings.UI.button.val.toggCal`|Toggle button for switching between showing the validation output and the calibration output on the validation result screen. See [Button options](#button-options). Default hotkey: `t`.|
+|`settings.UI.button.val.toggSpace`|Toggle button for switching between showing the validation output and the calibration output on the validation result screen in screen space or in tracker space. Only available if a different tracker space was set up using the settings.cal.pointPosTrackSpace option. See [Button options](#button-options). Default hotkey: `x`.|
+|`settings.UI.button.val.toggPlot`|Toggle button for switching between showing the validation result screen and a screen showing timeseries plots of the data collected during validation. See [Button options](#button-options). Default hotkey: `p`.|
+|||
+|`settings.UI.plot.bgColor`|RGB (0-255) background color for calibration/validation screen.|
+|`settings.UI.plot.eyeColors`|Colors to use for plotting the collected validation data for the left and right eye on the validation result screen. Provide as a two-element cell array, `{leftEyeColor,rightEyeColor}`, where each color is RGB (0-255).|
+|`settings.UI.plot.lineWidth`|Linewidth (pixels) used for plotting the data.|
+|`settings.UI.plot.scrMargins`|Fraction of screen used as blank margin (`[left right top bottom]`) around the plot screen.|
+|`settings.UI.plot.panelPad`|Vertical padding between the plot panels, expressed as fraction of screen.|
+|`settings.UI.plot.dotPosLine.color`|RGB (0-255) color of lines showing fixation point position on the time series plots.|
+|`settings.UI.plot.dotPosLine.width`|Linewidth (pixels) of lines showing fixation point position on the time series plots.|
+|`settings.UI.plot.ax.bgColor`|RGB (0-255) background color for plot panels.|
+|`settings.UI.plot.ax.lineColor`|RGB (0-255) background color for plot panel axis lines.|
+|`settings.UI.plot.ax.lineWidth`|Linewidth (pixels) of plot panel axis lines.|
+|`settings.UI.plot.ax.tickLength`|Length of plot ticks, expressed as fraction of screen.|
+|`settings.UI.plot.ax.highlightColor`|RGB (0-255) or RGBA (including opacity) color for highlight on plot with context indicating which data recorded during validation was used for data quality calculations.|
+|`settings.UI.plot.ax.axisLbls.x`|X-axis label.|
+|`settings.UI.plot.ax.axisLbls.offset`|Y-axis labels for plots without context.|
+|`settings.UI.plot.ax.axisLbl`|Text formatting options for axis labels, see [Text options](#text-options).|
+|`settings.UI.plot.ax.tickLbl`|Text formatting options for tick label values, see [Text options](#text-options).|
+|`settings.UI.plot.ax.valLbl`|Text formatting options for validation instance labels atop the plots, see [Text options](#text-options).|
+|`settings.UI.plot.but.exit`|Button to exit the plot view and return to the validation result screen. See [Button options](#button-options). Default hotkey: `escape`.|
+|`settings.UI.plot.but.valSel`|Toggle button for switching between showing just the data used for data quality calculations or all the data recorded during validation. See [Button options](#button-options). Default hotkey: `c`.|
 |||
 |`settings.UI.cal.errMsg.string`|String to display when the Tobii calibration functions inform that calibration was unsuccessful.|
 |`settings.UI.cal.errMsg.font`|See [Text options](#text-options).|
