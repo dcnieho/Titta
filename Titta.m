@@ -1634,7 +1634,7 @@ classdef Titta < handle
             settings.UI.plot.ax.bgColor             = 255;
             settings.UI.plot.ax.lineColor           = 0;
             settings.UI.plot.ax.lineWidth           = 1;
-            settings.UI.plot.ax.tickLength          = .01;                          % fraction of axis height
+            settings.UI.plot.ax.tickLength          = .01;                          % fraction of screen height
             settings.UI.plot.ax.highlightColor      = [255 0 0 50];
             settings.UI.plot.ax.axisLbls.x          = 'time (s)';
             settings.UI.plot.ax.axisLbls.offset     = {sprintf('horizontal offset (%c)',char(176)),sprintf('vertical offset (%c)',char(176)),'pupil size (mm)'};
