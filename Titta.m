@@ -249,7 +249,14 @@ classdef Titta < handle
             obj.changeAndCheckCalibEyeMode();
 
             % calibration point setup
-            assert(isempty(settings.cal.pointPosToTobii       ) || isequal(size(settings.cal.pointPosToTobii       ),size(settings.cal.pointPos))       ,'settings.cal.pointPosToTobii should either be empty or the same size as settings.cal.pointPos')
+            assert(isempty(settings.cal.pointPosTrackerSpace       ) || isequal(size(settings.cal.pointPosTrackerSpace       ),size(settings.cal.pointPos))       ,'settings.cal.pointPosTrackerSpace should either be empty or the same size as settings.cal.pointPos')
+            if ~isempty(settings.cal.pointPosTrackerSpace)
+                assert(~isequal(obj.settings.cal.pointPosTrackerSpace,obj.settings.cal.pointPos),'if settings.cal.pointPosTrackerSpace is set, it should not contain the same values as settings.cal.pointPos')
+                assert(~isempty(settings.val.pointPosTrackerSpace),'If the position of calibration points is specified using settings.cal.pointPosTrackerSpace, the position of validation points in tracker space should also be specified using settings.val.pointPosTrackerSpace')
+                assert(~isequal(obj.settings.val.pointPosTrackerSpace,obj.settings.val.pointPos),'if settings.val.pointPosTrackerSpace is set, it should not contain the same values as settings.val.pointPos')
+            else
+                assert( isempty(settings.val.pointPosTrackerSpace),'settings.val.pointPosTrackerSpace should not be specified if settings.cal.pointPosTrackerSpace is empty')
+            end
             
             % setup colors
             obj.settings.UI.val.eyeColors               = color2RGBA(obj.settings.UI.val.eyeColors);
@@ -1605,6 +1612,12 @@ classdef Titta < handle
             settings.UI.button.val.toggCal.fillColor    = toggleButClr.fill;
             settings.UI.button.val.toggCal.edgeColor    = toggleButClr.edge;
             settings.UI.button.val.toggCal.textColor    = toggleButClr.text;
+            settings.UI.button.val.toggSpace.accelerator= 'x';
+            settings.UI.button.val.toggSpace.visible    = true;
+            settings.UI.button.val.toggSpace.string     = 'tracker space (<i>x<i>)';
+            settings.UI.button.val.toggSpace.fillColor  = toggleButClr.fill;
+            settings.UI.button.val.toggSpace.edgeColor  = toggleButClr.edge;
+            settings.UI.button.val.toggSpace.textColor  = toggleButClr.text;
             settings.UI.button.val.toggPlot.accelerator = 'p';
             settings.UI.button.val.toggPlot.visible     = true;
             settings.UI.button.val.toggPlot.string      = 'show plot (<i>p<i>)';
@@ -1696,7 +1709,7 @@ classdef Titta < handle
             settings.UI.val.menu.text.eyeColors = eyeColors;                    % colors for "left" and "right" in calibration selection menu on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.menu.text.style     = 0;
             settings.cal.pointPos               = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
-            settings.cal.pointPosToTobii        = [];                           % if not empty, send these coordinates to the Tobii calibration routines, instead of those in settings.cal.pointPos. Useful if, e.g., you want to mirror the coordinates because participants view the screen through a mirror.
+            settings.cal.pointPosTrackerSpace   = [];                           % if not empty, send these coordinates to the Tobii calibration routines, instead of those in settings.cal.pointPos. Useful if, e.g., you want to mirror the coordinates because participants view the screen through a mirror. If not empty, set settings.val.pointPosTrackerSpace as well
             settings.cal.autoPace               = 2;                            % 0: manually confirm each calibration point. 1: only manually confirm the first point, the rest will be autoaccepted. 2: all calibration points will be auto-accepted
             settings.cal.paceDuration           = 0.8;                          % minimum duration (s) that each point is shown
             settings.cal.doRandomPointOrder     = true;
@@ -1710,6 +1723,7 @@ classdef Titta < handle
             settings.cal.doRecordExtSignal      = false;
             settings.cal.pointNotifyFunction    = [];                           % function that is called upon each calibration point completing
             settings.val.pointPos               = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
+            settings.val.pointPosTrackerSpace   = [];                           % required if settings.cal.pointPosTrackerSpace is not empty. If not empty, these coordinates reflect where the validation point is in the calibrated eye tracker space
             settings.val.paceDuration           = 0.8;
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
@@ -2874,8 +2888,8 @@ classdef Titta < handle
             % setup
             if qCal
                 points              = obj.settings.cal.pointPos;
-                if ~isempty(obj.settings.cal.pointPosToTobii)
-                    pointsSDK = obj.settings.cal.pointPosToTobii;
+                if ~isempty(obj.settings.cal.pointPosTrackerSpace)
+                    pointsSDK = obj.settings.cal.pointPosTrackerSpace;
                 else
                     pointsSDK = points;
                 end
@@ -2883,12 +2897,16 @@ classdef Titta < handle
                 out.pointStatus     = {};
                 extraInp            = {};
                 if ~strcmp(obj.settings.calibrateEye,'both')
-                    extraInp            = {obj.settings.calibrateEye};
+                    extraInp        = {obj.settings.calibrateEye};
                 end
                 stage               = 'cal';
             else
                 points              = obj.settings.val.pointPos;
-                pointsSDK           = points;
+                if ~isempty(obj.settings.val.pointPosTrackerSpace)
+                    pointsSDK = obj.settings.val.pointPosTrackerSpace;
+                else
+                    pointsSDK = points;
+                end
                 paceIntervalTicks   = ceil(obj.settings.val.paceDuration   *fs);
                 collectInterval     = ceil(obj.settings.val.collectDuration*fs);
                 nDataPoint          = ceil(obj.settings.val.collectDuration*obj.settings.freq);
@@ -2995,11 +3013,7 @@ classdef Titta < handle
                         pointOff = 1;
                         break;
                     end
-                    if qCal
-                        out.pointPos(end+1,1:5) =  points(currentPoint,[7 5 6 3 4]);
-                    else
-                        out.pointPos(end+1,1:3) =  points(currentPoint,[7 5 6]);
-                    end
+                    out.pointPos(end+1,1:5) =  points(currentPoint,[7 5 6 3 4]);    % that is: [ID pos_screen_pix_x pos_screen_pix_y pos_tracker_norm_x pos_tracker_norm_y]
                     if ~isempty(out.pointTs)
                         % log end of previous point
                         out.pointTs(end,3) = out.flips(end);
@@ -3103,7 +3117,7 @@ classdef Titta < handle
                             % start collection
                             obj.buffer.calibrationCollectData(points(currentPoint,3:4),extraInp{:});
                             nCollecting = 1;
-                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
+                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                         else
                             % check status
                             callResult  = obj.buffer.calibrationRetrieveResult();
@@ -3111,15 +3125,15 @@ classdef Titta < handle
                                 if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
                                     % success, next point
                                     advancePoint = true;
-                                    obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
+                                    obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                 else
                                     % failed
-                                    obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
+                                    obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                     if nCollecting==1
                                         % if failed first time, immediately try again
                                         obj.buffer.calibrationCollectData(points(currentPoint,3:4),extraInp{:});
                                         nCollecting = 2;
-                                        obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, to SDK: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
+                                        obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                                     else
                                         % if still fails, retry one more time at end of
                                         % point sequence (if this is not already a retried
@@ -3140,7 +3154,7 @@ classdef Titta < handle
                     else
                         if isnan(tick0v)
                             tick0v = tick;
-                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
+                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                         end
                         if tick>tick0v+collectInterval
                             dat = obj.buffer.peekN('gaze',nDataPoint);
@@ -3152,7 +3166,7 @@ classdef Titta < handle
                             tick0v = nan;
                             % next point
                             advancePoint = true;
-                            obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f)',currentPoint,points(currentPoint,5:6)));
+                            obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, in tracker space: %.3f %.3f)',currentPoint,points(currentPoint,[5:6 3:4])));
                         end
                     end
                 end
@@ -3345,10 +3359,10 @@ classdef Titta < handle
             % missing
             for p=length(val.gazeData):-1:1
                 if obj.calibrateLeftEye
-                    val.quality(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,2:3));
+                    val.quality(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,4:5));
                 end
                 if obj.calibrateRightEye
-                    val.quality(p).right = obj.getDataQuality(val.gazeData(p).right,val.pointPos(p,2:3));
+                    val.quality(p).right = obj.getDataQuality(val.gazeData(p).right,val.pointPos(p,4:5));
                 end
             end
             if obj.calibrateLeftEye
@@ -3393,7 +3407,7 @@ classdef Titta < handle
             out.dataLoss  = sum(qInvalid)/length(qInvalid);
         end
         
-        function [angs1D,offOnScreenDir,qInvalid] = getOffsetFromPoint(obj,gazeData,pointPos)
+        function [angs1D,offOnScreenDir,qInvalid] = getOffsetFromPoint(obj,gazeData,pointOnScreenDA)
             % prep: ensure invalid data is nan. This is not fully
             % guaranteed by the Pro SDK
             qInvalid = ~gazeData.gazeOrigin.valid;
@@ -3402,9 +3416,8 @@ classdef Titta < handle
             gazeData.gazePoint.onDisplayArea(:,qInvalid) = nan;
             gazeData.gazePoint.inUserCoords (:,qInvalid) = nan;
             
-            pointOnScreenDA  = (pointPos./obj.scrInfo.resolution{1}).';
-            pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA);
-            offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA);
+            pointOnScreenUCS = obj.ADCSToUCS(pointOnScreenDA.');
+            offOnScreenADCS  = bsxfun(@minus,gazeData.gazePoint.onDisplayArea,pointOnScreenDA.');
             offOnScreenCm    = bsxfun(@times,offOnScreenADCS,[obj.geom.displayArea.width,obj.geom.displayArea.height].');
             offOnScreenDir   = atan2(offOnScreenCm(2,:),offOnScreenCm(1,:));
             
@@ -3451,6 +3464,7 @@ classdef Titta < handle
             qHaveMultipleValidCals  = ~isempty(iValidCals) && ~isscalar(iValidCals);
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
             qHasValData             = isfield(cal{selection}.val{iVal},'pointPos');
+            qHaveTrackerSpacePos    = ~isempty(obj.settings.cal.pointPosTrackerSpace);
             
             % setup text for buttons
             Screen('TextFont',  wpnt(end), obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
@@ -3464,8 +3478,9 @@ classdef Titta < handle
             but(4)  = PTBButton(obj.settings.UI.button.val.selcal  , qHaveMultipleValidCals, wpnt(end), funs, obj.settings.UI.button.margins);
             but(5)  = PTBButton(obj.settings.UI.button.val.setup   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(7)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(8)  = PTBButton(obj.settings.UI.button.val.toggPlot,      qHasValData      , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.val.toggSpace, qHaveTrackerSpacePos , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(8)  = PTBButton(obj.settings.UI.button.val.toggCal ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(9)  = PTBButton(obj.settings.UI.button.val.toggPlot,      qHasValData      , wpnt(end), funs, obj.settings.UI.button.margins);
             % 1. below screen
             % position them
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
@@ -3497,17 +3512,18 @@ classdef Titta < handle
             end
             
             % 3. left side
-            if but(7).visible
-                % position it
-                but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+5,yPosTop);
-            end
-            if but(8).visible
-                % position it
-                yPos = yPosTop;
-                if but(7).visible
-                    yPos = but(7).rect(4)-but(8).rect(2)+15;
+            prevPos = nan;
+            for b=7:9
+                if but(b).visible
+                    % position it
+                    if isnan(prevPos)
+                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPosTop);
+                    else
+                        yPos    = prevPos(4)-but(b).rect(2)+15;
+                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPos);
+                    end
+                    but(b).rect = prevPos;
                 end
-                but(8).rect     = OffsetRect(but(8).rect,-but(8).rect(1)+5,yPos);
             end
             
             % check shiftable button accelerators do not conflict with
@@ -3592,6 +3608,7 @@ classdef Titta < handle
             qSelectedCalChanged = false;
             qAwaitingCalChange  = false;
             qShowCal            = false;
+            qShowInTrackerSpace = false;
             fixPointRectSz      = 80*obj.scrInfo.sFac;
             openInfoForPoint    = nan;
             qShowPlotOverlay    = false;
@@ -3658,15 +3675,20 @@ classdef Titta < handle
                                     qToggleSelectMenu   = true;
                                     qSelectMenuOpen     = ~qSelectMenuOpen;
                                 end
-                                if ~qHasCal
+                                if ~qHaveTrackerSpacePos
                                     but(7).visible    = false;
-                                elseif obj.settings.UI.button.val.toggCal.visible
+                                elseif obj.settings.UI.button.val.toggSpace.visible
                                     but(7).visible    = true;
                                 end
-                                if ~qHasValData
+                                if ~qHasCal
                                     but(8).visible    = false;
-                                elseif obj.settings.UI.button.val.toggPlot.visible
+                                elseif obj.settings.UI.button.val.toggCal.visible
                                     but(8).visible    = true;
+                                end
+                                if ~qHasValData
+                                    but(9).visible    = false;
+                                elseif obj.settings.UI.button.val.toggPlot.visible
+                                    but(9).visible    = true;
                                 end
                             end
                             % update info text
@@ -3707,25 +3729,22 @@ classdef Titta < handle
                                     [~,i] = min(hypot(pointPosTemp(:,4)-tobiiPoints(p,1),pointPosTemp(:,5)-tobiiPoints(p,2)));
                                     pointPos(p,:) = pointPosTemp(i,:);
                                 end
-                                % we want to draw calibration points in
-                                % eye-tracker/SDK space, not screen space,
-                                % as that is the only logical output. So
-                                % swap around and make all norm here
-                                pointPos = [pointPos(:,1) bsxfun(@times,pointPos(:,4:5),obj.scrInfo.resolution{1}) bsxfun(@rdivide,pointPos(:,2:3),obj.scrInfo.resolution{1})];
-                                % NB: first column is point ID, 2-3
-                                % position of point to show on screen (in
-                                % eye tracker space, but in pixels), 4-5
-                                % normpos of where point was actually
-                                % shown on screen.
                             else
                                 pointPos = cal{selection}.val{iVal}.pointPos;
                             end
+                            % pointPos now contains: [ID pos_screen_pix_x pos_screen_pix_y pos_tracker_norm_x pos_tracker_norm_y]
+                            % convert all to norm to work with
+                            pointPos    = [pointPos(:,1) bsxfun(@rdivide,pointPos(:,2:3),obj.scrInfo.resolution{1}) pointPos(:,4:5)];
                             nPoints     = size(pointPos,1);
-                            calValPos   = bsxfun(@plus,pointPos(:,2:3)*obj.scrInfo.sFac,obj.scrInfo.offset);
-                            % get rects around validation points
+                            if qShowInTrackerSpace
+                                pointPosPix = bsxfun(@times,pointPos(:,4:5),obj.scrInfo.resolution{1});
+                            else
+                                pointPosPix = bsxfun(@times,pointPos(:,2:3),obj.scrInfo.resolution{1});
+                            end
+                            calValPos   = bsxfun(@plus,pointPosPix*obj.scrInfo.sFac,obj.scrInfo.offset);
                             
-                            qHasDifferentSDKPositions = ~isempty(obj.settings.cal.pointPosToTobii) && ~isequal(obj.settings.cal.pointPosToTobii,obj.settings.cal.pointPos);
-                            if (qShowCal && qHasDifferentSDKPositions) || (~qShowCal && qHasValData)
+                            if qHaveTrackerSpacePos || (~qShowCal && qHasValData)
+                                % get rects around validation points
                                 calValRects = zeros(nPoints,4);
                                 for p=1:nPoints
                                     calValRects(p,:)= CenterRectOnPointd([0 0 fixPointRectSz fixPointRectSz],calValPos(p,1),calValPos(p,2));
@@ -3784,7 +3803,7 @@ classdef Titta < handle
                     Screen('TextFont', wpnt(end), obj.settings.UI.val.hover.text.font, obj.settings.UI.val.hover.text.style);
                     Screen('TextSize', wpnt(end), obj.settings.UI.val.hover.text.size);
                     if qShowCal
-                        str = sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition sent to SDK: %.3f,%.3f',pointPos(ip,4:5).*obj.scrInfo.resolution{1},pointPos(ip,4:5),pointPos(ip,2:3)./obj.scrInfo.resolution{1});
+                        str = sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition in tracker space: %.3f,%.3f',pointPos(ip,2:3).*obj.scrInfo.resolution{1},pointPos(ip,2:3),pointPos(ip,4:5));
                     else
                         if strcmp(cal{selection}.eye,'both')
                             lE = cal{selection}.val{iVal}.quality(ip).left;
@@ -3800,6 +3819,9 @@ classdef Titta < handle
                             rE = cal{selection}.val{iVal}.quality(ip).right;
                             c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
                             str = sprintf('Offset:       <color=%s>%.2f%c, (%.2f%c,%.2f%c)<color>\nPrecision SD:        <color=%s>%.2f%c<color>\nPrecision RMS:       <color=%s>%.2f%c<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,char(176),abs(rE.acc2D(1)),char(176),abs(rE.acc2D(2)),char(176), c,rE.STD1D,char(176), c,rE.RMS1D,char(176), c,rE.dataLoss*100);
+                        end
+                        if qHaveTrackerSpacePos
+                            str = [sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition in tracker space: %.3f,%.3f\n',pointPos(ip,2:3).*obj.scrInfo.resolution{1},pointPos(ip,2:3),pointPos(ip,4:5)) str]; %#ok<AGROW> 
                         end
                     end
                     [pointTextCache{ip},txtbounds] = obj.getTextCache(wpnt(end),str,[],'xlayout','left','baseColor',obj.settings.UI.val.hover.text.color);
@@ -3847,10 +3869,18 @@ classdef Titta < handle
                             end
                         end
                         if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
+                            if qHaveTrackerSpacePos && ~qShowInTrackerSpace
+                                % make data relative to point in screen space
+                                lEpos = bsxfun(@plus,bsxfun(@minus,lEpos,pointPos(p,4:5).'),pointPos(p,2:3).');
+                            end
                             lEpos = bsxfun(@plus,bsxfun(@times,lEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                             Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,eyeClrs{1},[],2);
                         end
                         if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
+                            if qHaveTrackerSpacePos && ~qShowInTrackerSpace
+                                % make data relative to point in screen space
+                                rEpos = bsxfun(@plus,bsxfun(@minus,rEpos,pointPos(p,4:5).'),pointPos(p,2:3).');
+                            end
                             rEpos = bsxfun(@plus,bsxfun(@times,rEpos,obj.scrInfo.resolution{1}.')*obj.scrInfo.sFac,obj.scrInfo.offset.');
                             Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(rEpos,2)); rEpos],2,[]),1,eyeClrs{2},[],2);
                         end
@@ -3866,8 +3896,9 @@ classdef Titta < handle
                     but(4).draw(mousePos,qSelectMenuOpen);
                     but(5).draw(mousePos);
                     but(6).draw(mousePos,qShowGaze);
-                    but(7).draw(mousePos,qShowCal);
-                    but(8).draw(mousePos);
+                    but(7).draw(mousePos,qShowInTrackerSpace);
+                    but(8).draw(mousePos,qShowCal);
+                    but(9).draw(mousePos);
                     % if selection menu open, draw on top
                     if qSelectMenuOpen
                         % menu background
@@ -3982,11 +4013,14 @@ classdef Titta < handle
                                     qShowGazeToAll      = shiftIsDown;
                                 elseif qIn(7)
                                     qUpdateCalDisplay   = true;
-                                    qShowCal            = ~qShowCal;
+                                    qShowInTrackerSpace = ~qShowInTrackerSpace;
                                 elseif qIn(8)
+                                    qUpdateCalDisplay   = true;
+                                    qShowCal            = ~qShowCal;
+                                elseif qIn(9)
                                     qShowPlotOverlay    = true;
                                 end
-                                qStickyShowPointInfo(:)  = false;
+                                qStickyShowPointInfo(:) = false;
                                 break;
                             end
                         end
@@ -4081,6 +4115,11 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggGaze.accelerator))
                                 qToggleGaze         = true;
                                 qShowGazeToAll      = shiftIsDown;
+                                qStickyShowPointInfo(:) = false;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.toggSpace.accelerator)) && ~shiftIsDown
+                                qUpdateCalDisplay   = true;
+                                qShowInTrackerSpace = ~qShowInTrackerSpace;
                                 qStickyShowPointInfo(:) = false;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.val.toggCal.accelerator)) && ~shiftIsDown && qHasCal
@@ -6169,19 +6208,21 @@ classdef Titta < handle
             plotData.all.y = plotData.all.y .* obj.scrInfo.resolution{1}(2);
             % get Ts of validation points, make all time relative to t0, in
             % seconds
-            plotData.pointIDs       = valData.pointPos(:,1);
-            plotData.points         = valData.pointPos(:,2:3);
-            plotData.all.pointTs    = valData.pointTs(:,2:3) - double(plotData.all.t(1))/1000/1000;          % time point on screen
-            plotData.all.collectTs  = arrayfun(@(d) d.systemTimeStamp([1 end]),valData.gazeData,'uni',false);% time data collected for point
-            plotData.all.collectTs  = double(cat(2,plotData.all.collectTs{:}).'-plotData.all.t(1))/1000/1000;
-            plotData.all.t          = double(plotData.all.t-plotData.all.t(1))/1000/1000;
+            plotData.pointIDs           = valData.pointPos(:,1);
+            plotData.points             = bsxfun(@rdivide,valData.pointPos(:,2:3),obj.scrInfo.resolution{1});
+            plotData.pointsTrackSpace   = valData.pointPos(:,4:5);
+            qHaveTrackerSpacePos        = ~isempty(obj.settings.cal.pointPosTrackerSpace);
+            plotData.all.pointTs        = valData.pointTs(:,2:3) - double(plotData.all.t(1))/1000/1000;          % time point on screen
+            plotData.all.collectTs      = arrayfun(@(d) d.systemTimeStamp([1 end]),valData.gazeData,'uni',false);% time data collected for point
+            plotData.all.collectTs      = double(cat(2,plotData.all.collectTs{:}).'-plotData.all.t(1))/1000/1000;
+            plotData.all.t              = double(plotData.all.t-plotData.all.t(1))/1000/1000;
             % cut off last bit of all validation data that lies beyond last
             % bit used for offset computation
             qRem = plotData.all.t>plotData.all.collectTs(end,2);
-            plotData.all.t(qRem) = [];
-            plotData.all.x(:,qRem) = [];
-            plotData.all.y(:,qRem) = [];
-            plotData.all.p(:,qRem) = [];
+            plotData.all.t(qRem)    = [];
+            plotData.all.x(:,qRem)  = [];
+            plotData.all.y(:,qRem)  = [];
+            plotData.all.p(:,qRem)  = [];
             plotData.all.pointTs(end,2) = plotData.all.collectTs(end,2);
             
             % 2
@@ -6207,7 +6248,7 @@ classdef Titta < handle
             plotData.off.y = [];
             plotData.off.p = [];
             if qHasLeft
-                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.left,y{1}), valData.gazeData, num2cell(valData.pointPos(:,2:3),2), 'uni',false);
+                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.left,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
                 temp    = cellfun(@(m,a) bsxfun(@times,m,[cos(a); sin(a)]),angs1D,offOnScreenDir,'uni',false);
                 temp    = cat(2,temp{:});
                 plotData.off.x = temp(1,:);
@@ -6216,7 +6257,7 @@ classdef Titta < handle
                 plotData.off.p = cat(1,temp{:}).';
             end
             if qHasRight
-                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.right,y{1}), valData.gazeData, num2cell(valData.pointPos(:,2:3),2), 'uni',false);
+                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.right,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
                 temp    = cellfun(@(m,a) bsxfun(@times,m,[cos(a); sin(a)]),angs1D,offOnScreenDir,'uni',false);
                 temp    = cat(2,temp{:});
                 plotData.off.x = [plotData.off.x; temp(1,:)];
@@ -6315,18 +6356,26 @@ classdef Titta < handle
             Screen('TextSize' ,wpnt(end),obj.settings.UI.plot.ax.valLbl.size);
             for t={'all','off'}
                 tt=t{1};
-                if strcmp(tt,'all')
+                if strcmp(tt,'all') && ~qHaveTrackerSpacePos
                     fmt = '%.0f,%0.f';
-                    fac = [1 1];
+                    fac = obj.scrInfo.resolution{1};
                 else
                     fmt = '%.2f,%.2f';
-                    fac = obj.scrInfo.resolution{1};
+                    fac = [1 1];
                 end
                 for q=nValPoint:-1:1
                     plotData.(tt).lbl.val(q) = obj.getTextCache(wpnt(end),...
-                        sprintf(['<font=%s><size=%d>%d @ (' fmt ')'],obj.settings.UI.plot.ax.valLbl.font,obj.settings.UI.plot.ax.valLbl.size,plotData.pointIDs(q),plotData.points(q,:)./fac),...
+                        sprintf(['<font=%s><size=%d>%d @ (' fmt ')'],obj.settings.UI.plot.ax.valLbl.font,obj.settings.UI.plot.ax.valLbl.size,plotData.pointIDs(q),plotData.pointsTrackSpace(q,:).*fac),...
                         [],'baseColor',obj.settings.UI.plot.ax.valLbl.color);
                 end
+            end
+            % get info text, if needed
+            if qHaveTrackerSpacePos
+                plotData.infoText = obj.getTextCache(wpnt(end),...
+                    sprintf('<font=%s><size=%d>Shown gaze positions are in tracker space',obj.settings.UI.plot.ax.valLbl.font,obj.settings.UI.plot.ax.valLbl.size),...
+                    [],'baseColor',obj.settings.UI.plot.ax.axisLbl.color);
+            else
+                plotData.infoText = [];
             end
             
             %%% layout the screen
@@ -6343,6 +6392,11 @@ classdef Titta < handle
             but(2).rect = OffsetRect(but(2).rect, -but(2).rect(1)+but(1).rect(1)-15-butSz, yPosTop);
             
             butRects = cat(1,but.rect).';
+
+            % position info text, if any, at same height as buttons
+            if ~isempty(plotData.infoText)
+                plotData.infoText = obj.repositionTextCache(plotData.infoText,[10-plotData.infoText.bbox(1) but(2).rect(4)-plotData.infoText.bbox(4)]);
+            end
             
             % figure out where to put plots
             % total size occupied by panels
@@ -6501,7 +6555,7 @@ classdef Titta < handle
             plotData.all.ax.dotPosLines = nan(2,nValPoint*2*2);
             for q=1:nValPoint
                 for r=1:2
-                    pos = plotData.all.ax.dat2pix{r}(plotData.all.pointTs(q,:),plotData.points(q,r).*[1 1]);
+                    pos = plotData.all.ax.dat2pix{r}(plotData.all.pointTs(q,:),plotData.pointsTrackSpace(q,r).*[1 1].*obj.scrInfo.resolution{1}(r));
                     plotData.all.ax.dotPosLines(:,(q-1)*4+(r-1)*2+(1:2)) = pos(1:2,:);
                 end
             end
@@ -6575,6 +6629,11 @@ classdef Titta < handle
                 % draw buttons
                 but(1).draw([mx my]);
                 but(2).draw([mx my],strcmp(plotWhich,'all'));
+                
+                % draw info text, if any
+                if ~isempty(plotData.infoText)
+                    obj.drawCachedText(plotData.infoText);
+                end
                 
                 % drawing done, show
                 Screen('Flip',wpnt(1),[]);
