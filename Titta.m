@@ -800,9 +800,17 @@ classdef Titta < handle
             %                  with the mouse) to also show the online
             %                  gaze position on the participant screen
             %                  (val.toggGaze)
+            %      p         - bring up plot of gaze and pupil data
+            %                  collected during validation (val.toggPlot)
             %      t         - toggle between whether gaze data collected
             %                  during validation or during calibration is
             %                  shown in the interface (val.toggCal)
+            %      x         - toggle between whether gaze data and
+            %                  calibrations are shown in screen space or
+            %                  tracker space (these are the same unless
+            %                  settings.cal.pointPosTrackerSpace is
+            %                  specified) are shown in the interface
+            %                  (val.toggSpace)
             %
             %    See also TITTA.CALIBRATEMANUAL, TITTA.GETOPTIONS,
             %    TITTA.GETDEFAULTS
