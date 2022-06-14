@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <deque>
 #include <array>
 #include <string>
 #include <limits>
@@ -29,7 +30,7 @@ class Titta
 {
 public:
     // short names for very long Tobii data types
-    using gaze          = TobiiResearchGazeData;
+    using gaze          = TobiiTypes::gazeData;
     using eyeImage      = TobiiTypes::eyeImage;
     using extSignal     = TobiiResearchExternalSignalData;
     using timeSync      = TobiiResearchTimeSynchronizationData;
@@ -44,13 +45,14 @@ public:
     {
         Unknown,
         Gaze,
+        EyeOpenness,
         EyeImage,
         ExtSignal,
         TimeSync,
         Positioning,
         Notification
     };
-    // "gaze", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
+    // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
     static Titta::DataStream stringToDataStream(std::string stream_);
     static std::string dataStreamToString(Titta::DataStream stream_);
 
@@ -109,6 +111,9 @@ public:
     bool hasStream(std::string stream_) const;
     bool hasStream(DataStream  stream_) const;
 
+    // deal with eyeOpenness stream
+    bool setIncludeEyeOpennessInGaze(bool include_);    // returns previous state
+
     // start stream
     bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
     bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
@@ -146,6 +151,7 @@ private:
     void Init();
     // Tobii callbacks need to be friends
     friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
+    friend void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
     friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
     friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
     friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
@@ -156,6 +162,8 @@ private:
     friend void TobiiNotificationCallback(TobiiResearchNotification*             notification_, void* user_data);
     // calibration
     void calibrationThread();
+    // gaze + eye openness receiver
+    void receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_);
     //// generic functions for internal use
     // helpers
     template <typename T>  mutex_type&      getMutex();
@@ -175,8 +183,14 @@ private:
     TobiiTypes::eyeTracker      _eyetracker;
 
     bool                        _recordingGaze          = false;
+    bool                        _recordingEyeOpenness   = false;
+    bool                        _includeEyeOpennessInGaze = false;
     std::vector<gaze>           _gaze;
     mutex_type                  _gazeMutex;
+    // staging area to merge gaze and eye openness
+    std::deque<gaze>            _gazeStaging;
+    std::atomic<bool>           _gazeStagingEmpty       = true;
+    mutex_type                  _gazeStageMutex;
 
     bool                        _recordingEyeImages     = false;
     std::vector<eyeImage>       _eyeImages;

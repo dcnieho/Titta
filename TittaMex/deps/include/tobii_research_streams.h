@@ -997,6 +997,65 @@ TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_unsubs
         TobiiResearchEyeTracker* eyetracker,
         tobii_research_eye_image_as_gif_callback callback);
 
+/**
+Provides data for the @ref tobii_research_eye_openness_data_callback callback.
+*/
+typedef struct {
+    /**
+    The time stamp according to the eye tracker's internal clock.
+    */
+    int64_t device_time_stamp;
+
+    /**
+    The time stamp according to the computer's internal clock.
+    */
+    int64_t system_time_stamp;
+
+    /**
+    Gets the validity of the eye openness data for the left eye.
+    */
+    TobiiResearchValidity left_eye_validity;
+
+    /**
+    The value of the left absolute eye openness.
+    */
+    float left_eye_openness_value;
+
+    /**
+    Gets the validity of the eye openness data for the right eye.
+    */
+    TobiiResearchValidity right_eye_validity;
+
+    /**
+    The value of the right absolute eye openness.
+    */
+    float right_eye_openness_value;
+} TobiiResearchEyeOpennessData;
+
+typedef void(*tobii_research_eye_openness_data_callback)(
+    TobiiResearchEyeOpennessData* openness_data, void* user_data);
+
+/**
+@brief Subscribes to eye openness for the eye tracker.
+@param eyetracker: Eye tracker object.
+@param callback: Callback that will receive the eye openness data.
+@param user_data: Caller specific data that will be sent to the callback.
+@returns A @ref TobiiResearchStatus code.
+*/
+TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_subscribe_to_eye_openness(
+    TobiiResearchEyeTracker* eyetracker, tobii_research_eye_openness_data_callback callback, void* user_data
+);
+
+/**
+@brief Unsubscribes from eye openness for the eye tracker.
+@param eyetracker: Eye tracker object.
+@param callback: Callback to unsubscribe.
+@returns A @ref TobiiResearchStatus code.
+*/
+TOBII_RESEARCH_API TobiiResearchStatus TOBII_RESEARCH_CALL tobii_research_unsubscribe_from_eye_openness(
+    TobiiResearchEyeTracker* eyetracker, tobii_research_eye_openness_data_callback callback
+);
+
 #ifdef __cplusplus
 }
 #endif

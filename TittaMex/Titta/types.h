@@ -7,12 +7,13 @@
 #include <optional>
 #include <mutex>
 #include <shared_mutex>
+#include <limits>
 
 #include <tobii_research_streams.h>
 #include <tobii_research_calibration.h>
 
 using mutex_type = std::shared_mutex;
-using read_lock = std::shared_lock<mutex_type>;
+using read_lock  = std::shared_lock<mutex_type>;
 using write_lock = std::unique_lock<mutex_type>;
 
 namespace TobiiTypes
@@ -35,6 +36,87 @@ namespace TobiiTypes
         TobiiResearchCapabilities   capabilities = TOBII_RESEARCH_CAPABILITIES_NONE;
         std::vector<float>          supportedFrequencies;
         std::vector<std::string>    supportedModes;
+    };
+
+    // extended gaze data (for merging gaze and eye openness
+    struct gazeOrigin
+    {
+        // The gaze origin position in 3D in the user coordinate system.
+        TobiiResearchPoint3D position_in_user_coordinates = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+
+        // The normalized gaze origin position in 3D in the track box coordinate system.
+        TobiiResearchNormalizedPoint3D position_in_track_box_coordinates = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+
+        // The validity of the gaze origin data.
+        TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;
+
+        bool available = false;
+    };
+
+    struct pupilData
+    {
+        // The diameter of the pupil in millimeters.
+        float diameter = std::numeric_limits<float>::quiet_NaN();
+
+        // The validity of the pupil data.
+        TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;
+
+        bool available = false;
+    };
+
+    struct gazePoint
+    {
+        // The gaze point position in 2D on the active display area.
+        TobiiResearchNormalizedPoint2D position_on_display_area = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+
+        // The gaze point position in 3D in the user coordinate system.
+        TobiiResearchPoint3D position_in_user_coordinates = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+
+        // The validity of the gaze point data.
+        TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;
+
+        bool available = false;
+    };
+
+    struct opennessData
+    {
+        // The value of the right absolute eye openness.
+        float diameter = std::numeric_limits<float>::quiet_NaN();
+
+        // The validity of the eye openness data
+        TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;
+
+        bool available = false;
+    };
+
+    struct eyeData
+    {
+        // The gaze point data.
+        gazePoint gaze_point;
+
+        // The pupil data.
+        pupilData pupil_data;
+
+        // The gaze origin data.
+        gazeOrigin gaze_origin;
+
+        // The eye openness data
+        opennessData openness_data;
+    };
+
+    struct gazeData
+    {
+        // The gaze data for the left eye.
+        eyeData left_eye;
+
+        // The gaze data for the right eye.
+        eyeData right_eye;
+
+        // The time stamp according to the eye tracker's internal clock.
+        int64_t device_time_stamp;
+
+        // The time stamp according to the computer's internal clock.
+        int64_t system_time_stamp;
     };
 
     // My own almost POD class for Tobii eye images, for safe resource management

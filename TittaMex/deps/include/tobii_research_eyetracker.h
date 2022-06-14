@@ -73,6 +73,11 @@ typedef enum {
     * Indicates that monocular calibration can be performed on the device.
     */
     TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION = 1 << 8,
+
+    /**
+    * Indicates that an eye openness stream is available on the device
+    */
+    TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA = 1 << 9,
 } TobiiResearchCapabilities;
 
 /**

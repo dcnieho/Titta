@@ -2688,6 +2688,7 @@ classdef Titta < handle
                 end
                 valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             end
+            prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
             obj.buffer.start('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
                 obj.buffer.start('eyeImage');
@@ -2783,6 +2784,7 @@ classdef Titta < handle
             out.val{iVal}.allData   = obj.ConsumeAllData(valStartT);
             out.val{iVal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
             obj.StopRecordAll();
+            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
             obj.ClearAllBuffers(valStartT);    % clean up data
             % compute accuracy etc
             if out.val{iVal}.status==1
@@ -4197,6 +4199,7 @@ classdef Titta < handle
             fs = min(fs);
             
             startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
+            prevEyeOpennessState    = obj.buffer.setIncludeEyeOpennessInGaze(true);
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
             if obj.settings.mancal.doRecordEyeImages && qHasEyeIm
@@ -6165,6 +6168,7 @@ classdef Titta < handle
             HideCursor;
             obj.buffer.stop('positioning');
             obj.buffer.stop('gaze');
+            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
             obj.sendMessage('STOP MANUAL CALIBRATION ROUTINE');
             obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
             if qHasEyeIm

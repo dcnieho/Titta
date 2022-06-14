@@ -50,6 +50,8 @@ namespace
     const std::map<std::string, Titta::DataStream> dataStreamMap =
     {
         { "gaze",           Titta::DataStream::Gaze },
+        { "eyeOpenness",    Titta::DataStream::EyeOpenness },
+        { "eye_openness",   Titta::DataStream::EyeOpenness },
         { "eyeImage",       Titta::DataStream::EyeImage },
         { "eye_image",      Titta::DataStream::EyeImage },
         { "externalSignal", Titta::DataStream::ExtSignal },
@@ -76,7 +78,7 @@ Titta::DataStream Titta::stringToDataStream(std::string stream_)
     if (it == dataStreamMap.end())
     {
         std::stringstream os;
-        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification")";
+        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification")";
         DoExitWithMsg(os.str());
     }
     return it->second;
@@ -112,8 +114,15 @@ void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
     if (user_data)
     {
         auto instance = static_cast<Titta*>(user_data);
-        auto l = instance->lockForWriting<Titta::gaze>();
-        instance->_gaze.push_back(*gaze_data_);
+        instance->receiveSample(gaze_data_, nullptr);
+    }
+}
+void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data)
+{
+    if (user_data)
+    {
+        auto instance = static_cast<Titta*>(user_data);
+        instance->receiveSample(nullptr, openness_data_);
     }
 }
 void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
@@ -325,6 +334,7 @@ Titta::Titta(TobiiResearchEyeTracker* et_)
 Titta::~Titta()
 {
     stop(DataStream::Gaze,        true);
+    stop(DataStream::EyeOpenness, true);
     stop(DataStream::EyeImage,    true);
     stop(DataStream::ExtSignal,   true);
     stop(DataStream::TimeSync,    true);
@@ -803,6 +813,8 @@ bool Titta::hasStream(DataStream  stream_) const
     {
         case DataStream::Gaze:
             return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA;
+        case DataStream::EyeOpenness:
+            return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA;
         case DataStream::EyeImage:
             return _eyetracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES;
         case DataStream::ExtSignal:
@@ -816,6 +828,30 @@ bool Titta::hasStream(DataStream  stream_) const
     }
 
     return supported;
+}
+
+bool Titta::setIncludeEyeOpennessInGaze(bool include_)
+{
+    if (include_ && !hasStream(DataStream::EyeOpenness))
+    {
+        std::stringstream os;
+        os << "Titta::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " << dataStreamToString(DataStream::EyeOpenness) << " stream, this eye tracker does not provide it";
+        DoExitWithMsg(os.str());
+    }
+
+    auto previous = _includeEyeOpennessInGaze;
+    _includeEyeOpennessInGaze = include_;
+    // start/stop eye openness stream if needed
+    if (_recordingGaze && !_includeEyeOpennessInGaze && _recordingEyeOpenness)
+    {
+        stop(DataStream::EyeOpenness);
+    }
+    else if (_recordingGaze && _includeEyeOpennessInGaze && !_recordingEyeOpenness)
+    {
+        start(DataStream::EyeOpenness);
+    }
+
+    return previous;
 }
 
 bool Titta::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
@@ -836,11 +872,33 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
             {
                 // deal with default arguments
                 auto initialBufferSize = initialBufferSize_.value_or(defaults::sampleBufSize);
-                // prepare and start buffer
-                auto l = lockForWriting<gaze>();
-                _gaze.reserve(initialBufferSize);
+                // prepare buffer
+                {
+                    auto l = lockForWriting<gaze>();
+                    _gaze.reserve(initialBufferSize);   // NB: if already reserved when starting eye openness, this will not shrink
+                }
+                // start buffer
                 result = tobii_research_subscribe_to_gaze_data(_eyetracker.et, TobiiGazeCallback, this);
                 stateVar = &_recordingGaze;
+            }
+            break;
+        }
+        case DataStream::EyeOpenness:
+        {
+            if (_recordingEyeOpenness)
+                result = TOBII_RESEARCH_STATUS_OK;
+            else
+            {
+                // deal with default arguments
+                auto initialBufferSize = initialBufferSize_.value_or(defaults::sampleBufSize);
+                // prepare buffer
+                {
+                    auto l = lockForWriting<gaze>();
+                    _gaze.reserve(initialBufferSize);   // NB: if already reserved when starting gaze, this will not shrink
+                }
+                // start buffer
+                result = tobii_research_subscribe_to_eye_openness(_eyetracker.et, TobiiEyeOpennessCallback, this);
+                stateVar = &_recordingEyeOpenness;
             }
             break;
         }
@@ -855,8 +913,10 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
                 auto asGif             = asGif_.value_or(defaults::eyeImageAsGIF);
 
                 // prepare and start buffer
-                auto l = lockForWriting<eyeImage>();
-                _eyeImages.reserve(initialBufferSize);
+                {
+                    auto l = lockForWriting<eyeImage>();
+                    _eyeImages.reserve(initialBufferSize);
+                }
 
                 // if already recording and switching from gif to normal or other way, first stop old stream
                 if (_recordingEyeImages)
@@ -884,8 +944,10 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
                 // deal with default arguments
                 auto initialBufferSize = initialBufferSize_.value_or(defaults::extSignalBufSize);
                 // prepare and start buffer
-                auto l = lockForWriting<extSignal>();
-                _extSignal.reserve(initialBufferSize);
+                {
+                    auto l = lockForWriting<extSignal>();
+                    _extSignal.reserve(initialBufferSize);
+                }
                 result = tobii_research_subscribe_to_external_signal_data(_eyetracker.et, TobiiExtSignalCallback, this);
                 stateVar = &_recordingExtSignal;
             }
@@ -900,8 +962,10 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
                 // deal with default arguments
                 auto initialBufferSize = initialBufferSize_.value_or(defaults::timeSyncBufSize);
                 // prepare and start buffer
-                auto l = lockForWriting<timeSync>();
-                _timeSync.reserve(initialBufferSize);
+                {
+                    auto l = lockForWriting<timeSync>();
+                    _timeSync.reserve(initialBufferSize);
+                }
                 result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker.et, TobiiTimeSyncCallback, this);
                 stateVar = &_recordingTimeSync;
             }
@@ -916,8 +980,10 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
                 // deal with default arguments
                 auto initialBufferSize = initialBufferSize_.value_or(defaults::positioningBufSize);
                 // prepare and start buffer
-                auto l = lockForWriting<positioning>();
-                _positioning.reserve(initialBufferSize);
+                {
+                    auto l = lockForWriting<positioning>();
+                    _positioning.reserve(initialBufferSize);
+                }
                 result = tobii_research_subscribe_to_user_position_guide(_eyetracker.et, TobiiPositioningCallback, this);
                 stateVar = &_recordingPositioning;
             }
@@ -932,8 +998,10 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
                 // deal with default arguments
                 auto initialBufferSize = initialBufferSize_.value_or(defaults::notificationBufSize);
                 // prepare and start buffer
-                auto l = lockForWriting<notification>();
-                _notification.reserve(initialBufferSize);
+                {
+                    auto l = lockForWriting<notification>();
+                    _notification.reserve(initialBufferSize);
+                }
                 result = tobii_research_subscribe_to_notifications(_eyetracker.et, TobiiNotificationCallback, this);
                 stateVar = &_recordingNotification;
             }
@@ -950,8 +1018,155 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
         os << "Titta::cpp::start: Cannot start recording " << dataStreamToString(stream_) << " stream";
         ErrorExit(os.str(), result);
     }
+    else
+    {
+        // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
+        if (     stream_==DataStream::EyeOpenness && _includeEyeOpennessInGaze && !_recordingGaze)
+            return start(DataStream::Gaze       , initialBufferSize_, asGif_);
+        // if requested to merge gaze and eye openness, a call to start gaze also starts eye openness
+        else if (stream_==DataStream::Gaze        && _includeEyeOpennessInGaze && !_recordingEyeOpenness)
+            return start(DataStream::EyeOpenness, initialBufferSize_, asGif_);
+        return true;
+    }
+}
 
-    return result == TOBII_RESEARCH_STATUS_OK;
+// tobii to own type helpers
+namespace {
+    void convert(TobiiTypes::gazePoint& out_, TobiiResearchGazePoint in_)
+    {
+        out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
+        out_.position_on_display_area       = in_.position_on_display_area;
+        out_.validity                       = in_.validity;
+        out_.available                      = true;
+    }
+    void convert(TobiiTypes::pupilData& out_, TobiiResearchPupilData in_)
+    {
+        out_.diameter                       = in_.diameter;
+        out_.validity                       = in_.validity;
+        out_.available                      = true;
+    }
+    void convert(TobiiTypes::gazeOrigin& out_, TobiiResearchGazeOrigin in_)
+    {
+        out_.position_in_track_box_coordinates = in_.position_in_track_box_coordinates;
+        out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
+        out_.validity                       = in_.validity;
+        out_.available                      = true;
+    }
+    void convert(TobiiTypes::opennessData& out_, TobiiResearchEyeOpennessData* in_, bool leftEye_)
+    {
+        if (leftEye_)
+        {
+            out_.diameter = in_->left_eye_openness_value;
+            out_.validity = in_->left_eye_validity;
+        }
+        else
+        {
+            out_.diameter = in_->right_eye_openness_value;
+            out_.validity = in_->right_eye_validity;
+        }
+        out_.available = true;
+    }
+    void convert(TobiiTypes::eyeData& out_, TobiiResearchEyeData in_)
+    {
+        convert(out_.gaze_point, in_.gaze_point);
+        convert(out_.pupil_data, in_.pupil_data);
+        convert(out_.gaze_origin, in_.gaze_origin);
+    }
+}
+
+void Titta::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_)
+{
+    auto needStage = _recordingGaze && _recordingEyeOpenness;
+    if (!needStage && !_gazeStagingEmpty)
+    {
+        // if any data in staging area but no longer expecting to merge, flush to output
+        auto l    = write_lock(_gazeStageMutex);
+        auto lOut = lockForWriting<Titta::gaze>();
+        _gaze.insert(_gaze.end(), std::make_move_iterator(_gazeStaging.begin()), std::make_move_iterator(_gazeStaging.end()));
+        _gazeStaging.clear();
+        _gazeStagingEmpty = true;
+    }
+
+    std::unique_lock<mutex_type> l(_gazeStageMutex, std::defer_lock);
+    if (needStage)
+        l.lock();
+
+    Titta::gaze* sample = nullptr;
+    std::deque<Titta::gaze> emitBuffer;
+    if (needStage)
+    {
+        // find if there is already a corresponding sample in the staging area
+        for (auto it = _gazeStaging.begin(); it != _gazeStaging.end(); )
+        {
+            if ((!!gaze_data_     && it->device_time_stamp <     gaze_data_->device_time_stamp && it->left_eye.openness_data.available) ||
+                (!!openness_data_ && it->device_time_stamp < openness_data_->device_time_stamp && it->left_eye.gaze_origin.available))
+            {
+                // We assume samples come in order. Here we have:
+                // 1. a sample older than this     gaze     sample for which eye openness is already available, or
+                // 2. a sample older than this eye openness sample for which     gaze     is already available;
+                // emit it, continue searching
+                emitBuffer.push_back(std::move(*it));
+                it = _gazeStaging.erase(it);
+            }
+            else if ((!!gaze_data_     && it->device_time_stamp ==     gaze_data_->device_time_stamp) ||
+                     (!!openness_data_ && it->device_time_stamp == openness_data_->device_time_stamp))
+            {
+                // found, this is the one we want. Move to output, take pointer to it as we'll be adding to it
+                emitBuffer.push_back(std::move(*it));
+                it = _gazeStaging.erase(it);
+                sample = &emitBuffer.back();
+                break;
+            }
+            else
+                it++;
+        }
+    }
+    if (!sample)
+    {
+        if (needStage)
+        {
+            _gazeStaging.push_back({});
+            sample = &_gazeStaging.back();
+        }
+        else
+        {
+            emitBuffer.push_back({});
+            sample = &emitBuffer.back();
+        }
+
+        if (gaze_data_)
+        {
+            sample->device_time_stamp = gaze_data_->device_time_stamp;
+            sample->system_time_stamp = gaze_data_->system_time_stamp;
+        }
+        else if (openness_data_)
+        {
+            sample->device_time_stamp = openness_data_->device_time_stamp;
+            sample->system_time_stamp = openness_data_->system_time_stamp;
+        }
+    }
+
+    if (gaze_data_)
+    {
+        // convert to own gaze data type
+        convert(sample->left_eye,  gaze_data_->left_eye);
+        convert(sample->right_eye, gaze_data_->right_eye);
+    }
+    else if (openness_data_)
+    {
+        // convert to own gaze data type
+        convert(sample->left_eye.openness_data , openness_data_, true);
+        convert(sample->right_eye.openness_data, openness_data_, false);
+    }
+    if (needStage)
+        l.unlock();
+
+    // output if anything
+    if (!emitBuffer.empty())
+    {
+        auto lOut = lockForWriting<Titta::gaze>();
+        _gaze.insert(_gaze.end(), std::make_move_iterator(emitBuffer.begin()), std::make_move_iterator(emitBuffer.end()));
+    }
 }
 
 bool Titta::isRecording(std::string stream_) const
@@ -965,6 +1180,8 @@ bool Titta::isRecording(DataStream  stream_) const
     {
         case DataStream::Gaze:
             return _recordingGaze;
+        case DataStream::EyeOpenness:
+            return _recordingEyeOpenness;
         case DataStream::EyeImage:
             return _recordingEyeImages;
         case DataStream::ExtSignal:
@@ -1108,6 +1325,7 @@ void Titta::clearTimeRange(DataStream stream_, std::optional<int64_t> timeStart_
     switch (stream_)
     {
         case DataStream::Gaze:
+        case DataStream::EyeOpenness:
             clearImpl<gaze>(timeStart, timeEnd);
             break;
         case DataStream::EyeImage:
@@ -1146,6 +1364,10 @@ bool Titta::stop(DataStream  stream_, std::optional<bool> clearBuffer_)
             result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker.et, TobiiGazeCallback);
             stateVar = &_recordingGaze;
             break;
+        case DataStream::EyeOpenness:
+            result = !_recordingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_eyetracker.et, TobiiEyeOpennessCallback);
+            stateVar = &_recordingEyeOpenness;
+            break;
         case DataStream::EyeImage:
             result = !_recordingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_eyetracker.et, _eyeImIsGif);
             stateVar = &_recordingEyeImages;
@@ -1175,10 +1397,20 @@ bool Titta::stop(DataStream  stream_, std::optional<bool> clearBuffer_)
     if (stateVar && success)
         *stateVar = false;
 
+    // if requested to merge gaze and eye openness, a call to stop eye openness also stops gaze
+    if (stream_==DataStream::EyeOpenness && _includeEyeOpennessInGaze && _recordingGaze)
+    {
+        return stop(DataStream::Gaze, clearBuffer) && success;
+    }
+    // if requested to merge gaze and eye openness, a call to stop gaze also stops eye openness
+    else if (stream_==DataStream::Gaze && _includeEyeOpennessInGaze && _recordingEyeOpenness)
+    {
+        return stop(DataStream::EyeOpenness, clearBuffer) && success;
+    }
     return success;
 }
 
-// gaze data, instantiate templated functions
+// gaze data (including eye openness), instantiate templated functions
 template std::vector<Titta::gaze> Titta::consumeN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
 template std::vector<Titta::gaze> Titta::consumeTimeRange(std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
 template std::vector<Titta::gaze> Titta::peekN(std::optional<size_t> NSamp_, std::optional<BufferSide> side_);
