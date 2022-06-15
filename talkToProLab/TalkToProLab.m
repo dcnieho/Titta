@@ -164,7 +164,10 @@ classdef TalkToProLab < handle
             % already exists
             this.clientProject.send(struct('operation','ListParticipants'));
             resp    = waitForResponse(this.clientProject,'ListParticipants');
-            names   = {resp.participant_list.participant_name};
+            names   = {};
+            if ~isempty(resp.participant_list)
+                names   = {resp.participant_list.participant_name};
+            end
             qPart   = strcmp(names,name);
             assert(~any(qPart)||allowExisting,'TalkToProLab: createParticipant: Participant with name ''%s'' already exists',name)
             
