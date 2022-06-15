@@ -36,7 +36,7 @@ namespace TobiiTypes
         // get all info about the eye tracker
         TobiiResearchStatus status;
         // first bunch of strings
-        if (!singleOpt || paramToRefresh_=="deviceName")
+        if (!singleOpt || paramToRefresh_ == "deviceName")
         {
             char* device_name;
             status = tobii_research_get_device_name(et, &device_name);
@@ -97,65 +97,56 @@ namespace TobiiTypes
             if (singleOpt) return;
         }
 
+        // rest of these should always be refreshed, just to be conservative
+        // in case e.g. some tracking mode doesn't support some capabilities
+        // or frequencies
+        bool used = false;
+
         // frequency and tracking mode
-        if (!singleOpt || paramToRefresh_ == "frequency")
-        {
-            float gaze_frequency;
-            status = tobii_research_get_gaze_output_frequency(et, &gaze_frequency);
-            if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current frequency", status);
-            frequency = gaze_frequency;
-            if (singleOpt) return;
-        }
-        if (!singleOpt || paramToRefresh_ == "trackingMode")
-        {
-            char* tracking_mode;
-            status = tobii_research_get_eye_tracking_mode(et, &tracking_mode);
-            if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current tracking mode", status);
-            trackingMode = tracking_mode;
-            tobii_research_free_string(tracking_mode);
-            if (singleOpt) return;
-        }
+        float gaze_frequency;
+        status = tobii_research_get_gaze_output_frequency(et, &gaze_frequency);
+        if (status != TOBII_RESEARCH_STATUS_OK)
+            ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current frequency", status);
+        frequency = gaze_frequency;
+        used = used || (singleOpt && paramToRefresh_ == "frequency");
+
+        char* tracking_mode;
+        status = tobii_research_get_eye_tracking_mode(et, &tracking_mode);
+        if (status != TOBII_RESEARCH_STATUS_OK)
+            ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker current tracking mode", status);
+        trackingMode = tracking_mode;
+        tobii_research_free_string(tracking_mode);
+        used = used || (singleOpt && paramToRefresh_ == "trackingMode");
 
         // its capabilities
-        if (!singleOpt || paramToRefresh_ == "capabilities")
-        {
-            status = tobii_research_get_capabilities(et, &capabilities);
-            if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker capabilities", status);
-            if (singleOpt) return;
-        }
+        status = tobii_research_get_capabilities(et, &capabilities);
+        if (status != TOBII_RESEARCH_STATUS_OK)
+            ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker capabilities", status);
+        used = used || (singleOpt && paramToRefresh_ == "capabilities");
 
         // get supported sampling frequencies
-        if (!singleOpt || paramToRefresh_ == "supportedFrequencies")
-        {
-            TobiiResearchGazeOutputFrequencies* tobiiFreqs = nullptr;
-            supportedFrequencies.clear();
-            status = tobii_research_get_all_gaze_output_frequencies(et, &tobiiFreqs);
-            if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker output frequencies", status);
-            supportedFrequencies.insert(supportedFrequencies.end(), &tobiiFreqs->frequencies[0], &tobiiFreqs->frequencies[tobiiFreqs->frequency_count]);   // yes, pointer to one past last element
-            tobii_research_free_gaze_output_frequencies(tobiiFreqs);
-            if (singleOpt) return;
-        }
+        TobiiResearchGazeOutputFrequencies* tobiiFreqs = nullptr;
+        supportedFrequencies.clear();
+        status = tobii_research_get_all_gaze_output_frequencies(et, &tobiiFreqs);
+        if (status != TOBII_RESEARCH_STATUS_OK)
+            ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker output frequencies", status);
+        supportedFrequencies.insert(supportedFrequencies.end(), &tobiiFreqs->frequencies[0], &tobiiFreqs->frequencies[tobiiFreqs->frequency_count]);   // yes, pointer to one past last element
+        tobii_research_free_gaze_output_frequencies(tobiiFreqs);
+        used = used || (singleOpt && paramToRefresh_ == "supportedFrequencies");
 
         // get supported eye tracking modes
-        if (!singleOpt || paramToRefresh_ == "supportedModes")
-        {
-            TobiiResearchEyeTrackingModes* tobiiModes = nullptr;
-            supportedModes.clear();
-            status = tobii_research_get_all_eye_tracking_modes(et, &tobiiModes);
-            if (status != TOBII_RESEARCH_STATUS_OK)
-                ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker's tracking modes", status);
-            supportedModes.insert(supportedModes.end(), &tobiiModes->modes[0], &tobiiModes->modes[tobiiModes->mode_count]);   // yes, pointer to one past last element
-            tobii_research_free_eye_tracking_modes(tobiiModes);
-            if (singleOpt) return;
-        }
+        TobiiResearchEyeTrackingModes* tobiiModes = nullptr;
+        supportedModes.clear();
+        status = tobii_research_get_all_eye_tracking_modes(et, &tobiiModes);
+        if (status != TOBII_RESEARCH_STATUS_OK)
+            ErrorExit("Titta::cpp::eyeTracker::refreshInfo: Cannot get eye tracker's tracking modes", status);
+        supportedModes.insert(supportedModes.end(), &tobiiModes->modes[0], &tobiiModes->modes[tobiiModes->mode_count]);   // yes, pointer to one past last element
+        tobii_research_free_eye_tracking_modes(tobiiModes);
+        used = used || (singleOpt && paramToRefresh_ == "supportedModes");
 
-        if (singleOpt)
+        if (singleOpt && !used)
         {
-            // shouldn't get here if a single option is specified, must be unknown option
+            // a single option is specified but unknown, emit error
             std::stringstream os;
             os << "Titta::cpp::eyeTracker::refreshInfo: Option " << paramToRefresh_.value() << " unknown.";
             DoExitWithMsg(os.str());
