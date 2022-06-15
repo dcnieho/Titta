@@ -9,7 +9,7 @@ Run `makeTittaMex.m` to build the mex file.
 32-bit builds are no longer supported on Windows (they have never been on Linux). The last version of Titta/TittaMex supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
 
 For building the Linux mex file the default gcc version 10.3.0 included with Ubuntu 21.04 was used.
-The mex file also builds with gcc 9.3.0 provided in the mingw64 distribution that comes with Octave 6.3.0.
+The mex file also builds with gcc 9.3.0 provided in the mingw64 distribution that comes with Octave 6.4.0.
 
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
