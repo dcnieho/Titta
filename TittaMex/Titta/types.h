@@ -53,7 +53,7 @@ namespace TobiiTypes
         bool available = false;
     };
 
-    struct pupil
+    struct pupilData
     {
         // The diameter of the pupil in millimeters.
         float diameter = std::numeric_limits<float>::quiet_NaN();
@@ -95,7 +95,7 @@ namespace TobiiTypes
         gazePoint   gaze_point;
 
         // The pupil data.
-        pupil       pupil;
+        pupilData   pupil;
 
         // The gaze origin data.
         gazeOrigin  gaze_origin;

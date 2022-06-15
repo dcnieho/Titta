@@ -1274,11 +1274,11 @@ namespace mxTypes
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesPup) / sizeof(*fieldNamesPup), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupil::diameter, 0.));                                   // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
         // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupil::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 2.3 pupil.available
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupil::available));
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
 
         // 3. gazeOrigin
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, sizeof(fieldNamesGO) / sizeof(*fieldNamesGO), fieldNamesGO));

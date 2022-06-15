@@ -1039,7 +1039,7 @@ namespace {
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::pupil& out_, TobiiResearchPupilData in_)
+    void convert(TobiiTypes::pupilData& out_, TobiiResearchPupilData in_)
     {
         out_.diameter                       = in_.diameter;
         out_.validity                       = in_.validity;

@@ -68,7 +68,7 @@ if isOctave
         striplibsfrommexfile(fullfile(myDir,'TittaMex','64',platform,sprintf('TittaMex_.%s',mexext)));
     end
 else
-    inpArgs = {'-R2017b'    % needed on R2019a to make sure we build a lib that runs on MATLABs as old as R2015b
+    inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
         '-v'
         '-O'
         '-outdir'
