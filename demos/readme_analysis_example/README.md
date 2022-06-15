@@ -6,4 +6,4 @@ The files in this folder demonstrate performing fixation classification on the d
 
 When viewing fixation detection with `c_showFix.m`, press any key to go to the next trial. Close the figure window and press any key to stop scrolling through the trials.
 
-the file `a_validationAccuracy.m` can be run in parallel to these scripts
+The file `a_validationAccuracy.m` can be run in parallel to these scripts
