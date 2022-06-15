@@ -1,20 +1,19 @@
 Usage instructions for using the Titta class are found in [the Titta documentation](../readme.md).
 
 ### Working on the source
-The enclosed `TittaMex.sln` file is to be opened and built with Visual Studio 2019 (last tested with version 16.6.0).
+The enclosed `TittaMex.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.2.3).
 
 ### Building the mex files
-Run `makeTittaMex.m` to build the mex file. To build the 32bit Windows version, use the Visual Studio project.
+Run `makeTittaMex.m` to build the mex file.
 
-For building the 32bit Windows mex file, a 32bit version of matlab must be installed. R2015b is the last version supporting 32bit.
+32-bit builds are no longer supported on Windows (they have never been on Linux). The last version of Titta/TittaMex supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
 
 For building the Linux mex file the default gcc version 7.4.0 included with Ubuntu 18.04 was used.
-The mex file also builds with gcc 7.4.0 provided in the mingw64 distribution that comes with Octave 5.1.0. The Titta class is currently however not supported on Octave due to bugs in how Octave deals with function handles.
+The mex file also builds with gcc 9.3.0 provided in the mingw64 distribution that comes with Octave 6.3.0.
 
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
 - `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2019b`
-- `MATLAB32_ROOT`: `C:\Program Files (x86)\MATLAB\R2015b`
 - `PYTHON_ROOT`: `C:\Program Files\PsychoPy3`
 
 ### Dependencies
@@ -24,8 +23,8 @@ readerwriterqueue located at `deps/include/readerwriterqueue` is required for co
 #### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
 To update the Tobii Pro C SDK used to build Titta against, you need to manually put the some files in the right place:
 1. The \*.h include files are placed in `\TittaMex\deps\include`
-2. The Windows \*.lib link libraries are placed in `\TittaMex\deps\lib`, renaming `Tobii_C_SDK\64\lib\tobii_research.lib` as `tobii_research64.lib`, and `Tobii_C_SDK\32\lib\tobii_research.lib` as `tobii_research32.lib`.
-3. The \*.dll and \*.so files are placed in the respective output directories, `\TittaMex\TittaMex\64` and `\TittaMex\TittaMex\32` (the latter Windows only)
+2. The Windows `Tobii_C_SDK\64\lib\tobii_research.lib` link library is placed in `\TittaMex\deps\lib`.
+3. The \*.dll and \*.so files are placed in the respective output directories, `\TittaMex\TittaMex\64\Windows` and `\TittaMex\TittaMex\64\Linux`, respectively.
 
 #### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
 1. Make sure the PsychoPy version you want to work with is installed.
