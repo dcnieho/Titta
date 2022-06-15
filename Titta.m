@@ -1635,7 +1635,7 @@ classdef Titta < handle
             settings.UI.plot.bgColor                = 180;
             settings.UI.plot.eyeColors              = eyeColors;                    % colors for data lines in plot screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.plot.lineWidth              = 2;
-            settings.UI.plot.scrMargins             = [.04 .02 .09 .06];            % fraction of screen used as blank margin ([left right top bottom])
+            settings.UI.plot.scrMargins             = [.01 .02 .09 .06];            % fraction of screen used as blank margin ([left right top bottom])
             settings.UI.plot.panelPad               = .02;                          % fraction of screen
             settings.UI.plot.dotPosLine.color       = 0;
             settings.UI.plot.dotPosLine.width       = 3;
@@ -1645,8 +1645,8 @@ classdef Titta < handle
             settings.UI.plot.ax.tickLength          = .01;                          % fraction of screen height
             settings.UI.plot.ax.highlightColor      = [255 0 0 50];
             settings.UI.plot.ax.axisLbls.x          = 'time (s)';
-            settings.UI.plot.ax.axisLbls.offset     = {sprintf('horizontal offset (%c)',char(176)),sprintf('vertical offset (%c)',char(176)),'pupil size (mm)'};
-            settings.UI.plot.ax.axisLbls.full       = {'horizontal gaze position (px)','vertical gaze position (px)','pupil size (mm)'};
+            settings.UI.plot.ax.axisLbls.offset     = {sprintf('horizontal offset (%c)',char(176)),sprintf('vertical offset (%c)',char(176)),'pupil size (mm)','eye opennness (mm)'};
+            settings.UI.plot.ax.axisLbls.full       = {'horizontal\ngaze position (px)','vertical\ngaze position (px)','pupil size (mm)','eye opennness (mm)'};
             settings.UI.plot.ax.axisLbl.font        = sansFont;
             settings.UI.plot.ax.axisLbl.size        = 22*textFac;
             settings.UI.plot.ax.axisLbl.color       = 0;
@@ -6196,25 +6196,35 @@ classdef Titta < handle
             valData             = cal{selection}.val{iVal};
             qHasLeft            = isfield(valData.allData.gaze,'left');
             qHasRight           = isfield(valData.allData.gaze,'right');
+            qHasEyeOpenness     = false;
             nValPoint           = size(valData.pointPos,1);
+            % 1
             % 1) get all gaze data and turn into pixels on the screen,
             %    highlight data used for validation calculations
             % 2) get data for each validation point turn gaze data for each
             %    validation point into offsets from validation point
-            % 1
             plotData.all.t = valData.allData.gaze.systemTimeStamp.';
             plotData.all.x = [];
             plotData.all.y = [];
             plotData.all.p = [];
+            plotData.all.o = [];
             if qHasLeft
                 plotData.all.x = valData.allData.gaze.left.gazePoint.onDisplayArea(1,:);
                 plotData.all.y = valData.allData.gaze.left.gazePoint.onDisplayArea(2,:);
                 plotData.all.p = valData.allData.gaze.left.pupil.diameter.';
+                if any(valData.allData.gaze.left.eyeOpenness.available)
+                    plotData.all.o = valData.allData.gaze.left.eyeOpenness.diameter.';
+                    qHasEyeOpenness = true;
+                end
             end
             if qHasRight
                 plotData.all.x = [plotData.all.x; valData.allData.gaze.right.gazePoint.onDisplayArea(1,:)];
                 plotData.all.y = [plotData.all.y; valData.allData.gaze.right.gazePoint.onDisplayArea(2,:)];
                 plotData.all.p = [plotData.all.p; valData.allData.gaze.right.pupil.diameter.'];
+                if any(valData.allData.gaze.right.eyeOpenness.available)
+                    plotData.all.o = [plotData.all.o; valData.allData.gaze.right.eyeOpenness.diameter.'];
+                    qHasEyeOpenness = true;
+                end
             end
             plotData.all.x = plotData.all.x .* obj.scrInfo.resolution{1}(1);
             plotData.all.y = plotData.all.y .* obj.scrInfo.resolution{1}(2);
@@ -6235,6 +6245,9 @@ classdef Titta < handle
             plotData.all.x(:,qRem)  = [];
             plotData.all.y(:,qRem)  = [];
             plotData.all.p(:,qRem)  = [];
+            if qHasEyeOpenness
+                plotData.all.o(:,qRem)  = [];
+            end
             plotData.all.pointTs(end,2) = plotData.all.collectTs(end,2);
             
             % 2
@@ -6259,6 +6272,7 @@ classdef Titta < handle
             plotData.off.x = [];
             plotData.off.y = [];
             plotData.off.p = [];
+            plotData.off.o = [];
             if qHasLeft
                 [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.left,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
                 temp    = cellfun(@(m,a) bsxfun(@times,m,[cos(a); sin(a)]),angs1D,offOnScreenDir,'uni',false);
@@ -6267,6 +6281,10 @@ classdef Titta < handle
                 plotData.off.y = temp(2,:);
                 temp    = arrayfun(@(x) x.left.pupil.diameter, valData.gazeData, 'uni',false);
                 plotData.off.p = cat(1,temp{:}).';
+                if qHasEyeOpenness
+                    temp    = arrayfun(@(x) x.left.eyeOpenness.diameter, valData.gazeData, 'uni',false);
+                    plotData.off.o = cat(1,temp{:}).';
+                end
             end
             if qHasRight
                 [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.right,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
@@ -6276,19 +6294,36 @@ classdef Titta < handle
                 plotData.off.y = [plotData.off.y; temp(2,:)];
                 temp    = arrayfun(@(x) x.right.pupil.diameter, valData.gazeData, 'uni',false);
                 plotData.off.p = [plotData.off.p; cat(1,temp{:}).'];
+                if qHasEyeOpenness
+                    temp    = arrayfun(@(x) x.right.eyeOpenness.diameter, valData.gazeData, 'uni',false);
+                    plotData.off.o = [plotData.off.o; cat(1,temp{:}).'];
+                end
             end
             % add nan in data gaps
-            for f='txyp'
+            fields = 'xyp';
+            fieldsT= 'txyp';
+            if qHasEyeOpenness
+                fields = [fields  'o'];
+                fieldsT= [fieldsT 'o'];
+            end
+            for f=fieldsT
                 for v=nValPoint:-1:2
                     plotData.off.(f) = [plotData.off.(f)(:,1:sampIdx(v)-1) nan(size(plotData.off.(f),1),1) plotData.off.(f)(:,sampIdx(v):end)];
                 end
             end
             
             %%% prep plots
+            numPanel = 3;
+            if qHasEyeOpenness
+                numPanel = 4;
+            end
             % get axis ticks
             % first get ranges of data
-            for t={'all.t','all.x','all.y','all.p','off.t','off.x','off.y','off.p'; false,true,true,false,false,false,false,false}
+            for t={'all.t','all.x','all.y','all.p','all.o','off.t','off.x','off.y','off.p','off.o'; false,true,true,false,false,false,false,false,false,false}
                 idxBase = structPathToIdx(t{1});
+                if t{1}(end)=='o' && ~qHasEyeOpenness
+                    continue;
+                end
                 idx     = structPathToIdx([t{1} '.data']);
                 plotData= subsasgn(plotData,idxBase,struct('data',subsref(plotData,idxBase)));
                 if t{2} % use screen dimensions instead of data range to set plot dimensions
@@ -6316,9 +6351,12 @@ classdef Titta < handle
             
             % determine tick values, and setup axis labels (draw to cache,
             % determine size)
-            for t={'all.t','all.x','all.y','all.p','off.t','off.x','off.y','off.p'}
+            for t={'all.t','all.x','all.y','all.p','all.o','off.t','off.x','off.y','off.p','off.o'}
                 tt=t{1};
-                if strcmp(tt(1:3),'off') || tt(end)=='p'
+                if tt(end)=='o' && ~qHasEyeOpenness
+                    continue;
+                end
+                if strcmp(tt(1:3),'off') || tt(end)=='p' || tt(end)=='o'
                     fmt = '%.2f';
                 else
                     fmt = '%.0f';
@@ -6354,10 +6392,10 @@ classdef Titta < handle
                 plotData.(tt).lbl.x = obj.getTextCache(wpnt(end),...
                     sprintf('<font=%s><size=%d>%s',obj.settings.UI.plot.ax.axisLbl.font,obj.settings.UI.plot.ax.axisLbl.size,obj.settings.UI.plot.ax.axisLbls.x),...
                     [],'baseColor',obj.settings.UI.plot.ax.axisLbl.color);
-                for l=1:length(obj.settings.UI.plot.ax.axisLbls.(lbl))
+                for l=1:numPanel
                     plotData.(tt).lbl.y(l) = obj.getTextCache(wpnt(end),...
                         sprintf('<font=%s><size=%d>%s',obj.settings.UI.plot.ax.axisLbl.font,obj.settings.UI.plot.ax.axisLbl.size,obj.settings.UI.plot.ax.axisLbls.(lbl){l}),...
-                        [],'baseColor',obj.settings.UI.plot.ax.axisLbl.color, 'transform',{'rotate',-90});
+                        [],'xlayout','center','baseColor',obj.settings.UI.plot.ax.axisLbl.color, 'transform',{'rotate',-90});
                 end
             end
             % get val lbls
@@ -6407,7 +6445,7 @@ classdef Titta < handle
 
             % position info text, if any, at same height as buttons
             if ~isempty(plotData.infoText)
-                plotData.infoText = obj.repositionTextCache(plotData.infoText,[10-plotData.infoText.bbox(1) but(2).rect(4)-plotData.infoText.bbox(4)]);
+                plotData.infoText = obj.repositionTextCache(plotData.infoText,[10-plotData.infoText.bbox(1) but(2).rect(2)-plotData.infoText.bbox(2)]);
             end
             
             % figure out where to put plots
@@ -6417,7 +6455,7 @@ classdef Titta < handle
             % size of each panel, including y-labels, excluding x-label as
             % only under last panel
             panelPad        = obj.scrInfo.resolution{end}(2) * obj.settings.UI.plot.panelPad;
-            panelSz         = [scrUsed(1) (scrUsed(2)-2*panelPad)/3];
+            panelSz         = [scrUsed(1) (scrUsed(2)-(numPanel-1)*panelPad)/numPanel];
             halfAxLineWidth = obj.settings.UI.plot.ax.lineWidth/2;
             
             % position axes
@@ -6425,6 +6463,9 @@ classdef Titta < handle
                 tt=t{1};
                 % get which part of that is for the axes
                 yTickTextRects                  = cat(1,cat(1,plotData.(tt).x.ticksTextCache.bbox),cat(1,plotData.(tt).y.ticksTextCache.bbox),cat(1,plotData.(tt).p.ticksTextCache.bbox));
+                if qHasEyeOpenness
+                    yTickTextRects                  = cat(1,yTickTextRects,cat(1,plotData.(tt).o.ticksTextCache.bbox));
+                end
                 yTickTextWidth                  = max(yTickTextRects(:,3)-yTickTextRects(:,1));
                 yLblTextRects                   = cat(1,plotData.(tt).lbl.y.bbox);
                 yLblTextWidths                  = yLblTextRects(:,3)-yLblTextRects(:,1);
@@ -6433,10 +6474,10 @@ classdef Titta < handle
                 % position axes
                 xspaceLeft = (obj.scrInfo.resolution{end}(1)-panelSz(1))/2+plotData.(tt).lbl.labelSpace(1);
                 plotData.(tt).ax.rects = [...
-                    xspaceLeft*[1 1 1];
-                    margins(3)+(0:2)*(panelSz(2)+panelPad);
-                    xspaceLeft*[1 1 1]+panelSz(1)-plotData.(tt).lbl.labelSpace(1);
-                    margins(3)+(0:2)*(panelSz(2)+panelPad) + panelSz(2)
+                    xspaceLeft*ones(1,numPanel);
+                    margins(3)+(0:numPanel-1)*(panelSz(2)+panelPad);
+                    xspaceLeft*ones(1,numPanel)+panelSz(1)-plotData.(tt).lbl.labelSpace(1);
+                    margins(3)+(0:numPanel-1)*(panelSz(2)+panelPad) + panelSz(2)
                     ];
             end
             % make sure axes have same position for both screens, so they
@@ -6450,6 +6491,9 @@ classdef Titta < handle
                 tt=t{1};
                 % get which part of that is for the axes
                 yTickTextRects                  = cat(1,cat(1,plotData.(tt).x.ticksTextCache.bbox),cat(1,plotData.(tt).y.ticksTextCache.bbox),cat(1,plotData.(tt).p.ticksTextCache.bbox));
+                if qHasEyeOpenness
+                    yTickTextRects                  = cat(1,yTickTextRects,cat(1,plotData.(tt).o.ticksTextCache.bbox));
+                end
                 yTickTextWidth                  = max(yTickTextRects(:,3)-yTickTextRects(:,1));
                 yLblTextRects                   = cat(1,plotData.(tt).lbl.y.bbox);
                 yLblTextWidths                  = yLblTextRects(:,3)-yLblTextRects(:,1);
@@ -6461,22 +6505,24 @@ classdef Titta < handle
                 % prepare axis lines
                 idxs = [1 1 1 3; 2 4 4 4];
                 plotData.(tt).ax.lines = plotData.(tt).ax.rects([idxs idxs+4 idxs+8]);
+                if qHasEyeOpenness
+                    plotData.(tt).ax.lines = cat(2,plotData.(tt).ax.lines,plotData.(tt).ax.rects(idxs+12));
+                end
                 
                 % make functions for converting data positions to pixel
                 % positions in axis
-                plotData.(tt).ax.dat2pix = cell(3,1);
-                fields = 'xyp';
-                for f=1:3
+                plotData.(tt).ax.dat2pix = cell(numPanel,1);
+                for f=1:length(fields)
                     xLim    = plotData.(tt).     t     .lim;
                     yLim    = plotData.(tt).(fields(f)).lim;
                     plotData.(tt).ax.dat2pix{f} = @(x,y) dat2pix(x,y,xLim,yLim,plotData.(tt).ax.rects(:,f));
                 end
                 
                 % prepare tick lines
-                plotData.(tt).ax.tickLinesX = cell(3,1);
-                plotData.(tt).ax.tickLinesY = cell(3,1);
+                plotData.(tt).ax.tickLinesX = cell(numPanel,1);
+                plotData.(tt).ax.tickLinesY = cell(numPanel,1);
                 tickLength = obj.settings.UI.plot.ax.tickLength*obj.scrInfo.resolution{end}(2);
-                for f=1:3
+                for f=1:length(fields)
                     xt          = plotData.(tt).     t     .ticks;
                     yt          = plotData.(tt).(fields(f)).ticks;
                     xLim        = plotData.(tt).     t     .lim;
@@ -6505,12 +6551,12 @@ classdef Titta < handle
                 end
                 
                 % position tick labels
-                for f='txyp'
+                for f=fieldsT
                     if f=='t'
                         tickLines = plotData.(tt).ax.tickLinesX{end}(:,1:2:end);
                         ax = 'x';
                     else
-                        tickLines = plotData.(tt).ax.tickLinesY{f=='xyp'}(:,1:2:end);
+                        tickLines = plotData.(tt).ax.tickLinesY{f=='xypo'}(:,1:2:end);
                         ax = 'y';
                     end
                     
@@ -6552,15 +6598,15 @@ classdef Titta < handle
             
             % prep background highlight indicating when validation data was
             % collected when plotting all
-            plotData.all.ax.highLightRects = nan(4,nValPoint*3);
+            plotData.all.ax.highLightRects = nan(4,nValPoint*numPanel);
             for q=1:nValPoint
                 pos = plotData.all.ax.dat2pix{1}(plotData.all.collectTs(q,:),[0 0]);
-                plotData.all.ax.highLightRects(1,(1:3)+(q-1)*3) = pos(1,1);
-                plotData.all.ax.highLightRects(3,(1:3)+(q-1)*3) = pos(1,2);
+                plotData.all.ax.highLightRects(1,(1:numPanel)+(q-1)*numPanel) = pos(1,1);
+                plotData.all.ax.highLightRects(3,(1:numPanel)+(q-1)*numPanel) = pos(1,2);
             end
-            for q=1:3
-                plotData.all.ax.highLightRects(2,q:3:nValPoint*3) = plotData.all.ax.rects(2,q);
-                plotData.all.ax.highLightRects(4,q:3:nValPoint*3) = plotData.all.ax.rects(4,q);
+            for q=1:numPanel
+                plotData.all.ax.highLightRects(2,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(2,q);
+                plotData.all.ax.highLightRects(4,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(4,q);
             end
                     
             % prep line indicating dot position
@@ -6622,7 +6668,7 @@ classdef Titta < handle
                 end
                 
                 % draw data
-                obj.drawPlotData(wpnt,plotData,plotWhich);
+                obj.drawPlotData(wpnt,plotData,plotWhich,qHasEyeOpenness);
                 
                 % draw axes and ticks
                 Screen('DrawLines',wpnt(end),plotData.(plotWhich).ax.lines               ,obj.settings.UI.plot.ax.lineWidth,lineColor,[],2);
@@ -6634,6 +6680,9 @@ classdef Titta < handle
                 obj.drawCachedText(plotData.(plotWhich).x.ticksTextCache);
                 obj.drawCachedText(plotData.(plotWhich).y.ticksTextCache);
                 obj.drawCachedText(plotData.(plotWhich).p.ticksTextCache);
+                if qHasEyeOpenness
+                    obj.drawCachedText(plotData.(plotWhich).o.ticksTextCache);
+                end
                 obj.drawCachedText(plotData.(plotWhich).lbl.x);
                 obj.drawCachedText(plotData.(plotWhich).lbl.y);
                 obj.drawCachedText(plotData.(plotWhich).lbl.val);
@@ -6707,9 +6756,12 @@ classdef Titta < handle
             obj.resetScreen(wpnt,screenState);
         end
         
-        function drawPlotData(obj,wpnt,plotData,plotWhich)
+        function drawPlotData(obj,wpnt,plotData,plotWhich,qHasEyeOpenness)
             fields = 'xyp';
-            for f=1:3
+            if qHasEyeOpenness
+                fields = [fields 'o'];
+            end
+            for f=1:length(fields)
                 % get data on plot
                 [xyo,axRect] = plotData.(plotWhich).ax.dat2pix{f}(plotData.(plotWhich).t.data,plotData.(plotWhich).(fields(f)).data);
                 % double up internal points as they are both the end of one line
