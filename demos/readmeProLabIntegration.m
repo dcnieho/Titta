@@ -80,8 +80,9 @@ try
     else
         TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
     end
-    % create participant (setting second parameter to true means that if a
-    % participant by that name already exists, 
+    % create participant (setting second parameter to true means that no
+    % error is thrown if a participant by that name already exists, instead
+    % a new recording is added to that participant.
     TalkToProLabInstance.createParticipant(TobiiProLabParticipant,true);
     
     if DEBUGlevel>1
@@ -202,7 +203,7 @@ try
     if isempty(fixMediaID)
         fixMediaID = TalkToProLabInstance.uploadMedia(screenShotFixPoint,'fixationPoint');
         % add AOI around fixation point location
-        fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*4),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point (*2 because radius->diameter, *2 to double size)
+        fixRect = CenterRectOnPoint([0 0 1 1]*round(winRect(3)/100*4),winRect(3)/2,winRect(4)/2);   % make AOI twice the size of the fixation point (and *2 again because radius->diameter, *2 to double size, so *4 in total)
         vertices= fixRect([1 3 3 1; 2 2 4 4]);
         TalkToProLabInstance.attachAOIToImage('fixationPoint','fixationPoint',[255 0 0],vertices,TalkToProLabInstance.makeAOITag('fixPoint','points'));
     end
@@ -224,7 +225,7 @@ try
     % repeat the above but show a different image. lets also record some
     % eye images, if supported on connected eye tracker
     if EThndl.buffer.hasStream('eyeImage')
-       EThndl.buffer.start('eyeImage');
+        EThndl.buffer.start('eyeImage');
     end
     % 1. fixation point
     Screen('gluDisk',wpnt,fixClrs(1),winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
