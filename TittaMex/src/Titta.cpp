@@ -1039,7 +1039,7 @@ namespace {
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::pupilData& out_, TobiiResearchPupilData in_)
+    void convert(TobiiTypes::pupil& out_, TobiiResearchPupilData in_)
     {
         out_.diameter                       = in_.diameter;
         out_.validity                       = in_.validity;
@@ -1052,7 +1052,7 @@ namespace {
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::opennessData& out_, TobiiResearchEyeOpennessData* in_, bool leftEye_)
+    void convert(TobiiTypes::eyeOpenness& out_, TobiiResearchEyeOpennessData* in_, bool leftEye_)
     {
         if (leftEye_)
         {
@@ -1069,7 +1069,7 @@ namespace {
     void convert(TobiiTypes::eyeData& out_, TobiiResearchEyeData in_)
     {
         convert(out_.gaze_point, in_.gaze_point);
-        convert(out_.pupil_data, in_.pupil_data);
+        convert(out_.pupil, in_.pupil_data);
         convert(out_.gaze_origin, in_.gaze_origin);
     }
 }
@@ -1098,7 +1098,7 @@ void Titta::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpe
         // find if there is already a corresponding sample in the staging area
         for (auto it = _gazeStaging.begin(); it != _gazeStaging.end(); )
         {
-            if ((!!gaze_data_     && it->device_time_stamp <     gaze_data_->device_time_stamp && it->left_eye.openness_data.available) ||
+            if ((!!gaze_data_     && it->device_time_stamp <     gaze_data_->device_time_stamp && it->left_eye.eye_openness.available) ||
                 (!!openness_data_ && it->device_time_stamp < openness_data_->device_time_stamp && it->left_eye.gaze_origin.available))
             {
                 // We assume samples come in order. Here we have:
@@ -1155,8 +1155,8 @@ void Titta::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpe
     else if (openness_data_)
     {
         // convert to own gaze data type
-        convert(sample->left_eye.openness_data , openness_data_, true);
-        convert(sample->right_eye.openness_data, openness_data_, false);
+        convert(sample->left_eye.eye_openness , openness_data_, true);
+        convert(sample->right_eye.eye_openness, openness_data_, false);
     }
     if (needStage)
         l.unlock();

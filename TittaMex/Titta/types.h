@@ -53,7 +53,7 @@ namespace TobiiTypes
         bool available = false;
     };
 
-    struct pupilData
+    struct pupil
     {
         // The diameter of the pupil in millimeters.
         float diameter = std::numeric_limits<float>::quiet_NaN();
@@ -78,12 +78,12 @@ namespace TobiiTypes
         bool available = false;
     };
 
-    struct opennessData
+    struct eyeOpenness
     {
         // The value of the right absolute eye openness.
         float diameter = std::numeric_limits<float>::quiet_NaN();
 
-        // The validity of the eye openness data
+        // The validity of the eye openness data.
         TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;
 
         bool available = false;
@@ -92,16 +92,16 @@ namespace TobiiTypes
     struct eyeData
     {
         // The gaze point data.
-        gazePoint gaze_point;
+        gazePoint   gaze_point;
 
         // The pupil data.
-        pupilData pupil_data;
+        pupil       pupil;
 
         // The gaze origin data.
-        gazeOrigin gaze_origin;
+        gazeOrigin  gaze_origin;
 
-        // The eye openness data
-        opennessData openness_data;
+        // The eye openness data.
+        eyeOpenness eye_openness;
     };
 
     struct gazeData
