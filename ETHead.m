@@ -178,11 +178,11 @@ classdef ETHead < handle
             % same for guidepos-based head position (see discussion above
             % in code block where this.eyeDistGuidePos is determined).
             offGP = this.RoriGP*[this.eyeDistGuidePos; 0];
-            if isnan(leftGuidePos)
+            if any(isnan(leftGuidePos))
                 leftGuidePos(1)     = rightGuidePos(1) -offGP(1);
                 leftGuidePos(2)     = rightGuidePos(2) +offGP(2);
                 leftGuidePos(3)     = rightGuidePos(3) -this.dZGP;
-            elseif ~this.qHaveRight
+            elseif any(isnan(rightGuidePos))
                 rightGuidePos(1)    = leftGuidePos(1)  +offGP(1);
                 rightGuidePos(2)    = leftGuidePos(2)  -offGP(2);
                 rightGuidePos(3)    = leftGuidePos(3)  +this.dZGP;
