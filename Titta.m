@@ -837,6 +837,8 @@ classdef Titta < handle
             [~,~,obj.keyState] = KbCheck();
             [~,~,obj.mouseState] = GetMouse();
             
+            % make sure we get eye openness data if available
+            prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
             
             %%% 1. some preliminary setup, to make sure we are in known state
             if bitand(flag,1)
@@ -1023,6 +1025,7 @@ classdef Titta < handle
             
             % clean up and reset PTB state
             obj.resetScreen(wpnt,screenState);
+            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
             
             % if we want to exit calibration mode because:
             % 1. user requests it (flag bit 2 is set)
