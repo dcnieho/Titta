@@ -270,6 +270,9 @@ classdef Titta < handle
             obj.settings.UI.setup.headCircleEdgeClr     = color2RGBA(obj.settings.UI.setup.headCircleEdgeClr);
             obj.settings.UI.setup.headCircleFillClr     = color2RGBA(obj.settings.UI.setup.headCircleFillClr);
             obj.settings.UI.setup.eyeClr                = color2RGBA(obj.settings.UI.setup.eyeClr);
+            obj.settings.UI.setup.eyeClrPosMissing      = color2RGBA(obj.settings.UI.setup.eyeClrPosMissing);
+            obj.settings.UI.setup.eyeBorderClr          = color2RGBA(obj.settings.UI.setup.eyeBorderClr);
+            obj.settings.UI.setup.eyeLidClr             = color2RGBA(obj.settings.UI.setup.eyeLidClr);
             obj.settings.UI.setup.pupilClr              = color2RGBA(obj.settings.UI.setup.pupilClr);
             obj.settings.UI.setup.crossClr              = color2RGBA(obj.settings.UI.setup.crossClr);
             obj.settings.UI.setup.fixBackColor          = color2RGBA(obj.settings.UI.setup.fixBackColor);
@@ -1488,6 +1491,7 @@ classdef Titta < handle
             settings.UI.startScreen             = 1;                            % 1. start with head positioning interface; 0. skip head positioning, go straight to calibration (if not loading previous calibrations), or validation result screen (if loading previous calibrations when calling Titta.calibrate()
             settings.UI.hardExitClosesPTB       = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
             settings.UI.setup.showEyes          = true;
+            settings.UI.setup.showEyeLids       = true;
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.showYaw           = true;                         % show yaw of head?
             settings.UI.setup.showYawToOperator = true;                         % show yaw of head on operator screen?
@@ -1498,6 +1502,10 @@ classdef Titta < handle
             settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
             settings.UI.setup.headCircleEdgeWidth= 5;
             settings.UI.setup.eyeClr            = 255;
+            settings.UI.setup.eyeClrPosMissing  = [255 166 166];
+            settings.UI.setup.eyeBorderClr      = 0;
+            settings.UI.setup.eyeBorderWidth    = 1;
+            settings.UI.setup.eyeLidClr         = [210 210 0];
             settings.UI.setup.pupilClr          = 0;
             settings.UI.setup.crossClr          = [255 0 0];
             settings.UI.setup.fixBackSize       = 20;
@@ -2369,12 +2377,12 @@ classdef Titta < handle
                 eyeData     = obj.buffer.peekN('gaze',1);
                 posGuide    = obj.buffer.peekN('positioning',1);
                 headP.update(...
-                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
+                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
                 if qHaveOperatorScreen
                     headO.update(...
-                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.diameter,...
-                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.diameter);
+                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
+                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
                 end
                 
                 if ~isnan(headP.avgDist)
@@ -2701,7 +2709,6 @@ classdef Titta < handle
                 end
                 valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             end
-            prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
             obj.buffer.start('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
                 obj.buffer.start('eyeImage');
@@ -2797,7 +2804,6 @@ classdef Titta < handle
             out.val{iVal}.allData   = obj.ConsumeAllData(valStartT);
             out.val{iVal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
             obj.StopRecordAll();
-            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
             obj.ClearAllBuffers(valStartT);    % clean up data
             % compute accuracy etc
             if out.val{iVal}.status==1
@@ -5289,13 +5295,13 @@ classdef Titta < handle
                         posGuide    = obj.buffer.peekN('positioning',1);
                         if ~isempty(eyeData.systemTimeStamp)
                             inp = {
-                                 eyeData.left.gazeOrigin.valid(end),  eyeData.left.gazeOrigin.inUserCoords(:,end),  posGuide.left.user_position,  eyeData.left.pupil.diameter(end),...
-                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(:,end), posGuide.right.user_position, eyeData.right.pupil.diameter(end)
+                                 eyeData.left.gazeOrigin.valid(end),  eyeData.left.gazeOrigin.inUserCoords(:,end),  posGuide.left.user_position,  eyeData.left.pupil.valid(end),  eyeData.left.pupil.diameter(end),  eyeData.left.eyeOpenness.valid(end),  eyeData.left.eyeOpenness.diameter(end),...
+                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(:,end), posGuide.right.user_position, eyeData.right.pupil.valid(end), eyeData.right.pupil.diameter(end), eyeData.right.eyeOpenness.valid(end), eyeData.right.eyeOpenness.diameter(end)
                                 };
                         else
                             inp = {
-                                [], [],  posGuide.left.user_position, [],...
-                                [], [], posGuide.right.user_position, []
+                                [], [],  posGuide.left.user_position, [], [], [], [],...
+                                [], [], posGuide.right.user_position, [], [], [], []
                                 };
                         end
                         headO.update(inp{:});
@@ -6903,6 +6909,11 @@ classdef Titta < handle
             head.showYaw            = showYaw;
             head.showEyes           = obj.settings.UI.setup.showEyes;
             head.eyeClr             = obj.settings.UI.setup.eyeClr;
+            head.eyeClrPosMissing   = obj.settings.UI.setup.eyeClrPosMissing;
+            head.eyeBorderClr       = obj.settings.UI.setup.eyeBorderClr;
+            head.eyeBorderWidth     = obj.settings.UI.setup.eyeBorderWidth;
+            head.showEyeLids        = obj.settings.UI.setup.showEyeLids;
+            head.eyeLidClr          = obj.settings.UI.setup.eyeLidClr;
             head.showPupils         = obj.settings.UI.setup.showPupils;
             head.pupilClr           = obj.settings.UI.setup.pupilClr;
             head.crossClr           = obj.settings.UI.setup.crossClr;
