@@ -30,7 +30,7 @@ proj    = rotMat*proj;
 proj    = bsxfun(@plus,proj*scaleFac,pos(:));
 
 % draw fill if any
-if ~isempty(fillClr)
+if ~isempty(fillClr) && (isConvex || ~any(isnan(proj(:)))) % isConvex==0 with nan values crashes PTB
     Screen('FillPoly', wpnt, fillClr, proj.', isConvex);
 end
 % draw edge, if any

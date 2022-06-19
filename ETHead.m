@@ -288,7 +288,7 @@ classdef ETHead < handle
                         openFac = eyeOpenness/this.eyeOpennessMax;
                     end
                     
-                    lidVerts = fliplr(genEllipse(100,1,openFac*.92,[0 pi]));      % *.95 as always want to show a bit of eyelid
+                    lidVerts = getEye(100,openFac);
                     edgeVerts= genEllipse(100,1,1,[0 pi]);
                     
                     this.eyeLidVerts{p,1} = [lidVerts edgeVerts(:,2:end-1)];
@@ -617,4 +617,31 @@ if nargin<4
 end
 alpha = linspace(range(1),range(2),nStep);
 verts = [a*cos(alpha); b*sin(alpha)];
+end
+
+function verts = getEye(nStep,openFac)
+if openFac==0
+    verts = [-1 1; 0 0];
+else
+    % use formula from K. Mundilova and T. Wills (2018). Folding the Vesica
+    % Piscis, Proceedings of Bridges 2018: Mathematics, Art, Music,
+    % Architecture, Education, Culture, p. 535–538 for folding a Vesica
+    % Piscis (equation 2 for f(bar)_{u,h}). The Vesica Piscis itself is a
+    % lot like an ellipse, but sharper eye corners and more consistent
+    % eyelid thickness. The folding means that the aperture slightly
+    % non-linearly decreases with decreasing eye openness (faster at the
+    % end), which is perhaps not exactly correct, but looks much better. I
+    % scale (deform) the Vesica Piscis such that maximum amplitude is 1 so
+    % that eyelids are not way too thick.
+    u       = .5;
+    h       = openFac;
+    s       = linspace(-acos(-u),acos(-u),nStep);
+    maxAmpn = (1+u)/(2+u);          % (1+u)*h/(1+u+h) with h fixed to 1
+    unitFac = 1/sin(s(end));        % factor to scale everything by so that width of Vesica Piscis is 2 ([-1, 1])
+    maxAmp  = maxAmpn*unitFac;      % factor to scale y by so that maximum amplitude (at h==1) is 1
+    t_uh    = h./(cos(s)+u+h)*unitFac;
+    x       = sin(s).*t_uh;
+    y       = (cos(s)+u).*t_uh;
+    verts   = [x; y/maxAmp*.92];    % *.92 as always want to see some eyelid, also when eye fully open
+end
 end
