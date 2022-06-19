@@ -288,11 +288,7 @@ classdef ETHead < handle
                         openFac = eyeOpenness/this.eyeOpennessMax;
                     end
                     
-                    if 0
-                        lidVerts = genEye(100,openFac*.95);
-                    else
-                        lidVerts = fliplr(genEllipse(100,1,openFac*.92,[0 pi]));      % *.95 as always want to show a bit of eyelid
-                    end
+                    lidVerts = fliplr(genEllipse(100,1,openFac*.92,[0 pi]));      % *.95 as always want to show a bit of eyelid
                     edgeVerts= genEllipse(100,1,1,[0 pi]);
                     
                     this.eyeLidVerts{p,1} = [lidVerts edgeVerts(:,2:end-1)];
@@ -621,24 +617,4 @@ if nargin<4
 end
 alpha = linspace(range(1),range(2),nStep);
 verts = [a*cos(alpha); b*sin(alpha)];
-end
-
-function verts = genEye(nStep,amp)
-% based on formula 1b of https://nyjp07.com/index_eye_E.html
-p = 0.5;
-a = -0.01;
-c = sqrt(-log((1-exp(a))/p))^2;
-
-% turn amp into b parameter
-scale = log(p+exp(a));
-b = 1/(amp^2)*scale;
-
-% figure out domain to calculate over
-lim = sqrt(-log((1-exp(a))/p)/c);
-
-% do calculation
-x   = linspace(-lim,lim,nStep);
-y   = sqrt((log(p*exp(-c*x.^2)+exp(a)))/b);
-
-verts = [x;y];
 end
