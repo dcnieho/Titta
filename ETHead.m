@@ -23,7 +23,7 @@ classdef ETHead < handle
         pupilRefDiam        = 5;        % mm
         pupilSzGain         = 1.5;
         
-        eyeOpennessMax      = 12;       % mm
+        eyeOpennessMax      = 10;       % mm, will grow if larger value is observed to accomodate it
         eyeOpennessScaleMax = 0.9;      % 1 would be a normal circle, this is major axis of ellipse
         yawFac              = 1.25;     % exaggerate yaw head depth rotation a bit, looks more like the eye images and simply makes it more visible
         pitchFac            = 1;
