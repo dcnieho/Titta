@@ -47,8 +47,10 @@ for p=1:nfiles
     dat.data.gaze.right.gazePoint.onDisplayArea(:,~dat.data.gaze.right.gazePoint.valid) = nan;
     dat.data.gaze. left.pupil.diameter(~dat.data.gaze. left.pupil.valid) = nan;
     dat.data.gaze.right.pupil.diameter(~dat.data.gaze.right.pupil.valid) = nan;
+    % collect data from the file, and turn gaze positions from normalized
+    % coordinates into pixels
     samp    = [bsxfun(@times,dat.data.gaze.left.gazePoint.onDisplayArea,scrRes.'); bsxfun(@times,dat.data.gaze.right.gazePoint.onDisplayArea,scrRes.'); dat.data.gaze.left.pupil.diameter; dat.data.gaze.right.pupil.diameter];
-    header  = {'t','gLX','gLY','gRX','gRY','pL','pR'};
+    header  = {'t','gaze_point_LX','gaze_point_LY','gaze_point_RX','gaze_point_RY','pupil_diameter_L','pupil_diameter_R'};
     [timest,what,msgs] = parseMsgs(dat.messages);
     
     % split up per task and write
