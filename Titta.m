@@ -6232,7 +6232,7 @@ classdef Titta < handle
             %    highlight data used for validation calculations
             % 2) get data for each validation point turn gaze data for each
             %    validation point into offsets from validation point
-            plotData.all.t = valData.allData.gaze.systemTimeStamp.';
+            plotData.all.t = valData.allData.gaze.systemTimeStamp;
             plotData.all.x = [];
             plotData.all.y = [];
             plotData.all.p = [];
@@ -6240,18 +6240,18 @@ classdef Titta < handle
             if qHasLeft
                 plotData.all.x = valData.allData.gaze.left.gazePoint.onDisplayArea(1,:);
                 plotData.all.y = valData.allData.gaze.left.gazePoint.onDisplayArea(2,:);
-                plotData.all.p = valData.allData.gaze.left.pupil.diameter.';
+                plotData.all.p = valData.allData.gaze.left.pupil.diameter;
                 if any(valData.allData.gaze.left.eyeOpenness.available)
-                    plotData.all.o = valData.allData.gaze.left.eyeOpenness.diameter.';
+                    plotData.all.o = valData.allData.gaze.left.eyeOpenness.diameter;
                     qHasEyeOpenness = true;
                 end
             end
             if qHasRight
                 plotData.all.x = [plotData.all.x; valData.allData.gaze.right.gazePoint.onDisplayArea(1,:)];
                 plotData.all.y = [plotData.all.y; valData.allData.gaze.right.gazePoint.onDisplayArea(2,:)];
-                plotData.all.p = [plotData.all.p; valData.allData.gaze.right.pupil.diameter.'];
+                plotData.all.p = [plotData.all.p; valData.allData.gaze.right.pupil.diameter];
                 if any(valData.allData.gaze.right.eyeOpenness.available)
-                    plotData.all.o = [plotData.all.o; valData.allData.gaze.right.eyeOpenness.diameter.'];
+                    plotData.all.o = [plotData.all.o; valData.allData.gaze.right.eyeOpenness.diameter];
                     qHasEyeOpenness = true;
                 end
             end
@@ -6265,7 +6265,7 @@ classdef Titta < handle
             qHaveTrackerSpacePos        = ~isempty(obj.settings.cal.pointPosTrackerSpace);
             plotData.all.pointTs        = valData.pointTs(:,2:3) - double(plotData.all.t(1))/1000/1000;          % time point on screen
             plotData.all.collectTs      = arrayfun(@(d) d.systemTimeStamp([1 end]),valData.gazeData,'uni',false);% time data collected for point
-            plotData.all.collectTs      = double(cat(2,plotData.all.collectTs{:}).'-plotData.all.t(1))/1000/1000;
+            plotData.all.collectTs      = double(cat(1,plotData.all.collectTs{:})-plotData.all.t(1))/1000/1000;
             plotData.all.t              = double(plotData.all.t-plotData.all.t(1))/1000/1000;
             % cut off last bit of all validation data that lies beyond last
             % bit used for offset computation
@@ -6287,7 +6287,7 @@ classdef Titta < handle
             dur     = tes-t0s;
             nSamp   = arrayfun(@(d) numel(d.systemTimeStamp),valData.gazeData);
             sampIdx = cumsum([1; nSamp]);
-            plotData.off.t = cat(1,valData.gazeData.systemTimeStamp).';
+            plotData.off.t = cat(2,valData.gazeData.systemTimeStamp);
             plotData.off.collectTs = nan(nValPoint,2);
             gapDur = int64(mean(dur)*.15);  % 15% gap
             for v=1:nValPoint
@@ -6309,10 +6309,10 @@ classdef Titta < handle
                 plotData.off.x = temp(1,:);
                 plotData.off.y = temp(2,:);
                 temp    = arrayfun(@(x) x.left.pupil.diameter, valData.gazeData, 'uni',false);
-                plotData.off.p = cat(1,temp{:}).';
+                plotData.off.p = cat(2,temp{:});
                 if qHasEyeOpenness
                     temp    = arrayfun(@(x) x.left.eyeOpenness.diameter, valData.gazeData, 'uni',false);
-                    plotData.off.o = cat(1,temp{:}).';
+                    plotData.off.o = cat(2,temp{:});
                 end
             end
             if qHasRight
@@ -6322,10 +6322,10 @@ classdef Titta < handle
                 plotData.off.x = [plotData.off.x; temp(1,:)];
                 plotData.off.y = [plotData.off.y; temp(2,:)];
                 temp    = arrayfun(@(x) x.right.pupil.diameter, valData.gazeData, 'uni',false);
-                plotData.off.p = [plotData.off.p; cat(1,temp{:}).'];
+                plotData.off.p = [plotData.off.p; cat(2,temp{:})];
                 if qHasEyeOpenness
                     temp    = arrayfun(@(x) x.right.eyeOpenness.diameter, valData.gazeData, 'uni',false);
-                    plotData.off.o = [plotData.off.o; cat(1,temp{:}).'];
+                    plotData.off.o = [plotData.off.o; cat(2,temp{:})];
                 end
             end
             % add nan in data gaps
