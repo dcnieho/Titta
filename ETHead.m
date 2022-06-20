@@ -93,7 +93,7 @@ classdef ETHead < handle
         lEyeOpenness
         rEyeOpenness
         headSz
-        circVerts           = genEllipse(200);
+        circVerts           = [];
         eyeLidVerts         = {};
         gridVerts           = {};
     end
@@ -108,6 +108,7 @@ classdef ETHead < handle
                 this.qFloatColorRange       = Screen('ColorRange',this.wpnt)==1;
                 this.trackBoxHalfWidth      = trackBoxHalfWidth;
                 this.trackBoxHalfHeight     = trackBoxHalfHeight;
+                this.circVerts              = genEllipse(200);
             end
         end
         
