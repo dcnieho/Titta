@@ -464,7 +464,7 @@ std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicen
 }
 
 // deal with error messages
-void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
+[[ noreturn ]] void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
 {
     std::stringstream os;
     os << "Titta::cpp Error: " << errMsg_ << std::endl;
