@@ -638,10 +638,10 @@ else
     h       = openFac;
     s       = linspace(-acos(-u),acos(-u),nStep);
     maxAmpn = (1+u)/(2+u);          % (1+u)*h/(1+u+h) with h fixed to 1
-    unitFac = 1/sin(s(end));        % factor to scale everything by so that width of Vesica Piscis is 2 ([-1, 1])
+    unitFac = 1/sin(s(end));        % factor to scale everything by so that height of Vesica Piscis is 2 ([-1, 1])
     maxAmp  = maxAmpn*unitFac;      % factor to scale y by so that maximum amplitude (at h==1) is 1
     t_uh    = h./(cos(s)+u+h)*unitFac;
-    x       = sin(s).*t_uh;
+    x       = sin(s).*t_uh;         % NB: x and y are swapped from Mundilova's article, as i need the form to be rotated 90 degrees
     y       = (cos(s)+u).*t_uh;
     verts   = [x; y/maxAmp*.92];    % *.92 as always want to see some eyelid, also when eye fully open
 end
