@@ -5,7 +5,7 @@
 
 namespace {
     template <typename T>
-    constexpr size_t getNumRows()
+    constexpr size_t getNumElements()
     {
         if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>) // also matches TobiiResearchNormalizedPoint3D, as that's typedeffed to TobiiResearchPoint3D
             return 3;

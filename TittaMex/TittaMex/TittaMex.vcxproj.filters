@@ -27,13 +27,10 @@
     <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_mem_var_type.h">
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h">
-      <Filter>Header Files\cpp_mex_helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h">
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils.h">
@@ -42,16 +39,19 @@
     <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h">
-      <Filter>Header Files\cpp_mex_helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h">
-      <Filter>Header Files\cpp_mex_helpers</Filter>
-    </ClInclude>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\replace_specialization_type.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\always_false.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\invocable_traits.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
   </ItemGroup>

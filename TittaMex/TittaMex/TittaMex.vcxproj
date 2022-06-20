@@ -63,6 +63,7 @@
       <PreprocessorDefinitions>_WINDLL;MATLAB_MEX_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)output\$(Platform);../deps/lib;$(MATLAB_ROOT)\extern\lib\win64\microsoft;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -80,6 +81,7 @@
       <PreprocessorDefinitions>_WINDLL;MATLAB_MEX_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -97,8 +99,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\always_false.h" />
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_mem_var_type.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h" />
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\invocable_traits.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h" />
