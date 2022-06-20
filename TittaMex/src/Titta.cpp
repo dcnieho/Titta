@@ -1028,6 +1028,9 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
             return start(DataStream::EyeOpenness, initialBufferSize_, asGif_);
         return true;
     }
+
+    // will never get here, but to make compiler happy
+    return true;
 }
 
 // tobii to own type helpers
