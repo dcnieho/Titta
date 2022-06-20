@@ -30,7 +30,7 @@ for p=1:nfiles
     C = load(fullfile(dirs.mat,files(p).name),'calibration');
     sel = C.calibration{end}.selectedCal;
     cal = C.calibration{end}.attempt{sel};
-    acc = cal.val{end}.acc(:).'; % [LX LY RX RY]
+    acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
 
     % print to file
     fprintf(fid,'%s\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).fname,acc);
