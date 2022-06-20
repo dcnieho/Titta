@@ -1977,7 +1977,7 @@ classdef Titta < handle
                     msg{e} = sprintf('%s eye:\n%s',eyes{e},sprintf('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.1f\n',dat{:}));
                 end
                 msg = [msg{:}]; msg(end) = [];
-                if IsOctave && IsWin
+                if IsOctave % NB: also for Linux so that output on command line renders correctly. Not needed for all other cases where its text for PTB graphics
                     degChar = char([194 176]);
                 else
                     degChar = char(176);
