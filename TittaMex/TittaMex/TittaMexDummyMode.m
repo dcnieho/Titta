@@ -25,7 +25,7 @@ classdef TittaMexDummyMode < TittaMex
             
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            if 1
+            if ~IsOctave
                 thisInfo    = ?TittaMexDummyMode;
                 thisMethods = thisInfo.MethodList;
                 superInfo   = ?TittaMex;

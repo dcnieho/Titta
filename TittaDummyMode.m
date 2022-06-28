@@ -41,11 +41,11 @@ classdef TittaDummyMode < Titta
             
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            if 1
+            if ~IsOctave
                 thisInfo    = ?TittaDummyMode;
                 thisMethods = thisInfo.MethodList;
                 superInfo   = ?Titta;
-                superMethods= superInfo.MethodList;
+                superMethods= superInfo.MethodList
                 % for both, remove their constructors from list and limit
                 % to only public methods
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'Titta'})) = [];
