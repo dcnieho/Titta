@@ -247,14 +247,7 @@ try
         str = 'Game over';
     end
     str = sprintf('<size=26>%s\n%d points',str,(nBlockInRow*nRow-length(blocks))*pointsPerBlock);
-    if exist('libptbdrawtext_ftgl64.dll','file')
-        % DrawFormattedText2 is 64bit matlab only (on Windows)
-        DrawFormattedText2(str,'win',wpnt,'sx','center', 'sy','center', 'xalign','center', 'yalign','center','xlayout','center','baseColor',0);
-    else
-        % fallback for 32bit matlab on Windows (TODO: what to support on
-        % the other platforms here)?
-        DrawFormattedText2GDI(wpnt,str,'center','center','center','center','center',0);
-    end
+    DrawFormattedText2(str,'win',wpnt,'sx','center', 'sy','center', 'xalign','center', 'yalign','center','xlayout','center','baseColor',0);
     Screen('Flip',wpnt);
     WaitSecs(3);
 catch me
