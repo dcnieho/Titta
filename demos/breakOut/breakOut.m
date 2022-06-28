@@ -147,9 +147,14 @@ try
     ListenChar(0);
     
     % find out which eye(s) to use, start acquiring samples
-    eye     = calInfo.attempt{calInfo.selectedCal}.eye;
-    useLeft = ismember(eye,{ 'left','both'});
-    useRight= ismember(eye,{'right','both'});
+    if ~qUseDummyMode
+        eye     = calInfo.attempt{calInfo.selectedCal}.eye;
+        useLeft = ismember(eye,{ 'left','both'});
+        useRight= ismember(eye,{'right','both'});
+    else
+        useLeft = true;
+        useRight= true;
+    end
     EThndl.buffer.start('gaze');
     
     paddlePos = XMAX/2;     % start in center of screen horizontally
