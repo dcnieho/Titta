@@ -277,26 +277,32 @@ if isempty(rects)
     end
 end
 
-[mx, my] = deal([]);
 if isRecording
     [mx, my] = GetMouse();
-end
-if size(rects,1)>1
-    qRect = inRect([mx my].',rects.');
-    rect = rects(qRect,:);
-    
-    % translate to local rect
-    mx  = mx-rect(1);
-    my  = my-rect(2);
-    rect= OffsetRect(rect,-rect(1),-rect(2));
+    if size(rects,1)>1
+        qRect = inRect([mx my].',rects.');
+        rect = rects(qRect,:);
+        
+        % translate to local rect
+        mx  = mx-rect(1);
+        my  = my-rect(2);
+        rect= OffsetRect(rect,-rect(1),-rect(2));
+    else
+        rect = rects;
+    end
+    % put into fake SampleStruct
+    ts = int64(GetSecs*1000*1000);
+    gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true,'available',true);
+    pu = struct('diameter',0,'valid',false,'available',true);   % also good for eye openness, has the same fields
+    gO = struct('inUserCoords',zeros(3,1),'inTrackBoxCoords',zeros(3,1),'valid',false,'available',true);
+    edat = struct('gazePoint',gP,'pupil',pu,'eyeOpenness',pu,'gazeOrigin',gO);
+    sample = struct('deviceTimeStamp',ts,'systemTimeStamp',ts,'left',edat,'right',edat);
 else
-    rect = rects;
+    % put into fake SampleStruct
+    gP = struct('onDisplayArea',zeros(2,0),'inUserCoords',zeros(3,0),'valid',isRecording,'available',false);
+    pu = struct('diameter',[],'valid',false,'available',false);  % also good for eye openness, has the same fields
+    gO = struct('inUserCoords',zeros(3,0),'inTrackBoxCoords',zeros(3,0),'valid',false,'available',false);
+    edat = struct('gazePoint',gP,'pupil',pu,'eyeOpenness',pu,'gazeOrigin',gO);
+    sample = struct('deviceTimeStamp',[],'systemTimeStamp',[],'left',edat,'right',edat);
 end
-% put into fake SampleStruct
-ts = round(GetSecs*1000*1000);
-gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true);
-pu = struct('diameter',0,'valid',false);
-gO = struct('inUserCoords',zeros(3,1),'inTrackBoxCoords',zeros(3,1),'valid',false);
-edat = struct('gazePoint',gP,'pupil',pu,'gazeOrigin',gO);
-sample = struct('deviceTimeStamp',ts,'systemTimeStamp',ts,'left',edat,'right',edat);
 end
