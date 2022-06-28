@@ -35,7 +35,7 @@ classdef TittaMex < handle
         trackingMode
     end
     
-    methods (Static = true)
+    methods (Static = true, Access = protected)
         function mexFnc = checkMEXFnc(mexFnc)
             % Input function_handle or name, return valid handle or error
             isOctave = ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5]);
