@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <string_view>
+#include <sstream>
 #include <map>
 #include <cstring>
 
@@ -366,11 +367,7 @@ Titta::Titta(std::string address_)
     TobiiResearchEyeTracker* et;
     TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&et);
     if (status != TOBII_RESEARCH_STATUS_OK)
-    {
-        std::stringstream os;
-        os << "Titta::cpp: Cannot get eye tracker \"" << address_ << "\"";
-        ErrorExit(os.str(), status);
-    }
+        ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
     _eyetracker = TobiiTypes::eyeTracker(et);
     Init();
 }
@@ -687,11 +684,9 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
     {
         workItem.eye = *eye_;
         if (workItem.eye != "left" && workItem.eye != "right")
-        {
-            std::stringstream os;
-            os << "Titta::cpp::calibrationCollectData: Cannot start calibration for eye " << workItem.eye.value() << ", unknown. Expected left or right.";
-            DoExitWithMsg(os.str());
-        }
+            DoExitWithMsg(
+                "Titta::cpp::calibrationCollectData: Cannot start calibration for eye " + workItem.eye.value() + ", unknown. Expected left or right."
+            );
     }
 }
 void Titta::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
@@ -881,11 +876,9 @@ bool Titta::hasStream(DataStream  stream_) const
 bool Titta::setIncludeEyeOpennessInGaze(bool include_)
 {
     if (include_ && !hasStream(DataStream::EyeOpenness))
-    {
-        std::stringstream os;
-        os << "Titta::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " << dataStreamToString(DataStream::EyeOpenness) << " stream, this eye tracker does not provide it";
-        DoExitWithMsg(os.str());
-    }
+        DoExitWithMsg(
+            "Titta::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " + dataStreamToString(DataStream::EyeOpenness) + " stream, this eye tracker does not provide it"
+        );
 
     auto previous = _includeEyeOpennessInGaze;
     _includeEyeOpennessInGaze = include_;
@@ -1061,11 +1054,7 @@ bool Titta::start(DataStream  stream_, std::optional<size_t> initialBufferSize_,
         *stateVar = result==TOBII_RESEARCH_STATUS_OK;
 
     if (result != TOBII_RESEARCH_STATUS_OK)
-    {
-        std::stringstream os;
-        os << "Titta::cpp::start: Cannot start recording " << dataStreamToString(stream_) << " stream";
-        ErrorExit(os.str(), result);
-    }
+        ErrorExit("Titta::cpp::start: Cannot start recording " + dataStreamToString(stream_) + " stream", result);
     else
     {
         // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
