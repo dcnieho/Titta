@@ -17,9 +17,9 @@ else
     tobii.frequency =  600;
 end
 
-% warm up GetSecs
+% warm up systemTimestamp
 for p=1:10
-    GetSecs();
+    tobii.systemTimestamp;
 end
 
 nSamp = 5000;
@@ -31,7 +31,7 @@ tic
 while i<=length(a)
     samp = tobii.consumeN('gaze');
     if ~isempty(samp.deviceTimeStamp)
-        a(1,i) = tobii.systemTimestamp; % this is basically GetSecs
+        a(1,i) = tobii.systemTimestamp;
         a(2,i) = samp.systemTimeStamp(end);
         a(3,i) = samp.deviceTimeStamp(end);
         a(4,i) = length(samp.systemTimeStamp);
@@ -78,9 +78,9 @@ if isprop(fhndl,'WindowState')
 end
 
 tic
-% just a check on how long GetSecs takes, to be sure that doesn't dominate
-% our results
+% just a check on how long tobii.systemTimestamp takes, to be sure that
+% doesn't dominate our results
 for p=1:nSamp
-    GetSecs();
+    tobii.systemTimestamp;
 end
 toc
