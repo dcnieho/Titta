@@ -173,7 +173,7 @@ classdef TittaMexDummyMode < TittaMex
             if nargin<2
                 error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
             end
-            stream = checkValidStream(this,stream);
+            checkValidStream(this,stream);
             status = false;
             if strcmpi(stream,'gaze')
                 status = this.isRecordingGaze;
@@ -183,7 +183,7 @@ classdef TittaMexDummyMode < TittaMex
             if nargin<2
                 error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
             end
-            stream = checkValidStream(this,stream);
+            checkValidStream(this,stream);
             if nargin>3
                 stream = checkValidBufferSide(this,side);
             end
@@ -196,7 +196,7 @@ classdef TittaMexDummyMode < TittaMex
             if nargin<2
                 error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
             end
-            stream = checkValidStream(this,stream);
+            checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
@@ -206,7 +206,7 @@ classdef TittaMexDummyMode < TittaMex
             if nargin<2
                 error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
             end
-            stream = checkValidStream(this,stream);
+            checkValidStream(this,stream);
             if nargin>3
                 stream = checkValidBufferSide(this,side);
             end
@@ -219,7 +219,7 @@ classdef TittaMexDummyMode < TittaMex
             if nargin<2
                 error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
             end
-            stream = checkValidStream(this,stream);
+            checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
                 data = getMouseSample(this.isRecordingGaze);
