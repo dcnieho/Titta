@@ -115,7 +115,8 @@ classdef TittaMexDummyMode < TittaMex
         % setters
         % properties only, so nothing to override
         % modifiers
-        function applyLicenses(~,~)
+        function applyResults = applyLicenses(~,~)
+            applyResults = [];
         end
         function clearLicenses(~)
         end
@@ -153,6 +154,9 @@ classdef TittaMexDummyMode < TittaMex
         function supported = hasStream(this,stream)
             assert(nargin>1,'TittaMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
             supported   = checkValidStream(this,stream);
+        end
+        function prevEyeOpennessState = setIncludeEyeOpennessInGaze(~,~)
+            prevEyeOpennessState = false;
         end
         function success = start(this,stream,~,~)
             assert(nargin>1,'TittaMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
