@@ -45,7 +45,7 @@ classdef TittaDummyMode < Titta
                 thisInfo    = ?TittaDummyMode;
                 thisMethods = thisInfo.MethodList;
                 superInfo   = ?Titta;
-                superMethods= superInfo.MethodList
+                superMethods= superInfo.MethodList;
                 % for both, remove their constructors from list and limit
                 % to only public methods
                 superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'Titta'})) = [];
