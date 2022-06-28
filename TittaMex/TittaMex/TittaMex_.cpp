@@ -145,6 +145,9 @@ namespace {
         // check functions for dummy mode
         CheckDataStream,
         CheckBufferSide,
+        // data stream info
+        GetAllDataStreamsString,
+        GetAllBufferSidesString,
 
         //// eye-tracker specific getters and setters
         // getters
@@ -215,6 +218,9 @@ namespace {
         // check functions for dummy mode
         { "checkDataStream",                Action::CheckDataStream },
         { "checkBufferSide",                Action::CheckBufferSide },
+        // data stream info
+        { "getAllDataStreamsString",        Action::GetAllDataStreamsString },
+        { "getAllBufferSidesString",        Action::GetAllBufferSidesString },
 
         //// eye-tracker specific getters and setters
         // getters
@@ -330,7 +336,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (action != Action::Touch && action != Action::New &&
             action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
             action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
-            action != Action::CheckDataStream && action != Action::CheckBufferSide)
+            action != Action::CheckDataStream && action != Action::CheckBufferSide &&
+            action != Action::GetAllDataStreamsString && action != Action::GetAllBufferSidesString)
         {
             instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
             instance = instIt->second;
@@ -422,7 +429,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::CheckDataStream:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
-                throw "checkDataStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "checkDataStream: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string, check if valid
             char* bufferCstr = mxArrayToString(prhs[1]);
@@ -434,13 +444,54 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::CheckBufferSide:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
-                throw "checkBufferSide: First input must be a sample side identifier string ('first', or 'last').";
+            {
+                std::string err = "checkBufferSide: First input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string, check if valid
             char* bufferCstr = mxArrayToString(prhs[1]);
             Titta::stringToBufferSide(bufferCstr);
             mxFree(bufferCstr);
             plhs[0] = mxCreateLogicalScalar(true);
+            return;
+        }
+        case Action::GetAllDataStreamsString:
+        {
+            if (nrhs > 1)
+            {
+                if (mxIsEmpty(prhs[1]))
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString(""));
+                else
+                {
+                    if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                        throw "getAllDataStreamsString: Expected first argument to be a char scalar.";
+                    char quoteChar[2] = { "\0" };
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString(quoteChar));
+                }
+            }
+            else
+                plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString());
+            return;
+        }
+        case Action::GetAllBufferSidesString:
+        {
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            {
+                if (mxIsEmpty(prhs[1]))
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(""));
+                else
+                {
+                    if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                        throw "getAllBufferSidesString: Expected first argument to be a char scalar.";
+                    char quoteChar[2] = { "\0" };
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
+                }
+            }
+            else
+                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
             return;
         }
 
@@ -693,7 +744,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::HasStream:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "hasStream: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "hasStream: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string, call hasStream() on instance
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -713,7 +767,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::Start:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "start: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "start: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get optional input arguments
             std::optional<size_t> bufSize;
@@ -743,7 +800,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::IsRecording:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "isRecording: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "isRecording: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string, call isBuffering() on instance
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -754,7 +814,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::ConsumeN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "consumeN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "consumeN: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -776,7 +839,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
             {
                 if (!mxIsChar(prhs[4]))
-                    throw "consumeN: Third input must be a sample side identifier string ('start', or 'end').";
+                {
+                    std::string err = "consumeN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
+                    throw err;
+                }
                 char* bufferCstr = mxArrayToString(prhs[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);
@@ -808,7 +874,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::ConsumeTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "consumeTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').";
+            {
+                std::string err = "consumeTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -857,7 +926,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::PeekN:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "peekN: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "peekN: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -879,7 +951,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs > 4 && !mxIsEmpty(prhs[4]))
             {
                 if (!mxIsChar(prhs[4]))
-                    throw "peekN: Third input must be a sample side identifier string ('start', or 'end').";
+                {
+                    std::string err = "peekN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
+                    throw err;
+                }
                 char* bufferCstr = mxArrayToString(prhs[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);
@@ -911,7 +986,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::PeekTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "peekTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').";
+            {
+                std::string err = "peekTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -960,7 +1038,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::Clear:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "clear: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "clear: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get data stream identifier string, clear buffer
             char* bufferCstr = mxArrayToString(prhs[2]);
@@ -971,7 +1052,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::ClearTimeRange:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "clearTimeRange: First input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', or 'notification').";
+            {
+                std::string err = "clearTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
@@ -998,7 +1082,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::Stop:
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "stop: first input must be a data stream identifier string ('gaze', 'eyeImage', 'externalSignal', 'timeSync', 'positioning', or 'notification').";
+            {
+                std::string err = "stop: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                throw err;
+            }
 
             // get optional input argument
             std::optional<bool> clearBuffer;

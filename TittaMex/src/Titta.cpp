@@ -2,7 +2,6 @@
 #include <vector>
 #include <algorithm>
 #include <string_view>
-#include <sstream>
 #include <map>
 #include <cstring>
 
@@ -76,11 +75,9 @@ Titta::DataStream Titta::stringToDataStream(std::string stream_)
 {
     auto it = dataStreamMap.find(stream_);
     if (it == dataStreamMap.end())
-    {
-        std::stringstream os;
-        os << R"(Titta::cpp: Requested stream ")" << stream_ << R"(" is not recognized. Supported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification")";
-        DoExitWithMsg(os.str());
-    }
+        DoExitWithMsg(
+            R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllDataStreamsString("\"")
+        );
     return it->second;
 }
 
@@ -90,15 +87,40 @@ std::string Titta::dataStreamToString(Titta::DataStream stream_)
     return v.first;
 }
 
+std::vector<std::string> Titta::getAllDataStreams()
+{
+    using val_t = typename std::underlying_type<Titta::DataStream>::type;
+    std::vector<std::string> out;
+
+    for (auto val = static_cast<val_t>(Titta::DataStream::Gaze); val < static_cast<val_t>(Titta::DataStream::Last); val++)
+        out.push_back(Titta::dataStreamToString(static_cast<Titta::DataStream>(val)));
+
+    return out;
+}
+
+std::string Titta::getAllDataStreamsString(const char* quoteChar_ /*= "\""*/)
+{
+    std::string out;
+    bool first = true;
+    for (auto const& s : Titta::getAllDataStreams())
+    {
+        if (first)
+            first = false;
+        else
+            out += ", ";
+        out += quoteChar_ + s + quoteChar_;
+    }
+    return out;
+}
+
+
 Titta::BufferSide Titta::stringToBufferSide(std::string bufferSide_)
 {
     auto it = bufferSideMap.find(bufferSide_);
     if (it == bufferSideMap.end())
-    {
-        std::stringstream os;
-        os << R"("Titta::cpp: Requested buffer side ")" << bufferSide_ << R"(" is not recognized. Supported buffer sides are: "start" and "end")";
-        DoExitWithMsg(os.str());
-    }
+        DoExitWithMsg(
+            R"(Titta::cpp: Requested buffer side ")" + bufferSide_ + R"(" is not recognized. Supported buffer sides are: )" + Titta::getAllBufferSidesString("\"")
+        );
     return it->second;
 }
 
@@ -106,6 +128,32 @@ std::string Titta::bufferSideToString(Titta::BufferSide bufferSide_)
 {
     auto v = *find_if(bufferSideMap.begin(), bufferSideMap.end(), [&bufferSide_](auto p) {return p.second == bufferSide_;});
     return v.first;
+}
+
+std::vector<std::string> Titta::getAllBufferSides()
+{
+    using val_t = typename std::underlying_type<Titta::BufferSide>::type;
+    std::vector<std::string> out;
+
+    for (auto val = static_cast<val_t>(Titta::BufferSide::Start); val < static_cast<val_t>(Titta::BufferSide::Last); val++)
+        out.push_back(Titta::bufferSideToString(static_cast<Titta::BufferSide>(val)));
+
+    return out;
+}
+
+std::string Titta::getAllBufferSidesString(const char* quoteChar_ /*= "\""*/)
+{
+    std::string out;
+    bool first = true;
+    for (auto const& s : Titta::getAllBufferSides())
+    {
+        if (first)
+            first = false;
+        else
+            out += ", ";
+        out += quoteChar_ + s + quoteChar_;
+    }
+    return out;
 }
 
 // callbacks

@@ -54,7 +54,7 @@ classdef TittaMexDummyMode < TittaMex
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
                 % (call static functions in the mex)
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging'});
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging','getAllBufferSidesString','getAllDataStreamsString'});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
@@ -152,21 +152,27 @@ classdef TittaMexDummyMode < TittaMex
         
         %% data streams
         function supported = hasStream(this,stream)
-            assert(nargin>1,'TittaMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             supported   = checkValidStream(this,stream);
         end
         function prevEyeOpennessState = setIncludeEyeOpennessInGaze(~,~)
             prevEyeOpennessState = false;
         end
         function success = start(this,stream,~,~)
-            assert(nargin>1,'TittaMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = true;
             end
         end
         function status = isRecording(this,stream)
-            assert(nargin>1,'TittaMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = checkValidStream(this,stream);
             status = false;
             if strcmpi(stream,'gaze')
@@ -174,7 +180,9 @@ classdef TittaMexDummyMode < TittaMex
             end
         end
         function data = consumeN(this,stream,~,side)
-            assert(nargin>1,'TittaMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = checkValidStream(this,stream);
             if nargin>3
                 stream = checkValidBufferSide(this,side);
@@ -185,7 +193,9 @@ classdef TittaMexDummyMode < TittaMex
             end
         end
         function data = consumeTimeRange(this,stream,~,~)
-            assert(nargin>1,'TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
@@ -193,7 +203,9 @@ classdef TittaMexDummyMode < TittaMex
             end
         end
         function data = peekN(this,stream,~,side)
-            assert(nargin>1,'TittaMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = checkValidStream(this,stream);
             if nargin>3
                 stream = checkValidBufferSide(this,side);
@@ -204,7 +216,9 @@ classdef TittaMexDummyMode < TittaMex
             end
         end
         function data = peekTimeRange(this,stream,~,~)
-            assert(nargin>1,'TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = checkValidStream(this,stream);
             data = [];
             if strcmpi(stream,'gaze')
@@ -212,15 +226,21 @@ classdef TittaMexDummyMode < TittaMex
             end
         end
         function clear(this,stream)
-            assert(nargin>1,'TittaMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             checkValidStream(this,stream);
         end
         function clearTimeRange(this,stream,~,~)
-            assert(nargin>1,'TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             checkValidStream(this,stream);
         end
         function success = stop(this,stream,~)
-            assert(nargin>1,'TittaMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeImage", "externalSignal" and "timeSync"');
+            if nargin<2
+                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
                 this.isRecordingGaze = false;

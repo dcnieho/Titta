@@ -50,22 +50,28 @@ public:
         ExtSignal,
         TimeSync,
         Positioning,
-        Notification
+        Notification,
+        Last            // fake value for iteration
     };
     // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
     static Titta::DataStream stringToDataStream(std::string stream_);
     static std::string dataStreamToString(Titta::DataStream stream_);
+    static std::vector<std::string> getAllDataStreams();
+    static std::string getAllDataStreamsString(const char* quoteChar_ = "\"");
 
     // side of buffer to get samples from
     enum class BufferSide
     {
         Unknown,
         Start,
-        End
+        End,
+        Last            // fake value for iteration
     };
     // "first", or "last"
     static Titta::BufferSide stringToBufferSide(std::string bufferSide_);
     static std::string bufferSideToString(Titta::BufferSide bufferSide_);
+    static std::vector<std::string> getAllBufferSides();
+    static std::string getAllBufferSidesString(const char* quoteChar_ = "\"");
 
 public:
     Titta(std::string address_);

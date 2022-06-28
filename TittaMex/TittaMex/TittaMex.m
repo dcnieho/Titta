@@ -152,6 +152,21 @@ classdef TittaMex < handle
         function stopLogging(this)
             this.cppmethodGlobal('stopLogging');
         end
+        % data stream info
+        function dataStreams = getAllDataStreamsString(this,quoteChar)
+            if nargin>1
+                dataStreams = this.cppmethodGlobal('getAllDataStreamsString',ensureStringIsChar(quoteChar));
+            else
+                dataStreams = this.cppmethodGlobal('getAllDataStreamsString');
+            end
+        end
+        function bufferSides = getAllBufferSidesString(this,quoteChar)
+            if nargin>1
+                bufferSides = this.cppmethodGlobal('getAllBufferSidesString',ensureStringIsChar(quoteChar));
+            else
+                bufferSides = this.cppmethodGlobal('getAllBufferSidesString');
+            end
+        end
         
         %% eye-tracker specific getters and setters
         % getters
@@ -321,7 +336,9 @@ classdef TittaMex < handle
         
         %% data streams
         function supported = hasStream(this,stream)
-            assert(nargin>1,'TittaMex::hasStream: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
         function prevEyeOpennessState = setIncludeEyeOpennessInGaze(this,include)
@@ -330,7 +347,9 @@ classdef TittaMex < handle
         function success = start(this,stream,initialBufferSize,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
-            assert(nargin>1,'TittaMex::start: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
@@ -341,7 +360,9 @@ classdef TittaMex < handle
             end
         end
         function status = isRecording(this,stream)
-            assert(nargin>1,'TittaMex::isRecording: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             status = this.cppmethod('isRecording',ensureStringIsChar(stream));
         end
         function data = consumeN(this,stream,NSamp,side)
@@ -350,7 +371,9 @@ classdef TittaMex < handle
             % -  side: Which side of buffer to consume samples from.
             %          Values: 'start' or 'end'
             %          Default: 'start'
-            assert(nargin>1,'TittaMex::consumeN: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
                 data = this.cppmethod('consumeN',stream,uint64(NSamp),ensureStringIsChar(side));
@@ -362,7 +385,9 @@ classdef TittaMex < handle
         end
         function data = consumeTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync" and "notification"');
+            if nargin<2
+                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',stream,int64(startT),int64(endT));
@@ -379,7 +404,9 @@ classdef TittaMex < handle
             % -  side: Which side of buffer to consume samples from.
             %          Values: 'start' or 'end'
             %          Default: 'end'
-            assert(nargin>1,'TittaMex::peekN: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
                 data = this.cppmethod('peekN',stream,uint64(NSamp),ensureStringIsChar(side));
@@ -391,7 +418,9 @@ classdef TittaMex < handle
         end
         function data = peekTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
-            assert(nargin>1,'TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync" and "notification"');
+            if nargin<2
+                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',stream,int64(startT),int64(endT));
@@ -402,12 +431,16 @@ classdef TittaMex < handle
             end
         end
         function clear(this,stream)
-            assert(nargin>1,'TittaMex::clear: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole buffer
-            assert(nargin>1,'TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync" and "notification"');
+            if nargin<2
+                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
                 this.cppmethod('clearTimeRange',stream,int64(startT),int64(endT));
@@ -420,7 +453,9 @@ classdef TittaMex < handle
         function success = stop(this,stream,doClearBuffer)
             % optional boolean input indicating whether buffer should be
             % cleared out
-            assert(nargin>1,'TittaMex::stop: provide stream argument. \nSupported streams are: "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning" and "notification"');
+            if nargin<2
+                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+            end
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(doClearBuffer)
                 success = this.cppmethod('stop',stream,logical(doClearBuffer));
