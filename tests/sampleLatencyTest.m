@@ -9,7 +9,7 @@ tobii = TittaMex();
 trackers = tobii.findAllEyeTrackers();
 tracker = trackers(1);
 tobii.init(tracker.address)
-hasEyeOpenness = ismember('HasEyeOpennessData',tobii.capabilities);
+hasEyeOpenness = tobii.hasStream('eyeOpenness');
 tobii.setIncludeEyeOpennessInGaze(false);
 if false
     tobii.frequency = 1200;

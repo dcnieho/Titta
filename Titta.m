@@ -841,7 +841,10 @@ classdef Titta < handle
             [~,~,obj.mouseState] = GetMouse();
             
             % make sure we get eye openness data if available
-            prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
+            qHasEyeOpenness = obj.buffer.hasStream('eyeOpenness');
+            if qHasEyeOpenness
+                prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
+            end
             
             %%% 1. some preliminary setup, to make sure we are in known state
             if bitand(flag,1)
@@ -1028,7 +1031,9 @@ classdef Titta < handle
             
             % clean up and reset PTB state
             obj.resetScreen(wpnt,screenState);
-            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
+            if qHasEyeOpenness
+                obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
+            end
             
             % if we want to exit calibration mode because:
             % 1. user requests it (flag bit 2 is set)
@@ -4212,6 +4217,7 @@ classdef Titta < handle
             
             % get eye tracker capabilities
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
+            qHasEyeOpenness         = obj.buffer.hasStream('eyeOpenness');
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
             % timing is done in ticks (display refreshes) instead of time.
@@ -4223,7 +4229,9 @@ classdef Titta < handle
             fs = min(fs);
             
             startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
-            prevEyeOpennessState    = obj.buffer.setIncludeEyeOpennessInGaze(true);
+            if qHasEyeOpenness
+                prevEyeOpennessState    = obj.buffer.setIncludeEyeOpennessInGaze(true);
+            end
             obj.buffer.start('gaze');
             obj.buffer.start('positioning');
             if obj.settings.mancal.doRecordEyeImages && qHasEyeIm
@@ -6197,7 +6205,9 @@ classdef Titta < handle
             HideCursor;
             obj.buffer.stop('positioning');
             obj.buffer.stop('gaze');
-            obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
+            if qHasEyeOpenness
+                obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
+            end
             obj.sendMessage('STOP MANUAL CALIBRATION ROUTINE');
             obj.buffer.clear('positioning');                % this one is not meant to be kept around (useless as it doesn't have time stamps). So just clear completely.
             if qHasEyeIm
