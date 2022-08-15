@@ -13,8 +13,7 @@ www.github.com/dcnieho/Titta.
 
 Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TittaMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TittaMex/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
 
-`demos/readme.m` shows a minimal example of using the toolbox's
-functionality.
+`demos/readme.m` shows a minimal example of using the toolbox's functionality. For documentation of the various data fields in the `.mat` file produced by the demos, see [the Tobii SDK documentation](https://developer.tobiipro.com/commonconcepts.html).
 
 Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobiipro.com/product-listing/eye-tracker-manager/) before trying to use it with Titta. Note also that some of the supported eye trackers require several setup steps before they are ready for use (e.g. do a display setup in Eye Tracker Manager). If these steps have not been performed, Titta will throw strange error messages.
 
