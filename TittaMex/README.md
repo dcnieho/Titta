@@ -10,6 +10,7 @@ Run `makeTittaMex.m` to build the mex file.
 
 For building the Linux mex file the default gcc version 11.2.0 included with Ubuntu 22.04 was used.
 (The mex file currently does not build with gcc 9.3.0 provided in the mingw64 distribution that comes with Octave 6.4.0 on Windows.)
+For compatibility with an earlier version of Ubuntu, either install the right GLIBCXX version or recompile following the instructions here. See [this issue](https://github.com/dcnieho/Titta/issues/40) for more information.
 
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
