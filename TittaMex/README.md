@@ -28,6 +28,7 @@ To update the Tobii Pro C SDK used to build Titta against, you need to manually 
 3. The \*.dll and \*.so files are placed in the respective output directories, `\TittaMex\TittaMex\64\Windows` and `\TittaMex\TittaMex\64\Linux`, respectively.
 
 #### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
+Please note that the code for the Python wrapper is currently not actively maintained and will not build as is now. However, assuming its updated, the following steps will build the code:
 1. Make sure the PsychoPy version you want to work with is installed.
 2. Make sure the `PYTHON_ROOT` environment variable is set to the location of your PsychoPy installation.
 3. Install PyBind11: in the root folder of your PsychoPy installation, execute `python -m pip install pybind11`
