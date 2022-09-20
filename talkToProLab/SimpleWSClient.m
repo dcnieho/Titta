@@ -8,7 +8,7 @@ classdef SimpleWSClient < WebSocketClient
         function this = SimpleWSClient(varargin)
             % add jar to static class path if needed, so the websocket java
             % library can be found
-            mustRestart = setupJavaStaticClassPath('matlab-websocket-1.4.jar');
+            mustRestart = setupJavaStaticClassPath('matlab-websocket-1.6.jar');
             if mustRestart
                 error('You need to <a href="matlab:quit;">restart matlab now</a> to finish installing WebSocket''s java backing library')
             end

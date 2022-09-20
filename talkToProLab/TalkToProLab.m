@@ -53,7 +53,7 @@ classdef TalkToProLab < handle
             
             % check WebSocketClient java class required for SimpleWSClient
             % is available
-            if exist('matlab-websocket-1.4.jar','file')==0
+            if exist('matlab-websocket-1.6.jar','file')==0
                 p = fileparts(mfilename('fullpath'));
                 error('The WebSocketClient required for TalkToProLab to function cannot be found. The folder ''%s'' is likely empty. If so, follow the install instructions provided here: https://github.com/dcnieho/Titta/#how-to-acquire to ensure that the right files are in the right place.',fullfile(p,'MatlabWebSocket'))
             end
