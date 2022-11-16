@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS // for uWS.h
 #include <iostream>
 #include <fstream>
+#include <locale>
 #include <map>
 #include <string>
 #include <sstream>
@@ -19,6 +20,40 @@ using json = nlohmann::json;
 
 
 void DoExitWithMsg(std::string errMsg_);
+
+// locale for proper nan printing (always nan, not sometimes -nan(ind))
+template<typename Iterator = std::ostreambuf_iterator<char>>
+class NumPut : public std::num_put<char, Iterator>
+{
+private:
+    using base_type = std::num_put<char, Iterator>;
+
+public:
+    using char_type = typename base_type::char_type;
+    using iter_type = typename base_type::iter_type;
+
+    NumPut(std::size_t refs = 0)
+        : base_type(refs)
+    {}
+
+protected:
+    virtual iter_type do_put(iter_type out, std::ios_base& str, char_type fill, double v) const override {
+        if (std::isnan(v))
+            out = std::copy(std::begin(NotANumber), std::end(NotANumber), out);
+        else
+            out = base_type::do_put(out, str, fill, v);
+        return out;
+    }
+    virtual iter_type do_put(iter_type out, std::ios_base& str, char_type fill, long double v) const override {
+        if (std::isnan(v))
+            out = std::copy(std::begin(NotANumber), std::end(NotANumber), out);
+        else
+            out = base_type::do_put(out, str, fill, v);
+        return out;
+    }
+private:
+    std::string NotANumber = "nan";
+};
 
 //#define LOCAL_TEST
 
@@ -438,9 +473,133 @@ int main()
             {
                 if (TittaInstance.get())
                 {
-                    auto samples = TittaInstance.get()->consumeN<Titta::gaze>();
-                    // TODO: store all to file somehow
+                    std::optional<std::string> filePathOpt;
+                    if (jsonInput.count("filePath"))
+                        filePathOpt = jsonInput.at("filePath").get<std::string>();
+                    auto filePath = filePathOpt.value_or("data.txt");
+
+                    auto num_put = new NumPut<>();
+                    std::locale locale(std::cout.getloc(), num_put);    // pass ownership
+
+                    std::ofstream outFile;
+                    outFile.open(filePath, std::iostream::out| std::iostream::trunc);
+                    if (outFile.is_open())
+                    {
+                        outFile.imbue(locale);
+
+                        // header
+                        for (auto x : {
+                            "device_time_stamp",
+                            "system_time_stamp",
+
+                            "left_gaze_point_available",
+                            "left_gaze_point_valid",
+                            "left_gaze_point_on_display_area_x",
+                            "left_gaze_point_on_display_area_y",
+                            "left_gaze_point_in_user_coordinates_x",
+                            "left_gaze_point_in_user_coordinates_y",
+                            "left_gaze_point_in_user_coordinates_z",
+                            "left_gaze_origin_available",
+                            "left_gaze_origin_valid",
+                            "left_gaze_origin_in_trackbox_coordinates_x",
+                            "left_gaze_origin_in_trackbox_coordinates_y",
+                            "left_gaze_origin_in_trackbox_coordinates_z",
+                            "left_gaze_origin_in_user_coordinates_x",
+                            "left_gaze_origin_in_user_coordinates_y",
+                            "left_gaze_origin_in_user_coordinates_z",
+                            "left_pupil_available",
+                            "left_pupil_valid",
+                            "left_pupil_diameter",
+                            "left_eye_openness_available",
+                            "left_eye_openness_valid",
+                            "left_eye_openness_diameter",
+
+                            "right_gaze_point_available",
+                            "right_gaze_point_valid",
+                            "right_gaze_point_on_display_area_x",
+                            "right_gaze_point_on_display_area_y",
+                            "right_gaze_point_in_user_coordinates_x",
+                            "right_gaze_point_in_user_coordinates_y",
+                            "right_gaze_point_in_user_coordinates_z",
+                            "right_gaze_origin_available",
+                            "right_gaze_origin_valid",
+                            "right_gaze_origin_in_trackbox_coordinates_x",
+                            "right_gaze_origin_in_trackbox_coordinates_y",
+                            "right_gaze_origin_in_trackbox_coordinates_z",
+                            "right_gaze_origin_in_user_coordinates_x",
+                            "right_gaze_origin_in_user_coordinates_y",
+                            "right_gaze_origin_in_user_coordinates_z",
+                            "right_pupil_available",
+                            "right_pupil_valid",
+                            "right_pupil_diameter",
+                            "right_eye_openness_available",
+                            "right_eye_openness_valid",
+                            "right_eye_openness_diameter",
+                            })
+                        {
+                            outFile << x << '\t';
+                        }
+                        outFile << '\n';
+
+                        // samples
+                        for (const auto& sample : TittaInstance.get()->consumeN<Titta::gaze>())
+                        {
+                            outFile << sample.device_time_stamp << '\t';
+                            outFile << sample.system_time_stamp << '\t';
+
+                            outFile << sample.left_eye.gaze_point.available << '\t';
+                            outFile << (sample.left_eye.gaze_point.validity==TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.left_eye.gaze_point.position_on_display_area.x << '\t';
+                            outFile << sample.left_eye.gaze_point.position_on_display_area.y << '\t';
+                            outFile << sample.left_eye.gaze_point.position_in_user_coordinates.x << '\t';
+                            outFile << sample.left_eye.gaze_point.position_in_user_coordinates.y << '\t';
+                            outFile << sample.left_eye.gaze_point.position_in_user_coordinates.z << '\t';
+                            outFile << sample.left_eye.gaze_origin.available << '\t';
+                            outFile << (sample.left_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_track_box_coordinates.x << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_track_box_coordinates.y << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_track_box_coordinates.z << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_user_coordinates.x << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_user_coordinates.y << '\t';
+                            outFile << sample.left_eye.gaze_origin.position_in_user_coordinates.z << '\t';
+                            outFile << sample.left_eye.pupil.available << '\t';
+                            outFile << (sample.left_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.left_eye.pupil.diameter << '\t';
+                            outFile << sample.left_eye.eye_openness.available << '\t';
+                            outFile << (sample.left_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.left_eye.eye_openness.diameter << '\t';
+
+                            outFile << sample.right_eye.gaze_point.available << '\t';
+                            outFile << (sample.right_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.right_eye.gaze_point.position_on_display_area.x << '\t';
+                            outFile << sample.right_eye.gaze_point.position_on_display_area.y << '\t';
+                            outFile << sample.right_eye.gaze_point.position_in_user_coordinates.x << '\t';
+                            outFile << sample.right_eye.gaze_point.position_in_user_coordinates.y << '\t';
+                            outFile << sample.right_eye.gaze_point.position_in_user_coordinates.z << '\t';
+                            outFile << sample.right_eye.gaze_origin.available << '\t';
+                            outFile << (sample.right_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_track_box_coordinates.x << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_track_box_coordinates.y << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_track_box_coordinates.z << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_user_coordinates.x << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_user_coordinates.y << '\t';
+                            outFile << sample.right_eye.gaze_origin.position_in_user_coordinates.z << '\t';
+                            outFile << sample.right_eye.pupil.available << '\t';
+                            outFile << (sample.right_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.right_eye.pupil.diameter << '\t';
+                            outFile << sample.right_eye.eye_openness.available << '\t';
+                            outFile << (sample.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID) << '\t';
+                            outFile << sample.right_eye.eye_openness.diameter << '\t';
+                        outFile << '\n';
+                        }
+                        outFile.close();
+                        sendJson(ws, { {"action", "saveData"}, {"status", true} });
+                    }
+                    else
+                        sendJson(ws, { {"error", "saveData"}, {"reason","could not open file"}, {"filePath", filePath}});
                 }
+                else
+                    sendJson(ws, {{"error", "saveData"}, {"reason","you need to startSampleBuffer first"}});
                 break;
             }
             case Action::StoreMessage:
