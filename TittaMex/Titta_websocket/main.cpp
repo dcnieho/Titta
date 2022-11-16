@@ -388,14 +388,18 @@ int main()
 
                 bool status = false;
                 if (TittaInstance.get())
-                    status = TittaInstance.get()->start("gaze");
+                {
+                    if (TittaInstance.get()->hasStream(Titta::DataStream::EyeOpenness))
+                        TittaInstance.get()->setIncludeEyeOpennessInGaze(true);
+                    status = TittaInstance.get()->start(Titta::DataStream::Gaze);
+                }
 
                 sendJson(ws, {{"action", "startSampleBuffer"}, {"status", status}});
                 break;
             }
             case Action::ClearSampleBuffer:
                 if (TittaInstance.get())
-                    TittaInstance.get()->clear("gaze");
+                    TittaInstance.get()->clear(Titta::DataStream::Gaze);
                 sendJson(ws, {{"action", "clearSampleBuffer"}, {"status", true}});  // nothing to clear or cleared, both success status
                 break;
             case Action::PeekSamples:
@@ -425,7 +429,7 @@ int main()
             {
                 bool status = false;
                 if (TittaInstance.get())
-                    status = TittaInstance.get()->stop("gaze");
+                    status = TittaInstance.get()->stop(Titta::DataStream::Gaze);
 
                 sendJson(ws, {{"action", "stopSampleBuffer"}, {"status", status}});
                 break;
