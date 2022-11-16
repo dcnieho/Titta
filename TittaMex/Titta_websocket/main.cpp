@@ -83,37 +83,42 @@ namespace {
     json formatSampleAsJSON(TobiiResearchGazeData sample_)
     {
         auto lx = sample_.left_eye .gaze_point.position_on_display_area.x;
-        auto ly = sample_.left_eye .gaze_point.position_on_display_area.y;
+        auto ly = sample_.left_eye.gaze_point.position_on_display_area.y;
+        auto lp = sample_.left_eye.pupil_data.diameter;
         auto rx = sample_.right_eye.gaze_point.position_on_display_area.x;
         auto ry = sample_.right_eye.gaze_point.position_on_display_area.y;
-        decltype(lx) x = 0;
-        decltype(ly) y = 0;
-
-        if (sample_.left_eye.gaze_point.validity==TOBII_RESEARCH_VALIDITY_INVALID)
-        {
-            // just return the other eye. if also missing, so be it
-            x = rx;
-            y = ry;
-        }
-        else if (sample_.right_eye.gaze_point.validity==TOBII_RESEARCH_VALIDITY_INVALID)
-        {
-            // just return the other eye. if also missing, so be it
-            x = lx;
-            y = ly;
-        }
-        else
-        {
-            // both eyes available, average
-            // could also be no eyes available, in which case this is moot and remains nan, which is fine
-            x = (lx+rx)/2;
-            y = (ly+ry)/2;
-        }
+        auto rp = sample_.right_eye.pupil_data.diameter;
 
         return
         {
             {"ts", sample_.system_time_stamp},
-            {"x" , x},
-            {"y" , y}
+            {"lx" , lx},
+            {"ly" , ly},
+            {"lp" , lp},
+            {"rx" , rx},
+            {"ry" , ry},
+            {"rp" , rp}
+        };
+    }
+
+    json formatSampleAsJSON(Titta::gaze sample_)
+    {
+        auto lx = sample_.left_eye.gaze_point.position_on_display_area.x;
+        auto ly = sample_.left_eye.gaze_point.position_on_display_area.y;
+        auto lp = sample_.left_eye.pupil.diameter;
+        auto rx = sample_.right_eye.gaze_point.position_on_display_area.x;
+        auto ry = sample_.right_eye.gaze_point.position_on_display_area.y;
+        auto rp = sample_.right_eye.pupil.diameter;
+
+        return
+        {
+            {"ts", sample_.system_time_stamp},
+            {"lx" , lx},
+            {"ly" , ly},
+            {"lp" , lp},
+            {"rx" , rx},
+            {"ry" , ry},
+            {"rp" , rp}
         };
     }
 
