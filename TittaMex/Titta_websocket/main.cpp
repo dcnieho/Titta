@@ -51,7 +51,7 @@ namespace {
         { "startSampleStream"   , Action::StartSampleStream},
         { "stopSampleStream"    , Action::StopSampleStream},
 
-        { "SetBaseSampleFreq"   , Action::SetBaseSampleFreq},
+        { "setBaseSampleFreq"   , Action::SetBaseSampleFreq},
         { "startSampleBuffer"   , Action::StartSampleBuffer},
         { "clearSampleBuffer"   , Action::ClearSampleBuffer},
         { "peekSamples"         , Action::PeekSamples},
