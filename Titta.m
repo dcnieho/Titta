@@ -1431,6 +1431,8 @@ classdef Titta < handle
                     settings.freq                   = 120;
                 case 'Tobii Pro Nano'
                     settings.freq                   = 60;
+                case 'Tobii Pro Spark'
+                    settings.freq                   = 60;
                 case {'Tobii Pro X3-120','Tobii Pro X3-120 EPU'}
                     settings.freq                   = 120;
                 case 'X2-60_Compact'
