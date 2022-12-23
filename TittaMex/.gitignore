@@ -21,3 +21,4 @@ git_refid.h
 *_d.mex*
 *_d.pyd*
 *.whl
+/JSON
