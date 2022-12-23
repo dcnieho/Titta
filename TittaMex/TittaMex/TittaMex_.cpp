@@ -1537,7 +1537,7 @@ namespace mxTypes
         // 1. type
         mxSetFieldByNumber(out, 0, 0, ToMatlab(std::string("stream error")));
         // 2. machine serial number
-        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.machineSerial));
+        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.machine_serial));
         // 3. system timestamps
         mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.system_time_stamp));
         // 4. stream error source

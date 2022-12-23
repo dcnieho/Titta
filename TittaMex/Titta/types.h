@@ -280,7 +280,7 @@ namespace TobiiTypes
     public:
         streamErrorMessage() = default;
         streamErrorMessage(std::string serial_, int64_t system_time_stamp_, TobiiResearchStreamError error_, TobiiResearchStreamErrorSource source_, std::string message_) :
-            machineSerial(serial_),
+            machine_serial(serial_),
             system_time_stamp(system_time_stamp_),
             error(error_),
             source(source_),
@@ -288,7 +288,7 @@ namespace TobiiTypes
         {}
 
     public:
-        std::string                     machineSerial;
+        std::string                     machine_serial;
         int64_t                         system_time_stamp = 0;
         TobiiResearchStreamError        error  = TOBII_RESEARCH_STREAM_ERROR_CONNECTION_LOST;
         TobiiResearchStreamErrorSource  source = TOBII_RESEARCH_STREAM_ERROR_SOURCE_USER;
