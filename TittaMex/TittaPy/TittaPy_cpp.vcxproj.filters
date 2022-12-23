@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TobiiWrapper.cpp">
+    <ClCompile Include="TittaPy_.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

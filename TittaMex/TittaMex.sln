@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29609.76
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Titta", "Titta.vcxproj", "{E0F6948B-AE6E-4905-B683-D048B5FB9A70}"
 EndProject
@@ -10,12 +10,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TittaMex", "TittaMex\TittaM
 		{E0F6948B-AE6E-4905-B683-D048B5FB9A70} = {E0F6948B-AE6E-4905-B683-D048B5FB9A70}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TobiiWrapper_cpp", "TobiiWrapper\TobiiWrapper_cpp.vcxproj", "{2C6137C2-382B-4A3E-B06D-38DC4F6E5EE7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TittaPy_cpp", "TittaPy\TittaPy_cpp.vcxproj", "{2C6137C2-382B-4A3E-B06D-38DC4F6E5EE7}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E0F6948B-AE6E-4905-B683-D048B5FB9A70} = {E0F6948B-AE6E-4905-B683-D048B5FB9A70}
 	EndProjectSection
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "TobiiWrapper_py", "TobiiWrapper\TobiiWrapper_py.pyproj", "{45FABE76-C9B7-495C-8487-39D9DC383C06}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "TittaPy_py", "TittaPy\TittaPy_py.pyproj", "{45FABE76-C9B7-495C-8487-39D9DC383C06}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Titta_websocket", "Titta_websocket\websocket.vcxproj", "{86C6E5FE-8DAA-4C2F-898B-AB77BC38A767}"
 	ProjectSection(ProjectDependencies) = postProject

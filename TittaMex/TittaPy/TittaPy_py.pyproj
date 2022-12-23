@@ -11,7 +11,7 @@
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>TobiiWrapper_py</Name>
+    <Name>TittaPy_py</Name>
     <RootNamespace>TobiiWrapper</RootNamespace>
     <InterpreterId>CondaEnv|CondaEnv|psychopy</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
