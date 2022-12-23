@@ -10,11 +10,8 @@ import platform
 
 __version__ = '1.0.0-rc1'
 
-# choose right version of dll to install along with built module
-if platform.architecture()[0]=="64bit":
-    data_files = [('lib\\site-packages\\',["./TittaMex_matlab/64/tobii_research.dll"])]
-else:
-    data_files = [('lib\\site-packages\\',["./TittaMex_matlab/32/tobii_research.dll"])]
+# dll to install along with built module
+data_files = [('lib\\site-packages\\',["./TittaMex_matlab/64/Windows/tobii_research.dll"])]
 
 
 class get_pybind_include(object):
@@ -34,8 +31,8 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'TobiiWrapper',
-        ['src/TittaMex.cpp','src/types.cpp','src/utils.cpp','TobiiWrapper/TobiiWrapper.cpp'],
+        'TittaPy',
+        ['src/Titta.cpp','src/types.cpp','src/utils.cpp','TittaPy/TittaPy.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
@@ -76,7 +73,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 setup(
-    name='TobiiWrapper',
+    name='TittaPy',
     version=__version__,
     author='Diederick C. Niehorster',
     author_email='diederick_c.niehorster@humlab.lu.se',
@@ -85,8 +82,8 @@ setup(
     keywords="Tobii PsychoPy",
     long_description='',
     ext_modules=ext_modules,
-    install_requires=['pybind11>=2.4'],
-    setup_requires=['pybind11>=2.4'],
+    install_requires=['pybind11>=2.10.1'],
+    setup_requires=['pybind11>=2.10.1'],  # this fixes problem if c++23 std::forward_like is available that i ran into
     cmdclass={'build_ext': BuildExt},
     data_files=data_files
 )
