@@ -302,7 +302,12 @@ std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities dat
 
 
 // start module scope
-PYBIND11_MODULE(TittaPy, m)
+#ifdef NDEBUG
+#   define MODULE_NAME TittaPy
+#else
+#   define MODULE_NAME TittaPy_d
+#endif
+PYBIND11_MODULE(MODULE_NAME, m)
 {
     // SDK and eye tracker info
     py::class_<TobiiResearchSDKVersion>(m, "SDK_version")
@@ -972,11 +977,18 @@ PYBIND11_MODULE(TittaPy, m)
         .def("__repr__",
             [](Titta& instance_)
             {
+                return string_format(
 #ifdef NDEBUG
-                return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
+                    "%s (%s, %s) @%.0f Hz at '%s'",
 #else
-                return string_format("<TittaPy.EyeTracker connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
+                    "<TittaPy.EyeTracker connected to '%s' (%s, %s) @%.0f Hz at '%s'>",
 #endif
+                    instance_.getEyeTrackerInfo().model.c_str(),
+                    instance_.getEyeTrackerInfo().serialNumber.c_str(),
+                    instance_.getEyeTrackerInfo().deviceName.c_str(),
+                    instance_.getEyeTrackerInfo().frequency,
+                    instance_.getEyeTrackerInfo().address.c_str()
+                );
             })
 
         //// global SDK functions
