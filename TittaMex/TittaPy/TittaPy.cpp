@@ -76,7 +76,7 @@ template <> std::string toString<>(const TobiiResearchDisplayArea& instance_, st
 
 template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instance_, std::string spacing)
 {
-    return string_format("calibration_eye_data (%s) at [%.4f,%.4f]", calibrationEyeValidityToString(instance_.validity), instance_.position_on_display_area.x, instance_.position_on_display_area.y);
+    return string_format("calibration_eye_data (%s) at [%.4f, %.4f]", calibrationEyeValidityToString(instance_.validity), instance_.position_on_display_area.x, instance_.position_on_display_area.y);
 }
 template <> std::string toString<>(const TobiiResearchCalibrationSample& instance_, std::string spacing)
 {
@@ -93,7 +93,7 @@ template <> std::string toString<>(const TobiiTypes::CalibrationPoint& instance_
         if (sample.right_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
             ++nValidRight;
     }
-    auto ret = string_format("calibration_point at [%.4f,%.4f] with %Iu samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_samples.size(), nValidLeft, nValidRight);
+    auto ret = string_format("calibration_point at [%.4f, %.4f] with %Iu samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_samples.size(), nValidLeft, nValidRight);
 #ifndef NDEBUG
     auto nextLvl = spacing + "  ";
     ret += ":\n";
@@ -117,73 +117,108 @@ template <> std::string toString<>(const TobiiTypes::CalibrationResult& instance
 
 template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
 {
+    return string_format(
 #ifdef NDEBUG
-    return string_format("[%.3f,%.3f,%.3f] mm", instance_.x, instance_.y, instance_.z);
+        "[%.3f, %.3f, %.3f] mm",
 #else
-    return string_format("<TobiiWrapper.point_3D at [%.3f,%.3f,%.3f] mm>", instance_.x, instance_.y, instance_.z);
+        "<TittaPy.point_3D at [%.3f, %.3f, %.3f] mm>",
 #endif
+        instance_.x, instance_.y, instance_.z
+    );
 }
 template <> std::string toString<>(const TobiiResearchNormalizedPoint2D& instance_, std::string spacing)
 {
+    return string_format(
 #ifdef NDEBUG
-    return string_format("[%.3f,%.3f] mm", instance_.x, instance_.y);
+        "[%.3f, %.3f] mm",
 #else
-    return string_format("<TobiiWrapper.point_2D_norm at [%.3f,%.3f] mm>", instance_.x, instance_.y);
+        "<TittaPy.point_2D_norm at [%.3f, %.3f] mm>",
 #endif
+        instance_.x, instance_.y
+    );
 }
 template <> std::string toString<>(const TobiiTypes::gazePoint& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("(available: %d, validity: %s)\n%son_display_area: %s\n%sin_user_coordinates: %s", instance_.available, validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
+        "(available: %d, validity: %s)\n%son_display_area: %s\n%sin_user_coordinates: %s",
 #else
-    return string_format("<TobiiWrapper.gaze_point (available: %d, validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>", instance_.validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str());
+        "<TittaPy.gaze_point (available: %d, validity: %s) containing:\n%son_display_area: %s\n%sin_user_coordinates: %s>",
 #endif
+        instance_.available, validityToString(instance_.validity), spacing.c_str(),
+        toString(instance_.position_on_display_area, nextLvl).c_str(), spacing.c_str(),
+        toString(instance_.position_in_user_coordinates, nextLvl).c_str()
+    );
 }
 template <> std::string toString<>(const TobiiTypes::pupilData& instance_, std::string spacing)
 {
-    auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("(available: %d, validity: %s)\n%sdiameter: %.3f mm", instance_.available, validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
+        "(available: %d, validity: %s)\n%sdiameter: %.3f mm",
 #else
-    return string_format("<TobiiWrapper.pupil (available: %d, validity: %s) containing:\n%sdiameter: %.3f mm>", instance_.available, validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
+        "<TittaPy.pupil (available: %d, validity: %s) containing:\n%sdiameter: %.3f mm>",
 #endif
+        instance_.available,
+        validityToString(instance_.validity), spacing.c_str(),
+        instance_.diameter
+    );
 }
 template <> std::string toString<>(const TobiiTypes::gazeOrigin& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("(available: %d, validity: %s)\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s", instance_.available, validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
+        "(available: %d, validity: %s)\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s",
 #else
-    return string_format("<TobiiWrapper.gaze_origin (available: %d, validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>", instance_.available, validityToString(instance_.validity), spacing.c_str(), toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(), toString(instance_.position_in_track_box_coordinates, nextLvl).c_str());
+        "<TittaPy.gaze_origin (available: %d, validity: %s) containing:\n%sin_user_coordinates: %s\n%sin_track_box_coordinates: %s>",
 #endif
+        instance_.available, validityToString(instance_.validity), spacing.c_str(),
+        toString(instance_.position_in_user_coordinates, nextLvl).c_str(), spacing.c_str(),
+        toString(instance_.position_in_track_box_coordinates, nextLvl).c_str()
+    );
 }
 template <> std::string toString<>(const TobiiTypes::eyeOpenness& instance_, std::string spacing)
 {
-    auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("(available: %d, validity: %s)\n%sdiameter: %.3f mm", instance_.available, validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
+        "(available: %d, validity: %s)\n%sdiameter: %.3f mm",
 #else
-    return string_format("<TobiiWrapper.eye_openness (available: %d, validity: %s) containing:\n%sdiameter: %.3f mm>", instance_.available, validityToString(instance_.validity), nextLvl.c_str(), instance_.diameter);
+        "<TittaPy.eye_openness (available: %d, validity: %s) containing:\n%sdiameter: %.3f mm>",
 #endif
+        instance_.available,
+        validityToString(instance_.validity), spacing.c_str(),
+        instance_.diameter
+    );
 }
 template <> std::string toString<>(const TobiiTypes::eyeData& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s", spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(), spacing.c_str(), toString(instance_.pupil, nextLvl).c_str(), spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str());
+        "\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s\n%seye_openness: %s",
 #else
-    return string_format("<TobiiWrapper.eye_data containing:\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s>", spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(), spacing.c_str(), toString(instance_.pupil_data, nextLvl).c_str(), spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str());
+        "<TittaPy.eye_data containing:\n%sgaze_point: %s\n%spupil: %s\n%sgaze_origin: %s\n%seye_openness: %s>",
 #endif
+        spacing.c_str(), toString(instance_.gaze_point, nextLvl).c_str(),
+        spacing.c_str(), toString(instance_.pupil, nextLvl).c_str(),
+        spacing.c_str(), toString(instance_.gaze_origin, nextLvl).c_str(),
+        spacing.c_str(), toString(instance_.eye_openness, nextLvl).c_str()
+    );
 }
 template <> std::string toString<>(const TobiiTypes::gazeData& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("sample (system_time: %" PRId64 "):\n%sleft: %s\n%sright: %s", instance_.system_time_stamp, spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+        "sample (system_time: %" PRId64 "):\n%sleft: %s\n%sright: %s",
 #else
-    return string_format("<TobiiWrapper.gaze_data (system_time: %" PRId64 ") containing:\n%sleft: %s\n%sright: %s>", instance_.system_time_stamp, spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+        "<TittaPy.gaze_data (system_time: %" PRId64 ") containing:\n%sleft: %s\n%sright: %s>",
 #endif
+        instance_.system_time_stamp, spacing.c_str(),
+        toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(),
+        toString(instance_.right_eye, nextLvl).c_str()
+    );
 }
 
 template <> std::string toString<>(const TobiiTypes::eyeImage& instance_, std::string spacing)
@@ -204,20 +239,28 @@ template <> std::string toString<>(const TobiiResearchTimeSynchronizationData& i
 template <> std::string toString<>(const TobiiResearchEyeUserPositionGuide& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("(validity: %s)\n%suser_position: %s", validityToString(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+        "(validity: %s)\n%suser_position: %s",
 #else
-    return string_format("<TobiiWrapper.positioning_eye (validity: %s) containing:\n%suser_position: %s>", validityToString(instance_.validity), spacing.c_str(), toString(instance_.user_position, nextLvl).c_str());
+        "<TittaPy.positioning_eye (validity: %s) containing:\n%suser_position: %s>",
 #endif
+        validityToString(instance_.validity), spacing.c_str(),
+        toString(instance_.user_position, nextLvl).c_str()
+    );
 }
 template <> std::string toString<>(const TobiiResearchUserPositionGuide& instance_, std::string spacing)
 {
     auto nextLvl = spacing + "  ";
+    return string_format(
 #ifdef NDEBUG
-    return string_format("positioning:\n%sleft: %s\n%sright: %s", spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+        "positioning:\n%sleft: %s\n%sright: %s",
 #else
-    return string_format("<TobiiWrapper.positioning containing:\n%sleft: %s\n%sright: %s>", spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(), spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str());
+        "<TittaPy.positioning containing:\n%sleft: %s\n%sright: %s>",
 #endif
+        spacing.c_str(), toString(instance_.left_eye, nextLvl).c_str(),
+        spacing.c_str(), toString(instance_.right_eye, nextLvl).c_str()
+    );
 }
 
 
@@ -259,7 +302,7 @@ std::vector<std::string> convertCapabilities(const TobiiResearchCapabilities dat
 
 
 // start module scope
-PYBIND11_MODULE(TobiiWrapper, m)
+PYBIND11_MODULE(TittaPy, m)
 {
     // SDK and eye tracker info
     py::class_<TobiiResearchSDKVersion>(m, "SDK_version")
@@ -273,7 +316,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (SDK_version)");
 
                 TobiiResearchSDKVersion p{ t[0].cast<int>(),t[1].cast<int>(),t[2].cast<int>(),t[3].cast<int>() };
                 return p;
@@ -299,7 +342,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 11)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (eye_tracker_info)");
 
                 TobiiTypes::eyeTracker p{ t[0].cast<std::string>(),t[1].cast<std::string>(),t[2].cast<std::string>(),t[3].cast<std::string>(),t[4].cast<std::string>(),t[5].cast<std::string>(),t[6].cast<float>(),t[7].cast<std::string>(),t[8].cast<TobiiResearchCapabilities>(),t[9].cast<std::vector<float>>(),t[10].cast<std::vector<std::string>>() };
                 return p;
@@ -334,7 +377,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (log_message)");
 
                 TobiiTypes::logMessage p{ t[0].cast<int64_t>(),t[1].cast<TobiiResearchLogSource>(),t[2].cast<TobiiResearchLogLevel>(),t[3].cast<std::string>() };
                 return p;
@@ -375,7 +418,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 5)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (stream_error_message)");
 
                 TobiiTypes::streamErrorMessage p{ t[0].cast<std::string>(),t[1].cast<int64_t>(),t[2].cast<TobiiResearchStreamError>(),t[3].cast<TobiiResearchStreamErrorSource>(),t[4].cast<std::string>() };
                 return p;
@@ -400,7 +443,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 8)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (track_box)");
 
                 TobiiResearchTrackBox p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<TobiiResearchPoint3D>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<TobiiResearchPoint3D>(),t[6].cast<TobiiResearchPoint3D>(),t[7].cast<TobiiResearchPoint3D>() };
                 return p;
@@ -422,7 +465,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 6)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (display_area)");
 
                 TobiiResearchDisplayArea p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<float>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<float>() };
                 return p;
@@ -496,7 +539,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_eye_data)");
 
                 TobiiResearchCalibrationEyeData p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<TobiiResearchCalibrationEyeValidity>() };
                 return p;
@@ -513,7 +556,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_sample)");
 
                 TobiiResearchCalibrationSample p{ t[0].cast<TobiiResearchCalibrationEyeData>(), t[1].cast<TobiiResearchCalibrationEyeData>() };
                 return p;
@@ -530,7 +573,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_point)");
 
                 TobiiTypes::CalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<std::vector<TobiiResearchCalibrationSample>>() };
                 return p;
@@ -547,7 +590,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_result)");
 
                 TobiiTypes::CalibrationResult p{ t[0].cast<std::vector<TobiiTypes::CalibrationPoint>>(), t[1].cast<TobiiResearchCalibrationStatus>() };
                 return p;
@@ -566,7 +609,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_work_item)");
 
                 TobiiTypes::CalibrationWorkItem p{ t[0].cast<TobiiTypes::CalibrationAction>(),t[1].cast<std::optional<std::vector<double>>>(),t[2].cast<std::optional<std::string>>(),t[3].cast<std::optional<std::vector<uint8_t>>>() };
                 return p;
@@ -585,7 +628,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 5)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (calibration_work_result)");
 
                 TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),static_cast<TobiiResearchStatus>(t[1].cast<int>()),t[2].cast<std::string>(),t[3].cast<std::optional<TobiiTypes::CalibrationResult>>(),t[4].cast<std::optional<std::vector<uint8_t>>>() };
                 return p;
@@ -610,7 +653,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 3)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (point_3D)");
 
                 TobiiResearchPoint3D p{ t[0].cast<float>(),t[1].cast<float>(),t[2].cast<float>() };
                 return p;
@@ -627,7 +670,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (point_2D_norm)");
 
                 TobiiResearchNormalizedPoint2D p{ t[0].cast<float>(),t[1].cast<float>() };
                 return p;
@@ -645,8 +688,8 @@ PYBIND11_MODULE(TobiiWrapper, m)
                 return py::make_tuple(p.position_on_display_area, p.position_in_user_coordinates, p.validity, p.available);
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 3)
-                    throw std::runtime_error("Invalid state!");
+                if (t.size() != 4)
+                    throw std::runtime_error("Invalid state! (gaze_point)");
 
                 TobiiTypes::gazePoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<TobiiResearchValidity>(),t[3].cast<bool>() };
                 return p;
@@ -660,11 +703,11 @@ PYBIND11_MODULE(TobiiWrapper, m)
         .def_readwrite("available", &TobiiTypes::pupilData::available)
         .def(py::pickle(
             [](const TobiiTypes::pupilData& p) { // __getstate__
-                return py::make_tuple(p.diameter, p.validity);
+                return py::make_tuple(p.diameter, p.validity, p.available);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 3)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (pupil)");
 
                 TobiiTypes::pupilData p{ t[0].cast<float>(),t[1].cast<TobiiResearchValidity>(),t[2].cast<bool>() };
                 return p;
@@ -683,7 +726,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (gaze_origin)");
 
                 TobiiTypes::gazeOrigin p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<TobiiResearchValidity>(),t[3].cast<bool>() };
                 return p;
@@ -697,11 +740,11 @@ PYBIND11_MODULE(TobiiWrapper, m)
         .def_readwrite("available", &TobiiTypes::eyeOpenness::available)
         .def(py::pickle(
             [](const TobiiTypes::eyeOpenness& p) { // __getstate__
-                return py::make_tuple(p.diameter, p.validity);
+                return py::make_tuple(p.diameter, p.validity, p.available);
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 3)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (eye_openness)");
 
                 TobiiTypes::eyeOpenness p{ t[0].cast<float>(),t[1].cast<TobiiResearchValidity>(),t[2].cast<bool>() };
                 return p;
@@ -720,7 +763,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (eye_data)");
 
                 TobiiTypes::eyeData p{ t[0].cast<TobiiTypes::gazePoint>(),t[1].cast<TobiiTypes::pupilData>(),t[2].cast<TobiiTypes::gazeOrigin>(),t[3].cast<TobiiTypes::eyeOpenness>() };
                 return p;
@@ -739,7 +782,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (gaze_data)");
 
             Titta::gaze p{ t[0].cast<TobiiTypes::eyeData>(),t[1].cast<TobiiTypes::eyeData>(),t[2].cast<int64_t>(),t[3].cast<int64_t>() };
                 return p;
@@ -776,7 +819,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 13)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (eye_image)");
 
                 TobiiTypes::eyeImage p;
                 p.isGif = t[0].cast<bool>();
@@ -817,7 +860,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 4)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (external_signal)");
 
                 TobiiResearchExternalSignalData p{ t[0].cast<int64_t>(),t[1].cast<int64_t>(),t[2].cast<uint32_t>(),t[3].cast<TobiiResearchExternalSignalChangeType>() };
                 return p;
@@ -838,7 +881,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 3)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (time_sync)");
 
                 TobiiResearchTimeSynchronizationData p{ t[0].cast<int64_t>(),t[1].cast<int64_t>(),t[2].cast<int64_t>() };
                 return p;
@@ -858,7 +901,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (positioning_eye)");
 
                 TobiiResearchEyeUserPositionGuide p{ t[0].cast<TobiiResearchNormalizedPoint3D>(),t[1].cast<TobiiResearchValidity>() };
                 return p;
@@ -875,7 +918,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
             },
             [](py::tuple t) { // __setstate__
                 if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                    throw std::runtime_error("Invalid state! (positioning)");
 
                 TobiiResearchUserPositionGuide p{ t[0].cast<TobiiResearchEyeUserPositionGuide>(),t[1].cast<TobiiResearchEyeUserPositionGuide>() };
                 return p;
@@ -886,7 +929,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
 
 
     // notification
-    py::enum_<TobiiResearchNotificationType>(m, "external_signal_change_type")
+    py::enum_<TobiiResearchNotificationType>(m, "notification_type")
         .value("connection_lost", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_LOST)
         .value("connection_restored", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_RESTORED)
         .value("calibration_mode_entered", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CALIBRATION_MODE_ENTERED)
@@ -911,8 +954,8 @@ PYBIND11_MODULE(TobiiWrapper, m)
                 return py::make_tuple(p.system_time_stamp, p.notification_type, p.output_frequency, p.display_area, p.errors_or_warnings);
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
+                if (t.size() != 5)
+                    throw std::runtime_error("Invalid state! (notification)");
 
                 TobiiTypes::notification p{ t[0].cast<int64_t>(),t[1].cast<TobiiResearchNotificationType>(),t[2].cast<std::optional<float>>(),t[3].cast<std::optional<TobiiResearchDisplayArea>>(),t[4].cast<std::optional<std::string>>() };
                 return p;
@@ -920,27 +963,10 @@ PYBIND11_MODULE(TobiiWrapper, m)
         ))
         .def("__repr__", [](const TobiiTypes::notification& instance_) { return toString(instance_); })
         ;
-    py::class_<TobiiResearchUserPositionGuide>(m, "positioning")
-        .def_readwrite("left", &TobiiResearchUserPositionGuide::left_eye)
-        .def_readwrite("right", &TobiiResearchUserPositionGuide::right_eye)
-        .def(py::pickle(
-            [](const TobiiResearchUserPositionGuide& p) { // __getstate__
-                return py::make_tuple(p.left_eye, p.right_eye);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state!");
-
-                TobiiResearchUserPositionGuide p{ t[0].cast<TobiiResearchEyeUserPositionGuide>(),t[1].cast<TobiiResearchEyeUserPositionGuide>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiResearchUserPositionGuide& instance_) { return toString(instance_); })
-        ;
 
 
     // main class
-    py::class_<Titta>(m, "wrapper")
+    py::class_<Titta>(m, "EyeTracker")
         .def(py::init<std::string>(),"address"_a)
 
         .def("__repr__",
@@ -949,7 +975,7 @@ PYBIND11_MODULE(TobiiWrapper, m)
 #ifdef NDEBUG
                 return string_format("%s (%s, %s) @%.0f Hz at '%s'", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
 #else
-                return string_format("<TobiiWrapper.wrapper connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
+                return string_format("<TittaPy.EyeTracker connected to '%s' (%s, %s) @%.0f Hz at '%s'>", instance_.getEyeTrackerInfo().model.c_str(), instance_.getEyeTrackerInfo().serialNumber.c_str(), instance_.getEyeTrackerInfo().deviceName.c_str(), instance_.getEyeTrackerInfo().frequency, instance_.getEyeTrackerInfo().address.c_str());
 #endif
             })
 

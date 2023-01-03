@@ -12,8 +12,8 @@
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>TittaPy_py</Name>
-    <RootNamespace>TobiiWrapper</RootNamespace>
-    <InterpreterId>CondaEnv|CondaEnv|psychopy</InterpreterId>
+    <RootNamespace>TittaPy</RootNamespace>
+    <InterpreterId>Global|VisualStudio|PsychoPy</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
@@ -31,13 +31,11 @@
     <Compile Include="test.py" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|psychopy" />
-    <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x64)" />
-    <InterpreterReference Include="Global|VisualStudio|PsychoPy3 (x86)" />
+    <InterpreterReference Include="Global|VisualStudio|PsychoPy" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="TobiiWrapper_cpp.vcxproj">
-      <Name>TobiiWrapper_cpp</Name>
+    <ProjectReference Include="TittaPy_cpp.vcxproj">
+      <Name>TittaPy_cpp</Name>
       <Project>{2c6137c2-382b-4a3e-b06d-38dc4f6e5ee7}</Project>
       <Private>True</Private>
     </ProjectReference>

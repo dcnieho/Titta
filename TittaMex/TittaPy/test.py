@@ -1,10 +1,8 @@
-from TobiiWrapper import wrapper as tw
+from TittaPy import EyeTracker
 
-#print(tw)
-#help(tw)
+#print(EyeTracker)
+#help(EyeTracker)
 #exit()
-
-
 
 # Import modules
 import pickle
@@ -16,26 +14,25 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # test static functions, then connect to first eye tracker found
-tw.start_logging()
-print(tw.get_SDK_version())
-print(tw.get_system_timestamp())
-ets = tw.find_all_eye_trackers()
+EyeTracker.start_logging()
+print(EyeTracker.get_SDK_version())
+print(EyeTracker.get_system_timestamp())
+ets = EyeTracker.find_all_eye_trackers()
 print(ets)
 if len(ets)==0:
-    EThndl = tw('tet-tcp://169.254.10.20')
+    EThndl = EyeTracker('tet-tcp://169.254.10.20')
 else:
-    EThndl = tw(ets[0].address)
+    EThndl = EyeTracker(ets[0].address)
 print(EThndl)
 
 # test properties
 # 1. these are read-write
-freq = EThndl.frequency
+EThndl.frequency = 600
 print(EThndl.frequency)
-if freq==150:
-    EThndl.frequency = 600
-else:
-    EThndl.frequency = 150
 print(EThndl)
+EThndl.frequency = 150
+print(EThndl)
+EThndl.frequency = 600
 print(EThndl.tracking_mode)
 print(EThndl.device_name)
 # 2. these are read only
@@ -58,7 +55,7 @@ print(EThndl.display_area)
 EThndl.leave_calibration_mode(True)
 
 print("enter_calibration_mode:")
-EThndl.enter_calibration_mode()
+EThndl.enter_calibration_mode(False)
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
@@ -135,10 +132,11 @@ print(res.status_string)
 print(EThndl.has_stream('gaze'))
 print(EThndl.is_recording('gaze'))
 success = EThndl.start('gaze')
+success = EThndl.start('positioning')
 success = EThndl.start('eye_image')
 success = EThndl.start('external_signal')
 success = EThndl.start('time_sync')
-success = EThndl.start('positioning')
+success = EThndl.start('notification')
 print(EThndl.is_recording('gaze'))
 core.wait(0.2)
 
@@ -153,14 +151,15 @@ This can be tested in a while-loop like the one below.
 
 TobiiWrapper doesn't show this problem luckily, so the below loop should be fine
 '''
-n_samples = EThndl.frequency * 2 # Record what should be two seconds of data
+dur = 4 # Record what should be this many seconds of data
+n_samples = EThndl.frequency * dur
 
 out = []
 k = 0
 ts = 0
 ts_old = 0
 
-t0 = time.clock()
+t0 = time.perf_counter()
 while k < n_samples:
     samples = EThndl.peek_N('gaze')
     if len(samples)>0:
@@ -170,16 +169,23 @@ while k < n_samples:
         #core.wait(0.00001) # Wait 1/10 ms
         continue
    
-    out.append([time.clock(), ts])
+    out.append([time.perf_counter(), ts])
     k += 1
     ts_old = ts
+
+    if out[-1][0]-t0>dur/2:
+        # start recording eye openness. Also, if set to true, any
+        # calls to start or stop either gaze or eye_openness will
+        # start or stop both
+        EThndl.set_include_eye_openness_in_gaze(True)
    
-print(time.clock() - t0)
-success = EThndl.stop('gaze')
+print(time.perf_counter() - t0)
+success = EThndl.stop('positioning')
+success = EThndl.stop('gaze')   # NB: also stops eye_openness
 success = EThndl.stop('eye_image')
 success = EThndl.stop('external_signal')
 success = EThndl.stop('time_sync')
-success = EThndl.stop('positioning')
+success = EThndl.stop('notification')
 
 
 #%% Plot data captured in real time (tobii time stamps, and loop intervals)
@@ -192,8 +198,8 @@ plt.plot(np.diff(out[:, 1] / 1000))
 #%% Plot timestamps of samples in the buffer (and test pickle save and load)
 all_samples = EThndl.peek_N('gaze',10000000)
 pickle.dump(all_samples,open( "save.pkl", "wb" ))
-print(all_samples[0])
-ut =[]
+print(all_samples[-1])
+ut = []
 for i in all_samples:
     ut.append(i.system_time_stamp)
    
@@ -202,7 +208,7 @@ plt.plot(np.diff(ut) / 1000)
 
 
 all_samples2 = pickle.load( open( "save.pkl", "rb" ) )
-ut2 =[]
+ut2 = []
 for i in all_samples2:
     ut2.append(i.system_time_stamp)
    
@@ -212,40 +218,38 @@ plt.plot(np.diff(ut2) / 1000)
 all_samples3 = EThndl.consume_N('gaze',10000000)
 all_samples4 = EThndl.consume_time_range('gaze')
 print([len(all_samples), len(all_samples2), len(all_samples3), len(all_samples4)])
-
+    
 
 all_images = EThndl.peek_time_range('eye_image') # by default peeks all
 print(all_images[0])
 pickle.dump(all_images,open( "save.pkl", "wb" ))
 
 plt.figure()
-plt.imshow(all_images[0].image)
+plt.imshow(all_images[0].image, cmap="gray")
 
 all_images2 = pickle.load( open( "save.pkl", "rb" ) )
 plt.figure()
-plt.imshow(all_images2[0].image)
-
-all_ext = EThndl.peek_N('external_signal',10000000)
-print(all_ext[0])
-pickle.dump(all_ext,open( "save.pkl", "wb" ))
-all_ext2 = pickle.load( open( "save.pkl", "rb" ) )
-print(all_ext2[0])
+plt.imshow(all_images2[0].image, cmap="gray")
 
 
-all_t = EThndl.peek_N('time_sync',10000000)
-print(all_t[0])
-pickle.dump(all_t,open( "save.pkl", "wb" ))
-all_t2 = pickle.load( open( "save.pkl", "rb" ) )
-print(all_t2[0])
+def save_and_load_test(which: str, data=None):
+    data = EThndl.peek_N(which)
+    if not data:
+        import warnings
+        warnings.warn(f"no data for {which} stream",RuntimeWarning)
+        return
+    print(data[0])
+    pickle.dump(data,open( "save.pkl", "wb" ))
+    data2 = pickle.load( open( "save.pkl", "rb" ) )
+    print(data2[0])
+
+save_and_load_test('external_signal')
+save_and_load_test('time_sync')
+save_and_load_test('positioning')
+save_and_load_test('notification')
 
 
-all_p = EThndl.peek_N('positioning',10000000)
-print(all_p[0])
-pickle.dump(all_p,open( "save.pkl", "wb" ))
-all_p2 = pickle.load( open( "save.pkl", "rb" ) )
-print(all_p2[0])
-
-l=EThndl.get_log()
+l=EThndl.get_log(True)  # True means the log is consumed. False (default) its only peeked.
 print(l)
 pickle.dump(l,open( "save.pkl", "wb" ))
 l2 = pickle.load( open( "save.pkl", "rb" ) )

@@ -1,7 +1,7 @@
 Usage instructions for using the Titta class are found in [the Titta documentation](../readme.md).
 
 ### Working on the source
-The enclosed `TittaMex.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.2.4).
+The enclosed `TittaMex.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.4.3).
 
 ### Building the mex files
 Run `makeTittaMex.m` to build the mex file.
@@ -14,8 +14,8 @@ For compatibility with an earlier version of Ubuntu, either install the right GL
 
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
-- `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2019b`
-- `PYTHON_ROOT`: `C:\Program Files\PsychoPy3`
+- `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2022a`
+- `PYTHON_ROOT`: `C:\Program Files\PsychoPy`
 
 ### Dependencies
 #### [readerwriterqueue](https://github.com/cameron314/readerwriterqueue)
@@ -31,7 +31,7 @@ To update the Tobii Pro C SDK used to build Titta against, you need to manually 
 Please note that the code for the Python wrapper is currently not actively maintained and will not build as is now. However, assuming its updated, the following steps will build the code:
 1. Make sure the PsychoPy version you want to work with is installed.
 2. Make sure the `PYTHON_ROOT` environment variable is set to the location of your PsychoPy installation.
-3. Install PyBind11: in the root folder of your PsychoPy installation, execute `python -m pip install pybind11`
+3. Install PyBind11: in the root folder of your PsychoPy installation, execute `python -m pip install pybind11`. Alternatively, install pybind11 through a package manager like vcpkg.
 4. As per [here](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites), make sure you have the Python Development workload for visual studio installed. Note however that you can unselect the Python 3 installation, the web tools and the miniconda installation that it by default installs, as we will be using the PsychoPy installation's Python environment. Check the "Python native development tools" option.
 
 ### Set up the Python environment for Visual Studio Python integration

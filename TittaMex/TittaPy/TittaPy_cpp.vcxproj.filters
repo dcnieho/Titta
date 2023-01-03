@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TittaPy_.cpp">
+    <ClCompile Include="TittaPy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

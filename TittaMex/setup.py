@@ -11,7 +11,7 @@ import platform
 __version__ = '1.0.0-rc1'
 
 # dll to install along with built module
-data_files = [('lib\\site-packages\\',["./TittaMex_matlab/64/Windows/tobii_research.dll"])]
+data_files = [('lib\\site-packages\\',["./TittaMex/64/Windows/tobii_research.dll"])]
 
 
 class get_pybind_include(object):

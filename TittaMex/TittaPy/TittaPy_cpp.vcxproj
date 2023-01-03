@@ -59,7 +59,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..;../deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Library\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;../deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>_WINDLL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -71,7 +71,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaMex\64\tobii_research.dll . /Y</Command>
+      <Command>xcopy ..\TittaMex\64\Windows\tobii_research.dll . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
@@ -83,7 +83,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..;../deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Library\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;../deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PreprocessorDefinitions>_WINDLL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -102,7 +102,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TittaPy_.cpp" />
+    <ClCompile Include="TittaPy.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -6,3 +6,4 @@
 *.bak
 *.mat
 octave-workspace
+*.egg-info
