@@ -27,10 +27,8 @@ print(EThndl)
 
 # test properties
 # 1. these are read-write
-EThndl.frequency = 600
-print(EThndl.frequency)
-print(EThndl)
 EThndl.frequency = 150
+print(EThndl.frequency)
 print(EThndl)
 EThndl.frequency = 600
 print(EThndl.tracking_mode)
