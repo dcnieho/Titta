@@ -35,11 +35,11 @@ Please note that the code for the Python wrapper is currently not actively maint
 4. As per [here](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites), make sure you have the Python Development workload for visual studio installed. Note however that you can unselect the Python 3 installation, the web tools and the miniconda installation that it by default installs, as we will be using the PsychoPy installation's Python environment. Check the "Python native development tools" option.
 
 ### Set up the Python environment for Visual Studio Python integration
-Last, visual studio needs to be able to find your PsychoPy's Python environment. To do so, add a new Python environment, choose existing environment, and point it to the root of your PsychoPy install. In my case, that is `C:\Program Files\PsychoPy3`.
+Last, visual studio needs to be able to find your PsychoPy's Python environment. To do so, add a new Python environment, choose existing environment, and point it to the root of your PsychoPy install. In my case, that is `C:\Program Files\PsychoPy`.
 
 #### Enabling native debugging
 To be able to debug both the Python and C++ side of things with PsychoPy, you must install the debug symbols for the Python installation. This is done through the installer normally, but we don't have an option to do that with PyschoPy. So we have to add them manually. Here's how:
-1. For 64bit Python 3.6.6 (what I am using in the current example), navigate to this [download location](https://www.python.org/ftp/python/3.6.6/amd64/).
+1. For 64bit Python 3.8.10 (what I am using in the current example), navigate to this [download location](https://www.python.org/ftp/python/3.8.10/amd64/).
 2. Download all `*_d.msi` and `*_pdb.msi` files there (might be overkill, but better have them all).
 3. Open a cmd with admin privileges, navigate to your download location.
-4. Execute for each file a command like: `core_d.msi TARGETDIR="C:\Program Files\PsychoPy3"`, where the `TARGETDIR` is set to the location of your PsychoPy installation.
+4. Execute for each file a command like: `core_d.msi TARGETDIR="C:\Program Files\PsychoPy"`, where the `TARGETDIR` is set to the location of your PsychoPy installation.
