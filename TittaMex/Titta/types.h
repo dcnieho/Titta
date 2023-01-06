@@ -125,7 +125,7 @@ namespace TobiiTypes
     {
     public:
         eyeImage() :
-            isGif(false),
+            is_gif(false),
             device_time_stamp(0),
             system_time_stamp(0),
             bits_per_pixel(0),
@@ -141,7 +141,7 @@ namespace TobiiTypes
             _eyeIm({nullptr,std::free})
         {}
         eyeImage(TobiiResearchEyeImage* e_) :
-            isGif(false),
+            is_gif(false),
             device_time_stamp(e_->device_time_stamp),
             system_time_stamp(e_->system_time_stamp),
             bits_per_pixel(e_->bits_per_pixel),
@@ -159,7 +159,7 @@ namespace TobiiTypes
             std::memcpy(_eyeIm.get(), e_->data, e_->data_size);
         }
         eyeImage(TobiiResearchEyeImageGif* e_) :
-            isGif(true),
+            is_gif(true),
             device_time_stamp(e_->device_time_stamp),
             system_time_stamp(e_->system_time_stamp),
             bits_per_pixel(0),
@@ -178,7 +178,7 @@ namespace TobiiTypes
         }
         eyeImage(eyeImage&&) noexcept = default;
         eyeImage(const eyeImage& other_) :
-            isGif(other_.isGif),
+            is_gif(other_.is_gif),
             device_time_stamp(other_.device_time_stamp),
             system_time_stamp(other_.system_time_stamp),
             bits_per_pixel(other_.bits_per_pixel),
@@ -219,7 +219,7 @@ namespace TobiiTypes
         {
             using std::swap;
 
-            swap(first.isGif, second.isGif);
+            swap(first.is_gif, second.is_gif);
             swap(first.device_time_stamp, second.device_time_stamp);
             swap(first.system_time_stamp, second.system_time_stamp);
             swap(first.bits_per_pixel, second.bits_per_pixel);
@@ -236,7 +236,7 @@ namespace TobiiTypes
         }
 
     public:
-        bool						isGif;
+        bool						is_gif;
         int64_t                     device_time_stamp;
         int64_t                     system_time_stamp;
         int                         bits_per_pixel;

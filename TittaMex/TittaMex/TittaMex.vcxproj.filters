@@ -54,6 +54,12 @@
     <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_field_nested.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\cpp_mex_helpers\mem_var_trait.h">
+      <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="TittaMex.m">

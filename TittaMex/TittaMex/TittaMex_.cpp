@@ -60,6 +60,8 @@
 #include "cpp_mex_helpers/include_matlab.h"
 
 #include "cpp_mex_helpers/pack_utils.h"
+#include "cpp_mex_helpers/get_field_nested.h"
+#include "cpp_mex_helpers/mem_var_trait.h"
 #include "tobii_to_matlab.h"
 
 #include "Titta/Titta.h"
@@ -97,12 +99,12 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
     mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
 
-    mxArray* ToMatlab(std::vector<Titta::gaze                     >     data_);
-    mxArray* FieldToMatlab(const std::vector<TobiiTypes::gazeData>&     data_, bool rowVector_, TobiiTypes::eyeData TobiiTypes::gazeData::* field_);
-    mxArray* ToMatlab(std::vector<Titta::eyeImage                 >     data_);
-    mxArray* ToMatlab(std::vector<Titta::extSignal                >     data_);
-    mxArray* ToMatlab(std::vector<Titta::timeSync                 >     data_);
-    mxArray* ToMatlab(std::vector<Titta::positioning              >     data_);
+    mxArray* ToMatlab(std::vector<Titta::gaze           >               data_);
+    mxArray* FieldToMatlab(const std::vector<Titta::gaze>&              data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
+    mxArray* ToMatlab(std::vector<Titta::eyeImage       >               data_);
+    mxArray* ToMatlab(std::vector<Titta::extSignal      >               data_);
+    mxArray* ToMatlab(std::vector<Titta::timeSync       >               data_);
+    mxArray* ToMatlab(std::vector<Titta::positioning    >               data_);
     mxArray* ToMatlab(Titta::logMessage                                 data_);
     mxArray* ToMatlab(Titta::streamError                                data_);
     mxArray* ToMatlab(Titta::notification data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
@@ -1193,20 +1195,7 @@ namespace
 }
 namespace mxTypes
 {
-    // type trait to extract member variable type from a pointer-to-member-variable
-    template <typename C>
-    struct memVarType;
-
-    template <class C, typename T>
-    struct memVarType<T C::*>
-    {
-        using type = T;
-    };
-
-    template <class C>
-    using memVarType_t = typename memVarType<C>::type;
-
-    // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see getFieldWrapper implementation)
+    // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
     template<typename Cont, typename... Fs>
     mxArray* TobiiFieldToMatlab(const Cont& data_, bool rowVectors_, Fs... fields)
     {
@@ -1220,8 +1209,8 @@ namespace mxTypes
 
         // this is one of the 2D/3D point types
         // determine what return type we get
-        // NB: appending extra field to access leads to wrong order if type tag was provided by user. getFieldWrapper detects this and corrects for it
-        using U = decltype(mxTypes::getFieldWrapper(std::declval<V>(), std::forward<Fs>(fields)..., &retT::x));
+        // NB: appending extra field to access leads to wrong order if type tag was provided by user. nested_field::getWrapper detects this and corrects for it
+        using U = decltype(nested_field::getWrapper(std::declval<V>(), std::forward<Fs>(fields)..., &retT::x));
         mwSize rCount = numElements;
         mwSize cCount = data_.size();
         if (!rowVectors_)
@@ -1232,10 +1221,10 @@ namespace mxTypes
         auto storage = static_cast<U*>(mxGetData(temp = mxCreateUninitNumericMatrix(rCount, cCount, typeToMxClass_v<U>, mxREAL)));
         for (auto&& samp : data_)
         {
-            (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::x);
-            (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::y);
+            (*storage++) = nested_field::getWrapper(samp, std::forward<Fs>(fields)..., &retT::x);
+            (*storage++) = nested_field::getWrapper(samp, std::forward<Fs>(fields)..., &retT::y);
             if constexpr (numElements == 3)
-                (*storage++) = mxTypes::getFieldWrapper(samp, std::forward<Fs>(fields)..., &retT::z);
+                (*storage++) = nested_field::getWrapper(samp, std::forward<Fs>(fields)..., &retT::z);
         }
         return temp;
     }
@@ -1347,17 +1336,17 @@ namespace mxTypes
         mxArray* out = mxCreateStructMatrix(1, 1, sizeof(fieldNames) / sizeof(*fieldNames), fieldNames);
 
         // 1. all device timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiTypes::gazeData::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &Titta::gaze::device_time_stamp));
         // 2. all system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TobiiTypes::gazeData::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &Titta::gaze::system_time_stamp));
         // 3. left  eye data
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TobiiTypes::gazeData::left_eye));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &Titta::gaze::left_eye));
         // 4. right eye data
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TobiiTypes::gazeData::right_eye));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &Titta::gaze::right_eye));
 
         return out;
     }
-    mxArray* FieldToMatlab(const std::vector<TobiiTypes::gazeData>& data_, bool rowVector_, TobiiTypes::eyeData TobiiTypes::gazeData::* field_)
+    mxArray* FieldToMatlab(const std::vector<Titta::gaze>& data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin","eyeOpenness"};
         const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid","available" };
@@ -1413,7 +1402,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<Titta::eyeImage> data_)
     {
         // check if all gif, then don't output unneeded fields
-        bool allGif = allEquals(data_, &Titta::eyeImage::isGif, true);
+        bool allGif = allEquals(data_, &Titta::eyeImage::is_gif, true);
 
         // fieldnames for all structs
         mxArray* out;
@@ -1444,7 +1433,7 @@ namespace mxTypes
         int off = 4 * (!allGif);
         mxSetFieldByNumber(out, 0, 5 + off, FieldToMatlab(data_, true, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
         mxSetFieldByNumber(out, 0, 6 + off, FieldToMatlab(data_, true, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 7 + off, FieldToMatlab(data_, true, &Titta::eyeImage::isGif));
+        mxSetFieldByNumber(out, 0, 7 + off, FieldToMatlab(data_, true, &Titta::eyeImage::is_gif));
         mxSetFieldByNumber(out, 0, 8 + off, eyeImagesToMatlab(data_));
 
         return out;
