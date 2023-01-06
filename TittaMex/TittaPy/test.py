@@ -1,3 +1,4 @@
+import TittaPy
 from TittaPy import EyeTracker
 
 #print(EyeTracker)
@@ -5,6 +6,7 @@ from TittaPy import EyeTracker
 #exit()
 
 # Import modules
+import sys
 import pickle
 import numpy as np
 import time
@@ -14,11 +16,15 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # test static functions, then connect to first eye tracker found
-EyeTracker.start_logging()
-print(EyeTracker.get_SDK_version())
-print(EyeTracker.get_system_timestamp())
-ets = EyeTracker.find_all_eye_trackers()
+TittaPy.start_logging()
+print(TittaPy.get_SDK_version())
+print(TittaPy.get_system_timestamp())
+ets = TittaPy.find_all_eye_trackers()
 print(ets)
+
+
+[print(d) for d in dir(EyeTracker.capabilities)]
+
 if len(ets)==0:
     EThndl = EyeTracker('tet-tcp://169.254.10.20')
 else:
@@ -125,7 +131,7 @@ while res==None:
     res = EThndl.calibration_retrieve_result()
 print(res.work_item.action)
 print(res.status_string)
-   
+
 #%% Record some data (and test all streams while we do so)
 print(EThndl.has_stream('gaze'))
 print(EThndl.is_recording('gaze'))
@@ -166,7 +172,7 @@ while k < n_samples:
     if ts == ts_old:
         #core.wait(0.00001) # Wait 1/10 ms
         continue
-   
+
     out.append([time.perf_counter(), ts])
     k += 1
     ts_old = ts
@@ -176,7 +182,7 @@ while k < n_samples:
         # calls to start or stop either gaze or eye_openness will
         # start or stop both
         EThndl.set_include_eye_openness_in_gaze(True)
-   
+
 print(time.perf_counter() - t0)
 success = EThndl.stop('positioning')
 success = EThndl.stop('gaze')   # NB: also stops eye_openness
@@ -194,13 +200,13 @@ plt.figure()
 plt.plot(np.diff(out[:, 1] / 1000))
 
 #%% Plot timestamps of samples in the buffer (and test pickle save and load)
-all_samples = EThndl.peek_N('gaze',10000000)
+all_samples = EThndl.peek_N('gaze', sys.maxsize)
 pickle.dump(all_samples,open( "save.pkl", "wb" ))
 print(all_samples[-1])
 ut = []
 for i in all_samples:
     ut.append(i.system_time_stamp)
-   
+
 plt.figure()
 plt.plot(np.diff(ut) / 1000)
 
@@ -209,14 +215,14 @@ all_samples2 = pickle.load( open( "save.pkl", "rb" ) )
 ut2 = []
 for i in all_samples2:
     ut2.append(i.system_time_stamp)
-   
+
 plt.figure()
 plt.plot(np.diff(ut2) / 1000)
 
-all_samples3 = EThndl.consume_N('gaze',10000000)
+all_samples3 = EThndl.consume_N('gaze', sys.maxsize)
 all_samples4 = EThndl.consume_time_range('gaze')
 print([len(all_samples), len(all_samples2), len(all_samples3), len(all_samples4)])
-    
+
 
 all_images = EThndl.peek_time_range('eye_image') # by default peeks all
 print(all_images[0])
@@ -231,7 +237,7 @@ plt.imshow(all_images2[0].image, cmap="gray")
 
 
 def save_and_load_test(which: str, data=None):
-    data = EThndl.peek_N(which)
+    data = EThndl.peek_N(which, sys.maxsize)
     if not data:
         import warnings
         warnings.warn(f"no data for {which} stream",RuntimeWarning)
@@ -247,12 +253,12 @@ save_and_load_test('positioning')
 save_and_load_test('notification')
 
 
-l=EThndl.get_log(True)  # True means the log is consumed. False (default) its only peeked.
+l=TittaPy.get_log(True)  # True means the log is consumed. False (default) its only peeked.
 print(l)
 pickle.dump(l,open( "save.pkl", "wb" ))
 l2 = pickle.load( open( "save.pkl", "rb" ) )
 print(l2)
-EThndl.stop_logging()
+TittaPy.stop_logging()
 
 
 plt.show()

@@ -13,7 +13,7 @@
     <OutputPath>.</OutputPath>
     <Name>TittaPy_py</Name>
     <RootNamespace>TittaPy</RootNamespace>
-    <InterpreterId>Global|VisualStudio|PsychoPy</InterpreterId>
+    <InterpreterId>MSBuild|.venv|$(MSBuildProjectFullPath)</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
@@ -31,14 +31,22 @@
     <Compile Include="test.py" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|VisualStudio|PsychoPy" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="TittaPy_cpp.vcxproj">
       <Name>TittaPy_cpp</Name>
       <Project>{2c6137c2-382b-4a3e-b06d-38dc4f6e5ee7}</Project>
       <Private>True</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="..\..\.venv\">
+      <Id>.venv</Id>
+      <Version>3.10</Version>
+      <Description>.venv (Python 3.10 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
