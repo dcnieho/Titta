@@ -7,3 +7,4 @@
 *.mat
 octave-workspace
 *.egg-info
+.venv*
