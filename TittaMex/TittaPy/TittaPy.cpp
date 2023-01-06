@@ -19,6 +19,7 @@ using namespace pybind11::literals;
 #include "cpp_mex_helpers/is_container_trait.h"
 #include "cpp_mex_helpers/get_field_nested.h"
 #include "cpp_mex_helpers/mem_var_trait.h"
+#include "tobii_elem_count.h"
 
 
 
@@ -152,18 +153,6 @@ void FieldToNpArray(py::dict& out_, const Cont& data_, const std::string& name_,
 
         out_[name_.c_str()] = l;
     }
-}
-
-
-template <typename T>
-constexpr size_t getNumElements()
-{
-    if      constexpr (std::is_same_v<T, TobiiResearchPoint3D>) // also matches TobiiResearchNormalizedPoint3D, as that's typedeffed to TobiiResearchPoint3D
-        return 3;
-    else if constexpr (std::is_same_v<T, TobiiResearchNormalizedPoint2D>)
-        return 2;
-    else
-        return 1;
 }
 
 template<typename Cont, typename... Fs>

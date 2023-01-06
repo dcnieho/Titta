@@ -62,7 +62,7 @@
 #include "cpp_mex_helpers/pack_utils.h"
 #include "cpp_mex_helpers/get_field_nested.h"
 #include "cpp_mex_helpers/mem_var_trait.h"
-#include "tobii_to_matlab.h"
+#include "tobii_elem_count.h"
 
 #include "Titta/Titta.h"
 #include "Titta/utils.h"

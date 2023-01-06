@@ -110,7 +110,7 @@
     <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h" />
     <ClInclude Include="..\deps\include\cpp_mex_helpers\replace_specialization_type.h" />
-    <ClInclude Include="tobii_to_matlab.h" />
+    <ClInclude Include="..\deps\include\tobii_elem_count.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

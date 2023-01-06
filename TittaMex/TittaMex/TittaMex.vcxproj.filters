@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tobii_to_matlab.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
@@ -59,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="..\deps\include\cpp_mex_helpers\mem_var_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\include\tobii_elem_count.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
