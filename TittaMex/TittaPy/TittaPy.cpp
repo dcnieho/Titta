@@ -408,8 +408,8 @@ template <> py::dict StructVectorToDict(const std::vector<std::variant<TobiiType
 
 void FieldToNpArray(py::dict& out_, const std::vector<TobiiResearchCalibrationSample>& data_, const std::string& name_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_)
 {
-    TobiiFieldToNpArray  (out_, data_, name_ + "position_on_display_area", field_, &TobiiResearchCalibrationEyeData::position_on_display_area);
-    FieldToNpArray<false>(out_, data_, name_ + "validity"                , field_, &TobiiResearchCalibrationEyeData::validity);
+    TobiiFieldToNpArray  (out_, data_, name_ + "_position_on_display_area", field_, &TobiiResearchCalibrationEyeData::position_on_display_area);
+    FieldToNpArray<false>(out_, data_, name_ + "_validity"                , field_, &TobiiResearchCalibrationEyeData::validity);
 }
 
 template <> py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& data_)
