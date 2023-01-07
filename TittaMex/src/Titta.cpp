@@ -1344,12 +1344,12 @@ void Titta::clearImpl(int64_t timeStart_, int64_t timeEnd_)
         return;
 
     // find applicable range
-    auto[start, end, whole] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
+    auto[startIt, endIt, whole] = getIteratorsFromTimeRange<T>(timeStart_, timeEnd_);
     // clear the flagged bit
     if (whole)
         buf.clear();
     else
-        buf.erase(start, end);
+        buf.erase(startIt, endIt);
 }
 void Titta::clear(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
 {
