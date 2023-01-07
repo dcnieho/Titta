@@ -132,7 +132,7 @@ void FieldToNpArray(py::dict& out_, const Cont& data_, const std::string& name_,
     if constexpr (UseArray)
     {
         py::array_t<U> a;
-        a.resize({ nElem, py::ssize_t{1} });
+        a.resize({ nElem });
 
         if (data_.size())
         {
