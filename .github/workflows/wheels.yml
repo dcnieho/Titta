@@ -46,8 +46,8 @@ jobs:
         submodules: true
 
     - uses: pypa/cibuildwheel@v2.11.4
-      env:
-        CIBW_BEFORE_ALL: cd TittaMex
+      with:
+        package-dir: TittaMex
 
     - name: Verify clean directory
       run: git diff --exit-code
