@@ -363,7 +363,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::notification>& 
 
     FieldToNpArray<true> (out, data_, "system_time_stamp" , &Titta::notification::system_time_stamp);
     FieldToNpArray<false>(out, data_, "notification_type" , &Titta::notification::notification_type);
-    FieldToNpArray<true> (out, data_, "output_frequency"  , &Titta::notification::output_frequency);
+    FieldToNpArray<false>(out, data_, "output_frequency"  , &Titta::notification::output_frequency);
     FieldToNpArray<false>(out, data_, "display_area"      , &Titta::notification::display_area);
     FieldToNpArray<false>(out, data_, "errors_or_warnings", &Titta::notification::errors_or_warnings);
 
