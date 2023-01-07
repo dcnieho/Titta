@@ -395,7 +395,7 @@ py::dict StructToDict(const Titta::streamError& data_)
     return d;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<std::variant<TobiiTypes::logMessage, TobiiTypes::streamErrorMessage>>& data_)
+py::list StructVectorToList(const std::vector<std::variant<TobiiTypes::logMessage, TobiiTypes::streamErrorMessage>>& data_)
 {
     py::list out;
 
@@ -766,7 +766,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     // logging
     m.def("start_logging", &Titta::startLogging,
         py::arg_v("initial_buffer_size", std::nullopt, "None"));
-    m.def("get_log", [](bool clearLog_) -> py::list { return StructVectorToDict(Titta::getLog(clearLog_)); },
+    m.def("get_log", [](bool clearLog_) -> py::list { return StructVectorToList(Titta::getLog(clearLog_)); },
         py::arg_v("clear_log", std::nullopt, "None"));
     m.def("stop_logging", &Titta::stopLogging);
 
