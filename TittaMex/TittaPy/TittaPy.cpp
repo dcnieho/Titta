@@ -16,7 +16,6 @@
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-#include "cpp_mex_helpers/is_container_trait.h"
 #include "cpp_mex_helpers/get_field_nested.h"
 #include "cpp_mex_helpers/mem_var_trait.h"
 #include "tobii_elem_count.h"
@@ -121,11 +120,9 @@ template <> std::string toString<>(const TobiiResearchNormalizedPoint2D& instanc
 
 
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
-template<bool UseArray, typename Cont, typename... Fs>
-requires Container<Cont>
-void FieldToNpArray(py::dict& out_, const Cont& data_, const std::string& name_, Fs... fields)
+template<bool UseArray, typename V, typename... Fs>
+void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
 {
-    using V = typename Cont::value_type;
     using U = decltype(nested_field::getWrapper(std::declval<V>(), fields...));
     auto nElem = static_cast<py::ssize_t>(data_.size());
 
@@ -155,11 +152,9 @@ void FieldToNpArray(py::dict& out_, const Cont& data_, const std::string& name_,
     }
 }
 
-template<typename Cont, typename... Fs>
-requires Container<Cont>
-void TobiiFieldToNpArray(py::dict& out_, const Cont& data_, const std::string& name_, Fs... fields)
+template<typename V, typename... Fs>
+void TobiiFieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
 {
-    using V = typename Cont::value_type;
     // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
     using memVar = std::conditional_t<std::is_member_object_pointer_v<last<0, V, Fs...>>, last<0, V, Fs...>, last<1, V, Fs...>>;
     using retT = memVarType_t<memVar>;
@@ -257,11 +252,8 @@ void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, 
 }
 
 
-template<typename Cont>
-requires Container<Cont>
-py::dict StructVectorToDict(const Cont& data_);
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::gaze>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::gaze>& data_)
 {
     py::dict out;
 
@@ -277,7 +269,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::gaze>& data_)
     return out;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data_)
 {
     py::dict out;
 
@@ -302,7 +294,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data
     return out;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::extSignal>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::extSignal>& data_)
 {
     py::dict out;
 
@@ -314,7 +306,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::extSignal>& dat
     return out;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::timeSync>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::timeSync>& data_)
 {
     py::dict out;
 
@@ -325,7 +317,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::timeSync>& data
     return out;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::positioning>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::positioning>& data_)
 {
     py::dict out;
 
@@ -337,7 +329,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::positioning>& d
     return out;
 }
 
-template <> py::dict StructVectorToDict(const std::vector<Titta::notification>& data_)
+py::dict StructVectorToDict(const std::vector<Titta::notification>& data_)
 {
     py::dict out;
 
@@ -392,7 +384,7 @@ void FieldToNpArray(py::dict& out_, const std::vector<TobiiResearchCalibrationSa
     FieldToNpArray<false>(out_, data_, name_ + "_validity"                , field_, &TobiiResearchCalibrationEyeData::validity);
 }
 
-template <> py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& data_)
+py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& data_)
 {
     py::dict out;
 
