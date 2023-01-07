@@ -23,8 +23,6 @@ ets = TittaPy.find_all_eye_trackers()
 print(ets)
 
 
-[print(d) for d in dir(EyeTracker.capabilities)]
-
 if len(ets)==0:
     EThndl = EyeTracker('tet-tcp://169.254.10.20')
 else:
@@ -110,8 +108,12 @@ while res==None:
 print(res.work_item.action)
 print(res.status_string)
 print(res.calibration_result)
-pickle.dump(res,open( "save.pkl", "wb" ))
-res2 = pickle.load( open( "save.pkl", "rb" ) )
+print(res.calibration_result.status)
+if res.calibration_result.points:
+    print(res.calibration_result.points[0].position_on_display_area)
+    print(res.calibration_result.points[0].samples)
+#pickle.dump(res,open( "save.pkl", "wb" ))
+#res2 = pickle.load( open( "save.pkl", "rb" ) )
 
 print("calibration_get_data:")
 EThndl.calibration_get_data()
@@ -167,7 +169,7 @@ t0 = time.perf_counter()
 while k < n_samples:
     samples = EThndl.peek_N('gaze')
     if len(samples)>0:
-        ts = samples[0].system_time_stamp
+        ts = samples['system_time_stamp'][0]
 
     if ts == ts_old:
         #core.wait(0.00001) # Wait 1/10 ms
@@ -202,50 +204,45 @@ plt.plot(np.diff(out[:, 1] / 1000))
 #%% Plot timestamps of samples in the buffer (and test pickle save and load)
 all_samples = EThndl.peek_N('gaze', sys.maxsize)
 pickle.dump(all_samples,open( "save.pkl", "wb" ))
-print(all_samples[-1])
-ut = []
-for i in all_samples:
-    ut.append(i.system_time_stamp)
+print(all_samples)
 
 plt.figure()
-plt.plot(np.diff(ut) / 1000)
+plt.plot(np.diff(all_samples['system_time_stamp']) / 1000)
 
 
 all_samples2 = pickle.load( open( "save.pkl", "rb" ) )
-ut2 = []
-for i in all_samples2:
-    ut2.append(i.system_time_stamp)
-
 plt.figure()
-plt.plot(np.diff(ut2) / 1000)
+plt.plot(np.diff(all_samples2['system_time_stamp']) / 1000)
 
 all_samples3 = EThndl.consume_N('gaze', sys.maxsize)
 all_samples4 = EThndl.consume_time_range('gaze')
-print([len(all_samples), len(all_samples2), len(all_samples3), len(all_samples4)])
+print([len(all_samples['system_time_stamp']), len(all_samples2['system_time_stamp']), len(all_samples3['system_time_stamp']), len(all_samples4['system_time_stamp'])])
 
 
 all_images = EThndl.peek_time_range('eye_image') # by default peeks all
-print(all_images[0])
+print(all_images)
+print(all_images['image'].shape)
 pickle.dump(all_images,open( "save.pkl", "wb" ))
 
 plt.figure()
-plt.imshow(all_images[0].image, cmap="gray")
+plt.imshow(all_images['image'][:,:,0], cmap="gray")
 
 all_images2 = pickle.load( open( "save.pkl", "rb" ) )
 plt.figure()
-plt.imshow(all_images2[0].image, cmap="gray")
+plt.imshow(all_images2['image'][:,:,0], cmap="gray")
 
+def dicts_equal(d1,d2):
+    return all([k in d2 and (not isinstance(d1[k],np.ndarray) and d1[k]==d2[k]) or all(d1[k] == d2[k]) for k in d1])
 
 def save_and_load_test(which: str, data=None):
     data = EThndl.peek_N(which, sys.maxsize)
-    if not data:
+    if data[list(data.keys())[0]].size==0:
         import warnings
         warnings.warn(f"no data for {which} stream",RuntimeWarning)
         return
-    print(data[0])
     pickle.dump(data,open( "save.pkl", "wb" ))
     data2 = pickle.load( open( "save.pkl", "rb" ) )
-    print(data2[0])
+    print(f'{which} pickled fine: {dicts_equal(data,data2)}')
 
 save_and_load_test('external_signal')
 save_and_load_test('time_sync')
@@ -253,13 +250,13 @@ save_and_load_test('positioning')
 save_and_load_test('notification')
 
 
+TittaPy.stop_logging()
 l=TittaPy.get_log(True)  # True means the log is consumed. False (default) its only peeked.
 print(l)
 pickle.dump(l,open( "save.pkl", "wb" ))
 l2 = pickle.load( open( "save.pkl", "rb" ) )
-print(l2)
-TittaPy.stop_logging()
+print(f'log pickled fine: {all([dicts_equal(x,y) for x,y in zip(l,l2)])}')
 
 
 plt.show()
-
+a=3
