@@ -41,7 +41,7 @@ public:
     using allLogTypes   = std::variant<logMessage, streamError>;
 
     // data stream type (NB: not log, as that isn't a class member)
-    enum class DataStream
+    enum class Stream
     {
         Unknown,
         Gaze,
@@ -54,10 +54,10 @@ public:
         Last            // fake value for iteration
     };
     // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
-    static Titta::DataStream stringToDataStream(std::string stream_);
-    static std::string dataStreamToString(Titta::DataStream stream_);
-    static std::vector<std::string> getAllDataStreams();
-    static std::string getAllDataStreamsString(const char* quoteChar_ = "\"");
+    static Titta::Stream stringToStream(std::string stream_);
+    static std::string streamToString(Titta::Stream stream_);
+    static std::vector<std::string> getAllStreams();
+    static std::string getAllStreamsString(const char* quoteChar_ = "\"");
 
     // side of buffer to get samples from
     enum class BufferSide
@@ -115,18 +115,18 @@ public:
     //// data streams
     // query if stream is supported
     bool hasStream(std::string stream_) const;
-    bool hasStream(DataStream  stream_) const;
+    bool hasStream(Stream      stream_) const;
 
     // deal with eyeOpenness stream
     bool setIncludeEyeOpennessInGaze(bool include_);    // returns previous state
 
     // start stream
     bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
-    bool start(DataStream  stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
+    bool start(Stream      stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
 
     // request stream state
     bool isRecording(std::string stream_) const;
-    bool isRecording(DataStream  stream_) const;
+    bool isRecording(Stream      stream_) const;
 
     // consume samples (by default all)
     template <typename T>
@@ -144,14 +144,14 @@ public:
 
     // clear all buffer contents
     void clear(std::string stream_);
-    void clear(DataStream  stream_);
+    void clear(Stream      stream_);
     // clear contents buffer within given timestamps (inclusive, by default whole buffer)
     void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
-    void clearTimeRange(DataStream  stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    void clearTimeRange(Stream      stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // stop, optionally deletes the buffer
     bool stop(std::string stream_, std::optional<bool> clearBuffer_ = std::nullopt);
-    bool stop(DataStream  stream_, std::optional<bool> clearBuffer_ = std::nullopt);
+    bool stop(Stream      stream_, std::optional<bool> clearBuffer_ = std::nullopt);
 
 private:
     void Init();

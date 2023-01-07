@@ -153,11 +153,11 @@ classdef TittaMex < handle
             this.cppmethodGlobal('stopLogging');
         end
         % data stream info
-        function dataStreams = getAllDataStreamsString(this,quoteChar)
+        function streams = getAllStreamsString(this,quoteChar)
             if nargin>1
-                dataStreams = this.cppmethodGlobal('getAllDataStreamsString',ensureStringIsChar(quoteChar));
+                streams = this.cppmethodGlobal('getAllStreamsString',ensureStringIsChar(quoteChar));
             else
-                dataStreams = this.cppmethodGlobal('getAllDataStreamsString');
+                streams = this.cppmethodGlobal('getAllStreamsString');
             end
         end
         function bufferSides = getAllBufferSidesString(this,quoteChar)
@@ -337,7 +337,7 @@ classdef TittaMex < handle
         %% data streams
         function supported = hasStream(this,stream)
             if nargin<2
-                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             supported = this.cppmethod('hasStream',ensureStringIsChar(stream));
         end
@@ -348,7 +348,7 @@ classdef TittaMex < handle
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
             if nargin<2
-                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(asGif)
@@ -361,7 +361,7 @@ classdef TittaMex < handle
         end
         function status = isRecording(this,stream)
             if nargin<2
-                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             status = this.cppmethod('isRecording',ensureStringIsChar(stream));
         end
@@ -372,7 +372,7 @@ classdef TittaMex < handle
             %          Values: 'start' or 'end'
             %          Default: 'start'
             if nargin<2
-                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
@@ -386,7 +386,7 @@ classdef TittaMex < handle
         function data = consumeTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
-                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
@@ -405,7 +405,7 @@ classdef TittaMex < handle
             %          Values: 'start' or 'end'
             %          Default: 'end'
             if nargin<2
-                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(side)
@@ -419,7 +419,7 @@ classdef TittaMex < handle
         function data = peekTimeRange(this,stream,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
-                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
@@ -432,14 +432,14 @@ classdef TittaMex < handle
         end
         function clear(this,stream)
             if nargin<2
-                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             this.cppmethod('clear',ensureStringIsChar(stream));
         end
         function clearTimeRange(this,stream,startT,endT)
             % optional start and end time inputs. Default: whole buffer
             if nargin<2
-                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>3 && ~isempty(endT)
@@ -454,7 +454,7 @@ classdef TittaMex < handle
             % optional boolean input indicating whether buffer should be
             % cleared out
             if nargin<2
-                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(doClearBuffer)

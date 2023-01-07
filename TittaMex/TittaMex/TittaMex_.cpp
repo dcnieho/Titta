@@ -145,10 +145,10 @@ namespace {
         GetLog,
         StopLogging,
         // check functions for dummy mode
-        CheckDataStream,
+        CheckStream,
         CheckBufferSide,
         // data stream info
-        GetAllDataStreamsString,
+        getAllStreamsString,
         GetAllBufferSidesString,
 
         //// eye-tracker specific getters and setters
@@ -218,10 +218,10 @@ namespace {
         { "getLog",                         Action::GetLog },
         { "stopLogging",                    Action::StopLogging },
         // check functions for dummy mode
-        { "checkDataStream",                Action::CheckDataStream },
+        { "checkStream",                    Action::CheckStream },
         { "checkBufferSide",                Action::CheckBufferSide },
         // data stream info
-        { "getAllDataStreamsString",        Action::GetAllDataStreamsString },
+        { "getAllStreamsString",            Action::getAllStreamsString },
         { "getAllBufferSidesString",        Action::GetAllBufferSidesString },
 
         //// eye-tracker specific getters and setters
@@ -338,8 +338,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (action != Action::Touch && action != Action::New &&
             action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
             action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
-            action != Action::CheckDataStream && action != Action::CheckBufferSide &&
-            action != Action::GetAllDataStreamsString && action != Action::GetAllBufferSidesString)
+            action != Action::CheckStream && action != Action::CheckBufferSide &&
+            action != Action::getAllStreamsString && action != Action::GetAllBufferSidesString)
         {
             instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
             instance = instIt->second;
@@ -428,17 +428,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::StopLogging:
             plhs[0] = mxCreateLogicalScalar(Titta::stopLogging());
             return;
-        case Action::CheckDataStream:
+        case Action::CheckStream:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
             {
-                std::string err = "checkDataStream: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "checkStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, check if valid
             char* bufferCstr = mxArrayToString(prhs[1]);
-            Titta::stringToDataStream(bufferCstr);
+            Titta::stringToStream(bufferCstr);
             mxFree(bufferCstr);
             plhs[0] = mxCreateLogicalScalar(true);
             return;
@@ -458,23 +458,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             plhs[0] = mxCreateLogicalScalar(true);
             return;
         }
-        case Action::GetAllDataStreamsString:
+        case Action::getAllStreamsString:
         {
             if (nrhs > 1)
             {
                 if (mxIsEmpty(prhs[1]))
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString(""));
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(""));
                 else
                 {
                     if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                        throw "getAllDataStreamsString: Expected first argument to be a char scalar.";
+                        throw "getAllStreamsString: Expected first argument to be a char scalar.";
                     char quoteChar[2] = { "\0" };
                     quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString(quoteChar));
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar));
                 }
             }
             else
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllDataStreamsString());
+                plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString());
             return;
         }
         case Action::GetAllBufferSidesString:
@@ -747,7 +747,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "hasStream: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "hasStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
@@ -770,7 +770,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "start: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "start: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
@@ -803,7 +803,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "isRecording: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "isRecording: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
@@ -817,13 +817,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "consumeN: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "consumeN: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
-            Titta::DataStream dataStream = instance->stringToDataStream(bufferCstr);
+            Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
@@ -850,25 +850,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 mxFree(bufferCstr);
             }
 
-            switch (dataStream)
+            switch (stream)
             {
-            case Titta::DataStream::Gaze:
-            case Titta::DataStream::EyeOpenness:
+            case Titta::Stream::Gaze:
+            case Titta::Stream::EyeOpenness:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::gaze>(nSamp, side));
                 return;
-            case Titta::DataStream::EyeImage:
+            case Titta::Stream::EyeImage:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::eyeImage>(nSamp, side));
                 return;
-            case Titta::DataStream::ExtSignal:
+            case Titta::Stream::ExtSignal:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::extSignal>(nSamp, side));
                 return;
-            case Titta::DataStream::TimeSync:
+            case Titta::Stream::TimeSync:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::timeSync>(nSamp, side));
                 return;
-            case Titta::DataStream::Positioning:
+            case Titta::Stream::Positioning:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::positioning>(nSamp, side));
                 return;
-            case Titta::DataStream::Notification:
+            case Titta::Stream::Notification:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::notification>(nSamp, side));
                 return;
             }
@@ -877,13 +877,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "consumeTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "consumeTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
-            Titta::DataStream dataStream = instance->stringToDataStream(bufferCstr);
+            Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
@@ -902,25 +902,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
 
-            switch (dataStream)
+            switch (stream)
             {
-            case Titta::DataStream::Gaze:
-            case Titta::DataStream::EyeOpenness:
+            case Titta::Stream::Gaze:
+            case Titta::Stream::EyeOpenness:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::gaze>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::EyeImage:
+            case Titta::Stream::EyeImage:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::eyeImage>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::ExtSignal:
+            case Titta::Stream::ExtSignal:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::extSignal>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::TimeSync:
+            case Titta::Stream::TimeSync:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::timeSync>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::Positioning:
+            case Titta::Stream::Positioning:
                 throw "consumeTimeRange: not supported for positioning stream.";
                 return;
-            case Titta::DataStream::Notification:
+            case Titta::Stream::Notification:
                 plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::notification>(timeStart, timeEnd));
                 return;
             }
@@ -929,13 +929,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "peekN: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "peekN: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
-            Titta::DataStream dataStream = instance->stringToDataStream(bufferCstr);
+            Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
@@ -962,25 +962,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 mxFree(bufferCstr);
             }
 
-            switch (dataStream)
+            switch (stream)
             {
-            case Titta::DataStream::Gaze:
-            case Titta::DataStream::EyeOpenness:
+            case Titta::Stream::Gaze:
+            case Titta::Stream::EyeOpenness:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::gaze>(nSamp, side));
                 return;
-            case Titta::DataStream::EyeImage:
+            case Titta::Stream::EyeImage:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::eyeImage>(nSamp, side));
                 return;
-            case Titta::DataStream::ExtSignal:
+            case Titta::Stream::ExtSignal:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::extSignal>(nSamp, side));
                 return;
-            case Titta::DataStream::TimeSync:
+            case Titta::Stream::TimeSync:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::timeSync>(nSamp, side));
                 return;
-            case Titta::DataStream::Positioning:
+            case Titta::Stream::Positioning:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::positioning>(nSamp, side));
                 return;
-            case Titta::DataStream::Notification:
+            case Titta::Stream::Notification:
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::notification>(nSamp, side));
                 return;
             }
@@ -989,13 +989,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "peekTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "peekTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
             char* bufferCstr = mxArrayToString(prhs[2]);
-            Titta::DataStream dataStream = instance->stringToDataStream(bufferCstr);
+            Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
@@ -1014,25 +1014,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
 
-            switch (dataStream)
+            switch (stream)
             {
-            case Titta::DataStream::Gaze:
-            case Titta::DataStream::EyeOpenness:
+            case Titta::Stream::Gaze:
+            case Titta::Stream::EyeOpenness:
                 plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::gaze>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::EyeImage:
+            case Titta::Stream::EyeImage:
                 plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::eyeImage>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::ExtSignal:
+            case Titta::Stream::ExtSignal:
                 plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::extSignal>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::TimeSync:
+            case Titta::Stream::TimeSync:
                 plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::timeSync>(timeStart, timeEnd));
                 return;
-            case Titta::DataStream::Positioning:
+            case Titta::Stream::Positioning:
                 throw "peekTimeRange: not supported for positioning stream.";
                 return;
-            case Titta::DataStream::Notification:
+            case Titta::Stream::Notification:
                 plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::notification>(timeStart, timeEnd));
                 return;
             }
@@ -1041,7 +1041,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "clear: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "clear: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
@@ -1055,7 +1055,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "clearTimeRange: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "clearTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
@@ -1085,7 +1085,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs < 3 || !mxIsChar(prhs[2]))
             {
-                std::string err = "stop: First input must be a data stream identifier string (" + Titta::getAllDataStreamsString("'") + ").";
+                std::string err = "stop: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 

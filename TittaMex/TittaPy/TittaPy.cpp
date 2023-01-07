@@ -868,7 +868,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             [](Titta& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> py::dict
             {
-                Titta::DataStream dataStream = Titta::stringToDataStream(stream_);
+                Titta::Stream stream = Titta::stringToStream(stream_);
 
                 std::optional<Titta::BufferSide> bufSide;
                 if (!side_.empty())
@@ -876,20 +876,20 @@ PYBIND11_MODULE(MODULE_NAME, m)
                     bufSide = Titta::stringToBufferSide(side_);
                 }
 
-                switch (dataStream)
+                switch (stream)
                 {
-                case Titta::DataStream::Gaze:
-                case Titta::DataStream::EyeOpenness:
+                case Titta::Stream::Gaze:
+                case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.consumeN<Titta::gaze>(NSamp_, bufSide));
-                case Titta::DataStream::EyeImage:
+                case Titta::Stream::EyeImage:
                     return StructVectorToDict(instance_.consumeN<Titta::eyeImage>(NSamp_, bufSide));
-                case Titta::DataStream::ExtSignal:
+                case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.consumeN<Titta::extSignal>(NSamp_, bufSide));
-                case Titta::DataStream::TimeSync:
+                case Titta::Stream::TimeSync:
                     return StructVectorToDict(instance_.consumeN<Titta::timeSync>(NSamp_, bufSide));
-                case Titta::DataStream::Positioning:
+                case Titta::Stream::Positioning:
                     return StructVectorToDict(instance_.consumeN<Titta::positioning>(NSamp_, bufSide));
-                case Titta::DataStream::Notification:
+                case Titta::Stream::Notification:
                     return StructVectorToDict(instance_.consumeN<Titta::notification>(NSamp_, bufSide));
                 }
                 return {};
@@ -900,22 +900,22 @@ PYBIND11_MODULE(MODULE_NAME, m)
             [](Titta& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
             -> py::dict
             {
-                Titta::DataStream dataStream = Titta::stringToDataStream(stream_);
+                Titta::Stream stream = Titta::stringToStream(stream_);
 
-                switch (dataStream)
+                switch (stream)
                 {
-                case Titta::DataStream::Gaze:
-                case Titta::DataStream::EyeOpenness:
+                case Titta::Stream::Gaze:
+                case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.consumeTimeRange<Titta::gaze>(timeStart_, timeEnd_));
-                case Titta::DataStream::EyeImage:
+                case Titta::Stream::EyeImage:
                     return StructVectorToDict(instance_.consumeTimeRange<Titta::eyeImage>(timeStart_, timeEnd_));
-                case Titta::DataStream::ExtSignal:
+                case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.consumeTimeRange<Titta::extSignal>(timeStart_, timeEnd_));
-                case Titta::DataStream::TimeSync:
+                case Titta::Stream::TimeSync:
                     return StructVectorToDict(instance_.consumeTimeRange<Titta::timeSync>(timeStart_, timeEnd_));
-                case Titta::DataStream::Positioning:
+                case Titta::Stream::Positioning:
                     DoExitWithMsg("Titta::cpp::consume_time_range: not supported for positioning stream.");
-                case Titta::DataStream::Notification:
+                case Titta::Stream::Notification:
                     return StructVectorToDict(instance_.consumeTimeRange<Titta::notification>(timeStart_, timeEnd_));
                 }
                 return {};
@@ -927,7 +927,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             [](Titta& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
             -> py::dict
             {
-                Titta::DataStream dataStream = Titta::stringToDataStream(stream_);
+                Titta::Stream stream = Titta::stringToStream(stream_);
 
                 std::optional<Titta::BufferSide> bufSide;
                 if (!side_.empty())
@@ -935,20 +935,20 @@ PYBIND11_MODULE(MODULE_NAME, m)
                     bufSide = Titta::stringToBufferSide(side_);
                 }
 
-                switch (dataStream)
+                switch (stream)
                 {
-                case Titta::DataStream::Gaze:
-                case Titta::DataStream::EyeOpenness:
+                case Titta::Stream::Gaze:
+                case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.peekN<Titta::gaze>(NSamp_, bufSide));
-                case Titta::DataStream::EyeImage:
+                case Titta::Stream::EyeImage:
                     return StructVectorToDict(instance_.peekN<Titta::eyeImage>(NSamp_, bufSide));
-                case Titta::DataStream::ExtSignal:
+                case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.peekN<Titta::extSignal>(NSamp_, bufSide));
-                case Titta::DataStream::TimeSync:
+                case Titta::Stream::TimeSync:
                     return StructVectorToDict(instance_.peekN<Titta::timeSync>(NSamp_, bufSide));
-                case Titta::DataStream::Positioning:
+                case Titta::Stream::Positioning:
                     return StructVectorToDict(instance_.peekN<Titta::positioning>(NSamp_, bufSide));
-                case Titta::DataStream::Notification:
+                case Titta::Stream::Notification:
                     return StructVectorToDict(instance_.peekN<Titta::notification>(NSamp_, bufSide));
                 }
                 return {};
@@ -959,22 +959,22 @@ PYBIND11_MODULE(MODULE_NAME, m)
             [](Titta& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
             -> py::dict
             {
-                Titta::DataStream dataStream = Titta::stringToDataStream(stream_);
+                Titta::Stream stream = Titta::stringToStream(stream_);
 
-                switch (dataStream)
+                switch (stream)
                 {
-                case Titta::DataStream::Gaze:
-                case Titta::DataStream::EyeOpenness:
+                case Titta::Stream::Gaze:
+                case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.peekTimeRange<Titta::gaze>(timeStart_, timeEnd_));
-                case Titta::DataStream::EyeImage:
+                case Titta::Stream::EyeImage:
                     return StructVectorToDict(instance_.peekTimeRange<Titta::eyeImage>(timeStart_, timeEnd_));
-                case Titta::DataStream::ExtSignal:
+                case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.peekTimeRange<Titta::extSignal>(timeStart_, timeEnd_));
-                case Titta::DataStream::TimeSync:
+                case Titta::Stream::TimeSync:
                     return StructVectorToDict(instance_.peekTimeRange<Titta::timeSync>(timeStart_, timeEnd_));
-                case Titta::DataStream::Positioning:
+                case Titta::Stream::Positioning:
                     DoExitWithMsg("Titta::cpp::peek_time_range: not supported for positioning stream.");
-                case Titta::DataStream::Notification:
+                case Titta::Stream::Notification:
                     return StructVectorToDict(instance_.peekTimeRange<Titta::notification>(timeStart_, timeEnd_));
                 }
                 return {};

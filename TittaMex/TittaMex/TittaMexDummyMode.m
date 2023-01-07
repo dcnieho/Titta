@@ -54,7 +54,7 @@ classdef TittaMexDummyMode < TittaMex
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
                 % (call static functions in the mex)
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging','getAllBufferSidesString','getAllDataStreamsString'});
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging','getAllBufferSidesString','getAllStreamsString'});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
@@ -153,7 +153,7 @@ classdef TittaMexDummyMode < TittaMex
         %% data streams
         function supported = hasStream(this,stream)
             if nargin<2
-                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::hasStream: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             supported   = checkValidStream(this,stream);
         end
@@ -162,7 +162,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function success = start(this,stream,~,~)
             if nargin<2
-                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
@@ -171,7 +171,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function status = isRecording(this,stream)
             if nargin<2
-                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::isRecording: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             status = false;
@@ -181,7 +181,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function data = consumeN(this,stream,~,side)
             if nargin<2
-                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::consumeN: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             if nargin>3
@@ -194,7 +194,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function data = consumeTimeRange(this,stream,~,~)
             if nargin<2
-                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             data = [];
@@ -204,7 +204,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function data = peekN(this,stream,~,side)
             if nargin<2
-                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::peekN: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             if nargin>3
@@ -217,7 +217,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function data = peekTimeRange(this,stream,~,~)
             if nargin<2
-                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::peekTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             data = [];
@@ -227,19 +227,19 @@ classdef TittaMexDummyMode < TittaMex
         end
         function clear(this,stream)
             if nargin<2
-                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::clear: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
         end
         function clearTimeRange(this,stream,~,~)
             if nargin<2
-                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::clearTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
         end
         function success = stop(this,stream,~)
             if nargin<2
-                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllDataStreamsString());
+                error('TittaMex::stop: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             success = checkValidStream(this,stream);
             if strcmpi(stream,'gaze')
@@ -258,7 +258,7 @@ end
 end
 
 function isValid = checkValidStream(this,stream)
-isValid = this.cppmethodGlobal('checkDataStream',ensureStringIsChar(stream));
+isValid = this.cppmethodGlobal('checkStream',ensureStringIsChar(stream));
 end
 function isValid = checkValidBufferSide(this,side)
 isValid = this.cppmethodGlobal('checkBufferSide',ensureStringIsChar(side));
