@@ -22,6 +22,8 @@ print(TittaPy.get_system_timestamp())
 ets = TittaPy.find_all_eye_trackers()
 print(ets)
 
+help(EyeTracker.calibration_collect_data)
+
 
 if len(ets)==0:
     EThndl = EyeTracker('tet-tcp://169.254.10.20')
@@ -58,11 +60,14 @@ EThndl.leave_calibration_mode(True)
 
 print("enter_calibration_mode:")
 EThndl.enter_calibration_mode(False)
+print(EThndl.is_in_calibration_mode())
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
 print(res.work_item.action)
 print(res.status_string)
+print(EThndl.is_in_calibration_mode())
+print(EThndl.calibration_get_status())
 pickle.dump(res,open( "save.pkl", "wb" ))
 res2 = pickle.load( open( "save.pkl", "rb" ) )
 
@@ -112,6 +117,7 @@ print(res.calibration_result.status)
 if res.calibration_result.points:
     print(res.calibration_result.points[0].position_on_display_area)
     print(res.calibration_result.points[0].samples)
+print(EThndl.calibration_get_status())
 #pickle.dump(res,open( "save.pkl", "wb" ))
 #res2 = pickle.load( open( "save.pkl", "rb" ) )
 
@@ -249,6 +255,12 @@ save_and_load_test('time_sync')
 save_and_load_test('positioning')
 save_and_load_test('notification')
 
+EThndl.clear_time_range('gaze',0,sys.maxsize)
+EThndl.clear_time_range('eye_image',0,sys.maxsize)
+EThndl.clear_time_range('external_signal',0,sys.maxsize)
+EThndl.clear_time_range('time_sync',0,sys.maxsize)
+EThndl.clear_time_range('positioning',0,sys.maxsize)
+EThndl.clear_time_range('notification',0,sys.maxsize)
 
 TittaPy.stop_logging()
 l=TittaPy.get_log(True)  # True means the log is consumed. False (default) its only peeked.

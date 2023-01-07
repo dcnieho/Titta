@@ -32,92 +32,6 @@ std::string string_format(const std::string& format, Args ... args)
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
-const char* calibrationEyeValidityToString(TobiiResearchCalibrationEyeValidity validity_)
-{
-    return validity_ == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED ? "invalid_and_not_used" : (validity_==TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED ? "valid_but_not_used" : (validity_==TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED ? "valid_and_used" : "unknown"));
-}
-
-
-template <typename T> std::string toString(const T& instance_, std::string spacing="");
-
-template <> std::string toString<>(const TobiiResearchSDKVersion& instance_, std::string spacing)
-{
-    return string_format("SDK_version %d.%d.%d.%d", instance_.major, instance_.minor, instance_.revision, instance_.build);
-}
-template <> std::string toString<>(const TobiiTypes::eyeTracker& instance_, std::string spacing)
-{
-    return string_format("eye_tracker_info for %s (%s)", instance_.model.c_str(), instance_.serialNumber.c_str());
-}
-
-template <> std::string toString<>(const TobiiResearchDisplayArea& instance_, std::string spacing)
-{
-    return string_format("display_area for %.1fmm x %.1fmm screen", instance_.width, instance_.height);
-}
-
-template <> std::string toString<>(const TobiiResearchCalibrationEyeData& instance_, std::string spacing)
-{
-    return string_format("calibration_eye_data (%s) at [%.4f, %.4f]", calibrationEyeValidityToString(instance_.validity), instance_.position_on_display_area.x, instance_.position_on_display_area.y);
-}
-template <> std::string toString<>(const TobiiResearchCalibrationSample& instance_, std::string spacing)
-{
-    auto nextLvl = spacing + "  ";
-    return string_format("calibration_sample:\n%sleft: %s\n%sright: %s", nextLvl.c_str(), toString(instance_.left_eye).c_str(), nextLvl.c_str(), toString(instance_.right_eye).c_str());
-}
-template <> std::string toString<>(const TobiiTypes::CalibrationPoint& instance_, std::string spacing)
-{
-    int nValidLeft = 0, nValidRight = 0;
-    for (auto& sample : instance_.calibration_samples)
-    {
-        if (sample.left_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
-            ++nValidLeft;
-        if (sample.right_eye.validity == TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
-            ++nValidRight;
-    }
-    auto ret = string_format("calibration_point at [%.4f, %.4f] with %Iu samples, of which %d valid for left eye and %d valid for right eye", instance_.position_on_display_area.x, instance_.position_on_display_area.y, instance_.calibration_samples.size(), nValidLeft, nValidRight);
-#ifndef NDEBUG
-    auto nextLvl = spacing + "  ";
-    ret += ":\n";
-    for (auto& sample : instance_.calibration_samples)
-        ret += string_format("%s%s\n", nextLvl.c_str(), toString(sample,nextLvl).c_str());
-#endif
-
-    return ret;
-}
-template <> std::string toString<>(const TobiiTypes::CalibrationResult& instance_, std::string spacing)
-{
-    std::string pointStr;
-    if (!instance_.calibration_points.empty())
-    {
-        pointStr += string_format(":\n");
-        for (auto& point : instance_.calibration_points)
-            pointStr += string_format("  %s\n", toString(point, "  ").c_str());
-    }
-    return string_format("calibration_result for %Iu calibration points%s", instance_.calibration_points.size(), pointStr.c_str());
-}
-
-template <> std::string toString<>(const TobiiResearchPoint3D& instance_, std::string spacing)
-{
-    return string_format(
-#ifdef NDEBUG
-        "[%.3f, %.3f, %.3f] mm",
-#else
-        "<TittaPy.point_3D at [%.3f, %.3f, %.3f] mm>",
-#endif
-        instance_.x, instance_.y, instance_.z
-    );
-}
-template <> std::string toString<>(const TobiiResearchNormalizedPoint2D& instance_, std::string spacing)
-{
-    return string_format(
-#ifdef NDEBUG
-        "[%.3f, %.3f] mm",
-#else
-        "<TittaPy.point_2D_norm at [%.3f, %.3f] mm>",
-#endif
-        instance_.x, instance_.y
-    );
-}
-
 
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
 template<bool UseArray, typename V, typename... Fs>
@@ -226,7 +140,7 @@ bool allEquals(const std::vector<S>& data_, T S::* field_, const R& ref_)
     return true;
 }
 
-py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_)
+py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage& e_)
 {
     py::array_t<uint8_t> a;
     a.resize({ e_.height, e_.width });
@@ -242,7 +156,7 @@ void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, 
     }
 
     py::list l;
-    for (auto& frame : data_)
+    for (const auto& frame : data_)
     {
         if (!frame.is_gif)
             l.append(imageToNumpy(frame));
@@ -253,7 +167,7 @@ void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, 
 
 
 
-py::dict StructVectorToDict(const std::vector<Titta::gaze>& data_)
+py::dict StructVectorToDict(std::vector<Titta::gaze> data_)
 {
     py::dict out;
 
@@ -269,7 +183,7 @@ py::dict StructVectorToDict(const std::vector<Titta::gaze>& data_)
     return out;
 }
 
-py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data_)
+py::dict StructVectorToDict(std::vector<Titta::eyeImage> data_)
 {
     py::dict out;
 
@@ -294,7 +208,7 @@ py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data_)
     return out;
 }
 
-py::dict StructVectorToDict(const std::vector<Titta::extSignal>& data_)
+py::dict StructVectorToDict(std::vector<Titta::extSignal> data_)
 {
     py::dict out;
 
@@ -306,7 +220,7 @@ py::dict StructVectorToDict(const std::vector<Titta::extSignal>& data_)
     return out;
 }
 
-py::dict StructVectorToDict(const std::vector<Titta::timeSync>& data_)
+py::dict StructVectorToDict(std::vector<Titta::timeSync> data_)
 {
     py::dict out;
 
@@ -317,7 +231,7 @@ py::dict StructVectorToDict(const std::vector<Titta::timeSync>& data_)
     return out;
 }
 
-py::dict StructVectorToDict(const std::vector<Titta::positioning>& data_)
+py::dict StructVectorToDict(std::vector<Titta::positioning> data_)
 {
     py::dict out;
 
@@ -329,7 +243,7 @@ py::dict StructVectorToDict(const std::vector<Titta::positioning>& data_)
     return out;
 }
 
-py::dict StructVectorToDict(const std::vector<Titta::notification>& data_)
+py::dict StructVectorToDict(std::vector<Titta::notification> data_)
 {
     py::dict out;
 
@@ -378,6 +292,16 @@ py::list StructVectorToList(const std::vector<std::variant<TobiiTypes::logMessag
     return out;
 }
 
+py::list StructToList(const TobiiResearchNormalizedPoint2D& data_)
+{
+    return py::cast(std::array<float, 2>{data_.x, data_.y});
+}
+
+py::list StructToList(const TobiiResearchPoint3D& data_)
+{
+    return py::cast(std::array<float, 3>{data_.x, data_.y, data_.z});
+}
+
 void FieldToNpArray(py::dict& out_, const std::vector<TobiiResearchCalibrationSample>& data_, const std::string& name_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_)
 {
     TobiiFieldToNpArray  (out_, data_, name_ + "_position_on_display_area", field_, &TobiiResearchCalibrationEyeData::position_on_display_area);
@@ -394,6 +318,128 @@ py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& d
     return out;
 }
 
+py::list StructVectorToList(const std::vector<TobiiTypes::CalibrationPoint>& data_)
+{
+    py::list out;
+
+    for (auto&& i : data_)
+    {
+        py::dict d;
+        d["position_on_display_area"] = StructToList(i.position_on_display_area);
+        d["samples"] = StructVectorToDict(i.calibration_samples);
+
+        out.append(d);
+    }
+
+    return out;
+}
+
+py::dict StructToDict(const TobiiTypes::CalibrationResult& data_)
+{
+    py::dict d;
+
+    d["points"] = StructVectorToList(data_.calibration_points);
+    d["status"] = data_.status;
+
+    return d;
+}
+
+py::dict StructToDict(const TobiiTypes::CalibrationWorkItem& data_)
+{
+    py::dict d;
+
+    d["action"] = data_.action;
+    if (data_.coordinates.has_value())
+        d["coordinates"] = *data_.coordinates;
+    if (data_.eye.has_value())
+        d["eye"] = *data_.eye;
+    if (data_.calibrationData.has_value())
+        d["calibration_data"] = *data_.calibrationData;
+
+    return d;
+}
+
+py::dict StructToDict(const TobiiTypes::CalibrationWorkResult& data_)
+{
+    py::dict d;
+
+    d["work_item"] = StructToDict(data_.workItem);
+    d["status"] = static_cast<int>(data_.status);
+    d["status_string"] = data_.statusString;
+    if (data_.calibrationResult.has_value())
+        d["calibration_result"] = StructToDict(*data_.calibrationResult);
+    if (data_.calibrationData.has_value())
+        d["calibration_data"] = *data_.calibrationData;
+
+    return d;
+}
+
+py::dict StructToDict(const TobiiResearchSDKVersion& data_)
+{
+    py::dict d;
+
+    d["major"] = data_.major;
+    d["minor"] = data_.minor;
+    d["revision"] = data_.revision;
+    d["build"] = data_.build;
+
+    return d;
+}
+
+py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
+{
+    py::list out;
+
+    for (auto&& i : data_)
+    {
+        py::dict d;
+        d["device_name"] = i.deviceName;
+        d["serial_number"] = i.serialNumber;
+        d["model"] = i.model;
+        d["firmware_version"] = i.firmwareVersion;
+        d["runtime_version"] = i.runtimeVersion;
+        d["address"] = i.address;
+        d["frequency"] = i.frequency;
+        d["tracking_mode"] = i.trackingMode;
+        d["capabilities"] = i.capabilities;
+        d["supported_frequencies"] = i.supportedFrequencies;
+        d["supported_modes"] = i.supportedModes;
+
+        out.append(d);
+    }
+
+    return out;
+}
+
+py::dict StructToDict(const TobiiResearchTrackBox& data_)
+{
+    py::dict d;
+
+    d["back_lower_left"] = StructToList(data_.back_lower_left);
+    d["back_lower_right"] = StructToList(data_.back_lower_right);
+    d["back_upper_left"] = StructToList(data_.back_upper_left);
+    d["back_upper_right"] = StructToList(data_.back_upper_right);
+    d["front_lower_left"] = StructToList(data_.front_lower_left);
+    d["front_lower_right"] = StructToList(data_.front_lower_right);
+    d["front_upper_left"] = StructToList(data_.front_upper_left);
+    d["front_upper_right"] = StructToList(data_.front_upper_right);
+
+    return d;
+}
+
+py::dict StructToDict(const TobiiResearchDisplayArea& data_)
+{
+    py::dict d;
+    d["bottom_left"] = StructToList(data_.bottom_left);
+    d["bottom_right"] = StructToList(data_.bottom_right);
+    d["top_left"] = StructToList(data_.top_left);
+    d["top_right"] = StructToList(data_.top_right);
+    d["width"] = data_.width;
+    d["height"] = data_.height;
+
+    return d;
+}
+
 
 
 // start module scope
@@ -404,27 +450,6 @@ py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& d
 #endif
 PYBIND11_MODULE(MODULE_NAME, m)
 {
-    // SDK and eye tracker info
-    py::class_<TobiiResearchSDKVersion>(m, "SDK_version")
-        .def_readwrite("major", &TobiiResearchSDKVersion::major)
-        .def_readwrite("minor", &TobiiResearchSDKVersion::minor)
-        .def_readwrite("revision", &TobiiResearchSDKVersion::revision)
-        .def_readwrite("build", &TobiiResearchSDKVersion::build)
-        .def(py::pickle(
-            [](const TobiiResearchSDKVersion& p) { // __getstate__
-                return py::make_tuple(p.major, p.minor, p.revision, p.build);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 4)
-                    throw std::runtime_error("Invalid state! (SDK_version)");
-
-                TobiiResearchSDKVersion p{ t[0].cast<int>(),t[1].cast<int>(),t[2].cast<int>(),t[3].cast<int>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiResearchSDKVersion& instance_) { return toString(instance_); })
-        ;
-
     // capabilities
     py::enum_<TobiiResearchCapabilities>(m, "capability")
         .value("can_set_display_area", TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
@@ -438,34 +463,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("can_do_monocular_calibration", TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
         .value("has_eye_openness_data", TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
         ;
-
-    py::class_<TobiiTypes::eyeTracker>(m, "eye_tracker_info")
-        .def_readonly("device_name", &TobiiTypes::eyeTracker::deviceName)
-        .def_readonly("serial_number", &TobiiTypes::eyeTracker::serialNumber)
-        .def_readonly("model", &TobiiTypes::eyeTracker::model)
-        .def_readonly("firmware_version", &TobiiTypes::eyeTracker::firmwareVersion)
-        .def_readonly("runtime_version", &TobiiTypes::eyeTracker::runtimeVersion)
-        .def_readonly("address", &TobiiTypes::eyeTracker::address)
-        .def_readonly("frequency", &TobiiTypes::eyeTracker::frequency)
-        .def_readonly("tracking_mode", &TobiiTypes::eyeTracker::trackingMode)
-        .def_readonly("capabilities", &TobiiTypes::eyeTracker::capabilities)
-        .def_readonly("supported_frequencies", &TobiiTypes::eyeTracker::supportedFrequencies)
-        .def_readonly("supported_modes", &TobiiTypes::eyeTracker::supportedModes)
-        .def(py::pickle(
-            [](const TobiiTypes::eyeTracker& p) { // __getstate__
-                return py::make_tuple(p.deviceName, p.serialNumber, p.model, p.firmwareVersion, p.runtimeVersion, p.address, p.frequency, p.trackingMode, p.capabilities, p.supportedFrequencies, p.supportedModes);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 11)
-                    throw std::runtime_error("Invalid state! (eye_tracker_info)");
-
-                TobiiTypes::eyeTracker p{ t[0].cast<std::string>(),t[1].cast<std::string>(),t[2].cast<std::string>(),t[3].cast<std::string>(),t[4].cast<std::string>(),t[5].cast<std::string>(),t[6].cast<float>(),t[7].cast<std::string>(),t[8].cast<TobiiResearchCapabilities>(),t[9].cast<std::vector<float>>(),t[10].cast<std::vector<std::string>>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiTypes::eyeTracker& instance_) { return toString(instance_); })
-        ;
-
     // logging
     py::enum_<TobiiResearchLogSource>(m, "log_source")
         .value("stream_engine", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE)
@@ -498,50 +495,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("subscription_HMD_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_HMD_GAZE_DATA)
         .value("subscription_user_position_guide", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE)
         ;
-
-    py::class_<TobiiResearchTrackBox>(m, "track_box")
-        .def_readwrite("back_lower_left", &TobiiResearchTrackBox::back_lower_left)
-        .def_readwrite("back_lower_right", &TobiiResearchTrackBox::back_lower_right)
-        .def_readwrite("back_upper_left", &TobiiResearchTrackBox::back_upper_left)
-        .def_readwrite("back_upper_right", &TobiiResearchTrackBox::back_upper_right)
-        .def_readwrite("front_lower_left", &TobiiResearchTrackBox::front_lower_left)
-        .def_readwrite("front_lower_right", &TobiiResearchTrackBox::front_lower_right)
-        .def_readwrite("front_upper_left", &TobiiResearchTrackBox::front_upper_left)
-        .def_readwrite("front_upper_right", &TobiiResearchTrackBox::front_upper_right)
-        .def(py::pickle(
-            [](const TobiiResearchTrackBox& p) { // __getstate__
-                return py::make_tuple(p.back_lower_left, p.back_lower_right, p.back_upper_left, p.back_upper_right, p.front_lower_left, p.front_lower_right, p.front_upper_left, p.front_upper_right);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 8)
-                    throw std::runtime_error("Invalid state! (track_box)");
-
-                TobiiResearchTrackBox p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<TobiiResearchPoint3D>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<TobiiResearchPoint3D>(),t[6].cast<TobiiResearchPoint3D>(),t[7].cast<TobiiResearchPoint3D>() };
-                return p;
-            }
-        ))
-        ;
-    py::class_<TobiiResearchDisplayArea>(m, "display_area")
-        .def_readwrite("bottom_left", &TobiiResearchDisplayArea::bottom_left)
-        .def_readwrite("bottom_right", &TobiiResearchDisplayArea::bottom_right)
-        .def_readwrite("height", &TobiiResearchDisplayArea::height)
-        .def_readwrite("top_left", &TobiiResearchDisplayArea::top_left)
-        .def_readwrite("top_right", &TobiiResearchDisplayArea::top_right)
-        .def_readwrite("width", &TobiiResearchDisplayArea::width)
-        .def(py::pickle(
-            [](const TobiiResearchDisplayArea& p) { // __getstate__
-                return py::make_tuple(p.bottom_left, p.bottom_right, p.height, p.top_left, p.top_right, p.width);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 6)
-                    throw std::runtime_error("Invalid state! (display_area)");
-
-                TobiiResearchDisplayArea p{ t[0].cast<TobiiResearchPoint3D>(),t[1].cast<TobiiResearchPoint3D>(),t[2].cast<float>(),t[3].cast<TobiiResearchPoint3D>(),t[4].cast<TobiiResearchPoint3D>(),t[5].cast<float>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiResearchDisplayArea& instance_) { return toString(instance_); })
-        ;
+    // license
     py::enum_<TobiiResearchLicenseValidationResult>(m, "license_validation_result")
         .value("ok", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK)
         .value("tampered", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_TAMPERED)
@@ -554,7 +508,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("invalid_model", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_MODEL)
         .value("unknown", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN)
         ;
-
     // calibration
     py::enum_<TobiiTypes::CalibrationState>(m, "calibration_state")
         .value("not_yet_entered", TobiiTypes::CalibrationState::NotYetEntered)
@@ -593,129 +546,18 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("valid_and_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
         .value("unknown", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN)
         ;
-    py::class_<TobiiTypes::CalibrationPoint>(m, "calibration_point")
-        .def_readwrite("position_on_display_area", &TobiiTypes::CalibrationPoint::position_on_display_area)
-        .def_property_readonly("samples", [](const TobiiTypes::CalibrationPoint& instance_) -> py::dict
-            { return StructVectorToDict(instance_.calibration_samples); })
-        //.def_readwrite("samples", &TobiiTypes::CalibrationPoint::calibration_samples)
-        .def(py::pickle(
-            [](const TobiiTypes::CalibrationPoint& p) { // __getstate__
-                return py::make_tuple(p.position_on_display_area, p.calibration_samples);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state! (calibration_point)");
-
-                TobiiTypes::CalibrationPoint p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<std::vector<TobiiResearchCalibrationSample>>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiTypes::CalibrationPoint& instance_) { return toString(instance_); })
-        ;
-    py::class_<TobiiTypes::CalibrationResult>(m, "calibration_result")
-        .def_readwrite("points", &TobiiTypes::CalibrationResult::calibration_points)
-        .def_readwrite("status", &TobiiTypes::CalibrationResult::status)
-        .def(py::pickle(
-            [](const TobiiTypes::CalibrationResult& p) { // __getstate__
-                return py::make_tuple(p.calibration_points, p.status);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state! (calibration_result)");
-
-                TobiiTypes::CalibrationResult p{ t[0].cast<std::vector<TobiiTypes::CalibrationPoint>>(), t[1].cast<TobiiResearchCalibrationStatus>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiTypes::CalibrationResult& instance_) { return toString(instance_); })
-        ;
-    py::class_<TobiiTypes::CalibrationWorkItem>(m, "calibration_work_item")
-        .def_readwrite("action", &TobiiTypes::CalibrationWorkItem::action)
-        .def_readwrite("coordinates", &TobiiTypes::CalibrationWorkItem::coordinates)
-        .def_readwrite("eye", &TobiiTypes::CalibrationWorkItem::eye)
-        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkItem::calibrationData)
-        .def(py::pickle(
-            [](const TobiiTypes::CalibrationWorkItem& p) { // __getstate__
-                return py::make_tuple(p.action, p.coordinates, p.eye, p.calibrationData);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 4)
-                    throw std::runtime_error("Invalid state! (calibration_work_item)");
-
-                TobiiTypes::CalibrationWorkItem p{ t[0].cast<TobiiTypes::CalibrationAction>(),t[1].cast<std::optional<std::vector<double>>>(),t[2].cast<std::optional<std::string>>(),t[3].cast<std::optional<std::vector<uint8_t>>>() };
-                return p;
-            }
-        ))
-        ;
-    py::class_<TobiiTypes::CalibrationWorkResult>(m, "calibration_work_result")
-        .def_readwrite("work_item", &TobiiTypes::CalibrationWorkResult::workItem)
-        .def_property_readonly("status", [](TobiiTypes::CalibrationWorkResult& instance_) { return static_cast<int>(instance_.status); })
-        .def_readwrite("status_string", &TobiiTypes::CalibrationWorkResult::statusString)
-        .def_readwrite("calibration_result", &TobiiTypes::CalibrationWorkResult::calibrationResult)
-        .def_readwrite("calibration_data", &TobiiTypes::CalibrationWorkResult::calibrationData)
-        .def(py::pickle(
-            [](const TobiiTypes::CalibrationWorkResult& p) { // __getstate__
-                return py::make_tuple(p.workItem, static_cast<int>(p.status), p.statusString, p.calibrationResult, p.calibrationData);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 5)
-                    throw std::runtime_error("Invalid state! (calibration_work_result)");
-
-                TobiiTypes::CalibrationWorkResult p{ t[0].cast<TobiiTypes::CalibrationWorkItem>(),static_cast<TobiiResearchStatus>(t[1].cast<int>()),t[2].cast<std::string>(),t[3].cast<std::optional<TobiiTypes::CalibrationResult>>(),t[4].cast<std::optional<std::vector<uint8_t>>>() };
-                return p;
-            }
-        ))
-        ;
-
-    py::class_<TobiiResearchPoint3D>(m, "point_3D")
-        .def_readwrite("x", &TobiiResearchPoint3D::x)
-        .def_readwrite("y", &TobiiResearchPoint3D::y)
-        .def_readwrite("z", &TobiiResearchPoint3D::z)
-        .def(py::pickle(
-            [](const TobiiResearchPoint3D& p) { // __getstate__
-                return py::make_tuple(p.x, p.y, p.z);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 3)
-                    throw std::runtime_error("Invalid state! (point_3D)");
-
-                TobiiResearchPoint3D p{ t[0].cast<float>(),t[1].cast<float>(),t[2].cast<float>() };
-                return p;
-            }
-        ))
-        .def("__repr__",[](const TobiiResearchPoint3D& instance_){ return toString(instance_); })
-        ;
-    py::class_<TobiiResearchNormalizedPoint2D>(m, "point_2D_norm")
-        .def_readwrite("x", &TobiiResearchNormalizedPoint2D::x)
-        .def_readwrite("y", &TobiiResearchNormalizedPoint2D::y)
-        .def(py::pickle(
-            [](const TobiiResearchNormalizedPoint2D& p) { // __getstate__
-                return py::make_tuple(p.x, p.y);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state! (point_2D_norm)");
-
-                TobiiResearchNormalizedPoint2D p{ t[0].cast<float>(),t[1].cast<float>() };
-                return p;
-            }
-        ))
-        .def("__repr__",[](const TobiiResearchNormalizedPoint2D& instance_){ return toString(instance_); })
-        ;
-
+    // streams
     py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
         .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
         .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
         .value("multi_roi_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_MULTI_ROI)
         .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
         ;
-
     py::enum_<TobiiResearchExternalSignalChangeType>(m, "external_signal_change_type")
         .value("value_changed", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED)
         .value("initial_value", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE)
         .value("connection_restored", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED)
         ;
-
     py::enum_<TobiiResearchNotificationType>(m, "notification_type")
         .value("connection_lost", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_LOST)
         .value("connection_restored", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_RESTORED)
@@ -732,9 +574,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
         ;
 
     //// global SDK functions
-    m.def("get_SDK_version", &Titta::getSDKVersion);
+    m.def("get_SDK_version", []() { return StructToDict(Titta::getSDKVersion()); });
     m.def("get_system_timestamp", &Titta::getSystemTimestamp);
-    m.def("find_all_eye_trackers", &Titta::findAllEyeTrackers);
+    m.def("find_all_eye_trackers", []() {return StructVectorToList(Titta::findAllEyeTrackers()); });
     // logging
     m.def("start_logging", &Titta::startLogging,
         py::arg_v("initial_buffer_size", std::nullopt, "None"));
@@ -751,7 +593,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             {
                 return string_format(
 #ifdef NDEBUG
-                    "%s (%s, %s) @%.0f Hz at '%s'",
+                    "<%s (%s, %s) @%.0f Hz at '%s'>",
 #else
                     "<TittaPy.EyeTracker connected to '%s' (%s, %s) @%.0f Hz at '%s'>",
 #endif
@@ -776,8 +618,8 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def_property_readonly("supported_modes", [](Titta& instance_) { return instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
         .def_property("frequency", [](Titta& instance_) { return instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
         .def_property("tracking_mode", [](Titta& instance_) { return instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &Titta::setTrackingMode)
-        .def_property_readonly("track_box", &Titta::getTrackBox)
-        .def_property_readonly("display_area", &Titta::getDisplayArea)
+        .def_property_readonly("track_box", [](Titta& instance_) { return StructToDict(instance_.getTrackBox()); })
+        .def_property_readonly("display_area", [](Titta& instance_) { return StructToDict(instance_.getDisplayArea()); })
         // modifiers
         .def("apply_licenses", &Titta::applyLicenses,
             "licenses"_a)
@@ -799,7 +641,16 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("calibration_apply_data", &Titta::calibrationApplyData,
             "cal_data"_a)
         .def("calibration_get_status", &Titta::calibrationGetStatus)
-        .def("calibration_retrieve_result", &Titta::calibrationRetrieveResult,
+        .def("calibration_retrieve_result", [](Titta& instance, bool makeStatusString_) -> std::optional<py::dict>
+            {
+                auto res = instance.calibrationRetrieveResult(makeStatusString_);
+                if (!res.has_value())
+                    return {};
+
+                return StructToDict(*res);
+            },
+
+
             "make_string"_a=false)
 
         //// data streams
@@ -984,7 +835,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
         ;
 
-
+    // nested enums
     py::enum_<Titta::Stream>(cET, "stream")
         .value(Titta::streamToString(Titta::Stream::Gaze, true).c_str(), Titta::Stream::Gaze)
         .value(Titta::streamToString(Titta::Stream::EyeOpenness, true).c_str(), Titta::Stream::EyeOpenness)
