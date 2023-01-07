@@ -78,10 +78,11 @@ setup(
     author='Diederick C. Niehorster',
     author_email='diederick_c.niehorster@humlab.lu.se',
     url='https://github.com/dcnieho/Titta',
-    description='Matlab and PsychToolbox interface to Tobii eye trackers using Tobii Pro SDK',
+    description='Interface to Tobii eye trackers using Tobii Pro SDK',
     keywords="Tobii PsychoPy",
     long_description='',
     ext_modules=ext_modules,
+    python_requires=">=3.8",
     install_requires=['pybind11>=2.10.1'],
     setup_requires=['pybind11>=2.10.1'],  # this fixes problem if c++23 std::forward_like is available that i ran into
     cmdclass={'build_ext': BuildExt},
