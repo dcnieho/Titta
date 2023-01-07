@@ -225,11 +225,11 @@ print(all_images['image'].shape)
 pickle.dump(all_images,open( "save.pkl", "wb" ))
 
 plt.figure()
-plt.imshow(all_images['image'][:,:,0], cmap="gray")
+plt.imshow(all_images['image'][0], cmap="gray")
 
 all_images2 = pickle.load( open( "save.pkl", "rb" ) )
 plt.figure()
-plt.imshow(all_images2['image'][:,:,0], cmap="gray")
+plt.imshow(all_images2['image'][0], cmap="gray")
 
 def dicts_equal(d1,d2):
     return all([k in d2 and (not isinstance(d1[k],np.ndarray) and d1[k]==d2[k]) or all(d1[k] == d2[k]) for k in d1])

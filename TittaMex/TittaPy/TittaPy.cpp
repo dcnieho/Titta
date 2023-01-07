@@ -238,40 +238,21 @@ py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage e_)
     std::memcpy(a.mutable_data(), e_.data(), e_.data_size);
     return a;
 }
-void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, const std::string& name_, const bool noneGif_)
+void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, const std::string& name_)
 {
     if (data_.empty())
     {
-        out_[name_.c_str()] = py::array_t<uint8_t>();
+        out_[name_.c_str()] = py::list();
         return;
     }
 
-    // 1. see if all same size, then we can put them in one big matrix
-    auto sz = data_[0].data_size;
-    bool same = allEquals(data_, &Titta::eyeImage::data_size, sz);
-    // 2. then copy over the images to the dict
-    if (data_[0].bits_per_pixel + data_[0].padding_per_pixel != 8)
-        throw "Titta: outputEyeImages: non-8bit images not implemented";
-    if (same)
+    py::list l;
+    for (auto& frame : data_)
     {
-        py::array_t<uint8_t> a;
-        a.resize({ static_cast<py::ssize_t>(data_[0].width), static_cast<py::ssize_t>(data_[0].height), static_cast<py::ssize_t>(data_.size()) });
-        auto storage = a.mutable_data();
-        size_t i = 0;
-        for (auto& frame : data_)
-            std::memcpy(storage + (i++) * sz, frame.data(), frame.data_size);
-        out_[name_.c_str()] = a;
-    }
-    else
-    {
-        py::list l;
-        for (auto& frame : data_)
-        {
-            if (!frame.is_gif)
-                l.append(imageToNumpy(frame));
-            else
-                l.append(py::array_t<uint8_t>(static_cast<py::ssize_t>(frame.data_size), static_cast<uint8_t*>(frame.data())));
-        }
+        if (!frame.is_gif)
+            l.append(imageToNumpy(frame));
+        else
+            l.append(py::array_t<uint8_t>(static_cast<py::ssize_t>(frame.data_size), static_cast<uint8_t*>(frame.data())));
     }
 }
 
@@ -302,7 +283,6 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data
 
     // check if all gif, then don't output unneeded fields
     bool allGif = allEquals(data_, &Titta::eyeImage::is_gif, true);
-    bool noneGif= allEquals(data_, &Titta::eyeImage::is_gif, false);
 
     FieldToNpArray<true>(out, data_, "device_time_stamp", &Titta::eyeImage::device_time_stamp);
     FieldToNpArray<true>(out, data_, "system_time_stamp", &Titta::eyeImage::system_time_stamp);
@@ -317,7 +297,7 @@ template <> py::dict StructVectorToDict(const std::vector<Titta::eyeImage>& data
     FieldToNpArray<false>(out, data_, "type"     , &Titta::eyeImage::type);
     FieldToNpArray<true> (out, data_, "camera_id", &Titta::eyeImage::camera_id);
     FieldToNpArray<true> (out, data_, "is_gif"   , &Titta::eyeImage::is_gif);
-    outputEyeImages(out, data_, "image"   , noneGif);
+    outputEyeImages(out, data_, "image");
 
     return out;
 }
