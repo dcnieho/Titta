@@ -67,7 +67,7 @@ public:
         End,
         Last            // fake value for iteration
     };
-    // "first", or "last"
+    // "start", or "end"
     static Titta::BufferSide stringToBufferSide(std::string bufferSide_);
     static std::string bufferSideToString(Titta::BufferSide bufferSide_);
     static std::vector<std::string> getAllBufferSides();
