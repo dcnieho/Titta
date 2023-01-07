@@ -406,6 +406,22 @@ template <> py::dict StructVectorToDict(const std::vector<std::variant<TobiiType
     return out;
 }
 
+void FieldToNpArray(py::dict& out_, const std::vector<TobiiResearchCalibrationSample>& data_, const std::string& name_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_)
+{
+    TobiiFieldToNpArray  (out_, data_, name_ + "position_on_display_area", field_, &TobiiResearchCalibrationEyeData::position_on_display_area);
+    FieldToNpArray<false>(out_, data_, name_ + "validity"                , field_, &TobiiResearchCalibrationEyeData::validity);
+}
+
+template <> py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& data_)
+{
+    py::dict out;
+
+    FieldToNpArray(out, data_, "samples_left" , &TobiiResearchCalibrationSample::left_eye);
+    FieldToNpArray(out, data_, "samples_right", &TobiiResearchCalibrationSample::right_eye);
+
+    return out;
+}
+
 
 
 // start module scope
@@ -605,43 +621,11 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("valid_and_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
         .value("unknown", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN)
         ;
-    py::class_<TobiiResearchCalibrationEyeData>(m, "calibration_eye_data")
-        .def_readwrite("position_on_display_area", &TobiiResearchCalibrationEyeData::position_on_display_area)
-        .def_readwrite("validity", &TobiiResearchCalibrationEyeData::validity)
-        .def(py::pickle(
-            [](const TobiiResearchCalibrationEyeData& p) { // __getstate__
-                return py::make_tuple(p.position_on_display_area, p.validity);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state! (calibration_eye_data)");
-
-                TobiiResearchCalibrationEyeData p{ t[0].cast<TobiiResearchNormalizedPoint2D>(), t[1].cast<TobiiResearchCalibrationEyeValidity>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiResearchCalibrationEyeData& instance_) { return toString(instance_); })
-        ;
-    py::class_<TobiiResearchCalibrationSample>(m, "calibration_sample")
-        .def_readwrite("left", &TobiiResearchCalibrationSample::left_eye)
-        .def_readwrite("right", &TobiiResearchCalibrationSample::right_eye)
-        .def(py::pickle(
-            [](const TobiiResearchCalibrationSample& p) { // __getstate__
-                return py::make_tuple(p.left_eye, p.right_eye);
-            },
-            [](py::tuple t) { // __setstate__
-                if (t.size() != 2)
-                    throw std::runtime_error("Invalid state! (calibration_sample)");
-
-                TobiiResearchCalibrationSample p{ t[0].cast<TobiiResearchCalibrationEyeData>(), t[1].cast<TobiiResearchCalibrationEyeData>() };
-                return p;
-            }
-        ))
-        .def("__repr__", [](const TobiiResearchCalibrationSample& instance_) { return toString(instance_); })
-        ;
     py::class_<TobiiTypes::CalibrationPoint>(m, "calibration_point")
         .def_readwrite("position_on_display_area", &TobiiTypes::CalibrationPoint::position_on_display_area)
-        .def_readwrite("samples", &TobiiTypes::CalibrationPoint::calibration_samples)
+        .def_property_readonly("samples", [](const TobiiTypes::CalibrationPoint& instance_) -> py::dict
+            { return StructVectorToDict(instance_.calibration_samples); })
+        //.def_readwrite("samples", &TobiiTypes::CalibrationPoint::calibration_samples)
         .def(py::pickle(
             [](const TobiiTypes::CalibrationPoint& p) { // __getstate__
                 return py::make_tuple(p.position_on_display_area, p.calibration_samples);
