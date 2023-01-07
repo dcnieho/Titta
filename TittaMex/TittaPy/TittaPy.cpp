@@ -786,8 +786,8 @@ PYBIND11_MODULE(MODULE_NAME, m)
         //// calibration
         .def("enter_calibration_mode", &Titta::enterCalibrationMode,
             "do_monocular"_a)
-        .def("is_in_calibration_mode", &Titta::leaveCalibrationMode,
-            py::arg_v("throw_error_if_not", std::nullopt, "None"))
+        .def("is_in_calibration_mode", &Titta::isInCalibrationMode,
+            py::arg_v("issue_error_if_not_", std::nullopt, "None"))
         .def("leave_calibration_mode", &Titta::leaveCalibrationMode,
             py::arg_v("force", std::nullopt, "None"))
         .def("calibration_collect_data", &Titta::calibrationCollectData,
