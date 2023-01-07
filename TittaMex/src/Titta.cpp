@@ -72,38 +72,42 @@ namespace
     std::unique_ptr<std::vector<Titta*>> g_allInstances = std::make_unique<std::vector<Titta*>>();
 }
 
-Titta::Stream Titta::stringToStream(std::string stream_)
+Titta::Stream Titta::stringToStream(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
 {
     auto it = streamMap.find(stream_);
     if (it == streamMap.end())
         DoExitWithMsg(
-            R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"")
+            R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"", snake_case_on_stream_not_found)
         );
     return it->second;
 }
 
-std::string Titta::streamToString(Titta::Stream stream_)
+std::string Titta::streamToString(Titta::Stream stream_, bool snakeCase /*= false*/)
 {
-    auto v = *find_if(streamMap.begin(), streamMap.end(), [&stream_](auto p) {return p.second == stream_;});
+    std::pair<std::string, Titta::Stream> v;
+    if (snakeCase)
+        v = *find_if(streamMap.rbegin(), streamMap.rend(), [&stream_](auto p) {return p.second == stream_;});
+    else
+        v = *find_if(streamMap. begin(), streamMap. end(), [&stream_](auto p) {return p.second == stream_;});
     return v.first;
 }
 
-std::vector<std::string> Titta::getAllStreams()
+std::vector<std::string> Titta::getAllStreams(bool snakeCase /*= false*/)
 {
     using val_t = typename std::underlying_type<Titta::Stream>::type;
     std::vector<std::string> out;
 
     for (auto val = static_cast<val_t>(Titta::Stream::Gaze); val < static_cast<val_t>(Titta::Stream::Last); val++)
-        out.push_back(Titta::streamToString(static_cast<Titta::Stream>(val)));
+        out.push_back(Titta::streamToString(static_cast<Titta::Stream>(val), snakeCase));
 
     return out;
 }
 
-std::string Titta::getAllStreamsString(const char* quoteChar_ /*= "\""*/)
+std::string Titta::getAllStreamsString(const char* quoteChar_ /*= "\""*/, bool snakeCase /*= false*/)
 {
     std::string out;
     bool first = true;
-    for (auto const& s : Titta::getAllStreams())
+    for (auto const& s : Titta::getAllStreams(snakeCase))
     {
         if (first)
             first = false;
@@ -845,9 +849,9 @@ Titta::getIteratorsFromTimeRange(int64_t timeStart_, int64_t timeEnd_)
 }
 
 
-bool Titta::hasStream(std::string stream_) const
+bool Titta::hasStream(std::string stream_, bool snake_case_on_stream_not_found /*= false*/) const
 {
-    return hasStream(stringToStream(stream_));
+    return hasStream(stringToStream(stream_, snake_case_on_stream_not_found));
 }
 bool Titta::hasStream(Stream stream_) const
 {
@@ -895,9 +899,9 @@ bool Titta::setIncludeEyeOpennessInGaze(bool include_)
     return previous;
 }
 
-bool Titta::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
+bool Titta::start(std::string stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_, bool snake_case_on_stream_not_found /*= false*/)
 {
-    return start(stringToStream(stream_), initialBufferSize_, asGif_);
+    return start(stringToStream(stream_, snake_case_on_stream_not_found), initialBufferSize_, asGif_);
 }
 bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std::optional<bool> asGif_)
 {
@@ -1209,9 +1213,9 @@ void Titta::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpe
     }
 }
 
-bool Titta::isRecording(std::string stream_) const
+bool Titta::isRecording(std::string stream_, bool snake_case_on_stream_not_found /*= false*/) const
 {
-    return isRecording(stringToStream(stream_));
+    return isRecording(stringToStream(stream_, snake_case_on_stream_not_found));
 }
 bool Titta::isRecording(Stream stream_) const
 {
@@ -1335,9 +1339,9 @@ void Titta::clearImpl(int64_t timeStart_, int64_t timeEnd_)
     else
         buf.erase(start, end);
 }
-void Titta::clear(std::string stream_)
+void Titta::clear(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
 {
-    clear(stringToStream(stream_));
+    clear(stringToStream(stream_, snake_case_on_stream_not_found));
 }
 void Titta::clear(Stream stream_)
 {
@@ -1352,9 +1356,9 @@ void Titta::clear(Stream stream_)
     else
         clearTimeRange(stream_);
 }
-void Titta::clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+void Titta::clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, bool snake_case_on_stream_not_found /*= false*/)
 {
-    clearTimeRange(stringToStream(stream_), timeStart_, timeEnd_);
+    clearTimeRange(stringToStream(stream_, snake_case_on_stream_not_found), timeStart_, timeEnd_);
 }
 void Titta::clearTimeRange(Stream stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
 {
@@ -1386,9 +1390,9 @@ void Titta::clearTimeRange(Stream stream_, std::optional<int64_t> timeStart_, st
     }
 }
 
-bool Titta::stop(std::string stream_, std::optional<bool> clearBuffer_)
+bool Titta::stop(std::string stream_, std::optional<bool> clearBuffer_, bool snake_case_on_stream_not_found /*= false*/)
 {
-    return stop(stringToStream(stream_), clearBuffer_);
+    return stop(stringToStream(stream_, snake_case_on_stream_not_found), clearBuffer_);
 }
 
 bool Titta::stop(Stream stream_, std::optional<bool> clearBuffer_)

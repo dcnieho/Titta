@@ -54,10 +54,10 @@ public:
         Last            // fake value for iteration
     };
     // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
-    static Titta::Stream stringToStream(std::string stream_);
-    static std::string streamToString(Titta::Stream stream_);
-    static std::vector<std::string> getAllStreams();
-    static std::string getAllStreamsString(const char* quoteChar_ = "\"");
+    static Titta::Stream stringToStream(std::string stream_, bool snake_case_on_stream_not_found = false);
+    static std::string streamToString(Titta::Stream stream_, bool snakeCase=false);    // by default output camelCase, if true, output snake_case
+    static std::vector<std::string> getAllStreams(bool snakeCase = false);
+    static std::string getAllStreamsString(const char* quoteChar_ = "\"", bool snakeCase = false);
 
     // side of buffer to get samples from
     enum class BufferSide
@@ -114,18 +114,18 @@ public:
 
     //// data streams
     // query if stream is supported
-    bool hasStream(std::string stream_) const;
+    bool hasStream(std::string stream_, bool snake_case_on_stream_not_found = false) const;
     bool hasStream(Stream      stream_) const;
 
     // deal with eyeOpenness stream
     bool setIncludeEyeOpennessInGaze(bool include_);    // returns previous state
 
     // start stream
-    bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
+    bool start(std::string stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
     bool start(Stream      stream_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> asGif_ = std::nullopt);
 
     // request stream state
-    bool isRecording(std::string stream_) const;
+    bool isRecording(std::string stream_, bool snake_case_on_stream_not_found = false) const;
     bool isRecording(Stream      stream_) const;
 
     // consume samples (by default all)
@@ -143,14 +143,14 @@ public:
     std::vector<T> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // clear all buffer contents
-    void clear(std::string stream_);
+    void clear(std::string stream_, bool snake_case_on_stream_not_found = false);
     void clear(Stream      stream_);
     // clear contents buffer within given timestamps (inclusive, by default whole buffer)
-    void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    void clearTimeRange(std::string stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, bool snake_case_on_stream_not_found = false);
     void clearTimeRange(Stream      stream_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
 
     // stop, optionally deletes the buffer
-    bool stop(std::string stream_, std::optional<bool> clearBuffer_ = std::nullopt);
+    bool stop(std::string stream_, std::optional<bool> clearBuffer_ = std::nullopt, bool snake_case_on_stream_not_found = false);
     bool stop(Stream      stream_, std::optional<bool> clearBuffer_ = std::nullopt);
 
 private:

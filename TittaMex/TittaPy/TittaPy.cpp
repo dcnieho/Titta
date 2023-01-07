@@ -787,7 +787,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     m.def("stop_logging", &Titta::stopLogging);
 
     // main class
-    py::class_<Titta>(m, "EyeTracker")
+    auto cET = py::class_<Titta>(m, "EyeTracker")
         .def(py::init<std::string>(),"address"_a)
 
         .def("__repr__",
@@ -848,7 +848,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         //// data streams
         // query if stream is supported
-        .def("has_stream", py::overload_cast<std::string>(&Titta::hasStream, py::const_),
+        .def("has_stream", [](const Titta& instance, std::string stream_) -> bool { return instance.hasStream(stream_, true); },
+            "stream"_a)
+        .def("has_stream", py::overload_cast<Titta::Stream>(&Titta::hasStream, py::const_),
             "stream"_a)
 
         // deal with eyeOpenness stream
@@ -856,24 +858,35 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "include"_a)
 
         // start stream
-        .def("start", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&Titta::start),
+        .def("start", [](Titta& instance, std::string stream_, std::optional<size_t> init_buf_, std::optional<bool> as_gif_) { return instance.start(stream_, init_buf_, as_gif_, true); },
+            "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
+        .def("start", py::overload_cast<Titta::Stream, std::optional<size_t>, std::optional<bool>>(&Titta::start),
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
 
         // request stream state
-        .def("is_recording", py::overload_cast<std::string>(&Titta::isRecording, py::const_),
+        .def("is_recording", [](const Titta& instance, std::string stream_) -> bool { return instance.isRecording(stream_, true); },
+            "stream"_a)
+        .def("is_recording", py::overload_cast<Titta::Stream>(&Titta::isRecording, py::const_),
             "stream"_a)
 
         // consume samples (by default all)
         .def("consume_N",
-            [](Titta& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
-                Titta::Stream stream = Titta::stringToStream(stream_);
+                Titta::Stream stream;
+                if (std::holds_alternative<std::string>(stream_))
+                    stream = Titta::stringToStream(std::get<std::string>(stream_), true);
+                else
+                    stream = std::get<Titta::Stream>(stream_);
 
                 std::optional<Titta::BufferSide> bufSide;
-                if (!side_.empty())
+                if (side_.has_value())
                 {
-                    bufSide = Titta::stringToBufferSide(side_);
+                    if (std::holds_alternative<std::string>(*side_))
+                        bufSide = Titta::stringToBufferSide(std::get<std::string>(*side_));
+                    else
+                        bufSide = std::get<Titta::BufferSide>(*side_);
                 }
 
                 switch (stream)
@@ -894,13 +907,17 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 }
                 return {};
             },
-            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), "side"_a="")
+            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         // consume samples within given timestamps (inclusive, by default whole buffer)
         .def("consume_time_range",
-            [](Titta& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
             -> py::dict
             {
-                Titta::Stream stream = Titta::stringToStream(stream_);
+                Titta::Stream stream;
+                if (std::holds_alternative<std::string>(stream_))
+                    stream = Titta::stringToStream(std::get<std::string>(stream_), true);
+                else
+                    stream = std::get<Titta::Stream>(stream_);
 
                 switch (stream)
                 {
@@ -924,15 +941,22 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
         .def("peek_N",
-            [](Titta& instance_, std::string stream_, std::optional<size_t> NSamp_, std::string side_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
-                Titta::Stream stream = Titta::stringToStream(stream_);
+                Titta::Stream stream;
+                if (std::holds_alternative<std::string>(stream_))
+                    stream = Titta::stringToStream(std::get<std::string>(stream_), true);
+                else
+                    stream = std::get<Titta::Stream>(stream_);
 
                 std::optional<Titta::BufferSide> bufSide;
-                if (!side_.empty())
+                if (side_.has_value())
                 {
-                    bufSide = Titta::stringToBufferSide(side_);
+                    if (std::holds_alternative<std::string>(*side_))
+                        bufSide = Titta::stringToBufferSide(std::get<std::string>(*side_));
+                    else
+                        bufSide = std::get<Titta::BufferSide>(*side_);
                 }
 
                 switch (stream)
@@ -953,13 +977,17 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 }
                 return {};
             },
-            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), "side"_a = "")
+            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         // peek samples within given timestamps (inclusive, by default whole buffer)
         .def("peek_time_range",
-            [](Titta& instance_, std::string stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
             -> py::dict
             {
-                Titta::Stream stream = Titta::stringToStream(stream_);
+                Titta::Stream stream;
+                if (std::holds_alternative<std::string>(stream_))
+                    stream = Titta::stringToStream(std::get<std::string>(stream_), true);
+                else
+                    stream = std::get<Titta::Stream>(stream_);
 
                 switch (stream)
                 {
@@ -982,16 +1010,38 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // clear all buffer contents
-        .def("clear", py::overload_cast<std::string>(&Titta::clear),
+        .def("clear", [](Titta& instance, std::string stream_) { return instance.clear(stream_, true); },
+            "stream"_a)
+        .def("clear", py::overload_cast<Titta::Stream>(&Titta::clear),
             "stream"_a)
 
         // clear contents buffer within given timestamps (inclusive, by default whole buffer)
-        .def("clear_time_range", py::overload_cast<std::string, std::optional<int64_t>, std::optional<int64_t>>(&Titta::clearTimeRange),
+        .def("clear_time_range", [](Titta& instance, std::string stream_, std::optional<int64_t> ts_, std::optional<int64_t> te_) { return instance.clearTimeRange(stream_, ts_, te_, true); },
+            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
+        .def("clear_time_range", py::overload_cast<Titta::Stream, std::optional<int64_t>, std::optional<int64_t>>(&Titta::clearTimeRange),
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // stop, optionally deletes the buffer
-        .def("stop", py::overload_cast<std::string, std::optional<bool>>(&Titta::stop),
+        .def("stop", [](Titta& instance, std::string stream_, std::optional<bool> clearBuf_) { return instance.stop(stream_, clearBuf_, true); },
             "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
+        .def("stop", py::overload_cast<Titta::Stream, std::optional<bool>>(&Titta::stop),
+            "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
+        ;
+
+
+    py::enum_<Titta::Stream>(cET, "stream")
+        .value(Titta::streamToString(Titta::Stream::Gaze, true).c_str(), Titta::Stream::Gaze)
+        .value(Titta::streamToString(Titta::Stream::EyeOpenness, true).c_str(), Titta::Stream::EyeOpenness)
+        .value(Titta::streamToString(Titta::Stream::EyeImage, true).c_str(), Titta::Stream::EyeImage)
+        .value(Titta::streamToString(Titta::Stream::ExtSignal, true).c_str(), Titta::Stream::ExtSignal)
+        .value(Titta::streamToString(Titta::Stream::TimeSync, true).c_str(), Titta::Stream::TimeSync)
+        .value(Titta::streamToString(Titta::Stream::Positioning, true).c_str(), Titta::Stream::Positioning)
+        .value(Titta::streamToString(Titta::Stream::Notification, true).c_str(), Titta::Stream::Notification)
+        ;
+
+    py::enum_<Titta::BufferSide>(cET, "buffer_side")
+        .value(Titta::bufferSideToString(Titta::BufferSide::Start).c_str(), Titta::BufferSide::Start)
+        .value(Titta::bufferSideToString(Titta::BufferSide::End).c_str(), Titta::BufferSide::End)
         ;
 
 // set module version info

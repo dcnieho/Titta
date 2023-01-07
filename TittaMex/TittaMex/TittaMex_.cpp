@@ -460,18 +460,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::getAllStreamsString:
         {
-            if (nrhs > 1)
+            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
-                if (mxIsEmpty(prhs[1]))
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(""));
-                else
+                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                    throw "getAllStreamsString: Expected first argument to be a char scalar.";
+
+                char quoteChar[2] = { "\0" };
+                quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+
+                if (nrhs > 2 && !mxIsEmpty(prhs[2]))
                 {
-                    if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                        throw "getAllStreamsString: Expected first argument to be a char scalar.";
-                    char quoteChar[2] = { "\0" };
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar));
+                    if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                        throw "getAllStreamsString: Expected second argument to be a logical scalar.";
+                    bool snakeCase = mxIsLogicalScalarTrue(prhs[2]);
+
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, snakeCase));
                 }
+                else
+                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar));
             }
             else
                 plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString());
@@ -481,16 +487,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
-                if (mxIsEmpty(prhs[1]))
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(""));
-                else
-                {
-                    if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                        throw "getAllBufferSidesString: Expected first argument to be a char scalar.";
-                    char quoteChar[2] = { "\0" };
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
-                }
+                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                    throw "getAllBufferSidesString: Expected first argument to be a char scalar.";
+                char quoteChar[2] = { "\0" };
+                quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
             }
             else
                 plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
