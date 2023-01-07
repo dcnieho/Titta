@@ -437,7 +437,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("__repr__", [](const TobiiResearchSDKVersion& instance_) { return toString(instance_); })
         ;
 
-
     // capabilities
     py::enum_<TobiiResearchCapabilities>(m, "capability")
         .value("can_set_display_area", TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
@@ -450,8 +449,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("has_HMD_lens_config", TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
         .value("can_do_monocular_calibration", TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
         .value("has_eye_openness_data", TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
-        .export_values();
-
+        ;
 
     py::class_<TobiiTypes::eyeTracker>(m, "eye_tracker_info")
         .def_readonly("device_name", &TobiiTypes::eyeTracker::deviceName)
@@ -485,7 +483,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("stream_engine", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE)
         .value("SDK", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_SDK)
         .value("firmware_upgrade", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE)
-        .export_values()
         ;
     py::enum_<TobiiResearchLogLevel>(m, "log_level")
         .value("error", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_ERROR)
@@ -493,7 +490,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("information", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_INFORMATION)
         .value("debug", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_DEBUG)
         .value("trace", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_TRACE)
-        .export_values()
         ;
     py::enum_<TobiiResearchStreamError>(m, "stream_error")
         .value("connection_lost", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_CONNECTION_LOST)
@@ -502,7 +498,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("too_many_subscribers", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_TOO_MANY_SUBSCRIBERS)
         .value("internal_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_INTERNAL_ERROR)
         .value("user_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_USER_ERROR)
-        .export_values()
         ;
     py::enum_<TobiiResearchStreamErrorSource>(m, "stream_error_source")
         .value("user", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_USER)
@@ -514,10 +509,8 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("subscription_notification", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_NOTIFICATION)
         .value("subscription_HMD_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_HMD_GAZE_DATA)
         .value("subscription_user_position_guide", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE)
-        .export_values()
         ;
 
-    // getters and setters
     py::class_<TobiiResearchTrackBox>(m, "track_box")
         .def_readwrite("back_lower_left", &TobiiResearchTrackBox::back_lower_left)
         .def_readwrite("back_lower_right", &TobiiResearchTrackBox::back_lower_right)
@@ -539,8 +532,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 return p;
             }
         ))
-        // default is fine for this one
-        //.def("__repr__", [](const TobiiResearchTrackBox& instance_) { return toString(instance_); })
         ;
     py::class_<TobiiResearchDisplayArea>(m, "display_area")
         .def_readwrite("bottom_left", &TobiiResearchDisplayArea::bottom_left)
@@ -574,7 +565,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("invalid_serial_number", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_SERIAL_NUMBER)
         .value("invalid_model", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_MODEL)
         .value("unknown", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN)
-        .export_values()
         ;
 
     // calibration
@@ -587,7 +577,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("getting_calibration_data", TobiiTypes::CalibrationState::GettingCalibrationData)
         .value("applying_calibration_data", TobiiTypes::CalibrationState::ApplyingCalibrationData)
         .value("left", TobiiTypes::CalibrationState::Left)
-        .export_values()
         ;
     py::enum_<TobiiTypes::CalibrationAction>(m, "calibration_action")
         .value("nothing", TobiiTypes::CalibrationAction::Nothing)
@@ -598,27 +587,23 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("get_calibration_data", TobiiTypes::CalibrationAction::GetCalibrationData)
         .value("apply_calibration_data", TobiiTypes::CalibrationAction::ApplyCalibrationData)
         .value("exit", TobiiTypes::CalibrationAction::Exit)
-        .export_values()
         ;
     py::enum_<TobiiResearchCalibrationStatus>(m, "calibration_status")
         .value("failure", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_FAILURE)
         .value("success", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS)
         .value("success_left_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_LEFT_EYE)
         .value("success_right_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_RIGHT_EYE)
-        .export_values()
         ;
     py::enum_<TobiiResearchSelectedEye>(m, "selected_eye")
         .value("left", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_LEFT)
         .value("right", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_RIGHT)
         .value("both", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_BOTH)
-        .export_values()
         ;
     py::enum_<TobiiResearchCalibrationEyeValidity>(m, "calibration_eye_validity")
         .value("invalid_and_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED)
         .value("valid_but_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED)
         .value("valid_and_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
         .value("unknown", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN)
-        .export_values()
         ;
     py::class_<TobiiResearchCalibrationEyeData>(m, "calibration_eye_data")
         .def_readwrite("position_on_display_area", &TobiiResearchCalibrationEyeData::position_on_display_area)
@@ -767,13 +752,13 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
         .value("multi_roi_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_MULTI_ROI)
         .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
-        .export_values();
+        ;
 
     py::enum_<TobiiResearchExternalSignalChangeType>(m, "external_signal_change_type")
         .value("value_changed", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED)
         .value("initial_value", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE)
         .value("connection_restored", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED)
-        .export_values();
+        ;
 
     py::enum_<TobiiResearchNotificationType>(m, "notification_type")
         .value("connection_lost", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_LOST)
@@ -788,7 +773,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("device_faults", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_DEVICE_FAULTS)
         .value("device_warnings", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_DEVICE_WARNINGS)
         .value("notification_unknown", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_UNKNOWN)
-        .export_values();
+        ;
 
     //// global SDK functions
     m.def("get_SDK_version", &Titta::getSDKVersion);
