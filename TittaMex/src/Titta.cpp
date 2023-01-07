@@ -46,17 +46,23 @@ namespace
         constexpr bool                  logBufClear               = true;
     }
 
-    // Map string to a Data Stream
-    const std::map<std::string, Titta::Stream> streamMap =
+    // Map string to a Stream
+    const std::map<std::string, Titta::Stream> streamMapCamelCase =
     {
         { "gaze",           Titta::Stream::Gaze },
         { "eyeOpenness",    Titta::Stream::EyeOpenness },
-        { "eye_openness",   Titta::Stream::EyeOpenness },
         { "eyeImage",       Titta::Stream::EyeImage },
-        { "eye_image",      Titta::Stream::EyeImage },
         { "externalSignal", Titta::Stream::ExtSignal },
-        { "external_signal",Titta::Stream::ExtSignal },
         { "timeSync",       Titta::Stream::TimeSync },
+        { "positioning",    Titta::Stream::Positioning },
+        { "notification",   Titta::Stream::Notification }
+    };
+    const std::map<std::string, Titta::Stream> streamMapSnakeCase =
+    {
+        { "gaze",           Titta::Stream::Gaze },
+        { "eye_openness",   Titta::Stream::EyeOpenness },
+        { "eye_image",      Titta::Stream::EyeImage },
+        { "external_signal",Titta::Stream::ExtSignal },
         { "time_sync",      Titta::Stream::TimeSync },
         { "positioning",    Titta::Stream::Positioning },
         { "notification",   Titta::Stream::Notification }
@@ -74,11 +80,17 @@ namespace
 
 Titta::Stream Titta::stringToStream(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
 {
-    auto it = streamMap.find(stream_);
-    if (it == streamMap.end())
-        DoExitWithMsg(
-            R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"", snake_case_on_stream_not_found)
-        );
+    auto it = streamMapCamelCase.find(stream_);
+    if (it == streamMapCamelCase.end())
+    {
+        auto it = streamMapSnakeCase.find(stream_);
+        if (it == streamMapSnakeCase.end())
+        {
+            DoExitWithMsg(
+                R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"", snake_case_on_stream_not_found)
+            );
+        }
+    }
     return it->second;
 }
 
@@ -86,9 +98,9 @@ std::string Titta::streamToString(Titta::Stream stream_, bool snakeCase /*= fals
 {
     std::pair<std::string, Titta::Stream> v;
     if (snakeCase)
-        v = *find_if(streamMap.rbegin(), streamMap.rend(), [&stream_](auto p) {return p.second == stream_;});
+        v = *find_if(streamMapSnakeCase.begin(), streamMapSnakeCase.end(), [&stream_](auto p) {return p.second == stream_;});
     else
-        v = *find_if(streamMap. begin(), streamMap. end(), [&stream_](auto p) {return p.second == stream_;});
+        v = *find_if(streamMapCamelCase.begin(), streamMapCamelCase.end(), [&stream_](auto p) {return p.second == stream_;});
     return v.first;
 }
 

@@ -152,7 +152,7 @@ classdef TittaMex < handle
         function stopLogging(this)
             this.cppmethodGlobal('stopLogging');
         end
-        % data stream info
+        % stream info
         function streams = getAllStreamsString(this,quoteChar,snakeCase)
             if nargin>2
                 streams = this.cppmethodGlobal('getAllStreamsString',ensureStringIsChar(quoteChar),logical(snakeCase));
