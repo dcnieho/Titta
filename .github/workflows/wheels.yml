@@ -23,11 +23,13 @@ jobs:
         pipx run build --sdist
 
     - name: Check metadata
-      run: pipx run twine check dist/*
+      run: |
+        cd TittaMex
+        pipx run twine check dist/*
 
     - uses: actions/upload-artifact@v3
       with:
-        path: dist/*.tar.gz
+        path: TittaMex/dist/*.tar.gz
 
 
   build_wheels:
@@ -45,7 +47,7 @@ jobs:
 
     - uses: pypa/cibuildwheel@v2.11.4
       env:
-        CIBW_BEFORE_BUILD: cd TittaMex
+        CIBW_BEFORE_ALL: cd TittaMex
 
     - name: Verify clean directory
       run: git diff --exit-code
@@ -54,7 +56,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@v3
       with:
-        path: wheelhouse/*.whl
+        path: TittaMex/wheelhouse/*.whl
 
 
   upload_all:
