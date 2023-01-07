@@ -676,7 +676,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
                 throw "calibrationCollectData: First argument must be a 2-element double array.";
             double* dat = static_cast<double*>(mxGetData(prhs[2]));
-            std::array<double, 2> point{ *dat, *(dat + 1) };
+            std::array<float, 2> point{ static_cast<float>(*dat), static_cast<float>(*(dat + 1)) };
 
             // get optional input argument
             std::optional<std::string> eye;
@@ -697,7 +697,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
                 throw "calibrationDiscardData: First argument must be a 2-element double array.";
             double* dat = static_cast<double*>(mxGetData(prhs[2]));
-            std::array<double, 2> point{ *dat, *(dat + 1) };
+            std::array<float, 2> point{ static_cast<float>(*dat), static_cast<float>(*(dat + 1)) };
 
             // get optional input argument
             std::optional<std::string> eye;

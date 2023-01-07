@@ -545,7 +545,7 @@ void Titta::calibrationThread()
         {
             // Start a data collection
             _calibrationState = TobiiTypes::CalibrationState::CollectingData;
-            auto& coords = workItem.coordinates.value();
+            auto& coords = *workItem.coordinates;
             if (_calibrationIsMonocular)
             {
                 TobiiResearchSelectedEye collectEye=TOBII_RESEARCH_SELECTED_EYE_LEFT, ignore;
@@ -566,7 +566,7 @@ void Titta::calibrationThread()
         {
             // discard calibration data for a specific point
             _calibrationState = TobiiTypes::CalibrationState::DiscardingData;
-            auto& coords = workItem.coordinates.value();
+            auto& coords = *workItem.coordinates;
             if (_calibrationIsMonocular)
             {
                 TobiiResearchSelectedEye discardEye = TOBII_RESEARCH_SELECTED_EYE_LEFT;
@@ -693,9 +693,9 @@ bool Titta::leaveCalibrationMode(std::optional<bool> force_)
     _calibrationState = TobiiTypes::CalibrationState::NotYetEntered;
     return issuedLeave; // we indicate if a leave action had been enqueued. direct force-leave above thus does not lead us to return true
 }
-void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::array<float, 2> coordinates_, std::optional<std::string> eye_)
 {
-    workItem.coordinates = {coordinates_.begin(),coordinates_.end()};
+    workItem.coordinates = coordinates_;
     if (eye_)
     {
         workItem.eye = *eye_;
@@ -705,14 +705,14 @@ void addCoordsEyeToWorkItem(TobiiTypes::CalibrationWorkItem& workItem, std::arra
             );
     }
 }
-void Titta::calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+void Titta::calibrationCollectData(std::array<float, 2> coordinates_, std::optional<std::string> eye_)
 {
     isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::CollectData};
     addCoordsEyeToWorkItem(workItem, coordinates_, eye_);
     _calibrationWorkQueue.enqueue(std::move(workItem));
 }
-void Titta::calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_)
+void Titta::calibrationDiscardData(std::array<float, 2> coordinates_, std::optional<std::string> eye_)
 {
     isInCalibrationMode(true);
     TobiiTypes::CalibrationWorkItem workItem{TobiiTypes::CalibrationAction::DiscardData};

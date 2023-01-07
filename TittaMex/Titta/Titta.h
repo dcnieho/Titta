@@ -104,8 +104,8 @@ public:
     bool enterCalibrationMode(bool doMonocular_);
     bool isInCalibrationMode(std::optional<bool> issueErrorIfNot_);
     bool leaveCalibrationMode(std::optional<bool> force_);
-    void calibrationCollectData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
-    void calibrationDiscardData(std::array<double, 2> coordinates_, std::optional<std::string> eye_);
+    void calibrationCollectData(std::array<float, 2> coordinates_, std::optional<std::string> eye_);
+    void calibrationDiscardData(std::array<float, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationComputeAndApply();
     void calibrationGetData();
     void calibrationApplyData(std::vector<uint8_t> calibrationData_);
