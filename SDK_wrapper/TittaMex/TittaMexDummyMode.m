@@ -1,5 +1,5 @@
 % TittaMex is part of Titta, a toolbox providing convenient access to
-% eye tracking functionality using Tobii eye trackers 
+% eye tracking functionality using Tobii eye trackers
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
@@ -15,17 +15,17 @@ classdef TittaMexDummyMode < TittaMex
         isRecordingGaze = false;
         isInCalMode     = false;
     end
-    
+
     methods
         % Use the name of your MEX file here
         function this = TittaMexDummyMode(~)
             % construct default base class, none of its properties are
             % relevant when in dummy mode
             this = this@TittaMex();
-            
+
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            if ~IsOctave
+            if ~ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5])  % check if we're running on Octave
                 thisInfo    = ?TittaMexDummyMode;
                 thisMethods = thisInfo.MethodList;
                 superInfo   = ?TittaMex;
@@ -41,7 +41,7 @@ classdef TittaMexDummyMode < TittaMex
                 thisMethods(~strcmp({definingClass.Name},thisInfo.Name)) = [];
                 definingClass = [superMethods.DefiningClass];
                 superMethods(~strcmp({definingClass.Name},superInfo.Name)) = [];
-                
+
                 % now check for problems:
                 % 1. any methods we define here that are not in superclass?
                 notInSuper = ~ismember({thisMethods.Name},{superMethods.Name});
@@ -49,7 +49,7 @@ classdef TittaMexDummyMode < TittaMex
                     fprintf('methods that are in %s but not in %s:\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(notInSuper).Name);
                 end
-                
+
                 % 2. methods from superclass that are not overridden.
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
@@ -59,7 +59,7 @@ classdef TittaMexDummyMode < TittaMex
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
                 end
-                
+
                 % 3. right number of input arguments?
                 qMatchingInput = false(size(thisMethods));
                 for p=1:length(thisMethods)
@@ -74,7 +74,7 @@ classdef TittaMexDummyMode < TittaMex
                     fprintf('methods in %s with wrong number of input arguments (mismatching %s):\n',thisInfo.Name,superInfo.Name);
                     fprintf('  %s\n',thisMethods(~qMatchingInput).Name);
                 end
-                
+
                 % 4. right number of output arguments?
                 qMatchingOutput = false(size(thisMethods));
                 for p=1:length(thisMethods)
@@ -91,16 +91,16 @@ classdef TittaMexDummyMode < TittaMex
                 end
             end
         end
-        
+
         %% Matlab interface
         function init(~,~)
         end
         function delete(~)
         end
-        
+
         %% global SDK functions
         % no need to override any
-        
+
         %% eye-tracker specific getters and setters
         % getters
         function eyeTracker = getEyeTrackerInfo(~)
@@ -120,7 +120,7 @@ classdef TittaMexDummyMode < TittaMex
         end
         function clearLicenses(~)
         end
-        
+
         %% calibration
         function hasEnqueuedEnter = enterCalibrationMode(this,~)
             this.isInCalMode    = true;
@@ -149,7 +149,7 @@ classdef TittaMexDummyMode < TittaMex
         function result = calibrationRetrieveResult(~)
             result = struct();
         end
-        
+
         %% data streams
         function supported = hasStream(this,stream)
             if nargin<2
@@ -282,7 +282,7 @@ if isRecording
     if size(rects,1)>1
         qRect = inRect([mx my].',rects.');
         rect = rects(qRect,:);
-        
+
         % translate to local rect
         mx  = mx-rect(1);
         my  = my-rect(2);
