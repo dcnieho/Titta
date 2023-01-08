@@ -4,21 +4,25 @@ clc
 myDir = fileparts(mfilename('fullpath'));
 cd(myDir);
 
-isWin    = strcmp(computer,'PCWIN') || strcmp(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<STREMP>
-isLinux  = strcmp(computer,'GLNX86') || strcmp(computer,'GLNXA64') || ~isempty(strfind(computer, 'linux-gnu')); %#ok<STREMP>
+isWin    = strcmp(computer,'PCWIN')                             || strcmp(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<STREMP>
+isLinux  = strcmp(computer,'GLNX86')                            || strcmp(computer,'GLNXA64') || ~isempty(strfind(computer, 'linux-gnu')); %#ok<STREMP>
+isOSX    = strcmp(computer,'MAC')    || strcmp(computer,'MACI') || streq(computer, 'MACI64')  || ~isempty(strfind(computer, 'apple-darwin')); %#ok<STREMP>
 isOctave = ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5]);  % If the built-in variable OCTAVE_VERSION exists, then we are running under GNU/Octave, otherwise not.
 is64Bit = ~isempty(strfind(computer, '64')); %#ok<STREMP>
 assert(is64Bit,'only 64-bit builds are supported');
 platform = 'Windows';
 if isLinux
     platform = 'Linux';
+elseif isOSX
+    platform = 'OSX';
 end
 
 if isOctave
     inpArgs = {'-v'
-        '-O'
+        '-O3'
         '-ffunction-sections'
         '-fdata-sections'
+        '-fvisibility=hidden'
         '-flto'
         '--output'
         fullfile(myDir,'TittaMex','64',platform,sprintf('TittaMex_.%s',mexext))
@@ -39,7 +43,10 @@ if isOctave
             '-lc'
             '-lrt'
             '-ldl'}.'];
-
+    elseif isOSX
+        inpArgs = [inpArgs {
+            sprintf('-L%s',fullfile(myDir,'TittaMex','64','OSX'))
+            '-mmacosx-version-min=''11'''}.'];
     elseif isWin
         inpArgs = [inpArgs {
             sprintf('-L%s',fullfile(myDir,'deps','lib'))}];
@@ -49,6 +56,7 @@ if isOctave
         tdir=eval('__octave_config_info__("bindir")');  % eval because invalid syntax for matlab, would cause whole file not to run
         cd(tdir);
     end
+
     % get cppflags, add to it what we need
     flags = regexprep(mkoctfile('-p','CXXFLAGS'),'\r|\n','');   % strip newlines
     if isempty(strfind(flags,'-std=c++2a')) %#ok<STREMP>
@@ -61,10 +69,11 @@ if isOctave
         flags = [flags ' -Wl,-rpath,''$ORIGIN'''];
     end
     setenv('LDFLAGS',flags);
+
     mex(inpArgs{:});
     cd(myDir);
     if isLinux
-        % PTB does it, so we uses their code to do this too
+        % PTB does it, so we use their code to do this too
         striplibsfrommexfile(fullfile(myDir,'TittaMex','64',platform,sprintf('TittaMex_.%s',mexext)));
     end
 else
@@ -87,8 +96,14 @@ else
             'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"'}.'];
     elseif isLinux
         inpArgs = [inpArgs {
-            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto"'
+            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
+            sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
+            '-ltobii_research'}.'];
+    elseif isOSX
+        inpArgs = [inpArgs {
+            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11''"'
+            'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto -mmacosx-version-min=''11''"'
             sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
             '-ltobii_research'}.'];
     end
