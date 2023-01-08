@@ -163,6 +163,7 @@ void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, 
         else
             l.append(py::array_t<uint8_t>(static_cast<py::ssize_t>(frame.data_size), static_cast<uint8_t*>(frame.data())));
     }
+    out_[name_.c_str()] = l;
 }
 
 
