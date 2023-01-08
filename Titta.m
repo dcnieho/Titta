@@ -1561,6 +1561,17 @@ classdef Titta < handle
                 settings.UI.cursor.sizebottom       = 16;
                 settings.UI.cursor.sizeleft         = 70;
                 settings.UI.cursor.sizeright        = 96;
+            elseif IsOSX
+                settings.UI.cursor.normal           = 0;                        % arrow
+                settings.UI.cursor.clickable        = 10;                       % hand
+                settings.UI.cursor.sizetopleft      = 0;
+                settings.UI.cursor.sizetopright     = 0;
+                settings.UI.cursor.sizebottomleft   = 0;
+                settings.UI.cursor.sizebottomright  = 0;
+                settings.UI.cursor.sizetop          = 0;
+                settings.UI.cursor.sizebottom       = 0;
+                settings.UI.cursor.sizeleft         = 0;
+                settings.UI.cursor.sizeright        = 0;
             end
             settings.UI.button.margins          = [14 16];
             if qUsingOldWindowsPTBRenderer  % old text PTB renderer on Windows
