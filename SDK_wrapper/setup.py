@@ -67,12 +67,12 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-Wl,--gc-sections -flto'],
+        'unix': ['-flto'],
     }
     if plat=="osx":
-        l_opts['unix'].append('-Wl,-rpath,''@loader_path''')
+        l_opts['unix'].extend(['-Wl,-rpath,''@loader_path''','-dead_strip'])
     else:
-        l_opts['unix'].append('-Wl,-rpath,''$ORIGIN''')
+        l_opts['unix'].extend(['-Wl,-rpath,''$ORIGIN''','-Wl,--gc-sections'])
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
