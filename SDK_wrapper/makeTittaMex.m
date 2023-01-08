@@ -67,6 +67,8 @@ if isOctave
     flags = [flags ' -Wl,--gc-sections -flto'];
     if isLinux
         flags = [flags ' -Wl,-rpath,''$ORIGIN'''];
+    elseif isOSX
+        flags = [flags ' -Wl,-rpath,''@loader_path'''];
     end
     setenv('LDFLAGS',flags);
 
@@ -97,13 +99,13 @@ else
         inpArgs = [inpArgs {
             'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
-            sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
+            sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
             '-ltobii_research'}.'];
     elseif isOSX
         inpArgs = [inpArgs {
-            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
-            'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto -mmacosx-version-min=''11''"'
-            sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
+            'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
+            'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
+            sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
             '-ltobii_research'}.'];
     end
     mex(inpArgs{:});
