@@ -60,7 +60,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@v3
       with:
-        path: TittaMex/wheelhouse/*.whl
+        path: wheelhouse/*.whl
 
 
   upload_all:
