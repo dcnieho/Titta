@@ -20,16 +20,16 @@ qAdd            = cellfun(@isempty,regexpi(opaths,pathExceptions)); % true where
 % also exclude either Windows or Linux mex folder
 if IsLinux
     % exclude Windows and OSX mex folders
-    qAdd = qAdd & contains(opaths,'TittaMex/64/Windows');
-    qAdd = qAdd & contains(opaths,'TittaMex/64/OSX');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/Windows');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/OSX');
 elseif IsOSX
     % exclude Windows and Linux mex folders
-    qAdd = qAdd & contains(opaths,'TittaMex/64/Windows');
-    qAdd = qAdd & contains(opaths,'TittaMex/64/Linux');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/Windows');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/Linux');
 else
     % exclude Linux ans OSX mex folders
-    qAdd = qAdd & contains(opaths,'TittaMex/64/Linux');
-    qAdd = qAdd & contains(opaths,'TittaMex/64/OSX');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/Linux');
+    qAdd = qAdd & ~contains(opaths,'TittaMex/64/OSX');
 end
 addpath(opaths{qAdd}); savepath;
 disp('--->>> Added Titta to the path...')
