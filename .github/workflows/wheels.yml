@@ -19,17 +19,17 @@ jobs:
 
     - name: Build SDist
       run: |
-        cd TittaMex
+        cd SDK_wrappper
         pipx run build --sdist
 
     - name: Check metadata
       run: |
-        cd TittaMex
+        cd SDK_wrappper
         pipx run twine check dist/*
 
     - uses: actions/upload-artifact@v3
       with:
-        path: TittaMex/dist/*.tar.gz
+        path: SDK_wrappper/dist/*.tar.gz
 
 
   build_wheels:
@@ -47,7 +47,7 @@ jobs:
 
     - uses: pypa/cibuildwheel@v2.11.4
       with:
-        package-dir: TittaMex
+        package-dir: SDK_wrappper
       env:
         CIBW_BUILD: cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
         CIBW_BEFORE_BUILD_MACOS: uname -a

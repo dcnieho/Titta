@@ -15,15 +15,21 @@ end
 opaths          = genpath(opath);
 opaths          = strsplit(opaths,pathsep);
 sep             = regexptranslate('escape',filesep);
-pathExceptions  = [sep '\.git|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build'];
+pathExceptions  = [sep '\.git|' sep '\.github|' sep '\.venv|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build|' sep 'TittaPy'];
 qAdd            = cellfun(@isempty,regexpi(opaths,pathExceptions)); % true where regexp _didn't_ match
 % also exclude either Windows or Linux mex folder
 if IsLinux
-    % exclude Windows mex folder
-    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Windows'));
+    % exclude Windows and OSX mex folders
+    qAdd = qAdd & contains(opaths,'TittaMex/64/Windows');
+    qAdd = qAdd & contains(opaths,'TittaMex/64/OSX');
+elseif IsOSX
+    % exclude Windows and Linux mex folders
+    qAdd = qAdd & contains(opaths,'TittaMex/64/Windows');
+    qAdd = qAdd & contains(opaths,'TittaMex/64/Linux');
 else
-    % exclude Linux mex folder
-    qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex\64\Linux'));
+    % exclude Linux ans OSX mex folders
+    qAdd = qAdd & contains(opaths,'TittaMex/64/Linux');
+    qAdd = qAdd & contains(opaths,'TittaMex/64/OSX');
 end
 addpath(opaths{qAdd}); savepath;
 disp('--->>> Added Titta to the path...')

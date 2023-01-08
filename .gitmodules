@@ -2,8 +2,8 @@
 	path = talkToProLab/MatlabWebSocket
 	url = ../../jebej/MatlabWebSocket.git
 [submodule "TittaMex/deps/include/readerwriterqueue"]
-	path = TittaMex/deps/include/readerwriterqueue
+	path = SDK_wrapper/deps/include/readerwriterqueue
 	url = ../../cameron314/readerwriterqueue.git
 [submodule "TittaMex/deps/include/cpp_mex_helpers"]
-	path = TittaMex/deps/include/cpp_mex_helpers
+	path = SDK_wrapper/deps/include/cpp_mex_helpers
 	url = ../cpp_mex_helpers.git
