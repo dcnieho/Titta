@@ -22,3 +22,4 @@ git_refid.h
 *_d.pyd*
 *.whl
 /JSON
+*.eggs
