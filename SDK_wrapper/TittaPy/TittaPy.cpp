@@ -374,18 +374,6 @@ py::dict StructToDict(const TobiiTypes::CalibrationWorkResult& data_)
     return d;
 }
 
-py::dict StructToDict(const TobiiResearchSDKVersion& data_)
-{
-    py::dict d;
-
-    d["major"] = data_.major;
-    d["minor"] = data_.minor;
-    d["revision"] = data_.revision;
-    d["build"] = data_.build;
-
-    return d;
-}
-
 py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
 {
     py::list out;
@@ -574,7 +562,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         ;
 
     //// global SDK functions
-    m.def("get_SDK_version", []() { return StructToDict(Titta::getSDKVersion()); });
+    m.def("get_SDK_version", []() { auto v = Titta::getSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
     m.def("get_system_timestamp", &Titta::getSystemTimestamp);
     m.def("find_all_eye_trackers", []() {return StructVectorToList(Titta::findAllEyeTrackers()); });
     // logging
