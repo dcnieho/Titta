@@ -5,7 +5,7 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
-__version__ = '1.0.0-rc1'
+__version__ = '1.0.0rc1'
 
 # dll to install along with built module
 data_files = [('lib\\site-packages\\',["./SDK_wrappper/64/Windows/tobii_research.dll"])]
@@ -49,11 +49,11 @@ class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
         'msvc': ['/DBUILD_FROM_SCRIPT','/DNDEBUG','/Zp8','/GR','/W3','/EHs','/nologo','/MD','/std:c++latest','/Gy','/Oi','/GL','/permissive-','/O2'],
-        'unix': ['-DBUILD_FROM_SCRIPT','-DNDEBUG','-std=c++17','-O3','-fvisibility=hidden'],
+        'unix': ['-DBUILD_FROM_SCRIPT','-DNDEBUG','-std=c++2a','-O3','-fvisibility=hidden','-ffunction-sections','-fdata-sections','-flto '],
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-Wl,-rpath,''$ORIGIN'''],
+        'unix': ['-Wl,-rpath,''$ORIGIN''','-Wl,--gc-sections -flto'],
     }
 
     def build_extensions(self):

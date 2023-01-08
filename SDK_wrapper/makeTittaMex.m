@@ -79,7 +79,6 @@ if isOctave
 else
     inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
         '-v'
-        '-O'
         '-outdir'
         fullfile(myDir,'TittaMex','64',platform)
         '-DBUILD_FROM_SCRIPT'
@@ -91,18 +90,18 @@ else
 
     if isWin
         inpArgs = [inpArgs {
-            'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /Oi /GL /permissive-"'
+            'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /Oi /GL /permissive- /O2"'
             sprintf('-L%s',fullfile(myDir,'deps','lib'))
             'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"'}.'];
     elseif isLinux
         inpArgs = [inpArgs {
-            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden"'
+            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
             sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
             '-ltobii_research'}.'];
     elseif isOSX
         inpArgs = [inpArgs {
-            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11''"'
+            'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto -mmacosx-version-min=''11''"'
             sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
             '-ltobii_research'}.'];
