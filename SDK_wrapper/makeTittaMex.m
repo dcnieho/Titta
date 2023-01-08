@@ -64,11 +64,13 @@ if isOctave
     end
     % get linker flags, add to it what we need
     flags = regexprep(mkoctfile('-p','LDFLAGS'),'\r|\n','');   % strip newlines
-    flags = [flags ' -Wl,--gc-sections -flto'];
+    flags = [flags ' -flto'];
     if isLinux
-        flags = [flags ' -Wl,-rpath,''$ORIGIN'''];
+        flags = [flags ' -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections'];
     elseif isOSX
-        flags = [flags ' -Wl,-rpath,''@loader_path'''];
+        flags = [flags ' -Wl,-rpath,''@loader_path'' -dead_strip -mmacosx-version-min=''11'''];
+    elseif isWin
+        flags = [flags ' -Wl,--gc-sections'];
     end
     setenv('LDFLAGS',flags);
 
