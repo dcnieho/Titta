@@ -4,11 +4,25 @@
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import sys
+
+# detect platform
+if sys.platform.startswith("win"):
+    plat = "win"
+elif sys.platform.startswith("linux"):
+    plat = "linux"
+elif sys.platform.startswith("darwin"):
+    plat = "osx"
 
 __version__ = '1.0.0rc1'
 
 # dll to install along with built module
-data_files = [('lib\\site-packages\\',["./SDK_wrappper/64/Windows/tobii_research.dll"])]
+if plat=="win":
+    data_files = [('lib\\site-packages\\',["./SDK_wrappper/64/Windows/tobii_research.dll"])]
+elif plat=="linux":
+    data_files = [('lib\\site-packages\\',["./SDK_wrappper/64/Linux/libtobii_research.so.1.10.1"])]
+elif plat=="osx":
+    data_files = [('lib\\site-packages\\',["./SDK_wrappper/64/Linux/libtobii_research.1.10.1.dylib"])]
 
 
 class get_pybind_include(object):
@@ -53,8 +67,12 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-Wl,-rpath,''$ORIGIN''','-Wl,--gc-sections -flto'],
+        'unix': ['-Wl,--gc-sections -flto'],
     }
+    if plat=="osx":
+        l_opts['unix'].append('-Wl,-rpath,''@loader_path''')
+    else:
+        l_opts['unix'].append('-Wl,-rpath,''$ORIGIN''')
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
