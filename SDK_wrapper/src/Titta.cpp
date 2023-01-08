@@ -83,7 +83,7 @@ Titta::Stream Titta::stringToStream(std::string stream_, bool snake_case_on_stre
     auto it = streamMapCamelCase.find(stream_);
     if (it == streamMapCamelCase.end())
     {
-        auto it = streamMapSnakeCase.find(stream_);
+        it = streamMapSnakeCase.find(stream_);
         if (it == streamMapSnakeCase.end())
         {
             DoExitWithMsg(
