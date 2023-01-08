@@ -48,6 +48,10 @@ jobs:
     - uses: pypa/cibuildwheel@v2.11.4
       with:
         package-dir: TittaMex
+      env:
+        CIBW_BUILD: cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
+        CIBW_BEFORE_BUILD_MACOS: uname -a
+        MACOSX_DEPLOYMENT_TARGET: 11
 
     - name: Verify clean directory
       run: git diff --exit-code
