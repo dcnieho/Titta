@@ -6,7 +6,7 @@ cd(myDir);
 
 isWin    = strcmp(computer,'PCWIN')                             || strcmp(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<STREMP>
 isLinux  = strcmp(computer,'GLNX86')                            || strcmp(computer,'GLNXA64') || ~isempty(strfind(computer, 'linux-gnu')); %#ok<STREMP>
-isOSX    = strcmp(computer,'MAC')    || strcmp(computer,'MACI') || streq(computer, 'MACI64')  || ~isempty(strfind(computer, 'apple-darwin')); %#ok<STREMP>
+isOSX    = strcmp(computer,'MAC')    || strcmp(computer,'MACI') || strcmp(computer, 'MACI64') || ~isempty(strfind(computer, 'apple-darwin')); %#ok<STREMP>
 isOctave = ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5]);  % If the built-in variable OCTAVE_VERSION exists, then we are running under GNU/Octave, otherwise not.
 is64Bit = ~isempty(strfind(computer, '64')); %#ok<STREMP>
 assert(is64Bit,'only 64-bit builds are supported');
