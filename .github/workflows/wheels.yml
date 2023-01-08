@@ -50,7 +50,7 @@ jobs:
         package-dir: SDK_wrapper
       env:
         CIBW_BUILD: cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
-        CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28_x86_64
+        CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
         CIBW_BEFORE_BUILD_MACOS: uname -a
         MACOSX_DEPLOYMENT_TARGET: 11
 
