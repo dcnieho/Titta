@@ -22,7 +22,6 @@ if isOctave
         '-O3'
         '-ffunction-sections'
         '-fdata-sections'
-        '-fvisibility=hidden'
         '-flto'
         '--output'
         fullfile(myDir,'TittaMex','64',platform,sprintf('TittaMex_.%s',mexext))
