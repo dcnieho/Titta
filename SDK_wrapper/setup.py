@@ -22,7 +22,7 @@ if plat=="win":
 elif plat=="linux":
     data_files = [('lib\\site-packages\\',["./TittaMex/64/Linux/libtobii_research.so.1.10.1"])]
 elif plat=="osx":
-    data_files = [('lib\\site-packages\\',["./TittaMex/64/Linux/libtobii_research.1.10.1.dylib"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex/64/OSX/libtobii_research.1.10.1.dylib"])]
 
 
 class get_pybind_include(object):
