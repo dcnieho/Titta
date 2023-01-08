@@ -34,6 +34,7 @@ elseif isWin
     % exclude Linux ans OSX mex folders
     qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/Linux')); %#ok<STRCLFH>
     qAdd = qAdd & cellfun(@isempty,strfind(opaths,'TittaMex/64/OSX')); %#ok<STRCLFH>
+else
     error('unsupported platform')
 end
 addpath(opaths{qAdd}); savepath;
