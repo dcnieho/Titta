@@ -840,8 +840,10 @@ PYBIND11_MODULE(MODULE_NAME, m)
         ;
 
 // set module version info
+#define Q(x) #x
+#define QUOTE(x) Q(x)
 #ifdef VERSION_INFO
-        m.attr("__version__") = VERSION_INFO;
+        m.attr("__version__") = QUOTE(VERSION_INFO);
 #else
         m.attr("__version__") = "dev";
 #endif
