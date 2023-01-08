@@ -13,10 +13,25 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include=".github">
+      <UniqueIdentifier>{705e5927-5699-4cf0-b031-656b27b31550}</UniqueIdentifier>
+    </Filter>
+    <Filter Include=".github\workflows">
+      <UniqueIdentifier>{a2f05806-137d-451f-9f7e-7de44e1e163d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TittaPy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\setup.py" />
+    <None Include="..\..\.github\dependabot.yml">
+      <Filter>.github</Filter>
+    </None>
+    <None Include="..\..\.github\workflows\wheels.yml">
+      <Filter>.github\workflows</Filter>
+    </None>
   </ItemGroup>
 </Project>

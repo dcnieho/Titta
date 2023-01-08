@@ -104,6 +104,11 @@
   <ItemGroup>
     <ClCompile Include="TittaPy.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\.github\dependabot.yml" />
+    <None Include="..\..\.github\workflows\wheels.yml" />
+    <None Include="..\setup.py" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
