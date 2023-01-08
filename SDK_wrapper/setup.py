@@ -18,11 +18,11 @@ __version__ = '1.0.0rc1'
 
 # dll to install along with built module
 if plat=="win":
-    data_files = [('lib\\site-packages\\',["./SDK_wrapper/64/Windows/tobii_research.dll"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex/64/Windows/tobii_research.dll"])]
 elif plat=="linux":
-    data_files = [('lib\\site-packages\\',["./SDK_wrapper/64/Linux/libtobii_research.so.1.10.1"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex/64/Linux/libtobii_research.so.1.10.1"])]
 elif plat=="osx":
-    data_files = [('lib\\site-packages\\',["./SDK_wrapper/64/Linux/libtobii_research.1.10.1.dylib"])]
+    data_files = [('lib\\site-packages\\',["./TittaMex/64/Linux/libtobii_research.1.10.1.dylib"])]
 
 
 class get_pybind_include(object):
