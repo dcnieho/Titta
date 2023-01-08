@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # test static functions, then connect to first eye tracker found
+print(TittaPy.__version__)
 TittaPy.start_logging()
 print(TittaPy.get_SDK_version())
 print(TittaPy.get_system_timestamp())
@@ -28,7 +29,7 @@ help(EyeTracker.calibration_collect_data)
 if len(ets)==0:
     EThndl = EyeTracker('tet-tcp://169.254.10.20')
 else:
-    EThndl = EyeTracker(ets[0].address)
+    EThndl = EyeTracker(ets[0]['address'])
 print(EThndl)
 
 # test properties
@@ -64,8 +65,8 @@ print(EThndl.is_in_calibration_mode())
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.status_string)
+print(res['work_item']['action'])
+print(res['status_string'])
 print(EThndl.is_in_calibration_mode())
 print(EThndl.calibration_get_status())
 pickle.dump(res,open( "save.pkl", "wb" ))
@@ -76,9 +77,9 @@ EThndl.calibration_discard_data([0.1,0.1])
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.work_item.coordinates)
-print(res.status_string)
+print(res['work_item']['action'])
+print(res['work_item']['coordinates'])
+print(res['status_string'])
 pickle.dump(res,open( "save.pkl", "wb" ))
 res2 = pickle.load( open( "save.pkl", "rb" ) )
 
@@ -97,9 +98,9 @@ EThndl.calibration_collect_data([0.45,0.45])
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.work_item.coordinates)
-print(res.status_string)
+print(res['work_item']['action'])
+print(res['work_item']['coordinates'])
+print(res['status_string'])
 pickle.dump(res,open( "save.pkl", "wb" ))
 res2 = pickle.load( open( "save.pkl", "rb" ) )
 
@@ -110,13 +111,13 @@ EThndl.calibration_compute_and_apply()
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.status_string)
-print(res.calibration_result)
-print(res.calibration_result.status)
-if res.calibration_result.points:
-    print(res.calibration_result.points[0].position_on_display_area)
-    print(res.calibration_result.points[0].samples)
+print(res['work_item']['action'])
+print(res['status_string'])
+print(res['calibration_result'])
+print(res['calibration_result']['status'])
+if res['calibration_result']['points']:
+    print(res['calibration_result']['points'][0]['position_on_display_area'])
+    print(res['calibration_result']['points'][0]['samples'])
 print(EThndl.calibration_get_status())
 #pickle.dump(res,open( "save.pkl", "wb" ))
 #res2 = pickle.load( open( "save.pkl", "rb" ) )
@@ -126,19 +127,19 @@ EThndl.calibration_get_data()
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.status_string)
+print(res['work_item']['action'])
+print(res['status_string'])
 #print(res.calibration_data)
 pickle.dump(res,open( "save.pkl", "wb" ))
 res2 = pickle.load( open( "save.pkl", "rb" ) )
 
 print("calibration_apply_data:")
-EThndl.calibration_apply_data(res.calibration_data)
+EThndl.calibration_apply_data(res['calibration_data'])
 res = None
 while res==None:
     res = EThndl.calibration_retrieve_result()
-print(res.work_item.action)
-print(res.status_string)
+print(res['work_item']['action'])
+print(res['status_string'])
 
 #%% Record some data (and test all streams while we do so)
 print(EThndl.has_stream('gaze'))
@@ -227,7 +228,7 @@ print([len(all_samples['system_time_stamp']), len(all_samples2['system_time_stam
 
 all_images = EThndl.peek_time_range('eye_image') # by default peeks all
 print(all_images)
-print(all_images['image'].shape)
+print(all_images['image'][0].shape)
 pickle.dump(all_images,open( "save.pkl", "wb" ))
 
 plt.figure()
@@ -259,7 +260,7 @@ EThndl.clear_time_range('gaze',0,sys.maxsize)
 EThndl.clear_time_range('eye_image',0,sys.maxsize)
 EThndl.clear_time_range('external_signal',0,sys.maxsize)
 EThndl.clear_time_range('time_sync',0,sys.maxsize)
-EThndl.clear_time_range('positioning',0,sys.maxsize)
+EThndl.clear('positioning')
 EThndl.clear_time_range('notification',0,sys.maxsize)
 
 TittaPy.stop_logging()
