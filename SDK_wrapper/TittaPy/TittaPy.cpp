@@ -429,6 +429,32 @@ py::dict StructToDict(const TobiiResearchDisplayArea& data_)
     return d;
 }
 
+py::list CapabilitiesToList(TobiiResearchCapabilities data_)
+{
+    py::list l;
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA);
+    return l;
+}
+
 
 
 // start module scope
@@ -602,7 +628,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def_property_readonly("firmware_version", [](Titta& instance_) { return instance_.getEyeTrackerInfo("firmwareVersion").firmwareVersion; })
         .def_property_readonly("runtime_version", [](Titta& instance_) { return instance_.getEyeTrackerInfo("runtimeVersion").runtimeVersion; })
         .def_property_readonly("address", [](Titta& instance_) { return instance_.getEyeTrackerInfo("address").address; })
-        .def_property_readonly("capabilities", [](Titta& instance_) { return instance_.getEyeTrackerInfo("capabilities").capabilities; })
+        .def_property_readonly("capabilities", [](Titta& instance_) { return CapabilitiesToList(instance_.getEyeTrackerInfo("capabilities").capabilities); })
         .def_property_readonly("supported_frequencies", [](Titta& instance_) { return instance_.getEyeTrackerInfo("supportedFrequencies").supportedFrequencies; })
         .def_property_readonly("supported_modes", [](Titta& instance_) { return instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
         .def_property("frequency", [](Titta& instance_) { return instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
