@@ -630,17 +630,14 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("calibration_apply_data", &Titta::calibrationApplyData,
             "cal_data"_a)
         .def("calibration_get_status", &Titta::calibrationGetStatus)
-        .def("calibration_retrieve_result", [](Titta& instance, bool makeStatusString_) -> std::optional<py::dict>
+        .def("calibration_retrieve_result", [](Titta& instance) -> std::optional<py::dict>
             {
-                auto res = instance.calibrationRetrieveResult(makeStatusString_);
+                auto res = instance.calibrationRetrieveResult(true);
                 if (!res.has_value())
                     return {};
 
                 return StructToDict(*res);
-            },
-
-
-            "make_string"_a=false)
+            })
 
         //// data streams
         // query if stream is supported
