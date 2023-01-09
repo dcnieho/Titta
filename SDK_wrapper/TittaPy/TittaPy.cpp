@@ -309,16 +309,6 @@ void FieldToNpArray(py::dict& out_, const std::vector<TobiiResearchCalibrationSa
     FieldToNpArray<false>(out_, data_, name_ + "_validity"                , field_, &TobiiResearchCalibrationEyeData::validity);
 }
 
-py::dict StructVectorToDict(const std::vector<TobiiResearchCalibrationSample>& data_)
-{
-    py::dict out;
-
-    FieldToNpArray(out, data_, "samples_left" , &TobiiResearchCalibrationSample::left_eye);
-    FieldToNpArray(out, data_, "samples_right", &TobiiResearchCalibrationSample::right_eye);
-
-    return out;
-}
-
 py::list StructVectorToList(const std::vector<TobiiTypes::CalibrationPoint>& data_)
 {
     py::list out;
@@ -326,8 +316,12 @@ py::list StructVectorToList(const std::vector<TobiiTypes::CalibrationPoint>& dat
     for (auto&& i : data_)
     {
         py::dict d;
-        d["position_on_display_area"] = StructToList(i.position_on_display_area);
-        d["samples"] = StructVectorToDict(i.calibration_samples);
+
+        d["position_on_display_area_x"] = i.position_on_display_area.x;
+        d["position_on_display_area_y"] = i.position_on_display_area.y;
+
+        FieldToNpArray(d, i.calibration_samples, "samples_left",  &TobiiResearchCalibrationSample::left_eye);
+        FieldToNpArray(d, i.calibration_samples, "samples_right", &TobiiResearchCalibrationSample::right_eye);
 
         out.append(d);
     }
