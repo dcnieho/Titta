@@ -17,10 +17,9 @@ elif sys.platform.startswith("darwin"):
 __version__ = '1.0.0rc1'
 
 # dll to install along with built module
+data_files = []
 if plat=="win":
-    data_files = [('lib\\site-packages\\',["./TittaMex/64/Windows/tobii_research.dll"])]
-elif plat=="linux":
-    data_files = [('lib\\site-packages\\',["./TittaMex/64/Linux/libtobii_research.so.1.10.1"])]
+    data_files = [('lib\\site-packages',["./TittaMex/64/Windows/tobii_research.dll"])]
 elif plat=="osx":
     data_files = [('lib\\site-packages\\',["./TittaMex/64/OSX/libtobii_research.1.10.1.dylib"])]
 
@@ -67,12 +66,12 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto'],
+        'unix': ['-flto', '-ltobii_research', '-L./TittaMex/64/Linux/'],
     }
     if plat=="osx":
         l_opts['unix'].extend(['-Wl,-rpath,''@loader_path''','-dead_strip'])
     else:
-        l_opts['unix'].extend(['-Wl,-rpath,''$ORIGIN''','-Wl,--gc-sections'])
+        l_opts['unix'].extend(['-Wl,--gc-sections'])
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
