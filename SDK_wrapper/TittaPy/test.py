@@ -10,7 +10,6 @@ import sys
 import pickle
 import numpy as np
 import time
-from psychopy import core
 import matplotlib.pyplot as plt
 
 plt.close('all')
@@ -151,7 +150,7 @@ success = EThndl.start('external_signal')
 success = EThndl.start('time_sync')
 success = EThndl.start('notification')
 print(EThndl.is_recording('gaze'))
-core.wait(0.2)
+time.sleep(0.2)
 
 
 '''
@@ -179,7 +178,6 @@ while k < n_samples:
         ts = samples['system_time_stamp'][0]
 
     if ts == ts_old:
-        #core.wait(0.00001) # Wait 1/10 ms
         continue
 
     out.append([time.perf_counter(), ts])
