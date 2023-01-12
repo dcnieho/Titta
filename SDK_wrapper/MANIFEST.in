@@ -1,0 +1,9 @@
+recursive-include deps *
+include Titta/*
+include src/*
+recursive-include TittaMex/64 *
+prune deps/include/readerwriterqueue/benchmarks
+prune deps/include/readerwriterqueue/tests
+global-exclude *.mex*
+global-exclude *.git
+global-exclude *.gitignore

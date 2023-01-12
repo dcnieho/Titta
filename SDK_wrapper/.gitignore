@@ -23,3 +23,4 @@ git_refid.h
 *.whl
 /JSON
 *.eggs
+dist/
