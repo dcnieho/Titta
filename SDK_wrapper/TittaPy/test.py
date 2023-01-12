@@ -140,6 +140,11 @@ while res==None:
 print(res['work_item']['action'])
 print(res['status_string'])
 
+EThndl.leave_calibration_mode()
+res = None
+while res==None:
+    res = EThndl.calibration_retrieve_result()
+
 #%% Record some data (and test all streams while we do so)
 print(EThndl.has_stream('gaze'))
 print(EThndl.is_recording('gaze'))
@@ -161,7 +166,7 @@ be called and therefore all samples to be collected appropriately).
 
 This can be tested in a while-loop like the one below.
 
-TobiiWrapper doesn't show this problem luckily, so the below loop should be fine
+TittaPy doesn't show this problem luckily, so the below loop should be fine
 '''
 dur = 4 # Record what should be this many seconds of data
 n_samples = EThndl.frequency * dur
