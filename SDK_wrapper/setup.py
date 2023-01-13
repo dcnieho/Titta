@@ -70,7 +70,7 @@ class BuildExt(build_ext):
     }
     if plat=="osx":
         c_opts['unix'].append('-mmacosx-version-min=11')
-        l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''@loader_path''','-dead_strip'])
+        l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''./TittaMex/64/OSX/''','-dead_strip'])
     else:
         l_opts['unix'].extend(['-L./TittaMex/64/Linux/', '-Wl,--gc-sections'])
 
