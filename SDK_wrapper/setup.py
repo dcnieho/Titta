@@ -21,7 +21,7 @@ data_files = []
 if plat=="win":
     data_files = [('lib\\site-packages',["./TittaMex/64/Windows/tobii_research.dll"])]
 elif plat=="osx":
-    data_files = [('lib\\site-packages\\',["./TittaMex/64/OSX/libtobii_research.1.10.1.dylib"])]
+    data_files = [('lib/site-packages/',["./TittaMex/64/OSX/libtobii_research.1.10.1.dylib"])]
 
 
 class get_pybind_include(object):
@@ -66,12 +66,13 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto', '-ltobii_research', '-L./TittaMex/64/Linux/'],
+        'unix': ['-flto', '-ltobii_research'],
     }
     if plat=="osx":
-        l_opts['unix'].extend(['-Wl,-rpath,''@loader_path''','-dead_strip'])
+        c_opts['unix'].append('-mmacosx-version-min=11')
+        l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''@loader_path''','-dead_strip'])
     else:
-        l_opts['unix'].extend(['-Wl,--gc-sections'])
+        l_opts['unix'].extend(['-L./TittaMex/64/Linux/', '-Wl,--gc-sections'])
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
