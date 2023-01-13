@@ -20,8 +20,6 @@ __version__ = '1.0.0rc1'
 data_files = []
 if plat=="win":
     data_files = [('lib\\site-packages',["./TittaMex/64/Windows/tobii_research.dll"])]
-elif plat=="osx":
-    data_files = [('lib/site-packages/',["./TittaMex/64/OSX/libtobii_research.1.10.1.dylib"])]
 
 
 class get_pybind_include(object):
