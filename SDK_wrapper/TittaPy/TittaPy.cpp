@@ -369,6 +369,32 @@ py::dict StructToDict(const TobiiTypes::CalibrationWorkResult& data_)
     return d;
 }
 
+py::list CapabilitiesToList(TobiiResearchCapabilities data_)
+{
+    py::list l;
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA);
+    return l;
+}
+
 py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
 {
     py::list out;
@@ -384,7 +410,7 @@ py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
         d["address"] = i.address;
         d["frequency"] = i.frequency;
         d["tracking_mode"] = i.trackingMode;
-        d["capabilities"] = i.capabilities;
+        d["capabilities"] = CapabilitiesToList(i.capabilities);
         d["supported_frequencies"] = i.supportedFrequencies;
         d["supported_modes"] = i.supportedModes;
 
@@ -421,32 +447,6 @@ py::dict StructToDict(const TobiiResearchDisplayArea& data_)
     d["height"] = data_.height;
 
     return d;
-}
-
-py::list CapabilitiesToList(TobiiResearchCapabilities data_)
-{
-    py::list l;
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA);
-    return l;
 }
 
 
