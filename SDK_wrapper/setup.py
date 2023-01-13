@@ -97,6 +97,7 @@ setup(
     ext_modules=ext_modules,
     python_requires=">=3.8",
     setup_requires=['pybind11>=2.10.1'],  # this fixes problem if c++23 std::forward_like is available that i ran into
+    install_requires=['numpy'],
     cmdclass={'build_ext': BuildExt},
     data_files=data_files
 )
