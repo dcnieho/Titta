@@ -107,6 +107,7 @@
   <ItemGroup>
     <None Include="..\..\.github\dependabot.yml" />
     <None Include="..\..\.github\workflows\wheels.yml" />
+    <None Include="..\MANIFEST.in" />
     <None Include="..\setup.py" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

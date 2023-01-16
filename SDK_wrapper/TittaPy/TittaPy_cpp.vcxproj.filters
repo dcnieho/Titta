@@ -33,5 +33,6 @@
     <None Include="..\..\.github\workflows\wheels.yml">
       <Filter>.github\workflows</Filter>
     </None>
+    <None Include="..\MANIFEST.in" />
   </ItemGroup>
 </Project>
