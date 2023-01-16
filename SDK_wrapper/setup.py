@@ -14,7 +14,7 @@ elif sys.platform.startswith("linux"):
 elif sys.platform.startswith("darwin"):
     plat = "osx"
 
-__version__ = '1.0.0rc2'
+__version__ = '1.0.0rc3'
 
 # dll to install along with built module
 data_files = []
