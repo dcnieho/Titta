@@ -7,19 +7,9 @@ from setuptools.command.build_ext import build_ext
 import sys
 
 # detect platform
-if sys.platform.startswith("win"):
-    plat = "win"
-elif sys.platform.startswith("linux"):
-    plat = "linux"
-elif sys.platform.startswith("darwin"):
-    plat = "osx"
+isOSX = sys.platform.startswith("darwin")
 
 __version__ = '1.0.0rc3'
-
-# dll to install along with built module
-data_files = []
-if plat=="win":
-    data_files = [('lib\\site-packages',["./TittaMex/64/Windows/tobii_research.dll"])]
 
 
 class get_pybind_include(object):
@@ -66,8 +56,9 @@ class BuildExt(build_ext):
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
         'unix': ['-flto', '-ltobii_research'],
     }
-    if plat=="osx":
+    if isOSX:
         c_opts['unix'].append('-mmacosx-version-min=11')
+        # set rpath so that delocate can find .dylib
         l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''./SDK_wrapper/TittaMex/64/OSX/''','-dead_strip'])
     else:
         l_opts['unix'].extend(['-L./TittaMex/64/Linux/', '-Wl,--gc-sections'])
@@ -113,6 +104,5 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
         'Programming Language :: C++',
-    ],
-    data_files=data_files
+    ]
 )
