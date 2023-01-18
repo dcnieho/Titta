@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest] #[ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -26,7 +26,7 @@ jobs:
       with:
         package-dir: SDK_wrapper
       env:
-        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
+        CIBW_BUILD: cp*-manylinux_x86_64 cp38-macosx_x86_64 cp*-win_amd64
 
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
@@ -35,7 +35,7 @@ jobs:
         CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib
 
         CIBW_BEFORE_BUILD_MACOS: uname -a
-        MACOSX_DEPLOYMENT_TARGET: 11
+        MACOSX_DEPLOYMENT_TARGET: 10.14
 
     - name: Verify clean directory
       run: git diff --exit-code
