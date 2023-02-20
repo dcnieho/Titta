@@ -1674,11 +1674,7 @@ classdef Titta < handle
             settings.UI.plot.ax.tickLength          = .01;                          % fraction of screen height
             settings.UI.plot.ax.highlightColor      = [255 0 0 50];
             settings.UI.plot.ax.axisLbls.x          = 'time (s)';
-            if IsOctave && IsWin
-                degChar = char([194 176]);
-            else
-                degChar = char(176);
-            end
+            degChar = char(176);
             settings.UI.plot.ax.axisLbls.offset     = {sprintf('horizontal offset (%s)',degChar),sprintf('vertical offset (%s)',degChar),'pupil size (mm)','eye opennness (mm)'};
             settings.UI.plot.ax.axisLbls.full       = {'horizontal\ngaze position (px)','vertical\ngaze position (px)','pupil size (mm)','eye opennness (mm)'};
             settings.UI.plot.ax.axisLbl.font        = sansFont;
@@ -3579,11 +3575,7 @@ classdef Titta < handle
             
             
             % setup menu, if any
-            if IsOctave && IsWin
-                degChar = char([194 176]);
-            else
-                degChar = char(176);
-            end
+            degChar = char(176);
             if qHaveMultipleValidCals
                 margin          = 10;
                 pad             = 3;
@@ -4501,11 +4493,7 @@ classdef Titta < handle
             whichPointDiscard       = nan;
             qCancelPointCollect     = false;
             qRegenSnapShotMenuListing = false;
-            if IsOctave && IsWin
-                degChar = char([194 176]);
-            else
-                degChar = char(176);
-            end
+            degChar = char(176);
             while ~qDoneWithManualCalib
                 % start new calibration, if wanted (e.g. eye changed, last
                 % calibration point discarded). New cal also started when a
