@@ -1049,7 +1049,7 @@ classdef Titta < handle
             obj.logCalib(out);
         end
         
-        function out = calibrateManual(obj,wpnt,previousCalibs)
+        function out = calibrateManual(obj,wpnt,previousCalibs,controller)
             % Do participant setup and calibration for non-compliant subjects
             %
             %    CALIBRATION = Titta.calibrate(WPNT) displays the
@@ -1068,6 +1068,10 @@ classdef Titta < handle
             %    can then be revalidated and used, or replaced.
             %    PREVIOUSCALIBS is expected to be a CALIBRATION output from
             %    a previous run of Titta.calibrateManual.
+            %
+            %    CALIBRATION = Titta.calibrate(WPNT,...,CONTROLLER) allows
+            %    using a controller class that automatically runs a
+            %    calibration and/or validation.
             %
             %    INTERFACE
             %    The interface can be fully controlled by key combinations.
@@ -1151,12 +1155,18 @@ classdef Titta < handle
             %                  the interface button with the mouse) to also
             %                  show the head position visualization on the
             %                  participant screen (toggHead)
+            %      a         - if a controller is provided, toggle
+            %                  automatic calibration/validation (as
+            %                  available) on or off (toggAuto)
             %
             %    See also TITTA.CALIBRATE, TITTA.GETOPTIONS,
             %    TITTA.GETDEFAULTS
             
             % this function does all setup, draws the interface, etc
             assert(numel(wpnt)==2,'Titta.calibrateManual: need a two screen setup for this mode')
+            if nargin<4 || isempty(controller)
+                controller = [];
+            end
             if nargin<3 || isempty(previousCalibs)
                 previousCalibs = [];
             end
@@ -1187,7 +1197,7 @@ classdef Titta < handle
             out.wasSkipped      = false;
             
             % run the setup/calibration process
-            out = obj.doManualCalib(wpnt,out,currentSelection);
+            out = obj.doManualCalib(wpnt,out,currentSelection,controller);
             switch out.status
                 case 1
                     % all good, we're done
@@ -4212,7 +4222,7 @@ classdef Titta < handle
             HideCursor;
         end
         
-        function out = doManualCalib(obj,wpnt,out,currentSelection)
+        function out = doManualCalib(obj,wpnt,out,currentSelection,controller)
             % init key, mouse state
             [~,~,obj.keyState]      = KbCheck();
             [~,~,obj.mouseState]    = GetMouse();
@@ -4221,6 +4231,8 @@ classdef Titta < handle
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             qHasEyeOpenness         = obj.buffer.hasStream('eyeOpenness');
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
+            qHasAutoCal             = ~isempty(controller) && controller.canControl('calibration');
+            qHasAutoVal             = ~isempty(controller) && controller.canControl('validation');
             
             % timing is done in ticks (display refreshes) instead of time.
             % If multiple screens, get fs of participant screen as that
