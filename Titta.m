@@ -2907,12 +2907,9 @@ classdef Titta < handle
             end
             
             % timing is done in ticks (display refreshes) instead of time.
-            % If multiple screens, get lowest fs as that will determine
-            % tick rate
-            for w=length(wpnt):-1:1
-                fs(w) = Screen('NominalFrameRate',wpnt(w));
-            end
-            fs = min(fs);
+            % If multiple screens, get fs of participant screen as that
+            % should determine tick rate (observer screen runs unsynced)
+            fs = Screen('NominalFrameRate',wpnt(1));
             
             % start recording eye images if not already started
             eyeStartTime        = [];
@@ -4226,12 +4223,9 @@ classdef Titta < handle
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
             % timing is done in ticks (display refreshes) instead of time.
-            % If multiple screens, get lowest fs as that will determine
-            % tick rate
-            for w=length(wpnt):-1:1
-                fs(w) = Screen('NominalFrameRate',wpnt(w));
-            end
-            fs = min(fs);
+            % If multiple screens, get fs of participant screen as that
+            % should determine tick rate (observer screen runs unsynced)
+            fs = Screen('NominalFrameRate',wpnt(1));
             
             startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
             if qHasEyeOpenness
