@@ -81,14 +81,16 @@ try
     calViz                      = VideoCalibrationDisplay();
     settings.mancal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
-    % callback function for completion of each calibration point
-    settings.mancal.cal.pointNotifyFunction = @demoCalCompletionFun;
-    settings.mancal.val.pointNotifyFunction = @demoCalCompletionFun;
+    % calibration logic: custom controller
+    calController = MonkeyCalController([],calViz);
+    settings.mancal.cal.pointNotifyFunction = @calController.receiveUpdate;
+    settings.mancal.cal.useExtendedNotify = true;
     
     % init
     EThndl          = Titta(settings);
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
+    calController.EThndl = EThndl;
     nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
     
     if DEBUGlevel>1
@@ -125,7 +127,6 @@ try
     vp.start();
     calViz.setVideoPlayer(vp);
 
-    calController = MonkeyCalController(EThndl,calViz);
     
     % do calibration
     try

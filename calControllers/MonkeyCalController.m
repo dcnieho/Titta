@@ -3,11 +3,6 @@ classdef MonkeyCalController < handle
         stateEnum = struct('cal_positioning',0, 'cal_gazing',1, 'cal_calibrating',2);
     end
     properties (SetAccess=private)
-        % comms
-        EThndl;
-        calDisplay;
-        rewardProvider = [];
-
         % state
         gazeOnScreen;                               % true if we have gaze for both eyes and the average position is on screen
         meanGaze;
@@ -21,6 +16,11 @@ classdef MonkeyCalController < handle
         calPoint;
     end
     properties
+        % comms
+        EThndl;
+        calDisplay;
+        rewardProvider = [];
+
         nSamples                    = 3;            % number of gaze sample to peek on each iteration
         scrRes;
 
@@ -82,7 +82,12 @@ classdef MonkeyCalController < handle
             end
         end
 
-        function receiveUpdate(obj,type,data)
+        function receiveUpdate(obj,titta_instance,currentPoint,posNorm,posPix,stage,type,calState)
+            type
+            calState
+            if strcmp(type,'cal_compute_and_apply')
+                calState.calibrationResult
+            end
             % TODO: interface through which at least the following can be
             % communicated to the controller:
             % - cal/val mode switch

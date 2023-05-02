@@ -1877,6 +1877,7 @@ classdef Titta < handle
             settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.mancal.cal.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.cal.pointNotifyFunction = [];                       % function that is called upon each calibration point completing
+            settings.mancal.cal.useExtendedNotify   = false;                    % if true, settings.mancal.cal.pointNotifyFunction is also called to report on other calibration actions (point discarding, compute and apply, loading of stored calibration)
             settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.val.collectDuration     = 0.5;
@@ -4812,6 +4813,12 @@ classdef Titta < handle
                                     end
                                     qUpdateLineDisplay  = true;
                                     qUpdateCalStatusText= true;
+
+                                    % if wanted, notify user callback of
+                                    % compute and apply result
+                                    if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                        obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_compute_and_apply',computeResult);
+                                    end
                                 end
                             elseif calibrationStatus==1
                                 % computed succesfully, waiting for
@@ -4976,13 +4983,19 @@ classdef Titta < handle
                                 % check we've loaded yet
                                 % computed succesfully, waiting for
                                 % calibration data retrieval
-                                calData = obj.buffer.calibrationRetrieveResult();
-                                if ~isempty(calData) && strcmp(calData.workItem.action,'ApplyCalibrationData')
+                                callResult = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(callResult) && strcmp(callResult.workItem.action,'ApplyCalibrationData')
                                     qUpdatePointHover       = true;
                                     qUpdateLineDisplay      = true;
                                     qUpdateCalStatusText    = true;
                                     calibrationStatus       = 1;    % status: calibrated
                                     awaitingCalChangeType   = '';   % done with loading calibration
+
+                                    % if wanted, notify user callback of
+                                    % compute and apply result
+                                    if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                        obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_load',callResult);
+                                    end
                                 end
                             end
                     end
@@ -5564,6 +5577,12 @@ classdef Titta < handle
                                     break;
                                 end
                             end
+
+                            % if wanted, notify user callback that point
+                            % was discarded
+                            if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                obj.settings.mancal.cal.pointNotifyFunction(obj,whichPointDiscard,pointsP(whichPointDiscard,1:2),pointsP(whichPointDiscard,3:4),stage,'cal_discard',out.attempt{kCal}.cal{calAction}.discardStatus);
+                            end
                             
                             % if in calibration mode and point states have
                             % changed, and no further calibration points
@@ -5666,7 +5685,11 @@ classdef Titta < handle
                                     frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
                                 end
                                 fun = obj.settings.mancal.cal.pointNotifyFunction;
-                                extra = {out.attempt{kCal}.cal{calAction}.collectStatus};
+                                extra = {};
+                                if obj.settings.mancal.cal.useExtendedNotify
+                                    extra = {'cal_collect'};
+                                end
+                                extra = [extra {out.attempt{kCal}.cal{calAction}.collectStatus}]; %#ok<AGROW> 
                             else
                                 fun = obj.settings.mancal.val.pointNotifyFunction;
                                 extra = {};
