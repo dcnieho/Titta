@@ -73,8 +73,11 @@ try
     settings.UI.val.fixFrontColor           = fixClrs(2);
     settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
     settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
-    % calibration display
-    % custom calibration drawer
+    % setup operator display
+    settings.UI.mancal.showHead             = true;     % show head display when interface opens
+    settings.UI.mancal.headScale            = .35;
+    settings.UI.mancal.headPos              = [.5 .175];
+    % calibration display: custom calibration drawer
     calViz                      = VideoCalibrationDisplay();
     settings.mancal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
