@@ -375,6 +375,9 @@ classdef Titta < handle
             obj.settings.UI.button.mancal.toggGaze.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.fillColor);
             obj.settings.UI.button.mancal.toggGaze.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.edgeColor);
             obj.settings.UI.button.mancal.toggGaze.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggGaze.textColor);
+            obj.settings.UI.button.mancal.toggAuto.fillColor    = color2RGBA(obj.settings.UI.button.mancal.toggAuto.fillColor);
+            obj.settings.UI.button.mancal.toggAuto.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.toggAuto.edgeColor);
+            obj.settings.UI.button.mancal.toggAuto.textColor    = color2RGBA(obj.settings.UI.button.mancal.toggAuto.textColor);
             obj.settings.UI.mancal.menu.bgColor                 = color2RGBA(obj.settings.UI.mancal.menu.bgColor);
             obj.settings.UI.mancal.menu.itemColor               = color2RGBA(obj.settings.UI.mancal.menu.itemColor);
             obj.settings.UI.mancal.menu.itemColorActive         = color2RGBA(obj.settings.UI.mancal.menu.itemColorActive);
@@ -1828,6 +1831,12 @@ classdef Titta < handle
             settings.UI.button.mancal.toggGaze.fillColor    = toggleButClr.fill;
             settings.UI.button.mancal.toggGaze.edgeColor    = toggleButClr.edge;
             settings.UI.button.mancal.toggGaze.textColor    = toggleButClr.text;
+            settings.UI.button.mancal.toggAuto.accelerator  = 'a';
+            settings.UI.button.mancal.toggAuto.visible      = true;
+            settings.UI.button.mancal.toggAuto.string       = 'auto (<i>a<i>)';
+            settings.UI.button.mancal.toggAuto.fillColor    = backButClr.fill;
+            settings.UI.button.mancal.toggAuto.edgeColor    = backButClr.edge;
+            settings.UI.button.mancal.toggAuto.textColor    = backButClr.text;
             settings.UI.mancal.menu.bgColor         = 110;
             settings.UI.mancal.menu.itemColor       = 140;
             settings.UI.mancal.menu.itemColorActive = 180;
@@ -4234,6 +4243,7 @@ classdef Titta < handle
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             qHasAutoCal             = ~isempty(controller) && controller.canControl('calibration');
             qHasAutoVal             = ~isempty(controller) && controller.canControl('validation');
+            qHasAuto                = qHasAutoCal || qHasAutoVal;
             
             % timing is done in ticks (display refreshes) instead of time.
             % If multiple screens, get fs of participant screen as that
@@ -4285,11 +4295,12 @@ classdef Titta < handle
             but(3)  = PTBButton(obj.settings.UI.button.mancal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(4)  = PTBButton(obj.settings.UI.button.mancal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(5)  = PTBButton(obj.settings.UI.button.mancal.snapshot ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(6)  = PTBButton(obj.settings.UI.button.mancal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(7)  = PTBButton(obj.settings.UI.button.mancal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.mancal.toggAuto ,       qHasAuto        , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.mancal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(8)  = PTBButton(obj.settings.UI.button.mancal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             % 1. below screen
             % position them
-            butRectsBase= cat(1,but([but(1:5).visible]).rect);
+            butRectsBase= cat(1,but([but(1:6).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
                 yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
@@ -4300,7 +4311,7 @@ classdef Titta < handle
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
                 butRects(:,4)     = yposBase;
-                idx = find((1:length(but))<=5&[but.visible]);
+                idx = find((1:length(but))<=6&[but.visible]);
                 for b=1:length(idx)
                     but(idx(b)).rect = butRects(b,:);
                 end
@@ -4310,11 +4321,11 @@ classdef Titta < handle
             % position them
             yPosTop             = .02*obj.scrInfo.resolution{end}(2);
             buttonOff           = 900;
-            if but(6).visible
-                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(6).rect(3),yPosTop);
-            end
             if but(7).visible
-                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
+                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(7).rect(3),yPosTop);
+            end
+            if but(8).visible
+                but(8).rect     = OffsetRect(but(8).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
             end
             % get all butRects, needed below in script
             butRects        = cat(1,but.rect).';
@@ -4471,6 +4482,8 @@ classdef Titta < handle
             qUpdateLineDisplay      = true;
             % 10. cursor drawer state
             qUpdateCursors          = true;
+            % 11. auto mode (controller)
+            qAutoActive             = false;
             
             % setup canvas positions if needed
             qDrawEyeValidity    = false;
@@ -4479,7 +4492,7 @@ classdef Titta < handle
                 if ~any(visible)
                     basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                 else
-                    basePos = min(butRects(2,[but(1:5).visible]));
+                    basePos = min(butRects(2,[but(1:6).visible]));
                 end
                 eyeCanvasPoss(:,1) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)-obj.eyeImageCanvasSize(1)-eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
                 eyeCanvasPoss(:,2) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)                          +eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
@@ -5355,7 +5368,7 @@ classdef Titta < handle
                             if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                             else
-                                basePos = min(butRects(2,[but(1:5).visible]));
+                                basePos = min(butRects(2,[but(1:6).visible]));
                             end
                             eyeImageRect(:,1) = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,1)).';
                             eyeImageRect(:,3) = OffsetRect([0 0 eyeSzs(:,3).'],obj.scrInfo.center{end}(1)            +eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,3)).';
@@ -5394,8 +5407,9 @@ classdef Titta < handle
                     but(3).draw(mousePos);
                     but(4).draw(mousePos);
                     but(5).draw(mousePos,qSelectSnapMenuOpen);
-                    but(6).draw(mousePos,qShowHead);
-                    but(7).draw(mousePos,qShowGaze);
+                    but(6).draw(mousePos,qAutoActive);
+                    but(7).draw(mousePos,qShowHead);
+                    but(8).draw(mousePos,qShowGaze);
                     
                     % draw eye images, if any
                     if qShowEyeImage
@@ -5919,10 +5933,12 @@ classdef Titta < handle
                                 elseif qInBut(5)
                                     qToggleSelectEyeMenu= true;
                                 elseif qInBut(6)
+                                    qAutoActive         = ~qAutoActive;
+                                elseif qInBut(7)
                                     qShowHead           = ~qShowHead;
                                     qShowHeadToAll      = shiftIsDown;
                                     qUpdateCursors      = true;
-                                elseif qInBut(7)
+                                elseif qInBut(8)
                                     qShowGaze           = ~qShowGaze;
                                     qShowGazeToAll      = shiftIsDown;
                                 end
@@ -6182,6 +6198,9 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggGaze.accelerator))
                                 qShowGaze           = ~qShowGaze;
                                 qShowGazeToAll      = shiftIsDown;
+                                break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggAuto.accelerator))
+                                qAutoActive         = ~qAutoActive;
                                 break;
                             end
                         end
