@@ -84,7 +84,9 @@ try
     % calibration logic: custom controller
     calController = MonkeyCalController([],calViz);
     settings.mancal.cal.pointNotifyFunction = @calController.receiveUpdate;
+    settings.mancal.val.pointNotifyFunction = @calController.receiveUpdate;
     settings.mancal.cal.useExtendedNotify = true;
+    settings.mancal.val.useExtendedNotify = true;
     
     % init
     EThndl          = Titta(settings);

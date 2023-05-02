@@ -1886,11 +1886,12 @@ classdef Titta < handle
             settings.mancal.cal.pointPos            = [[0.1 0.1]; [0.1 0.9]; [0.5 0.5]; [0.9 0.1]; [0.9 0.9]];
             settings.mancal.cal.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.cal.pointNotifyFunction = [];                       % function that is called upon each calibration point completing
-            settings.mancal.cal.useExtendedNotify   = false;                    % if true, settings.mancal.cal.pointNotifyFunction is also called to report on other calibration actions (point discarding, compute and apply, loading of stored calibration)
+            settings.mancal.cal.useExtendedNotify   = false;                    % if true, settings.mancal.cal.pointNotifyFunction is also called to report on other calibration actions (point discarding, compute and apply, loading of stored calibration, mode switch to validation, accept)
             settings.mancal.val.pointPos            = [[0.5 .2]; [.2 .5];[.8 .5]; [.5 .8]];
             settings.mancal.val.paceDuration        = 0.8;                      % minimum duration (s) that each point is shown
             settings.mancal.val.collectDuration     = 0.5;
             settings.mancal.val.pointNotifyFunction = [];                       % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
+            settings.mancal.val.useExtendedNotify   = false;                    % if true, settings.mancal.val.pointNotifyFunction is also called to report on other validation actions (mode switch to calibration, accept)
             
             settings.debugMode                  = false;                        % for use with PTB's PsychDebugWindowConfiguration. e.g. does not hide cursor
         end
@@ -4563,6 +4564,11 @@ classdef Titta < handle
                             pointTextCache  = cPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.cal.paceDuration*fs);
                             obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                            % if wanted, notify user callback of
+                            % compute and apply result
+                            if isa(obj.settings.mancal.val.pointNotifyFunction,'function_handle') && obj.settings.mancal.val.useExtendedNotify
+                                obj.settings.mancal.val.pointNotifyFunction(obj,[],[],[],stage,'val_switch_to_cal',[]);
+                            end
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
                             if exist('pointsP','var')
@@ -4575,6 +4581,11 @@ classdef Titta < handle
                             pointTextCache  = vPointTextCache;
                             paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
                             obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                            % if wanted, notify user callback of
+                            % compute and apply result
+                            if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_switch_to_val',[]);
+                            end
                     end
                     % get point rects on operator screen
                     calValRectsSel  = zeros(4,size(pointsO,1));
@@ -5199,7 +5210,14 @@ classdef Titta < handle
                             end
                         end
                         pointsP(whichPointDiscard,end-[1 0])        = 0;    %#ok<AGROW> % status: not collected
-                        % need to updating lines display
+
+                        % if wanted, notify user callback that point
+                        % was discarded
+                        if isa(obj.settings.mancal.val.pointNotifyFunction,'function_handle') && obj.settings.mancal.val.useExtendedNotify
+                            obj.settings.mancal.val.pointNotifyFunction(obj,whichPointDiscard,pointsP(whichPointDiscard,1:2),pointsP(whichPointDiscard,3:4),stage,'val_discard',[]);
+                        end
+
+                        % need to update lines display
                         out.attempt{kCal}.val{valAction}.point      = nan(1,5);         % dummy point
                         out.attempt{kCal}.val{valAction}.whichCal   = out.attempt{kCal}.val{valAction-1}.whichCal;
                         out.attempt{kCal}.val{valAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
@@ -5711,6 +5729,9 @@ classdef Titta < handle
                             else
                                 fun = obj.settings.mancal.val.pointNotifyFunction;
                                 extra = {};
+                                if obj.settings.mancal.val.useExtendedNotify
+                                    extra = {'val_collect',out.attempt{kCal}.val{valAction}};
+                                end
                             end
                             if isa(fun,'function_handle')
                                 fun(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,extra{:});
@@ -6253,6 +6274,12 @@ classdef Titta < handle
             % return selected cal
             out.status      = status;
             out.selectedCal = [kCal getLastManualCal(out.attempt{kCal})];
+
+            % if wanted, notify user callback of
+            % compute and apply result
+            if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
+                obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,[stage '_finished'],out);
+            end
             
             % clean up
             HideCursor;
