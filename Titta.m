@@ -4567,7 +4567,7 @@ classdef Titta < handle
                             % if wanted, notify user callback of
                             % compute and apply result
                             if isa(obj.settings.mancal.val.pointNotifyFunction,'function_handle') && obj.settings.mancal.val.useExtendedNotify
-                                obj.settings.mancal.val.pointNotifyFunction(obj,[],[],[],stage,'val_switch_to_cal',[]);
+                                obj.settings.mancal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
                             end
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
@@ -4584,7 +4584,7 @@ classdef Titta < handle
                             % if wanted, notify user callback of
                             % compute and apply result
                             if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
-                                obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_switch_to_val',[]);
+                                obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
                             end
                     end
                     % get point rects on operator screen

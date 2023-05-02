@@ -14,6 +14,7 @@ classdef MonkeyCalController < handle
         onScreenTimeThresh;
         videoSize;
         calPoint;
+        stage;
     end
     properties
         % comms
@@ -64,25 +65,34 @@ classdef MonkeyCalController < handle
         function commands = tick(obj)
             commands = {};
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
-            if offScreenTime > obj.maxOffScreenTime
-                obj.reward(false);
-            else
-                if obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
-                    % training to position and look at screen
-                    obj.trainLookScreen();
-                elseif obj.videoSize < size(obj.videoSizes,1)
-                    % training to look at video
-                    obj.controlState = obj.stateEnum.cal_gazing;
-                    obj.trainLookVideo();
+            if strcmp(obj.stage,'cal')
+                if offScreenTime > obj.maxOffScreenTime
+                    obj.reward(false);
                 else
-                    % calibrating
-                    obj.controlState = obj.stateEnum.cal_calibrating;
-                    obj.calibrate();
+                    if obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
+                        % training to position and look at screen
+                        obj.trainLookScreen();
+                    elseif obj.videoSize < size(obj.videoSizes,1)
+                        % training to look at video
+                        obj.controlState = obj.stateEnum.cal_gazing;
+                        obj.trainLookVideo();
+                    else
+                        % calibrating
+                        obj.controlState = obj.stateEnum.cal_calibrating;
+                        obj.calibrate();
+                    end
                 end
             end
         end
 
-        function receiveUpdate(obj,titta_instance,currentPoint,posNorm,posPix,stage,type,calState)
+        function receiveUpdate(obj,~,currentPoint,posNorm,posPix,~,type,calState)
+            switch type
+                case 'cal_enter'
+                    obj.stage = 'cal';
+
+                case 'val_enter'
+                    obj.stage = 'val';
+            end
             type
             calState
             if strcmp(type,'cal_compute_and_apply')
