@@ -4268,7 +4268,7 @@ classdef Titta < handle
             if isempty(obj.settings.UI.mancal.headPos)
                 headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
             else
-                headORect       = OffsetRect([0 0 obj.scrInfo.resolution{2}*facO],obj.settings.UI.mancal.headPos(1),obj.settings.UI.mancal.headPos(2));
+                headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.settings.UI.mancal.headPos(1)*obj.scrInfo.resolution{2}(1),obj.settings.UI.mancal.headPos(2)*obj.scrInfo.resolution{2}(2));
             end
             headO.allPosOff = headORect(1:2);
             refPosO         = refPosO+headORect(1:2);
