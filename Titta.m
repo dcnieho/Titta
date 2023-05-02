@@ -1991,7 +1991,11 @@ classdef Titta < handle
                     if isempty(idx)
                         return;
                     end
-                    val     = cal.val{idx}.allPoints;
+                    if isfield(cal.val{idx},'allPoints')    % can occur in manual calibration if collecting and then discarding all validation data
+                        val = cal.val{idx}.allPoints;
+                    else
+                        val = [];
+                    end
                     str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
                 end
             end
