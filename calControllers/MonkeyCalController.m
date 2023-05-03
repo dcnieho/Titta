@@ -79,7 +79,7 @@ classdef MonkeyCalController < handle
                     else
                         % calibrating
                         obj.controlState = obj.stateEnum.cal_calibrating;
-                        obj.calibrate();
+                        commands = obj.calibrate();
                     end
                 end
             end
@@ -234,7 +234,12 @@ classdef MonkeyCalController < handle
             end
         end
 
-        function calibrate(obj)
+        function commands = calibrate(obj)
+            % TODO: needs logic for moving video to calibration points
+            % TODO: needs logic to wait for results of commands
+            % TODO: needs to issue compute and apply when all points
+            % acquired, and wait for result
+            commands = {};
             calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
             dist = hypot(obj.meanGaze(1)-calPos(1),obj.meanGaze(2)-calPos(2));
             if dist < obj.calOnVideoDistFac*obj.scrRes(2)
@@ -244,7 +249,8 @@ classdef MonkeyCalController < handle
                 end
                 onDur = obj.latestTimestamp-obj.onVideoTimestamp;
                 if onDur > obj.calOnVideoTime
-                    % TODO issue calibration, rest of logic
+                    % request calibration point collection
+                    commands = {'cal','collect_point'}; % something with point ID and location, so Titta's logic can double check it knows this point
                 end
             else
                 if obj.onVideoTimestamp>0 || isnan(obj.onVideoTimestamp)
@@ -253,7 +259,7 @@ classdef MonkeyCalController < handle
                 offDur = obj.latestTimestamp--obj.onVideoTimestamp;
                 if offDur > obj.maxOffScreenTime
                     obj.reward(false);
-                    % TODO: discard data for this point
+                    % request discarding data for this point
                 end
             end
         end
