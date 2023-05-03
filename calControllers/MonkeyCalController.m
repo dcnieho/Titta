@@ -20,7 +20,7 @@ classdef MonkeyCalController < handle
         % comms
         EThndl;
         calDisplay;
-        rewardProvider = [];
+        rewardProvider;
 
         nSamples                    = 3;            % number of gaze sample to peek on each iteration
         scrRes;
@@ -86,24 +86,31 @@ classdef MonkeyCalController < handle
         end
 
         function receiveUpdate(obj,~,currentPoint,posNorm,posPix,~,type,calState)
+            % event communicated to the controller:
             switch type
+                % cal/val mode switches
                 case 'cal_enter'
                     obj.stage = 'cal';
-
                 case 'val_enter'
                     obj.stage = 'val';
+                % calibration/validation point collected
+                case 'cal_collect'
+                case 'val_collect'
+                % calibration/validation point discarded
+                case 'cal_discard'
+                case 'val_discard'
+                % new calibration computed (may have failed) or loaded
+                case 'cal_compute_and_apply'
+                case 'cal_load'
+                % interface exited from calibration or validation screen
+                case 'cal_finished'
+                case 'val_finished'
             end
             type
             calState
             if strcmp(type,'cal_compute_and_apply')
                 calState.calibrationResult
             end
-            % TODO: interface through which at least the following can be
-            % communicated to the controller:
-            % - cal/val mode switch
-            % - calibration point result
-            % - calibration point discard result
-            % - calibration compute result
         end
 
         function draw(obj,wpnt)
