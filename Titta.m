@@ -1319,6 +1319,12 @@ classdef Titta < handle
             dat.systemInfo  = obj.systemInfo;
             dat.geometry    = obj.geom;
             dat.settings    = obj.settings;
+            if isa(dat.settings.UI.setup.instruct.strFun,'function_handle')
+                dat.settings.UI.setup.instruct.strFun = func2str(dat.settings.UI.setup.instruct.strFun);
+            end
+            if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
+                dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
+            end
             if isa(dat.settings.cal.drawFunction,'function_handle')
                 dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
             end
@@ -1328,14 +1334,14 @@ classdef Titta < handle
             if isa(dat.settings.val.pointNotifyFunction,'function_handle')
                 dat.settings.val.pointNotifyFunction = func2str(dat.settings.val.pointNotifyFunction);
             end
-            if isa(dat.settings.UI.setup.instruct.strFun,'function_handle')
-                dat.settings.UI.setup.instruct.strFun = func2str(dat.settings.UI.setup.instruct.strFun);
-            end
-            if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
-                dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
-            end
             if isa(dat.settings.UI.mancal.instruct.strFun,'function_handle')
                 dat.settings.UI.mancal.instruct.strFun = func2str(dat.settings.UI.mancal.instruct.strFun);
+            end
+            if isa(dat.settings.mancal.pointNotifyFunction,'function_handle')
+                dat.settings.mancal.cal.pointNotifyFunction = func2str(dat.settings.mancal.cal.pointNotifyFunction);
+            end
+            if isa(dat.settings.mancal.pointNotifyFunction,'function_handle')
+                dat.settings.mancal.val.pointNotifyFunction = func2str(dat.settings.mancal.val.pointNotifyFunction);
             end
             dat.TobiiLog            = obj.buffer.getLog(false);
             dat.data                = obj.ConsumeAllData();
