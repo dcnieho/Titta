@@ -9,7 +9,7 @@ import sys
 # detect platform
 isOSX = sys.platform.startswith("darwin")
 
-__version__ = '1.0.0rc5'
+__version__ = '1.0.0'
 
 
 class get_pybind_include(object):
