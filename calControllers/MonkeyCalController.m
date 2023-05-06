@@ -22,7 +22,7 @@ classdef MonkeyCalController < handle
         calDisplay;
         rewardProvider;
 
-        nSamples                    = 3;            % number of gaze sample to peek on each iteration
+        gazeFetchDur                = 100;          % duration of gaze samples to peek on each iteration (ms, e.g., last 100 ms of gaze)
         scrRes;
 
         maxOffScreenTime            = 40/60*1000;
@@ -147,7 +147,7 @@ classdef MonkeyCalController < handle
             obj.controlState = obj.stateEnum.cal_positioning;
 
             obj.gazeOnScreen = false;
-            obj.meanGaze = [nan nan];
+            obj.meanGaze = [nan nan].';
             obj.onScreenTimestamp = nan;
             obj.offScreenTimestamp = nan;
             obj.onVideoTimestamp = nan;
@@ -159,31 +159,34 @@ classdef MonkeyCalController < handle
         end
 
         function updateGaze(obj)
-            gaze = obj.EThndl.buffer.peekN('gaze',obj.nSamples);
+            gaze = obj.EThndl.buffer.peekN('gaze',round(1000/obj.gazeFetchDur*obj.EThndl.frequency));
             if isempty(gaze)
                 return
             end
+
+            minValidFrac = .5;
+
             obj.latestTimestamp = gaze.systemTimeStamp(end)/1000;   % us -> ms
-            qValid = all([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],1);
-            iSamp = find(qValid,1);
-            if isempty(iSamp)
-                obj.gazeOnScreen = false;
-                obj.meanGaze = [nan nan];
-                obj.onScreenTimestamp = nan;
-                if isnan(obj.offScreenTimestamp)
-                    obj.offScreenTimestamp = gaze.systemTimeStamp(1)/1000;  % us -> ms
-                end
-            else
-                iSamp = find(qValid,1,'last');
-                obj.meanGaze = mean([eyeData.left.gazePoint.onDisplayArea(:,iSamp) eyeData.right.gazePoint.onDisplayArea(:,iSamp)],2);
-                obj.meanGaze = obj.meanGaze.*obj.scrRes(:);
+            fValid = mean([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid]);
+            if any(fValid>minValidFrac)
+                l_gaze = mean(eyeData. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
+                r_gaze = mean(eyeData.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
+                obj.meanGaze = mean([l_gaze r_gaze],2).*obj.scrRes(:);
                 obj.gazeOnScreen = obj.meanGaze(1) > 0 && obj.meanGaze(1)<obj.scrRes(1) && ...
                                    obj.meanGaze(2) > 0 && obj.meanGaze(2)<obj.scrRes(2);
                 if obj.gazeOnScreen
                     obj.offScreenTimestamp = nan;
                     if isnan(obj.onScreenTimestamp)
+                        iSamp = find(any([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],1),1,'last');
                         obj.onScreenTimestamp = gaze.systemTimeStamp(iSamp)/1000;   % us -> ms
                     end
+                end
+            else
+                obj.gazeOnScreen = false;
+                obj.meanGaze = [nan nan].';
+                obj.onScreenTimestamp = nan;
+                if isnan(obj.offScreenTimestamp)
+                    obj.offScreenTimestamp = gaze.systemTimeStamp(1)/1000;  % us -> ms
                 end
             end
         end
