@@ -4522,7 +4522,7 @@ classdef Titta < handle
             frameMsg                = '';
             whichPoint              = nan;
             whichPointDiscard       = nan;
-            qCancelPointCollect     = false;
+            cancelOrDiscardPoint    = nan;
             qRegenSnapShotMenuListing = false;
             degChar = char(176);
             while ~qDoneWithManualCalib
@@ -5977,35 +5977,7 @@ classdef Titta < handle
                             elseif any(qOnFixTarget)
                                 which                   = find(qOnFixTarget,1);
                                 if shiftIsDown
-                                    qDoneSomething = false;
-                                    % if clicked point is enqueued, cancel
-                                    % it
-                                    qInList = pointList==which;
-                                    if any(qInList)
-                                        % reset to previous state
-                                        pointsP(qInList,end) = pointsP(qInList,end-1);
-                                        qDoneSomething = true;
-                                        % clear from list of enqueued points
-                                        pointList(qInList) = []; %#ok<AGROW>
-                                    end
-                                    
-                                    % if currently showing point but not
-                                    % yet trying to collect, cancel as well
-                                    if ~isnan(whichPoint) && whichPoint==which && pointsP(whichPoint,end)==2
-                                        qCancelPointCollect = true;
-                                    end
-                                    
-                                    % if point already collected, enqueue a
-                                    % discard for it
-                                    if pointsP(which,end)==1
-                                        discardList = [discardList which]; %#ok<AGROW>
-                                        qDoneSomething = true;
-                                    end
-                                    if qDoneSomething
-                                        qUpdatePointHover = true;
-                                        break;
-                                    end
-                                        
+                                    cancelOrDiscardPoint = which;
                                 elseif ~ismember(pointsP(which,end),[2 3 4])
                                     % clicked point is not in enqueued,
                                     % displaying or collecting status:
@@ -6154,7 +6126,7 @@ classdef Titta < handle
                                     % if currently showing point but not
                                     % yet trying to collect, cancel as well
                                     if ~isnan(whichPoint) && pointsP(whichPoint,end)==2
-                                        qCancelPointCollect = true;
+                                        cancelOrDiscardPoint = whichPoint;
                                     end
                                     if qDoneSomething
                                         qUpdatePointHover = true;
@@ -6167,34 +6139,7 @@ classdef Titta < handle
                                 requested   = str2double(keys(qWhich));
                                 if requested<=size(pointsP,1)
                                     if shiftIsDown
-                                        qDoneSomething = false;
-                                        % if clicked point is enqueued, cancel
-                                        % it
-                                        qInList = pointList==requested;
-                                        if any(qInList)
-                                            % reset to previous state
-                                            pointsP(qInList,end) = pointsP(qInList,end-1);
-                                            qDoneSomething = true;
-                                            % clear from list of enqueued points
-                                            pointList(qInList) = []; %#ok<AGROW>
-                                        end
-                                        
-                                        % if currently showing point but not
-                                        % yet trying to collect, cancel as well
-                                        if ~isnan(whichPoint) && whichPoint==requested && pointsP(whichPoint,end)==2
-                                            qCancelPointCollect = true;
-                                        end
-                                        
-                                        % if point already collected, enqueue a
-                                        % discard for it
-                                        if pointsP(requested,end)==1
-                                            discardList = [discardList requested]; %#ok<AGROW>
-                                            qDoneSomething = true;
-                                        end
-                                        if qDoneSomething
-                                            qUpdatePointHover = true;
-                                            break;
-                                        end
+                                        cancelOrDiscardPoint = requested;
                                     elseif ~ismember(pointsP(requested,end),[2 3 4])
                                         % point is not in enqueued,
                                         % displaying or collecting status:
@@ -6236,24 +6181,49 @@ classdef Titta < handle
                             end
                         end
                     end
-                    % check if a point collections needs to be cancelled
-                    if qCancelPointCollect && ~isnan(whichPoint)
-                        frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                        if strcmp(stage,'cal')
-                            out.attempt{kCal}.cal{calAction}.wasCancelled = true;
-                        else
-                            out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                    % process point discard or collection cancel
+                    if ~isnan(cancelOrDiscardPoint)
+                        qDoneSomething = false;
+                        % if point is enqueued, cancel it
+                        qInList = pointList==cancelOrDiscardPoint;
+                        if any(qInList)
+                            % reset to previous state
+                            pointsP(pointList(qInList),end) = pointsP(pointList(qInList),end-1);
+                            qDoneSomething = true;
+                            % clear from list of enqueued points
+                            pointList(qInList) = []; %#ok<AGROW>
                         end
-                        % reset to previous state
-                        pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
-                        whichPoint = nan;
-                        % reset calibration point drawer
-                        % function
-                        drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                        % done, break from draw loop
-                        qCancelPointCollect     = false;
-                        qUpdatePointHover       = true;
-                        break;
+
+                        % if currently showing point but not
+                        % yet trying to collect, cancel as well
+                        if ~isnan(whichPoint) && whichPoint==cancelOrDiscardPoint && pointsP(whichPoint,end)==2
+                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                            if strcmp(stage,'cal')
+                                out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                            else
+                                out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                            end
+                            % reset to previous state
+                            pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                            whichPoint = nan;
+                            % reset calibration point drawer
+                            % function
+                            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                        end
+
+                        % if point already collected or currently being
+                        % collected, enqueue a discard for it
+                        if ismember(pointsP(cancelOrDiscardPoint,end),[1 3])
+                            discardList = [discardList cancelOrDiscardPoint]; %#ok<AGROW>
+                            qDoneSomething = true;
+                        end
+                        
+                        cancelOrDiscardPoint = nan;
+                        if qDoneSomething
+                            % done, break from draw loop
+                            qUpdatePointHover = true;
+                            break;
+                        end
                     end
                     % check if hovering over point for which we have info,
                     % and no menus open
