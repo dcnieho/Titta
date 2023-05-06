@@ -6,7 +6,7 @@ if nargin<8 || isempty(sFac)
     sFac = 1;
 end
 if nargin<9 || isempty(offset)
-    offset = 1;
+    offset = 0;
 end
 
 qShowLeft   = ~isempty(clrL);
