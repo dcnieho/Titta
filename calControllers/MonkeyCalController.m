@@ -4,6 +4,8 @@ classdef MonkeyCalController < handle
     end
     properties (SetAccess=private)
         % state
+        stage;
+
         gazeOnScreen;                               % true if we have gaze for both eyes and the average position is on screen
         meanGaze;
         onScreenTimestamp;                          % time of start of episode of gaze on screen
@@ -13,8 +15,9 @@ classdef MonkeyCalController < handle
 
         onScreenTimeThresh;
         videoSize;
+
         calPoint;
-        stage;
+        awaitingCalResult           = 0;            % 0: not awaiting anything; 1: awaiting point collect result; 2: awaiting point discard result; 3: awaiting compute and apply result
 
         drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
     end
@@ -175,8 +178,8 @@ classdef MonkeyCalController < handle
     methods (Access = private, Hidden)
         function setCleanState(obj)
             obj.controlState = obj.stateEnum.cal_positioning;
-            obj.drawState = 1;
 
+            obj.stage = [];
             obj.gazeOnScreen = false;
             obj.meanGaze = [nan nan].';
             obj.onScreenTimestamp = nan;
@@ -186,7 +189,11 @@ classdef MonkeyCalController < handle
 
             obj.onScreenTimeThresh = 1;
             obj.videoSize = 1;
+
             obj.calPoint = 1;
+            obj.awaitingCalResult = 0;
+
+            obj.drawState = 1;
         end
 
         function updateGaze(obj)
@@ -269,7 +276,6 @@ classdef MonkeyCalController < handle
         end
 
         function commands = calibrate(obj)
-            % TODO: needs logic for moving video to calibration points
             % TODO: needs logic to wait for results of commands
             % TODO: needs to issue compute and apply when all points
             % acquired, and wait for result
@@ -282,9 +288,10 @@ classdef MonkeyCalController < handle
                     obj.onVideoTimestamp = obj.latestTimestamp;
                 end
                 onDur = obj.latestTimestamp-obj.onVideoTimestamp;
-                if onDur > obj.calOnVideoTime
+                if onDur > obj.calOnVideoTime && ~(obj.awaitingCalResult)
                     % request calibration point collection
-                    commands = {'cal','collect_point'}; % something with point ID and location, so Titta's logic can double check it knows this point
+                    commands = {'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}; % something with point ID and location, so Titta's logic can double check it knows this point
+                    obj.awaitingCalResult = 1;
                 end
             else
                 if obj.onVideoTimestamp>0 || isnan(obj.onVideoTimestamp)
@@ -294,6 +301,8 @@ classdef MonkeyCalController < handle
                 if offDur > obj.maxOffScreenTime
                     obj.reward(false);
                     % request discarding data for this point
+                    commands = {'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)};
+                    obj.awaitingCalResult = 2;
                 end
             end
         end

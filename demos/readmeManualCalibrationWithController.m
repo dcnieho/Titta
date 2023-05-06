@@ -33,6 +33,7 @@ bgClr                   = 127;
 eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
 videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
 videoExt                = 'mov';
+numCalPoints            = 2;    % 2, 3 or 5
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
@@ -77,6 +78,10 @@ try
     settings.UI.mancal.showHead             = true;     % show head display when interface opens
     settings.UI.mancal.headScale            = .35;
     settings.UI.mancal.headPos              = [.5 .175];
+    % calibration display
+    if numCalPoints==2
+        settings.mancal.cal.pointPos = [settings.mancal.cal.pointPos; .65, .35; .35, .65];
+    end
     % calibration display: custom calibration drawer
     calViz                      = VideoCalibrationDisplay();
     settings.mancal.drawFunction= @calViz.doDraw;
@@ -87,6 +92,15 @@ try
     settings.mancal.val.pointNotifyFunction = @calController.receiveUpdate;
     settings.mancal.cal.useExtendedNotify = true;
     settings.mancal.val.useExtendedNotify = true;
+    if numCalPoints==2
+        calController.calPoints = [6 7];
+    elseif numCalPoints==3
+        calController.calPoints = [3 2 4];
+    else    % 5 points
+        calController.calPoints = [3 1 2 3 4];
+    end
+    calController.calPoss = settings.mancal.cal.pointPos(calController.calPoints,:);
+
     
     % init
     EThndl          = Titta(settings);
