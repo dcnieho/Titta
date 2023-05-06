@@ -64,6 +64,7 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
+            obj.updateGaze();
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
             if strcmp(obj.stage,'cal')
                 if offScreenTime > obj.maxOffScreenTime
@@ -166,11 +167,11 @@ classdef MonkeyCalController < handle
 
             minValidFrac = .5;
 
-            obj.latestTimestamp = gaze.systemTimeStamp(end)/1000;   % us -> ms
-            fValid = mean([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid]);
+            obj.latestTimestamp = double(gaze.systemTimeStamp(end))/1000;   % us -> ms
+            fValid = mean([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],2);
             if any(fValid>minValidFrac)
-                l_gaze = mean(eyeData. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
-                r_gaze = mean(eyeData.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
+                l_gaze = mean(gaze. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
+                r_gaze = mean(gaze.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
                 obj.meanGaze = mean([l_gaze r_gaze],2).*obj.scrRes(:);
                 obj.gazeOnScreen = obj.meanGaze(1) > 0 && obj.meanGaze(1)<obj.scrRes(1) && ...
                                    obj.meanGaze(2) > 0 && obj.meanGaze(2)<obj.scrRes(2);
@@ -178,7 +179,7 @@ classdef MonkeyCalController < handle
                     obj.offScreenTimestamp = nan;
                     if isnan(obj.onScreenTimestamp)
                         iSamp = find(any([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],1),1,'last');
-                        obj.onScreenTimestamp = gaze.systemTimeStamp(iSamp)/1000;   % us -> ms
+                        obj.onScreenTimestamp = double(gaze.systemTimeStamp(iSamp))/1000;   % us -> ms
                     end
                 end
             else
@@ -186,7 +187,7 @@ classdef MonkeyCalController < handle
                 obj.meanGaze = [nan nan].';
                 obj.onScreenTimestamp = nan;
                 if isnan(obj.offScreenTimestamp)
-                    obj.offScreenTimestamp = gaze.systemTimeStamp(1)/1000;  % us -> ms
+                    obj.offScreenTimestamp = double(gaze.systemTimeStamp(1))/1000;  % us -> ms
                 end
             end
         end
@@ -228,7 +229,7 @@ classdef MonkeyCalController < handle
                 if dist < obj.videoSizes(obj.videoSize,2)*2
                     obj.reward(true);
                     if rand()<=obj.videoShrinkRate
-                        obj.videoSize = min(obj.videoSize,size(obj.videoSizes,1));
+                        obj.videoSize = min(obj.videoSize+1,size(obj.videoSizes,1));
                         obj.calDisplay.calSize = obj.videoSizes(obj.videoSize,:);
                     end
                 else
