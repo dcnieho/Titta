@@ -123,6 +123,8 @@ try
     Screen('Preference', 'TextRenderer', 1);
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
 
+    calController.scrRes = winRectP(3:4);
+
     vids = FileFromFolder(videoFolder, [], videoExt);
     vids = arrayfun(@(x) fullfile(x.folder,x.name), vids, 'uni', false);
     vp = VideoPlayer(wpntP,vids);
