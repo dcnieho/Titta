@@ -4495,6 +4495,7 @@ classdef Titta < handle
             qUpdateCursors          = true;
             % 11. auto mode (controller)
             qAutoActive             = false;
+            autoCommands            = {};
             
             % setup canvas positions if needed
             qDrawEyeValidity    = false;
@@ -5501,6 +5502,11 @@ classdef Titta < handle
                             break;
                         end
                     end
+
+                    % check controller, if any
+                    if qAutoActive
+                        autoCommands = controller.tick();
+                    end
                     
                     % get eye data if needed
                     if qShowGaze || qShowHead || qShowGazeToAll || (qShowEyeImage && qDrawEyeValidity)
@@ -5623,6 +5629,11 @@ classdef Titta < handle
                             end
                             Screen('DrawTextures', wpnt(end), eyeTexs(qTex),[],eyeImageRect(:,qTex));
                         end
+                    end
+
+                    % draw controller annotations, if any
+                    if qAutoActive
+                        controller.draw(wpnt, tick, obj.scrInfo.sFac, obj.scrInfo.offset.');
                     end
                     
                     % draw calibration/validation points
@@ -5769,7 +5780,9 @@ classdef Titta < handle
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
                     mousePos = [mx my];
                     % if any drag active change head rect position/size
-                    if qDraggingHead || ~isnan(headResizingGrip)
+                    if ~isempty(autoCommands)
+
+                    elseif qDraggingHead || ~isnan(headResizingGrip)
                         % update headORect
                         if qDraggingHead
                             vec         = mousePos-dragPos;

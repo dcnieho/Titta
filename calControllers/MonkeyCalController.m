@@ -15,6 +15,8 @@ classdef MonkeyCalController < handle
         videoSize;
         calPoint;
         stage;
+
+        drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
     end
     properties
         % comms
@@ -53,11 +55,14 @@ classdef MonkeyCalController < handle
     
     
     methods
-        function obj = MonkeyCalController(EThndl,calDisplay,rewardProvider)
+        function obj = MonkeyCalController(EThndl,calDisplay,scrRes,rewardProvider)
             obj.setCleanState();
             obj.EThndl = EThndl;
             obj.calDisplay = calDisplay;
             if nargin>2
+                obj.scrRes = scrRes;
+            end
+            if nargin>3
                 obj.rewardProvider = rewardProvider;
             end
         end
@@ -75,7 +80,10 @@ classdef MonkeyCalController < handle
                         obj.trainLookScreen();
                     elseif obj.videoSize < size(obj.videoSizes,1)
                         % training to look at video
-                        obj.controlState = obj.stateEnum.cal_gazing;
+                        if obj.controlState ~= obj.stateEnum.cal_gazing
+                            obj.drawState = 1;
+                            obj.controlState = obj.stateEnum.cal_gazing;
+                        end
                         obj.trainLookVideo();
                     else
                         % calibrating
@@ -114,18 +122,39 @@ classdef MonkeyCalController < handle
             end
         end
 
-        function draw(obj,wpnt)
+        function draw(obj,wpnts,tick,sFac,offset)
+            % wpnts: two window pointers. first is for participant screen,
+            % second for operator
+            if obj.drawState>0
+                drawCmd = 'draw';
+                if obj.drawState==1
+                    drawCmd = 'new';
+                    if obj.controlState == obj.stateEnum.cal_positioning
+                        obj.calDisplay.calSize = obj.videoSizes(1,:);
+                    end
+                end
+                if ismember(obj.controlState, [obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing])
+                    pos = obj.scrRes/2;
+                elseif obj.controlState == obj.stateEnum.cal_calibrating
+                    calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
+                    pos = calPos;
+                end
+                obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
+                obj.drawState = 2;
+            end
+            % sFac and offset are used to scale from participant screen to
+            % operator screen, in case they have different resolutions
             switch obj.controlState
                 case obj.stateEnum.cal_positioning
                     % nothing to draw
                 case obj.stateEnum.cal_gazing
                     % draw video rect
-                    rect = CenterRectOnPointd([0 0 obj.videoSizes(obj.videoSize,:)],obj.scrRes(1)/2,obj.scrRes(2)/2);
-                    Screen('FrameRect',wpnt,0,rect,4);
+                    rect = CenterRectOnPointd([0 0 obj.videoSizes(obj.videoSize,:)*sFac],obj.scrRes(1)/2*sFac+offset(1),obj.scrRes(2)/2*sFac+offset(2));
+                    Screen('FrameRect',wpnts(end),0,rect,4);
                 case obj.stateEnum.cal_calibrating
                     calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
-                    rect = CenterRectOnPointd([0 0 obj.videoSizes(obj.videoSize,:)],calPos(1),calPos(2));
-                    Screen('FrameRect',wpnt,0,rect,4);
+                    rect = CenterRectOnPointd([0 0 obj.videoSizes(obj.videoSize,:)*sFac],calPos(1)*sFac+offset(1),calPos(2)*sFac+offset(2));
+                    Screen('FrameRect',wpnts(end),0,rect,4);
             end
         end
     end
@@ -146,6 +175,7 @@ classdef MonkeyCalController < handle
     methods (Access = private, Hidden)
         function setCleanState(obj)
             obj.controlState = obj.stateEnum.cal_positioning;
+            obj.drawState = 1;
 
             obj.gazeOnScreen = false;
             obj.meanGaze = [nan nan].';
