@@ -5336,6 +5336,171 @@ classdef Titta < handle
                 while true
                     tick        = tick+1;
                     nextFlipT   = out.flips(end)+1/1000;
+
+                    % calibration logic
+                    % check for status of discarding point
+                    if ~isnan(whichPointDiscard)
+                        % check status
+                        callResult  = obj.buffer.calibrationRetrieveResult();
+                        if ~isempty(callResult) && strcmp(callResult.workItem.action,'DiscardData')
+                            pointsP(whichPointDiscard,end-[1 0]) = 0;        % status: not collected
+                            out.attempt{kCal}.cal{calAction}.discardStatus = callResult;
+                            out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                            out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                            
+                            % find which point we just discarded, mark it
+                            % as such
+                            for p=length(out.attempt{kCal}.cal):-1:1
+                                if out.attempt{kCal}.cal{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.cal{p}.wasCancelled && ~out.attempt{kCal}.cal{p}.wasDiscarded && ~isfield(out.attempt{kCal}.cal{p},'discardStatus')
+                                    out.attempt{kCal}.cal{p}.wasDiscarded = true;
+                                    break;
+                                end
+                            end
+
+                            % if wanted, notify user callback that point
+                            % was discarded
+                            if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                obj.settings.mancal.cal.pointNotifyFunction(obj,whichPointDiscard,pointsP(whichPointDiscard,1:2),pointsP(whichPointDiscard,3:4),stage,'cal_discard',out.attempt{kCal}.cal{calAction}.discardStatus);
+                            end
+                            
+                            % if in calibration mode and point states have
+                            % changed, and no further calibration points
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
+                                qUpdateCalStatusText    = true;
+                                pointStateLastCal       = pointsP(:,end);
+                                if all(pointsP(:,end)==0)
+                                    % if no points left, user intention is
+                                    % to clear the calibration. We do that
+                                    % by leaving and reentering calibration
+                                    % mode
+                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                        obj.doEnterCalibrationMode();
+                                    end
+                                    qNewCal     = true;
+                                    qClearState = true;
+                                else
+                                    % data for some points left: issue
+                                    % calibration command
+                                    calibrationStatus       = 2;
+                                    awaitingCalChangeType   = 'compute';
+                                    obj.buffer.calibrationComputeAndApply();
+                                end
+                            end
+                            
+                            whichPointDiscard = nan;
+                            qUpdatePointHover = true;
+                            break;
+                        end
+                    end
+                    % accept point
+                    if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
+                        qPointDone = false;
+                        if strcmp(stage,'cal')
+                            if ~nCollectionTries
+                                % start collection
+                                obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                pointsP(whichPoint,end-[1 0])   = [0 3];            % status: collecting, and set previous to not collected since it'll now be wiped
+                                pointStateLastCal(whichPoint)   = 0; %#ok<AGROW>    % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
+                                nCollectionTries                = 1;
+                                out.attempt{kCal}.cal{calAction}.wasCancelled = false;
+                                out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                                qUpdatePointHover               = true;
+                                break;
+                            else
+                                % check status
+                                callResult  = obj.buffer.calibrationRetrieveResult();
+                                if ~isempty(callResult)
+                                    if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
+                                        % success, next point
+                                        pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
+                                        qPointDone              = true;
+                                        out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
+                                    else
+                                        % failed
+                                        if nCollectionTries==1
+                                            % if failed first time, immediately try again
+                                            obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
+                                            nCollectionTries = 2;
+                                        else
+                                            % failed again, stop trying
+                                            pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
+                                            qPointDone              = true;
+                                            out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
+                                        end
+                                    end
+                                end
+                            end
+                        else
+                            if isnan(tick0v)
+                                tick0v = tick;
+                                out.attempt{kCal}.val{valAction}.wasCancelled = false;
+                                out.attempt{kCal}.val{valAction}.wasDiscarded = false;
+                                pointsP(whichPoint,end) = 3;        % status: collecting
+                                qUpdatePointHover       = true;
+                                break;
+                            end
+                            if tick>tick0v+collectInterval
+                                dat = obj.buffer.peekN('gaze',nDataPoint);
+                                out.attempt{kCal}.val{valAction}.gazeData = dat;
+                                tick0v              = nan;
+                                qPointDone          = true;
+                                qUpdateLineDisplay  = true;
+                                pointsP(whichPoint,end) = 1;        % status: collected
+                            end
+                        end
+                        % if finished collecting, log, clean up, and if in
+                        % calibration mode, calibrate if collection was
+                        % successful
+                        if qPointDone
+                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
+                            if strcmp(stage,'cal')
+                                if callResult.status==0
+                                    % success
+                                    frameMsg = [frameMsg ', status: ok']; %#ok<AGROW>
+                                else
+                                    % failure
+                                    frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
+                                end
+                                fun = obj.settings.mancal.cal.pointNotifyFunction;
+                                extra = {};
+                                if obj.settings.mancal.cal.useExtendedNotify
+                                    extra = {'cal_collect'};
+                                end
+                                extra = [extra {out.attempt{kCal}.cal{calAction}.collectStatus}]; %#ok<AGROW> 
+                            else
+                                fun = obj.settings.mancal.val.pointNotifyFunction;
+                                extra = {};
+                                if obj.settings.mancal.val.useExtendedNotify
+                                    extra = {'val_collect',out.attempt{kCal}.val{valAction}};
+                                end
+                            end
+                            if isa(fun,'function_handle')
+                                fun(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,extra{:});
+                            end
+                            whichPoint = nan;
+                            % if no points enqueued, reset calibration
+                            % point drawer function (if any)
+                            if isempty(pointList)
+                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            end
+                            % if in calibration mode and point states have
+                            % changed, and no further calibration points
+                            % queued up for collection or discarding ->
+                            % kick off a new calibration
+                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
+                                calibrationStatus       = 2;
+                                qUpdateCalStatusText    = true;
+                                pointStateLastCal       = pointsP(:,end);
+                                awaitingCalChangeType   = 'compute';
+                                obj.buffer.calibrationComputeAndApply();
+                            end
+                            qUpdatePointHover = true;
+                            % done with draw loop
+                            break;
+                        end
+                    end
                     
                     % get eye data if needed
                     if qShowGaze || qShowHead || qShowGazeToAll || (qShowEyeImage && qDrawEyeValidity)
@@ -5598,171 +5763,6 @@ classdef Titta < handle
                     if ~isempty(frameMsg)
                         obj.sendMessage(frameMsg,out.flips(end));
                         frameMsg = '';
-                    end
-                    
-                    % calibration logic
-                    % check for status of discarding point
-                    if ~isnan(whichPointDiscard)
-                        % check status
-                        callResult  = obj.buffer.calibrationRetrieveResult();
-                        if ~isempty(callResult) && strcmp(callResult.workItem.action,'DiscardData')
-                            pointsP(whichPointDiscard,end-[1 0]) = 0;        % status: not collected
-                            out.attempt{kCal}.cal{calAction}.discardStatus = callResult;
-                            out.attempt{kCal}.cal{calAction}.wasCancelled = false;
-                            out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
-                            
-                            % find which point we just discarded, mark it
-                            % as such
-                            for p=length(out.attempt{kCal}.cal):-1:1
-                                if out.attempt{kCal}.cal{p}.point(1)==whichPointDiscard && ~out.attempt{kCal}.cal{p}.wasCancelled && ~out.attempt{kCal}.cal{p}.wasDiscarded && ~isfield(out.attempt{kCal}.cal{p},'discardStatus')
-                                    out.attempt{kCal}.cal{p}.wasDiscarded = true;
-                                    break;
-                                end
-                            end
-
-                            % if wanted, notify user callback that point
-                            % was discarded
-                            if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
-                                obj.settings.mancal.cal.pointNotifyFunction(obj,whichPointDiscard,pointsP(whichPointDiscard,1:2),pointsP(whichPointDiscard,3:4),stage,'cal_discard',out.attempt{kCal}.cal{calAction}.discardStatus);
-                            end
-                            
-                            % if in calibration mode and point states have
-                            % changed, and no further calibration points
-                            % queued up for collection or discarding ->
-                            % kick off a new calibration
-                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
-                                qUpdateCalStatusText    = true;
-                                pointStateLastCal       = pointsP(:,end);
-                                if all(pointsP(:,end)==0)
-                                    % if no points left, user intention is
-                                    % to clear the calibration. We do that
-                                    % by leaving and reentering calibration
-                                    % mode
-                                    if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
-                                        obj.doEnterCalibrationMode();
-                                    end
-                                    qNewCal     = true;
-                                    qClearState = true;
-                                else
-                                    % data for some points left: issue
-                                    % calibration command
-                                    calibrationStatus       = 2;
-                                    awaitingCalChangeType   = 'compute';
-                                    obj.buffer.calibrationComputeAndApply();
-                                end
-                            end
-                            
-                            whichPointDiscard = nan;
-                            qUpdatePointHover = true;
-                            break;
-                        end
-                    end
-                    % accept point
-                    if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
-                        qPointDone = false;
-                        if strcmp(stage,'cal')
-                            if ~nCollectionTries
-                                % start collection
-                                obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                pointsP(whichPoint,end-[1 0])   = [0 3];            % status: collecting, and set previous to not collected since it'll now be wiped
-                                pointStateLastCal(whichPoint)   = 0; %#ok<AGROW>    % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous
-                                nCollectionTries                = 1;
-                                out.attempt{kCal}.cal{calAction}.wasCancelled = false;
-                                out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
-                                qUpdatePointHover               = true;
-                                break;
-                            else
-                                % check status
-                                callResult  = obj.buffer.calibrationRetrieveResult();
-                                if ~isempty(callResult)
-                                    if strcmp(callResult.workItem.action,'CollectData') && callResult.status==0     % TOBII_RESEARCH_STATUS_OK
-                                        % success, next point
-                                        pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
-                                        qPointDone              = true;
-                                        out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
-                                    else
-                                        % failed
-                                        if nCollectionTries==1
-                                            % if failed first time, immediately try again
-                                            obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
-                                            nCollectionTries = 2;
-                                        else
-                                            % failed again, stop trying
-                                            pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
-                                            qPointDone              = true;
-                                            out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
-                                        end
-                                    end
-                                end
-                            end
-                        else
-                            if isnan(tick0v)
-                                tick0v = tick;
-                                out.attempt{kCal}.val{valAction}.wasCancelled = false;
-                                out.attempt{kCal}.val{valAction}.wasDiscarded = false;
-                                pointsP(whichPoint,end) = 3;        % status: collecting
-                                qUpdatePointHover       = true;
-                                break;
-                            end
-                            if tick>tick0v+collectInterval
-                                dat = obj.buffer.peekN('gaze',nDataPoint);
-                                out.attempt{kCal}.val{valAction}.gazeData = dat;
-                                tick0v              = nan;
-                                qPointDone          = true;
-                                qUpdateLineDisplay  = true;
-                                pointsP(whichPoint,end) = 1;        % status: collected
-                            end
-                        end
-                        % if finished collecting, log, clean up, and if in
-                        % calibration mode, calibrate if collection was
-                        % successful
-                        if qPointDone
-                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4));
-                            if strcmp(stage,'cal')
-                                if callResult.status==0
-                                    % success
-                                    frameMsg = [frameMsg ', status: ok']; %#ok<AGROW>
-                                else
-                                    % failure
-                                    frameMsg = [frameMsg sprintf(', status: failed (%s)',callResult.statusString)]; %#ok<AGROW>
-                                end
-                                fun = obj.settings.mancal.cal.pointNotifyFunction;
-                                extra = {};
-                                if obj.settings.mancal.cal.useExtendedNotify
-                                    extra = {'cal_collect'};
-                                end
-                                extra = [extra {out.attempt{kCal}.cal{calAction}.collectStatus}]; %#ok<AGROW> 
-                            else
-                                fun = obj.settings.mancal.val.pointNotifyFunction;
-                                extra = {};
-                                if obj.settings.mancal.val.useExtendedNotify
-                                    extra = {'val_collect',out.attempt{kCal}.val{valAction}};
-                                end
-                            end
-                            if isa(fun,'function_handle')
-                                fun(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,extra{:});
-                            end
-                            whichPoint = nan;
-                            % if no points enqueued, reset calibration
-                            % point drawer function (if any)
-                            if isempty(pointList)
-                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                            end
-                            % if in calibration mode and point states have
-                            % changed, and no further calibration points
-                            % queued up for collection or discarding ->
-                            % kick off a new calibration
-                            if strcmp(stage,'cal') && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(pointList) && isempty(discardList)
-                                calibrationStatus       = 2;
-                                qUpdateCalStatusText    = true;
-                                pointStateLastCal       = pointsP(:,end);
-                                awaitingCalChangeType   = 'compute';
-                                obj.buffer.calibrationComputeAndApply();
-                            end
-                            qUpdatePointHover = true;
-                            % done with draw loop
-                            break;
-                        end
                     end
 
                     % get user response
