@@ -5887,7 +5887,11 @@ classdef Titta < handle
                                         whichPos= autoCommand{4};
                                         assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
                                         assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
-                                        cancelOrDiscardPoint = which;
+                                        if isnan(cancelOrDiscardPoint)
+                                            cancelOrDiscardPoint = which;
+                                        else
+                                            cancelOrDiscardPoint = [cancelOrDiscardPoint which]; %#ok<AGROW> 
+                                        end
                                         if ~ismember(pointsP(cancelOrDiscardPoint,end),[1 3])
                                             % unless point is in collecting
                                             % or collected state, a discard
@@ -6343,43 +6347,46 @@ classdef Titta < handle
                         end
                     end
                     % process point discard or collection cancel
-                    if ~isnan(cancelOrDiscardPoint)
+                    if ~isscalar(cancelOrDiscardPoint) || ~isnan(cancelOrDiscardPoint)
                         qDoneSomething = false;
-                        % if point is enqueued, cancel it
-                        qInList = pointList==cancelOrDiscardPoint;
-                        if any(qInList)
-                            % reset to previous state
-                            pointsP(pointList(qInList),end) = pointsP(pointList(qInList),end-1);
-                            qDoneSomething = true;
-                            % clear from list of enqueued points
-                            pointList(qInList) = []; %#ok<AGROW>
-                        end
-
-                        % if currently showing point but not
-                        % yet trying to collect, cancel as well
-                        if ~isnan(whichPoint) && whichPoint==cancelOrDiscardPoint && pointsP(whichPoint,end)==2
-                            frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
-                            if strcmp(stage,'cal')
-                                out.attempt{kCal}.cal{calAction}.wasCancelled = true;
-                            else
-                                out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                        for p=1:length(cancelOrDiscardPoint)
+                            cdp = cancelOrDiscardPoint(p);
+                            % if point is enqueued, cancel it
+                            qInList = pointList==cdp;
+                            if any(qInList)
+                                % reset to previous state
+                                pointsP(pointList(qInList),end) = pointsP(pointList(qInList),end-1);
+                                qDoneSomething = true;
+                                % clear from list of enqueued points
+                                pointList(qInList) = []; %#ok<AGROW>
                             end
-                            % reset to previous state
-                            pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
-                            whichPoint = nan;
-                            % reset calibration point drawer
-                            % function
-                            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
-                            qDoneSomething = true;
+
+                            % if currently showing point but not
+                            % yet trying to collect, cancel as well
+                            if ~isnan(whichPoint) && whichPoint==cdp && pointsP(whichPoint,end)==2
+                                frameMsg = sprintf('POINT OFF %d (%.0f %.0f), cancelled',whichPoint,pointsP(whichPoint,3:4));
+                                if strcmp(stage,'cal')
+                                    out.attempt{kCal}.cal{calAction}.wasCancelled = true;
+                                else
+                                    out.attempt{kCal}.val{valAction}.wasCancelled = true;
+                                end
+                                % reset to previous state
+                                pointsP(whichPoint,end) = pointsP(whichPoint,end-1);
+                                whichPoint = nan;
+                                % reset calibration point drawer
+                                % function
+                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                qDoneSomething = true;
+                            end
+
+                            % if point already collected or currently being
+                            % collected, enqueue a discard for it
+                            if ismember(pointsP(cdp,end),[1 3])
+                                discardList = [discardList cdp]; %#ok<AGROW>
+                                qDoneSomething = true;
+                            end
                         end
 
-                        % if point already collected or currently being
-                        % collected, enqueue a discard for it
-                        if ismember(pointsP(cancelOrDiscardPoint,end),[1 3])
-                            discardList = [discardList cancelOrDiscardPoint]; %#ok<AGROW>
-                            qDoneSomething = true;
-                        end
-                        
                         cancelOrDiscardPoint = nan;
                         if qDoneSomething
                             % done, break from draw loop
