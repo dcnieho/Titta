@@ -92,6 +92,7 @@ try
     settings.mancal.val.pointNotifyFunction = @calController.receiveUpdate;
     settings.mancal.cal.useExtendedNotify = true;
     settings.mancal.val.useExtendedNotify = true;
+    settings.UI.button.mancal.toggAuto.visible = true;
     if numCalPoints==2
         calController.calPoints = [6 7];
     elseif numCalPoints==3
@@ -100,6 +101,10 @@ try
         calController.calPoints = [3 1 2 3 4];
     end
     calController.calPoss = settings.mancal.cal.pointPos(calController.calPoints,:);
+    % calibration logic: only manual calibration attempts since controller
+    % controls this
+    settings.UI.button.mancal.calibrate.visible = true;
+    settings.mancal.cal.autoCalibrate = false;
 
     
     % init
