@@ -4794,22 +4794,19 @@ classdef Titta < handle
                     qUpdateCursors              = true;
                 end
                 
-                % switch on/off eye images
-                if qHasEyeIm
-                    % toggle eye images on or off if requested
-                    if qToggleEyeImage
-                        if qShowEyeImage && ~obj.settings.mancal.doRecordEyeImages
-                            % switch off
-                            obj.buffer.stop('eyeImage');
-                            obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
-                        elseif ~obj.settings.mancal.doRecordEyeImages
-                            % switch on
-                            eyeStartTime = obj.getTimeAsSystemTime();
-                            obj.buffer.start('eyeImage');
-                        end
-                        qShowEyeImage   = ~qShowEyeImage;
-                        qToggleEyeImage = false;
+                % toggle eye images on or off if requested
+                if qHasEyeIm && qToggleEyeImage
+                    if qShowEyeImage && ~obj.settings.mancal.doRecordEyeImages
+                        % switch off
+                        obj.buffer.stop('eyeImage');
+                        obj.buffer.clearTimeRange('eyeImage',eyeStartTime);  % default third argument, clearing from startT until now
+                    elseif ~obj.settings.mancal.doRecordEyeImages
+                        % switch on
+                        eyeStartTime = obj.getTimeAsSystemTime();
+                        obj.buffer.start('eyeImage');
                     end
+                    qShowEyeImage   = ~qShowEyeImage;
+                    qToggleEyeImage = false;
                 end
                 
                 % update cursors
