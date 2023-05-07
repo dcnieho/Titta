@@ -4613,7 +4613,13 @@ classdef Titta < handle
                             if isa(obj.settings.mancal.val.pointNotifyFunction,'function_handle') && obj.settings.mancal.val.useExtendedNotify
                                 obj.settings.mancal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
                             end
-                            but(9).visible = true;
+                            % if auto mode is on, check if it should stay
+                            % on
+                            if qAutoActive && ~qHasAutoCal
+                                qAutoActive = false;
+                            end
+                            % make calibration button visible, if wanted
+                            but(9).visible = obj.settings.UI.button.mancal.calibrate.visible;
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
                             if exist('pointsP','var')
@@ -4631,6 +4637,13 @@ classdef Titta < handle
                             if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
                                 obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
                             end
+                            % if auto mode is on, check if it should stay
+                            % on
+                            if qAutoActive && ~qHasAutoVal
+                                qAutoActive = false;
+                            end
+                            % no calibration button when validating. Make
+                            % sure its hidden
                             but(9).visible = false;
                     end
                     % get point rects on operator screen
