@@ -92,6 +92,8 @@ classdef MonkeyCalController < handle
                             obj.shouldUpdateStatusText = true;
                         end
                         obj.trainLookVideo();
+                    elseif obj.controlState == obj.stateEnum.cal_done
+                        % procedure is done: nothing to do
                     else
                         % calibrating
                         if obj.controlState ~= obj.stateEnum.cal_calibrating
@@ -115,7 +117,6 @@ classdef MonkeyCalController < handle
                     obj.stage = 'val';
                 % calibration/validation point collected
                 case {'cal_collect','val_collect'}
-                    {type,currentPoint,posNorm,callResult}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                 % calibration/validation point discarded
                 case {'cal_discard','val_discard'}
@@ -145,6 +146,8 @@ classdef MonkeyCalController < handle
                     txt = sprintf('Gaze training\nvideo size %d/%d',obj.videoSize,size(obj.videoSizes,1));
                 case obj.stateEnum.cal_calibrating
                     txt = sprintf('Calibrating %d/%d',obj.calPoint,length(obj.calPoints));
+                case obj.stateEnum.cal_done
+                    txt = 'Calibration done';
             end
             obj.shouldUpdateStatusText = false;
         end
@@ -166,10 +169,12 @@ classdef MonkeyCalController < handle
                     calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
                     pos = calPos;
                 end
-                % TODO: don't call draw here if we issued a point command
-                % and haven't gotten a status update yet, then code is
-                % showing the point
-                obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
+                % Don't call draw here if we've issued a point command
+                % and haven't gotten a status update yet, then Titta is
+                % showing the point for us
+                if obj.awaitingCalResult~=1
+                    obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
+                end
                 obj.drawState = 2;
             end
             % sFac and offset are used to scale from participant screen to
@@ -357,12 +362,13 @@ classdef MonkeyCalController < handle
                     end
                     obj.lastUpdate = {};
                 elseif obj.awaitingCalResult==3 && strcmp(obj.lastUpdate{1},'cal_compute_and_apply')
-                    if obj.lastUpdate{2}.status==0 && strcmpi(obj.lastUpdate{2}.calibrationResult,'success')
+                    if obj.lastUpdate{2}.status==0 && strcmpi(obj.lastUpdate{2}.calibrationResult.status,'success')
                         % successful calibration
                         obj.reward(false);
                         obj.controlState = obj.stateEnum.cal_done;
                         obj.shouldUpdateStatusText = true;
                         commands = {{'cal','disable_controller'}};
+                        obj.drawState = 0;
                     else
                         % failed, start over
                         for p=length(obj.calPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
@@ -370,6 +376,7 @@ classdef MonkeyCalController < handle
                         end
                         obj.awaitingCalResult = 2;
                         obj.calPoint = 1;
+                        obj.drawState = 1;
                     end
                     obj.lastUpdate = {};
                 elseif ~isempty(obj.lastUpdate)
