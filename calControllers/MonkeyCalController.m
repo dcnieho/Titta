@@ -52,6 +52,7 @@ classdef MonkeyCalController < handle
     properties (Access=private,Hidden=true)
         controlState;
         shouldUpdateStatusText;
+        trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
 
         awaitingCalResult           = 0;            % 0: not awaiting anything; 1: awaiting point collect result; 2: awaiting point discard result; 3: awaiting compute and apply result
         lastUpdate                  = {};
@@ -230,7 +231,10 @@ classdef MonkeyCalController < handle
         end
 
         function updateGaze(obj)
-            gaze = obj.EThndl.buffer.peekN('gaze',round(1000/obj.gazeFetchDur*obj.EThndl.frequency));
+            if isempty(obj.trackerFrequency)
+                obj.trackerFrequency = obj.EThndl.frequency;
+            end
+            gaze = obj.EThndl.buffer.peekN('gaze',round(1000/obj.gazeFetchDur*obj.trackerFrequency));
             if isempty(gaze)
                 return
             end
