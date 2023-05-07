@@ -4529,7 +4529,7 @@ classdef Titta < handle
             qUpdateCursors          = true;
             % 11. auto mode (controller)
             qAutoActive             = false;
-            autoCommand             = {};
+            autoCommands            = {};
             qUpdateAutoStatusText   = false;
             controllerStatusText    = '';
             autoStatusTextCache     = [];
@@ -5577,7 +5577,7 @@ classdef Titta < handle
 
                     % check controller, if any
                     if qAutoActive
-                        autoCommand = controller.tick();
+                        autoCommands = controller.tick();
                         controllerStatusText = controller.getStatusText();
                         if ~isempty(controllerStatusText)
                             qUpdateAutoStatusText = true;
@@ -5860,32 +5860,57 @@ classdef Titta < handle
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
                     mousePos = [mx my];
                     % if any drag active change head rect position/size
-                    if ~isempty(autoCommand)
-                        if strcmp(autoCommand{1},stage)    % check command is for current stage
-                            switch autoCommand{2}
-                                case 'collect_point'
-                                    which   = autoCommand{3};
-                                    whichPos= autoCommand{4};
-                                    assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
-                                    assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
-                                    % if point is not enqueued already,
-                                    % enqueue it
-                                    if ~ismember(pointsP(which,end),[2 3 4])
-                                        % point is not in enqueued,
-                                        % displaying or collecting status:
-                                        % enqueue
-                                        pointList(1,end+1)      = which; %#ok<AGROW>
-                                        pointsP(which,end)      = 4; % status: enqueued
-                                        qUpdatePointHover       = true;
-                                        break;
-                                    end
-                                case 'discard_point'
-                                    which   = autoCommand{3};
-                                    whichPos= autoCommand{4};
-                                    assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
-                                    assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
-                                    cancelOrDiscardPoint = which;
+                    if ~isempty(autoCommands)
+                        qBreak = false;
+                        for c=1:length(autoCommands)
+                            autoCommand = autoCommands{c};
+                            if strcmp(autoCommand{1},stage)    % check command is for current stage
+                                switch autoCommand{2}
+                                    case 'collect_point'
+                                        which   = autoCommand{3};
+                                        whichPos= autoCommand{4};
+                                        assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
+                                        assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
+                                        % if point is not enqueued already,
+                                        % enqueue it
+                                        if ~ismember(pointsP(which,end),[2 3 4])
+                                            % point is not in enqueued,
+                                            % displaying or collecting status:
+                                            % enqueue
+                                            pointList(1,end+1)      = which; %#ok<AGROW>
+                                            pointsP(which,end)      = 4; % status: enqueued
+                                            qUpdatePointHover       = true;
+                                            qBreak = true;
+                                        end
+                                    case 'discard_point'
+                                        which   = autoCommand{3};
+                                        whichPos= autoCommand{4};
+                                        assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
+                                        assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
+                                        cancelOrDiscardPoint = which;
+                                        if ~ismember(pointsP(cancelOrDiscardPoint,end),[1 3])
+                                            % unless point is in collecting
+                                            % or collected state, a discard
+                                            % would not actually get
+                                            % queued. So fake a response
+                                            % here instead when needed
+                                            if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
+                                                extra = {};
+                                                if strcmp(stage,'cal')
+                                                    extra = {struct('status',0)};
+                                                end
+                                                obj.settings.mancal.(stage).pointNotifyFunction(obj,cancelOrDiscardPoint,pointsP(cancelOrDiscardPoint,1:2),pointsP(cancelOrDiscardPoint,3:4),stage,[stage '_discard'],extra{:});
+                                            end
+                                        end
+                                    case 'compute_and_apply'
+                                        qProcessDoCal = true;
+                                    case 'disable_controller'
+                                        qAutoActive = false;
+                                end
                             end
+                        end
+                        if qBreak
+                            break;
                         end
                     elseif qDraggingHead || ~isnan(headResizingGrip)
                         % update headORect
@@ -6345,6 +6370,7 @@ classdef Titta < handle
                             % reset calibration point drawer
                             % function
                             drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            qDoneSomething = true;
                         end
 
                         % if point already collected or currently being
