@@ -6088,7 +6088,9 @@ classdef Titta < handle
                                 elseif qInBut(5)
                                     qToggleSelectEyeMenu= true;
                                 elseif qInBut(6)
-                                    qAutoActive         = ~qAutoActive;
+                                    if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
+                                        qAutoActive         = ~qAutoActive;
+                                    end
                                 elseif qInBut(7)
                                     qShowHead           = ~qShowHead;
                                     qShowHeadToAll      = shiftIsDown;
@@ -6307,7 +6309,9 @@ classdef Titta < handle
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggAuto.accelerator))
-                                qAutoActive         = ~qAutoActive;
+                                if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
+                                    qAutoActive         = ~qAutoActive;
+                                end
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calibrate.accelerator))
                                 if shiftIsDown
