@@ -1,6 +1,6 @@
 classdef MonkeyCalController < handle
     properties (Access=private, Constant)
-        stateEnum = struct('cal_positioning',0, 'cal_gazing',1, 'cal_calibrating',2);
+        stateEnum = struct('cal_positioning',0, 'cal_gazing',1, 'cal_calibrating',2, 'cal_done',3);
     end
     properties (SetAccess=private)
         % state
@@ -17,9 +17,6 @@ classdef MonkeyCalController < handle
         videoSize;
 
         calPoint;
-        awaitingCalResult           = 0;            % 0: not awaiting anything; 1: awaiting point collect result; 2: awaiting point discard result; 3: awaiting compute and apply result
-
-        drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
     end
     properties
         % comms
@@ -55,6 +52,11 @@ classdef MonkeyCalController < handle
     properties (Access=private,Hidden=true)
         controlState;
         shouldUpdateStatusText;
+
+        awaitingCalResult           = 0;            % 0: not awaiting anything; 1: awaiting point collect result; 2: awaiting point discard result; 3: awaiting compute and apply result
+        lastUpdate                  = {};
+
+        drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
     end
     
     
@@ -103,7 +105,7 @@ classdef MonkeyCalController < handle
             end
         end
 
-        function receiveUpdate(obj,~,currentPoint,posNorm,posPix,~,type,calState)
+        function receiveUpdate(obj,~,currentPoint,posNorm,~,~,type,callResult)
             % event communicated to the controller:
             switch type
                 % cal/val mode switches
@@ -112,22 +114,21 @@ classdef MonkeyCalController < handle
                 case 'val_enter'
                     obj.stage = 'val';
                 % calibration/validation point collected
-                case 'cal_collect'
-                case 'val_collect'
+                case {'cal_collect','val_collect'}
+                    {type,currentPoint,posNorm,callResult}
+                    obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                 % calibration/validation point discarded
-                case 'cal_discard'
-                case 'val_discard'
+                case {'cal_discard','val_discard'}
+                    obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                 % new calibration computed (may have failed) or loaded
                 case 'cal_compute_and_apply'
+                    obj.lastUpdate = {type,callResult};
                 case 'cal_load'
+                    % ignore
                 % interface exited from calibration or validation screen
-                case 'cal_finished'
-                case 'val_finished'
-            end
-            type
-            calState
-            if strcmp(type,'cal_compute_and_apply')
-                calState.calibrationResult
+                case {'cal_finished','val_finished'}
+                    % we're done according to operator, clear
+                    obj.setCleanState();
             end
         end
 
@@ -311,16 +312,82 @@ classdef MonkeyCalController < handle
             commands = {};
             calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
             dist = hypot(obj.meanGaze(1)-calPos(1),obj.meanGaze(2)-calPos(2));
-            if dist < obj.calOnVideoDistFac*obj.scrRes(2)
+            if obj.awaitingCalResult>0
+                % we're waiting for the result of an action. Those are all
+                % blocking in the Python code, but not here. For identical
+                % behavior (and easier logic), we put all the response
+                % waiting logic here, short-circuiting the below logic that
+                % depends on where the subject looks
+                if isempty(obj.lastUpdate)
+                    return;
+                end
+                if obj.awaitingCalResult==1 && strcmp(obj.lastUpdate{1},'cal_collect')
+                    % check this is for the expected point
+                    if obj.lastUpdate{2}==obj.calPoints(obj.calPoint) && all(obj.lastUpdate{3}==obj.calPoss(obj.calPoint,:))
+                        % check result
+                        if obj.lastUpdate{4}.status==0     % TOBII_RESEARCH_STATUS_OK
+                            % success, decide next action
+                            if obj.calPoint<length(obj.calPoints)
+                                % calibrate next point
+                                obj.calPoint = obj.calPoint+1;
+                                obj.awaitingCalResult = 0;
+                                obj.shouldUpdateStatusText = true;
+                                obj.onVideoTimestamp = nan;
+                                obj.drawState = 1;
+                            else
+                                % all collected, attempt calibration
+                                commands = {{'cal','compute_and_apply'}};
+                                obj.awaitingCalResult = 3;
+                                obj.shouldUpdateStatusText = true;
+                            end
+                        else
+                            commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
+                            obj.awaitingCalResult = 2;
+                        end
+                    end
+                    obj.lastUpdate = {};
+                elseif obj.awaitingCalResult==2 && strcmp(obj.lastUpdate{1},'cal_discard')
+                    % check this is for the expected point
+                    if obj.lastUpdate{2}==obj.calPoints(obj.calPoint) && all(obj.lastUpdate{3}==obj.calPoss(obj.calPoint,:))
+                        if obj.lastUpdate{4}.status==0     % TOBII_RESEARCH_STATUS_OK
+                            obj.awaitingCalResult = 0;
+                        else
+                            error('can''t discard point, something seriously wrong')
+                        end
+                    end
+                    obj.lastUpdate = {};
+                elseif obj.awaitingCalResult==3 && strcmp(obj.lastUpdate{1},'cal_compute_and_apply')
+                    if obj.lastUpdate{2}.status==0 && strcmpi(obj.lastUpdate{2}.calibrationResult,'success')
+                        % successful calibration
+                        obj.reward(false);
+                        obj.controlState = obj.stateEnum.cal_done;
+                        obj.shouldUpdateStatusText = true;
+                        commands = {{'cal','disable_controller'}};
+                    else
+                        % failed, start over
+                        for p=length(obj.calPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
+                            commands = [commands {{'cal','discard_point', obj.calPoints(p), obj.calPoss(p,:)}}];
+                        end
+                        obj.awaitingCalResult = 2;
+                        obj.calPoint = 1;
+                    end
+                    obj.lastUpdate = {};
+                elseif ~isempty(obj.lastUpdate)
+                    % unexpected (perhaps stale, e.g. from before auto was switched on) update, discard
+                    obj.lastUpdate = {};
+                end
+            elseif dist < obj.calOnVideoDistFac*obj.scrRes(2)
                 obj.reward(true);
                 if obj.onVideoTimestamp<0 || isnan(obj.onVideoTimestamp)
                     obj.onVideoTimestamp = obj.latestTimestamp;
                 end
                 onDur = obj.latestTimestamp-obj.onVideoTimestamp;
-                if onDur > obj.calOnVideoTime && ~(obj.awaitingCalResult)
-                    % request calibration point collection
-                    commands = {'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}; % something with point ID and location, so Titta's logic can double check it knows this point
-                    obj.awaitingCalResult = 1;
+                if onDur > obj.calOnVideoTime
+                    if obj.awaitingCalResult==0
+                        % request calibration point collection
+                        commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}}; % something with point ID and location, so Titta's logic can double check it knows this point
+                        obj.awaitingCalResult = 1;
+                    end
                 end
             else
                 if obj.onVideoTimestamp>0 || isnan(obj.onVideoTimestamp)
@@ -330,7 +397,7 @@ classdef MonkeyCalController < handle
                 if offDur > obj.maxOffScreenTime
                     obj.reward(false);
                     % request discarding data for this point
-                    commands = {'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)};
+                    commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                     obj.awaitingCalResult = 2;
                 end
             end
