@@ -5259,11 +5259,8 @@ classdef Titta < handle
                         Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
                         Screen('TextSize', wpnt(end), obj.settings.UI.mancal.calState.text.size);
                         text = sprintf('<u>Controller status<u>:\n%s',controllerStatusText);
-                        posRect = [10 10 10 10];
-                        if but(9).visible
-                            posRect = OffsetRect(posRect,0,calTextCache.bbox(4)+10);
-                        end
-                        autoStatusTextCache = obj.getTextCache(wpnt(end), text,posRect,'xalign','left','yalign','top');
+                        posRect = OffsetRect([10 10 10 10],0,calTextCache.bbox(4)+10);
+                        autoStatusTextCache = obj.getTextCache(wpnt(end),text,posRect,'xalign','left','yalign','top');
                     end
                     qUpdateAutoStatusText = false;
                     controllerStatusText = '';
