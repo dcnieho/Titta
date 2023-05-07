@@ -92,7 +92,7 @@ classdef MonkeyCalController < handle
                         obj.trainLookVideo();
                     else
                         % calibrating
-                        if obj.controlState ~= obj.stateEnum.cal_gazing
+                        if obj.controlState ~= obj.stateEnum.cal_calibrating
                             obj.drawState = 1;
                             obj.controlState = obj.stateEnum.cal_calibrating;
                             obj.shouldUpdateStatusText = true;
