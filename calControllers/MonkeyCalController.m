@@ -54,6 +54,7 @@ classdef MonkeyCalController < handle
     end
     properties (Access=private,Hidden=true)
         controlState;
+        shouldUpdateStatusText;
     end
     
     
@@ -86,11 +87,16 @@ classdef MonkeyCalController < handle
                         if obj.controlState ~= obj.stateEnum.cal_gazing
                             obj.drawState = 1;
                             obj.controlState = obj.stateEnum.cal_gazing;
+                            obj.shouldUpdateStatusText = true;
                         end
                         obj.trainLookVideo();
                     else
                         % calibrating
-                        obj.controlState = obj.stateEnum.cal_calibrating;
+                        if obj.controlState ~= obj.stateEnum.cal_gazing
+                            obj.drawState = 1;
+                            obj.controlState = obj.stateEnum.cal_calibrating;
+                            obj.shouldUpdateStatusText = true;
+                        end
                         commands = obj.calibrate();
                     end
                 end
@@ -125,6 +131,23 @@ classdef MonkeyCalController < handle
             end
         end
 
+        function txt = getStatusText(obj)
+            txt = '';
+            if ~obj.shouldUpdateStatusText
+                return
+            end
+            switch obj.controlState
+                case obj.stateEnum.cal_positioning
+                    txt = sprintf('Positioning %d/%d',obj.onScreenTimeThresh, obj.onScreenTimeThreshCap);
+                case obj.stateEnum.cal_gazing
+                    % draw video rect
+                    txt = sprintf('Gaze training\nvideo size %d/%d',obj.videoSize,size(obj.videoSizes,1));
+                case obj.stateEnum.cal_calibrating
+                    txt = sprintf('Calibrating %d/%d',obj.calPoint,length(obj.calPoints));
+            end
+            obj.shouldUpdateStatusText = false;
+        end
+
         function draw(obj,wpnts,tick,sFac,offset)
             % wpnts: two window pointers. first is for participant screen,
             % second for operator
@@ -142,6 +165,9 @@ classdef MonkeyCalController < handle
                     calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
                     pos = calPos;
                 end
+                % TODO: don't call draw here if we issued a point command
+                % and haven't gotten a status update yet, then code is
+                % showing the point
                 obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
                 obj.drawState = 2;
             end
@@ -178,6 +204,7 @@ classdef MonkeyCalController < handle
     methods (Access = private, Hidden)
         function setCleanState(obj)
             obj.controlState = obj.stateEnum.cal_positioning;
+            obj.shouldUpdateStatusText = true;
 
             obj.stage = [];
             obj.gazeOnScreen = false;
@@ -251,6 +278,7 @@ classdef MonkeyCalController < handle
             if onScreenTime > obj.onScreenTimeThresh*2
                 if rand()<=obj.onScreenTimeThreshIncRate
                     obj.onScreenTimeThresh = min(obj.onScreenTimeThresh*2,obj.onScreenTimeThreshCap);   % limit to onScreenTimeThreshCap
+                    obj.shouldUpdateStatusText = true;
                 end
             end
         end
@@ -268,6 +296,7 @@ classdef MonkeyCalController < handle
                     if rand()<=obj.videoShrinkRate
                         obj.videoSize = min(obj.videoSize+1,size(obj.videoSizes,1));
                         obj.calDisplay.calSize = obj.videoSizes(obj.videoSize,:);
+                        obj.shouldUpdateStatusText = true;
                     end
                 else
                     obj.reward(false);

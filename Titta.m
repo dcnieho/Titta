@@ -4530,6 +4530,9 @@ classdef Titta < handle
             % 11. auto mode (controller)
             qAutoActive             = false;
             autoCommand             = {};
+            qUpdateAutoStatusText   = false;
+            controllerStatusText    = '';
+            autoStatusTextCache     = [];
             % 12. auto calibration mode
             qAutoCalibrate          = obj.settings.mancal.cal.autoCalibrate;
             
@@ -5248,6 +5251,23 @@ classdef Titta < handle
                     calTextCache = obj.getTextCache(wpnt(end), text,posRect,'xalign','left','yalign','top');
                     qUpdateCalStatusText = false;
                 end
+
+                if qUpdateAutoStatusText
+                    if controllerStatusText==-1
+                        autoStatusTextCache = [];
+                    else
+                        Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
+                        Screen('TextSize', wpnt(end), obj.settings.UI.mancal.calState.text.size);
+                        text = sprintf('<u>Controller status<u>:\n%s',controllerStatusText);
+                        posRect = [10 10 10 10];
+                        if but(9).visible
+                            posRect = OffsetRect(posRect,0,calTextCache.bbox(4)+10);
+                        end
+                        autoStatusTextCache = obj.getTextCache(wpnt(end), text,posRect,'xalign','left','yalign','top');
+                    end
+                    qUpdateAutoStatusText = false;
+                    controllerStatusText = '';
+                end
                 
                 % calibration/validation logic variables
                 if ~isempty(discardList) && isnan(whichPoint) && isnan(whichPointDiscard)
@@ -5564,6 +5584,10 @@ classdef Titta < handle
                     % check controller, if any
                     if qAutoActive
                         autoCommand = controller.tick();
+                        controllerStatusText = controller.getStatusText();
+                        if ~isempty(controllerStatusText)
+                            qUpdateAutoStatusText = true;
+                        end
                     end
                     
                     % get eye data if needed
@@ -5657,6 +5681,9 @@ classdef Titta < handle
                     end
                     % draw text with calibration status
                     obj.drawCachedText(calTextCache);
+                    if ~isempty(autoStatusTextCache)
+                        obj.drawCachedText(autoStatusTextCache);
+                    end
                     % draw buttons
                     mousePos = [mx my];
                     but(1).draw(mousePos,qSelectEyeMenuOpen);
@@ -6381,6 +6408,10 @@ classdef Titta < handle
                     elseif ~isnan(pointToShowInfoFor)
                         % stop showing info
                         pointToShowInfoFor = nan;
+                        break;
+                    end
+                    % break out of draw loop if there are texts to update
+                    if qUpdateCalStatusText || qUpdateAutoStatusText
                         break;
                     end
                     % if awaiting calibration status change, break out of
