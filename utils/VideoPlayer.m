@@ -58,33 +58,7 @@ classdef VideoPlayer < handle
         end
         
         function delete(obj)
-            if isempty(obj.playingVid)
-                % never started, no state to clean up
-                return
-            end
-            try
-                Screen('PlayMovie', obj.playingVid, 0);
-                Screen('CloseMovie', obj.playingVid);
-
-                if obj.nextVidPrefetch == 1
-                    % A prefetch operation for a movie is still in progress. We
-                    % need to finalize this cleanly by waiting for the movie to
-                    % open and then closing it
-                    obj.nextVid = obj.openNextVid(false, obj.nextVidIndex);
-                    obj.nextVidPrefetch = 2;
-                end
-
-                if obj.nextVidPrefetch == 2
-                    % New prefetch movie was finished. We need to stop and
-                    % close it
-                    Screen('PlayMovie', obj.nextVid, 0);
-                    Screen('CloseMovie', obj.nextVid);
-                end
-            catch
-                % the above may fail if window was closed already since
-                % we're cleaning up from a previous run
-            end
-            Screen('CloseMovie');
+            obj.cleanup();
         end
 
         function set.shuffle(obj,val)
@@ -152,6 +126,42 @@ classdef VideoPlayer < handle
              if obj.nextVidPrefetch == 2
                  Screen('PlayMovie', obj.nextVid, 0);
             end
+        end
+
+        function cleanup(obj)
+            if isempty(obj.playingVid)
+                % never started, no state to clean up
+                return
+            end
+            try
+                Screen('PlayMovie', obj.playingVid, 0);
+                Screen('CloseMovie', obj.playingVid);
+
+                if obj.nextVidPrefetch == 1
+                    % A prefetch operation for a movie is still in progress. We
+                    % need to finalize this cleanly by waiting for the movie to
+                    % open and then closing it
+                    obj.nextVid = obj.openNextVid(false, obj.nextVidIndex);
+                    obj.nextVidPrefetch = 2;
+                end
+
+                if obj.nextVidPrefetch == 2
+                    % New prefetch movie was finished. We need to stop and
+                    % close it
+                    Screen('PlayMovie', obj.nextVid, 0);
+                    Screen('CloseMovie', obj.nextVid);
+                end
+            catch
+                % the above may fail if window was closed already since
+                % we're cleaning up from a previous run
+            end
+            Screen('CloseMovie');
+
+            obj.nextVidPrefetch = 0;
+            obj.nextVids = [];
+            obj.playingVid = [];
+            obj.nextVidIndex = nan;
+            obj.nextVid = [];
         end
     end
 
