@@ -6186,8 +6186,8 @@ classdef Titta < handle
                                     qToggleSelectSnapMenu   = true;
                                 end
                                 break;
-                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
-                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9','+'});
+                            elseif any(ismember(keys(1),{'1','2','3','4','5','6','7','8','9','+'}))    % key 1 is '1!', for instance, so check if first character is 1 instead of strcmp
+                                qWhich      = ismember(keys(1),{'1','2','3','4','5','6','7','8','9','+'});
                                 requested   = str2double(keys(qWhich));
                                 if qSelectEyeMenuOpen
                                     if requested<=3
@@ -6289,9 +6289,9 @@ classdef Titta < handle
                                         break;
                                     end
                                 end
-                            elseif any(ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'}))    % key 1 is '1!', for instance, so check if 1 is contained instead if strcmp
+                            elseif any(ismember(keys(1),{'1','2','3','4','5','6','7','8','9'}))    % key 1 is '1!', for instance, so check if first character is 1 instead of strcmp
                                 % calibration/validation point
-                                qWhich      = ismember(num2cell(keys),{'1','2','3','4','5','6','7','8','9'});
+                                qWhich      = ismember(keys(1),{'1','2','3','4','5','6','7','8','9'});
                                 requested   = str2double(keys(qWhich));
                                 if requested<=size(pointsP,1)
                                     if shiftIsDown
