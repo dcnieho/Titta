@@ -1,6 +1,7 @@
 classdef MonkeyCalController < handle
     properties (Access=private, Constant)
         stateEnum = struct('cal_positioning',0, 'cal_gazing',1, 'cal_calibrating',2, 'cal_done',3);
+        pointStateEnum = struct('nothing',0, 'showing',1, 'collecting',2, 'discarding',3, 'collected', 4);
     end
     properties (SetAccess=private)
         % state
@@ -17,6 +18,9 @@ classdef MonkeyCalController < handle
         videoSize;
 
         calPoint;
+        calPoints                   = [];           % ID of calibration points to run by the controller, in provided order
+        calPoss                     = [];           % corresponding positions
+        calPointsState              = [];
     end
     properties
         % comms
@@ -46,14 +50,12 @@ classdef MonkeyCalController < handle
 
         calOnVideoTime              = 500;
         calOnVideoDistFac           = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
-        calPoints                   = [];           % ID of calibration points to run by the controller, in provided order
-        calPoss                     = [];           % corresponding positions
 
         verbosity                   = 0;            % if 1, prints messages about what its up to, if 2: also prints messages about rewards (many!)
         logReceiver                 = 0;            % if 0: matlab command line. if 1: Titta
     end
     properties (Access=private,Hidden=true)
-        controlState;
+        controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldUpdateStatusText;
         trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
 
@@ -75,6 +77,13 @@ classdef MonkeyCalController < handle
             if nargin>3
                 obj.rewardProvider = rewardProvider;
             end
+        end
+
+        function setCalPoints(obj, calPoints,calPoss)
+            assert(ismember(obj.controlState,[obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing]),'cannot set calibration points when already calibrating or calibrated')
+            obj.calPoints       = calPoints;                % ID of calibration points to run by the controller, in provided order
+            obj.calPoss         = calPoss;                  % corresponding positions
+            obj.calPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.calPoss));
         end
 
         function commands = tick(obj)
@@ -138,12 +147,22 @@ classdef MonkeyCalController < handle
                         success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         obj.log_to_cmd('%s point collect: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
                     end
+                    % update point status
+                    iPoint = find(obj.calPoints==currentPoint);
+                    if ~isempty(iPoint) && all(posNorm==obj.calPoss(iPoint,:))
+                        obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
+                    end
                 % calibration/validation point discarded
                 case {'cal_discard','val_discard'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if obj.verbosity
                         success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         obj.log_to_cmd('%s point discard: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
+                    end
+                    % update point status
+                    iPoint = find(obj.calPoints==currentPoint);
+                    if ~isempty(iPoint) && all(posNorm==obj.calPoss(iPoint,:))
+                        obj.calPointsState(iPoint) = obj.pointStateEnum.nothing;
                     end
                 % new calibration computed (may have failed) or loaded
                 case 'cal_compute_and_apply'
@@ -256,6 +275,9 @@ classdef MonkeyCalController < handle
 
             obj.calPoint = 1;
             obj.awaitingCalResult = 0;
+            obj.calPoints         = [];
+            obj.calPoss           = [];
+            obj.calPointsState    = [];
 
             obj.drawState = 1;
         end
@@ -419,6 +441,7 @@ classdef MonkeyCalController < handle
                 elseif obj.awaitingCalResult==3 && strcmp(obj.lastUpdate{1},'cal_compute_and_apply')
                     if obj.lastUpdate{2}.status==0 && strcmpi(obj.lastUpdate{2}.calibrationResult.status,'success')
                         % successful calibration
+                        obj.awaitingCalResult = 0;
                         obj.reward(false);
                         obj.controlState = obj.stateEnum.cal_done;
                         obj.shouldUpdateStatusText = true;
@@ -470,11 +493,14 @@ classdef MonkeyCalController < handle
                 offDur = obj.latestTimestamp--obj.onVideoTimestamp;
                 if offDur > obj.maxOffScreenTime
                     obj.reward(false);
-                    % request discarding data for this point
-                    commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
-                    obj.awaitingCalResult = 2;
-                    if obj.verbosity
-                        obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
+                    % request discarding data for this point fi its being
+                    % collected
+                    if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting
+                        commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
+                        obj.awaitingCalResult = 2;
+                        if obj.verbosity
+                            obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
+                        end
                     end
                 end
             end

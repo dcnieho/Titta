@@ -94,13 +94,17 @@ try
     settings.mancal.val.useExtendedNotify = true;
     settings.UI.button.mancal.toggAuto.visible = true;
     if numCalPoints==2
-        calController.calPoints = [6 7];
+        calPoints = [6 7];
     elseif numCalPoints==3
-        calController.calPoints = [3 2 4];
+        calPoints = [3 2 4];
     else    % 5 points
-        calController.calPoints = [3 1 2 3 4];
+        calPoints = [3 1 2 3 4];
     end
-    calController.calPoss = settings.mancal.cal.pointPos(calController.calPoints,:);
+    calController.setCalPoints(calPoints,settings.mancal.cal.pointPos(calPoints,:));
+    if DEBUGlevel>0
+        calController.verbosity = 1;
+        calController.logReceiver = 1;
+    end
     % calibration logic: only manual calibration attempts since controller
     % controls this
     settings.UI.button.mancal.calibrate.visible = true;
