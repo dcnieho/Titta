@@ -1346,10 +1346,10 @@ classdef Titta < handle
             if isa(dat.settings.UI.mancal.instruct.strFun,'function_handle')
                 dat.settings.UI.mancal.instruct.strFun = func2str(dat.settings.UI.mancal.instruct.strFun);
             end
-            if isa(dat.settings.mancal.pointNotifyFunction,'function_handle')
+            if isa(dat.settings.mancal.cal.pointNotifyFunction,'function_handle')
                 dat.settings.mancal.cal.pointNotifyFunction = func2str(dat.settings.mancal.cal.pointNotifyFunction);
             end
-            if isa(dat.settings.mancal.pointNotifyFunction,'function_handle')
+            if isa(dat.settings.mancal.val.pointNotifyFunction,'function_handle')
                 dat.settings.mancal.val.pointNotifyFunction = func2str(dat.settings.mancal.val.pointNotifyFunction);
             end
             dat.TobiiLog            = obj.buffer.getLog(false);
