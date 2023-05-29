@@ -103,7 +103,7 @@ try
         calController.calAfterFirstCollected = true;
     end
     if DEBUGlevel>0
-        calController.logTypes = 3;
+        calController.logTypes = 1+2*(DEBUGlevel==2);
         calController.logReceiver = 1;
     end
     % calibration logic: only manual calibration attempts since controller

@@ -191,7 +191,7 @@ classdef MonkeyCalController < handle
                     if obj.isActive
                         obj.setTittaPacing('cal','val');
                     end
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         obj.log_to_cmd('calibration mode entered');
                     end
                 case 'val_enter'
@@ -199,13 +199,13 @@ classdef MonkeyCalController < handle
                     if obj.isActive
                         obj.setTittaPacing('val','cal');
                     end
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         obj.log_to_cmd('validation mode entered');
                     end
                 % calibration/validation point collected
                 case {'cal_collect','val_collect'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         if startsWith(type,'cal')
                             success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         else
@@ -221,7 +221,7 @@ classdef MonkeyCalController < handle
                 % calibration/validation point discarded
                 case {'cal_discard','val_discard'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         if startsWith(type,'cal')
                             success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         else
@@ -237,7 +237,7 @@ classdef MonkeyCalController < handle
                 % new calibration computed (may have failed) or loaded
                 case 'cal_compute_and_apply'
                     obj.lastUpdate = {type,callResult};
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         success = callResult.status==0 && strcmpi(callResult.calibrationResult.status,'success');
                         obj.log_to_cmd('calibration compute and apply result received: %s',ternary(success,'success','failed'));
                     end
@@ -245,7 +245,7 @@ classdef MonkeyCalController < handle
                     % ignore
                 case 'cal_cleared'
                     obj.lastUpdate = {type};
-                    if bitget(obj.logTypes,1)
+                    if bitget(obj.logTypes,2)
                         obj.log_to_cmd('calibration clear result received');
                     end
                 % interface exited from calibration or validation screen
