@@ -97,56 +97,55 @@ classdef MonkeyCalController < handle
             if strcmp(obj.stage,'cal')
                 if offScreenTime > obj.maxOffScreenTime
                     obj.reward(false);
-                else
-                    switch obj.controlState
-                        case obj.stateEnum.cal_positioning
-                            if obj.shouldRewindState
-                                obj.onScreenTimeThresh = 1;
+                end
+                switch obj.controlState
+                    case obj.stateEnum.cal_positioning
+                        if obj.shouldRewindState
+                            obj.onScreenTimeThresh = 1;
+                            obj.shouldRewindState = false;
+                            obj.drawState = 1;
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('rewinding state: reset looking threshold');
+                            end
+                        elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
+                            % training to position and look at screen
+                            obj.trainLookScreen();
+                        else
+                            obj.controlState = obj.stateEnum.cal_gazing;
+                            obj.drawState = 1;
+                            obj.shouldUpdateStatusText = true;
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('training to look at video');
+                            end
+                        end
+                    case obj.stateEnum.cal_gazing
+                        if obj.shouldRewindState
+                            obj.videoSize = 1;
+                            obj.drawState = 1;
+                            if obj.reEntryState<obj.stateEnum.cal_gazing
+                                obj.controlState = obj.stateEnum.cal_positioning;
+                            else
                                 obj.shouldRewindState = false;
-                                obj.drawState = 1;
-                                if bitget(obj.logTypes,1)
-                                    obj.log_to_cmd('rewinding state: reset looking threshold');
-                                end
-                            elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
-                                % training to position and look at screen
-                                obj.trainLookScreen();
-                            else
-                                obj.controlState = obj.stateEnum.cal_gazing;
-                                obj.drawState = 1;
-                                obj.shouldUpdateStatusText = true;
-                                if bitget(obj.logTypes,1)
-                                    obj.log_to_cmd('training to look at video');
-                                end
                             end
-                        case obj.stateEnum.cal_gazing
-                            if obj.shouldRewindState
-                                obj.videoSize = 1;
-                                obj.drawState = 1;
-                                if obj.reEntryState<obj.stateEnum.cal_gazing
-                                    obj.controlState = obj.stateEnum.cal_positioning;
-                                else
-                                    obj.shouldRewindState = false;
-                                end
-                                if bitget(obj.logTypes,1)
-                                    obj.log_to_cmd('rewinding state: reset video size');
-                                end
-                            elseif obj.videoSize < size(obj.videoSizes,1)
-                                % training to look at video
-                                obj.trainLookVideo();
-                            else
-                                obj.controlState = obj.stateEnum.cal_calibrating;
-                                obj.drawState = 1;
-                                obj.shouldUpdateStatusText = true;
-                                if bitget(obj.logTypes,1)
-                                    obj.log_to_cmd('calibrating');
-                                end
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('rewinding state: reset video size');
                             end
-                        case obj.stateEnum.cal_calibrating
-                            % calibrating
-                            commands = obj.calibrate();
-                        case obj.stateEnum.cal_done
-                            % procedure is done: nothing to do
-                    end
+                        elseif obj.videoSize < size(obj.videoSizes,1)
+                            % training to look at video
+                            obj.trainLookVideo();
+                        else
+                            obj.controlState = obj.stateEnum.cal_calibrating;
+                            obj.drawState = 1;
+                            obj.shouldUpdateStatusText = true;
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('calibrating');
+                            end
+                        end
+                    case obj.stateEnum.cal_calibrating
+                        % calibrating
+                        commands = obj.calibrate();
+                    case obj.stateEnum.cal_done
+                        % procedure is done: nothing to do
                 end
             end
         end
