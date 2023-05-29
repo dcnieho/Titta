@@ -291,8 +291,6 @@ classdef MonkeyCalController < handle
                 % showing the point for us
                 if obj.awaitingCalResult~=1
                     obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
-                else
-                    %fprintf('state %d\n',obj.awaitingCalResult);
                 end
                 obj.drawState = 2;
             end
@@ -525,6 +523,7 @@ classdef MonkeyCalController < handle
                             % overkill i think but doesn't hurt)
                             commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                             obj.awaitingCalResult = 2;
+                            obj.drawState = 1;  % Titta calibration logic tells drawer to clean up upon failed point. Reshow point here
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('failed to collect calibration point %d, requesting to discard it', obj.calPoints(obj.calPoint));
                             end
