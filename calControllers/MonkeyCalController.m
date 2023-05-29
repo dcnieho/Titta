@@ -69,6 +69,7 @@ classdef MonkeyCalController < handle
         lastUpdate                  = {};
 
         drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
+        drawExtraFrame              = false;        % because command in tick() is only processed in Titta after fixation point is drawn, we need to draw one extra frame here to avoid flashing when starting calibration point collection
 
         backupPaceDuration          = struct('cal',[],'val',[]);
     end
@@ -295,10 +296,14 @@ classdef MonkeyCalController < handle
                 % Don't call draw here if we've issued a point command
                 % and haven't gotten a status update yet, then Titta is
                 % showing the point for us
-                if obj.awaitingCalResult~=1
+                if obj.awaitingCalResult~=1 || obj.drawExtraFrame
                     obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
                 end
                 obj.drawState = 2;
+
+                if obj.awaitingCalResult~=1 && obj.drawExtraFrame
+                    obj.drawExtraFrame = false;
+                end
             end
             % sFac and offset are used to scale from participant screen to
             % operator screen, in case they have different resolutions
@@ -358,6 +363,7 @@ classdef MonkeyCalController < handle
             obj.calPointsState      = [];
 
             obj.drawState           = 1;
+            obj.drawExtraFrame      = false;
             obj.backupPaceDuration  = struct('cal',[],'val',[]);
         end
 
@@ -602,6 +608,7 @@ classdef MonkeyCalController < handle
                         % request calibration point collection
                         commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}}; % something with point ID and location, so Titta's logic can double check it knows this point
                         obj.awaitingCalResult = 1;
+                        obj.drawExtraFrame = true;
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('request calibration of point %d @ (%.3f,%.3f)', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
                         end
