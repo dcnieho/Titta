@@ -5910,9 +5910,13 @@ classdef Titta < handle
                                         qProcessDoCal = true;
                                     case 'disable_controller'
                                         qAutoActive = false;
+                                        if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
+                                            obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_deactivate',stage),[]);
+                                        end
                                 end
                             end
                         end
+                        autoCommands = {};
                         if qBreak
                             break;
                         end
