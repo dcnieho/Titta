@@ -4502,7 +4502,6 @@ classdef Titta < handle
             eyeImageRectLocal       = zeros(4,4);
             eyeImageRect            = zeros(4,4);
             eyeCanvasPoss           = zeros(4,2);
-            
             % 6. online gaze
             qShowGaze               = obj.settings.UI.mancal.showGaze;
             qShowGazeToAll          = false;
@@ -4535,6 +4534,8 @@ classdef Titta < handle
             autoStatusTextCache     = [];
             % 12. auto calibration mode
             qAutoCalibrate          = obj.settings.mancal.cal.autoCalibrate;
+            % 13. calibration point drawer state
+            qForcePointDraw         = false;
             
             % setup canvas positions if needed
             qDrawEyeValidity    = false;
@@ -5855,6 +5856,10 @@ classdef Titta < handle
                             tick0p              = tick;
                             qWaitForAllowAccept = false;
                         end
+                    elseif qForcePointDraw
+                        % we assume some other logic already told drawer
+                        % where point should be
+                        drawFunction(wpnt(1),'draw',nan,[],tick,stage);
                     end
                     
                     % drawing done, show
@@ -5936,6 +5941,12 @@ classdef Titta < handle
                                         if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
                                             obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_deactivate',stage),[]);
                                         end
+                                    case 'enable_force_draw'
+                                        qForcePointDraw = true;
+                                        pos = autoCommand{3};
+                                        drawFunction(wpnt(1),'new',nan,pos,tick,stage);
+                                    case 'disable_force_draw'
+                                        qForcePointDraw = false;
                                 end
                             end
                         end

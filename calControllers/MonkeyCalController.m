@@ -47,6 +47,9 @@ classdef MonkeyCalController < handle
                                     400 400;
                                     300 300;
                                     ];
+        videoSizeCal                = [300 300];
+        showVideoWhenCalDone        = true;
+        videoSizeWhenCalDone        = [600 600];
 
         calOnVideoTime              = 500;
         calOnVideoDistFac           = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
@@ -70,6 +73,8 @@ classdef MonkeyCalController < handle
 
         drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
         drawExtraFrame              = false;        % because command in tick() is only processed in Titta after fixation point is drawn, we need to draw one extra frame here to avoid flashing when starting calibration point collection
+        forceDrawEnabled            = false;
+        shouldDisableForceDraw      = false;
 
         backupPaceDuration          = struct('cal',[],'val',[]);
     end
@@ -109,6 +114,7 @@ classdef MonkeyCalController < handle
                             obj.onScreenTimeThresh = 1;
                             obj.shouldRewindState = false;
                             obj.drawState = 1;
+                            obj.shouldUpdateStatusText = true;
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('rewinding state: reset looking threshold');
                             end
@@ -127,6 +133,7 @@ classdef MonkeyCalController < handle
                         if obj.shouldRewindState
                             obj.videoSize = 1;
                             obj.drawState = 1;
+                            obj.shouldUpdateStatusText = true;
                             if obj.reEntryState<obj.stateEnum.cal_gazing
                                 obj.controlState = obj.stateEnum.cal_positioning;
                             else
@@ -141,6 +148,7 @@ classdef MonkeyCalController < handle
                         else
                             obj.controlState = obj.stateEnum.cal_calibrating;
                             obj.drawState = 1;
+                            obj.calDisplay.calSize = obj.videoSizeCal;
                             obj.shouldUpdateStatusText = true;
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('calibrating');
@@ -152,6 +160,13 @@ classdef MonkeyCalController < handle
                     case obj.stateEnum.cal_done
                         % procedure is done: nothing to do
                 end
+            end
+            if obj.shouldDisableForceDraw
+                if obj.forceDrawEnabled
+                    commands = [commands {{obj.stage,'disable_force_draw'}}];
+                    obj.forceDrawEnabled = false;
+                end
+                obj.shouldDisableForceDraw = false;
             end
         end
 
@@ -172,6 +187,7 @@ classdef MonkeyCalController < handle
                     obj.lastUpdate = {};
                     obj.awaitingCalResult = 0;
                     obj.isActive = true;
+                    obj.shouldDisableForceDraw = true;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
                     obj.setTittaPacing('cal','');
@@ -293,9 +309,9 @@ classdef MonkeyCalController < handle
                     calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
                     pos = calPos;
                 end
-                % Don't call draw here if we've issued a point command
-                % and haven't gotten a status update yet, then Titta is
-                % showing the point for us
+                % Don't call draw here if we've issued a command to collect
+                % calibration data for a point and haven't gotten a status
+                % update yet, then Titta is showing the point for us
                 if obj.awaitingCalResult~=1 || obj.drawExtraFrame
                     obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
                 end
@@ -364,6 +380,8 @@ classdef MonkeyCalController < handle
 
             obj.drawState           = 1;
             obj.drawExtraFrame      = false;
+            obj.forceDrawEnabled    = false;
+            obj.shouldDisableForceDraw  = false;
             obj.backupPaceDuration  = struct('cal',[],'val',[]);
         end
 
@@ -487,7 +505,9 @@ classdef MonkeyCalController < handle
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration cleared, restarting collection');
                         end
+                        obj.calDisplay.calSize = obj.videoSizeCal;
                     end
+                    obj.shouldUpdateStatusText = true;
                 end
                 obj.lastUpdate = {};
             elseif obj.awaitingCalResult>0
@@ -573,6 +593,11 @@ classdef MonkeyCalController < handle
                             obj.shouldUpdateStatusText = true;
                             commands = {{'cal','disable_controller'}};
                             obj.drawState = 0;
+                            if obj.showVideoWhenCalDone
+                                commands = [commands {{'cal','enable_force_draw',obj.scrRes(:).'/2}}];
+                                obj.calDisplay.calSize = obj.videoSizeWhenCalDone;
+                                obj.forceDrawEnabled = true;
+                            end
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('calibration successfully applied, disabling controller');
                             end
