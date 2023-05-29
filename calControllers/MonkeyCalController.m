@@ -57,6 +57,7 @@ classdef MonkeyCalController < handle
         logReceiver                 = 0;            % if 0: matlab command line. if 1: Titta
     end
     properties (Access=private,Hidden=true)
+        isActive                    = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
         activationCount             = 0;
@@ -67,6 +68,8 @@ classdef MonkeyCalController < handle
         lastUpdate                  = {};
 
         drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
+
+        backupPaceDuration          = struct('cal',[],'val',[]);
     end
     
     
@@ -166,17 +169,35 @@ classdef MonkeyCalController < handle
                     end
                     obj.lastUpdate = {};
                     obj.awaitingCalResult = 0;
+                    obj.isActive = true;
+                    % backup Titta pacing duration and set to 0, since the
+                    % controller controls when data should be collected
+                    obj.setTittaPacing('cal','');
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('controller activated for calibration. Activation #%d',obj.activationCount);
+                    end
+                case {'cal_deactivate','val_deactivate'}
+                    obj.isActive = false;
+                    % backup Titta pacing duration and set to 0, since the
+                    % controller controls when data should be collected
+                    obj.setTittaPacing('',type(1:3));
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('controller deactivated for %s',ternary(startsWith(type,'cal'),'calibration','validation'));
                     end
                 % cal/val mode switches
                 case 'cal_enter'
                     obj.stage = 'cal';
+                    if obj.isActive
+                        obj.setTittaPacing('cal','val');
+                    end
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('calibration mode entered');
                     end
                 case 'val_enter'
                     obj.stage = 'val';
+                    if obj.isActive
+                        obj.setTittaPacing('val','cal');
+                    end
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('validation mode entered');
                     end
@@ -224,6 +245,7 @@ classdef MonkeyCalController < handle
                 % interface exited from calibration or validation screen
                 case {'cal_finished','val_finished'}
                     % we're done according to operator, clear
+                    obj.setTittaPacing('',type(1:3));
                     obj.setCleanState();
             end
         end
@@ -314,24 +336,25 @@ classdef MonkeyCalController < handle
             obj.activationCount     = 0;
             obj.shouldUpdateStatusText = true;
 
-            obj.stage = [];
-            obj.gazeOnScreen = false;
-            obj.meanGaze = [nan nan].';
-            obj.onScreenTimestamp = nan;
-            obj.offScreenTimestamp = nan;
-            obj.onVideoTimestamp = nan;
-            obj.latestTimestamp = nan;
+            obj.stage               = '';
+            obj.gazeOnScreen        = false;
+            obj.meanGaze            = [nan nan].';
+            obj.onScreenTimestamp   = nan;
+            obj.offScreenTimestamp  = nan;
+            obj.onVideoTimestamp    = nan;
+            obj.latestTimestamp     = nan;
 
-            obj.onScreenTimeThresh = 1;
-            obj.videoSize = 1;
+            obj.onScreenTimeThresh  = 1;
+            obj.videoSize           = 1;
 
-            obj.calPoint = 1;
-            obj.awaitingCalResult = 0;
-            obj.calPoints         = [];
-            obj.calPoss           = [];
-            obj.calPointsState    = [];
+            obj.calPoint            = 1;
+            obj.awaitingCalResult   = 0;
+            obj.calPoints           = [];
+            obj.calPoss             = [];
+            obj.calPointsState      = [];
 
-            obj.drawState = 1;
+            obj.drawState           = 1;
+            obj.backupPaceDuration  = struct('cal',[],'val',[]);
         end
 
         function updateGaze(obj)
@@ -587,6 +610,25 @@ classdef MonkeyCalController < handle
                     end
                 end
             end
+        end
+
+        function setTittaPacing(obj,set,reset)
+            settings = obj.EThndl.getOptions();
+            if ~isempty(set)
+                obj.backupPaceDuration.(set) = settings.mancal.(set).paceDuration;
+                settings.mancal.(set).paceDuration = 0;
+                if bitget(obj.logTypes,1)
+                    obj.log_to_cmd('setting Titta pacing duration for %s to 0',ternary(strcmpi(set,'cal'),'calibration','validation'));
+                end
+            end
+            if ~isempty(reset) && ~isempty(obj.backupPaceDuration.(reset))
+                settings.mancal.(reset).paceDuration = obj.backupPaceDuration.(reset);
+                obj.backupPaceDuration.(reset) = [];
+                if bitget(obj.logTypes,1)
+                    obj.log_to_cmd('resetting Titta pacing duration for %s',ternary(strcmpi(reset,'cal'),'calibration','validation'));
+                end
+            end
+            obj.EThndl.setOptions(settings);
         end
 
         function log_to_cmd(obj,msg,varargin)
