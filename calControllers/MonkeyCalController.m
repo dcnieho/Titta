@@ -103,6 +103,10 @@ classdef MonkeyCalController < handle
                             if obj.shouldRewindState
                                 obj.onScreenTimeThresh = 1;
                                 obj.shouldRewindState = false;
+                                obj.drawState = 1;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('rewinding state: reset looking threshold');
+                                end
                             elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
                                 % training to position and look at screen
                                 obj.trainLookScreen();
@@ -117,10 +121,14 @@ classdef MonkeyCalController < handle
                         case obj.stateEnum.cal_gazing
                             if obj.shouldRewindState
                                 obj.videoSize = 1;
+                                obj.drawState = 1;
                                 if obj.reEntryState<obj.stateEnum.cal_gazing
                                     obj.controlState = obj.stateEnum.cal_positioning;
                                 else
                                     obj.shouldRewindState = false;
+                                end
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('rewinding state: reset video size');
                                 end
                             elseif obj.videoSize < size(obj.videoSizes,1)
                                 % training to look at video
@@ -151,14 +159,16 @@ classdef MonkeyCalController < handle
             switch type
                 case 'cal_activate'
                     obj.activationCount = obj.activationCount+1;
-                    if obj.controlState>=obj.reEntryState
+                    if obj.activationCount>1 && obj.controlState>=obj.reEntryState
                         obj.shouldRewindState = true;
-                        obj.controlState = obj.controlState-1;
+                        if obj.controlState>obj.reEntryState
+                            obj.controlState = obj.controlState-1;
+                        end
                     end
                     obj.lastUpdate = {};
                     obj.awaitingCalResult = 0;
                     if bitget(obj.logTypes,1)
-                        obj.log_to_cmd('controller activated for calibration');
+                        obj.log_to_cmd('controller activated for calibration. Activation #%d',obj.activationCount);
                     end
                 % cal/val mode switches
                 case 'cal_enter'
