@@ -1,5 +1,5 @@
 classdef MonkeyCalController < handle
-    properties (Access=private, Constant)
+    properties (Constant)
         stateEnum = struct('cal_positioning',0, 'cal_gazing',1, 'cal_calibrating',2, 'cal_done',3);
         pointStateEnum = struct('nothing',0, 'showing',1, 'collecting',2, 'discarding',3, 'collected', 4);
     end
@@ -51,11 +51,15 @@ classdef MonkeyCalController < handle
         calOnVideoTime              = 500;
         calOnVideoDistFac           = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
 
-        verbosity                   = 0;            % if 1, prints messages about what its up to, if 2: also prints messages about rewards (many!)
+        reEntryState                = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
+
+        logTypes                    = 0;            % bitmask: if 0, no logging. bit 1: print basic messages about what its up to. bit 2: print each command received in receiveUpdate(), bit 3: print messages about rewards (many!)
         logReceiver                 = 0;            % if 0: matlab command line. if 1: Titta
     end
     properties (Access=private,Hidden=true)
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
+        shouldRewindState           = false;
+        activationCount             = 0;
         shouldUpdateStatusText;
         trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
 
@@ -94,33 +98,46 @@ classdef MonkeyCalController < handle
                 if offScreenTime > obj.maxOffScreenTime
                     obj.reward(false);
                 else
-                    if obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
-                        % training to position and look at screen
-                        obj.trainLookScreen();
-                    elseif obj.videoSize < size(obj.videoSizes,1)
-                        % training to look at video
-                        if obj.controlState ~= obj.stateEnum.cal_gazing
-                            obj.drawState = 1;
-                            obj.controlState = obj.stateEnum.cal_gazing;
-                            obj.shouldUpdateStatusText = true;
-                            if obj.verbosity
-                                obj.log_to_cmd('training to look at video');
+                    switch obj.controlState
+                        case obj.stateEnum.cal_positioning
+                            if obj.shouldRewindState
+                                obj.onScreenTimeThresh = 1;
+                                obj.shouldRewindState = false;
+                            elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
+                                % training to position and look at screen
+                                obj.trainLookScreen();
+                            else
+                                obj.controlState = obj.stateEnum.cal_gazing;
+                                obj.drawState = 1;
+                                obj.shouldUpdateStatusText = true;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('training to look at video');
+                                end
                             end
-                        end
-                        obj.trainLookVideo();
-                    elseif obj.controlState == obj.stateEnum.cal_done
-                        % procedure is done: nothing to do
-                    else
-                        % calibrating
-                        if obj.controlState ~= obj.stateEnum.cal_calibrating
-                            obj.drawState = 1;
-                            obj.controlState = obj.stateEnum.cal_calibrating;
-                            obj.shouldUpdateStatusText = true;
-                            if obj.verbosity
-                                obj.log_to_cmd('calibrating');
+                        case obj.stateEnum.cal_gazing
+                            if obj.shouldRewindState
+                                obj.videoSize = 1;
+                                if obj.reEntryState<obj.stateEnum.cal_gazing
+                                    obj.controlState = obj.stateEnum.cal_positioning;
+                                else
+                                    obj.shouldRewindState = false;
+                                end
+                            elseif obj.videoSize < size(obj.videoSizes,1)
+                                % training to look at video
+                                obj.trainLookVideo();
+                            else
+                                obj.controlState = obj.stateEnum.cal_calibrating;
+                                obj.drawState = 1;
+                                obj.shouldUpdateStatusText = true;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('calibrating');
+                                end
                             end
-                        end
-                        commands = obj.calibrate();
+                        case obj.stateEnum.cal_calibrating
+                            % calibrating
+                            commands = obj.calibrate();
+                        case obj.stateEnum.cal_done
+                            % procedure is done: nothing to do
                     end
                 end
             end
@@ -128,22 +145,36 @@ classdef MonkeyCalController < handle
 
         function receiveUpdate(obj,~,currentPoint,posNorm,~,~,type,callResult)
             % event communicated to the controller:
+            if bitget(obj.logTypes,2)
+                obj.log_to_cmd('received update of type: %s',type);
+            end
             switch type
+                case 'cal_activate'
+                    obj.activationCount = obj.activationCount+1;
+                    if obj.controlState>=obj.reEntryState
+                        obj.shouldRewindState = true;
+                        obj.controlState = obj.controlState-1;
+                    end
+                    obj.lastUpdate = {};
+                    obj.awaitingCalResult = 0;
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('controller activated for calibration');
+                    end
                 % cal/val mode switches
                 case 'cal_enter'
                     obj.stage = 'cal';
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         obj.log_to_cmd('calibration mode entered');
                     end
                 case 'val_enter'
                     obj.stage = 'val';
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         obj.log_to_cmd('validation mode entered');
                     end
                 % calibration/validation point collected
                 case {'cal_collect','val_collect'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         obj.log_to_cmd('%s point collect: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
                     end
@@ -155,7 +186,7 @@ classdef MonkeyCalController < handle
                 % calibration/validation point discarded
                 case {'cal_discard','val_discard'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
                         obj.log_to_cmd('%s point discard: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
                     end
@@ -167,7 +198,7 @@ classdef MonkeyCalController < handle
                 % new calibration computed (may have failed) or loaded
                 case 'cal_compute_and_apply'
                     obj.lastUpdate = {type,callResult};
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         success = callResult.status==0 && strcmpi(callResult.calibrationResult.status,'success');
                         obj.log_to_cmd('calibration compute and apply result received: %s',ternary(success,'success','failed'));
                     end
@@ -221,6 +252,8 @@ classdef MonkeyCalController < handle
                 % showing the point for us
                 if obj.awaitingCalResult~=1
                     obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
+                else
+                    %fprintf('state %d\n',obj.awaitingCalResult);
                 end
                 obj.drawState = 2;
             end
@@ -256,10 +289,12 @@ classdef MonkeyCalController < handle
     
     methods (Access = private, Hidden)
         function setCleanState(obj)
-            if obj.verbosity
+            if bitget(obj.logTypes,1)
                 obj.log_to_cmd('cleanup state');
             end
-            obj.controlState = obj.stateEnum.cal_positioning;
+            obj.controlState        = obj.stateEnum.cal_positioning;
+            obj.shouldRewindState   = false;
+            obj.activationCount     = 0;
             obj.shouldUpdateStatusText = true;
 
             obj.stage = [];
@@ -319,7 +354,7 @@ classdef MonkeyCalController < handle
         end
 
         function reward(obj,on)
-            if obj.verbosity>1
+            if bitget(obj.logTypes,3)
                 obj.log_to_cmd('reward: %s',ternary(on,'on','off'));
             end
             if isempty(obj.rewardProvider)
@@ -344,7 +379,7 @@ classdef MonkeyCalController < handle
                 if rand()<=obj.onScreenTimeThreshIncRate
                     obj.onScreenTimeThresh = min(obj.onScreenTimeThresh*2,obj.onScreenTimeThreshCap);   % limit to onScreenTimeThreshCap
                     obj.shouldUpdateStatusText = true;
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         obj.log_to_cmd('on-screen looking time threshold increased to %d',obj.onScreenTimeThresh);
                     end
                 end
@@ -365,7 +400,7 @@ classdef MonkeyCalController < handle
                         obj.videoSize = min(obj.videoSize+1,size(obj.videoSizes,1));
                         obj.calDisplay.calSize = obj.videoSizes(obj.videoSize,:);
                         obj.shouldUpdateStatusText = true;
-                        if obj.verbosity
+                        if bitget(obj.logTypes,1)
                             obj.log_to_cmd('video size decreased to %dx%d',obj.videoSizes(obj.videoSize,:));
                         end
                     end
@@ -379,7 +414,38 @@ classdef MonkeyCalController < handle
             commands = {};
             calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
             dist = hypot(obj.meanGaze(1)-calPos(1),obj.meanGaze(2)-calPos(2));
-            if obj.awaitingCalResult>0
+            if obj.shouldRewindState
+                % discard all points
+                if obj.awaitingCalResult~=2
+                    for p=length(obj.calPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
+                        commands = [commands {{'cal','discard_point', obj.calPoints(p), obj.calPoss(p,:)}}]; %#ok<AGROW>
+                    end
+                    obj.calPoint = 1;
+                    obj.drawState = 1;
+                    obj.awaitingCalResult = 2;
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('rewinding state: discarding all calibration points');
+                    end
+                elseif obj.awaitingCalResult==2 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'cal_discard')
+                    % check this is for the expected point
+                    if obj.lastUpdate{2}==obj.calPoints(obj.calPoint) && all(obj.lastUpdate{3}==obj.calPoss(obj.calPoint,:))
+                        if obj.lastUpdate{4}.status==0     % TOBII_RESEARCH_STATUS_OK
+                            obj.awaitingCalResult = 0;
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('successfully discarded calibration point %d', obj.calPoints(obj.calPoint));
+                            end
+                            if obj.reEntryState<obj.stateEnum.cal_calibrating
+                                obj.controlState = obj.stateEnum.cal_gazing;
+                            else
+                                obj.shouldRewindState = false;
+                            end
+                        else
+                            error('can''t discard point, something seriously wrong')
+                        end
+                    end
+                end
+                obj.lastUpdate = {};
+            elseif obj.awaitingCalResult>0
                 % we're waiting for the result of an action. Those are all
                 % blocking in the Python code, but not here. For identical
                 % behavior (and easier logic), we put all the response
@@ -401,7 +467,7 @@ classdef MonkeyCalController < handle
                                 obj.shouldUpdateStatusText = true;
                                 obj.onVideoTimestamp = nan;
                                 obj.drawState = 1;
-                                if obj.verbosity
+                                if bitget(obj.logTypes,1)
                                     obj.log_to_cmd('successfully collected calibration point %d, requesting collection of point %d', obj.calPoints(obj.calPoint-1), obj.calPoints(obj.calPoint));
                                 end
                             else
@@ -409,7 +475,7 @@ classdef MonkeyCalController < handle
                                 commands = {{'cal','compute_and_apply'}};
                                 obj.awaitingCalResult = 3;
                                 obj.shouldUpdateStatusText = true;
-                                if obj.verbosity
+                                if bitget(obj.logTypes,1)
                                     obj.log_to_cmd('all calibration points successfully collected, requesting computing and applying calibration');
                                 end
                             end
@@ -419,7 +485,7 @@ classdef MonkeyCalController < handle
                             % overkill i think but doesn't hurt)
                             commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                             obj.awaitingCalResult = 2;
-                            if obj.verbosity
+                            if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('failed to collect calibration point %d, requesting to discard it', obj.calPoints(obj.calPoint));
                             end
                         end
@@ -430,7 +496,7 @@ classdef MonkeyCalController < handle
                     if obj.lastUpdate{2}==obj.calPoints(obj.calPoint) && all(obj.lastUpdate{3}==obj.calPoss(obj.calPoint,:))
                         if obj.lastUpdate{4}.status==0     % TOBII_RESEARCH_STATUS_OK
                             obj.awaitingCalResult = 0;
-                            if obj.verbosity
+                            if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('successfully discarded calibration point %d', obj.calPoints(obj.calPoint));
                             end
                         else
@@ -447,7 +513,7 @@ classdef MonkeyCalController < handle
                         obj.shouldUpdateStatusText = true;
                         commands = {{'cal','disable_controller'}};
                         obj.drawState = 0;
-                        if obj.verbosity
+                        if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration successfully applied, disabling controller');
                         end
                     else
@@ -458,14 +524,14 @@ classdef MonkeyCalController < handle
                         obj.awaitingCalResult = 2;
                         obj.calPoint = 1;
                         obj.drawState = 1;
-                        if obj.verbosity
+                        if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration failed discarding all points and starting over');
                         end
                     end
                     obj.lastUpdate = {};
                 elseif ~isempty(obj.lastUpdate)
                     % unexpected (perhaps stale, e.g. from before auto was switched on) update, discard
-                    if obj.verbosity
+                    if bitget(obj.logTypes,1)
                         obj.log_to_cmd('unexpected update from Titta: %s, discarding',obj.lastUpdate{1});
                     end
                     obj.lastUpdate = {};
@@ -481,7 +547,7 @@ classdef MonkeyCalController < handle
                         % request calibration point collection
                         commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}}; % something with point ID and location, so Titta's logic can double check it knows this point
                         obj.awaitingCalResult = 1;
-                        if obj.verbosity
+                        if bitget(obj.logTypes,1)
                             obj.log_to_cmd('request calibration of point %d @ (%.3f,%.3f)', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
                         end
                     end
@@ -498,7 +564,7 @@ classdef MonkeyCalController < handle
                     if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting
                         commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                         obj.awaitingCalResult = 2;
-                        if obj.verbosity
+                        if bitget(obj.logTypes,1)
                             obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
                         end
                     end

@@ -102,7 +102,7 @@ try
     end
     calController.setCalPoints(calPoints,settings.mancal.cal.pointPos(calPoints,:));
     if DEBUGlevel>0
-        calController.verbosity = 1;
+        calController.logTypes = 3;
         calController.logReceiver = 1;
     end
     % calibration logic: only manual calibration attempts since controller

@@ -6113,6 +6113,13 @@ classdef Titta < handle
                                 elseif qInBut(6)
                                     if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                                         qAutoActive         = ~qAutoActive;
+                                        if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
+                                            state = 'deactivate';
+                                            if qAutoActive
+                                                state = 'activate';
+                                            end
+                                            obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
+                                        end
                                     end
                                 elseif qInBut(7)
                                     qShowHead           = ~qShowHead;
@@ -6334,6 +6341,13 @@ classdef Titta < handle
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.toggAuto.accelerator))
                                 if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                                     qAutoActive         = ~qAutoActive;
+                                    if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
+                                        state = 'deactivate';
+                                        if qAutoActive
+                                            state = 'activate';
+                                        end
+                                        obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
+                                    end
                                 end
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.mancal.calibrate.accelerator))
