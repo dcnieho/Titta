@@ -5892,7 +5892,7 @@ classdef Titta < handle
                                         else
                                             cancelOrDiscardPoint = [cancelOrDiscardPoint which]; %#ok<AGROW> 
                                         end
-                                        if ~ismember(pointsP(cancelOrDiscardPoint,end),[1 3])
+                                        if ~ismember(pointsP(which,end),[1 3])
                                             % unless point is in collecting
                                             % or collected state, a discard
                                             % would not actually get
@@ -5903,7 +5903,7 @@ classdef Titta < handle
                                                 if strcmp(stage,'cal')
                                                     extra = {struct('status',0)};
                                                 end
-                                                obj.settings.mancal.(stage).pointNotifyFunction(obj,cancelOrDiscardPoint,pointsP(cancelOrDiscardPoint,1:2),pointsP(cancelOrDiscardPoint,3:4),stage,[stage '_discard'],extra{:});
+                                                obj.settings.mancal.(stage).pointNotifyFunction(obj,which,pointsP(which,1:2),pointsP(which,3:4),stage,[stage '_discard'],extra{:});
                                             end
                                         end
                                     case 'compute_and_apply'
