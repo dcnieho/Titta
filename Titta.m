@@ -5864,7 +5864,7 @@ classdef Titta < handle
                     % get user response
                     [mx,my,mousePress,keyPress,shiftIsDown,mouseRelease] = obj.getNewMouseKeyPress(wpnt(end));
                     mousePos = [mx my];
-                    % if any drag active change head rect position/size
+                    % if any auto commands, process
                     if ~isempty(autoCommands)
                         qBreak = false;
                         for c=1:length(autoCommands)
@@ -5940,6 +5940,7 @@ classdef Titta < handle
                             break;
                         end
                     elseif qDraggingHead || ~isnan(headResizingGrip)
+                        % if drag active, change head rect position/size
                         % update headORect
                         if qDraggingHead
                             vec         = mousePos-dragPos;
