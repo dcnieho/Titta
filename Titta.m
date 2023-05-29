@@ -4621,6 +4621,8 @@ classdef Titta < handle
                             if qAutoActive && ~qHasAutoCal
                                 qAutoActive = false;
                             end
+                            % hide/show auto mode button if necessary
+                            but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoCal;
                             % make calibration button visible, if wanted
                             but(9).visible = obj.settings.UI.button.mancal.calibrate.visible;
                         case 'cal'  % currently 'cal', becomes 'val'
@@ -4645,6 +4647,8 @@ classdef Titta < handle
                             if qAutoActive && ~qHasAutoVal
                                 qAutoActive = false;
                             end
+                            % hide/show auto mode button if necessary
+                            but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoVal;
                             % no calibration button when validating. Make
                             % sure its hidden
                             but(9).visible = false;
