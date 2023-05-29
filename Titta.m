@@ -5452,6 +5452,11 @@ classdef Titta < handle
                                     end
                                     qNewCal     = true;
                                     qClearState = true;
+                                    % if wanted, notify user callback of
+                                    % calibration clearing result
+                                    if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                        obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
+                                    end
                                 else
                                     % data for some points left: issue
                                     % calibration command
@@ -5908,6 +5913,20 @@ classdef Titta < handle
                                         end
                                     case 'compute_and_apply'
                                         qProcessDoCal = true;
+                                    case 'clear'
+                                        % clear the calibration. We do that
+                                        % by leaving and reentering
+                                        % calibration mode
+                                        if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                                            obj.doEnterCalibrationMode();
+                                        end
+                                        qNewCal     = true;
+                                        qClearState = true;
+                                        % if wanted, notify user callback
+                                        % of calibration clearing result
+                                        if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                            obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
+                                        end
                                     case 'disable_controller'
                                         qAutoActive = false;
                                         if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
@@ -6436,6 +6455,11 @@ classdef Titta < handle
                                 end
                                 qNewCal     = true;
                                 qClearState = true;
+                                % if wanted, notify user callback of
+                                % calibration clearing result
+                                if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                                    obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
+                                end
                             else
                                 % there is data for at least
                                 % some points
