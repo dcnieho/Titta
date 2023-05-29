@@ -184,7 +184,11 @@ classdef MonkeyCalController < handle
                 case {'cal_collect','val_collect'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,1)
-                        success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        if startsWith(type,'cal')
+                            success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        else
+                            success = true;
+                        end
                         obj.log_to_cmd('%s point collect: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
                     end
                     % update point status
@@ -196,7 +200,11 @@ classdef MonkeyCalController < handle
                 case {'cal_discard','val_discard'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,1)
-                        success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        if startsWith(type,'cal')
+                            success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        else
+                            success = true;
+                        end
                         obj.log_to_cmd('%s point discard: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
                     end
                     % update point status
