@@ -79,9 +79,7 @@ try
     settings.UI.mancal.headScale            = .35;
     settings.UI.mancal.headPos              = [.5 .175];
     % calibration display
-    if numCalPoints==2
-        settings.mancal.cal.pointPos = [settings.mancal.cal.pointPos; .65, .35; .35, .65];
-    end
+    settings.mancal.cal.pointPos = [settings.mancal.cal.pointPos; .65, .35; .35, .65];
     % calibration display: custom calibration drawer
     calViz                      = VideoCalibrationDisplay();
     settings.mancal.drawFunction= @calViz.doDraw;
@@ -96,11 +94,14 @@ try
     if numCalPoints==2
         calPoints = [6 7];
     elseif numCalPoints==3
-        calPoints = [3 2 4];
-    else    % 5 points
+        calPoints = [3 6 7];
+    elseif numCalPoints==5
         calPoints = [3 1 2 3 4];
     end
     calController.setCalPoints(calPoints,settings.mancal.cal.pointPos(calPoints,:));
+    if ismember(numCalPoints,[3 5])
+        calController.calAfterFirstCollected = true;
+    end
     if DEBUGlevel>0
         calController.logTypes = 3;
         calController.logReceiver = 1;
