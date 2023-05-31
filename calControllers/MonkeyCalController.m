@@ -95,6 +95,7 @@ classdef MonkeyCalController < handle
 
         function setCalPoints(obj, calPoints,calPoss)
             assert(ismember(obj.controlState,[obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing]),'cannot set calibration points when already calibrating or calibrated')
+            assert(length(unique(calPoints))==length(calPoints),'At least one calibration point ID is specified more than once. Specify each calibration point only once.')
             obj.calPoints       = calPoints;                % ID of calibration points to run by the controller, in provided order
             obj.calPoss         = calPoss;                  % corresponding positions
             obj.calPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.calPoss));
