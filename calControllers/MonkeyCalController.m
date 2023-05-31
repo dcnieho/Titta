@@ -53,7 +53,7 @@ classdef MonkeyCalController < handle
 
         calOnVideoTime              = 500;
         calOnVideoDistFac           = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
-        calAfterFirstCollected      = true;
+        calAfterFirstCollected      = false;
 
         reEntryState                = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
 
@@ -646,7 +646,7 @@ classdef MonkeyCalController < handle
                 offDur = obj.latestTimestamp--obj.onVideoTimestamp;
                 if offDur > obj.maxOffScreenTime
                     obj.reward(false);
-                    % request discarding data for this point fi its being
+                    % request discarding data for this point if its being
                     % collected
                     if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting
                         commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
