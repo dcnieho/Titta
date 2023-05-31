@@ -96,7 +96,7 @@ try
     elseif numCalPoints==3
         calPoints = [3 6 7];
     elseif numCalPoints==5
-        calPoints = [3 1 2 3 4];
+        calPoints = [3 1 2 4 5];
     end
     calController.setCalPoints(calPoints,settings.mancal.cal.pointPos(calPoints,:));
     if ismember(numCalPoints,[3 5])
