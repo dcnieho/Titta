@@ -464,7 +464,7 @@ classdef MonkeyCalController < handle
                 % possibly decrease video size
                 if dist < obj.videoSizes(obj.videoSize,2)*2
                     obj.reward(true);
-                    if rand()<=obj.videoShrinkRate
+                    if onScreenTime > obj.videoShrinkTime && rand()<=obj.videoShrinkRate
                         obj.videoSize = min(obj.videoSize+1,size(obj.videoSizes,1));
                         obj.calDisplay.calSize = obj.videoSizes(obj.videoSize,:);
                         obj.shouldUpdateStatusText = true;
