@@ -402,6 +402,7 @@ classdef MonkeyCalController < handle
             end
             gaze = obj.EThndl.buffer.peekN('gaze',round(1000/obj.gazeFetchDur*obj.trackerFrequency));
             if isempty(gaze)
+                obj.meanGaze = nan;
                 return
             end
 
