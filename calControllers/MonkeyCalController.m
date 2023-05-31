@@ -533,10 +533,10 @@ classdef MonkeyCalController < handle
                                 obj.onVideoTimestamp = nan;
                                 obj.drawState = 1;
                                 if bitget(obj.logTypes,1)
-                                    obj.log_to_cmd('successfully collected calibration point %d, requesting collection of point %d', obj.calPoints(obj.calPoint-1), obj.calPoints(obj.calPoint));
+                                    obj.log_to_cmd('successfully collected calibration point %d, continue with collection of point %d', obj.calPoints(obj.calPoint-1), obj.calPoints(obj.calPoint));
                                 end
                             else
-                                % all collected, attempt calibration
+                                % all collected or first collected and calibration wanted after first -> attempt calibration
                                 commands = {{'cal','compute_and_apply'}};
                                 obj.awaitingCalResult = 3;
                                 obj.shouldUpdateStatusText = true;
@@ -584,7 +584,7 @@ classdef MonkeyCalController < handle
                             obj.onVideoTimestamp = nan;
                             obj.drawState = 1;
                             if bitget(obj.logTypes,1)
-                                obj.log_to_cmd('calibration successfully applied, continuing calibration. Requesting collection of point %d', obj.calPoints(obj.calPoint));
+                                obj.log_to_cmd('calibration successfully applied, continuing calibration. Continue with collection of point %d', obj.calPoints(obj.calPoint));
                             end
                         else
                             obj.awaitingCalResult = 0;
