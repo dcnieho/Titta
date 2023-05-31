@@ -4435,7 +4435,6 @@ classdef Titta < handle
             else
                 drawFunction    = @obj.drawFixationPointDefault;
             end
-            collectInterval     = ceil(obj.settings.mancal.val.collectDuration*fs);
             nDataPoint          = ceil(obj.settings.mancal.val.collectDuration*obj.settings.freq);
             
             % prep colors
@@ -4562,6 +4561,7 @@ classdef Titta < handle
             out.flips               = GetSecs();    % anchor timing
             frameMsg                = '';
             whichPoint              = nan;
+            qWaitForAllowAccept     = false;
             whichPointDiscard       = nan;
             cancelOrDiscardPoint    = nan;
             qProcessDoCal           = false;
@@ -4610,7 +4610,6 @@ classdef Titta < handle
                             pointsP         = cPointsP;
                             pointsO         = cPointsO;
                             pointTextCache  = cPointTextCache;
-                            paceIntervalTicks   = ceil(obj.settings.mancal.cal.paceDuration*fs);
                             obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                             % if wanted, notify user callback of mode
                             % change
@@ -4636,7 +4635,6 @@ classdef Titta < handle
                             pointsP         = vPointsP;
                             pointsO         = vPointsO;
                             pointTextCache  = vPointTextCache;
-                            paceIntervalTicks   = ceil(obj.settings.mancal.val.paceDuration*fs);
                             obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                             % if wanted, notify user callback of mode
                             % change
@@ -5477,7 +5475,7 @@ classdef Titta < handle
                         end
                     end
                     % accept point
-                    if tick>tick0p+paceIntervalTicks && ~isnan(whichPoint)
+                    if out.flips(end)>tick0p+obj.settings.mancal.(stage).paceDuration && ~isnan(whichPoint)
                         qPointDone = false;
                         if strcmp(stage,'cal')
                             if ~nCollectionTries
@@ -5516,14 +5514,14 @@ classdef Titta < handle
                             end
                         else
                             if isnan(tick0v)
-                                tick0v = tick;
+                                tick0v = out.flips(end);
                                 out.attempt{kCal}.val{valAction}.wasCancelled = false;
                                 out.attempt{kCal}.val{valAction}.wasDiscarded = false;
                                 pointsP(whichPoint,end) = 3;        % status: collecting
                                 qUpdatePointHover       = true;
                                 break;
                             end
-                            if tick>tick0v+collectInterval
+                            if out.flips(end)>tick0v+obj.settings.mancal.val.collectDuration
                                 dat = obj.buffer.peekN('gaze',nDataPoint);
                                 out.attempt{kCal}.val{valAction}.gazeData = dat;
                                 tick0v              = nan;
@@ -5849,13 +5847,10 @@ classdef Titta < handle
                     
                     % on participant screen, draw fixation point if
                     % currently active
+                    qAllowAccept = false;
                     if ~isnan(whichPoint)
                         qAllowAccept= drawFunction(wpnt(1),drawCmd,whichPoint,pointsP(whichPoint,3:4),tick,stage);
                         drawCmd     = 'draw';
-                        if qWaitForAllowAccept && qAllowAccept
-                            tick0p              = tick;
-                            qWaitForAllowAccept = false;
-                        end
                     elseif qForcePointDraw
                         % we assume some other logic already told drawer
                         % where point should be
@@ -5868,6 +5863,13 @@ classdef Titta < handle
                     if ~isempty(frameMsg)
                         obj.sendMessage(frameMsg,out.flips(end));
                         frameMsg = '';
+                    end
+
+                    % if drawer indicate ready for calibrate and we were
+                    % awaiting such message, process it
+                    if qWaitForAllowAccept && qAllowAccept
+                        tick0p              = out.flips(end);
+                        qWaitForAllowAccept = false;
                     end
 
                     % get user response
