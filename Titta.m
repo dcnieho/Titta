@@ -369,6 +369,9 @@ classdef Titta < handle
             obj.settings.UI.button.mancal.calibrate.fillColor   = color2RGBA(obj.settings.UI.button.mancal.calibrate.fillColor);
             obj.settings.UI.button.mancal.calibrate.edgeColor   = color2RGBA(obj.settings.UI.button.mancal.calibrate.edgeColor);
             obj.settings.UI.button.mancal.calibrate.textColor   = color2RGBA(obj.settings.UI.button.mancal.calibrate.textColor);
+            obj.settings.UI.button.mancal.discard.fillColor     = color2RGBA(obj.settings.UI.button.mancal.discard.fillColor);
+            obj.settings.UI.button.mancal.discard.edgeColor     = color2RGBA(obj.settings.UI.button.mancal.discard.edgeColor);
+            obj.settings.UI.button.mancal.discard.textColor     = color2RGBA(obj.settings.UI.button.mancal.discard.textColor);
             obj.settings.UI.button.mancal.snapshot.fillColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.fillColor);
             obj.settings.UI.button.mancal.snapshot.edgeColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.edgeColor);
             obj.settings.UI.button.mancal.snapshot.textColor    = color2RGBA(obj.settings.UI.button.mancal.snapshot.textColor);
@@ -1147,6 +1150,9 @@ classdef Titta < handle
             %                  shift while pressing this accelerator
             %                  toggles between automatic calibration mode
             %                  and manual mode (calibrate)
+            %      d         - discard current calibration (and/or
+            %                  collected points' data), if any. I.e., start
+            %                  with a clean slate.
             %      s         - opens a menu that allows the current
             %                  calibration state to be snapshotted, and any
             %                  existing snapshots to be loaded. The menu can
@@ -1828,12 +1834,18 @@ classdef Titta < handle
             settings.UI.button.mancal.continue.fillColor    = continueButClr.fill;
             settings.UI.button.mancal.continue.edgeColor    = continueButClr.edge;
             settings.UI.button.mancal.continue.textColor    = continueButClr.text;
-            settings.UI.button.mancal.calibrate.accelerator= 'return';
-            settings.UI.button.mancal.calibrate.visible    = false;
-            settings.UI.button.mancal.calibrate.string     = 'calibrate\n(<i>enter<i>)';
-            settings.UI.button.mancal.calibrate.fillColor  = continueButClr.fill;
-            settings.UI.button.mancal.calibrate.edgeColor  = continueButClr.edge;
-            settings.UI.button.mancal.calibrate.textColor  = continueButClr.text;
+            settings.UI.button.mancal.calibrate.accelerator = 'return';
+            settings.UI.button.mancal.calibrate.visible     = false;
+            settings.UI.button.mancal.calibrate.string      = 'calibrate\n(<i>enter<i>)';
+            settings.UI.button.mancal.calibrate.fillColor   = continueButClr.fill;
+            settings.UI.button.mancal.calibrate.edgeColor   = continueButClr.edge;
+            settings.UI.button.mancal.calibrate.textColor   = continueButClr.text;
+            settings.UI.button.mancal.discard.accelerator   = 'd';
+            settings.UI.button.mancal.discard.visible       = false;
+            settings.UI.button.mancal.discard.string        = 'discard\nall (<i>d<i>)';
+            settings.UI.button.mancal.discard.fillColor     = backButClr.fill;
+            settings.UI.button.mancal.discard.edgeColor     = backButClr.edge;
+            settings.UI.button.mancal.discard.textColor     = backButClr.text;
             settings.UI.button.mancal.snapshot.accelerator  = 's';
             settings.UI.button.mancal.snapshot.visible      = true;
             settings.UI.button.mancal.snapshot.string       = 'snapshot (<i>s<i>)';
@@ -4322,6 +4334,7 @@ classdef Titta < handle
             but(7)  = PTBButton(obj.settings.UI.button.mancal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(8)  = PTBButton(obj.settings.UI.button.mancal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(9)  = PTBButton(obj.settings.UI.button.mancal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(10) = PTBButton(obj.settings.UI.button.mancal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             % 1. below screen
             % position them
             butRectsBase= cat(1,but([but(1:6).visible]).rect);
@@ -4354,7 +4367,7 @@ classdef Titta < handle
             
             % 3. left side
             prevPos = nan;
-            for b=9
+            for b=9:10
                 if but(b).visible
                     % position it
                     if isnan(prevPos)
@@ -4372,8 +4385,9 @@ classdef Titta < handle
             
             % check shiftable button accelerators do not conflict with
             % built in ones
-            assert(~ismember(obj.settings.UI.button.mancal.toggHead.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggHead.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
-            assert(~ismember(obj.settings.UI.button.mancal.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~ismember(obj.settings.UI.button.mancal.toggHead .accelerator,{'escape','s','d','o'}), 'settings.UI.button.mancal.toggHead.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~ismember(obj.settings.UI.button.mancal.toggGaze .accelerator,{'escape','s','d','o'}), 'settings.UI.button.mancal.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~ismember(obj.settings.UI.button.mancal.calibrate.accelerator,{'escape','s','d','o'}),'settings.UI.button.mancal.calibrate.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
             
             % setup menu, if any
             menuMargin      = 10;
@@ -4560,6 +4574,7 @@ classdef Titta < handle
             whichPointDiscard       = nan;
             cancelOrDiscardPoint    = nan;
             qProcessDoCal           = false;
+            qProcessClearCal        = false;
             qRegenSnapShotMenuListing = false;
             degChar = char(176);
             while ~qDoneWithManualCalib
@@ -4618,8 +4633,9 @@ classdef Titta < handle
                             end
                             % hide/show auto mode button if necessary
                             but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoCal;
-                            % make calibration button visible, if wanted
-                            but(9).visible = obj.settings.UI.button.mancal.calibrate.visible;
+                            % make calibration and discard buttons visible, if wanted
+                            but(9).visible  = obj.settings.UI.button.mancal.calibrate.visible;
+                            but(10).visible = obj.settings.UI.button.mancal.discard.visible;
                         case 'cal'  % currently 'cal', becomes 'val'
                             % copy over status of cal points to storage
                             if exist('pointsP','var')
@@ -4643,9 +4659,10 @@ classdef Titta < handle
                             end
                             % hide/show auto mode button if necessary
                             but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoVal;
-                            % no calibration button when validating. Make
-                            % sure its hidden
-                            but(9).visible = false;
+                            % no calibration and discard buttons when
+                            % validating. Make sure they're hidden
+                            but(9).visible  = false;
+                            but(10).visible = false;
                     end
                     % get point rects on operator screen
                     calValRectsSel  = zeros(4,size(pointsO,1));
@@ -5246,8 +5263,10 @@ classdef Titta < handle
                     pointStr = sprintf('%d ',sort(usedCalibrationPoints));
                     text = sprintf('<u>%s<u>\n<color=%s>%s<color>\nactive cal based on:\npoints [%s]',modetxt,clr2hex(clr),text,pointStr(1:end-1));
                     posRect = [10 10 10 10];
-                    if but(9).visible
-                        posRect = OffsetRect(posRect,0,RectHeight(but(9).rect)+10);
+                    if but(10).visible
+                        posRect = OffsetRect(posRect,0,but(10).rect(4)+10);
+                    elseif but(9).visible
+                        posRect = OffsetRect(posRect,0,but(9).rect(4)+10);
                     end
                     calTextCache = obj.getTextCache(wpnt(end), text,posRect,'xalign','left','yalign','top');
                     qUpdateCalStatusText = false;
@@ -5698,6 +5717,7 @@ classdef Titta < handle
                     but(7).draw(mousePos,qShowHead);
                     but(8).draw(mousePos,qShowGaze);
                     but(9).draw(mousePos,qAutoCalibrate);
+                    but(10).draw(mousePos);
                     
                     % draw eye images, if any
                     if qShowEyeImage
@@ -5926,19 +5946,7 @@ classdef Titta < handle
                                     case 'compute_and_apply'
                                         qProcessDoCal = true;
                                     case 'clear'
-                                        % clear the calibration. We do that
-                                        % by leaving and reentering
-                                        % calibration mode
-                                        if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
-                                            obj.doEnterCalibrationMode();
-                                        end
-                                        qNewCal     = true;
-                                        qClearState = true;
-                                        % if wanted, notify user callback
-                                        % of calibration clearing result
-                                        if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
-                                            obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
-                                        end
+                                        qProcessClearCal = true;
                                     case 'disable_controller'
                                         qAutoActive = false;
                                         if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
@@ -6177,6 +6185,8 @@ classdef Titta < handle
                                     else
                                         qProcessDoCal = true;
                                     end
+                                elseif qInBut(10)
+                                    qProcessClearCal = true;
                                 end
                                 break;
                             elseif any(qOnFixTarget)
@@ -6399,6 +6409,8 @@ classdef Titta < handle
                                 else
                                     qProcessDoCal = true;
                                 end
+                            elseif any(strcmpi(keys,obj.settings.UI.button.mancal.discard.accelerator))
+                                qProcessClearCal = true;
                             end
                         end
                     end
@@ -6453,7 +6465,6 @@ classdef Titta < handle
                     % see if we should do a calibration action, if
                     % requested
                     if qProcessDoCal
-                        qProcessDoCal = false;
                         if strcmp(stage,'cal') && isempty(pointList) && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(discardList)
                             % if in calibration mode and no
                             % further calibration points queued
@@ -6466,19 +6477,8 @@ classdef Titta < handle
                             pointStateLastCal       = pointsP(:,end);
                             if all(pointsP(:,end)==0)
                                 % no data for any points. Clear
-                                % current calibration. We do
-                                % that by leaving and
-                                % reentering calibration mode
-                                if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
-                                    obj.doEnterCalibrationMode();
-                                end
-                                qNewCal     = true;
-                                qClearState = true;
-                                % if wanted, notify user callback of
-                                % calibration clearing result
-                                if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
-                                    obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
-                                end
+                                % current calibration.
+                                qProcessClearCal = true;
                             else
                                 % there is data for at least
                                 % some points
@@ -6487,6 +6487,23 @@ classdef Titta < handle
                                 obj.buffer.calibrationComputeAndApply();
                             end
                         end
+                        qProcessDoCal = false;
+                    end
+                    if qProcessClearCal
+                        % We clear the current calibration by leaving and
+                        % reentering calibration mode
+                        if obj.doLeaveCalibrationMode()     % returns false if we weren't in calibration mode to begin with
+                            obj.doEnterCalibrationMode();
+                        end
+                        qNewCal     = true;
+                        qClearState = true;
+                        % if wanted, notify user callback of calibration
+                        % clearing result
+                        if isa(obj.settings.mancal.cal.pointNotifyFunction,'function_handle') && obj.settings.mancal.cal.useExtendedNotify
+                            obj.settings.mancal.cal.pointNotifyFunction(obj,[],[],[],stage,'cal_cleared',[]);
+                        end
+                        qUpdateCalStatusText    = true;
+                        qProcessClearCal = false;
                     end
                     % check if hovering over point for which we have info,
                     % and no menus open
