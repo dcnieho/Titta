@@ -119,6 +119,7 @@ try
     % calibration logic: only manual calibration attempts since controller
     % controls this
     settings.UI.button.mancal.calibrate.visible = true;
+    settings.UI.button.mancal.discard.visible = true;
     settings.mancal.cal.autoCalibrate = false;
 
     
