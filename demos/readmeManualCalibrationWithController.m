@@ -54,10 +54,10 @@ cd(home);
 try
     eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
 
-    prevCal = {};
+    prevCal = {[]};
     if loadPreviousCal
         prevFile = uigetfile('*.mat','Select datafile from previous recording to load calibration from');
-        if exist(prevFile,'file')==2
+        if (ischar(prevFile) || isstring(prevFile)) && exist(prevFile,'file')==2
             prev = load(prevFile);
             prevCal = prev.calibration(end);
         end
