@@ -34,6 +34,7 @@ eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on oper
 videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
 videoExt                = 'mov';
 numCalPoints            = 2;    % 2, 3 or 5
+loadPreviousCal         = true;     % if true, operator will be prompted for a mat-file from a previous run from which to load the previous calibration
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
@@ -52,6 +53,15 @@ cd(home);
 
 try
     eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
+
+    prevCal = {};
+    if loadPreviousCal
+        prevFile = uigetfile('*.mat','Select datafile from previous recording to load calibration from');
+        if exist(prevFile,'file')==2
+            prev = load(prevFile);
+            prevCal = prev.calibration(end);
+        end
+    end
     
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
@@ -164,7 +174,7 @@ try
         % keypresses from leaking through to matlab
         ListenChar(2);
     end
-    tobii.calVal{1} = EThndl.calibrateManual([wpntP wpntO],[],calController);
+    tobii.calVal{1} = EThndl.calibrateManual([wpntP wpntO],prevCal{:},calController);
     ListenChar(0);
     
     
