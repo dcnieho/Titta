@@ -66,6 +66,8 @@ classdef MonkeyCalController < handle
         isActive                    = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
+        shouldClearCal              = false;
+        clearCalNow                 = false;
         activationCount             = 0;
         shouldUpdateStatusText;
         trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
@@ -111,57 +113,73 @@ classdef MonkeyCalController < handle
                 if offScreenTime > obj.maxOffScreenTime
                     obj.reward(false);
                 end
-                switch obj.controlState
-                    case obj.stateEnum.cal_positioning
-                        if obj.shouldRewindState
-                            obj.onScreenTimeThresh = 1;
-                            obj.shouldRewindState = false;
-                            obj.drawState = 1;
-                            obj.shouldUpdateStatusText = true;
-                            if bitget(obj.logTypes,1)
-                                obj.log_to_cmd('rewinding state: reset looking threshold');
-                            end
-                        elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
-                            % training to position and look at screen
-                            obj.trainLookScreen();
-                        else
-                            obj.controlState = obj.stateEnum.cal_gazing;
-                            obj.drawState = 1;
-                            obj.shouldUpdateStatusText = true;
-                            if bitget(obj.logTypes,1)
-                                obj.log_to_cmd('training to look at video');
-                            end
+                if obj.clearCalNow
+                    if obj.awaitingCalResult~=4
+                        commands = {{'cal','clear'}};
+                        obj.awaitingCalResult = 4;
+                        if bitget(obj.logTypes,1)
+                            obj.log_to_cmd('calibration state is not clean upon controller activation. Requesting to clear it first');
                         end
-                    case obj.stateEnum.cal_gazing
-                        if obj.shouldRewindState
-                            obj.videoSize = 1;
-                            obj.drawState = 1;
-                            obj.shouldUpdateStatusText = true;
-                            if obj.reEntryState<obj.stateEnum.cal_gazing
-                                obj.controlState = obj.stateEnum.cal_positioning;
-                            else
+                    elseif obj.awaitingCalResult==4 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'cal_cleared')
+                        obj.awaitingCalResult = 0;
+                        obj.clearCalNow = false;
+                        if bitget(obj.logTypes,1)
+                            obj.log_to_cmd('calibration data cleared, starting controller');
+                        end
+                    end
+                else
+                    switch obj.controlState
+                        case obj.stateEnum.cal_positioning
+                            if obj.shouldRewindState
+                                obj.onScreenTimeThresh = 1;
                                 obj.shouldRewindState = false;
+                                obj.drawState = 1;
+                                obj.shouldUpdateStatusText = true;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('rewinding state: reset looking threshold');
+                                end
+                            elseif obj.onScreenTimeThresh < obj.onScreenTimeThreshCap
+                                % training to position and look at screen
+                                obj.trainLookScreen();
+                            else
+                                obj.controlState = obj.stateEnum.cal_gazing;
+                                obj.drawState = 1;
+                                obj.shouldUpdateStatusText = true;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('training to look at video');
+                                end
                             end
-                            if bitget(obj.logTypes,1)
-                                obj.log_to_cmd('rewinding state: reset video size');
+                        case obj.stateEnum.cal_gazing
+                            if obj.shouldRewindState
+                                obj.videoSize = 1;
+                                obj.drawState = 1;
+                                obj.shouldUpdateStatusText = true;
+                                if obj.reEntryState<obj.stateEnum.cal_gazing
+                                    obj.controlState = obj.stateEnum.cal_positioning;
+                                else
+                                    obj.shouldRewindState = false;
+                                end
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('rewinding state: reset video size');
+                                end
+                            elseif obj.videoSize < size(obj.videoSizes,1)
+                                % training to look at video
+                                obj.trainLookVideo();
+                            else
+                                obj.controlState = obj.stateEnum.cal_calibrating;
+                                obj.drawState = 1;
+                                obj.calDisplay.calSize = obj.videoSizeCal;
+                                obj.shouldUpdateStatusText = true;
+                                if bitget(obj.logTypes,1)
+                                    obj.log_to_cmd('calibrating');
+                                end
                             end
-                        elseif obj.videoSize < size(obj.videoSizes,1)
-                            % training to look at video
-                            obj.trainLookVideo();
-                        else
-                            obj.controlState = obj.stateEnum.cal_calibrating;
-                            obj.drawState = 1;
-                            obj.calDisplay.calSize = obj.videoSizeCal;
-                            obj.shouldUpdateStatusText = true;
-                            if bitget(obj.logTypes,1)
-                                obj.log_to_cmd('calibrating');
-                            end
-                        end
-                    case obj.stateEnum.cal_calibrating
-                        % calibrating
-                        commands = obj.calibrate();
-                    case obj.stateEnum.cal_done
-                        % procedure is done: nothing to do
+                        case obj.stateEnum.cal_calibrating
+                            % calibrating
+                            commands = obj.calibrate();
+                        case obj.stateEnum.cal_done
+                            % procedure is done: nothing to do
+                    end
                 end
             end
             if obj.shouldDisableForceDraw
@@ -186,6 +204,8 @@ classdef MonkeyCalController < handle
                         if obj.controlState>obj.reEntryState
                             obj.controlState = obj.controlState-1;
                         end
+                    elseif obj.shouldClearCal
+                        obj.clearCalNow = true;
                     end
                     obj.lastUpdate = {};
                     obj.awaitingCalResult = 0;
@@ -238,6 +258,7 @@ classdef MonkeyCalController < handle
                     if ~isempty(iPoint) && all(posNorm==obj.calPoss(iPoint,:))
                         obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
+                    obj.shouldClearCal = true;
                 % calibration/validation point discarded
                 case {'cal_discard','val_discard'}
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
@@ -261,13 +282,17 @@ classdef MonkeyCalController < handle
                         success = callResult.status==0 && strcmpi(callResult.calibrationResult.status,'success');
                         obj.log_to_cmd('calibration compute and apply result received: %s',ternary(success,'success','failed'));
                     end
+                % a calibration was loaded
                 case 'cal_load'
-                    % ignore
+                    % mark that we need to clear it if controller is activated
+                    obj.shouldClearCal = true;
+                % calibration was cleared: now at a blank slate
                 case 'cal_cleared'
                     obj.lastUpdate = {type};
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('calibration clear result received');
                     end
+                    obj.shouldClearCal = false;
                 % interface exited from calibration or validation screen
                 case {'cal_finished','val_finished'}
                     % we're done according to operator, clear
@@ -370,6 +395,8 @@ classdef MonkeyCalController < handle
             end
             obj.controlState        = obj.stateEnum.cal_positioning;
             obj.shouldRewindState   = false;
+            obj.shouldClearCal      = false;
+            obj.clearCalNow         = false;
             obj.activationCount     = 0;
             obj.shouldUpdateStatusText = true;
 
