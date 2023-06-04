@@ -5075,6 +5075,12 @@ classdef Titta < handle
                                     qUpdateCalStatusText    = true;
                                     calibrationStatus       = 1;    % status: calibrated
                                     awaitingCalChangeType   = '';   % done with loading calibration
+                                    if strcmp(calLoadSource,'previousCal')
+                                        % save this previous calibration as
+                                        % a snapshot
+                                        qSaveSnapShot = true;
+                                    end
+                                    calLoadSource = '';
 
                                     % if wanted, notify user callback of
                                     % calibration load result
