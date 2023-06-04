@@ -872,6 +872,7 @@ classdef Titta < handle
             qHasEnteredCalMode      = false;
             qGoToValidationViewer   = false;
             if ~isempty(previousCalibs)
+                assert(strcmp(previousCalibs.type,'standard'),'Titta.calibrate: only previous calibrations created by Titta.calibrate can be loaded, not those from Titta.calibrateManual')
                 % prepopulate with previous calibrations passed by user
                 out                 = previousCalibs;
                 % preload the one previously selected by user
@@ -1201,6 +1202,7 @@ classdef Titta < handle
             
             % setup the setup/calibration screens
             if ~isempty(previousCalibs)
+                assert(strcmp(previousCalibs.type,'manual'),'Titta.calibrateManual: only previous calibrations created by Titta.calibrateManual can be loaded, not those from Titta.calibrate')
                 % prepopulating and loading is done inside doManualCalib,
                 % here only copy over the previous calibrations passed by
                 % user
