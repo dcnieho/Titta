@@ -4273,11 +4273,6 @@ classdef Titta < handle
             qHasAutoVal             = ~isempty(controller) && controller.canControl('validation');
             qHasAuto                = qHasAutoCal || qHasAutoVal;
             
-            % timing is done in ticks (display refreshes) instead of time.
-            % If multiple screens, get fs of participant screen as that
-            % should determine tick rate (observer screen runs unsynced)
-            fs = Screen('NominalFrameRate',wpnt(1));
-            
             startT                  = obj.sendMessage('START MANUAL CALIBRATION ROUTINE');
             if qHasEyeOpenness
                 prevEyeOpennessState    = obj.buffer.setIncludeEyeOpennessInGaze(true);
@@ -4474,7 +4469,7 @@ classdef Titta < handle
             else
                 stage                   = 'val';    % will be set to 'cal' below because qToggleStage is true
                 kCal                    = 0;
-                awaitingCalChangeType   = '';           % 'compute' or 'load'
+                awaitingCalChangeType   = '';       % 'compute' or 'load'
                 calLoadSource           = '';
             end
             % 3. selection menus
