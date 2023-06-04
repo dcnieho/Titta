@@ -29,6 +29,7 @@ classdef MonkeyCalController < handle
         rewardProvider;
 
         gazeFetchDur                = 100;          % duration of gaze samples to peek on each iteration (ms, e.g., last 100 ms of gaze)
+        gazeAggregationMethod       = 1;            % 1: use mean of all samples during last gazeFetchDur ms, 2: use mean of last valid sample during last gazeFetchDur ms
         scrRes;
 
         maxOffScreenTime            = 40/60*1000;
@@ -411,9 +412,20 @@ classdef MonkeyCalController < handle
             obj.latestTimestamp = double(gaze.systemTimeStamp(end))/1000;   % us -> ms
             fValid = mean([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],2);
             if any(fValid>minValidFrac)
-                l_gaze = mean(gaze. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
-                r_gaze = mean(gaze.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
-                obj.meanGaze = mean([l_gaze r_gaze],2).*obj.scrRes(:);
+
+                switch obj.gazeAggregationMethod
+                    case 1
+                        % take mean of valid samples
+                        l_gaze = mean(gaze. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
+                        r_gaze = mean(gaze.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
+                        obj.meanGaze = mean([l_gaze r_gaze],2).*obj.scrRes(:);
+                    case 2
+                        % use last valid sample
+                        qValid = all([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],1);
+                        iSamp = find(qValid,1,'last');
+                        obj.meanGaze = mean([gaze.left.gazePoint.onDisplayArea(:,iSamp) gaze.right.gazePoint.onDisplayArea(:,iSamp)],2);
+                        obj.meanGaze = obj.meanGaze.*obj.scrRes(:);
+                end
                 obj.gazeOnScreen = obj.meanGaze(1) > 0 && obj.meanGaze(1)<obj.scrRes(1) && ...
                                    obj.meanGaze(2) > 0 && obj.meanGaze(2)<obj.scrRes(2);
                 if obj.gazeOnScreen
