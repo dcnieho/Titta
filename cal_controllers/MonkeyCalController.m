@@ -89,10 +89,10 @@ classdef MonkeyCalController < handle
             obj.setCleanState();
             obj.EThndl = EThndl;
             obj.calDisplay = calDisplay;
-            if nargin>2
+            if nargin>2 && ~isempty(scrRes)
                 obj.scrRes = scrRes;
             end
-            if nargin>3
+            if nargin>3 && ~isempty(rewardProvider)
                 obj.rewardProvider = rewardProvider;
             end
         end
