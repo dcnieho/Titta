@@ -22,7 +22,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: pypa/cibuildwheel@v2.12.1
+    - uses: pypa/cibuildwheel@v2.13.1
       with:
         package-dir: SDK_wrapper
       env:
