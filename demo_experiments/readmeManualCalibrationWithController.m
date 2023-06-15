@@ -118,6 +118,7 @@ try
     if ismember(numCalPoints,[3 5])
         calController.calAfterFirstCollected = true;
     end
+    calController.setValPoints([1:size(settings.mancal.val.pointPos,1)],settings.mancal.val.pointPos); %#ok<NBRAK2> 
     if DEBUGlevel>0
         calController.logTypes = 1+2*(DEBUGlevel==2);
         calController.logReceiver = 1;
