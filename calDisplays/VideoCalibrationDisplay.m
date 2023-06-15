@@ -54,7 +54,7 @@ classdef VideoCalibrationDisplay < handle
             end
             
             % now that we have a wpnt, interrogate window
-            if isempty(obj.qFloatColorRange)
+            if isempty(obj.qFloatColorRange) && ~isempty(wpnt)
                 obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
             end
             
@@ -94,16 +94,18 @@ classdef VideoCalibrationDisplay < handle
                 end
                 obj.tex = newTex;
             end
-
-            Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
-            if obj.tex>0 && (obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5)
-                if ~isempty(obj.videoSize)
-                    ts = [0 0 obj.videoSize];
-                else
-                    ts = Screen('Rect',obj.tex);
+            
+            if ~isempty(wpnt)
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
+                if obj.tex>0 && (obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5)
+                    if ~isempty(obj.videoSize)
+                        ts = [0 0 obj.videoSize];
+                    else
+                        ts = Screen('Rect',obj.tex);
+                    end
+                    rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
+                    Screen('DrawTexture',wpnt,obj.tex,[],rect);
                 end
-                rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
-                Screen('DrawTexture',wpnt,obj.tex,[],rect);
             end
         end
     end
