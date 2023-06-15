@@ -64,9 +64,12 @@ classdef MonkeyCalController < handle
         showVideoWhenValDone        = true;
         videoSizeWhenValDone        = [600 600];
 
-        calOnVideoTime              = 500;
-        calOnVideoDistFac           = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
-        calAfterFirstCollected      = false;
+        calOnTargetTime             = 500;          % ms
+        calOnTargetDistFac          = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
+        calAfterFirstCollected      = false;        % if true, a calibration compute_and_apply command will be given after the first calibration point is successfully collected, before continueing to collect the next calibration point
+
+        valOnTargetDist             = 150;          % pixels
+        valOnTargetTime             = 500;          % ms
 
         reEntryStateCal             = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
         reEntryStateVal             = MonkeyCalController.stateEnum.val_validating;     % when reactivating controller, discard state up to beginning of this state
@@ -81,6 +84,7 @@ classdef MonkeyCalController < handle
         shouldRewindState           = false;
         shouldClearCal              = false;
         clearCalNow                 = false;
+        clearValNow                 = false;
         activationCount             = struct('cal',0, 'val',0);
         shouldUpdateStatusText;
         trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
@@ -118,6 +122,14 @@ classdef MonkeyCalController < handle
             obj.calPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.calPoss));
         end
 
+        function setValPoints(obj, valPoints,valPoss)
+            assert(obj.controlState < obj.stateEnum.val_validating,'cannot set validation points when already validating or validated')
+            assert(length(unique(valPoints))==length(valPoints),'At least one validation point ID is specified more than once. Specify each validation point only once.')
+            obj.valPoints       = valPoints;                % ID of calibration points to run by the controller, in provided order
+            obj.valPoss         = valPoss;                  % corresponding positions
+            obj.valPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.valPoss));
+        end
+
         function commands = tick(obj)
             commands = {};
             obj.updateGaze();
@@ -136,6 +148,7 @@ classdef MonkeyCalController < handle
                     elseif obj.awaitingPointResult==4 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'cal_cleared')
                         obj.awaitingPointResult = 0;
                         obj.clearCalNow = false;
+                        obj.lastUpdate = {};
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration data cleared, starting controller');
                         end
@@ -181,7 +194,7 @@ classdef MonkeyCalController < handle
                             else
                                 obj.controlState = obj.stateEnum.cal_calibrating;
                                 obj.drawState = 1;
-                                obj.calDisplay.calSize = obj.videoSizeCal;
+                                obj.calDisplay.videoSize = obj.videoSizeCal;
                                 obj.shouldUpdateStatusText = true;
                                 if bitget(obj.logTypes,1)
                                     obj.log_to_cmd('calibrating');
@@ -196,12 +209,37 @@ classdef MonkeyCalController < handle
                 end
             else
                 % validation
-                switch obj.controlState
-                    case obj.stateEnum.val_validating
-                        % validating
-                        commands = obj.validate();
-                    case obj.stateEnum.val_done
-                        % procedure is done: nothing to do
+                if obj.clearValNow
+                    if obj.awaitingPointResult~=2
+                        for p=length(obj.valPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
+                            commands = [commands {{'val','discard_point', obj.valPoints(p), obj.valPoss(p,:)}}]; %#ok<AGROW> 
+                        end
+                        obj.awaitingPointResult = 2;
+                        obj.valPoint = 1;
+                        obj.drawState = 1;
+                        if bitget(obj.logTypes,1)
+                            obj.log_to_cmd('clearing validation state to be sure its clean upon controller activation');
+                        end
+                    elseif obj.awaitingPointResult==2 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_discard')
+                        % check this is for the expected point
+                        if obj.lastUpdate{2}==obj.valPoints(obj.valPoint) && all(obj.lastUpdate{3}==obj.valPoss(obj.valPoint,:))
+                            obj.awaitingPointResult = 0;
+                            obj.clearValNow = false;
+                            obj.shouldUpdateStatusText = true;
+                            obj.lastUpdate = {};
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('validation data cleared, starting controller');
+                            end
+                        end
+                    end
+                else
+                    switch obj.controlState
+                        case obj.stateEnum.val_validating
+                            % validating
+                            commands = obj.validate();
+                        case obj.stateEnum.val_done
+                            % procedure is done: nothing to do
+                    end
                 end
             end
             if obj.shouldDisableForceDraw
@@ -224,21 +262,25 @@ classdef MonkeyCalController < handle
                     isCal = strcmpi(mode,'cal');
                     obj.activationCount.(mode) = obj.activationCount.(mode)+1;
                     if isCal
-                        if obj.activationCount.(mode)>1 && obj.controlState>=obj.reEntryStateCal
+                        if obj.activationCount.cal>1 && obj.controlState>=obj.reEntryStateCal
                             obj.shouldRewindState = true;
                             if obj.controlState>obj.reEntryStateCal
+                                if obj.controlState > obj.stateEnum.cal_done
+                                    obj.controlState = obj.stateEnum.cal_done;
+                                end
                                 obj.controlState = obj.controlState-1;
                             end
                         elseif obj.shouldClearCal
                             obj.clearCalNow = true;
                         end
-                    else
-                        if obj.activationCount.(mode)>1 && obj.controlState>=obj.reEntryStateVal
-                            obj.shouldRewindState = true;
-                            if obj.controlState>obj.reEntryStateVal
-                                obj.controlState = obj.controlState-1;
-                            end
+                        if obj.activationCount.cal==1 && obj.controlState>obj.stateEnum.cal_done
+                            obj.controlState = obj.stateEnum.cal_positioning;
                         end
+                    else
+                        obj.clearValNow = true; % always issue a validation clear, in case there is any data
+                        obj.controlState = obj.stateEnum.val_validating;
+                        obj.shouldUpdateStatusText = true;
+                        obj.calDisplay.videoSize = obj.videoSizeVal;
                     end
                     obj.lastUpdate = {};
                     obj.awaitingPointResult = 0;
@@ -384,7 +426,7 @@ classdef MonkeyCalController < handle
                 if obj.drawState==1
                     drawCmd = 'new';
                     if obj.controlState == obj.stateEnum.cal_positioning
-                        obj.calDisplay.calSize = obj.videoSizes(1,:);
+                        obj.calDisplay.videoSize = obj.videoSizes(1,:);
                     end
                 end
                 if ismember(obj.controlState, [obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing])
@@ -473,6 +515,7 @@ classdef MonkeyCalController < handle
             obj.shouldRewindState   = false;
             obj.shouldClearCal      = false;
             obj.clearCalNow         = false;
+            obj.clearValNow         = false;
             obj.activationCount.cal = 0;
             obj.activationCount.val = 0;
             obj.shouldUpdateStatusText = true;
@@ -602,7 +645,7 @@ classdef MonkeyCalController < handle
                     obj.reward(true);
                     if onScreenTime > obj.videoShrinkTime && rand()<=obj.videoShrinkRate
                         obj.videoSize = min(obj.videoSize+1,size(obj.videoSizes,1));
-                        obj.calDisplay.calSize = obj.videoSizes(obj.videoSize,:);
+                        obj.calDisplay.videoSize = obj.videoSizes(obj.videoSize,:);
                         obj.shouldUpdateStatusText = true;
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('video size decreased to %dx%d',obj.videoSizes(obj.videoSize,:));
@@ -641,7 +684,7 @@ classdef MonkeyCalController < handle
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration cleared, restarting collection');
                         end
-                        obj.calDisplay.calSize = obj.videoSizeCal;
+                        obj.calDisplay.videoSize = obj.videoSizeCal;
                     end
                     obj.shouldUpdateStatusText = true;
                 end
@@ -731,7 +774,7 @@ classdef MonkeyCalController < handle
                             obj.drawState = 0;
                             if obj.showVideoWhenCalDone
                                 commands = [commands {{'cal','enable_force_draw',obj.scrRes(:).'/2}}];
-                                obj.calDisplay.calSize = obj.videoSizeWhenCalDone;
+                                obj.calDisplay.videoSize = obj.videoSizeWhenCalDone;
                                 obj.forceDrawEnabled = true;
                             end
                             if bitget(obj.logTypes,1)
@@ -754,19 +797,19 @@ classdef MonkeyCalController < handle
                 elseif ~isempty(obj.lastUpdate)
                     % unexpected (perhaps stale, e.g. from before auto was switched on) update, discard
                     if bitget(obj.logTypes,1)
-                        obj.log_to_cmd('unexpected update from Titta: %s, discarding',obj.lastUpdate{1});
+                        obj.log_to_cmd('unexpected update from Titta during calibration: %s, discarding',obj.lastUpdate{1});
                     end
                     obj.lastUpdate = {};
                 end
-            elseif dist < obj.calOnVideoDistFac*obj.scrRes(2)
+            elseif dist < obj.calOnTargetDistFac*obj.scrRes(2)
                 obj.reward(true);
                 if obj.onVideoTimestamp<0 || isnan(obj.onVideoTimestamp)
                     obj.onVideoTimestamp = obj.latestTimestamp;
                 end
                 onDur = obj.latestTimestamp-obj.onVideoTimestamp;
-                if onDur > obj.calOnVideoTime && obj.awaitingPointResult==0
+                if onDur > obj.calOnTargetTime && obj.awaitingPointResult==0
                     % request calibration point collection
-                    commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}}; % something with point ID and location, so Titta's logic can double check it knows this point
+                    commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                     obj.awaitingPointResult = 1;
                     obj.drawExtraFrame = true;
                     if bitget(obj.logTypes,1)
@@ -782,12 +825,104 @@ classdef MonkeyCalController < handle
                     obj.reward(false);
                     % request discarding data for this point if its being
                     % collected
-                    if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting
+                    if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting || obj.awaitingPointResult~=0
                         commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                         obj.awaitingPointResult = 2;
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
                         end
+                    end
+                end
+            end
+        end
+
+
+        function commands = validate(obj)
+            commands = {};
+
+            if obj.awaitingPointResult>0
+                % we're waiting for the result of an action. Check if there
+                % is a result and process. Unlike calibration, this does
+                % not short-circuit the logic below, as we may wish to
+                % abort collection of a validation point
+                if obj.awaitingPointResult==1 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_collect')
+                    % check this is for the expected point
+                    if obj.lastUpdate{2}==obj.valPoints(obj.valPoint) && all(obj.lastUpdate{3}==obj.valPoss(obj.valPoint,:))
+                        % validation points always succeed, decide next
+                        % action
+                        if obj.valPoint<length(obj.valPoints)
+                            obj.valPoint = obj.valPoint+1;
+                            obj.awaitingPointResult = 0;
+                            obj.shouldUpdateStatusText = true;
+                            obj.onVideoTimestamp = nan;
+                            obj.drawState = 1;
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('successfully collected validation point %d, continue with collection of point %d', obj.valPoints(obj.valPoint-1), obj.valPoints(obj.valPoint));
+                            end
+                        else
+                            % done validating
+                            obj.awaitingPointResult = 0;
+                            obj.reward(false);
+                            obj.controlState = obj.stateEnum.val_done;
+                            obj.shouldUpdateStatusText = true;
+                            commands = {{'val','disable_controller'}};
+                            obj.drawState = 0;
+                            if obj.showVideoWhenValDone
+                                commands = [commands {{'val','enable_force_draw',obj.scrRes(:).'/2}}];
+                                obj.calDisplay.videoSize = obj.videoSizeWhenValDone;
+                                obj.forceDrawEnabled = true;
+                            end
+                            if bitget(obj.logTypes,1)
+                                obj.log_to_cmd('validation finished, disabling controller');
+                            end
+                            return
+                        end
+                    end
+                    obj.lastUpdate = {};
+                elseif obj.awaitingPointResult==2 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_discard')
+                    % check this is for the expected point
+                    if obj.lastUpdate{2}==obj.valPoints(obj.valPoint) && all(obj.lastUpdate{3}==obj.valPoss(obj.valPoint,:))
+                        obj.awaitingPointResult = 0;
+                    end
+                    obj.lastUpdate = {};
+                elseif ~isempty(obj.lastUpdate)
+                    % unexpected (perhaps stale, e.g. from before auto was switched on) update, discard
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('unexpected update from Titta during validation: %s, discarding',obj.lastUpdate{1});
+                    end
+                    obj.lastUpdate = {};
+                end
+            end
+
+            valPos = obj.valPoss(obj.valPoint,:).*obj.scrRes(:).';
+            distL  = hypot(obj. leftGaze(1)-valPos(1), obj. leftGaze(2)-valPos(2));
+            distR  = hypot(obj.rightGaze(1)-valPos(1), obj.rightGaze(2)-valPos(2));
+            distM  = hypot(obj. meanGaze(1)-valPos(1), obj. meanGaze(2)-valPos(2));
+            minDist = min([distM, distL, distR]);
+            if minDist<obj.valOnTargetDist
+                if obj.onVideoTimestamp<0 || isnan(obj.onVideoTimestamp)
+                    obj.onVideoTimestamp = obj.latestTimestamp;
+                end
+                onDur = obj.latestTimestamp-obj.onVideoTimestamp;
+                if onDur > obj.valOnTargetTime && obj.awaitingPointResult==0
+                    obj.reward(true)
+                    % request validation point collection
+                    commands = {{'val','collect_point', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:)}};
+                    obj.awaitingPointResult = 1;
+                    obj.drawExtraFrame = true;
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('request collection of validation data for point %d @ (%.3f,%.3f)', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:));
+                    end
+                end
+            else
+                obj.reward(false)
+                % request discarding data for this point if its being
+                % collected
+                if obj.valPointsState(obj.valPoint)==obj.pointStateEnum.collecting || obj.awaitingPointResult~=0
+                    commands = {{'val','discard_point', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:)}};
+                    obj.awaitingPointResult = 2;
+                    if bitget(obj.logTypes,1)
+                        obj.log_to_cmd('request discarding validation point %d @ (%.3f,%.3f)',obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:));
                     end
                 end
             end
