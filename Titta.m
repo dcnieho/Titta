@@ -5342,6 +5342,9 @@ classdef Titta < handle
                     pointsP(whichPoint,end) = 2;    %#ok<AGROW> % status: displayed
                     qUpdatePointHover       = true;
                     pointList(1)            = [];
+                    if obj.settings.mancal.(stage).useExtendedNotify
+                        obj.settings.mancal.(stage).pointNotifyFunction(obj,whichPoint,pointsP(whichPoint,1:2),pointsP(whichPoint,3:4),stage,[stage '_collect_started'],[]);
+                    end
                     if strcmp(stage,'cal')
                         calAction                                   = calAction+1;
                         out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPoint,[5 3 4 1 2]);
@@ -5568,14 +5571,14 @@ classdef Titta < handle
                                 fun = obj.settings.mancal.cal.pointNotifyFunction;
                                 extra = {};
                                 if obj.settings.mancal.cal.useExtendedNotify
-                                    extra = {'cal_collect'};
+                                    extra = {'cal_collect_done'};
                                 end
                                 extra = [extra {out.attempt{kCal}.cal{calAction}.collectStatus}]; %#ok<AGROW> 
                             else
                                 fun = obj.settings.mancal.val.pointNotifyFunction;
                                 extra = {};
                                 if obj.settings.mancal.val.useExtendedNotify
-                                    extra = {'val_collect',out.attempt{kCal}.val{valAction}};
+                                    extra = {'val_collect_done',out.attempt{kCal}.val{valAction}};
                                 end
                             end
                             if isa(fun,'function_handle')
