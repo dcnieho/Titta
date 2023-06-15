@@ -8,6 +8,8 @@ classdef MonkeyCalController < handle
         stage;
 
         gazeOnScreen;                               % true if we have gaze for both eyes and the average position is on screen
+        leftGaze;
+        rightGaze;
         meanGaze;
         onScreenTimestamp;                          % time of start of episode of gaze on screen
         offScreenTimestamp;                         % time of start of episode of gaze off screen
@@ -30,6 +32,7 @@ classdef MonkeyCalController < handle
 
         gazeFetchDur                = 100;          % duration of gaze samples to peek on each iteration (ms, e.g., last 100 ms of gaze)
         gazeAggregationMethod       = 1;            % 1: use mean of all samples during last gazeFetchDur ms, 2: use mean of last valid sample during last gazeFetchDur ms
+        minValidGazeFrac            = .5;
         scrRes;
 
         maxOffScreenTime            = 40/60*1000;
@@ -367,10 +370,23 @@ classdef MonkeyCalController < handle
             % draw gaze if wanted
             if obj.showGazeToOperator
                 sz = [1/40 1/120]*obj.scrRes(2);
-                rectH = CenterRectOnPointd([0 0        sz ], obj.meanGaze(1)*sFac+offset(1), obj.meanGaze(2)*sFac+offset(2));
-                rectV = CenterRectOnPointd([0 0 fliplr(sz)], obj.meanGaze(1)*sFac+offset(1), obj.meanGaze(2)*sFac+offset(2));
-                Screen('FillRect',wpnts(end), 0, rectH);
-                Screen('FillRect',wpnts(end), 0, rectV);
+                for p=1:3
+                    switch p
+                        case 1
+                            pos = obj.leftGaze;
+                            clr = [255 0 0];
+                        case 2
+                            pos = obj.rightGaze;
+                            clr = [0 0 255];
+                        case 3
+                            pos = obj.meanGaze;
+                            clr = 0;
+                    end
+                rectH = CenterRectOnPointd([0 0        sz ], pos(1)*sFac+offset(1), pos(2)*sFac+offset(2));
+                rectV = CenterRectOnPointd([0 0 fliplr(sz)], pos(1)*sFac+offset(1), pos(2)*sFac+offset(2));
+                Screen('FillRect',wpnts(end), clr, rectH);
+                Screen('FillRect',wpnts(end), clr, rectV);
+                end
             end
         end
     end
@@ -402,6 +418,8 @@ classdef MonkeyCalController < handle
 
             obj.stage               = '';
             obj.gazeOnScreen        = false;
+            obj.leftGaze            = [nan nan].';
+            obj.rightGaze           = [nan nan].';
             obj.meanGaze            = [nan nan].';
             obj.onScreenTimestamp   = nan;
             obj.offScreenTimestamp  = nan;
@@ -434,25 +452,23 @@ classdef MonkeyCalController < handle
                 return
             end
 
-            minValidFrac = .5;
-
             obj.latestTimestamp = double(gaze.systemTimeStamp(end))/1000;   % us -> ms
             fValid = mean([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],2);
-            if any(fValid>minValidFrac)
-
+            if any(fValid>obj.minValidGazeFrac)
                 switch obj.gazeAggregationMethod
                     case 1
                         % take mean of valid samples
-                        l_gaze = mean(gaze. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan');
-                        r_gaze = mean(gaze.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan');
-                        obj.meanGaze = mean([l_gaze r_gaze],2).*obj.scrRes(:);
+                        obj.leftGaze = mean(gaze. left.gazePoint.onDisplayArea(:,gaze. left.gazePoint.valid),2,'omitnan').*obj.scrRes(:);
+                        obj.rightGaze= mean(gaze.right.gazePoint.onDisplayArea(:,gaze.right.gazePoint.valid),2,'omitnan').*obj.scrRes(:);
                     case 2
                         % use last valid sample
                         qValid = all([gaze.left.gazePoint.valid; gaze.right.gazePoint.valid],1);
                         iSamp = find(qValid,1,'last');
-                        obj.meanGaze = mean([gaze.left.gazePoint.onDisplayArea(:,iSamp) gaze.right.gazePoint.onDisplayArea(:,iSamp)],2);
-                        obj.meanGaze = obj.meanGaze.*obj.scrRes(:);
+                        obj.leftGaze = gaze. left.gazePoint.onDisplayArea(:,iSamp).*obj.scrRes(:);
+                        obj.rightGaze= gaze.right.gazePoint.onDisplayArea(:,iSamp).*obj.scrRes(:);
                 end
+                obj.meanGaze = mean([obj.leftGaze obj.rightGaze],2);
+
                 obj.gazeOnScreen = obj.meanGaze(1) > 0 && obj.meanGaze(1)<obj.scrRes(1) && ...
                                    obj.meanGaze(2) > 0 && obj.meanGaze(2)<obj.scrRes(2);
                 if obj.gazeOnScreen
@@ -464,6 +480,8 @@ classdef MonkeyCalController < handle
                 end
             else
                 obj.gazeOnScreen = false;
+                obj.leftGaze = [nan nan].';
+                obj.rightGaze= [nan nan].';
                 obj.meanGaze = [nan nan].';
                 obj.onScreenTimestamp = nan;
                 if isnan(obj.offScreenTimestamp)
