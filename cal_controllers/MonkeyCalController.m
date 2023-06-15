@@ -81,7 +81,7 @@ classdef MonkeyCalController < handle
         shouldRewindState           = false;
         shouldClearCal              = false;
         clearCalNow                 = false;
-        activationCount             = 0;
+        activationCount             = struct('cal',0, 'val',0);
         shouldUpdateStatusText;
         trackerFrequency;                           % calling obj.EThndl.frequency is blocking when a calibration action is ongoing, so cache the value
 
@@ -196,7 +196,13 @@ classdef MonkeyCalController < handle
                 end
             else
                 % validation
-
+                switch obj.controlState
+                    case obj.stateEnum.val_validating
+                        % validating
+                        commands = obj.validate();
+                    case obj.stateEnum.val_done
+                        % procedure is done: nothing to do
+                end
             end
             if obj.shouldDisableForceDraw
                 if obj.forceDrawEnabled
@@ -213,15 +219,26 @@ classdef MonkeyCalController < handle
                 obj.log_to_cmd('received update of type: %s',type);
             end
             switch type
-                case 'cal_activate'
-                    obj.activationCount = obj.activationCount+1;
-                    if obj.activationCount>1 && obj.controlState>=obj.reEntryStateCal
-                        obj.shouldRewindState = true;
-                        if obj.controlState>obj.reEntryStateCal
-                            obj.controlState = obj.controlState-1;
+                case {'cal_activate','val_activate'}
+                    mode = type(1:3);
+                    isCal = strcmpi(mode,'cal');
+                    obj.activationCount.(mode) = obj.activationCount.(mode)+1;
+                    if isCal
+                        if obj.activationCount.(mode)>1 && obj.controlState>=obj.reEntryStateCal
+                            obj.shouldRewindState = true;
+                            if obj.controlState>obj.reEntryStateCal
+                                obj.controlState = obj.controlState-1;
+                            end
+                        elseif obj.shouldClearCal
+                            obj.clearCalNow = true;
                         end
-                    elseif obj.shouldClearCal
-                        obj.clearCalNow = true;
+                    else
+                        if obj.activationCount.(mode)>1 && obj.controlState>=obj.reEntryStateVal
+                            obj.shouldRewindState = true;
+                            if obj.controlState>obj.reEntryStateVal
+                                obj.controlState = obj.controlState-1;
+                            end
+                        end
                     end
                     obj.lastUpdate = {};
                     obj.awaitingPointResult = 0;
@@ -229,16 +246,13 @@ classdef MonkeyCalController < handle
                     obj.shouldDisableForceDraw = true;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
-                    obj.setTittaPacing('cal','');
+                    obj.setTittaPacing(type(1:3),'');
                     if bitget(obj.logTypes,1)
-                        obj.log_to_cmd('controller activated for calibration. Activation #%d',obj.activationCount);
-                    end
-                case 'val_activate'
-                    % backup Titta pacing duration and set to 0, since the
-                    % controller controls when data should be collected
-                    obj.setTittaPacing('val','');
-                    if bitget(obj.logTypes,1)
-                        obj.log_to_cmd('controller activated for validation. Activation #%d',obj.activationCount);
+                        if isCal
+                            obj.log_to_cmd('controller activated for calibration. Activation #%d',obj.activationCount.(mode));
+                        else
+                            obj.log_to_cmd('controller activated for validation. Activation #%d',obj.activationCount.(mode));
+                        end
                     end
                 case {'cal_deactivate','val_deactivate'}
                     obj.isActive = false;
@@ -265,16 +279,12 @@ classdef MonkeyCalController < handle
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('validation mode entered');
                     end
-                % calibration/validation point collected
-                case {'cal_collect','val_collect'}
+                % calibration point collected
+                case 'cal_collect'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,2)
-                        if startsWith(type,'cal')
-                            success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
-                        else
-                            success = true;
-                        end
-                        obj.log_to_cmd('%s point collect: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
+                        success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        obj.log_to_cmd('calibration point collect: %s',ternary(success,'success','failed'));
                     end
                     % update point status
                     iPoint = find(obj.calPoints==currentPoint);
@@ -282,21 +292,39 @@ classdef MonkeyCalController < handle
                         obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
                     obj.shouldClearCal = true;
-                % calibration/validation point discarded
-                case {'cal_discard','val_discard'}
+                % validation point collected
+                case 'val_collect'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,2)
-                        if startsWith(type,'cal')
-                            success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
-                        else
-                            success = true;
-                        end
-                        obj.log_to_cmd('%s point discard: %s',ternary(startsWith(type,'cal'),'calibration','validation'),ternary(success,'success','failed'));
+                        obj.log_to_cmd('validation point collect: success');
+                    end
+                    % update point status
+                    iPoint = find(obj.valPoints==currentPoint);
+                    if ~isempty(iPoint) && all(posNorm==obj.valPoss(iPoint,:))
+                        obj.valPointsState(iPoint) = obj.pointStateEnum.collected;
+                    end
+                % calibration point discarded
+                case 'cal_discard'
+                    obj.lastUpdate = {type,currentPoint,posNorm,callResult};
+                    if bitget(obj.logTypes,2)
+                        success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
+                        obj.log_to_cmd('calibration point discard: %s',ternary(success,'success','failed'));
                     end
                     % update point status
                     iPoint = find(obj.calPoints==currentPoint);
                     if ~isempty(iPoint) && all(posNorm==obj.calPoss(iPoint,:))
                         obj.calPointsState(iPoint) = obj.pointStateEnum.nothing;
+                    end
+                % validation point discarded
+                case 'val_discard'
+                    obj.lastUpdate = {type,currentPoint,posNorm,callResult};
+                    if bitget(obj.logTypes,2)
+                        obj.log_to_cmd('validation point discard: success');
+                    end
+                    % update point status
+                    iPoint = find(obj.valPoints==currentPoint);
+                    if ~isempty(iPoint) && all(posNorm==obj.valPoss(iPoint,:))
+                        obj.valPointsState(iPoint) = obj.pointStateEnum.nothing;
                     end
                 % new calibration computed (may have failed) or loaded
                 case 'cal_compute_and_apply'
@@ -445,7 +473,8 @@ classdef MonkeyCalController < handle
             obj.shouldRewindState   = false;
             obj.shouldClearCal      = false;
             obj.clearCalNow         = false;
-            obj.activationCount     = 0;
+            obj.activationCount.cal = 0;
+            obj.activationCount.val = 0;
             obj.shouldUpdateStatusText = true;
 
             obj.stage               = '';
