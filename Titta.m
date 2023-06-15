@@ -5587,7 +5587,7 @@ classdef Titta < handle
                             whichPoint = nan;
                             % if no points enqueued, reset calibration
                             % point drawer function (if any)
-                            if isempty(pointList)
+                            if isempty(pointList) && ~qAutoActive && ~qForcePointDraw
                                 drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                             end
                             % if in calibration mode and point states have
@@ -5963,8 +5963,6 @@ classdef Titta < handle
                                         end
                                     case 'enable_force_draw'
                                         qForcePointDraw = true;
-                                        pos = autoCommand{3};
-                                        drawFunction(wpnt(1),'new',nan,pos,tick,stage);
                                     case 'disable_force_draw'
                                         qForcePointDraw = false;
                                 end
@@ -6452,7 +6450,9 @@ classdef Titta < handle
                                 whichPoint = nan;
                                 % reset calibration point drawer
                                 % function
-                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                if ~qAutoActive && ~qForcePointDraw
+                                    drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                end
                                 qDoneSomething = true;
                             end
 
