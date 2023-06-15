@@ -5938,11 +5938,11 @@ classdef Titta < handle
                                             % queued. So fake a response
                                             % here instead when needed
                                             if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
-                                                extra = {};
+                                                callResult = [];
                                                 if strcmp(stage,'cal')
-                                                    extra = {struct('status',0)};
+                                                    callResult = struct('status',0);
                                                 end
-                                                obj.settings.mancal.(stage).pointNotifyFunction(obj,which,pointsP(which,1:2),pointsP(which,3:4),stage,[stage '_discard'],extra{:});
+                                                obj.settings.mancal.(stage).pointNotifyFunction(obj,which,pointsP(which,1:2),pointsP(which,3:4),stage,[stage '_discard'],callResult);
                                             end
                                         end
                                     case 'compute_and_apply'
