@@ -5903,7 +5903,7 @@ classdef Titta < handle
                         qBreak = false;
                         for c=1:length(autoCommands)
                             autoCommand = autoCommands{c};
-                            if strcmp(autoCommand{1},stage)    % check command is for current stage
+                            if strcmp(autoCommand{1},stage)    % check command is for current stage, else ignore
                                 switch autoCommand{2}
                                     case 'collect_point'
                                         which   = autoCommand{3};
@@ -5946,9 +5946,13 @@ classdef Titta < handle
                                             end
                                         end
                                     case 'compute_and_apply'
-                                        qProcessDoCal = true;
+                                        if strcmp(stage,'cal')
+                                            qProcessDoCal = true;
+                                        end
                                     case 'clear'
-                                        qProcessClearCal = true;
+                                        if strcmp(stage,'cal')
+                                            qProcessClearCal = true;
+                                        end
                                     case 'disable_controller'
                                         qAutoActive = false;
                                         if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
