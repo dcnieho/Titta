@@ -70,6 +70,7 @@ classdef MonkeyCalController < handle
 
         valOnTargetDist             = 150;          % pixels
         valOnTargetTime             = 500;          % ms
+        valRandomizeTargets         = true;
 
         reEntryStateCal             = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
         reEntryStateVal             = MonkeyCalController.stateEnum.val_validating;     % when reactivating controller, discard state up to beginning of this state
@@ -211,12 +212,17 @@ classdef MonkeyCalController < handle
                 % validation
                 if obj.clearValNow
                     if obj.awaitingPointResult~=2
+                        obj.valPoint = 1;
+                        if obj.valRandomizeTargets
+                            order = randperm(length(obj.valPoints));
+                            obj.valPoints = obj.valPoints(order);
+                            obj.valPoss   = obj.valPoss(order,:);
+                        end
+                        % ensure we're in clean state
                         for p=length(obj.valPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
                             commands = [commands {{'val','discard_point', obj.valPoints(p), obj.valPoss(p,:)}}]; %#ok<AGROW> 
                         end
                         obj.awaitingPointResult = 2;
-                        obj.valPoint = 1;
-                        obj.drawState = 1;
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('clearing validation state to be sure its clean upon controller activation');
                         end
@@ -227,6 +233,7 @@ classdef MonkeyCalController < handle
                             obj.clearValNow = false;
                             obj.shouldUpdateStatusText = true;
                             obj.lastUpdate = {};
+                            obj.drawState = 1;
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('validation data cleared, starting controller');
                             end
