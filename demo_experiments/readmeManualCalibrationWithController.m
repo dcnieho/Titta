@@ -91,6 +91,7 @@ try
     settings.UI.mancal.headPos              = [.5 .175];
     % calibration display
     settings.mancal.cal.pointPos = [settings.mancal.cal.pointPos; .65, .35; .35, .65];
+    settings.mancal.val.pointPos = [.2 1/3; .4 1/3; .6 1/3; .8 1/3; .2 2/3; .4 2/3; .6 2/3; .8 2/3];
     % calibration display: custom calibration drawer
     calViz                      = VideoCalibrationDisplay();
     settings.mancal.drawFunction= @calViz.doDraw;
