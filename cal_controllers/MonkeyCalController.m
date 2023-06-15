@@ -309,6 +309,8 @@ classdef MonkeyCalController < handle
                     obj.stage = 'cal';
                     if obj.isActive
                         obj.setTittaPacing('cal','val');
+                    elseif obj.forceDrawEnabled
+                        obj.setupForceDraw();
                     end
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('calibration mode entered');
@@ -317,12 +319,18 @@ classdef MonkeyCalController < handle
                     obj.stage = 'val';
                     if obj.isActive
                         obj.setTittaPacing('val','cal');
+                    elseif obj.forceDrawEnabled
+                        obj.setupForceDraw();
                     end
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('validation mode entered');
                     end
+                case 'cal_collect_started'
+                    obj.calDisplay.videoSize = obj.videoSizeCal;
+                case 'val_collect_started'
+                    obj.calDisplay.videoSize = obj.videoSizeVal;
                 % calibration point collected
-                case 'cal_collect'
+                case 'cal_collect_done'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,2)
                         success = callResult.status==0;     % TOBII_RESEARCH_STATUS_OK
@@ -334,8 +342,11 @@ classdef MonkeyCalController < handle
                         obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
                     obj.shouldClearCal = true;
+                    if obj.forceDrawEnabled
+                        obj.setupForceDraw();
+                    end
                 % validation point collected
-                case 'val_collect'
+                case 'val_collect_done'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('validation point collect: success');
@@ -344,6 +355,9 @@ classdef MonkeyCalController < handle
                     iPoint = find(obj.valPoints==currentPoint);
                     if ~isempty(iPoint) && all(posNorm==obj.valPoss(iPoint,:))
                         obj.valPointsState(iPoint) = obj.pointStateEnum.collected;
+                    end
+                    if obj.forceDrawEnabled
+                        obj.setupForceDraw();
                     end
                 % calibration point discarded
                 case 'cal_discard'
@@ -698,7 +712,7 @@ classdef MonkeyCalController < handle
                 if isempty(obj.lastUpdate)
                     return;
                 end
-                if obj.awaitingPointResult==1 && strcmp(obj.lastUpdate{1},'cal_collect')
+                if obj.awaitingPointResult==1 && strcmp(obj.lastUpdate{1},'cal_collect_done')
                     % check this is for the expected point
                     if obj.lastUpdate{2}==obj.calPoints(obj.calPoint) && all(obj.lastUpdate{3}==obj.calPoss(obj.calPoint,:))
                         % check result
@@ -773,9 +787,8 @@ classdef MonkeyCalController < handle
                             commands = {{'cal','disable_controller'}};
                             obj.drawState = 0;
                             if obj.showVideoWhenCalDone
-                                commands = [commands {{'cal','enable_force_draw',obj.scrRes(:).'/2}}];
-                                obj.calDisplay.videoSize = obj.videoSizeWhenCalDone;
-                                obj.forceDrawEnabled = true;
+                                commands = [commands {{'cal','enable_force_draw'}}];
+                                obj.setupForceDraw();
                             end
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('calibration successfully applied, disabling controller');
@@ -845,7 +858,7 @@ classdef MonkeyCalController < handle
                 % is a result and process. Unlike calibration, this does
                 % not short-circuit the logic below, as we may wish to
                 % abort collection of a validation point
-                if obj.awaitingPointResult==1 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_collect')
+                if obj.awaitingPointResult==1 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_collect_done')
                     % check this is for the expected point
                     if obj.lastUpdate{2}==obj.valPoints(obj.valPoint) && all(obj.lastUpdate{3}==obj.valPoss(obj.valPoint,:))
                         % validation points always succeed, decide next
@@ -868,9 +881,8 @@ classdef MonkeyCalController < handle
                             commands = {{'val','disable_controller'}};
                             obj.drawState = 0;
                             if obj.showVideoWhenValDone
-                                commands = [commands {{'val','enable_force_draw',obj.scrRes(:).'/2}}];
-                                obj.calDisplay.videoSize = obj.videoSizeWhenValDone;
-                                obj.forceDrawEnabled = true;
+                                commands = [commands {{'val','enable_force_draw'}}];
+                                obj.setupForceDraw();
                             end
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('validation finished, disabling controller');
@@ -945,6 +957,16 @@ classdef MonkeyCalController < handle
                 end
             end
             obj.EThndl.setOptions(settings);
+        end
+
+        function setupForceDraw(obj)
+            if strcmp(obj.stage,'cal')
+                obj.calDisplay.videoSize = obj.videoSizeWhenCalDone;
+            else
+                obj.calDisplay.videoSize = obj.videoSizeWhenValDone;
+            end
+            obj.calDisplay.doDraw([],'new',nan,obj.scrRes(:).'/2,nan,obj.stage);
+            obj.forceDrawEnabled = true;
         end
 
         function log_to_cmd(obj,msg,varargin)
