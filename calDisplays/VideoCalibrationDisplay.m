@@ -17,7 +17,7 @@ classdef VideoCalibrationDisplay < handle
         blinkInterval       = 0.3;
         blinkCount          = 2;
         bgColor             = 127;
-        calSize             = [];
+        videoSize           = [];
     end
     properties (Access=private, Hidden = true)
         qFloatColorRange;
@@ -97,8 +97,8 @@ classdef VideoCalibrationDisplay < handle
 
             Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
             if obj.tex>0 && (obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5)
-                if ~isempty(obj.calSize)
-                    ts = [0 0 obj.calSize];
+                if ~isempty(obj.videoSize)
+                    ts = [0 0 obj.videoSize];
                 else
                     ts = Screen('Rect',obj.tex);
                 end
