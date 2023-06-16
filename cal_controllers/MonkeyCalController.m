@@ -515,29 +515,10 @@ classdef MonkeyCalController < handle
             end
 
             % draw video rect for operator
-            sz = [];
-            pos = [];
-            if ~obj.isActive && obj.isNonActiveShowingVideo
-                if strcmp(obj.stage,'cal')
-                    sz = obj.calVideoSizeWhenDone;
-                else
-                    sz = obj.valVideoSizeWhenDone;
-                end
-                pos = obj.scrRes/2;
-            else
-                switch obj.controlState
-                    case obj.stateEnum.cal_gazing
-                        sz  = obj.videoSizes(obj.videoSize,:);
-                        pos = obj.scrRes/2;
-                    case obj.stateEnum.cal_calibrating
-                        sz  = obj.calVideoSize;
-                        pos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
-                    case obj.stateEnum.val_validating
-                        sz  = obj.valVideoSize;
-                        pos = obj.valPoss(obj.valPoint,:).*obj.scrRes(:).';
-                end
-            end
-            if ~isempty(sz) && ~isempty(pos)
+            if (~obj.isActive && (obj.isNonActiveShowingVideo || obj.isShowingPointManually)) || ...
+               ismember(obj.controlState, [obj.stateEnum.cal_gazing obj.stateEnum.cal_calibrating obj.stateEnum.val_validating])
+                pos = obj.calDisplay.pos;
+                sz = obj.calDisplay.videoSize;
                 rect = CenterRectOnPointd([0 0 sz*sFac],pos(1)*sFac+offset(1),pos(2)*sFac+offset(2));
                 Screen('FrameRect',wpnts(end),0,rect,4);
             end
