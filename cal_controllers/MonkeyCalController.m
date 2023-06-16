@@ -60,10 +60,14 @@ classdef MonkeyCalController < handle
         calVideoSize                = [300 300];
         calShowVideoWhenDone        = true;
         calVideoSizeWhenDone        = [600 600];
+        calWhenDoneRewardDistFac    = .5;           % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
+        calWhenDoneRewardTime       = 500;          % ms
 
         valVideoSize                = [300 300];
         valShowVideoWhenDone        = true;
         valVideoSizeWhenDone        = [600 600];
+        valWhenDoneRewardDistFac    = .5;           % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
+        valWhenDoneRewardTime       = 500;          % ms
 
         calOnTargetTime             = 500;          % ms
         calOnTargetDistFac          = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
@@ -141,6 +145,7 @@ classdef MonkeyCalController < handle
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
             if ~obj.isActive && obj.isNonActiveShowingVideo     % check like this: non active video showing flag should be ignored when controller is active
                 % check if should be giving reward: when gaze on video
+                obj.determineNonActiveVideoReward();
                 return
             end
             
@@ -297,6 +302,7 @@ classdef MonkeyCalController < handle
                     obj.isActive = true;
                     obj.shouldUpdateStatusText = true;
                     obj.isNonActiveShowingVideo = false;
+                    obj.onVideoTimestamp = nan;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
                     obj.setTittaPacing(type(1:3),'');
@@ -925,6 +931,7 @@ classdef MonkeyCalController < handle
                             obj.reward(false);
                             obj.controlState = obj.stateEnum.val_done;
                             obj.shouldUpdateStatusText = true;
+                            obj.onVideoTimestamp = nan;
                             commands = {{'val','disable_controller'}};
                             obj.drawState = 0;
                             if obj.valShowVideoWhenDone
@@ -1013,6 +1020,38 @@ classdef MonkeyCalController < handle
             end
             obj.drawState = 1;
             obj.isNonActiveShowingVideo = true;
+            obj.onVideoTimestamp = nan;
+        end
+
+        function determineNonActiveVideoReward(obj)
+            vidPos = obj.scrRes/2;
+            distL  = hypot(obj. leftGaze(1)-vidPos(1), obj. leftGaze(2)-vidPos(2));
+            distR  = hypot(obj.rightGaze(1)-vidPos(1), obj.rightGaze(2)-vidPos(2));
+            distM  = hypot(obj. meanGaze(1)-vidPos(1), obj. meanGaze(2)-vidPos(2));
+            minDist = min([distM, distL, distR]);
+
+            if strcmp(obj.stage,'cal')
+                sz      = obj.calVideoSizeWhenDone;
+                distFac = obj.calWhenDoneRewardDistFac;
+                dur     = obj.calWhenDoneRewardTime;
+            else
+                sz      = obj.valVideoSizeWhenDone;
+                distFac = obj.valWhenDoneRewardDistFac;
+                dur     = obj.valWhenDoneRewardTime;
+            end
+            dist = sz(1)*distFac;
+
+            if minDist < dist
+                if obj.onVideoTimestamp<0 || isnan(obj.onVideoTimestamp)
+                    obj.onVideoTimestamp = obj.latestTimestamp;
+                end
+                onDur = obj.latestTimestamp-obj.onVideoTimestamp;
+                if onDur > dur
+                    obj.reward(true)
+                end
+            else
+                obj.reward(false)
+            end
         end
 
         function log_to_cmd(obj,msg,varargin)
