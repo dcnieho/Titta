@@ -2,16 +2,13 @@ classdef VideoCalibrationDisplay < handle
     properties (Access=private, Constant)
         calStateEnum = struct('undefined',0, 'showing',1, 'blinking',2);
     end
-    properties (Access=private)
+    properties (SetAccess=private)
         calState;
-        currentPoint;
         pointStartT;
         blinkStartT;
     end
-    properties (SetAccess=private)
-        images              = {};
-        imageDurations      = [];
-        imageScales         = [];
+    properties (Dependent, SetAccess=private)
+        pos;    % can't set position here, you set it through doDraw() with drawCmd 'new'
     end
     properties
         blinkInterval       = 0.3;
@@ -20,6 +17,7 @@ classdef VideoCalibrationDisplay < handle
         videoSize           = [];
     end
     properties (Access=private, Hidden = true)
+        currentPoint;
         qFloatColorRange;
         cumDurations;
         videoPlayer;
@@ -39,6 +37,10 @@ classdef VideoCalibrationDisplay < handle
         function setCleanState(obj)
             obj.calState        = obj.calStateEnum.undefined;
             obj.currentPoint    = nan(1,3);
+        end
+
+        function pos = get.pos(obj)
+            pos = obj.currentPoint(2:3);
         end
         
         function qAllowAcceptKey = doDraw(obj,wpnt,drawCmd,currentPoint,pos,~,~)
