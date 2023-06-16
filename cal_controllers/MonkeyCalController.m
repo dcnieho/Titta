@@ -87,6 +87,7 @@ classdef MonkeyCalController < handle
     properties (Access=private,Hidden=true)
         isActive                    = false;
         isNonActiveShowingVideo     = false;
+        isShowingPointManually      = false;
         dispensingReward            = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
@@ -138,14 +139,14 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
-            if ~obj.isActive && ~obj.isNonActiveShowingVideo
+            if ~obj.isActive && ~obj.isNonActiveShowingVideo && ~obj.isShowingPointManually
                 return;
             end
             obj.updateGaze();
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
-            if ~obj.isActive && obj.isNonActiveShowingVideo     % check like this: non active video showing flag should be ignored when controller is active
-                % check if should be giving reward: when gaze on video
-                obj.determineNonActiveVideoReward();
+            if ~obj.isActive && (obj.isNonActiveShowingVideo || obj.isShowingPointManually)     % check like this: this logic should only kick in when controller is not active
+                % check if should be giving reward: when gaze on/near video
+                obj.determineNonActiveReward();
                 return
             end
             
@@ -345,8 +346,12 @@ classdef MonkeyCalController < handle
                     end
                 case 'cal_collect_started'
                     obj.calDisplay.videoSize = obj.calVideoSize;
+                    obj.isShowingPointManually = ~obj.isActive;
+                    obj.shouldUpdateStatusText = obj.shouldUpdateStatusText || obj.isShowingPointManually;
                 case 'val_collect_started'
                     obj.calDisplay.videoSize = obj.valVideoSize;
+                    obj.isShowingPointManually = ~obj.isActive;
+                    obj.shouldUpdateStatusText = obj.shouldUpdateStatusText || obj.isShowingPointManually;
                 % calibration point collected
                 case 'cal_collect_done'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
@@ -359,7 +364,9 @@ classdef MonkeyCalController < handle
                     if ~isempty(iPoint) && all(posNorm==obj.calPoss(iPoint,:))
                         obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
-                    obj.shouldClearCal = true;
+                    obj.shouldClearCal = true;  % mark that we need to clear calibration if controller is activated
+                    obj.shouldUpdateStatusText = obj.shouldUpdateStatusText || obj.isShowingPointManually;
+                    obj.isShowingPointManually = false;
                     if obj.isNonActiveShowingVideo
                         obj.setupNonActiveVideo();
                     end
@@ -374,6 +381,8 @@ classdef MonkeyCalController < handle
                     if ~isempty(iPoint) && all(posNorm==obj.valPoss(iPoint,:))
                         obj.valPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
+                    obj.shouldUpdateStatusText = obj.shouldUpdateStatusText || obj.isShowingPointManually;
+                    obj.isShowingPointManually = false;
                     if obj.isNonActiveShowingVideo
                         obj.setupNonActiveVideo();
                     end
@@ -409,7 +418,7 @@ classdef MonkeyCalController < handle
                     end
                 % a calibration was loaded
                 case 'cal_load'
-                    % mark that we need to clear it if controller is activated
+                    % mark that we need to clear calibration if controller is activated
                     obj.shouldClearCal = true;
                 % calibration was cleared: now at a blank slate
                 case 'cal_cleared'
@@ -437,6 +446,9 @@ classdef MonkeyCalController < handle
             end
             if ~obj.isActive
                 txt = 'Inactive';
+                if obj.isShowingPointManually
+                    txt = [txt ', showing point manually'];
+                end
             else
                 switch obj.controlState
                     case obj.stateEnum.cal_positioning
@@ -464,10 +476,10 @@ classdef MonkeyCalController < handle
             % second for operator
             % sFac and offset are used to scale from participant screen to
             % operator screen, in case they have different resolutions
-            if ~obj.isActive && ~obj.isNonActiveShowingVideo
+            if ~obj.isActive && ~obj.isNonActiveShowingVideo && ~obj.isShowingPointManually
                 return;
             end
-            if obj.drawState>0
+            if obj.drawState>0 && ~obj.isShowingPointManually
                 drawCmd = 'draw';
                 if obj.drawState==1
                     drawCmd = 'new';
@@ -574,6 +586,7 @@ classdef MonkeyCalController < handle
             end
             obj.isActive            = false;
             obj.isNonActiveShowingVideo = false;
+            obj.isShowingPointManually  = false;
             obj.dispensingReward    = false;
             obj.controlState        = obj.stateEnum.cal_positioning;
             obj.shouldRewindState   = false;
@@ -1023,22 +1036,23 @@ classdef MonkeyCalController < handle
             obj.onVideoTimestamp = nan;
         end
 
-        function determineNonActiveVideoReward(obj)
-            vidPos = obj.scrRes/2;
+        function determineNonActiveReward(obj)
+            % for during manual calibration points and when showing video
+            % after a calibration or validation
+            vidPos = obj.calDisplay.pos;
             distL  = hypot(obj. leftGaze(1)-vidPos(1), obj. leftGaze(2)-vidPos(2));
             distR  = hypot(obj.rightGaze(1)-vidPos(1), obj.rightGaze(2)-vidPos(2));
             distM  = hypot(obj. meanGaze(1)-vidPos(1), obj. meanGaze(2)-vidPos(2));
             minDist = min([distM, distL, distR]);
 
             if strcmp(obj.stage,'cal')
-                sz      = obj.calVideoSizeWhenDone;
                 distFac = obj.calWhenDoneRewardDistFac;
                 dur     = obj.calWhenDoneRewardTime;
             else
-                sz      = obj.valVideoSizeWhenDone;
                 distFac = obj.valWhenDoneRewardDistFac;
                 dur     = obj.valWhenDoneRewardTime;
             end
+            sz = obj.calDisplay.videoSize;
             dist = sz(1)*distFac;
 
             if minDist < dist
