@@ -81,6 +81,7 @@ classdef MonkeyCalController < handle
     end
     properties (Access=private,Hidden=true)
         isActive                    = false;
+        dispensingReward            = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
         shouldClearCal              = false;
@@ -436,6 +437,7 @@ classdef MonkeyCalController < handle
                 case obj.stateEnum.val_done
                     txt = 'Validation done';
             end
+            txt = sprintf('%s\nReward: %s',txt,ternary(obj.dispensingReward,'on','off'));
             obj.shouldUpdateStatusText = false;
         end
 
@@ -532,6 +534,8 @@ classdef MonkeyCalController < handle
             if bitget(obj.logTypes,1)
                 obj.log_to_cmd('cleanup state');
             end
+            obj.isActive            = false;
+            obj.dispensingReward    = false;
             obj.controlState        = obj.stateEnum.cal_positioning;
             obj.shouldRewindState   = false;
             obj.shouldClearCal      = false;
@@ -622,9 +626,16 @@ classdef MonkeyCalController < handle
         end
 
         function reward(obj,on)
+            on = ~~on;
+            if (on && obj.dispensingReward) || (~on && ~obj.dispensingReward)
+                % nothing to do, already in expected state
+                return
+            end
+            obj.dispensingReward = on;
             if bitget(obj.logTypes,3)
                 obj.log_to_cmd('reward: %s',ternary(on,'on','off'));
             end
+            obj.shouldUpdateStatusText = true;
             if isempty(obj.rewardProvider)
                 return
             end
@@ -859,7 +870,6 @@ classdef MonkeyCalController < handle
 
         function commands = validate(obj)
             commands = {};
-
             if obj.awaitingPointResult>0
                 % we're waiting for the result of an action. Check if there
                 % is a result and process. Unlike calibration, this does
