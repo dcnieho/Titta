@@ -419,10 +419,13 @@ classdef MonkeyCalController < handle
             end
         end
 
-        function txt = getStatusText(obj)
+        function txt = getStatusText(obj,force)
             % return '!!clear_status' if you want to remove the status text
+            if nargin<2
+                force = false;
+            end
             txt = '';
-            if ~obj.shouldUpdateStatusText
+            if ~obj.shouldUpdateStatusText && ~force
                 return
             end
             if ~obj.isActive
