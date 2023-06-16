@@ -293,6 +293,7 @@ classdef MonkeyCalController < handle
                     obj.lastUpdate = {};
                     obj.awaitingPointResult = 0;
                     obj.isActive = true;
+                    obj.shouldUpdateStatusText = true;
                     obj.shouldDisableForceDraw = true;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
@@ -306,6 +307,7 @@ classdef MonkeyCalController < handle
                     end
                 case {'cal_deactivate','val_deactivate'}
                     obj.isActive = false;
+                    obj.shouldUpdateStatusText = true;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
                     obj.setTittaPacing('',type(1:3));
@@ -421,21 +423,25 @@ classdef MonkeyCalController < handle
             if ~obj.shouldUpdateStatusText
                 return
             end
-            switch obj.controlState
-                case obj.stateEnum.cal_positioning
-                    txt = sprintf('Positioning %d/%d',obj.onScreenTimeThresh, obj.onScreenTimeThreshCap);
-                case obj.stateEnum.cal_gazing
-                    % draw video rect
-                    txt = sprintf('Gaze training\nvideo size %d/%d',obj.videoSize,size(obj.videoSizes,1));
-                case obj.stateEnum.cal_calibrating
-                    txt = sprintf('Calibrating %d/%d',obj.calPoint,length(obj.calPoints));
-                case obj.stateEnum.cal_done
-                    txt = 'Calibration done';
+            if ~obj.isActive
+                txt = 'Inactive';
+            else
+                switch obj.controlState
+                    case obj.stateEnum.cal_positioning
+                        txt = sprintf('Positioning %d/%d',obj.onScreenTimeThresh, obj.onScreenTimeThreshCap);
+                    case obj.stateEnum.cal_gazing
+                        % draw video rect
+                        txt = sprintf('Gaze training\nvideo size %d/%d',obj.videoSize,size(obj.videoSizes,1));
+                    case obj.stateEnum.cal_calibrating
+                        txt = sprintf('Calibrating %d/%d',obj.calPoint,length(obj.calPoints));
+                    case obj.stateEnum.cal_done
+                        txt = 'Calibration done';
 
-                case obj.stateEnum.val_validating
-                    txt = sprintf('Validating %d/%d',obj.valPoint,length(obj.valPoints));
-                case obj.stateEnum.val_done
-                    txt = 'Validation done';
+                    case obj.stateEnum.val_validating
+                        txt = sprintf('Validating %d/%d',obj.valPoint,length(obj.valPoints));
+                    case obj.stateEnum.val_done
+                        txt = 'Validation done';
+                end
             end
             txt = sprintf('%s\nReward: %s',txt,ternary(obj.dispensingReward,'on','off'));
             obj.shouldUpdateStatusText = false;
