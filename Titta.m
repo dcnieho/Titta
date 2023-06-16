@@ -4540,6 +4540,7 @@ classdef Titta < handle
             qAutoActive             = false;
             autoCommands            = {};
             qUpdateAutoStatusText   = false;
+            qForceUpdateAutoStatusText = false;
             controllerStatusText    = '';
             autoStatusTextCache     = [];
             % 12. auto calibration mode
@@ -4631,6 +4632,7 @@ classdef Titta < handle
                             if qAutoActive && ~qHasAutoCal
                                 qAutoActive = false;
                             end
+                            qForceUpdateAutoStatusText = true;
                             % hide/show auto mode button if necessary
                             but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoCal;
                             % make calibration and discard buttons visible, if wanted
@@ -4657,6 +4659,7 @@ classdef Titta < handle
                             if qAutoActive && ~qHasAutoVal
                                 qAutoActive = false;
                             end
+                            qForceUpdateAutoStatusText = true;
                             % hide/show auto mode button if necessary
                             but(6).visible = obj.settings.UI.button.mancal.toggAuto.visible && qHasAutoVal;
                             % no calibration and discard buttons when
@@ -5609,13 +5612,14 @@ classdef Titta < handle
                     % check controller, if any
                     if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                         autoCommands = controller.tick();
-                        controllerStatusText = controller.getStatusText();
+                        controllerStatusText = controller.getStatusText(qForceUpdateAutoStatusText);
                         if ~isempty(controllerStatusText)
                             if strcmp(controllerStatusText,'!!clear_status')
                                 controllerStatusText = '';
                             end
                             qUpdateAutoStatusText = true;
                         end
+                        qForceUpdateAutoStatusText = false;
                     end
                     
                     % get eye data if needed
