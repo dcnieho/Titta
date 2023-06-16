@@ -4544,8 +4544,6 @@ classdef Titta < handle
             autoStatusTextCache     = [];
             % 12. auto calibration mode
             qAutoCalibrate          = obj.settings.mancal.cal.autoCalibrate;
-            % 13. calibration point drawer state
-            qForcePointDraw         = false;
             
             % setup canvas positions if needed
             qDrawEyeValidity    = false;
@@ -5587,7 +5585,7 @@ classdef Titta < handle
                             whichPoint = nan;
                             % if no points enqueued, reset calibration
                             % point drawer function (if any)
-                            if isempty(pointList) && ~qAutoActive && ~qForcePointDraw
+                            if isempty(pointList) && ~qAutoActive
                                 drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                             end
                             % if in calibration mode and point states have
@@ -5609,7 +5607,7 @@ classdef Titta < handle
                     end
 
                     % check controller, if any
-                    if qAutoActive
+                    if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                         autoCommands = controller.tick();
                         controllerStatusText = controller.getStatusText();
                         if ~isempty(controllerStatusText)
@@ -5749,7 +5747,7 @@ classdef Titta < handle
                     end
 
                     % draw controller annotations, if any
-                    if qAutoActive
+                    if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                         controller.draw(wpnt, tick, obj.scrInfo.sFac, obj.scrInfo.offset.');
                     end
                     
@@ -5880,10 +5878,6 @@ classdef Titta < handle
                     if ~isnan(whichPoint)
                         qAllowAccept= drawFunction(wpnt(1),drawCmd,whichPoint,pointsP(whichPoint,3:4),tick,stage);
                         drawCmd     = 'draw';
-                    elseif qForcePointDraw
-                        % we assume some other logic already told drawer
-                        % where point should be
-                        drawFunction(wpnt(1),'draw',nan,[],tick,stage);
                     end
                     
                     % drawing done, show
@@ -5964,10 +5958,8 @@ classdef Titta < handle
                                         if isa(obj.settings.mancal.(stage).pointNotifyFunction,'function_handle') && obj.settings.mancal.(stage).useExtendedNotify
                                             obj.settings.mancal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_deactivate',stage),[]);
                                         end
-                                    case 'enable_force_draw'
-                                        qForcePointDraw = true;
-                                    case 'disable_force_draw'
-                                        qForcePointDraw = false;
+                                    otherwise
+                                        error('Titta: manual calibration: received command ''%s'' from calibration controller that I do not understand',autoCommand{2});
                                 end
                             end
                         end
@@ -6453,7 +6445,7 @@ classdef Titta < handle
                                 whichPoint = nan;
                                 % reset calibration point drawer
                                 % function
-                                if ~qAutoActive && ~qForcePointDraw
+                                if ~qAutoActive
                                     drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
                                 end
                                 qDoneSomething = true;
