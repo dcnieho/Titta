@@ -57,12 +57,13 @@ classdef MonkeyCalController < handle
                                     400 400;
                                     300 300;
                                     ];
-        videoSizeCal                = [300 300];
-        showVideoWhenCalDone        = true;
-        videoSizeWhenCalDone        = [600 600];
-        videoSizeVal                = [300 300];
-        showVideoWhenValDone        = true;
-        videoSizeWhenValDone        = [600 600];
+        calVideoSize                = [300 300];
+        calShowVideoWhenDone        = true;
+        calVideoSizeWhenDone        = [600 600];
+
+        valVideoSize                = [300 300];
+        valShowVideoWhenDone        = true;
+        valVideoSizeWhenDone        = [600 600];
 
         calOnTargetTime             = 500;          % ms
         calOnTargetDistFac          = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
@@ -204,7 +205,7 @@ classdef MonkeyCalController < handle
                             else
                                 obj.controlState = obj.stateEnum.cal_calibrating;
                                 obj.drawState = 1;
-                                obj.calDisplay.videoSize = obj.videoSizeCal;
+                                obj.calDisplay.videoSize = obj.calVideoSize;
                                 obj.shouldUpdateStatusText = true;
                                 if bitget(obj.logTypes,1)
                                     obj.log_to_cmd('calibrating');
@@ -289,7 +290,7 @@ classdef MonkeyCalController < handle
                         obj.clearValNow = true; % always issue a validation clear, in case there is any data
                         obj.controlState = obj.stateEnum.val_validating;
                         obj.shouldUpdateStatusText = true;
-                        obj.calDisplay.videoSize = obj.videoSizeVal;
+                        obj.calDisplay.videoSize = obj.valVideoSize;
                     end
                     obj.lastUpdate = {};
                     obj.awaitingPointResult = 0;
@@ -337,9 +338,9 @@ classdef MonkeyCalController < handle
                         obj.log_to_cmd('validation mode entered');
                     end
                 case 'cal_collect_started'
-                    obj.calDisplay.videoSize = obj.videoSizeCal;
+                    obj.calDisplay.videoSize = obj.calVideoSize;
                 case 'val_collect_started'
-                    obj.calDisplay.videoSize = obj.videoSizeVal;
+                    obj.calDisplay.videoSize = obj.valVideoSize;
                 % calibration point collected
                 case 'cal_collect_done'
                     obj.lastUpdate = {type,currentPoint,posNorm,callResult};
@@ -500,9 +501,9 @@ classdef MonkeyCalController < handle
             pos = [];
             if ~obj.isActive && obj.isNonActiveShowingVideo
                 if strcmp(obj.stage,'cal')
-                    sz = obj.videoSizeWhenCalDone;
+                    sz = obj.calVideoSizeWhenDone;
                 else
-                    sz = obj.videoSizeWhenValDone;
+                    sz = obj.valVideoSizeWhenDone;
                 end
                 pos = obj.scrRes/2;
             else
@@ -511,10 +512,10 @@ classdef MonkeyCalController < handle
                         sz  = obj.videoSizes(obj.videoSize,:);
                         pos = obj.scrRes/2;
                     case obj.stateEnum.cal_calibrating
-                        sz  = obj.videoSizeCal;
+                        sz  = obj.calVideoSize;
                         pos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
                     case obj.stateEnum.val_validating
-                        sz  = obj.videoSizeVal;
+                        sz  = obj.valVideoSize;
                         pos = obj.valPoss(obj.valPoint,:).*obj.scrRes(:).';
                 end
             end
@@ -746,7 +747,7 @@ classdef MonkeyCalController < handle
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration cleared, restarting collection');
                         end
-                        obj.calDisplay.videoSize = obj.videoSizeCal;
+                        obj.calDisplay.videoSize = obj.calVideoSize;
                     end
                     obj.shouldUpdateStatusText = true;
                 end
@@ -834,7 +835,7 @@ classdef MonkeyCalController < handle
                             obj.shouldUpdateStatusText = true;
                             commands = {{'cal','disable_controller'}};
                             obj.drawState = 0;
-                            if obj.showVideoWhenCalDone
+                            if obj.calShowVideoWhenDone
                                 obj.setupNonActiveVideo();
                             end
                             if bitget(obj.logTypes,1)
@@ -926,7 +927,7 @@ classdef MonkeyCalController < handle
                             obj.shouldUpdateStatusText = true;
                             commands = {{'val','disable_controller'}};
                             obj.drawState = 0;
-                            if obj.showVideoWhenValDone
+                            if obj.valShowVideoWhenDone
                                 obj.setupNonActiveVideo();
                             end
                             if bitget(obj.logTypes,1)
@@ -1006,9 +1007,9 @@ classdef MonkeyCalController < handle
 
         function setupNonActiveVideo(obj)
             if strcmp(obj.stage,'cal')
-                obj.calDisplay.videoSize = obj.videoSizeWhenCalDone;
+                obj.calDisplay.videoSize = obj.calVideoSizeWhenDone;
             else
-                obj.calDisplay.videoSize = obj.videoSizeWhenValDone;
+                obj.calDisplay.videoSize = obj.valVideoSizeWhenDone;
             end
             obj.drawState = 1;
             obj.isNonActiveShowingVideo = true;
