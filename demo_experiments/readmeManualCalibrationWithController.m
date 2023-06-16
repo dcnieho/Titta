@@ -121,7 +121,7 @@ try
     end
     calController.setValPoints([1:size(settings.mancal.val.pointPos,1)],settings.mancal.val.pointPos); %#ok<NBRAK2> 
     if DEBUGlevel>0
-        calController.logTypes = 1+2*(DEBUGlevel==2);
+        calController.logTypes = 1+2*(DEBUGlevel==2)+4; % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
         calController.logReceiver = 1;
     end
     % calibration logic: only manual calibration attempts since controller
