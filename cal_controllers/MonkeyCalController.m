@@ -81,6 +81,7 @@ classdef MonkeyCalController < handle
     end
     properties (Access=private,Hidden=true)
         isActive                    = false;
+        isNonActiveShowingVideo     = false;
         dispensingReward            = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
@@ -96,8 +97,6 @@ classdef MonkeyCalController < handle
 
         drawState                   = 0;            % 0: don't issue draws from here; 1: new command should be given to drawer; 2: regular draw command should be given
         drawExtraFrame              = false;        % because command in tick() is only processed in Titta after fixation point is drawn, we need to draw one extra frame here to avoid flashing when starting calibration point collection
-        forceDrawEnabled            = false;
-        shouldDisableForceDraw      = false;
 
         backupPaceDuration          = struct('cal',[],'val',[]);
     end
@@ -134,8 +133,17 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
+            if ~obj.isActive && ~obj.isNonActiveShowingVideo
+                return;
+            end
             obj.updateGaze();
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
+            if ~obj.isActive && obj.isNonActiveShowingVideo     % check like this: non active video showing flag should be ignored when controller is active
+                % check if should be giving reward: when gaze on video
+                return
+            end
+            
+            % normal controller active mode
             if strcmp(obj.stage,'cal')
                 if offScreenTime > obj.maxOffScreenTime
                     obj.reward(false);
@@ -250,13 +258,6 @@ classdef MonkeyCalController < handle
                     end
                 end
             end
-            if obj.shouldDisableForceDraw
-                if obj.forceDrawEnabled
-                    commands = [commands {{obj.stage,'disable_force_draw'}}];
-                    obj.forceDrawEnabled = false;
-                end
-                obj.shouldDisableForceDraw = false;
-            end
         end
 
         function receiveUpdate(obj,~,currentPoint,posNorm,~,~,type,callResult)
@@ -294,7 +295,7 @@ classdef MonkeyCalController < handle
                     obj.awaitingPointResult = 0;
                     obj.isActive = true;
                     obj.shouldUpdateStatusText = true;
-                    obj.shouldDisableForceDraw = true;
+                    obj.isNonActiveShowingVideo = false;
                     % backup Titta pacing duration and set to 0, since the
                     % controller controls when data should be collected
                     obj.setTittaPacing(type(1:3),'');
@@ -319,8 +320,8 @@ classdef MonkeyCalController < handle
                     obj.stage = 'cal';
                     if obj.isActive
                         obj.setTittaPacing('cal','val');
-                    elseif obj.forceDrawEnabled
-                        obj.setupForceDraw();
+                    elseif obj.isNonActiveShowingVideo
+                        obj.setupNonActiveVideo();
                     end
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('calibration mode entered');
@@ -329,8 +330,8 @@ classdef MonkeyCalController < handle
                     obj.stage = 'val';
                     if obj.isActive
                         obj.setTittaPacing('val','cal');
-                    elseif obj.forceDrawEnabled
-                        obj.setupForceDraw();
+                    elseif obj.isNonActiveShowingVideo
+                        obj.setupNonActiveVideo();
                     end
                     if bitget(obj.logTypes,2)
                         obj.log_to_cmd('validation mode entered');
@@ -352,8 +353,8 @@ classdef MonkeyCalController < handle
                         obj.calPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
                     obj.shouldClearCal = true;
-                    if obj.forceDrawEnabled
-                        obj.setupForceDraw();
+                    if obj.isNonActiveShowingVideo
+                        obj.setupNonActiveVideo();
                     end
                 % validation point collected
                 case 'val_collect_done'
@@ -366,8 +367,8 @@ classdef MonkeyCalController < handle
                     if ~isempty(iPoint) && all(posNorm==obj.valPoss(iPoint,:))
                         obj.valPointsState(iPoint) = obj.pointStateEnum.collected;
                     end
-                    if obj.forceDrawEnabled
-                        obj.setupForceDraw();
+                    if obj.isNonActiveShowingVideo
+                        obj.setupNonActiveVideo();
                     end
                 % calibration point discarded
                 case 'cal_discard'
@@ -412,7 +413,7 @@ classdef MonkeyCalController < handle
                     obj.shouldClearCal = false;
                 % interface exited from calibration or validation screen
                 case {'cal_finished','val_finished'}
-                    % we're done according to operator, clear
+                    % we're done according to operator, clean up
                     obj.setTittaPacing('',type(1:3));
                     obj.setCleanState();
             end
@@ -451,6 +452,11 @@ classdef MonkeyCalController < handle
         function draw(obj,wpnts,tick,sFac,offset)
             % wpnts: two window pointers. first is for participant screen,
             % second for operator
+            % sFac and offset are used to scale from participant screen to
+            % operator screen, in case they have different resolutions
+            if ~obj.isActive && ~obj.isNonActiveShowingVideo
+                return;
+            end
             if obj.drawState>0
                 drawCmd = 'draw';
                 if obj.drawState==1
@@ -459,7 +465,10 @@ classdef MonkeyCalController < handle
                         obj.calDisplay.videoSize = obj.videoSizes(1,:);
                     end
                 end
-                if ismember(obj.controlState, [obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing])
+                pos = [nan nan];
+                if ~obj.isActive && obj.isNonActiveShowingVideo
+                    pos = obj.scrRes/2;
+                elseif ismember(obj.controlState, [obj.stateEnum.cal_positioning obj.stateEnum.cal_gazing])
                     pos = obj.scrRes/2;
                 elseif obj.controlState == obj.stateEnum.cal_calibrating
                     calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
@@ -474,29 +483,41 @@ classdef MonkeyCalController < handle
                 if obj.awaitingPointResult~=1 || obj.drawExtraFrame
                     obj.calDisplay.doDraw(wpnts(1),drawCmd,nan,pos,tick,obj.stage);
                 end
-                obj.drawState = 2;
+                if ~isnan(pos(1))
+                    obj.drawState = 2;
+                end
 
                 if obj.awaitingPointResult~=1 && obj.drawExtraFrame
                     obj.drawExtraFrame = false;
                 end
             end
-            % sFac and offset are used to scale from participant screen to
-            % operator screen, in case they have different resolutions
-            switch obj.controlState
-                case obj.stateEnum.cal_positioning
-                    % nothing to draw
-                case obj.stateEnum.cal_gazing
-                    % draw video rect
-                    rect = CenterRectOnPointd([0 0 obj.videoSizes(obj.videoSize,:)*sFac],obj.scrRes(1)/2*sFac+offset(1),obj.scrRes(2)/2*sFac+offset(2));
-                    Screen('FrameRect',wpnts(end),0,rect,4);
-                case obj.stateEnum.cal_calibrating
-                    calPos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
-                    rect = CenterRectOnPointd([0 0 obj.videoSizeCal*sFac],calPos(1)*sFac+offset(1),calPos(2)*sFac+offset(2));
-                    Screen('FrameRect',wpnts(end),0,rect,4);
-                case obj.stateEnum.val_validating
-                    valPos = obj.valPoss(obj.valPoint,:).*obj.scrRes(:).';
-                    rect = CenterRectOnPointd([0 0 obj.videoSizeVal*sFac],valPos(1)*sFac+offset(1),valPos(2)*sFac+offset(2));
-                    Screen('FrameRect',wpnts(end),0,rect,4);
+
+            % draw video rect for operator
+            sz = [];
+            pos = [];
+            if ~obj.isActive && obj.isNonActiveShowingVideo
+                if strcmp(obj.stage,'cal')
+                    sz = obj.videoSizeWhenCalDone;
+                else
+                    sz = obj.videoSizeWhenValDone;
+                end
+                pos = obj.scrRes/2;
+            else
+                switch obj.controlState
+                    case obj.stateEnum.cal_gazing
+                        sz  = obj.videoSizes(obj.videoSize,:);
+                        pos = obj.scrRes/2;
+                    case obj.stateEnum.cal_calibrating
+                        sz  = obj.videoSizeCal;
+                        pos = obj.calPoss(obj.calPoint,:).*obj.scrRes(:).';
+                    case obj.stateEnum.val_validating
+                        sz  = obj.videoSizeVal;
+                        pos = obj.valPoss(obj.valPoint,:).*obj.scrRes(:).';
+                end
+            end
+            if ~isempty(sz) && ~isempty(pos)
+                rect = CenterRectOnPointd([0 0 sz*sFac],pos(1)*sFac+offset(1),pos(2)*sFac+offset(2));
+                Screen('FrameRect',wpnts(end),0,rect,4);
             end
 
             % draw gaze if wanted
@@ -542,6 +563,7 @@ classdef MonkeyCalController < handle
                 obj.log_to_cmd('cleanup state');
             end
             obj.isActive            = false;
+            obj.isNonActiveShowingVideo = false;
             obj.dispensingReward    = false;
             obj.controlState        = obj.stateEnum.cal_positioning;
             obj.shouldRewindState   = false;
@@ -579,8 +601,6 @@ classdef MonkeyCalController < handle
 
             obj.drawState           = 1;
             obj.drawExtraFrame      = false;
-            obj.forceDrawEnabled    = false;
-            obj.shouldDisableForceDraw  = false;
             obj.backupPaceDuration  = struct('cal',[],'val',[]);
         end
 
@@ -812,8 +832,7 @@ classdef MonkeyCalController < handle
                             commands = {{'cal','disable_controller'}};
                             obj.drawState = 0;
                             if obj.showVideoWhenCalDone
-                                commands = [commands {{'cal','enable_force_draw'}}];
-                                obj.setupForceDraw();
+                                obj.setupNonActiveVideo();
                             end
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('calibration successfully applied, disabling controller');
@@ -905,8 +924,7 @@ classdef MonkeyCalController < handle
                             commands = {{'val','disable_controller'}};
                             obj.drawState = 0;
                             if obj.showVideoWhenValDone
-                                commands = [commands {{'val','enable_force_draw'}}];
-                                obj.setupForceDraw();
+                                obj.setupNonActiveVideo();
                             end
                             if bitget(obj.logTypes,1)
                                 obj.log_to_cmd('validation finished, disabling controller');
@@ -983,14 +1001,14 @@ classdef MonkeyCalController < handle
             obj.EThndl.setOptions(settings);
         end
 
-        function setupForceDraw(obj)
+        function setupNonActiveVideo(obj)
             if strcmp(obj.stage,'cal')
                 obj.calDisplay.videoSize = obj.videoSizeWhenCalDone;
             else
                 obj.calDisplay.videoSize = obj.videoSizeWhenValDone;
             end
-            obj.calDisplay.doDraw([],'new',nan,obj.scrRes(:).'/2,nan,obj.stage);
-            obj.forceDrawEnabled = true;
+            obj.drawState = 1;
+            obj.isNonActiveShowingVideo = true;
         end
 
         function log_to_cmd(obj,msg,varargin)
