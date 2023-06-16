@@ -5275,7 +5275,7 @@ classdef Titta < handle
                 end
 
                 if qUpdateAutoStatusText
-                    if controllerStatusText==-1
+                    if isempty(controllerStatusText)
                         autoStatusTextCache = [];
                     else
                         Screen('TextFont', wpnt(end), obj.settings.UI.mancal.calState.text.font, obj.settings.UI.mancal.calState.text.style);
@@ -5613,6 +5613,9 @@ classdef Titta < handle
                         autoCommands = controller.tick();
                         controllerStatusText = controller.getStatusText();
                         if ~isempty(controllerStatusText)
+                            if strcmp(controllerStatusText,'!!clear_status')
+                                controllerStatusText = '';
+                            end
                             qUpdateAutoStatusText = true;
                         end
                     end
