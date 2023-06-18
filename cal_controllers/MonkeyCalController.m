@@ -431,6 +431,7 @@ classdef MonkeyCalController < handle
                 case {'cal_finished','val_finished'}
                     % we're done according to operator, clean up
                     obj.setTittaPacing('',type(1:3));
+                    obj.reward(false);
                     obj.setCleanState();
             end
         end
