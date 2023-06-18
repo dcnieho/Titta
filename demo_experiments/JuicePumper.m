@@ -30,6 +30,8 @@ classdef JuicePumper < handle
 
         function delete(obj)
             if ~isempty(obj.portHandle)
+                % ensure we stop the juice before we destruct
+                obj.stop();
                 delete(obj.portHandle)
             end
         end
