@@ -5609,8 +5609,8 @@ classdef Titta < handle
                         end
                     end
 
-                    % check controller, if any
-                    if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
+                    % update/check controller
+                    if qHasAuto
                         autoCommands = controller.tick();
                         controllerStatusText = controller.getStatusText(qForceUpdateAutoStatusText);
                         if ~isempty(controllerStatusText)
@@ -5750,8 +5750,8 @@ classdef Titta < handle
                         end
                     end
 
-                    % draw controller annotations, if any
-                    if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
+                    % invoke controller draw action
+                    if qHasAuto
                         controller.draw(wpnt, tick, obj.scrInfo.sFac, obj.scrInfo.offset.');
                     end
                     
