@@ -5,7 +5,7 @@ classdef ImageCalibrationDisplay < handle
     properties (Access=private)
         calState;
         currentPoint;
-        pointStartT;
+        startT;
         blinkStartT;
         texs;
     end
@@ -15,9 +15,10 @@ classdef ImageCalibrationDisplay < handle
         imageScales         = [];
     end
     properties
-        blinkInterval       = 0.3;
-        blinkCount          = 2;
-        bgColor             = 127;
+        blinkInterval           = 0.3;
+        blinkCount              = 2;
+        restartAnimForEachPoint = true; % if true, each new point starts with first frame. if false, animation continues where it was, just moves position
+        bgColor                 = 127;
     end
     properties (Access=private, Hidden = true)
         qFloatColorRange;
@@ -34,6 +35,7 @@ classdef ImageCalibrationDisplay < handle
         function setCleanState(obj)
             obj.calState        = obj.calStateEnum.undefined;
             obj.currentPoint    = nan(1,3);
+            obj.startT          = [];
             if ~isempty(obj.texs)
                 Screen('Close',[obj.texs.tex]);
                 obj.texs = [];
@@ -92,22 +94,22 @@ classdef ImageCalibrationDisplay < handle
             end
             
             % check point changed
-            curT = GetSecs;     % instead of using time directly, you could use the 'tick' call sequence number input to this function to animate your display
+            curT = GetSecs;
             if strcmp(drawCmd,'new')
                 obj.currentPoint    = [currentPoint pos];
-                obj.pointStartT     = curT;
+                if isempty(obj.startT) || obj.restartAnimForEachPoint
+                    obj.startT = curT;
+                end
                 obj.calState        = obj.calStateEnum.showing;
             elseif strcmp(drawCmd,'redo')
                 % start blink, restart animation.
                 obj.calState        = obj.calStateEnum.blinking;
                 obj.blinkStartT     = curT;
-                obj.pointStartT     = 0;
             else % drawCmd == 'draw'
                 % regular draw: check state transition
                 if obj.calState==obj.calStateEnum.blinking && (curT-obj.blinkStartT)>obj.blinkInterval*obj.blinkCount*2
                     % blink finished
                     obj.calState    = obj.calStateEnum.showing;
-                    obj.pointStartT = curT;
                 end
             end
             
@@ -121,7 +123,7 @@ classdef ImageCalibrationDisplay < handle
             
             % draw
             if obj.calState~=obj.calStateEnum.blinking
-                [~,~,whichIm] = histcounts(mod(curT-obj.pointStartT,obj.cumDurations(end)),obj.cumDurations);
+                [~,~,whichIm] = histcounts(mod(curT-obj.startT,obj.cumDurations(end)),obj.cumDurations);
             else
                 whichIm = 1;
             end

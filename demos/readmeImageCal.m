@@ -20,7 +20,7 @@ useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 imageFolder             = fullfile(fileparts(mfilename("fullpath")),'..','calDisplays');
 images                  = cellfun(@(x) fullfile(imageFolder,x),{'colorWheel.gif','flower.gif'},'uni',false);
-imageFrameDurations     = 0.1; % s
+imageFrameDurations     = [repmat(.05,1,30) repmat(.15,1,22)]; % s  (30 frames in first file, 22 frames in second file, and they require different playback speeds, hence this)
 imageScaleFac           = 1;
 % task parameters
 fixTime                 = .5;
@@ -59,6 +59,7 @@ try
     calViz                           = ImageCalibrationDisplay();
     calViz.setImages([],images,imageFrameDurations,imageScaleFac);
     calViz.bgColor                   = bgClr;
+    % calViz.restartAnimForEachPoint   = false;
     settings.cal.drawFunction        = @calViz.doDraw;
     % NB: initialized further below
     % callback function for completion of each calibration point
