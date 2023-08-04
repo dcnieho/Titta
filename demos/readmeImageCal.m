@@ -9,6 +9,15 @@
 % for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
+%
+% This demo shows how to make a calibration display where the calibration
+% point consists of a series of images, shown for a specified duration. As
+% shown, animated gifs can also be used, and (not shown) they can be freely
+% intermixed with other image files containing only a single frame. In the
+% default setup, for each new calibration/validation point, the animation
+% starts from the beginning. It can be changed to a version when the
+% animation keeps playing as the point jumps to different locations by
+% setting calViz.restartAnimForEachPoint below to false.
 
 clear all
 sca
