@@ -36,6 +36,8 @@ classdef MonkeyCalController < handle
         calDisplay;
         rewardProvider;
 
+        forceRewardButton           = '';           % if provided, when key press on this button is detected, reward is forced on
+
         gazeFetchDur                = 100;          % duration of gaze samples to peek on each iteration (ms, e.g., last 100 ms of gaze)
         gazeAggregationMethod       = 1;            % 1: use mean of all samples during last gazeFetchDur ms, 2: use mean of last valid sample during last gazeFetchDur ms
         minValidGazeFrac            = .5;
@@ -89,6 +91,7 @@ classdef MonkeyCalController < handle
         isNonActiveShowingVideo     = false;
         isShowingPointManually      = false;
         dispensingReward            = false;
+        dispensingForcedReward      = false;
         controlState                = MonkeyCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
         shouldClearCal              = false;
@@ -139,6 +142,16 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
+            if ~isempty(obj.forceRewardButton) && ~isempty(obj.rewardProvider)
+                [~,~,keyCode] = KbCheck();
+                if any(keyCode) && ismember(KbName(keyCode),{obj.forceRewardButton})
+                    obj.dispensingForcedReward = true;
+                    obj.reward(true);
+                elseif obj.dispensingForcedReward
+                    obj.dispensingForcedReward = false;
+                    obj.reward(false);
+                end
+            end
             if ~isempty(obj.rewardProvider)
                 obj.rewardProvider.tick();
             end
@@ -572,7 +585,8 @@ classdef MonkeyCalController < handle
             obj.isActive            = false;
             obj.isNonActiveShowingVideo = false;
             obj.isShowingPointManually  = false;
-            obj.dispensingReward    = false;
+            obj.dispensingReward        = false;
+            obj.dispensingForcedReward  = false;
             obj.controlState        = obj.stateEnum.cal_positioning;
             obj.shouldRewindState   = false;
             obj.shouldClearCal      = false;
@@ -664,6 +678,10 @@ classdef MonkeyCalController < handle
             on = ~~on;
             if (on && obj.dispensingReward) || (~on && ~obj.dispensingReward)
                 % nothing to do, already in expected state
+                return
+            end
+            if obj.dispensingForcedReward && ~on
+                % ignore request to switch off reward, since its forced on
                 return
             end
             obj.dispensingReward = on;
