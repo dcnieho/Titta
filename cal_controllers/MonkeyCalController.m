@@ -139,6 +139,9 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
+            if ~isempty(obj.rewardProvider)
+                obj.rewardProvider.tick();
+            end
             if ~obj.isActive && ~obj.isNonActiveShowingVideo && ~obj.isShowingPointManually
                 return;
             end
