@@ -101,6 +101,7 @@ try
     if provideRewards
         comPorts = JuicePumper.getPorts();
         rewardProvider = JuicePumper(comPorts(3));
+        rewardProvider.dutyCycle = 170; % ms
     end
     calController = MonkeyCalController([],calViz,[],rewardProvider);
     settings.mancal.cal.pointNotifyFunction = @calController.receiveUpdate;
