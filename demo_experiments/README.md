@@ -1,0 +1,3 @@
+This folder contains a series of simple readme scripts that demonstrate different functionality of Titta. The recorded data is stored in a `.mat` file, and can be analyzed using the example scripts in the [`demo_analysis`](../demo_analysis) folder of this repository.
+
+Furthermore contained are [a complete antisaccade protocol](antiSaccade) and an eye-controlled version of the [BreakOut! game](breakOut) implemented using Titta functionality.
