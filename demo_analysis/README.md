@@ -7,3 +7,16 @@ The files in this folder demonstrate performing fixation classification on the d
 When viewing fixation detection with `c_showFix.m`, press any key to go to the next trial. Close the figure window and press any key to stop scrolling through the trials.
 
 The file `a_validationAccuracy.m` can be run in parallel to these scripts and will report the accuracy of the calibration for each recording, as established by the validation procedure run as part of the recording.
+
+## AOI Analysis
+After fixation classification has been performed using the above steps, AOI analysis can be performed using the script `d_AOIfix.m`.
+
+How to make AOIs:
+- For each stimulus, create a folder with the same name as the stimulus file, so e.g. rabbits.jpg. In that folder, you will store the AOIs for that stimulus
+- Make them as follows:
+   1. Open the image file in a graphics program, such as Photoshop, GIMP, or even Paint.
+   2. Make all the areas on the image that are inside the AOI fully white, everything else fully black. That means the AOI can have any shape and also consist of multiple separate areas. It is advisable that you ensure that areas in different AOIs do not overlap. A simple way to create AOIs is to draw and export them as separate layers (Photoshop, GIMP).
+   3. Save this file as `.png` (important, not jpg).
+   4. The name of the file is the name of the AOI. So, e.g., the folder `rabbits.jpg` may contain the files `tail.png` and `ears.png` that denote the tail and ear AOIs for the rabbits.jpg stimulus.
+
+The example AOIs in the folder `AOIs` were drawn on the two images used in the `readme_*.m` demos.
