@@ -58,7 +58,7 @@ try
     calViz                      = VideoCalibrationDisplay();
     settings.cal.drawFunction   = @calViz.doDraw;
     calViz.bgColor              = bgClr;
-    calViz.calSize              = calVidSize;
+    calViz.videoSize            = calVidSize;
     % NB: initialized further below
     % callback function for completion of each calibration point
     settings.cal.pointNotifyFunction = @demoCalCompletionFun;
