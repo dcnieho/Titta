@@ -1,7 +1,7 @@
 function [AOI] = loadAOIFolder(stimdir,ext,includeList)
 % [AOI] = loadAOIFolder(stimdir)
 %
-% Leest alle AOIplaten in en maakt er booleanmatrices van
+% Reads all AOI images and turns them into boolean masks
 
 extrain = {};
 if nargin>1 && ~isempty(ext)
@@ -11,7 +11,7 @@ if nargin>2 && ~iscell(includeList)
     includeList = {includeList};
 end
 
-AOIpl  = FileFromFolder(stimdir,extrain{:});       % Kijk hoeveel AOIs er zijn voor deze stimulus
+AOIpl  = FileFromFolder(stimdir,extrain{:});       % get number of AOIs for this stimulus
 
 % filter out AOIs not in the include list, if any
 for p=length(AOIpl):-1:1
@@ -46,9 +46,9 @@ for q=length(AOIpl):-1:1
     AOI(q).bool     = a;
     AOI(q).bool     = AOI(q).bool(:,:,1);
     if ~islogical(AOI(q).bool)
-        AOI(q).bool = AOI(q).bool > .8;                     % alles boven .8 rekenen we als wit, 0 is zwart
+        AOI(q).bool = AOI(q).bool > .8;                     % everything above .8 is counted as white, rest is black
     end
     
-    AOI(q).name     = AOIpl(q).fname;                       % AOI naam
-    AOI(q).fname    = AOIpl(q).name;                        % AOI naam
+    AOI(q).name     = AOIpl(q).fname;                       % AOI name
+    AOI(q).fname    = AOIpl(q).name;                        % AOI name
 end

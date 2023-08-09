@@ -1,7 +1,8 @@
 function [AOI] = loadAllAOIFolders(stimdir,ext,includeFolderList,includeAOIList)
-% [AOI] = loadAllAOIFolders(stimdir,ext,includeList)
+% [AOI] = loadAllAOIFolders(stimdir,ext,includeList,includeAOIList)
 % 
-% Leest alle AOIplaten in en maakt er booleanmatrices van
+% For all stimuli, reads all AOI images and turns them into boolean masks,
+% organized by stimulus
 
 if nargin<2
     ext = '';
@@ -15,7 +16,6 @@ end
 
 foldnm      = FolderFromFolder(stimdir);
 
-% lees de AOIplaten in en maak er (sparse) booleans van
 i=1;
 for p=length(foldnm):-1:1
     if nargin>2 && ~isempty(includeFolderList) && ~ismember(foldnm(p).name,includeFolderList)
