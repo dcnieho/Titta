@@ -52,8 +52,8 @@ for p=1:nfiles
     if ~strcmp(lastRead,sessionFileName)
         sess = load(fullfile(dirs.mat,sessionFileName),'expt');
         lastRead = sessionFileName;
+        fInfo = [sess.expt.stim.fInfo];
     end
-    fInfo = [sess.expt.stim.fInfo];
     qWhich= strcmp({fInfo.name},what{1});
     
     % load img, if only one
