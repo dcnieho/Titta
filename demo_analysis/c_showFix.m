@@ -51,20 +51,22 @@ for p=1:nfiles
     sessionFileName = sprintf('%s.mat',files(p).subj);
     if ~strcmp(lastRead,sessionFileName)
         sess = load(fullfile(dirs.mat,sessionFileName),'expt');
+        lastRead = sessionFileName;
     end
+    fInfo = [sess.expt.stim.fInfo];
+    qWhich= strcmp({fInfo.name},what{1});
     
     % load img, if only one
     if ~~exist(fullfile(dirs.AOImasks,what{1}),'file')
         img.data = imread(fullfile(dirs.AOImasks,what{1}));
-    elseif ~~exist(fullfile(sess.expt.stimDir,what{1}),'file')
+    elseif ~~exist(fullfile(sess.expt.stim(qWhich).fInfo.folder,what{1}),'file')
         img.data = imread(fullfile(sess.expt.stimDir,what{1}));
     else
         img      = [];
     end
     if ~isempty(img)
-        % centered on screen
-        stimOff  = [sess.expt.winRect(3)-size(img.data,2) sess.expt.winRect(4)-size(img.data,1)]./2;
-        stimRect = [0 0 size(img.data,2) size(img.data,1)]+[stimOff stimOff];
+        % get position on screen
+        stimRect = sess.expt.stim(qWhich).scrRect;
         img.x    = linspace(stimRect(1),stimRect(3),size(img.data,2));
         img.y    = linspace(stimRect(2),stimRect(4),size(img.data,1));
     end
