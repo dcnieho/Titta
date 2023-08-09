@@ -20,10 +20,7 @@ end
 cd ..;
 cd ..;  cd function_library;    dirs.funclib    = cd;
 cd ..;
-if ~isdir('stimuli')
-    mkdir(fullfile(cd,'stimuli'));
-end
-        cd stimuli;             dirs.stims    = cd;
+cd stimuli;                     dirs.stims    = cd;
 cd ..;
 addpath(genpath(dirs.funclib));                 % add dirs to path
 
