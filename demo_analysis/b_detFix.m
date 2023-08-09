@@ -30,7 +30,7 @@ maxMergeDist = 15;
 minFixDur    = 60;
 
 %%% check I2MC (fixation classifier) is available
-assert(~~exist('I2MCfunc','file'),'It appears that I2MC is not available. please follow the instructions in /readme_analysis_example/function_library/I2MC/get_I2MC.txt to download it.')
+assert(~~exist('I2MCfunc','file'),'It appears that I2MC is not available. please follow the instructions in /demo_analysis/function_library/I2MC/get_I2MC.txt to download it.')
 
 %%% get all trials, parse into subject and stimulus
 [files,nfiles]  = FileFromFolder(dirs.samplesO,[],'txt');
