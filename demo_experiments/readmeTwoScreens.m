@@ -148,6 +148,9 @@ try
     end
     ListenChar(0);
     
+    % prep stimuli (get rabbits) - preload these before the trials to
+    % ensure good timing
+    rabbits = loadStimuliFromFolder(fullfile(PsychtoolboxRoot,'PsychDemos'),{'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'},wpntP,winRectP(3:4));
     
     % later:
     EThndl.buffer.start('gaze');
@@ -164,14 +167,6 @@ try
     % PsychToolbox, so startT as returned by Screen('Flip') can be used
     % directly to segment eye tracking data
     EThndl.sendMessage('FIX ON',startT);
-    
-    % read in konijntjes image (may want to preload this before the trial
-    % to ensure good timing)
-    stimFName   = 'konijntjes1024x768.jpg';
-    stimDir     = fullfile(PsychtoolboxRoot,'PsychDemos');
-    stimFullName= fullfile(stimDir,stimFName);
-    im          = imread(stimFullName);
-    tex         = Screen('MakeTexture',wpntP,im);
     nextFlipT   = startT+fixTime-1/hz/2;
     
     % now update also operator screen, once timing critical bit is done
@@ -188,15 +183,15 @@ try
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    Screen('DrawTexture',wpntP,tex);                    % draw centered on the screen
-    imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
-    EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
+    Screen('DrawTexture',wpntP,rabbits(1).tex,[],rabbits(1).scrRect);
+    imgT = Screen('Flip',wpntP,nextFlipT);
+    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(1).fInfo.name,rabbits(1).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
     while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
-        Screen('DrawTexture',wpntO,tex);
+        Screen('DrawTexture',wpntO,rabbits(1).tex);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
@@ -204,8 +199,8 @@ try
     % record x seconds of data, then clear screen. Indicate stimulus
     % removed, clean up
     endT = Screen('Flip',wpntP,nextFlipT);
-    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
-    Screen('Close',tex);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(1).fInfo.name),endT);
+    Screen('Close',rabbits(1).tex);
     nextFlipT = endT+1; % lees precise, about 1s give or take a frame, is fine
     
     % now update also operator screen, once timing critical bit is done
@@ -231,24 +226,20 @@ try
         Screen('Flip',wpntO);
     end
     % 2. image
-    stimFNameBlur   = 'konijntjes1024x768blur.jpg';
-    stimFullNameBlur= fullfile(stimDir,stimFNameBlur);
-    im              = imread(stimFullNameBlur);
-    tex             = Screen('MakeTexture',wpntP,im);
-    Screen('DrawTexture',wpntP,tex);                    % draw centered on the screen
-    imgT = Screen('Flip',wpntP,nextFlipT);   % bit of slack to make sure requested presentation time can be achieved
-    EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
+    Screen('DrawTexture',wpntP,rabbits(2).tex,[],rabbits(2).scrRect);
+    imgT = Screen('Flip',wpntP,startT+fixTime-1/hz/2);                  % bit of slack to make sure requested presentation time can be achieved
+    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(2).fInfo.name,rabbits(2).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
-        Screen('DrawTexture',wpntO,tex);
+        Screen('DrawTexture',wpntO,rabbits(2).tex);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
     end
     
     % 3. end recording after x seconds of data again, clear screen.
     endT = Screen('Flip',wpntP,nextFlipT);
-    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFNameBlur),endT);
-    Screen('Close',tex);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(2).fInfo.name),endT);
+    Screen('Close',rabbits(2).tex);
     Screen('Flip',wpntO);
     
     % stop recording
@@ -260,7 +251,7 @@ try
     % save data to mat file, adding info about the experiment
     dat = EThndl.collectSessionData();
     dat.expt.winRect = winRectP;
-    dat.expt.stimDir = stimDir;
+    dat.expt.stim    = rabbits;
     save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
     % NB: if you don't want to add anything to the saved data, you can use
     % EThndl.saveData directly

@@ -47,14 +47,6 @@ try
     Priority(1);
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
-    % read in stimuli
-    stimFName   = {'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'};
-    stimDir     = fullfile(PsychtoolboxRoot,'PsychDemos');
-    for p=length(stimFName):-1:1
-        im          = imread(fullfile(stimDir,stimFName{p}));
-        tex(p)      = Screen('MakeTexture',wpnt,im);
-    end
-    
     % do calibration (info about validation accuracy will be stored in eye
     % tracker messages, and more info is collected by the
     % EThndl.collectSessionData() call below)
@@ -62,6 +54,9 @@ try
     EThndl.calibrate(wpnt);
     ListenChar(0);
     
+    % prep stimuli (get rabbits) - preload these before the trials to
+    % ensure good timing
+    rabbits = loadStimuliFromFolder(fullfile(PsychtoolboxRoot,'PsychDemos'),{'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'},wpnt,winRect(3:4));
     
     % later:
     EThndl.buffer.start('gaze');
@@ -75,7 +70,7 @@ try
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
     presT   = T+1/hz/2; % next possible flip, with a bit of slack to make sure requested presentation time can be achieved
-    for p=1:length(stimFName)
+    for p=1:length(rabbits)
         % First draw a fixation point
         Screen('gluDisk',wpnt,0,winRect(3)/2,winRect(4)/2,round(winRect(3)/100));
         startT = Screen('Flip',wpnt,presT);
@@ -87,19 +82,19 @@ try
         
         % show image on screen after requested duration of fixation point
         presT= startT+fixTime-1/hz/2;
-        Screen('DrawTexture',wpnt,tex(p));                  % draw centered on the screen
+        Screen('DrawTexture',wpnt,rabbits(p).tex,[],rabbits(p).scrRect);
         imgT = Screen('Flip',wpnt,presT);
         % log when it was shown
-        EThndl.sendMessage(sprintf('STIM ON: %s',stimFName{p}),imgT);
+        EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(p).fInfo.name,rabbits(p).scrRect),imgT);
         
         % record x seconds of data, then clear screen (flip without drawing
         % anything).
         presT= imgT+imageTime-1/hz/2;
         endT = Screen('Flip',wpnt,presT);
         % log when stimulus was removed from screen
-        EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName{p}),endT);
+        EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(p).fInfo.name),endT);
         % clean up
-        Screen('Close',tex(p));
+        Screen('Close',rabbits(p).tex);
         
         % set up when next fixation point should be shown
         presT= endT+1-1/hz/2;
@@ -111,7 +106,7 @@ try
     % save data to mat file, adding info about the experiment
     dat = EThndl.collectSessionData();
     dat.expt.winRect = winRect;
-    dat.expt.stimDir = stimDir;
+    dat.expt.stim    = rabbits;
     save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
     % NB: if you don't want to add anything to the saved data, you can use
     % EThndl.saveData('filename') directly
