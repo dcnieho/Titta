@@ -79,7 +79,9 @@ for p=1:nfiles
         fclose(fid);
 
         % copy stimuli, if needed
-        imgFile     = fullfile(dat.expt.stimDir,what{q});
+        fInfo = [dat.expt.stim.fInfo];
+        qWhich= strcmp({fInfo.name},what{q});
+        imgFile     = fullfile(dat.expt.stim(qWhich).fInfo.folder,what{q});
         imgFileOut  = fullfile(dirs.stims,what{q});
         if exist(imgFile,'file') && ~exist(imgFileOut,'file')
             copyfile(imgFile,imgFileOut,'f');
