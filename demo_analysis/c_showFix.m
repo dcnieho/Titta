@@ -16,6 +16,8 @@ cd ..;
 cd function_library;            dirs.funclib    = cd;
 cd ..;
 cd results;                     dirs.res        = cd;
+        cd 'AOImasks';          dirs.AOImasks   = cd;
+cd ..;
 cd(dirs.home);
 addpath(genpath(dirs.funclib));                 % add dirs to path
 
@@ -52,11 +54,14 @@ for p=1:nfiles
     end
     
     % load img, if only one
-    imgFile  = fullfile(sess.expt.stimDir,what{1});
-    if ~exist(imgFile,'file')
-        img      = [];
+    if ~~exist(fullfile(dirs.AOImasks,what{1}),'file')
+        img.data = imread(fullfile(dirs.AOImasks,what{1}));
+    elseif ~~exist(fullfile(sess.expt.stimDir,what{1}),'file')
+        img.data = imread(fullfile(sess.expt.stimDir,what{1}));
     else
-        img.data = imread(imgFile);
+        img      = [];
+    end
+    if ~isempty(img)
         % centered on screen
         stimOff  = [sess.expt.winRect(3)-size(img.data,2) sess.expt.winRect(4)-size(img.data,1)]./2;
         stimRect = [0 0 size(img.data,2) size(img.data,1)]+[stimOff stimOff];
