@@ -9,7 +9,7 @@ When viewing fixation detection with `c_showFix.m`, press any key to go to the n
 The file `a_validationAccuracy.m` can be run in parallel to these scripts and will report the accuracy of the calibration for each recording, as established by the validation procedure run as part of the recording.
 
 ## AOI Analysis
-After fixation classification has been performed using the above steps, AOI analysis can be performed using the script `d_AOIfix.m`.
+After fixation classification has been performed using the above steps, AOI analysis can be performed using the script `d_AOIfix.m`. Your AOI masks can be drawn on top of the stimulus using `d_drawAOIs.m`. If such stimuli with AOI masks are available, `c_showFix.m` will use these instead of the original stimuli to draw your data on.
 
 How to make AOIs:
 - For each stimulus, create a folder with the same name as the stimulus file, so e.g. rabbits.jpg. In that folder, you will store the AOIs for that stimulus
