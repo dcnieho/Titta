@@ -1,6 +1,4 @@
 clear variables; clear global; clear mex; close all; fclose('all'); clc
-%%% NOTE: this code relies on functions from the PsychToolBox package,
-%%% please make sure it is installed
 %%% it furthermore uses I2MC, make sure you downloaded it and placed it in
 %%% /function_library/I2MC
 
@@ -72,7 +70,7 @@ for p=1:nfiles
     opt.yres          = sess.expt.winRect(4);
     opt.missingx      = nan;
     opt.missingy      = nan;
-    opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;
+    opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;  % mm -> cm
     opt.disttoscreen  = disttoscreen;
     opt.freq          = sess.settings.freq;
     if opt.freq>120

@@ -1,6 +1,4 @@
 clear variables; clear global; clear mex; close all; fclose('all'); clc
-%%% NOTE: this code relies on functions from the PsychToolBox package,
-%%% please make sure it is installed
 
 dbstop if error % for debugging: trigger a debug point when an error occurs
 
