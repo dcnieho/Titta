@@ -188,8 +188,7 @@ classdef ImageCalibrationDisplay < handle
 
             % if indexed image, turn into RGB image
             if ~isempty(cmap)
-                cmap    = permute(cmap,[1 3 2]);
-                imdata  = reshape(cmap(imdata(:)+1,1,:),[size(imdata) 3]);
+                imdata = ind2rgb(imdata,cmap);
             end
             
             % convert to double with 0--1 range
@@ -208,7 +207,7 @@ classdef ImageCalibrationDisplay < handle
                 a = double(a)/double(intmax(class(a)));
             end
             % add
-            imdata          = cat(3,imdata,a);
+            imdata = cat(3,imdata,a);
         end
 
         function tex = uploadImage(imdata,wpnt,scrSize,qDontScaleUp)
@@ -222,7 +221,7 @@ classdef ImageCalibrationDisplay < handle
                 if Screen('ColorRange',wpnt)==1
                     tex.tex = Screen('MakeTexture',wpnt,imdata,[],[],1);
                 else
-                    imdata      = uint8(round(imdata*255));
+                    imdata  = uint8(round(imdata*255));
                     tex.tex = Screen('MakeTexture',wpnt,imdata);
                 end
             else
