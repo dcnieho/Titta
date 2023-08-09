@@ -20,6 +20,11 @@ end
 cd ..;
 cd ..;  cd function_library;    dirs.funclib    = cd;
 cd ..;
+if ~isdir('stimuli')
+    mkdir(fullfile(cd,'stimuli'));
+end
+        cd stimuli;             dirs.stims    = cd;
+cd ..;
 addpath(genpath(dirs.funclib));                 % add dirs to path
 
 %%% cut up the data file into tasks
@@ -75,6 +80,13 @@ for p=1:nfiles
         data = [num2cell(ts(qSel)); num2cell(samp(:,qSel))];
         fprintf(fid,fmt,data{:});
         fclose(fid);
+
+        % copy stimuli, if needed
+        imgFile     = fullfile(dat.expt.stimDir,what{q});
+        imgFileOut  = fullfile(dirs.stims,what{q});
+        if exist(imgFile,'file') && ~exist(imgFileOut,'file')
+            copyfile(imgFile,imgFileOut,'f');
+        end
     end
 end
 
