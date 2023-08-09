@@ -216,7 +216,7 @@ classdef ImageCalibrationDisplay < handle
             tex.ext   = fliplr(tex.size);   % size is [y x], for rects need [x y]
 
             % store image data
-            if nargin>2 && ~isempty(wpnt)
+            if nargin>1 && ~isempty(wpnt)
                 % upload as PTB texture
                 if Screen('ColorRange',wpnt)==1
                     tex.tex = Screen('MakeTexture',wpnt,imdata,[],[],1);
@@ -229,15 +229,15 @@ classdef ImageCalibrationDisplay < handle
                 tex.imdata = imdata;
             end
 
-            if nargin>3 && ~isempty(scrSize)
+            if nargin>2 && ~isempty(scrSize)
                 % find scale fac to make it fit on screen
                 tex.scaleFac = min(scrSize./tex.ext);
-                if nargin>4 && ~isempty(qDontScaleUp) && qDontScaleUp
+                if nargin>3 && ~isempty(qDontScaleUp) && qDontScaleUp
                     % make sure image is not scaled up (scaleFac not higher
                     % than 1)
                     tex.scaleFac = min(1, tex.scaleFac);
                 end
-                tex.scrRect = CenterRect([0 0 tex.ext].*min(tex.scaleFac),[0 0 scrSize]);
+                tex.scrRect = CenterRect([0 0 tex.ext].*tex.scaleFac,[0 0 scrSize]);
             end
         end
     end
