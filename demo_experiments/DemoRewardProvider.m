@@ -27,7 +27,7 @@ classdef DemoRewardProvider < handle
             if ~obj.dummyMode
                 obj.startT = GetSecs();
                 obj.dispense(true);
-                fprintf('DemoRewardProvider: start\n');
+                % fprintf('DemoRewardProvider: start\n');
             end
             obj.on = true;
         end
@@ -38,10 +38,10 @@ classdef DemoRewardProvider < handle
                 iVal = floor((GetSecs-obj.startT)*1000/obj.dutyCycle)+1;
                 if mod(iVal,2)==1 && ~obj.dispensing
                     obj.dispense(true);
-                    fprintf('DemoRewardProvider: pulse on %.3f\n',GetSecs-obj.startT);
+                    % fprintf('DemoRewardProvider: pulse on %.3f\n',GetSecs-obj.startT);
                 elseif mod(iVal,2)==0 && obj.dispensing
                     obj.dispense(false);
-                    fprintf('DemoRewardProvider: pulse off %.3f\n',GetSecs-obj.startT);
+                    % fprintf('DemoRewardProvider: pulse off %.3f\n',GetSecs-obj.startT);
                 end
             end
         end
@@ -49,7 +49,7 @@ classdef DemoRewardProvider < handle
         function stop(obj)
             if ~obj.dummyMode
                 obj.dispense(false);
-                fprintf('DemoRewardProvider: stop\n');
+                % fprintf('DemoRewardProvider: stop\n');
             end
             obj.on = false;
         end
