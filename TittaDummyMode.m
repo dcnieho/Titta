@@ -125,7 +125,7 @@ classdef TittaDummyMode < Titta
             out = [];
         end
         
-        function out = calibrateManual(~,~,~)
+        function out = calibrateAdvanced(~,~,~)
             out = [];
         end
     end

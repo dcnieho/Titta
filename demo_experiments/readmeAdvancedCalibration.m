@@ -12,7 +12,7 @@
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates Titta's
-% manual calibration mode that is designed for working with non-compliant
+% advanced calibration mode that is designed for working with non-compliant
 % participants.
 % 
 % NB: some care is taken to not update operator screen during timing
@@ -75,7 +75,7 @@ try
     if useAnimatedCalibration
         % custom calibration drawer
         calViz                      = AnimatedCalibrationDisplay();
-        settings.mancal.drawFunction= @calViz.doDraw;
+        settings.advcal.drawFunction= @calViz.doDraw;
         calViz.bgColor              = bgClr;
         calViz.fixBackColor         = fixClrs(1);
         calViz.fixFrontColor        = fixClrs(2);
@@ -86,8 +86,8 @@ try
         settings.cal.fixFrontColor  = fixClrs(2);
     end
     % callback function for completion of each calibration point
-    settings.mancal.cal.pointNotifyFunction = @demoCalCompletionFun;
-    settings.mancal.val.pointNotifyFunction = @demoCalCompletionFun;
+    settings.advcal.cal.pointNotifyFunction = @demoCalCompletionFun;
+    settings.advcal.val.pointNotifyFunction = @demoCalCompletionFun;
     
     % init
     EThndl          = Titta(settings);
@@ -131,7 +131,7 @@ try
         % keypresses from leaking through to matlab
         ListenChar(2);
     end
-    tobii.calVal{1} = EThndl.calibrateManual([wpntP wpntO]);
+    tobii.calVal{1} = EThndl.calibrateAdvanced([wpntP wpntO]);
     ListenChar(0);
     
     % prep stimuli (get rabbits) - preload these before the trials to

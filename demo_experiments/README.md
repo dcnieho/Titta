@@ -18,4 +18,4 @@ The following readme scripts are available:
 - `readmeTwoScreens.m`: Version of `readme.m` showing use of the dual monitor mode of Titta that provides separate participant and operator screens.
 
 Besides the default operation mode with a simple interface for calibration and validation that is suitable for cooperative participants, Titta also includes a separate more advanced calibration interface that gives the operator more control over what is shown to participants. This may be suitable for calibrating non-cooperative participants such as infants and primates. This mode is demoed in the following readme scripts:
-- `readmeManualCalibration.m`: Version of `readme.m` showing use of the advanced calibration interface implemented with the `Titta.calibrateManual()` function.
+- `readmeAdvancedCalibration.m`: Version of `readme.m` showing use of the advanced calibration interface implemented with the `Titta.calibrateAdvanced()` function.
