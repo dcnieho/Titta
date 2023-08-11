@@ -1012,14 +1012,14 @@ classdef MonkeyCalController < handle
         function setTittaPacing(obj,set,reset)
             settings = obj.EThndl.getOptions();
             if ~isempty(set)
-                obj.backupPaceDuration.(set) = settings.mancal.(set).paceDuration;
-                settings.mancal.(set).paceDuration = 0;
+                obj.backupPaceDuration.(set) = settings.advcal.(set).paceDuration;
+                settings.advcal.(set).paceDuration = 0;
                 if bitget(obj.logTypes,1)
                     obj.log_to_cmd('setting Titta pacing duration for %s to 0',ternary(strcmpi(set,'cal'),'calibration','validation'));
                 end
             end
             if ~isempty(reset) && ~isempty(obj.backupPaceDuration.(reset))
-                settings.mancal.(reset).paceDuration = obj.backupPaceDuration.(reset);
+                settings.advcal.(reset).paceDuration = obj.backupPaceDuration.(reset);
                 obj.backupPaceDuration.(reset) = [];
                 if bitget(obj.logTypes,1)
                     obj.log_to_cmd('resetting Titta pacing duration for %s',ternary(strcmpi(reset,'cal'),'calibration','validation'));

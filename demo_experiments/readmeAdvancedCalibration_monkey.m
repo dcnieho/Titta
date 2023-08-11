@@ -54,15 +54,6 @@ cd(home);
 
 try
     eyeColors = cellfun(@color2RGBA,eyeColors,'uni',false);
-
-    prevCal = {[]};
-    if loadPreviousCal
-        prevFile = uigetfile('*.mat','Select datafile from previous recording to load calibration from');
-        if (ischar(prevFile) || isstring(prevFile)) && exist(prevFile,'file')==2
-            prev = load(prevFile);
-            prevCal = prev.calibration(end);
-        end
-    end
     
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
@@ -86,15 +77,15 @@ try
     settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
     settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     % setup operator display
-    settings.UI.mancal.showHead             = true;     % show head display when interface opens
-    settings.UI.mancal.headScale            = .35;
-    settings.UI.mancal.headPos              = [.5 .175];
+    settings.UI.advcal.showHead             = true;     % show head display when interface opens
+    settings.UI.advcal.headScale            = .35;
+    settings.UI.advcal.headPos              = [.5 .175];
     % calibration display
-    settings.mancal.cal.pointPos = [settings.mancal.cal.pointPos; .65, .35; .35, .65];
-    settings.mancal.val.pointPos = [.2 1/3; .4 1/3; .6 1/3; .8 1/3; .2 2/3; .4 2/3; .6 2/3; .8 2/3];
+    settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .65, .35; .35, .65];
+    settings.advcal.val.pointPos = [.2 1/3; .4 1/3; .6 1/3; .8 1/3; .2 2/3; .4 2/3; .6 2/3; .8 2/3];
     % calibration display: custom calibration drawer
     calViz                      = VideoCalibrationDisplay();
-    settings.mancal.drawFunction= @calViz.doDraw;
+    settings.advcal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
     % calibration logic: custom controller
     rewardProvider = [];
@@ -104,11 +95,11 @@ try
         rewardProvider.dutyCycle = 170; % ms
     end
     calController = MonkeyCalController([],calViz,[],rewardProvider);
-    settings.mancal.cal.pointNotifyFunction = @calController.receiveUpdate;
-    settings.mancal.val.pointNotifyFunction = @calController.receiveUpdate;
-    settings.mancal.cal.useExtendedNotify = true;
-    settings.mancal.val.useExtendedNotify = true;
-    settings.UI.button.mancal.toggAuto.visible = true;
+    settings.advcal.cal.pointNotifyFunction = @calController.receiveUpdate;
+    settings.advcal.val.pointNotifyFunction = @calController.receiveUpdate;
+    settings.advcal.cal.useExtendedNotify = true;
+    settings.advcal.val.useExtendedNotify = true;
+    settings.UI.button.advcal.toggAuto.visible = true;
     if numCalPoints==2
         calPoints = [6 7];
     elseif numCalPoints==3
@@ -116,21 +107,16 @@ try
     elseif numCalPoints==5
         calPoints = [3 1 2 4 5];
     end
-    calController.setCalPoints(calPoints,settings.mancal.cal.pointPos(calPoints,:));
+    calController.setCalPoints(calPoints,settings.advcal.cal.pointPos(calPoints,:));
     if ismember(numCalPoints,[3 5])
         calController.calAfterFirstCollected = true;
     end
-    calController.setValPoints([1:size(settings.mancal.val.pointPos,1)],settings.mancal.val.pointPos); %#ok<NBRAK2> 
+    calController.setValPoints([1:size(settings.advcal.val.pointPos,1)],settings.advcal.val.pointPos); %#ok<NBRAK2> 
     calController.forceRewardButton = 'j';
     if DEBUGlevel>0
         calController.logTypes = 1+2*(DEBUGlevel==2)+4; % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
         calController.logReceiver = 1;
     end
-    % calibration logic: only manual calibration attempts since controller
-    % controls this
-    settings.UI.button.mancal.calibrate.visible = true;
-    settings.UI.button.mancal.discard.visible = true;
-    settings.mancal.cal.autoCalibrate = false;
 
     
     % init
@@ -185,7 +171,7 @@ try
         % keypresses from leaking through to matlab
         ListenChar(2);
     end
-    tobii.calVal{1} = EThndl.calibrateManual([wpntP wpntO],prevCal{:},calController);
+    tobii.calVal{1} = EThndl.calibrateAdvanced([wpntP wpntO],[],calController);
     ListenChar(0);
     
     
