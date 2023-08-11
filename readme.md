@@ -72,7 +72,7 @@ The `Titta` C++ class, the `TittaMex` MATLAB/Octave wrapper and the `TittaPy` Py
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB/Octave with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
 ## Usage
-As demonstrated in the demo scripts, the toolbox is configured through
+As demonstrated in the [demo scripts](demo_experiments), the toolbox is configured through
 the following interface:
 1. Retrieve (default) settings for eye tracker of interest: `settings =
 Titta.getDefaults('tracker model name');` Supported eye trackers and their corresponding model names in the Tobii Pro SDK/Titta are:
@@ -102,6 +102,7 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
 3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
 4. Interact with the eye tracker using the below API.
 5. When calling `Titta.calibrate()`, a participant setup and calibration interface is shown. For each screen, several keyboard hotkeys are available to activate certain functionality. By default, the hotkey for each button is printed in the button's label. It can be configured to different keys with the `settings.UI.button` options [listed below](#supported-options). In addition, a few global hotkeys are available. These are documented below in the API documentation of the `Titta.calibrate()` method.
+6. Example analysis scripts for the recorded data (fixation classification and AOI analysis) are [also provided](demo_analysis).
 
 ## API
 ### `Titta` class
