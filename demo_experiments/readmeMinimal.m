@@ -37,8 +37,7 @@ try
     settings.cal.drawFunction   = @calViz.doDraw;
     
     % init
-    EThndl          = Titta(settings);
-    % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
+    EThndl = Titta(settings);
     EThndl.init();
     
     % open PTB screen
@@ -65,7 +64,7 @@ try
     % do trials
     T       = Screen('Flip',wpnt);
     % NB: Timing in PsychToolbox is best done by setting a deadline for
-    % each flip. This techinque works by ensure that the previous screen
+    % each flip. This technique works by ensuring that the previous screen
     % (e.g., fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
@@ -109,7 +108,7 @@ try
     dat.expt.stim    = rabbits;
     save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
     % NB: if you don't want to add anything to the saved data, you can use
-    % EThndl.saveData('filename') directly
+    % EThndl.saveData('filename') directly to replace the above code
     
     % shut down
     EThndl.deInit();
