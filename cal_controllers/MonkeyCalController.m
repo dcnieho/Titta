@@ -894,6 +894,7 @@ classdef MonkeyCalController < handle
                     % request calibration point collection
                     commands = {{'cal','collect_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                     obj.awaitingPointResult = 1;
+                    obj.calPointsState(obj.calPoint) = obj.pointStateEnum.collecting;
                     obj.drawExtraFrame = true;
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('request calibration of point %d @ (%.3f,%.3f)', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
@@ -911,6 +912,7 @@ classdef MonkeyCalController < handle
                     if obj.calPointsState(obj.calPoint)==obj.pointStateEnum.collecting || obj.awaitingPointResult~=0
                         commands = {{'cal','discard_point', obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:)}};
                         obj.awaitingPointResult = 2;
+                        obj.calPointsState(obj.calPoint) = obj.pointStateEnum.discarding;
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.calPoints(obj.calPoint), obj.calPoss(obj.calPoint,:));
                         end
@@ -990,6 +992,7 @@ classdef MonkeyCalController < handle
                     % request validation point collection
                     commands = {{'val','collect_point', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:)}};
                     obj.awaitingPointResult = 1;
+                    obj.valPointsState(obj.valPoint) = obj.pointStateEnum.collecting;
                     obj.drawExtraFrame = true;
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('request collection of validation data for point %d @ (%.3f,%.3f)', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:));
@@ -1002,6 +1005,7 @@ classdef MonkeyCalController < handle
                 if obj.valPointsState(obj.valPoint)==obj.pointStateEnum.collecting || obj.awaitingPointResult~=0
                     commands = {{'val','discard_point', obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:)}};
                     obj.awaitingPointResult = 2;
+                    obj.valPointsState(obj.valPoint) = obj.pointStateEnum.discarding;
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('request discarding validation point %d @ (%.3f,%.3f)',obj.valPoints(obj.valPoint), obj.valPoss(obj.valPoint,:));
                     end
