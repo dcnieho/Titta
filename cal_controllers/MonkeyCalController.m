@@ -129,7 +129,7 @@ classdef MonkeyCalController < handle
             assert(length(unique(calPoints))==length(calPoints),'At least one calibration point ID is specified more than once. Specify each calibration point only once.')
             obj.calPoints       = calPoints;                % ID of calibration points to run by the controller, in provided order
             obj.calPoss         = calPoss;                  % corresponding positions
-            obj.calPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.calPoss));
+            obj.calPointsState  = repmat(obj.pointStateEnum.nothing, 1, size(obj.calPoss,1));
         end
 
         function setValPoints(obj, valPoints,valPoss)
@@ -137,7 +137,7 @@ classdef MonkeyCalController < handle
             assert(length(unique(valPoints))==length(valPoints),'At least one validation point ID is specified more than once. Specify each validation point only once.')
             obj.valPoints       = valPoints;                % ID of calibration points to run by the controller, in provided order
             obj.valPoss         = valPoss;                  % corresponding positions
-            obj.valPointsState  = repmat(obj.pointStateEnum.nothing, size(obj.valPoss));
+            obj.valPointsState  = repmat(obj.pointStateEnum.nothing, 1, size(obj.valPoss,1));
         end
 
         function commands = tick(obj)
