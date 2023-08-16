@@ -2,6 +2,7 @@ classdef DemoRewardProvider < handle
     properties
         dummyMode = false;
         dutyCycle = inf;    % ms. If set to something other than inf, reward will be on for dutyCycle ms, then off for dutyCycle ms, etc for as long rewards are on. This requires frequently calling tick()
+        verbose   = false;  % if true, prints state updates to command line
     end
     properties (SetAccess=private)
         on = false;
@@ -27,7 +28,9 @@ classdef DemoRewardProvider < handle
             if ~obj.dummyMode
                 obj.startT = GetSecs();
                 obj.dispense(true);
-                % fprintf('DemoRewardProvider: start\n');
+                if obj.verbose
+                    fprintf('DemoRewardProvider: start\n');
+                end
             end
             obj.on = true;
         end
@@ -38,10 +41,14 @@ classdef DemoRewardProvider < handle
                 iVal = floor((GetSecs-obj.startT)*1000/obj.dutyCycle)+1;
                 if mod(iVal,2)==1 && ~obj.dispensing
                     obj.dispense(true);
-                    % fprintf('DemoRewardProvider: pulse on %.3f\n',GetSecs-obj.startT);
+                    if obj.verbose
+                        fprintf('DemoRewardProvider: pulse on %.3f\n',GetSecs-obj.startT);
+                    end
                 elseif mod(iVal,2)==0 && obj.dispensing
                     obj.dispense(false);
-                    % fprintf('DemoRewardProvider: pulse off %.3f\n',GetSecs-obj.startT);
+                    if obj.verbose
+                        fprintf('DemoRewardProvider: pulse off %.3f\n',GetSecs-obj.startT);
+                    end
                 end
             end
         end
@@ -49,7 +56,9 @@ classdef DemoRewardProvider < handle
         function stop(obj)
             if ~obj.dummyMode
                 obj.dispense(false);
-                % fprintf('DemoRewardProvider: stop\n');
+                if obj.verbose
+                    fprintf('DemoRewardProvider: stop\n');
+                end
             end
             obj.on = false;
         end
