@@ -4625,15 +4625,18 @@ classdef Titta < handle
                             pointsO         = cPointsO;
                             pointTextCache  = cPointTextCache;
                             obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
-                            % if wanted, notify user callback of mode
-                            % change
-                            if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
-                                obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
-                            end
                             % if auto mode is on, check if it should stay
                             % on
                             if qAutoActive && ~qHasAutoCal
                                 qAutoActive = false;
+                                if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                    obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'val_deactivate',[]);
+                                end
+                            end
+                            % if wanted, notify user callback of mode
+                            % change
+                            if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
                             end
                             qForceUpdateAutoStatusText = true;
                             % hide/show auto mode button if necessary
@@ -4652,15 +4655,18 @@ classdef Titta < handle
                             pointsO         = vPointsO;
                             pointTextCache  = vPointTextCache;
                             obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
-                            % if wanted, notify user callback of mode
-                            % change
-                            if isa(obj.settings.advcal.cal.pointNotifyFunction,'function_handle') && obj.settings.advcal.cal.useExtendedNotify
-                                obj.settings.advcal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
-                            end
                             % if auto mode is on, check if it should stay
                             % on
                             if qAutoActive && ~qHasAutoVal
                                 qAutoActive = false;
+                                if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                    obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_deactivate',[]);
+                                end
+                            end
+                            % if wanted, notify user callback of mode
+                            % change
+                            if isa(obj.settings.advcal.cal.pointNotifyFunction,'function_handle') && obj.settings.advcal.cal.useExtendedNotify
+                                obj.settings.advcal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
                             end
                             qForceUpdateAutoStatusText = true;
                             % hide/show auto mode button if necessary
