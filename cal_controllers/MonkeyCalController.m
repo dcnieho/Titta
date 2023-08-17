@@ -33,7 +33,7 @@ classdef MonkeyCalController < handle
     properties
         % comms
         EThndl;
-        calDisplay;
+        calDisplay;                                 % expected to be a VideoCalibrationDisplay instance
         rewardProvider;
 
         forceRewardButton           = '';           % if provided, when key press on this button is detected, reward is forced on
@@ -115,6 +115,7 @@ classdef MonkeyCalController < handle
         function obj = MonkeyCalController(EThndl,calDisplay,scrRes,rewardProvider)
             obj.setCleanState();
             obj.EThndl = EThndl;
+            assert(isa(calDisplay,"VideoCalibrationDisplay"))
             obj.calDisplay = calDisplay;
             if nargin>2 && ~isempty(scrRes)
                 obj.scrRes = scrRes;
