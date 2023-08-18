@@ -5922,7 +5922,7 @@ classdef Titta < handle
                                         which   = autoCommand{3};
                                         whichPos= autoCommand{4};
                                         assert(which<=size(pointsP,1),'Point ID provided by calibration controller (%d) is unknown, only points 1--%d are known',which,size(pointsP,1));
-                                        assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1:2),whichPos);
+                                        assert(all(pointsP(which,1:2)==whichPos),'Location of point ID provided by controller did not match expected location. Location for point %d should be %.3f,%.3f, not %.3f,%.3f',which,pointsP(which,1),pointsP(which,2),whichPos(1),whichPos(2));
                                         % if point is not enqueued already,
                                         % enqueue it
                                         if ~ismember(pointsP(which,end),[2 3 4])
