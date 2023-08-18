@@ -78,7 +78,7 @@ try
     % with center point
     settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .5, .1; .5, .9];
     % calibration display: custom calibration drawer
-    calViz                      = AnimatedCalibrationDisplay();
+    calViz                      = MultiTargetCalibrationDisplay();
     settings.advcal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
     calViz.fixBackColor         = fixClrs(1);
@@ -97,10 +97,10 @@ try
     settings.advcal.val.useExtendedNotify = true;
     % show the button to start the controller.
     settings.UI.button.advcal.toggAuto.visible = true;
-    calPoints = {3,[1 2 7],[4 5 6]};    % show calibration points in three steps. Denote which points in which steps
-    calPoss   = cellfun(@(x) settings.mancal.cal.pointPos(x,:),'uni',false);
+    calPoints = {3,[2 5 6],[1 4 7]};    % show calibration points in three steps. Denote which points in which steps
+    calPoss   = cellfun(@(x) settings.advcal.cal.pointPos(x,:),calPoints,'uni',false);
     margins   = [.2, .1, .06];          % maximum distance of current gaze from calibration points to be counted as on a given point and triggering a calibration. fractions of horizontal screen resolution
-    calController.setCalSteps(calPoints,calPoss,margins);
+    calController.setCalPoints(calPoints,calPoss,margins);
     calController.calAfterEachStep = true;  % tell controller to update calibration after each step is completed
     if DEBUGlevel>0
         calController.logTypes  = 1+2*(DEBUGlevel==2)+4;    % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
