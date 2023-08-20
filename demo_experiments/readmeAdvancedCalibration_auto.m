@@ -99,8 +99,7 @@ try
     settings.UI.button.advcal.toggAuto.visible = true;
     calPoints = {3,[2 5 6],[1 4 7]};    % show calibration points in three steps. Denote which points in which steps
     calPoss   = cellfun(@(x) settings.advcal.cal.pointPos(x,:),calPoints,'uni',false);
-    margins   = [.2, .1, .06];          % maximum distance of current gaze from calibration points to be counted as on a given point and triggering a calibration. fractions of horizontal screen resolution
-    calController.setCalPoints(calPoints,calPoss,margins);
+    calController.setCalPoints(calPoints,calPoss);
     calController.calAfterEachStep = true;  % tell controller to update calibration after each step is completed
     if DEBUGlevel>0
         calController.logTypes  = 1+2*(DEBUGlevel==2)+4;    % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
