@@ -117,12 +117,18 @@ classdef MultiStepCalController < handle
             obj.updateGaze();
             if ~obj.isActive && (obj.isShowingRewardTarget || obj.isShowingPointManually)     % check like this: this logic should only kick in when controller is not active
                 % check if should give reward
-                if obj.isShowingPointManually && obj.gazingOnManualPoint
-                    obj.reward(true);
+                if obj.isShowingPointManually
+                    if obj.gazingOnManualPoint
+                        obj.reward(true);
+                    else
+                        obj.reward(false);
+                    end
                 else
                     onDur = obj.latestTimestamp-obj.onTargetTimestamp;
                     if onDur > obj.nonActiveRewardDelay
                         obj.reward(true);
+                    else
+                        obj.reward(false);
                     end
                 end
                 return
@@ -487,6 +493,7 @@ classdef MultiStepCalController < handle
                 obj.gazeOnScreen = false;
                 obj.gazePos = [nan nan].';
                 obj.onScreenTimestamp = nan;
+                obj.onTargetTimestamp = nan;
                 if isnan(obj.offScreenTimestamp)
                     obj.offScreenTimestamp = double(gaze.systemTimeStamp(1))/1000;  % us -> ms
                 end
@@ -577,6 +584,7 @@ classdef MultiStepCalController < handle
                 obj.calDisplay.setActivePoint(nan);
                 obj.gazingOnRewardTarget = false;
                 obj.gazingOnManualPoint = false;
+                obj.onTargetTimestamp = nan;
             end
         end
 
