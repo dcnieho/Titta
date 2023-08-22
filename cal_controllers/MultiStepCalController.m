@@ -41,7 +41,7 @@ classdef MultiStepCalController < handle
 
         showRewardTargetWhenDone    = true;         % if true, shows a centered square on the screen after the calibration logic is finished and the controller disengages. Gaze on the square triggers rewards (for demo purposes)
         nonActiveRewardDelay        = 500;          % ms, time until reward is dispensed when looking at the (demo) reward square
-        rewardTargetSize            = .15;          % radius, fraction of horizontal screen resolution
+        rewardTargetRadius          = .15;          % radius, fraction of horizontal screen resolution
         rewardTargetColor           = [255 0 0];
 
         showGazeToOperator          = true;         % if true, aggregated gaze as used by the controller is drawn as a crosshair on the operator screen
@@ -331,7 +331,7 @@ classdef MultiStepCalController < handle
                     end
                 elseif obj.isShowingRewardTarget
                     pos = obj.scrRes/2;
-                    sz = 2*obj.rewardTargetSize*obj.scrRes(1);
+                    sz = 2*obj.rewardTargetRadius*obj.scrRes(1);
                     rect = CenterRectOnPointd([0 0 sz sz],pos(1),pos(2));
                     Screen('FrameOval',wpnts(1),obj.getColorForWindow(1,obj.rewardTargetColor),rect,4);
                 end
@@ -352,7 +352,12 @@ classdef MultiStepCalController < handle
                 pos = obj.scrRes/2;
             end
             for p=1:size(pos,1)
-                sz = 2*ternary(obj.step==1,obj.calMargin1,obj.calMargin2)*obj.scrRes(1);
+                if obj.isActive || obj.isShowingPointManually
+                    sz = ternary(obj.step==1,obj.calMargin1,obj.calMargin2);
+                elseif obj.isShowingRewardTarget
+                    sz = obj.rewardTargetRadius;
+                end
+                sz = 2*sz*obj.scrRes(1);
                 lWidth = ternary(obj.isActive && obj.calPoints{obj.step}(p)==obj.gazedCalPoint,8,4);
                 if ~obj.isActive || obj.step==1
                     rect = CenterRectOnPointd([0 0 [sz sz]*sFac],pos(p,1)*sFac+offset(1),pos(p,2)*sFac+offset(2));
@@ -510,7 +515,7 @@ classdef MultiStepCalController < handle
             % For later steps, check if gaze in direction of a calibration
             % point and not too close to center point
             if obj.isShowingRewardTarget
-                refDist = obj.rewardTargetSize;
+                refDist = obj.rewardTargetRadius;
             elseif ~obj.isActive || obj.step==1
                 refDist = obj.calMargin1;
             else
