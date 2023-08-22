@@ -38,9 +38,13 @@ for p=1:nfiles
     
     % load data file
     C = load(fullfile(dirs.mat,files(p).name),'calibration');
-    sel = C.calibration{end}.selectedCal;
-    cal = C.calibration{end}.attempt{sel};
-    acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+    if C.calibration{end}.wasSkipped
+        acc = nan(1,4);
+    else
+        sel = C.calibration{end}.selectedCal;
+        cal = C.calibration{end}.attempt{sel};
+        acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+    end
 
     % print to file
     fprintf(fid,'%s\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).fname,acc);
