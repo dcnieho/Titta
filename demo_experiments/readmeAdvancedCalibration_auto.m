@@ -37,7 +37,7 @@ eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on oper
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scrPresenter            = 1;
+scrParticipant          = 1;
 scrOperator             = 2;
 % live view parameters
 dataWindowDur           = 500;  % ms
@@ -126,8 +126,8 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    [wpntP,winRectP] = PsychImaging('OpenWindow', scrPresenter, bgClr, [], [], [], [], 4);
-    [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator , bgClr, [], [], [], [], 4);
+    [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr, [], [], [], [], 4);
+    [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator   , bgClr, [], [], [], [], 4);
     hz=Screen('NominalFrameRate', wpntP);
     Priority(1);
     Screen('BlendFunction', wpntP, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
