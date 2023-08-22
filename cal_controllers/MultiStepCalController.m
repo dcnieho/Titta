@@ -415,36 +415,45 @@ classdef MultiStepCalController < handle
             if bitget(obj.logTypes,1)
                 obj.log_to_cmd('cleanup state');
             end
-            % TODO update so everything is cleared
-            obj.isActive            = false;
-            obj.isDone              = false;
-            obj.isShowingRewardTarget = false;
-            obj.isShowingPointManually  = false;
-            obj.dispensingReward        = false;
-            obj.shouldRewindState   = false;
-            obj.shouldClearCal      = false;
-            obj.clearCalNow         = false;
-            obj.activationCount.cal = 0;
-            obj.activationCount.val = 0;
-            obj.shouldUpdateStatusText = true;
+            obj.step                        = 1;
 
-            obj.gazeOnScreen        = false;
-            obj.gazePos            = [nan nan].';
-            obj.onScreenTimestamp   = nan;
-            obj.offScreenTimestamp  = nan;
-            obj.onTargetTimestamp    = nan;
-            obj.latestTimestamp     = nan;
+            obj.gazePos                     = [nan nan].';
+            obj.gazeOnScreen                = false;
+            obj.onScreenTimestamp           = nan;
+            obj.offScreenTimestamp          = nan;
+            obj.onTargetTimestamp           = nan;
+            obj.latestTimestamp             = nan;
 
-            obj.calPoints           = [];
-            obj.calPoss             = [];
-            obj.calPointsState      = [];
-            obj.gazedCalPoint       = nan;
+            obj.calPoints                   = [];
+            obj.calPoss                     = [];
+            obj.calPointsState              = [];
+            obj.gazedCalPoint               = nan;
+            obj.activeCalPoint              = nan;
 
-            obj.awaitingPointResult = 0;
+            obj.gazingOnRewardTarget        = false;
+            obj.gazingOnManualPoint         = false;
 
-            obj.drawState           = 0;
-            obj.drawExtraFrame      = false;
-            obj.backupPaceDuration  = struct('cal',[],'val',[]);
+            obj.isActive                    = false;
+            obj.isDone                      = false;
+            obj.isShowingRewardTarget       = false;
+            obj.isShowingPointManually      = false;
+            obj.manualPoint                 = [nan nan nan];
+            obj.dispensingReward            = false;
+            obj.shouldRewindState           = false;
+            obj.shouldClearCal              = false;
+            obj.clearCalNow                 = false;
+            obj.activationCount             = struct('cal',0, 'val',0);
+            obj.shouldUpdateStatusText      = false;
+            obj.trackerFrequency            = [];
+            obj.qFloatColorRange            = [];
+
+            obj.awaitingPointResult         = 0;
+            obj.lastUpdate                  = {};
+
+            obj.drawState                   = 0;
+            obj.drawExtraFrame              = false;
+
+            obj.backupPaceDuration          = struct('cal',[],'val',[]);
         end
 
 
