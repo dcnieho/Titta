@@ -105,7 +105,8 @@ classdef MultiStepCalController < handle
             end
 
             nothingToDo = ~obj.isActive && ~obj.isShowingRewardTarget && ~obj.isShowingPointManually;
-            % check if reward should be switched off
+            % check if reward should be switched off because looking
+            % outside of the screen
             offScreenTime = obj.latestTimestamp-obj.offScreenTimestamp;
             if offScreenTime > obj.maxOffScreenTime || nothingToDo
                 obj.reward(false);
@@ -116,7 +117,8 @@ classdef MultiStepCalController < handle
 
             obj.updateGaze();
             if ~obj.isActive && (obj.isShowingRewardTarget || obj.isShowingPointManually)     % check like this: this logic should only kick in when controller is not active
-                % check if should give reward
+                % check if should give reward for looking at manually shown
+                % calibration point or reward target
                 if obj.isShowingPointManually
                     if obj.gazingOnManualPoint
                         obj.reward(true);
@@ -328,7 +330,7 @@ classdef MultiStepCalController < handle
             end
 
             % first participant screen
-            if obj.drawState==1 && ~obj.isShowingPointManually
+            if (obj.drawState==1 || obj.drawExtraFrame) && ~obj.isShowingPointManually
                 if obj.isActive
                     % Don't call draw here if we've issued a command to collect
                     % calibration data for a point and haven't gotten a status
@@ -343,7 +345,7 @@ classdef MultiStepCalController < handle
                     Screen('FrameOval',wpnts(1),obj.getColorForWindow(1,obj.rewardTargetColor),rect,4);
                 end
 
-                if obj.awaitingPointResult~=1 && obj.drawExtraFrame
+                if obj.drawExtraFrame
                     obj.drawExtraFrame = false;
                 end
             end
@@ -616,6 +618,20 @@ classdef MultiStepCalController < handle
                 % nothing to do
                 return
             elseif obj.awaitingPointResult>0
+                % check if should abort calibration point collection
+                if obj.awaitingPointResult==1 && obj.gazedCalPoint~=obj.activeCalPoint
+                    % request discarding data for this point if its being
+                    % collected
+                    qIdx = obj.calPoints{obj.step}==obj.activeCalPoint;
+                    if obj.calPointsState{obj.step}(qIdx)==obj.pointStateEnum.collecting
+                        commands = {{'cal','discard_point', obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:)}};
+                        obj.awaitingPointResult = 2;
+                        if bitget(obj.logTypes,1)
+                            obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:));
+                        end
+                    end
+                end
+
                 % we're waiting for the result of an action. For easier
                 % logic, we put all the response waiting logic here,
                 % short-circuiting the below logic that depends on where
@@ -663,6 +679,7 @@ classdef MultiStepCalController < handle
                                 obj.log_to_cmd('failed to collect calibration point %d, requesting to discard it', obj.activeCalPoint);
                             end
                         end
+                        obj.drawState = 1;
                     end
                     obj.lastUpdate = {};
                 elseif obj.awaitingPointResult==2 && strcmp(obj.lastUpdate{1},'cal_discard')
@@ -680,6 +697,7 @@ classdef MultiStepCalController < handle
                             error('can''t discard point, something seriously wrong')
                         end
                         obj.activeCalPoint = nan;
+                        obj.drawState = 1;
                     end
                     obj.lastUpdate = {};
                 elseif obj.awaitingPointResult==3 && strcmp(obj.lastUpdate{1},'cal_compute_and_apply')
@@ -718,6 +736,7 @@ classdef MultiStepCalController < handle
                         end
                         obj.awaitingPointResult = 2;
                         obj.step = 1;
+                        obj.setCalDisplayPoints();
                         obj.activeCalPoint = obj.calPoints{1}(1);
                         if bitget(obj.logTypes,1)
                             obj.log_to_cmd('calibration failed discarding all points and starting over');
@@ -741,28 +760,16 @@ classdef MultiStepCalController < handle
                     commands = {{'cal','collect_point', obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:)}};
                     obj.awaitingPointResult = 1;
                     obj.calPointsState{obj.step}(qIdx) = obj.pointStateEnum.discarding;
+                    obj.drawState = 0;
+                    obj.drawExtraFrame = true;
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('request calibration of point %d @ (%.3f,%.3f)', obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:));
                     end
                 end
-            else
-                if obj.onTargetTimestamp>0 || isnan(obj.onTargetTimestamp)
-                    obj.onTargetTimestamp = -obj.latestTimestamp;
-                end
-                offDur = obj.latestTimestamp--obj.onTargetTimestamp;
-                if offDur > obj.maxOffScreenTime
-                    obj.reward(false);
-                    % request discarding data for this point if its being
-                    % collected
-                    qIdx = obj.calPoints{obj.step}==obj.activeCalPoint;
-                    if ~isnan(obj.activeCalPoint) && obj.calPointsState{obj.step}(qIdx)==obj.pointStateEnum.collecting || obj.awaitingPointResult~=0
-                        commands = {{'cal','discard_point', obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:)}};
-                        obj.awaitingPointResult = 2;
-                        if bitget(obj.logTypes,1)
-                            obj.log_to_cmd('request discarding calibration point %d @ (%.3f,%.3f)',obj.activeCalPoint, obj.calPoss{obj.step}(qIdx,:));
-                        end
-                    end
-                end
+            end
+
+            if isnan(obj.gazedCalPoint)
+                obj.reward(false);
             end
         end
 
