@@ -40,10 +40,33 @@ for p=1:nfiles
     C = load(fullfile(dirs.mat,files(p).name),'calibration');
     if C.calibration{end}.wasSkipped
         acc = nan(1,4);
-    else
+    elseif strcmp(C.calibration{end}.type,'standard')
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel};
         acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+    elseif strcmp(C.calibration{end}.type,'advanced')
+        sel = C.calibration{end}.selectedCal;
+        cal = C.calibration{end}.attempt{sel(1)};
+        if ~isfield(cal,'val')
+            % no validation done
+            acc = nan(1,4);
+        else
+            % find the active/last valid validation for this
+            % calibration, if any
+            idx = nan;
+            for q=length(cal.val):-1:1
+                if ~isnan(cal.val{q}.point(1)) && cal.val{q}.whichCal==sel(2) && ~cal.val{q}.wasCancelled && ~cal.val{q}.wasDiscarded
+                    idx = q;
+                    break;
+                end
+            end
+            if isnan(idx)
+                % no validation
+                acc = nan(1,4);
+            else
+                acc = cal.val{idx}.allPoints.acc2D(:).';
+            end
+        end
     end
 
     % print to file
