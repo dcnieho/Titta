@@ -181,6 +181,7 @@ classdef MultiStepCalController < handle
                     obj.lastUpdate = {};
                     obj.awaitingPointResult = 0;
                     obj.isActive = true;
+                    obj.step = 1;
                     obj.shouldUpdateStatusText = true;
                     obj.isShowingRewardTarget = false;
                     obj.isShowingPointManually= false;
@@ -196,6 +197,7 @@ classdef MultiStepCalController < handle
                 case 'cal_deactivate'
                     % controller deactivated
                     obj.isActive = false;
+                    obj.gazedCalPoint = nan;
                     obj.shouldUpdateStatusText = true;
                     obj.drawState = 0;
                     % backup Titta pacing duration and set to 0, since the
@@ -277,7 +279,6 @@ classdef MultiStepCalController < handle
                         obj.log_to_cmd('calibration clear result received');
                     end
                     obj.calPointsState = cellfun(@(x) repmat(obj.pointStateEnum.nothing, 1, size(x,1)),obj.calPoss,'uni',false);
-                    obj.step = 1;
                     obj.shouldClearCal = false;
                 case {'cal_finished','val_finished'}
                     % interface exited from calibration or validation
