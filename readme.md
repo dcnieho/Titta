@@ -451,7 +451,7 @@ The following read-only properties are available for a TalkToProLab instance:
 |Property|Description|
 | --- | --- |
 |`projectID`|The GUID indentifying the project opened in Pro Lab.|
-|`participantID `|Filled by `TalkToProLab.createParticipant()`. The GUID indentifying the participant for which a recording will be created in Pro Lab.|
+|`participantID`|Filled by `TalkToProLab.createParticipant()`. The GUID indentifying the participant for which a recording will be created in Pro Lab.|
 |`recordingID`|Filled by `TalkToProLab.startRecording()`. The GUID indentifying the current recording in Pro Lab.|
 |`clientClock`|Websocket interface to the clock API of Tobii Pro Lab.|
 |`clientProject`|Websocket interface to the project API of Tobii Pro Lab.|
