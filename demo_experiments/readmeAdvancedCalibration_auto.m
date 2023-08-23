@@ -17,7 +17,9 @@
 % calibrating, in multiple steps (first a center calibration points is
 % shown, data collected for it and calibration appied based on it, then in
 % two more steps, data is collected for two times three other points).
-% A dummy class providing rewards is also implemented for demo purposes.
+% A dummy class providing rewards when looking at the calibration points or
+% inside a red circle shown after calibration is also implemented for demo
+% purposes.
 % 
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
