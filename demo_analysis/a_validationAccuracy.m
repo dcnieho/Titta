@@ -43,7 +43,11 @@ for p=1:nfiles
     elseif strcmp(C.calibration{end}.type,'standard')
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel};
-        acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+        if ~isfield(cal.val{end},'acc2D')
+            acc = nan(1,4);
+        else
+            acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+        end
     elseif strcmp(C.calibration{end}.type,'advanced')
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel(1)};
