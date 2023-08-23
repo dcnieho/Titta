@@ -11,13 +11,13 @@ Please cite:
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta. 
 
-Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `TittaMex/deps/include/` carry a different license, please refer to [the Tobii License Agreement](TittaMex/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
+Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `SDK_wrapper/deps/include/` carry a different license, please refer to [the Tobii License Agreement](SDK_wrapper/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
 
 `demos/readme.m` shows a minimal example of using the toolbox's functionality. For documentation of the various data fields in the `.mat` file produced by the demos, see [the Tobii SDK documentation](https://developer.tobiipro.com/commonconcepts.html).
 
-Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobiipro.com/product-listing/eye-tracker-manager/) before trying to use it with Titta. Note also that some of the supported eye trackers require several setup steps before they are ready for use (e.g. do a display setup in Eye Tracker Manager). If these steps have not been performed, Titta will throw strange error messages.
+Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobii.com/products/software/applications-and-developer-kits/tobii-pro-eye-tracker-manager) before trying to use it with Titta. Note also that some of the supported eye trackers require several setup steps before they are ready for use (e.g. do a display setup in Eye Tracker Manager). If these steps have not been performed, Titta will throw strange error messages.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended. 
+To run the toolbox, the [Tobii Pro SDK](https://www.tobii.com/products/software/applications-and-developer-kits/tobii-pro-sdk) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended. 
 
 Only the `Titta.calibrate()` and `Titta.calibrateManual()` functions and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB/Octave without having PsychToolbox installed.
 
@@ -27,22 +27,22 @@ Currently the toolbox is only supported on Windows 10 (Windows 7 may continue to
 Only 64-bit MATLAB and GNU Octave are supported. 32-bit MATLAB support was previously available for Windows, but has been discontinued when the Tobii SDK dropped support for 32-bit platforms. The last version of Titta supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
 
 ### Windows
-Using the newest Psychtoolbox version is recommended for use with both Matlab and GNU Octave. For use with Matlab, at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB version R2022b. To use Titta with GNU Octave at minimum Octave version 7.3 is required, which also entails at minimum [PsychToolbox version 3.0.19, "Virtuality", released on 2023-02-17](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/3.0.19.0). The main Titta class, Titta mex and the readme demos have been tested to work on Octave. The breakOut demo does not work due to incomplete classdef support in Octave.
+Using the newest Psychtoolbox version is recommended for use with both Matlab and GNU Octave. For use with Matlab, at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB version R2022b. To use Titta with GNU Octave at minimum Octave version 7.3 is required, which also entails at minimum [PsychToolbox version 3.0.19, "Virtuality", released on 2023-02-17](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/3.0.19.0). The main Titta class, TittaMex and the readme demos have been tested to work on Octave. The breakOut demo does not work due to incomplete classdef support in Octave.
 
 ### Linux
 Using version [Psychtoolbox 3.0.18.7 release "Experimental Taylor expansion" SP2, released on 2022-04-20](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/3.0.18.7) or later is recommended, but at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB version R2022a. GNU Octave support has been tested with Octave versions 6.4 and 7.3. Titta for Linux is currently built on Ubuntu 22.04, which means it doesn not work out of the box on other Ubuntu releases. See [the TittaMex readme](/TittaMex/README.md) for more information how to make it work on your platform.
 
 ### Mac OSX
-OSX is currently not supported, although the MEX file does build succesfully on OSX with the [`makeTittaMex.m`](SDK_wrapper/makeTittaMex.m) script.
+OSX is currently not supported, although the TittaMex file does build succesfully on OSX with the [`makeTittaMex.m`](SDK_wrapper/makeTittaMex.m) script.
 
 ## How to acquire
 The recommended way to acquire Titta is to use the `git` tool to download it. Alternatively you can download the components separately and place them in the right locations. Here are instructions for these two routes:
 1. Using Git
     1. install git from https://git-scm.org if you don't already have it. If you do not
        like using the command line/terminal, consider using a graphical git tool such as
-       [SmartGit](https://www.syntevo.com/smartgit/), which is available free for non-commercial use
+       [SmartGit](https://www.syntevo.com/smartgit/), which is available free for non-commercial use.
     1. Download Titta and its dependencies in one go using the following command:
-       `git clone --recurse-submodules -j8 git://github.com/dcnieho/Titta.git`
+       `git clone --recurse-submodules -j8 git://github.com/dcnieho/Titta.git`.
     1. Should this not work due to your git version being too old, try executing the
        following commands:
        ```
@@ -57,22 +57,22 @@ The recommended way to acquire Titta is to use the `git` tool to download it. Al
     1. Then download MatlabWebSocket (available from https://github.com/jebej/MatlabWebSocket). Download the [currently tested version](https://github.com/jebej/MatlabWebSocket/tree/7454ab1564d3142a643a4d381f67206698abb8d6).
     1. Put the MatlabWebSocket directory inside Titta at the right location:
       `<tittaRootDir>/talkToProLab/MatlabWebSocket`).
-1. When running on Windows, ensure you have the latest version of the [Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017, 2019 and 2022](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) installed. This is the most likely cause of errors like "The specified module could not be found" when loading the mex file.
+1. When running on Windows, ensure you have the latest version of the [Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017, 2019 and 2022](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads) installed. This is the most likely cause of errors like "The specified module could not be found" when loading the TittaMex file.
 
 ## Contents
 The toolbox consists of multiple parts:
 
 ### The `Titta` class
-The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TittaMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` participant setup and calibration interface requires PsychToolbox.
+The Titta class is the main workhorse of this toolbox, providing a wrapper around the Tobii Pro SDK as well as the TittaMex class described below, and a convenient graphical user interface (rendered through PsychToolbox) for participant setup, calibration and validation. Only the `Titta.calibrate()` and `Titta.calibrateAdvanced()` participant setup and calibration interfaces require PsychToolbox.
 
 ### The `Titta`, `TittaMex` and `TittaPy` classes in the `SDK_wrapper` directory
-The `Titta` C++ class, the `TittaMex` MATLAB/Octave wrapper and the `TittaPy` Python wrapper are alternatives to the Tobii Pro MATLAB and Python SDKs for handling data streams and calibration, and can be used without making use of the Titta interface. The C++ code can be compiled and used as a static library without Matlab/Octave or Python. It is used by both the MATLAB and Python versions of Titta under the hood (Titta users can access it directly through the [`Titta.buffer` property](#properties)). Besides providing access to the same tracker functionality as the Tobii Pro MATLAB SDK, it has two main features: (1) more complete and granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive. It furthermore offers GNU Octave support, which the MATLAB SDK has dropped since version 1.10, and provides eye openness data alongside data in the gaze stream instead of in a separate stream that the user than has to link up later themselves. Finally, other functions implemented in `TittaMex` provide return values that are a bit friendlier to use in MATLAB/Octave, in the author's opinion (e.g. `double`s instead of `single`s) and no use of MATLAB classes to just hold plain data. On the Python side, besides the above benefits, use of the `Titta` C++ wrapper in `TittaPy` prevents issues where data is lost with the Tobii Python SDK's callback-style interface if the user does not sleep or yield often enough in their code, and also provides data from the various streams as a dict-of-lists instead of a list-of-dicts, which is easy to use and straightforwardly transformed to a `pandas` `DataFrame`, or saved to an HDF5 file.
+The `Titta` C++ class, the `TittaMex` MATLAB/Octave wrapper and the `TittaPy` Python wrapper are alternatives to the Tobii Pro MATLAB and Python SDKs for handling data streams and calibration, and can be used without making use of the Titta interface. The C++ code can be compiled and used as a static library without Matlab/Octave or Python. It is used by both the MATLAB and Python versions of Titta under the hood (Titta users can access it directly through the [`Titta.buffer` property](#properties)). Besides providing access to the same tracker functionality as the Tobii Pro MATLAB SDK, it has two main features: (1) more complete and granular access to the data streams: (a): support for both consuming (destructive) and peeking (non-destructive) data streams; (b): support for only accessing or clearing specific parts of the tracker's data streams; and (c) data provided as structs-of-arrays instead of arrays-of-structs which makes data access significantly simpler and is much more memory efficient. The second main feature is (2) asynchronous calibration methods, allowing to issue non-blocking method calls for all stages of the calibration process, such that the interface can remain responsive. It furthermore offers GNU Octave support, which the MATLAB SDK has dropped since version 1.10, and provides eye openness data alongside data in the gaze stream instead of in a separate stream that the user then has to link up later themselves. Finally, other functions implemented in `TittaMex` provide return values that are a bit friendlier to use in MATLAB/Octave, in the author's opinion (e.g. `double`s which are MATLAB's native data type instead of `single`s) and no use of MATLAB classes to just hold plain data. On the Python side, besides the above benefits, use of the `Titta` C++ wrapper in `TittaPy` prevents issues where data is lost with the Tobii Python SDK's callback-style interface if the user does not sleep or yield often enough in their code, and also provides data from the various streams as a dict-of-lists instead of a list-of-dicts, which is easy to use and straightforwardly transformed to a `pandas` `DataFrame`, or saved to an HDF5 file.
 
 ### The `TalkToProLab` class
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB/Octave with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
 ## Usage
-As demonstrated in the demo scripts, the toolbox is configured through
+As demonstrated in the [demo scripts](/demos), the toolbox is configured through
 the following interface:
 1. Retrieve (default) settings for eye tracker of interest: `settings =
 Titta.getDefaults('tracker model name');` Supported eye trackers and their corresponding model names in the Tobii Pro SDK/Titta are:
@@ -101,7 +101,7 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
 2. Change settings from their defaults if wanted (see [supported options](#supported-options) section below)
 3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
 4. Interact with the eye tracker using the below API.
-5. When calling `Titta.calibrate()`, a participant setup and calibration interface is shown. For each screen, several keyboard hotkeys are available to activate certain functionality. By default, the hotkey for each button is printed in the button's label. It can be configured to different keys with the `settings.UI.button` options [listed below](#supported-options). In addition, a few global hotkeys are available. These are documented below in the API documentation of the `Titta.calibrate()` method.
+5. When calling `Titta.calibrate()`, a participant setup and calibration interface is shown. For each screen, several keyboard hotkeys are available to activate certain functionality. By default, the hotkey for each button is printed in the button's label. It can be configured to different keys with the `settings.UI.button` options [listed below](#supported-options). In addition, a few global hotkeys are available. These are documented below in the API documentation of the `Titta.calibrate()` method. A more advanced participant setup and calibration interface intended especially to enable work with non-cooperative subject populations such as infants and primates is provided by the `Titta.calibrateAdvanced()` function.
 
 ## API
 ### `Titta` class
@@ -129,7 +129,7 @@ The following method calls are available on a Titta instance:
 |`setOptions()`|<ol><li>`settings`: struct with updated settings</li></ol>||Change active settings. First use `getOptions()` to get an up-to-date settings struct, then edit the wanted settings and use this function to set them|
 |`init()`|||Connect to the Tobii eye tracker and initialize it according to the requested settings|
 |`calibrate()`|<ol><li>`wpnt`: window pointer to PsychToolbox screen where the calibration stimulus should be shown. See `PsychImaging('OpenWindow')` or `Screen('OpenWindow')`. Can be an array of two window pointers. In this case, the first window pointer is taken to refer to the participant screen, and the second to an operator screen. In this case, a minimal interface is presented on the participant screen, while full information is shown on the operator screen, including a live view of gaze data and eye images (if available) during calibration and validation.</li><li>`flag`: optional. Flag indicating whether this call to calibrate should cause the eye-tracker to enter before start calibration, or exit calibration mode when finished. The flag is a bitfield whose values can be bitand()ed together. Understood values: `1`: enter calibration mode when starting calibration; `2`: exit calibration mode when calibration finished. Default: `3`: both enter and exit calibration mode during this function call. Used for bimonocular calibrations, when the `calibrate()` function is called twice in a row, first to calibrate the first eye (use `flag=1` to enter calibration mode here but not exit), and then a second time to calibrate the other eye (use `flag=2` to exit calibration mode when done).</li><li>`previousCalibs`: `calibrationAttempt` struct returned by a previous run of `Titta.calibrate()`. Allows to prepopulate the interface with previous calibration(s). The previously selected calibration is made active and it can then be revalidated and used, or replaced. Note that the `previousCalibs` functionality should be used together with bimonocular calibration _only_ when the calibration of the first eye is not replaced (validating it is ok, and recommended). This because prepopulating calibrations for the second eye will load this previous calibration, and thus undo any new calibration for the first eye.</li></ol>|<ol><li>`calibrationAttempt`: struct containing information about the calibration/validation run</li></ol>|Do participant setup, calibration and validation. Issue `help Titta.calibrate` on the matlab command prompt for further documentation.|
-|`calibrateManual()` **NB: only tested with Spectrum**|<ol><li>`wpnt`: an array of two window pointers to PsychToolbox screens where the calibration stimulus and operator interfaces should be shown. See `PsychImaging('OpenWindow')` or `Screen('OpenWindow')`. The first window pointer is taken to refer to the participant screen, and the second to an operator screen.</li><li>`previousCalibs`: `calibration` struct returned by a previous run of `Titta.calibrateManual()`. Allows to prepopulate the interface with previous calibration(s). The previously selected calibration is made active and it can then be revalidated and used, or replaced.</li></ol>|<ol><li>`calibration`: struct containing information about the calibration/validation run</li></ol>|Do participant setup, calibration and validation using a manual procedure suitable for non-compliant subjects. Issue `help Titta.calibrateManual` on the matlab command prompt for further documentation.|
+|`calibrateManual()`|<ol><li>`wpnt`: an array of two window pointers to PsychToolbox screens where the calibration stimulus and operator interfaces should be shown. See `PsychImaging('OpenWindow')` or `Screen('OpenWindow')`. The first window pointer is taken to refer to the participant screen, and the second to an operator screen.</li><li>`previousCalibs`: `calibration` struct returned by a previous run of `Titta.calibrateManual()`. Allows to prepopulate the interface with previous calibration(s). The previously selected calibration is made active and it can then be revalidated and used, or replaced.</li></ol>|<ol><li>`calibration`: struct containing information about the calibration/validation run</li></ol>|Do participant setup, calibration and validation using a manual procedure suitable for non-compliant subjects. Issue `help Titta.calibrateManual` on the matlab command prompt for further documentation.|
 |`sendMessage()`|<ol><li>`message`: Message to be written into idf file</li><li>`time`: (optional) timestamp of the message (in seconds, will be stored as microseconds). Candidate times are the timestamps provided by PsychToolbox, such as the timestamp returned by `Screen('Flip')` or keyboard functions such as `KbEventGet`.</li></ol>|<ol><li>`time`: timestamp (microseconds) stored with the message</li></ol>|Store timestamped message|
 |`getMessages()`||<ol><li>`messages`: returns Nx2 cell array containing N timestamps (microseconds, first column) and the associated N messages (second column)</li></ol>|Get all the timestamped messages stored during the current session.|
 |`collectSessionData()`||<ol><li>`data`: struct with all information and data collected during the current session. Contains information about all calibration attemps; all timestamped messages; eye-tracker system information; setup geometry and settings that are in effect; and log messages generated by the eye tracker; and any data in the buffers of any of the eye-tracker's data streams</li></ol>|Collects all data one may want to store to file, neatly organized.|
@@ -138,13 +138,13 @@ The following method calls are available on a Titta instance:
 
 
 #### Properties
-The following read-only properties are available for a Titta instance:
+The following **read-only** properties are available for a Titta instance:
 
 |Property|Description|
 | --- | --- |
 |`geom`|Filled by `init()`. Struct with information about the setup geometry known to the eye tracker, such as screen width and height, and the screen's location in the eye tracker's user coordinate system.|
 |`calibrateHistory`|Returns cell array with information about all calibration attempts during the current session|
-|`buffer`|Initialized by call to `init()`. Returns handle to [`TittaMex`](#tittamex-class) instance for interaction with the eye tracker's data streams. This handle can furthermore be used for directly interacting with the eye tracker through the Tobii Pro SDK, but note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
+|`buffer`|Initialized by call to `init()`. Returns handle to [`TittaMex`](#titta-tittamex-tittapy-classes) instance for interaction with the eye tracker's data streams. This handle can furthermore be used for directly interacting with the eye tracker through the Tobii Pro SDK, but note that this is at your own risk. Titta should have minimal assumptions about eye-tracker state, but I cannot guarantee that direct interaction with the eye tracker does not interfere with later use of Titta in the same session.|
 |`deviceName`|Get connected eye tracker's device name.|
 |`serialNumber`|Get connected eye tracker's serial number.|
 |`model`|Get connected eye tracker's model name.|
@@ -152,11 +152,16 @@ The following read-only properties are available for a Titta instance:
 |`runtimeVersion`|Get connected eye tracker's runtime version.|
 |`address`|Get connected eye tracker's address.|
 |`capabilities`|Get connected eye tracker's exposed capabilities.|
-|`frequency`|Get or set connected eye tracker's sampling frequency.|
-|`trackingMode`|Get or set connected eye tracker's tracking mode.|
 |`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
 |`supportedModes`|Get connected eye tracker's supported tracking modes.|
 |`systemInfo`|Filled by `init()`. Struct with information about the eye tracker connected to: the device name, serial number, model name, firmware version, runtime version, address, sampling frequency, tracking mode, capabilities, supported sampling frequencies, and supported tracking modes of the connected eye tracker.|
+
+The following **settable** properties are available for a Titta instance:
+
+|Property|Description|
+| --- | --- |
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
 
 #### Supported options
 Which of the below options are available depends on the eye tracker model. The `getDefaults()` and `getOptions()` method calls return the appropriate set of options for the indicated eye tracker.
@@ -327,28 +332,30 @@ Each button takes the below options:
 The fields `string`, `fillColor`, `edgeColor` and `textColor` can be single entries, 2-element cell array or 3-element cell arrays. This is used to specify different looks for the button when in inactive state, hovered state, and activated state. If a single text or color is provided, this text/look applies to all three button states. If two are provided, the first text/color applies to both the inactive and hovered button states and the second to the activated state. If three are provided, they apply to the inactive, hovered and activated states, respectively. The `string`, `fillColor`, `edgeColor` and `textColor` can have these properties set independently from each other (you could thus provide different strings for the three states, while keeping colors constant over them).
 
 ### `Titta`, `TittaMex`, `TittaPy` classes
-The below documents the available functions and properties on a `Titta` class. The same functionality is also available from a `TittaPy` instance, but in that case all function and property names as well as stream names use `snake_case` names instead of `camelCase`. Furthermore, static functions in the `Titta` class are found at the module level in `TittaPy`.
+The below documents the available functions and properties on a `Titta` SDK wrapper class. The functionality below is exposed under the same names in `TittaMex`. The same functionality is also available from a `TittaPy` instance, but in that case all function and property names as well as stream names use `snake_case` names instead of `camelCase`. Furthermore, static functions in the `Titta` class are found at the module level in `TittaPy`.
 
 #### Static methods
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
 |`findAllEyeTrackers()`||<ol><li>`eyeTrackerList`: An array of structs with information about the connected eye trackers.</li></ol>|Gets the eye trackers that are connected to the system, as listed by the Tobii Pro SDK.|
+|`getSDKVersion()`||<ol><li>`SDKVersion`: A string containing the version of the Tobii SDK.</li></ol>|Get the version of the Tobii Pro SDK dynamic library that is used by Titta.|
+|`getSystemTimestamp()`||<ol><li>`timestamp`: An int64 scalar denoting Tobii system time in microseconds.</li></ol>|Get the current system time through the Tobii Pro SDK.|
 |||||
 |`startLogging()`|<ol><li>`initialBufferSize`: (optional) value indicating for how many event memory should be allocated</li></ol>|<ol><li>`success`: a boolean indicating whether logging was started successfully</li></ol>|Start listening to the eye tracker's log stream, store any events to buffer.|
 |`getLog()`|<ol><li>`clearLogBuffer`: (optional) boolean indicating whether the log buffer should be cleared</li></ol>|<ol><li>`data`: struct containing all events in the log buffer, if available. If not available, an empty struct is returned.</li></ol>|Return and (optionally) remove log events from the buffer.|
 |`stopLogging()`|||Stop listening to the eye tracker's log stream.|
 
 #### Construction and initialization
-An instance of TittaMex is constructed by calling `Titta()`, `TittaMex()` or `TittaPy()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to. A list of connected eye trackers is provided by calling the static function `Titta.findAllEyeTrackers()`.
+An instance of Titta/TittaMex/TittaPy is constructed by calling `Titta()`, `TittaMex()` or `TittaPy()`. Before it becomes fully functional, its `init()` method should be called to provide it with the address of an eye tracker to connect to. A list of connected eye trackers is provided by calling the static function `Titta.findAllEyeTrackers()`.
 
 #### Methods
 The following method calls are available on a `Titta` instance:
 
 |Call|Inputs|Outputs|Description|
 | --- | --- | --- | --- |
-|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect to the TittaMex class instance to the Tobii eye tracker and prepare it for use.|
+|`init()`|<ol><li>`address`: address of the eye tracker to connect to</li></ol>||Connect the Titta class instance to the Tobii eye tracker and prepare it for use.|
 |||||
-|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that `TittaMex` is connected to.</li></ol>|Get information about the eye tracker that the `TittaMex` instance is connected to.|
+|`getEyeTrackerInfo()`||<ol><li>`eyeTracker`: information about the eyeTracker that Titta is connected to.</li></ol>|Get information about the eye tracker that the Titta instance is connected to.|
 |`getTrackBox()`||<ol><li>`trackBox`: track box of the connected eye tracker.</li></ol>|Get the track box of the connected eye tracker.|
 |`getDisplayArea()`||<ol><li>`displayArea`: display area of the connected eye tracker.</li></ol>|Get the display area of the connected eye tracker.|
 |`applyLicenses()`|<ol><li>`licenses`: a cell array of licenses (`char` of `uint8` representations of the license file read in binary mode).</li></ol>|<ol><li>`applyResults`: a cell array of strings indicating whether license(s) were successfully applied.</li></ol>|Apply license(s) to the connected eye tracker.|
@@ -374,27 +381,30 @@ The following method calls are available on a `Titta` instance:
 |`calibrationComputeAndApply()`|||Queue request for the tracker to compute the calibration function and start using it.|
 |`calibrationGetData()`|||Request retrieval of the computed calibration as an (uninterpretable) binary stream.|
 |`calibrationApplyData()`|<ol><li>`cal`: a binary stream as gotten through `calibrationGetData()`</li></ol>||Apply the provided calibration data.|
-|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of TittaMex's calibration mechanism.|
-|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by TittaMex's calibration mechanism.|
+|`calibrationGetStatus()`||<ol><li>`status`: a string, possible values: `NotYetEntered`, `AwaitingCalPoint`, `CollectingData`, `DiscardingData`, `Computing`, `GettingCalibrationData`, `ApplyingCalibrationData` and `Left`</li></ol>|Get the current state of Titta's calibration mechanism.|
+|`calibrationRetrieveResult()`||<ol><li>`result`: a struct containing a submitted work item and the associated result, if any compelted work items are available</li></ol>|Get information about tasks completed by Titta's calibration mechanism.|
 
 #### Properties
-The following read-only properties are available for a TittaMex instance:
+The following **read-only** properties are available for a Titta instance:
 
 |Property|Description|
 | --- | --- |
-|`getSDKVersion`|Get the version of the Tobii Pro SDK dynamic library that is used by `TittaMex`.|
-|`getSystemTimestamp`|Get the current system time through the Tobii Pro SDK. Returns an int64 scalar denoting Tobii system time in microseconds.|
-|`deviceName`|Get or set connected eye tracker's device name.|
 |`serialNumber`|Get connected eye tracker's serial number.|
 |`model`|Get connected eye tracker's model name.|
 |`firmwareVersion`|Get connected eye tracker's firmware version.|
 |`runtimeVersion`|Get connected eye tracker's runtime version.|
 |`address`|Get connected eye tracker's address.|
 |`capabilities`|Get connected eye tracker's exposed capabilities.|
-|`frequency`|Get or set connected eye tracker's sampling frequency.|
-|`trackingMode`|Get or set connected eye tracker's tracking mode.|
 |`supportedFrequencies`|Get connected eye tracker's supported sampling frequencies.|
 |`supportedModes`|Get connected eye tracker's supported tracking modes.|
+
+The following **settable** properties are available for a Titta instance:
+
+|Property|Description|
+| --- | --- |
+|`deviceName`|Get or set connected eye tracker's device name.|
+|`frequency`|Get or set connected eye tracker's sampling frequency.|
+|`trackingMode`|Get or set connected eye tracker's tracking mode.|
 
 ### `TalkToProLab` class
 #### Static methods
