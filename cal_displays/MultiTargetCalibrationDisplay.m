@@ -100,11 +100,11 @@ classdef MultiTargetCalibrationDisplay < handle
             if strcmp(drawCmd,'new')
                 if ~isnan(currentPoint)
                     if ~ismember(currentPoint, obj.pointIds)
-                        % add point, needed e.g. when manually showing a
-                        % point
-                        obj.pointIds = [obj.pointIds currentPoint];
-                        obj.pointPoss = [obj.pointPoss; pos];
-                        obj.pointShown = [obj.pointShown true];
+                        % replace points, needed e.g. when manually showing
+                        % a point
+                        obj.pointIds = currentPoint;
+                        obj.pointPoss = pos;
+                        obj.pointShown = true;
                     end
                     
                     obj.setActivePoint(currentPoint);
