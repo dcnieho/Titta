@@ -2000,7 +2000,9 @@ classdef Titta < handle
             %    MESSAGE = Titta.getValidationQualityMessage(CAL,SELECTEDCAL)
             %    formats the calibration information for specific
             %    calibration SELECTEDCAL in the calibration attempt array
-            %    CAL.
+            %    CAL. SELECTEDCAL is a single index in case CAL comes from
+            %    Titta.calibrate, and two indices in case it is output from
+            %    Titta.calibrateAdvanced.
             %
             %    See also TITTA.CALIBRATE TITTA.CALIBRATEADVANCED
             
