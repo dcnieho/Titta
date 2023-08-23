@@ -44,6 +44,7 @@ for p=1:nfiles
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel};
         if ~isfield(cal.val{end},'acc2D')
+            % no validation done
             acc = nan(1,4);
         else
             acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
@@ -60,7 +61,8 @@ for p=1:nfiles
             whichCals = cellfun(@(x) x.whichCal, cal.val);
             idx     = find(whichCals==sel(2),1,'last');
             if isempty(idx) || ~isfield(cal.val{idx},'allPoints')
-                % no validation
+                % no validation done for this calibration, or all
+                % validation data discarded again by operator
                 acc = nan(1,4);
             else
                 acc = cal.val{idx}.allPoints.acc2D(:).';
