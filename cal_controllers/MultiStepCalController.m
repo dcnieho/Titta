@@ -554,6 +554,7 @@ classdef MultiStepCalController < handle
                         obj.gazedCalPoint = gazedPoint;
                     elseif obj.isShowingPointManually
                         obj.gazingOnManualPoint = true;
+                        obj.calDisplay.setActivePoint(obj.manualPoint(1));
                     elseif obj.isShowingRewardTarget
                         obj.gazingOnRewardTarget = true;
                     end
