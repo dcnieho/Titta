@@ -2006,40 +2006,69 @@ classdef Titta < handle
             %
             %    See also TITTA.CALIBRATE TITTA.CALIBRATEADVANCED
             
-            message = '';
             if isfield(cal,'quality')
                 % direct validation quality struct passed in, process
                 % directly
                 val = cal;
                 str = 'Data Quality (computed from validation)';
             else
-                if isfield(cal,'attempt')
-                    % find selected calibration, make sure we output quality
-                    % info for that
+                % get type of calibration
+                if isfield(cal,'type')
+                    type = cal.type;
+                else
+                    % guess based on number of items in selectedCal
+                    assert(nargin>=2 || ~isempty(selectedCal),'If you pass in a specific calibration attempt, you must provide the selectedCal input argument')
+                    if isscalar(selectedCal)
+                        type = 'standard';
+                    else
+                        type = 'advanced';
+                    end
+                end
+
+                % a specific attempt may be passed in, or a whole
+                % calibration session. If a whole calibration session, get
+                % which specific attempt we should use.
+                if isfield(cal,'attempt')   % whole calibration session
+                    % find selected calibration, that's the one we should
+                    % output quality info for that
                     if nargin<2 || isempty(selectedCal)
                         assert(isfield(cal,'selectedCal'),'The user did not select a calibration')
                         selectedCal    = cal.selectedCal;
                     end
-                    cal     = cal.attempt{selectedCal(1)};
+                    cal = cal.attempt{selectedCal(1)};
                 end
-                if isscalar(selectedCal)
-                    % find last valid validation
-                    iVal    = find(cellfun(@(x) x.status, cal.val)==1,1,'last');
-                    val     = cal.val{iVal};
-                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal,iVal);
-                else
-                    % get val belonging to this cal
-                    whichCals = cellfun(@(x) x.whichCal, cal.val);
-                    idx     = find(whichCals==selectedCal(2),1,'last');
-                    if isempty(idx)
-                        return;
-                    end
-                    if isfield(cal.val{idx},'allPoints')    % can occur in advanced calibration if collecting and then discarding all validation data
-                        val = cal.val{idx}.allPoints;
-                    else
-                        val = [];
-                    end
-                    str     = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
+                switch type
+                    case 'standard'
+                        % find last valid validation
+                        iVal= find(cellfun(@(x) x.status, cal.val)==1,1,'last');
+                        val = cal.val{iVal};
+                        if isfield(val,'quality')
+                            str = sprintf('%d Data Quality (computed from validation %d)',selectedCal,iVal);
+                        else
+                            str = sprintf('%d Data Quality',selectedCal);
+                        end
+                    case 'advanced'
+                        % find the active/last valid validation for this
+                        % calibration, if any
+                        idx = [];
+                        if isfield(cal,'val')
+                            whichCals = cellfun(@(x) x.whichCal, cal.val);
+                            idx     = find(whichCals==selectedCal(2),1,'last');
+                        end
+                        if isempty(idx)
+                            val = [];
+                        else
+                            if isfield(cal.val{idx},'allPoints')    % this field not existing can occur in advanced calibration if collecting and then discarding all validation data
+                                val = cal.val{idx}.allPoints;
+                            else
+                                val = [];
+                            end
+                        end
+                        if isempty(val)
+                            str = sprintf('%d Data Quality',selectedCal(1));
+                        else
+                            str = sprintf('%d Data Quality (computed from validation %d)',selectedCal(1),idx);
+                        end
                 end
             end
             % get data to put in message, output per eye separately.
@@ -2065,7 +2094,7 @@ classdef Titta < handle
                 end
                 message = sprintf('CALIBRATION %s:\npoint\tacc (%s)\taccX (%s)\taccY (%s)\tSTD (%s)\tRMS (%s)\tdata loss (%%)\n%s',str,degChar,degChar,degChar,degChar,degChar,msg);
             else
-                message = sprintf('CALIBRATION %s: no validation was performed',str);
+                message = sprintf('CALIBRATION %s: validation not available',str);
             end
         end
         
