@@ -57,14 +57,9 @@ for p=1:nfiles
         else
             % find the active/last valid validation for this
             % calibration, if any
-            idx = nan;
-            for q=length(cal.val):-1:1
-                if ~isnan(cal.val{q}.point(1)) && cal.val{q}.whichCal==sel(2) && ~cal.val{q}.wasCancelled && ~cal.val{q}.wasDiscarded
-                    idx = q;
-                    break;
-                end
-            end
-            if isnan(idx)
+            whichCals = cellfun(@(x) x.whichCal, cal.val);
+            idx     = find(whichCals==sel(2),1,'last');
+            if isempty(idx) || ~isfield(cal.val{idx},'allPoints')
                 % no validation
                 acc = nan(1,4);
             else
