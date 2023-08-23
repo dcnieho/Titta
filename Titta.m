@@ -1251,20 +1251,13 @@ classdef Titta < handle
                 obj.doLeaveCalibrationMode();
             end
             
+            % log information about data quality from validation, if any
+            message = obj.getValidationQualityMessage(out);
+            obj.sendMessage(message);
+            
             % log whole process in calibrateHistory and log to messages
             % which calibration was selected
             obj.logCalib(out);
-            
-            % also log information about data quality from validation, if
-            % any
-            if isfield(out.attempt{out.selectedCal(1)},'val')
-                message = obj.getValidationQualityMessage(out);
-                if ~isempty(message)
-                    obj.sendMessage(message);
-                else
-                    obj.sendMessage('not validated');
-                end
-            end
         end
         
         function time = sendMessage(obj,str,time)
