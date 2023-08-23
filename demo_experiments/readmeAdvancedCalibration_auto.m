@@ -12,8 +12,14 @@
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates Titta's
-% manual calibration mode that is designed for working with non-compliant
-% participants.
+% advanced calibration mode that is designed for working with non-compliant
+% participants. This version uses a controller for automatically
+% calibrating, in multiple steps (first a center calibration points is
+% shown, data collected for it and calibration appied based on it, then in
+% two more steps, data is collected for two times three other points).
+% A dummy class providing rewards when looking at the calibration points or
+% inside a red circle shown after calibration is also implemented for demo
+% purposes.
 % 
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
@@ -30,11 +36,10 @@ DEBUGlevel              = 0;
 fixClrs                 = [0 255];
 bgClr                   = 127;
 eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
-useAnimatedCalibration  = true;
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scrPresenter            = 1;
+scrParticipant          = 1;
 scrOperator             = 2;
 % live view parameters
 dataWindowDur           = 500;  % ms
@@ -71,28 +76,43 @@ try
     settings.UI.val.fixFrontColor           = fixClrs(2);
     settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
     settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
-    % calibration display
-    if useAnimatedCalibration
-        % custom calibration drawer
-        calViz                      = AnimatedCalibrationDisplay();
-        settings.mancal.drawFunction= @calViz.doDraw;
-        calViz.bgColor              = bgClr;
-        calViz.fixBackColor         = fixClrs(1);
-        calViz.fixFrontColor        = fixClrs(2);
-    else
-        % set color of built-in fixation points
-        settings.cal.bgColor        = bgClr;
-        settings.cal.fixBackColor   = fixClrs(1);
-        settings.cal.fixFrontColor  = fixClrs(2);
+    % calibration display: add two more points so we have a square grid
+    % with center point
+    settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .5, .1; .5, .9];
+    % calibration display: custom calibration drawer
+    calViz                      = MultiTargetCalibrationDisplay();
+    settings.advcal.drawFunction= @calViz.doDraw;
+    calViz.bgColor              = bgClr;
+    calViz.fixBackColor         = fixClrs(1);
+    calViz.fixFrontColor        = fixClrs(2);
+    % calibration logic: custom controller
+    rewardProvider = DemoRewardProvider();
+    rewardProvider.dutyCycle = 170; % ms
+    calController = MultiStepCalController([],calViz,[],rewardProvider);
+    % hook up our controller with the state notifications provided by
+    % Titta.calibrateAdvanced (request extended notification) so that the
+    % calibration controller can keep track of whats going on and issue
+    % appropriate commands.
+    settings.advcal.cal.pointNotifyFunction = @calController.receiveUpdate;
+    settings.advcal.val.pointNotifyFunction = @calController.receiveUpdate;
+    settings.advcal.cal.useExtendedNotify = true;
+    settings.advcal.val.useExtendedNotify = true;
+    % show the button to start the controller.
+    settings.UI.button.advcal.toggAuto.visible = true;
+    calPoints = {3,[2 5 6],[1 4 7]};    % show calibration points in three steps. Denote which points in which steps
+    calPoss   = cellfun(@(x) settings.advcal.cal.pointPos(x,:),calPoints,'uni',false);
+    calController.setCalPoints(calPoints,calPoss);
+    calController.calAfterEachStep = true;  % tell controller to update calibration after each step is completed
+    if DEBUGlevel>0
+        calController.logTypes  = 1+2*(DEBUGlevel==2)+4;    % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
+        calController.logReceiver = 1;                      % 1: log to Titta messages
     end
-    % callback function for completion of each calibration point
-    settings.mancal.cal.pointNotifyFunction = @demoCalCompletionFun;
-    settings.mancal.val.pointNotifyFunction = @demoCalCompletionFun;
+
     
     % init
     EThndl          = Titta(settings);
-    % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
+    calController.EThndl = EThndl;
     nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
     
     if DEBUGlevel>1
@@ -108,8 +128,8 @@ try
         Screen('Preference', 'Verbosity', 2);
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    [wpntP,winRectP] = PsychImaging('OpenWindow', scrPresenter, bgClr, [], [], [], [], 4);
-    [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator , bgClr, [], [], [], [], 4);
+    [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr, [], [], [], [], 4);
+    [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator   , bgClr, [], [], [], [], 4);
     hz=Screen('NominalFrameRate', wpntP);
     Priority(1);
     Screen('BlendFunction', wpntP, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -122,6 +142,9 @@ try
     % a "better safe than sorry" setting.
     Screen('Preference', 'TextRenderer', 1);
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
+
+    calController.scrRes = winRectP(3:4);
+
     
     % do calibration
     try
@@ -131,7 +154,7 @@ try
         % keypresses from leaking through to matlab
         ListenChar(2);
     end
-    tobii.calVal{1} = EThndl.calibrateManual([wpntP wpntO]);
+    tobii.calVal{1} = EThndl.calibrateAdvanced([wpntP wpntO],[],calController);
     ListenChar(0);
     
     

@@ -2,24 +2,22 @@ classdef VideoCalibrationDisplay < handle
     properties (Access=private, Constant)
         calStateEnum = struct('undefined',0, 'showing',1, 'blinking',2);
     end
-    properties (Access=private)
+    properties (SetAccess=private)
         calState;
-        currentPoint;
         pointStartT;
         blinkStartT;
     end
-    properties (SetAccess=private)
-        images              = {};
-        imageDurations      = [];
-        imageScales         = [];
+    properties (Dependent, SetAccess=private)
+        pos;    % can't set position here, you set it through doDraw() with drawCmd 'new'
     end
     properties
         blinkInterval       = 0.3;
         blinkCount          = 2;
         bgColor             = 127;
-        calSize             = [];
+        videoSize           = [];
     end
     properties (Access=private, Hidden = true)
+        currentPoint;
         qFloatColorRange;
         cumDurations;
         videoPlayer;
@@ -40,6 +38,10 @@ classdef VideoCalibrationDisplay < handle
             obj.calState        = obj.calStateEnum.undefined;
             obj.currentPoint    = nan(1,3);
         end
+
+        function pos = get.pos(obj)
+            pos = obj.currentPoint(2:3);
+        end
         
         function qAllowAcceptKey = doDraw(obj,wpnt,drawCmd,currentPoint,pos,~,~)
             % last two inputs, tick (monotonously increasing integer) and
@@ -54,7 +56,7 @@ classdef VideoCalibrationDisplay < handle
             end
             
             % now that we have a wpnt, interrogate window
-            if isempty(obj.qFloatColorRange)
+            if isempty(obj.qFloatColorRange) && ~isempty(wpnt)
                 obj.qFloatColorRange    = Screen('ColorRange',wpnt)==1;
             end
             
@@ -94,16 +96,18 @@ classdef VideoCalibrationDisplay < handle
                 end
                 obj.tex = newTex;
             end
-
-            Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
-            if obj.tex>0 && (obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5)
-                if ~isempty(obj.calSize)
-                    ts = [0 0 obj.calSize];
-                else
-                    ts = Screen('Rect',obj.tex);
+            
+            if ~isempty(wpnt)
+                Screen('FillRect',wpnt,obj.getColorForWindow(obj.bgColor)); % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
+                if obj.tex>0 && (obj.calState~=obj.calStateEnum.blinking || mod((curT-obj.blinkStartT)/obj.blinkInterval/2,1)>.5)
+                    if ~isempty(obj.videoSize)
+                        ts = [0 0 obj.videoSize];
+                    else
+                        ts = Screen('Rect',obj.tex);
+                    end
+                    rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
+                    Screen('DrawTexture',wpnt,obj.tex,[],rect);
                 end
-                rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
-                Screen('DrawTexture',wpnt,obj.tex,[],rect);
             end
         end
     end

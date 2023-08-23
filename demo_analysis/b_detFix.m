@@ -1,6 +1,16 @@
+% this demo code is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta, please cite the following paper:
+%
+% Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox
+% for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers. Behavior Research Methods.
+% doi: https://doi.org/10.3758/s13428-020-01358-8
+
 clear variables; clear global; clear mex; close all; fclose('all'); clc
-%%% NOTE: this code relies on functions from the PsychToolBox package,
-%%% please make sure it is installed
 %%% it furthermore uses I2MC, make sure you downloaded it and placed it in
 %%% /function_library/I2MC
 
@@ -30,7 +40,7 @@ maxMergeDist = 15;
 minFixDur    = 60;
 
 %%% check I2MC (fixation classifier) is available
-assert(~~exist('I2MCfunc','file'),'It appears that I2MC is not available. please follow the instructions in /readme_analysis_example/function_library/I2MC/get_I2MC.txt to download it.')
+assert(~~exist('I2MCfunc','file'),'It appears that I2MC is not available. please follow the instructions in /demo_analysis/function_library/I2MC/get_I2MC.txt to download it.')
 
 %%% get all trials, parse into subject and stimulus
 [files,nfiles]  = FileFromFolder(dirs.samplesO,[],'txt');
@@ -72,7 +82,7 @@ for p=1:nfiles
     opt.yres          = sess.expt.winRect(4);
     opt.missingx      = nan;
     opt.missingy      = nan;
-    opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;
+    opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;  % mm -> cm
     opt.disttoscreen  = disttoscreen;
     opt.freq          = sess.settings.freq;
     if opt.freq>120

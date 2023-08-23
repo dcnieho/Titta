@@ -1,6 +1,16 @@
+% this demo code is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta, please cite the following paper:
+%
+% Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox
+% for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers. Behavior Research Methods.
+% doi: https://doi.org/10.3758/s13428-020-01358-8
+
 clear variables; clear global; clear mex; close all; fclose('all'); clc
-%%% NOTE: this code relies on functions from the PsychToolBox package,
-%%% please make sure it is installed
 
 dbstop if error % for debugging: trigger a debug point when an error occurs
 
@@ -21,6 +31,8 @@ end
         cd samples_ophak;       dirs.samplesO   = cd;
 cd ..;
 cd ..;  cd function_library;    dirs.funclib    = cd;
+cd ..;
+cd stimuli;                     dirs.stims    = cd;
 cd ..;
 addpath(genpath(dirs.funclib));                 % add dirs to path
 
@@ -77,6 +89,15 @@ for p=1:nfiles
         data = [num2cell(ts(qSel)); num2cell(samp(:,qSel))];
         fprintf(fid,fmt,data{:});
         fclose(fid);
+
+        % copy stimuli, if needed
+        fInfo = [dat.expt.stim.fInfo];
+        qWhich= strcmp({fInfo.name},what{q});
+        imgFile     = fullfile(dat.expt.stim(qWhich).fInfo.folder,what{q});
+        imgFileOut  = fullfile(dirs.stims,what{q});
+        if exist(imgFile,'file') && ~exist(imgFileOut,'file')
+            copyfile(imgFile,imgFileOut,'f');
+        end
     end
 end
 

@@ -18,6 +18,9 @@ fixClrs                 = [0 255];
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
+videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
+videoExt                = 'mov';
+calVidSize              = [100 100];
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
@@ -51,19 +54,12 @@ try
     settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
     settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     % calibration display
-    if useAnimatedCalibration
-        % custom calibration drawer
-        calViz                      = AnimatedCalibrationDisplay();
-        settings.cal.drawFunction   = @calViz.doDraw;
-        calViz.bgColor              = bgClr;
-        calViz.fixBackColor         = fixClrs(1);
-        calViz.fixFrontColor        = fixClrs(2);
-    else
-        % set color of built-in fixation points
-        settings.cal.bgColor        = bgClr;
-        settings.cal.fixBackColor   = fixClrs(1);
-        settings.cal.fixFrontColor  = fixClrs(2);
-    end
+    % custom calibration drawer
+    calViz                      = VideoCalibrationDisplay();
+    settings.cal.drawFunction   = @calViz.doDraw;
+    calViz.bgColor              = bgClr;
+    calViz.videoSize            = calVidSize;
+    % NB: initialized further below
     % callback function for completion of each calibration point
     settings.cal.pointNotifyFunction = @demoCalCompletionFun;
     
@@ -97,6 +93,12 @@ try
     % a "better safe than sorry" setting.
     Screen('Preference', 'TextRenderer', 1);
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
+
+    vids = FileFromFolder(videoFolder, [], videoExt);
+    vids = arrayfun(@(x) fullfile(x.folder,x.name), vids, 'uni', false);
+    vp = VideoPlayer(wpnt,vids);
+    vp.start();
+    calViz.setVideoPlayer(vp);
     
     % do calibration
     try
@@ -128,6 +130,9 @@ try
     end
     ListenChar(0);
     
+    % prep stimuli (get rabbits) - preload these before the trials to
+    % ensure good timing
+    rabbits = loadStimuliFromFolder(fullfile(PsychtoolboxRoot,'PsychDemos'),{'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'},wpnt,winRect(3:4));
     
     % later:
     EThndl.buffer.start('gaze');
@@ -145,28 +150,20 @@ try
     % directly to segment eye tracking data
     EThndl.sendMessage('FIX ON',startT);
     
-    % read in konijntjes image (may want to preload this before the trial
-    % to ensure good timing)
-    stimFName   = 'konijntjes1024x768.jpg';
-    stimDir     = fullfile(PsychtoolboxRoot,'PsychDemos');
-    stimFullName= fullfile(stimDir,stimFName);
-    im          = imread(stimFullName);
-    tex         = Screen('MakeTexture',wpnt,im);
-    
     % show on screen and log when it was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
-    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
-    EThndl.sendMessage(sprintf('STIM ON: %s',stimFName),imgT);
+    Screen('DrawTexture',wpnt,rabbits(1).tex,[],rabbits(1).scrRect);
+    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);                   % bit of slack to make sure requested presentation time can be achieved
+    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(1).fInfo.name,rabbits(1).scrRect),imgT);
     
     % record x seconds of data, then clear screen. Indicate stimulus
     % removed, clean up
     endT = Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
-    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFName),endT);
-    Screen('Close',tex);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(1).fInfo.name),endT);
+    Screen('Close',rabbits(1).tex);
     
     % slightly less precise ISI is fine..., about 1s give or take a frame
     % or continue immediately if the above upload actions took longer than
@@ -183,18 +180,14 @@ try
     startT = Screen('Flip',wpnt);
     EThndl.sendMessage('FIX ON',startT);
     % 2. image
-    stimFNameBlur   = 'konijntjes1024x768blur.jpg';
-    stimFullNameBlur= fullfile(stimDir,stimFNameBlur);
-    im              = imread(stimFullNameBlur);
-    tex             = Screen('MakeTexture',wpnt,im);
-    Screen('DrawTexture',wpnt,tex);                     % draw centered on the screen
-    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);   % bit of slack to make sure requested presentation time can be achieved
-    EThndl.sendMessage(sprintf('STIM ON: %s',stimFNameBlur),imgT);
+    Screen('DrawTexture',wpnt,rabbits(2).tex,[],rabbits(2).scrRect);
+    imgT = Screen('Flip',wpnt,startT+fixTime-1/hz/2);                   % bit of slack to make sure requested presentation time can be achieved
+    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(2).fInfo.name,rabbits(2).scrRect),imgT);
     
     % 4. end recording after x seconds of data again, clear screen.
     endT = Screen('Flip',wpnt,imgT+imageTime-1/hz/2);
-    EThndl.sendMessage(sprintf('STIM OFF: %s',stimFNameBlur),endT);
-    Screen('Close',tex);
+    EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(2).fInfo.name),endT);
+    Screen('Close',rabbits(2).tex);
     
     % stop recording
     if EThndl.buffer.hasStream('eyeImage')
@@ -205,7 +198,7 @@ try
     % save data to mat file, adding info about the experiment
     dat = EThndl.collectSessionData();
     dat.expt.winRect = winRect;
-    dat.expt.stimDir = stimDir;
+    dat.expt.stim    = rabbits;
     save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
     % NB: if you don't want to add anything to the saved data, you can use
     % EThndl.saveData directly
