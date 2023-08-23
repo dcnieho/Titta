@@ -4994,7 +4994,7 @@ classdef Titta < handle
                                         if ~isnan(idx) && ~qFound(idx) && vals{p}.whichCal==whichCal && ~vals{p}.wasCancelled && ~vals{p}.wasDiscarded
                                             % we don't yet have validation data for
                                             % this point, and it is for the current
-                                            % calibration -> collect
+                                            % calibration -> copy it over
                                             qFound(idx) = true;
                                             if isnan(oidx)
                                                 oidx = size(vals{p}.allPoints.pointPos,1);
