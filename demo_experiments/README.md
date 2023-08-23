@@ -19,3 +19,4 @@ The following readme scripts are available:
 
 Besides the default operation mode with a simple interface for calibration and validation that is suitable for cooperative participants, Titta also includes a separate more advanced calibration interface that gives the operator more control over what is shown to participants. This may be suitable for calibrating non-cooperative participants such as infants and primates. This mode is demoed in the following readme scripts:
 - `readmeAdvancedCalibration.m`: Version of `readme.m` showing use of the advanced calibration interface implemented with the `Titta.calibrateAdvanced()` function.
+- `readmeAdvancedCalibration_auto.m`: Version of `readmeAdvancedCalibration.m` that shows usage of a calibration controller ([`MultiStepCalController`](../cal_controllers/MultiStepCalController.m)) to automatically run a calibration procedure consisting of multiple steps, and provide rewards when subjects look at the calibration points.
