@@ -67,9 +67,10 @@ classdef MultiTargetCalibrationDisplay < handle
                 return
             end
             qPoint = pointId==obj.pointIds;
-            assert(sum(qPoint)==1,'point %d not known',pointId);
-            obj.pointActive = find(qPoint,1);
-            obj.oscillStartT = GetSecs();
+            if any(qPoint)
+                obj.pointActive = find(qPoint,1);
+                obj.oscillStartT = GetSecs();
+            end
         end
 
         function hidePoint(obj, pointId)
