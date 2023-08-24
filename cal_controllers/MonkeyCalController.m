@@ -145,7 +145,7 @@ classdef MonkeyCalController < handle
             commands = {};
             if ~isempty(obj.forceRewardButton) && ~isempty(obj.rewardProvider)
                 [~,~,keyCode] = KbCheck();
-                if any(keyCode) && ismember(KbName(keyCode),{obj.forceRewardButton})
+                if any(keyCode) && any(ismember(KbName(keyCode),{obj.forceRewardButton}))
                     obj.dispensingForcedReward = true;
                     obj.reward(true);
                 elseif obj.dispensingForcedReward
