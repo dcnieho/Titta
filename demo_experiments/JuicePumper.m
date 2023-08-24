@@ -8,6 +8,7 @@ classdef JuicePumper < handle
         baudrate = 9600;
         dummyMode = false;
         dutyCycle = inf;    % ms. If set to something other than inf, juice will be pulsed with the pump being on for dutyCycle ms, then off for dutyCycle ms, etc for as long rewards are on. This requires frequently calling tick()
+        verbose   = false;  % if true, prints state updates to command line
     end
     properties (SetAccess=private)
         on = false;
@@ -35,40 +36,48 @@ classdef JuicePumper < handle
         end
 
         function delete(obj)
+            % ensure we stop the juice before we destruct
+            obj.stop();
             if ~isempty(obj.portHandle)
-                % ensure we stop the juice before we destruct
-                obj.stop();
                 delete(obj.portHandle)
             end
         end
 
         function start(obj)
-            if ~obj.dummyMode && ~obj.on
+            if ~obj.on
                 obj.startT = GetSecs();
                 obj.dispense(true);
-                % fprintf('start\n');
+                if obj.verbose
+                    fprintf('JuicePumper: start\n');
+                end
             end
             obj.on = true;
         end
 
         function tick(obj)
-            if ~obj.dummyMode && obj.on
+            if obj.on
                 % pulsing: check if need to switch pump on or off
                 iVal = floor((GetSecs-obj.startT)*1000/obj.dutyCycle)+1;
                 if mod(iVal,2)==1 && ~obj.dispensing
                     obj.dispense(true);
-                    % fprintf('pulse on %.3f\n',GetSecs-obj.startT);
+                    if obj.verbose
+                        fprintf('JuicePumper: pulse on %.3f\n',GetSecs-obj.startT);
+                    end
                 elseif mod(iVal,2)==0 && obj.dispensing
                     obj.dispense(false);
-                    % fprintf('pulse off %.3f\n',GetSecs-obj.startT);
+                    if obj.verbose
+                        fprintf('JuicePumper: pulse off %.3f\n',GetSecs-obj.startT);
+                    end
                 end
             end
         end
 
         function stop(obj)
-            if ~obj.dummyMode
+            if obj.on
                 obj.dispense(false);
-                % fprintf('stop\n');
+                if obj.verbose
+                    fprintf('JuicePumper: stop\n');
+                end
             end
             obj.on = false;
         end
@@ -82,12 +91,14 @@ classdef JuicePumper < handle
 
     methods (Access = private, Hidden)
         function dispense(obj,start)
-            if start
+            obj.dispensing = start;
+            if obj.dummyMode
+                return
+            end
+            if obj.dispensing
                 fwrite(obj.portHandle, [160 1 1 162]);
-                obj.dispensing = true;
             else
                 fwrite(obj.portHandle, [160 1 0 161]);
-                obj.dispensing = false;
             end
         end
     end
