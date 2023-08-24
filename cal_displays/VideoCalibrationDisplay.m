@@ -50,11 +50,16 @@ classdef VideoCalibrationDisplay < handle
             % last two inputs, tick (monotonously increasing integer) and
             % stage ("cal" or "val") are not used in this code
             
-            % if called with drawCmd == 'cleanUp', this is a signal that
-            % calibration/validation is done, and cleanup can occur if
-            % wanted
-            if strcmp(drawCmd,'cleanUp')
-                obj.setCleanState();
+            % if called with drawCmd == 'fullCleanUp', this is a signal
+            % that calibration/validation is done, and cleanup can occur if
+            % wanted. If called with drawCmd == 'sequenceCleanUp' that
+            % means there should be a gap in the drawing sequence (e.g. no
+            % smooth animation between two positions). For this one we keep
+            % image playback state unless asked to fully clean up.
+            if ismember(drawCmd,{'fullCleanUp','sequenceCleanUp'})
+                if strcmp(drawCmd,'fullCleanUp')
+                    obj.setCleanState();
+                end
                 return;
             end
             

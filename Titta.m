@@ -2877,7 +2877,7 @@ classdef Titta < handle
                         % accross setup screens and such.
                         % So, send cleanup message to user function (if any)
                         if isa(obj.settings.cal.drawFunction,'function_handle')
-                            obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                            obj.settings.cal.drawFunction(wpnt(1),'fullCleanUp',nan,nan,nan,nan);
                         end
                         for w=wpnt
                             Screen('FillRect', w, obj.getColorForWindow(obj.settings.cal.bgColor,w));
@@ -2916,7 +2916,7 @@ classdef Titta < handle
             if out.val{iVal}.status~=-1   % see comment above about why not when -1
                 % cleanup message to user function (if any)
                 if isa(obj.settings.cal.drawFunction,'function_handle')
-                    obj.settings.cal.drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                    obj.settings.cal.drawFunction(wpnt(1),'fullCleanUp',nan,nan,nan,nan);
                 end
             end
             out.status = out.val{iVal}.status;
@@ -5622,7 +5622,7 @@ classdef Titta < handle
                             % if no points enqueued, reset calibration
                             % point drawer function (if any)
                             if isempty(pointList) && ~qAutoActive
-                                drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                drawFunction(wpnt(1),'sequenceCleanUp',nan,nan,nan,nan);
                             end
                             % if in calibration mode and point states have
                             % changed, and no further calibration points
@@ -6483,7 +6483,7 @@ classdef Titta < handle
                                 % reset calibration point drawer
                                 % function
                                 if ~qAutoActive
-                                    drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);
+                                    drawFunction(wpnt(1),'sequenceCleanUp',nan,nan,nan,nan);
                                 end
                                 qDoneSomething = true;
                             end
@@ -6583,7 +6583,7 @@ classdef Titta < handle
             end
             
             % clean up
-            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);    % make sure calibration display gets a change to tear down whatever it has allocated
+            drawFunction(wpnt(1),'fullCleanUp',nan,nan,nan,nan);    % make sure calibration display gets a change to tear down whatever it has allocated
             HideCursor;
             obj.buffer.stop('positioning');
             obj.buffer.stop('gaze');

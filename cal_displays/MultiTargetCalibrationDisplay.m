@@ -83,10 +83,13 @@ classdef MultiTargetCalibrationDisplay < handle
             % last two inputs, tick (monotonously increasing integer) and
             % stage ("cal" or "val") are not used in this code
             
-            % if called with drawCmd == 'cleanUp', this is a signal that
-            % calibration/validation is done, and cleanup can occur if
-            % wanted
-            if strcmp(drawCmd,'cleanUp')
+            % if called with drawCmd == 'fullCleanUp', this is a signal
+            % that calibration/validation is done, and cleanup can occur if
+            % wanted. If called with drawCmd == 'sequenceCleanUp' that
+            % means there should be a gap in the drawing sequence (e.g. no
+            % smooth animation between two positions). For this one we can
+            % just clean up state in both cases.
+            if ismember(drawCmd,{'fullCleanUp','sequenceCleanUp'})
                 obj.setCleanState();
                 return;
             end
