@@ -37,6 +37,9 @@ classdef VideoCalibrationDisplay < handle
         function setCleanState(obj)
             obj.calState        = obj.calStateEnum.undefined;
             obj.currentPoint    = nan(1,3);
+            if ~isempty(obj.videoPlayer)
+                obj.videoPlayer.cleanup();
+            end
         end
 
         function pos = get.pos(obj)
