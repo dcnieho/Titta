@@ -6576,13 +6576,14 @@ classdef Titta < handle
             out.status      = status;
             out.selectedCal = [kCal getLastAdvancedCal(out.attempt{kCal})];
 
-            % if wanted, notify user callback of
-            % compute and apply result
+            % if wanted, notify user callback that this routine is being
+            % exited
             if isa(obj.settings.advcal.(stage).pointNotifyFunction,'function_handle') && obj.settings.advcal.(stage).useExtendedNotify
                 obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,[stage '_finished'],out);
             end
             
             % clean up
+            drawFunction(wpnt(1),'cleanUp',nan,nan,nan,nan);    % make sure calibration display gets a change to tear down whatever it has allocated
             HideCursor;
             obj.buffer.stop('positioning');
             obj.buffer.stop('gaze');
