@@ -1350,6 +1350,9 @@ classdef Titta < handle
             if isa(dat.settings.UI.advcal.instruct.strFun,'function_handle')
                 dat.settings.UI.advcal.instruct.strFun = func2str(dat.settings.UI.advcal.instruct.strFun);
             end
+            if isa(dat.settings.advcal.drawFunction,'function_handle')
+                dat.settings.advcal.drawFunction = func2str(dat.settings.advcal.drawFunction);
+            end
             if isa(dat.settings.advcal.cal.pointNotifyFunction,'function_handle')
                 dat.settings.advcal.cal.pointNotifyFunction = func2str(dat.settings.advcal.cal.pointNotifyFunction);
             end
