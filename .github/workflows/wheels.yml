@@ -1,7 +1,5 @@
 name: Wheels
 
-# Note: the cibuildwheel options are inside pyproject.toml
-
 on:
   workflow_dispatch:
   release:
