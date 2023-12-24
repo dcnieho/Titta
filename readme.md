@@ -1,4 +1,5 @@
 [![Downloads](https://static.pepy.tech/badge/tittapy)](https://pepy.tech/project/tittapy)
+[![Citation Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.juleskreuer.eu%2Fcitation-badge.php%3Fshield%26doi%3D10.3758%2Fs13428-020-01358-8&color=blue)](https://scholar.google.com/citations?view_op=view_citation&citation_for_view=uRUYoVgAAAAJ:J_g5lzvAfSwC)
 
 Titta is a toolbox for using eye trackers from Tobii Pro AB with MATLAB or GNU Octave,
 specifically offering integration with [PsychToolbox](http://psychtoolbox.org/). A Python version
