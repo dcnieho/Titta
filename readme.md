@@ -79,6 +79,12 @@ On the Python side, besides the above benefits, use of the `Titta` C++ wrapper i
 ### The `TalkToProLab` class
 The `TalkToProLab` class provides an implementation of [Tobii Pro Lab](https://www.tobiipro.com/product-listing/tobii-pro-lab/)'s External Presenter interface, allowing experiments to be created and run from MATLAB/Octave with PsychToolbox or other presentation methods, while recording, project management, recording playback/visualization and analysis can be performed in Tobii Pro Lab.
 
+The `TalkToProLab` class must be able to communicate with the External Presenter interface of Pro Lab for it to operate. As such, to use the `TalkToProLab` class, do the following:
+1) Open an External Presenter project in Tobii Pro Lab, make sure its name matches what you provide to the [`TalkToProLab` constructor](#construction-1).
+2) Navigate to the 'record'-tab in Pro Lab
+3) Make sure that the External presenter button is red and says 'not connected'
+4) Run this script
+
 ## Usage
 As demonstrated in the [demo scripts](demo_experiments), the toolbox is configured through
 the following interface:
