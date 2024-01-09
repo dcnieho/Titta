@@ -18,6 +18,8 @@ function antiSaccadeProLabIntegration(varargin)
 % To run
 % 1) In Pro Lab, make a new External Presenter project with the name
 %    'antiSaccade'. Open this project and select the recording tab.
+% 2) In Pro Lab, navigate to the 'record'-tab and make sure that the
+%    External presenter button is red and says 'not connected'.
 % 2) In this code, make sure the size of the screen (sv.scr.rect below),
 %    its framerate (sv.scr.framerate) and other settings match your setup.
 % 3) First, the stimuli need to be uploaded to Pro Lab. Below, set
