@@ -14,8 +14,9 @@
 % Antoniades et al. (2013). An internationally standardised antisaccade
 % protocol. Vision Research 84, 1--5.
 %
-% Before running, make sure the size of the screen (sv.scr.rect below), its
-% framerate (sv.scr.framerate) and other settings match your setup.
+% Before running, make sure the size of the screen (settings.scr.rect
+% below), its framerate (settings.scr.framerate) and other settings match
+% your setup.
 %
 % When running the version with Tobii Pro Lab integration, additional
 % running instructions are provided in antiSaccadeProLabIntegration.m
@@ -66,9 +67,9 @@ settings = antiSaccadeParameters(doDemo,useProLab);
 % ... and possibly more, such as screen size and viewing distance
 % 2.4 if using Pro Lab integration, you would probably want to change some
 %     of these variables:
-% sv.proLab.projectName
-% sv.proLab.participant
-% sv.proLab.RecordingName
+% settings.proLab.projectName
+% settings.proLab.participant
+% settings.proLab.RecordingName
 % 2.5 furthermore the first time you run with pro lab integration, you must
 %     set this to upload the stimuli. after that, set it back to false.
 % settings.proLab.doDryRun = true;
