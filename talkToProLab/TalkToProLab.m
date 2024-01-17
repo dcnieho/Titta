@@ -307,7 +307,7 @@ classdef TalkToProLab < handle
             assert(size(vertices,1)==2,'TalkToProLab: attachAOIToImage: AOI vertices should be a 2xN array')
             nVert = size(vertices,2);
             AOI.key_frames{1}.is_active = true;
-            AOI.key_frames{1}.seconds   = 0;
+            AOI.key_frames{1}.time      = int64(0);     % microseconds, appears to be ignored for image media, set to 0 anyway to be safe
             AOI.key_frames{1}.vertices  = repmat(struct('x',0,'y',0),1,nVert);
             vertices = num2cell(vertices);
             [AOI.key_frames{1}.vertices.x] = vertices{1,:};
