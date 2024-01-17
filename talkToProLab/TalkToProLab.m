@@ -238,7 +238,7 @@ classdef TalkToProLab < handle
                     mimeType = 'image/png';
                 case 'gif'
                     mimeType = 'image/gif';
-                case 'mp4'
+                case {'mp4','mov'}
                     mimeType = 'video/mp4';
                 case 'avi'
                     mimeType = 'video/x-msvideo';
