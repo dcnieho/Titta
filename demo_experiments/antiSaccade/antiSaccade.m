@@ -23,7 +23,8 @@ function antiSaccade(varargin)
 % minutes. To run the full protocol, set doDemo below to false.
 
 if nargin<1
-    sv      = antiSaccadeParameters(true,false);
+    doDemo  = true;
+    sv      = antiSaccadeParameters(doDemo,false);
 else
     sv      = varargin{1};
 end

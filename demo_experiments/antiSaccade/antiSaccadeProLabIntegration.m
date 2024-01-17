@@ -34,7 +34,8 @@ function antiSaccadeProLabIntegration(varargin)
 %    in its analysis view.
 
 if nargin<1
-    sv      = antiSaccadeParameters(true,true);
+    doDemo  = true;
+    sv      = antiSaccadeParameters(doDemo,true);
 else
     sv      = varargin{1};
 end
