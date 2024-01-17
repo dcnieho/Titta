@@ -42,6 +42,7 @@ end
 % sv.doDryRun = true;
 
 %% prepare run
+addpath(fullfile(cd,'functions'))
 %%%%%%%%%%%%%%%%%% get display setup
 rect                = Screen('Rect',sv.scr.num);
 frate               = Screen('FrameRate',sv.scr.num);
