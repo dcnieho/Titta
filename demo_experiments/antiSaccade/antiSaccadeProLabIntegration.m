@@ -23,7 +23,7 @@ function antiSaccadeProLabIntegration(varargin)
 % 2) In this code, make sure the size of the screen (sv.scr.rect below),
 %    its framerate (sv.scr.framerate) and other settings match your setup.
 % 3) First, the stimuli need to be uploaded to Pro Lab. Below, set
-%    sv.doDryRun to true and run this code.
+%    sv.proLab.doDryRun to true and run this code.
 % 4) Once finished, set sv.doDryRun back to false. You are now ready to run
 %    the demo. Check that the correct eye tracker is set with the command
 %    Titta.getDefaults('Tobii Pro Spectrum') below.
@@ -40,7 +40,7 @@ else
     sv      = varargin{1};
 end
 
-% sv.doDryRun = true;
+% sv.proLab.doDryRun = true;
 
 %% prepare run
 addpath(fullfile(cd,'functions'))
