@@ -174,7 +174,7 @@ std::string Titta::getAllBufferSidesString(const char* quoteChar_ /*= "\""*/)
 }
 
 // callbacks
-void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
+void TittaGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
@@ -182,7 +182,7 @@ void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
         instance->receiveSample(gaze_data_, nullptr);
     }
 }
-void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data)
+void TittaEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data)
 {
     if (user_data)
     {
@@ -190,7 +190,7 @@ void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void
         instance->receiveSample(nullptr, openness_data_);
     }
 }
-void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
+void TittaEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
@@ -199,7 +199,7 @@ void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
         instance->_eyeImages.emplace_back(eye_image_);
     }
 }
-void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
+void TittaEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
 {
     if (user_data)
     {
@@ -208,7 +208,7 @@ void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_d
         instance->_eyeImages.emplace_back(eye_image_);
     }
 }
-void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
+void TittaExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
 {
     if (user_data)
     {
@@ -217,7 +217,7 @@ void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* 
         instance->_extSignal.push_back(*ext_signal_);
     }
 }
-void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
+void TittaTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
 {
     if (user_data)
     {
@@ -226,7 +226,7 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
         instance->_timeSync.push_back(*time_sync_data_);
     }
 }
-void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
+void TittaPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
 {
     if (user_data)
     {
@@ -235,7 +235,7 @@ void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, vo
         instance->_positioning.push_back(*position_data_);
     }
 }
-void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
+void TittaLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_)
 {
     if (Titta::_logMessages)
     {
@@ -243,7 +243,7 @@ void TobiiLogCallback(int64_t system_time_stamp_, TobiiResearchLogSource source_
         Titta::_logMessages->emplace_back(Titta::logMessage(system_time_stamp_, source_, level_, message_));
     }
 }
-void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
+void TittaStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* user_data)
 {
     if (Titta::_logMessages && errorData_)
     {
@@ -259,7 +259,7 @@ void TobiiStreamErrorCallback(TobiiResearchStreamErrorData* errorData_, void* us
         Titta::_logMessages->emplace_back(Titta::streamError(serial,errorData_->system_time_stamp, errorData_->error, errorData_->source, errorData_->message));
     }
 }
-void TobiiNotificationCallback(TobiiResearchNotification* notification_, void* user_data)
+void TittaNotificationCallback(TobiiResearchNotification* notification_, void* user_data)
 {
     if (user_data)
     {
@@ -311,14 +311,14 @@ bool Titta::startLogging(std::optional<size_t> initialBufferSize_)
 
     auto l = write_lock(Titta::_logsMutex);
     _logMessages->reserve(initialBufferSize);
-    auto result = tobii_research_logging_subscribe(TobiiLogCallback);
+    auto result = tobii_research_logging_subscribe(TittaLogCallback);
 
     if (g_allInstances)
     {
         // also start stream error logging on all instances
         for (auto inst : *g_allInstances)
             if (inst->_eyetracker.et)
-                tobii_research_subscribe_to_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback, inst->_eyetracker.et);
+                tobii_research_subscribe_to_stream_errors(inst->_eyetracker.et, TittaStreamErrorCallback, inst->_eyetracker.et);
     }
 
     return _isLogging = result == TOBII_RESEARCH_STATUS_OK;
@@ -350,7 +350,7 @@ bool Titta::stopLogging()
         // also stop stream error logging on all instances
         for (auto inst: *g_allInstances)
             if (inst->_eyetracker.et)
-                tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker.et, TobiiStreamErrorCallback);
+                tobii_research_unsubscribe_from_stream_errors(inst->_eyetracker.et, TittaStreamErrorCallback);
     }
 
     return success;
@@ -362,16 +362,16 @@ namespace
     TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, Titta* instance_, bool asGif_)
     {
         if (asGif_)
-            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback, instance_);
+            return tobii_research_subscribe_to_eye_image_as_gif(eyetracker_, TittaEyeImageGifCallback, instance_);
         else
-            return tobii_research_subscribe_to_eye_image       (eyetracker_,    TobiiEyeImageCallback, instance_);
+            return tobii_research_subscribe_to_eye_image       (eyetracker_,    TittaEyeImageCallback, instance_);
     }
     TobiiResearchStatus doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyetracker_, bool isGif_)
     {
         if (isGif_)
-            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TobiiEyeImageGifCallback);
+            return tobii_research_unsubscribe_from_eye_image_as_gif(eyetracker_, TittaEyeImageGifCallback);
         else
-            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TobiiEyeImageCallback);
+            return tobii_research_unsubscribe_from_eye_image       (eyetracker_,    TittaEyeImageCallback);
     }
 }
 
@@ -403,7 +403,7 @@ Titta::~Titta()
     stop(Stream::Notification,true);
 
     if (_eyetracker.et)
-        tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TobiiStreamErrorCallback);
+        tobii_research_unsubscribe_from_stream_errors(_eyetracker.et, TittaStreamErrorCallback);
     stopLogging();
 
     leaveCalibrationMode(false);
@@ -431,7 +431,7 @@ void Titta::Init()
         }
 
         // start stream error logging
-        tobii_research_subscribe_to_stream_errors(_eyetracker.et, TobiiStreamErrorCallback, _eyetracker.et);
+        tobii_research_subscribe_to_stream_errors(_eyetracker.et, TittaStreamErrorCallback, _eyetracker.et);
     }
     start(Stream::Notification);    // always start notification stream as soon as we're connected
     if (g_allInstances)
@@ -935,7 +935,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     _gaze.reserve(initialBufferSize);   // NB: if already reserved when starting eye openness, this will not shrink
                 }
                 // start buffer
-                result = tobii_research_subscribe_to_gaze_data(_eyetracker.et, TobiiGazeCallback, this);
+                result = tobii_research_subscribe_to_gaze_data(_eyetracker.et, TittaGazeCallback, this);
                 stateVar = &_recordingGaze;
             }
             break;
@@ -954,7 +954,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     _gaze.reserve(initialBufferSize);   // NB: if already reserved when starting gaze, this will not shrink
                 }
                 // start buffer
-                result = tobii_research_subscribe_to_eye_openness(_eyetracker.et, TobiiEyeOpennessCallback, this);
+                result = tobii_research_subscribe_to_eye_openness(_eyetracker.et, TittaEyeOpennessCallback, this);
                 stateVar = &_recordingEyeOpenness;
             }
             break;
@@ -1005,7 +1005,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     auto l = lockForWriting<extSignal>();
                     _extSignal.reserve(initialBufferSize);
                 }
-                result = tobii_research_subscribe_to_external_signal_data(_eyetracker.et, TobiiExtSignalCallback, this);
+                result = tobii_research_subscribe_to_external_signal_data(_eyetracker.et, TittaExtSignalCallback, this);
                 stateVar = &_recordingExtSignal;
             }
             break;
@@ -1023,7 +1023,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     auto l = lockForWriting<timeSync>();
                     _timeSync.reserve(initialBufferSize);
                 }
-                result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker.et, TobiiTimeSyncCallback, this);
+                result = tobii_research_subscribe_to_time_synchronization_data(_eyetracker.et, TittaTimeSyncCallback, this);
                 stateVar = &_recordingTimeSync;
             }
             break;
@@ -1041,7 +1041,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     auto l = lockForWriting<positioning>();
                     _positioning.reserve(initialBufferSize);
                 }
-                result = tobii_research_subscribe_to_user_position_guide(_eyetracker.et, TobiiPositioningCallback, this);
+                result = tobii_research_subscribe_to_user_position_guide(_eyetracker.et, TittaPositioningCallback, this);
                 stateVar = &_recordingPositioning;
             }
             break;
@@ -1059,7 +1059,7 @@ bool Titta::start(Stream stream_, std::optional<size_t> initialBufferSize_, std:
                     auto l = lockForWriting<notification>();
                     _notification.reserve(initialBufferSize);
                 }
-                result = tobii_research_subscribe_to_notifications(_eyetracker.et, TobiiNotificationCallback, this);
+                result = tobii_research_subscribe_to_notifications(_eyetracker.et, TittaNotificationCallback, this);
                 stateVar = &_recordingNotification;
             }
             break;
@@ -1417,11 +1417,11 @@ bool Titta::stop(Stream stream_, std::optional<bool> clearBuffer_)
     switch (stream_)
     {
         case Stream::Gaze:
-            result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker.et, TobiiGazeCallback);
+            result = !_recordingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_eyetracker.et, TittaGazeCallback);
             stateVar = &_recordingGaze;
             break;
         case Stream::EyeOpenness:
-            result = !_recordingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_eyetracker.et, TobiiEyeOpennessCallback);
+            result = !_recordingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_eyetracker.et, TittaEyeOpennessCallback);
             stateVar = &_recordingEyeOpenness;
             break;
         case Stream::EyeImage:
@@ -1429,19 +1429,19 @@ bool Titta::stop(Stream stream_, std::optional<bool> clearBuffer_)
             stateVar = &_recordingEyeImages;
             break;
         case Stream::ExtSignal:
-            result = !_recordingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_eyetracker.et, TobiiExtSignalCallback);
+            result = !_recordingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_eyetracker.et, TittaExtSignalCallback);
             stateVar = &_recordingExtSignal;
             break;
         case Stream::TimeSync:
-            result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker.et, TobiiTimeSyncCallback);
+            result = !_recordingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_eyetracker.et, TittaTimeSyncCallback);
             stateVar = &_recordingTimeSync;
             break;
         case Stream::Positioning:
-            result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker.et, TobiiPositioningCallback);
+            result = !_recordingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_eyetracker.et, TittaPositioningCallback);
             stateVar = &_recordingPositioning;
             break;
         case Stream::Notification:
-            result = !_recordingNotification ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_notifications(_eyetracker.et, TobiiNotificationCallback);
+            result = !_recordingNotification ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_notifications(_eyetracker.et, TittaNotificationCallback);
             stateVar = &_recordingNotification;
             break;
     }

@@ -156,16 +156,16 @@ public:
 private:
     void Init();
     // Tobii callbacks need to be friends
-    friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
-    friend void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
-    friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
-    friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
-    friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
-    friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
-    friend void TobiiPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
-    friend void TobiiLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
-    friend void TobiiStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data);
-    friend void TobiiNotificationCallback(TobiiResearchNotification*             notification_, void* user_data);
+    friend void TittaGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
+    friend void TittaEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
+    friend void TittaEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
+    friend void TittaEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
+    friend void TittaExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
+    friend void TittaTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
+    friend void TittaPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
+    friend void TittaLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
+    friend void TittaStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data);
+    friend void TittaNotificationCallback(TobiiResearchNotification*             notification_, void* user_data);
     // calibration
     void calibrationThread();
     // gaze + eye openness receiver
