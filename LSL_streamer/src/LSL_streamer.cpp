@@ -171,6 +171,10 @@ uint32_t LSL_streamer::getID()
     static std::atomic<uint32_t> lastID = 0;
     return lastID++;
 }
+void LSL_streamer::Init()
+{
+
+}
 
 
 // helpers to make the below generic
