@@ -253,6 +253,10 @@ bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, 
 }
 bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_)
 {
+    // if already streaming, don't start again
+    if (isStreaming(stream_))
+        return false;
+
     // for gaze signal, get info about the eye tracker's gaze stream
     auto hasFreq = stream_ == Titta::Stream::Gaze || stream_ == Titta::Stream::EyeOpenness;
     if (hasFreq)
@@ -616,7 +620,7 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
     _outStreams.insert(std::make_pair(stream_,lsl::stream_outlet(info, 1)));
 
     // start the eye tracker stream
-    start(stream_, asGif_);
+    return start(stream_, asGif_);
 }
 
 
