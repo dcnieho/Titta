@@ -809,8 +809,11 @@ void LSL_streamer::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearc
     if (!needStage && !_gazeStagingEmpty)
     {
         // if any data in staging area but no longer expecting to merge, flush to output
-        auto l    = write_lock(_gazeStageMutex);
-        _gaze.insert(_gaze.end(), std::make_move_iterator(_gazeStaging.begin()), std::make_move_iterator(_gazeStaging.end()));
+        if (isStreaming(Titta::Stream::Gaze))
+        {
+            for (auto& samp : _gazeStaging)
+                pushSample(samp);
+        }
         _gazeStaging.clear();
         _gazeStagingEmpty = true;
     }
