@@ -160,6 +160,7 @@
     <ClInclude Include="deps\include\tobii_research_eyetracker.h" />
     <ClInclude Include="deps\include\tobii_research_streams.h" />
     <ClInclude Include="LSL_streamer\LSL_streamer.h" />
+    <ClInclude Include="LSL_streamer\types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

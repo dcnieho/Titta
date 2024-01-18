@@ -36,6 +36,7 @@ namespace
         constexpr size_t                peekNSamp                 = 1;
         constexpr int64_t               peekTimeRangeStart        = 0;
         constexpr int64_t               peekTimeRangeEnd          = std::numeric_limits<int64_t>::max();
+        constexpr bool                  timeIsLocalTime           = true;
     }
 }
 
@@ -213,7 +214,7 @@ getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, size_t NSamp_, Titta:
 
 template <typename DataType>
 std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator, bool>
-getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64_t timeEnd_)
+getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
 {
     // !NB: appropriate locking is responsibility of caller!
     // find elements within given range of time stamps, both sides inclusive.
@@ -226,10 +227,10 @@ getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64
 
     // 2. see which member variable to access
     int64_t DataType::* field;
-    if constexpr (std::is_same_v<DataType, Titta::timeSync>)
-        field = &DataType::system_request_time_stamp;
+    if (timeIsLocalTime_)
+        field = &DataType::local_system_time_stamp;
     else
-        field = &DataType::system_time_stamp;
+        field = &DataType::remote_system_time_stamp;
 
     // 3. check if requested times are before or after vector start and end
     bool inclFirst = timeStart_ <= buf_.front().*field;
@@ -926,7 +927,7 @@ void LSL_streamer::pushSample(Titta::gaze sample_)
         sample_.right_eye.eye_openness.diameter,
         static_cast<float>(sample_.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.eye_openness.available),
     };
-    _outStreams.at(Titta::Stream::Gaze).push_sample(sample);
+    _outStreams.at(Titta::Stream::Gaze).push_sample(sample, sample_.system_time_stamp/1'000'000.);
 }
 void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
 {
@@ -937,14 +938,14 @@ void LSL_streamer::pushSample(Titta::extSignal sample_)
     const int64_t sample[] = {
         sample_.device_time_stamp, sample_.value
     };
-    _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample);
+    _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, sample_.system_time_stamp / 1'000'000.);
 }
 void LSL_streamer::pushSample(Titta::timeSync sample_)
 {
     const int64_t sample[] = {
         sample_.system_request_time_stamp, sample_.device_time_stamp, sample_.system_response_time_stamp
     };
-    _outStreams.at(Titta::Stream::TimeSync).push_sample(sample);
+    _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, sample_.system_request_time_stamp / 1'000'000.);
 }
 void LSL_streamer::pushSample(Titta::positioning sample_)
 {
@@ -1031,8 +1032,8 @@ bool LSL_streamer::isStreaming(Titta::Stream stream_) const
             break;
     }
 
-    // TODO: this second check doesn't work for eye openness i think. EyeOpenness should always be packed in a gaze stream, even if if rest of gaze data is not streamed
-    return isStreaming && _outStreams.contains(stream_);
+    // EyeOpenness is always packed in a gaze stream, so check for that instead
+    return isStreaming && ((stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_));
 }
 
 void LSL_streamer::stopOutlet(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
@@ -1084,7 +1085,7 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, const typename std::vecto
 }
 
 template <typename DataType>
-void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t timeEnd_)
+void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
 {
     auto l = lockForWriting(inlet_);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer(inlet_);
@@ -1092,7 +1093,7 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t
         return;
 
     // find applicable range
-    auto [startIt, endIt, whole] = getIteratorsFromTimeRange<DataType>(timeStart_, timeEnd_);
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange<DataType>(timeStart_, timeEnd_, timeIsLocalTime_);
     // clear the flagged bit
     if (whole)
         buf.clear();
@@ -1126,17 +1127,18 @@ std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t>
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+std::vector<DataType> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
-    auto timeStart  = timeStart_.value_or(defaults::consumeTimeRangeStart);
-    auto timeEnd    = timeEnd_  .value_or(defaults::consumeTimeRangeEnd);
+    auto timeStart      = timeStart_      .value_or(defaults::consumeTimeRangeStart);
+    auto timeEnd        = timeEnd_        .value_or(defaults::consumeTimeRangeEnd);
+    auto timeIsLocalTime= timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
 
     auto& inlet = getInlet<DataType>(id_);
     auto l      = lockForWriting(inlet);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf   = getBuffer(inlet);
 
-    auto [startIt, endIt, whole] = getIteratorsFromTimeRange(buf, timeStart, timeEnd);
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange(buf, timeStart, timeEnd, timeIsLocalTime);
     return consumeFromVec(buf, startIt, endIt);
 }
 
@@ -1155,17 +1157,18 @@ std::vector<DataType> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NS
     return peekFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+std::vector<DataType> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
-    auto timeStart  = timeStart_.value_or(defaults::peekTimeRangeStart);
-    auto timeEnd    = timeEnd_  .value_or(defaults::peekTimeRangeEnd);
+    auto timeStart       = timeStart_      .value_or(defaults::peekTimeRangeStart);
+    auto timeEnd         = timeEnd_        .value_or(defaults::peekTimeRangeEnd);
+    auto timeIsLocalTime = timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
 
     auto& inlet     = getInlet<DataType>(id_);
     auto l          = lockForReading(inlet);
     auto& buf       = getBuffer(inlet);
 
-    auto [startIt, endIt, whole] = getIteratorsFromTimeRange(buf, timeStart, timeEnd);
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange(buf, timeStart, timeEnd, timeIsLocalTime);
     return peekFromVec(buf, startIt, endIt);
 }
 
@@ -1183,11 +1186,12 @@ void LSL_streamer::clear(uint32_t id_)
     else
         clearTimeRange(stream_);*/
 }
-void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
-    auto timeStart = timeStart_.value_or(defaults::clearTimeRangeStart);
-    auto timeEnd   = timeEnd_  .value_or(defaults::clearTimeRangeEnd);
+    auto timeStart       = timeStart_      .value_or(defaults::clearTimeRangeStart);
+    auto timeEnd         = timeEnd_        .value_or(defaults::clearTimeRangeEnd);
+    auto timeIsLocalTime = timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
 
     // visit with templated lambda that allows us to get the data type, then
     // check if type is positioning, error, else forward. May need to split in two
@@ -1214,28 +1218,28 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
 }
 
 // gaze data (including eye openness), instantiate templated functions
-template std::vector<Titta::gaze> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::gaze> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<Titta::gaze> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::gaze> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSLTypes::gaze> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::gaze> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSLTypes::gaze> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::gaze> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // eye images, instantiate templated functions
-template std::vector<Titta::eyeImage> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::eyeImage> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<Titta::eyeImage> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::eyeImage> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSLTypes::eyeImage> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::eyeImage> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSLTypes::eyeImage> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::eyeImage> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // external signals, instantiate templated functions
-template std::vector<Titta::extSignal> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::extSignal> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<Titta::extSignal> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::extSignal> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSLTypes::extSignal> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::extSignal> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSLTypes::extSignal> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::extSignal> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // time sync data, instantiate templated functions
-template std::vector<Titta::timeSync> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::timeSync> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<Titta::timeSync> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<Titta::timeSync> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSLTypes::timeSync> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::timeSync> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSLTypes::timeSync> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSLTypes::timeSync> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream

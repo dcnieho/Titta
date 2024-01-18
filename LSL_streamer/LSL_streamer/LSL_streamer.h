@@ -19,28 +19,21 @@
 
 #include "Titta/types.h"
 #include "Titta/Titta.h"
+#include "LSL_streamer/types.h"
 
 #include "lsl_cpp.h"
 
 
 class LSL_streamer
 {
-template <class DataType>
-class Inlet
-{
-public:
-    lsl::stream_inlet       _inlet;
-    std::vector<DataType>   _buffer;
-    mutex_type              _mutex;
-};
-public:
-    using AllInlets = std::variant<
-                        Inlet<Titta::gaze>,
-                        Inlet<Titta::eyeImage>,
-                        Inlet<Titta::extSignal>,
-                        Inlet<Titta::timeSync>,
-                        Inlet<Titta::positioning>
-                    >;
+    template <class DataType>
+    class Inlet
+    {
+    public:
+        lsl::stream_inlet       _inlet;
+        std::vector<DataType>   _buffer;
+        mutex_type              _mutex;
+    };
 
 public:
     LSL_streamer(std::string address_);
@@ -73,19 +66,19 @@ public:
     std::vector<DataType> consumeN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
     // consume samples within given timestamps (inclusive, by default whole buffer)
     template <typename DataType>
-    std::vector<DataType> consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    std::vector<DataType> consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
     // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
     template <typename DataType>
     std::vector<DataType> peekN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
     // peek samples within given timestamps (inclusive, by default whole buffer)
     template <typename DataType>
-    std::vector<DataType> peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    std::vector<DataType> peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
     // clear all buffer contents
     void clear(uint32_t id_);
     // clear contents buffer within given timestamps (inclusive, by default whole buffer)
-    void clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt);
+    void clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
     // stop, optionally deletes the buffer
     bool stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
@@ -119,36 +112,33 @@ private:
     bool stop(Titta::Stream stream_);
 
 private:
-    TobiiTypes::eyeTracker                      _localEyeTracker;
+    TobiiTypes::eyeTracker          _localEyeTracker;
 
-    std::map<Titta::Stream, lsl::stream_outlet> _outStreams;
-    std::map<uint32_t, AllInlets>               _inStreams;
-
-
-    bool                            _streamingGaze          = false;
-    bool                            _streamingEyeOpenness   = false;
-    bool                            _includeEyeOpennessInGaze = false;
-    std::vector<Titta::gaze>        _gaze;
-    mutex_type                      _gazeMutex;
+    // outgoing
+    std::map<Titta::Stream,
+             lsl::stream_outlet>    _outStreams;
     // staging area to merge gaze and eye openness
     std::deque<Titta::gaze>         _gazeStaging;
     std::atomic<bool>               _gazeStagingEmpty       = true;
+    bool                            _includeEyeOpennessInGaze = false;
     mutex_type                      _gazeStageMutex;
 
+    bool                            _streamingGaze          = false;
+    bool                            _streamingEyeOpenness   = false;
     bool                            _streamingEyeImages     = false;
-    std::vector<Titta::eyeImage>    _eyeImages;
     bool                            _eyeImIsGif             = false;
-    mutex_type                      _eyeImagesMutex;
-
     bool                            _streamingExtSignal     = false;
-    std::vector<Titta::extSignal>   _extSignal;
-    mutex_type                      _extSignalMutex;
-
     bool                            _streamingTimeSync      = false;
-    std::vector<Titta::timeSync>    _timeSync;
-    mutex_type                      _timeSyncMutex;
-
     bool                            _streamingPositioning   = false;
-    std::vector<Titta::positioning> _positioning;
-    mutex_type                      _positioningMutex;
+
+
+    // incoming
+    using AllInlets = std::variant<
+                        Inlet<LSLTypes::gaze>,
+                        Inlet<LSLTypes::eyeImage>,
+                        Inlet<LSLTypes::extSignal>,
+                        Inlet<LSLTypes::timeSync>,
+                        Inlet<Titta::positioning>
+                    >;
+    std::map<uint32_t, AllInlets>   _inStreams;
 };

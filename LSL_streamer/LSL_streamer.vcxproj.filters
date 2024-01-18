@@ -80,5 +80,8 @@
     <ClInclude Include="deps\include\Titta\utils.h">
       <Filter>Header Files\include\Titta</Filter>
     </ClInclude>
+    <ClInclude Include="LSL_streamer\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
