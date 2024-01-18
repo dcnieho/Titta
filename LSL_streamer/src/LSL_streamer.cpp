@@ -910,7 +910,7 @@ void LSL_streamer::pushSample(Titta::gaze sample_)
         sample_.right_eye.eye_openness.diameter,
         static_cast<float>(sample_.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.eye_openness.available),
     };
-    _outStreams.at(Titta::Stream::Positioning).push_sample(sample);
+    _outStreams.at(Titta::Stream::Gaze).push_sample(sample);
 }
 void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
 {
@@ -921,7 +921,7 @@ void LSL_streamer::pushSample(Titta::extSignal sample_)
     const int64_t sample[] = {
         sample_.device_time_stamp, sample_.value
     };
-    _outStreams.at(Titta::Stream::TimeSync).push_sample(sample);
+    _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample);
 }
 void LSL_streamer::pushSample(Titta::timeSync sample_)
 {
