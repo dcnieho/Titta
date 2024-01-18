@@ -152,6 +152,11 @@ LSL_streamer::LSL_streamer(TobiiResearchEyeTracker* et_)
     _localEyeTracker = TobiiTypes::eyeTracker(et_);
     Init();
 }
+LSL_streamer::LSL_streamer(TobiiTypes::eyeTracker et_)
+    : _localEyeTracker(et_)
+{
+    Init();
+}
 LSL_streamer::~LSL_streamer()
 {
     stopOutlet(Titta::Stream::Gaze);

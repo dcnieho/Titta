@@ -45,6 +45,7 @@ public:
 public:
     LSL_streamer(std::string address_);
     LSL_streamer(TobiiResearchEyeTracker* et_);
+    LSL_streamer(TobiiTypes::eyeTracker et_);
     ~LSL_streamer();
 
     //// global SDK functions
