@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LSL_streamer", "LSL_streamer.vcxproj", "{C86B8529-65A4-4727-A94F-35DDC464350F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E0F6948B-AE6E-4905-B683-D048B5FB9A70} = {E0F6948B-AE6E-4905-B683-D048B5FB9A70}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Titta", "submodules\Titta\SDK_wrapper\Titta.vcxproj", "{E0F6948B-AE6E-4905-B683-D048B5FB9A70}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppTest", "cppTest\cppTest.vcxproj", "{5E258B04-1EA2-4051-8B69-AD85FE0A0554}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C86B8529-65A4-4727-A94F-35DDC464350F} = {C86B8529-65A4-4727-A94F-35DDC464350F}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C86B8529-65A4-4727-A94F-35DDC464350F}.Debug|x64.ActiveCfg = Debug|x64
+		{C86B8529-65A4-4727-A94F-35DDC464350F}.Debug|x64.Build.0 = Debug|x64
+		{C86B8529-65A4-4727-A94F-35DDC464350F}.Release|x64.ActiveCfg = Release|x64
+		{C86B8529-65A4-4727-A94F-35DDC464350F}.Release|x64.Build.0 = Release|x64
+		{E0F6948B-AE6E-4905-B683-D048B5FB9A70}.Debug|x64.ActiveCfg = Debug|x64
+		{E0F6948B-AE6E-4905-B683-D048B5FB9A70}.Debug|x64.Build.0 = Debug|x64
+		{E0F6948B-AE6E-4905-B683-D048B5FB9A70}.Release|x64.ActiveCfg = Release|x64
+		{E0F6948B-AE6E-4905-B683-D048B5FB9A70}.Release|x64.Build.0 = Release|x64
+		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Debug|x64.ActiveCfg = Debug|x64
+		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Debug|x64.Build.0 = Debug|x64
+		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Release|x64.ActiveCfg = Release|x64
+		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84BCEAC0-521B-4481-AA3D-5542313BC20D}
+	EndGlobalSection
+EndGlobal
