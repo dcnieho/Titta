@@ -94,13 +94,13 @@ private:
     void Init();
     static uint32_t getID();
     // Tobii callbacks need to be friends
-    friend void TobiiGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
-    friend void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
-    friend void TobiiEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
-    friend void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
-    friend void TobiiExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
-    friend void TobiiTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
-    friend void TobiiPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
+    friend void LSLGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
+    friend void LSLEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
+    friend void LSLEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
+    friend void LSLEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
+    friend void LSLExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
+    friend void LSLTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
+    friend void LSLPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
     // gaze + eye openness receiver
     void receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_);
     // data pushers

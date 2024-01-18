@@ -40,7 +40,7 @@ namespace
 }
 
 // callbacks
-void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
+void LSLGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
@@ -48,7 +48,7 @@ void TobiiGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
         instance->receiveSample(gaze_data_, nullptr);
     }
 }
-void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data)
+void LSLEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data)
 {
     if (user_data)
     {
@@ -56,7 +56,7 @@ void TobiiEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void
         instance->receiveSample(nullptr, openness_data_);
     }
 }
-void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
+void LSLEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
@@ -65,7 +65,7 @@ void TobiiEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
             instance->pushSample(eye_image_);
     }
 }
-void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
+void LSLEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
 {
     if (user_data)
     {
@@ -74,7 +74,7 @@ void TobiiEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_d
             instance->pushSample(eye_image_);
     }
 }
-void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
+void LSLExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
 {
     if (user_data)
     {
@@ -83,7 +83,7 @@ void TobiiExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* 
             instance->pushSample(*ext_signal_);
     }
 }
-void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
+void LSLTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data)
 {
     if (user_data)
     {
@@ -92,7 +92,7 @@ void TobiiTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_
             instance->pushSample(*time_sync_data_);
     }
 }
-void TobiiPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
+void LSLPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data)
 {
     if (user_data)
     {
@@ -122,16 +122,16 @@ namespace
     TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, LSL_streamer* instance_, const bool asGif_)
     {
         if (asGif_)
-            return tobii_research_subscribe_to_eye_image_as_gif(eyeTracker_, TobiiEyeImageGifCallback, instance_);
+            return tobii_research_subscribe_to_eye_image_as_gif(eyeTracker_, LSLEyeImageGifCallback, instance_);
         else
-            return tobii_research_subscribe_to_eye_image       (eyeTracker_,    TobiiEyeImageCallback, instance_);
+            return tobii_research_subscribe_to_eye_image       (eyeTracker_,    LSLEyeImageCallback, instance_);
     }
     TobiiResearchStatus doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, const bool isGif_)
     {
         if (isGif_)
-            return tobii_research_unsubscribe_from_eye_image_as_gif(eyeTracker_, TobiiEyeImageGifCallback);
+            return tobii_research_unsubscribe_from_eye_image_as_gif(eyeTracker_, LSLEyeImageGifCallback);
         else
-            return tobii_research_unsubscribe_from_eye_image       (eyeTracker_,    TobiiEyeImageCallback);
+            return tobii_research_unsubscribe_from_eye_image       (eyeTracker_,    LSLEyeImageCallback);
     }
 }
 
@@ -649,7 +649,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_gaze_data(_localEyeTracker.et, TobiiGazeCallback, this);
+                result = tobii_research_subscribe_to_gaze_data(_localEyeTracker.et, LSLGazeCallback, this);
                 stateVar = &_streamingGaze;
             }
             break;
@@ -661,7 +661,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_eye_openness(_localEyeTracker.et, TobiiEyeOpennessCallback, this);
+                result = tobii_research_subscribe_to_eye_openness(_localEyeTracker.et, LSLEyeOpennessCallback, this);
                 stateVar = &_streamingEyeOpenness;
             }
             break;
@@ -699,7 +699,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_external_signal_data(_localEyeTracker.et, TobiiExtSignalCallback, this);
+                result = tobii_research_subscribe_to_external_signal_data(_localEyeTracker.et, LSLExtSignalCallback, this);
                 stateVar = &_streamingExtSignal;
             }
             break;
@@ -711,7 +711,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_time_synchronization_data(_localEyeTracker.et, TobiiTimeSyncCallback, this);
+                result = tobii_research_subscribe_to_time_synchronization_data(_localEyeTracker.et, LSLTimeSyncCallback, this);
                 stateVar = &_streamingTimeSync;
             }
             break;
@@ -723,7 +723,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_user_position_guide(_localEyeTracker.et, TobiiPositioningCallback, this);
+                result = tobii_research_subscribe_to_user_position_guide(_localEyeTracker.et, LSLPositioningCallback, this);
                 stateVar = &_streamingPositioning;
             }
             break;
@@ -957,11 +957,11 @@ bool LSL_streamer::stop(Titta::Stream stream_)
     switch (stream_)
     {
     case Titta::Stream::Gaze:
-        result = !_streamingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker.et, TobiiGazeCallback);
+        result = !_streamingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker.et, LSLGazeCallback);
         stateVar = &_streamingGaze;
         break;
     case Titta::Stream::EyeOpenness:
-        result = !_streamingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker.et, TobiiEyeOpennessCallback);
+        result = !_streamingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker.et, LSLEyeOpennessCallback);
         stateVar = &_streamingEyeOpenness;
         break;
     case Titta::Stream::EyeImage:
@@ -969,15 +969,15 @@ bool LSL_streamer::stop(Titta::Stream stream_)
         stateVar = &_streamingEyeImages;
         break;
     case Titta::Stream::ExtSignal:
-        result = !_streamingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker.et, TobiiExtSignalCallback);
+        result = !_streamingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker.et, LSLExtSignalCallback);
         stateVar = &_streamingExtSignal;
         break;
     case Titta::Stream::TimeSync:
-        result = !_streamingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker.et, TobiiTimeSyncCallback);
+        result = !_streamingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker.et, LSLTimeSyncCallback);
         stateVar = &_streamingTimeSync;
         break;
     case Titta::Stream::Positioning:
-        result = !_streamingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker.et, TobiiPositioningCallback);
+        result = !_streamingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker.et, LSLPositioningCallback);
         stateVar = &_streamingPositioning;
         break;
     }
