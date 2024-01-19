@@ -1188,19 +1188,27 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
     }
     else if (stype == "VideoCompressed" || stype == "VideoRaw")
     {
-
+        _inStreams.emplace(id,
+            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::eyeImage>>, streamInfo_)
+        );
     }
     else if (stype == "TTL")
     {
-
+        _inStreams.emplace(id,
+            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::extSignal>>, streamInfo_)
+        );
     }
     else if (stype == "TimeSync")
     {
-
+        _inStreams.emplace(id,
+            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::timeSync>>, streamInfo_)
+        );
     }
     else if (stype == "Positioning")
     {
-
+        _inStreams.emplace(id,
+            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::positioning>>, streamInfo_)
+        );
     }
     else
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
