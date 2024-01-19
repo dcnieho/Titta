@@ -56,16 +56,21 @@ public:
                     >;
 
 public:
+    LSL_streamer() {};
     LSL_streamer(std::string address_);
     LSL_streamer(TobiiResearchEyeTracker* et_);
-    LSL_streamer(TobiiTypes::eyeTracker et_);
+    LSL_streamer(const TobiiTypes::eyeTracker& et_);
     ~LSL_streamer();
+
 
     //// global SDK functions
     static TobiiResearchSDKVersion getTobiiSDKVersion();
     static int32_t getLSLVersion();
 
+
     //// outlets
+    void connect(std::string address_);
+    void connect(TobiiResearchEyeTracker* et_);
     bool startOutlet(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
     bool startOutlet(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
     void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
@@ -73,6 +78,7 @@ public:
     bool isStreaming(Titta::Stream stream_) const;
     void stopOutlet(std::string    stream_, bool snake_case_on_stream_not_found = false);
     void stopOutlet(Titta::Stream  stream_);
+
 
     //// inlets
     // query what streams are available (optionally filter by type, empty string means no filter)
@@ -108,9 +114,10 @@ public:
     // stop, optionally deletes the buffer
     bool stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
 
+
 private:
+    // outlet stuff
     static void CheckClocks();
-    static uint32_t getID();
     // Tobii callbacks need to be friends
     friend void LSLGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
     friend void LSLEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
@@ -127,7 +134,13 @@ private:
     void pushSample(Titta::extSignal sample_);
     void pushSample(Titta::timeSync sample_);
     void pushSample(Titta::positioning sample_);
+    // callback registration and deregistration
+    bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
+    bool stop(Titta::Stream stream_);
 
+
+    // inlet stuff
+    static uint32_t getID();
     // helper
     template <typename DataType>
     friend void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_);
@@ -135,12 +148,10 @@ private:
     template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_);
 
-    // callback registration and deregistration
-    bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
-    bool stop(Titta::Stream stream_);
 
 private:
-    TobiiTypes::eyeTracker          _localEyeTracker;
+    std::unique_ptr<TobiiTypes::eyeTracker>
+                                    _localEyeTracker;
 
     // outgoing
     std::map<Titta::Stream,

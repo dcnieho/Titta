@@ -140,22 +140,15 @@ namespace
 
 LSL_streamer::LSL_streamer(std::string address_)
 {
-    TobiiResearchEyeTracker* et;
-    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(),&et);
-    if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
-    _localEyeTracker = TobiiTypes::eyeTracker(et);
-    CheckClocks();
+    connect(std::move(address_));
 }
 LSL_streamer::LSL_streamer(TobiiResearchEyeTracker* et_)
 {
-    _localEyeTracker = TobiiTypes::eyeTracker(et_);
-    CheckClocks();
+    connect(et_);
 }
-LSL_streamer::LSL_streamer(TobiiTypes::eyeTracker et_)
-    : _localEyeTracker(et_)
+LSL_streamer::LSL_streamer(const TobiiTypes::eyeTracker& et_)
 {
-    CheckClocks();
+    connect(et_.et);
 }
 LSL_streamer::~LSL_streamer()
 {
@@ -207,12 +200,37 @@ void LSL_streamer::CheckClocks()
 }
 
 
+void LSL_streamer::connect(std::string address_)
+{
+    if (_localEyeTracker)
+        DoExitWithMsg("Already connected to an eye tracker, cannot connect again");
+
+    TobiiResearchEyeTracker* et;
+    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
+    connect(et);
+}
+
+void LSL_streamer::connect(TobiiResearchEyeTracker* et_)
+{
+    if (_localEyeTracker)
+        DoExitWithMsg("Already connected to an eye tracker, cannot connect again");
+
+    _localEyeTracker = std::make_unique<TobiiTypes::eyeTracker>(et_);
+    CheckClocks();
+}
+
+
 bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, bool snake_case_on_stream_not_found /*= false*/)
 {
     return startOutlet(Titta::stringToStream(stream_, snake_case_on_stream_not_found), asGif_);
 }
 bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_)
 {
+    if (!_localEyeTracker)
+        DoExitWithMsg("Not connected to an eye tracker, cannot start an outlet");
+
     // if already streaming, don't start again
     if (isStreaming(stream_))
         return false;
@@ -220,7 +238,7 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
     // for gaze signal, get info about the eye tracker's gaze stream
     auto hasFreq = stream_ == Titta::Stream::Gaze || stream_ == Titta::Stream::EyeOpenness;
     if (hasFreq)
-        _localEyeTracker.refreshInfo();
+        _localEyeTracker->refreshInfo();
 
     std::string type;
     int nChannel = 0;
@@ -263,18 +281,18 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
     lsl::stream_info info(lslStreamName,
         type,
         nChannel,
-        hasFreq ? _localEyeTracker.frequency : lsl::IRREGULAR_RATE,
+        hasFreq ? _localEyeTracker->frequency : lsl::IRREGULAR_RATE,
         format,
-        std::format("LSL_streamer:{}@{}", lslStreamName, _localEyeTracker.serialNumber));
+        std::format("LSL_streamer:{}@{}", lslStreamName, _localEyeTracker->serialNumber));
 
     // create meta-data
     info.desc()
         .append_child("acquisition")
         .append_child_value("manufacturer", "Tobii")
-        .append_child_value("model", _localEyeTracker.model)
-        .append_child_value("serial_number", _localEyeTracker.serialNumber)
-        .append_child_value("firmware_version", _localEyeTracker.firmwareVersion)
-        .append_child_value("tracking_mode", _localEyeTracker.trackingMode);
+        .append_child_value("model", _localEyeTracker->model)
+        .append_child_value("serial_number", _localEyeTracker->serialNumber)
+        .append_child_value("firmware_version", _localEyeTracker->firmwareVersion)
+        .append_child_value("tracking_mode", _localEyeTracker->trackingMode);
     auto channels = info.desc().append_child("channels");
 
     // describe the streams
@@ -586,7 +604,10 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
 
 void LSL_streamer::setIncludeEyeOpennessInGaze(bool include_)
 {
-    if (include_ && !(_localEyeTracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA))
+    if (!_localEyeTracker)
+        DoExitWithMsg("Not connected to an eye tracker, no possible to set outlet options");
+
+    if (include_ && !(_localEyeTracker->capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA))
         DoExitWithMsg(
             "LSL_streamer::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " + Titta::streamToString(Titta::Stream::EyeOpenness) + " stream, this eye tracker does not provide it"
         );
@@ -613,7 +634,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_gaze_data(_localEyeTracker.et, LSLGazeCallback, this);
+                result = tobii_research_subscribe_to_gaze_data(_localEyeTracker->et, LSLGazeCallback, this);
                 stateVar = &_streamingGaze;
             }
             break;
@@ -625,7 +646,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_eye_openness(_localEyeTracker.et, LSLEyeOpennessCallback, this);
+                result = tobii_research_subscribe_to_eye_openness(_localEyeTracker->et, LSLEyeOpennessCallback, this);
                 stateVar = &_streamingEyeOpenness;
             }
             break;
@@ -642,13 +663,13 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
                 // if already recording and switching from gif to normal or other way, first stop old stream
                 if (_streamingEyeImages)
                     if (asGif != _eyeImIsGif)
-                        doUnsubscribeEyeImage(_localEyeTracker.et, _eyeImIsGif);
+                        doUnsubscribeEyeImage(_localEyeTracker->et, _eyeImIsGif);
                     else
                         // nothing to do
                         return true;
 
                 // subscribe to new stream
-                result = doSubscribeEyeImage(_localEyeTracker.et, this, asGif);
+                result = doSubscribeEyeImage(_localEyeTracker->et, this, asGif);
                 stateVar = &_streamingEyeImages;
                 if (result==TOBII_RESEARCH_STATUS_OK)
                     // update type being recorded if subscription to stream was successful
@@ -663,7 +684,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_external_signal_data(_localEyeTracker.et, LSLExtSignalCallback, this);
+                result = tobii_research_subscribe_to_external_signal_data(_localEyeTracker->et, LSLExtSignalCallback, this);
                 stateVar = &_streamingExtSignal;
             }
             break;
@@ -675,7 +696,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_time_synchronization_data(_localEyeTracker.et, LSLTimeSyncCallback, this);
+                result = tobii_research_subscribe_to_time_synchronization_data(_localEyeTracker->et, LSLTimeSyncCallback, this);
                 stateVar = &_streamingTimeSync;
             }
             break;
@@ -687,7 +708,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // start sending
-                result = tobii_research_subscribe_to_user_position_guide(_localEyeTracker.et, LSLPositioningCallback, this);
+                result = tobii_research_subscribe_to_user_position_guide(_localEyeTracker->et, LSLPositioningCallback, this);
                 stateVar = &_streamingPositioning;
             }
             break;
@@ -924,27 +945,27 @@ bool LSL_streamer::stop(Titta::Stream stream_)
     switch (stream_)
     {
     case Titta::Stream::Gaze:
-        result = !_streamingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker.et, LSLGazeCallback);
+        result = !_streamingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker->et, LSLGazeCallback);
         stateVar = &_streamingGaze;
         break;
     case Titta::Stream::EyeOpenness:
-        result = !_streamingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker.et, LSLEyeOpennessCallback);
+        result = !_streamingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker->et, LSLEyeOpennessCallback);
         stateVar = &_streamingEyeOpenness;
         break;
     case Titta::Stream::EyeImage:
-        result = !_streamingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_localEyeTracker.et, _eyeImIsGif);
+        result = !_streamingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_localEyeTracker->et, _eyeImIsGif);
         stateVar = &_streamingEyeImages;
         break;
     case Titta::Stream::ExtSignal:
-        result = !_streamingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker.et, LSLExtSignalCallback);
+        result = !_streamingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker->et, LSLExtSignalCallback);
         stateVar = &_streamingExtSignal;
         break;
     case Titta::Stream::TimeSync:
-        result = !_streamingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker.et, LSLTimeSyncCallback);
+        result = !_streamingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker->et, LSLTimeSyncCallback);
         stateVar = &_streamingTimeSync;
         break;
     case Titta::Stream::Positioning:
-        result = !_streamingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker.et, LSLPositioningCallback);
+        result = !_streamingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker->et, LSLPositioningCallback);
         stateVar = &_streamingPositioning;
         break;
     }
@@ -1002,6 +1023,9 @@ void LSL_streamer::stopOutlet(std::string stream_, bool snake_case_on_stream_not
 
 void LSL_streamer::stopOutlet(Titta::Stream stream_)
 {
+    if (!_localEyeTracker)
+        return;
+
     // stop the callback
     stop(stream_);
 
