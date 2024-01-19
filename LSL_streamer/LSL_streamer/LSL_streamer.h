@@ -83,7 +83,7 @@ public:
     [[nodiscard]] uint32_t startListening(std::string streamSourceID_);
 
     // info about inlet (desc is set now)
-    lsl::stream_info getInletInfo(uint32_t id_) const;
+    lsl::stream_info getInletInfo(uint32_t id_);
     Titta::Stream    getInletType(uint32_t id_);
 
     // consume samples (by default all)

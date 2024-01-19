@@ -1285,18 +1285,17 @@ Titta::Stream LSL_streamer::getInletType(uint32_t id_)
     return getInletTypeImpl(getAllInletsVariant(id_));
 }
 
-lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
+lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
 {
     // get inlet
-    if (!_inStreams.contains(id_))
-        DoExitWithMsg(std::format("No inlet with id {} is known", id_));
-    lsl::stream_inlet& inlet = std::visit(
+    auto& inlet = getAllInletsVariant(id_);
+    lsl::stream_inlet& lsl_inlet = std::visit(
         [](auto& in_) -> lsl::stream_inlet& {
             return in_._inlet;
-        }, *_inStreams.at(id_));
+        }, inlet);
 
     // return it's stream info
-    return inlet.info(1.);
+    return lsl_inlet.info(1.);
 }
 
 template <typename DataType>
