@@ -46,6 +46,9 @@ int main(int argc, char** argv)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
             }
+            std::cout << streams[0].as_xml() << std::endl;
+            auto id = tobii_lsl.startListening(streams[0].source_id());
+            std::cout << tobii_lsl.getInletInfo(id).as_xml() << std::endl;
 
             for (int i = 0; i < 60; i++)
             {

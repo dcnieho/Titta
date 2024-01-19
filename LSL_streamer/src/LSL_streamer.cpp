@@ -1135,7 +1135,7 @@ LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
     if (!_inStreams.contains(id_))
         DoExitWithMsg(std::format("No inlet with id {} is known", id_));
 
-    return std::get<Inlet<DataType>>(_inStreams.at(id_));
+    return std::get<Inlet<DataType>>(*_inStreams.at(id_));
 }
 
 std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, bool snake_case_on_stream_not_found)
@@ -1174,7 +1174,52 @@ uint32_t LSL_streamer::startListening(std::string streamSourceID_)
 }
 uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
 {
+    if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
+        DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
+
+    // subscribe to the stream
+    auto id = getID();
+    auto stype = streamInfo_.type();
+    if (stype =="Gaze")
+    {
+        _inStreams.emplace(id,
+            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::gaze>>, streamInfo_)
+        );
+    }
+    else if (stype == "VideoCompressed" || stype == "VideoRaw")
+    {
+
+    }
+    else if (stype == "TTL")
+    {
+
+    }
+    else if (stype == "TimeSync")
+    {
+
+    }
+    else if (stype == "Positioning")
+    {
+
+    }
+    else
+        DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
+
     return 0;
+}
+
+lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
+{
+    // get inlet
+    if (!_inStreams.contains(id_))
+        DoExitWithMsg(std::format("No inlet with id {} is known", id_));
+    lsl::stream_inlet& inlet = std::visit(
+        [](auto& in_) -> lsl::stream_inlet& {
+            return in_._inlet;
+        }, *_inStreams.at(id_));
+
+    // return it's stream info
+    return inlet.info(1.);
 }
 
 template <typename DataType>

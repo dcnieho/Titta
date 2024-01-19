@@ -6,6 +6,7 @@
 #include <optional>
 #include <atomic>
 #include <variant>
+#include <memory>
 #include <tobii_research.h>
 #include <tobii_research_streams.h>
 #pragma comment(lib, "tobii_research.lib")
@@ -30,10 +31,22 @@ class LSL_streamer
     class Inlet
     {
     public:
+        Inlet(const lsl::stream_info& streamInfo_) :
+            _inlet(streamInfo_)
+        {}
+
         lsl::stream_inlet       _inlet;
         std::vector<DataType>   _buffer;
         mutex_type              _mutex;
     };
+
+public:
+    // short names for very long Tobii data types
+    using gaze          = LSLTypes::gaze;
+    using eyeImage      = LSLTypes::eyeImage;
+    using extSignal     = LSLTypes::extSignal;
+    using timeSync      = LSLTypes::timeSync;
+    using positioning   = Titta::positioning;
 
 public:
     LSL_streamer(std::string address_);
@@ -61,6 +74,9 @@ public:
     // subscribe to stream
     [[nodiscard]] uint32_t startListening(lsl::stream_info streamInfo_);
     [[nodiscard]] uint32_t startListening(std::string streamSourceID_);
+
+    // info about inlet (desc is set now)
+    lsl::stream_info getInletInfo(uint32_t id_) const;
 
     // consume samples (by default all)
     template <typename DataType>    // e.g. Titta::gaze
@@ -135,11 +151,11 @@ private:
 
     // incoming
     using AllInlets = std::variant<
-                        Inlet<LSLTypes::gaze>,
-                        Inlet<LSLTypes::eyeImage>,
-                        Inlet<LSLTypes::extSignal>,
-                        Inlet<LSLTypes::timeSync>,
-                        Inlet<Titta::positioning>
+                        Inlet<gaze>,
+                        Inlet<eyeImage>,
+                        Inlet<extSignal>,
+                        Inlet<timeSync>,
+                        Inlet<positioning>
                     >;
-    std::map<uint32_t, AllInlets>   _inStreams;
+    std::map<uint32_t, std::unique_ptr<AllInlets>>  _inStreams;
 };
