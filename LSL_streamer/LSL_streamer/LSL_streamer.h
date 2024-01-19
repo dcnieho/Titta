@@ -56,7 +56,7 @@ public:
                     >;
 
 public:
-    LSL_streamer() {};
+    LSL_streamer() {}
     LSL_streamer(std::string address_);
     LSL_streamer(TobiiResearchEyeTracker* et_);
     LSL_streamer(const TobiiTypes::eyeTracker& et_);
