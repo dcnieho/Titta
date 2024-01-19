@@ -85,7 +85,7 @@ public:
     bool stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
 
 private:
-    void Init();
+    static void CheckClocks();
     static uint32_t getID();
     // Tobii callbacks need to be friends
     friend void LSLGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);

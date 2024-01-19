@@ -145,17 +145,17 @@ LSL_streamer::LSL_streamer(std::string address_)
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
     _localEyeTracker = TobiiTypes::eyeTracker(et);
-    Init();
+    CheckClocks();
 }
 LSL_streamer::LSL_streamer(TobiiResearchEyeTracker* et_)
 {
     _localEyeTracker = TobiiTypes::eyeTracker(et_);
-    Init();
+    CheckClocks();
 }
 LSL_streamer::LSL_streamer(TobiiTypes::eyeTracker et_)
     : _localEyeTracker(et_)
 {
-    Init();
+    CheckClocks();
 }
 LSL_streamer::~LSL_streamer()
 {
@@ -171,7 +171,7 @@ uint32_t LSL_streamer::getID()
     static std::atomic<uint32_t> lastID = 0;
     return lastID++;
 }
-void LSL_streamer::Init()
+void LSL_streamer::CheckClocks()
 {
     // check tobii/titta clock and lsl clock are the same
     // 1. warm up clocks by calling them once
