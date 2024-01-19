@@ -42,11 +42,18 @@ class LSL_streamer
 
 public:
     // short names for very long Tobii data types
-    using gaze          = LSLTypes::gaze;
-    using eyeImage      = LSLTypes::eyeImage;
-    using extSignal     = LSLTypes::extSignal;
-    using timeSync      = LSLTypes::timeSync;
-    using positioning   = Titta::positioning;
+    using gaze          = LSLTypes::gaze;       // getInletType() -> Titta::Stream::Gaze
+    using eyeImage      = LSLTypes::eyeImage;   // getInletType() -> Titta::Stream::EyeImage
+    using extSignal     = LSLTypes::extSignal;  // getInletType() -> Titta::Stream::ExtSignal
+    using timeSync      = LSLTypes::timeSync;   // getInletType() -> Titta::Stream::TimeSync
+    using positioning   = Titta::positioning;   // getInletType() -> Titta::Stream::Positioning
+    using AllInlets = std::variant<
+                        Inlet<gaze>,
+                        Inlet<eyeImage>,
+                        Inlet<extSignal>,
+                        Inlet<timeSync>,
+                        Inlet<positioning>
+                    >;
 
 public:
     LSL_streamer(std::string address_);
@@ -64,8 +71,8 @@ public:
     void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
     bool isStreaming(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
     bool isStreaming(Titta::Stream stream_) const;
-    void stopOutlet(std::string   stream_, bool snake_case_on_stream_not_found = false);
-    void stopOutlet(Titta::Stream stream_);
+    void stopOutlet(std::string    stream_, bool snake_case_on_stream_not_found = false);
+    void stopOutlet(Titta::Stream  stream_);
 
     //// inlets
     // query what streams are available (optionally filter by type, empty string means no filter)
@@ -77,9 +84,10 @@ public:
 
     // info about inlet (desc is set now)
     lsl::stream_info getInletInfo(uint32_t id_) const;
+    Titta::Stream    getInletType(uint32_t id_);
 
     // consume samples (by default all)
-    template <typename DataType>    // e.g. Titta::gaze
+    template <typename DataType>    // e.g. LSL_streamer::gaze
     std::vector<DataType> consumeN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
     // consume samples within given timestamps (inclusive, by default whole buffer)
     template <typename DataType>
@@ -122,6 +130,9 @@ private:
 
     // helper
     template <typename DataType>
+    friend void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_);
+    AllInlets& getAllInletsVariant(uint32_t id_);
+    template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_);
 
     // callback registration and deregistration
@@ -150,12 +161,5 @@ private:
 
 
     // incoming
-    using AllInlets = std::variant<
-                        Inlet<gaze>,
-                        Inlet<eyeImage>,
-                        Inlet<extSignal>,
-                        Inlet<timeSync>,
-                        Inlet<positioning>
-                    >;
     std::map<uint32_t, std::unique_ptr<AllInlets>>  _inStreams;
 };

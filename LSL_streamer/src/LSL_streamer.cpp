@@ -1012,8 +1012,55 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 
 
 /* inlet stuff starts here */
+template <typename DataType>
+void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_); // fwd declare
 namespace
 {
+template <class...> constexpr std::false_type always_false{};
+template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze>        { using type = LSL_streamer::gaze; };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = LSL_streamer::gaze; };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage>    { using type = LSL_streamer::eyeImage; };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::ExtSignal>   { using type = LSL_streamer::extSignal; };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::TimeSync>    { using type = LSL_streamer::timeSync; };
+template <>                struct TittaStreamToLSLInletType<Titta::Stream::Positioning> { using type = LSL_streamer::positioning; };
+template <Titta::Stream T>
+using TittaStreamToLSLInletType_t = typename TittaStreamToLSLInletType<T>::type;
+template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value; };
+template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze>        { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
+template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage>    { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
+template <>           struct LSLInletTypeToTittaStream<LSL_streamer::extSignal>   { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
+template <>           struct LSLInletTypeToTittaStream<LSL_streamer::timeSync>    { static constexpr Titta::Stream value = Titta::Stream::TimeSync; };
+template <>           struct LSLInletTypeToTittaStream<LSL_streamer::positioning> { static constexpr Titta::Stream value = Titta::Stream::Positioning; };
+template <typename T>
+constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
+
+Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
+{
+    return std::visit(
+        [] <typename T>(LSL_streamer::Inlet<T>&) {
+        return LSLInletTypeToTittaStream_v<T>;
+    }
+    , inlet_);
+}
+void checkInletType(LSL_streamer::AllInlets& inlet_, Titta::Stream stream_, uint32_t id_)
+{
+#define CHECK_TYPE(type) case type:\
+    checkInletType<TittaStreamToLSLInletType_t<type>>(inlet_, id_);\
+    break;
+
+    switch (stream_)
+    {
+        CHECK_TYPE(Titta::Stream::Gaze)
+        CHECK_TYPE(Titta::Stream::EyeOpenness)
+        CHECK_TYPE(Titta::Stream::EyeImage)
+        CHECK_TYPE(Titta::Stream::ExtSignal)
+        CHECK_TYPE(Titta::Stream::TimeSync)
+        CHECK_TYPE(Titta::Stream::Positioning)
+    }
+#undef CHECK_TYPE
+}
+
 // helpers to make the below generic
 template <typename DataType>
 read_lock  lockForReading(LSL_streamer::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
@@ -1128,14 +1175,31 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t
         buf.erase(startIt, endIt);
 }
 }
-
 template <typename DataType>
-LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
+void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_)
+{
+    if (!std::holds_alternative<LSL_streamer::Inlet<DataType>>(inlet_))
+    {
+        auto wanted = LSLInletTypeToTittaStream_v<DataType>;
+        auto actual = getInletTypeImpl(inlet_);
+        DoExitWithMsg(std::format("Inlet with id {} should be of type {}, but the inlet associated with that ID instead was of type {}. Fatal error", id_, Titta::streamToString(wanted), Titta::streamToString(actual)));
+    }
+}
+
+LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_)
 {
     if (!_inStreams.contains(id_))
         DoExitWithMsg(std::format("No inlet with id {} is known", id_));
 
-    return std::get<Inlet<DataType>>(*_inStreams.at(id_));
+    return *_inStreams.at(id_);
+}
+template <typename DataType>
+LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
+{
+    auto& allInlets = getAllInletsVariant(id_);
+    checkInletType<DataType>(allInlets, id_);
+
+    return std::get<Inlet<DataType>>(allInlets);
 }
 
 std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, bool snake_case_on_stream_not_found)
@@ -1214,6 +1278,11 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
 
     return 0;
+}
+
+Titta::Stream LSL_streamer::getInletType(uint32_t id_)
+{
+    return getInletTypeImpl(getAllInletsVariant(id_));
 }
 
 lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
@@ -1336,32 +1405,32 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
 }
 
 // gaze data (including eye openness), instantiate templated functions
-template std::vector<LSLTypes::gaze> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::gaze> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSLTypes::gaze> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::gaze> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::gaze> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::gaze> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::gaze> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::gaze> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // eye images, instantiate templated functions
-template std::vector<LSLTypes::eyeImage> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::eyeImage> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSLTypes::eyeImage> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::eyeImage> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::eyeImage> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::eyeImage> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::eyeImage> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::eyeImage> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // external signals, instantiate templated functions
-template std::vector<LSLTypes::extSignal> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::extSignal> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSLTypes::extSignal> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::extSignal> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::extSignal> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::extSignal> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::extSignal> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::extSignal> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // time sync data, instantiate templated functions
-template std::vector<LSLTypes::timeSync> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::timeSync> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSLTypes::timeSync> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSLTypes::timeSync> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::timeSync> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::timeSync> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<LSL_streamer::timeSync> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<LSL_streamer::timeSync> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
-template std::vector<Titta::positioning> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-//template std::vector<Titta::positioning> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<Titta::positioning> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-//template std::vector<Titta::positioning> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSL_streamer::positioning> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+//template std::vector<LSL_streamer::positioning> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<LSL_streamer::positioning> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+//template std::vector<LSL_streamer::positioning> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
