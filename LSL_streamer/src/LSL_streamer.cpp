@@ -207,76 +207,6 @@ void LSL_streamer::CheckClocks()
 }
 
 
-// helpers to make the below generic
-namespace {
-template <typename DataType>
-read_lock  lockForReading(LSL_streamer::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
-template <typename DataType>
-write_lock lockForWriting(LSL_streamer::Inlet<DataType>& inlet_) { return write_lock(inlet_._mutex); }
-template <typename DataType>
-std::vector<DataType>& getBuffer(LSL_streamer::Inlet<DataType>& inlet_)
-{
-    return inlet_._buffer;
-}
-template <typename DataType>
-std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator>
-getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, size_t NSamp_, Titta::BufferSide side_)
-{
-    auto startIt = std::begin(buf_);
-    auto   endIt = std::end(buf_);
-    auto nSamp   = std::min(NSamp_, std::size(buf_));
-
-    switch (side_)
-    {
-    case Titta::BufferSide::Start:
-        endIt   = std::next(startIt, nSamp);
-        break;
-    case Titta::BufferSide::End:
-        startIt = std::prev(endIt  , nSamp);
-        break;
-    default:
-        DoExitWithMsg("LSL_streamer::::cpp::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
-        break;
-    }
-    return { startIt, endIt };
-}
-
-template <typename DataType>
-std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator, bool>
-getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
-{
-    // !NB: appropriate locking is responsibility of caller!
-    // find elements within given range of time stamps, both sides inclusive.
-    // Since returns are iterators, what is returned is first matching element until one past last matching element
-    // 1. get buffer to traverse, if empty, return
-    auto startIt = std::begin(buf_);
-    auto   endIt = std::end(buf_);
-    if (std::empty(buf_))
-        return {startIt,endIt, true};
-
-    // 2. see which member variable to access
-    int64_t DataType::* field;
-    if (timeIsLocalTime_)
-        field = &DataType::local_system_time_stamp;
-    else
-        field = &DataType::remote_system_time_stamp;
-
-    // 3. check if requested times are before or after vector start and end
-    bool inclFirst = timeStart_ <= buf_.front().*field;
-    bool inclLast  = timeEnd_   >= buf_.back().*field;
-
-    // 4. if start time later than beginning of samples, or end time earlier, find correct iterators
-    if (!inclFirst)
-        startIt = std::lower_bound(startIt, endIt, timeStart_, [&field](const DataType& a_, const int64_t& b_) {return a_.*field < b_;});
-    if (!inclLast)
-        endIt   = std::upper_bound(startIt, endIt, timeEnd_  , [&field](const int64_t& a_, const DataType& b_) {return a_ < b_.*field;});
-
-    // 5. done, return
-    return {startIt, endIt, inclFirst&&inclLast};
-}
-}
-
-
 bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, bool snake_case_on_stream_not_found /*= false*/)
 {
     return startOutlet(Titta::stringToStream(stream_, snake_case_on_stream_not_found), asGif_);
@@ -1084,6 +1014,73 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 /* inlet stuff starts here */
 namespace
 {
+// helpers to make the below generic
+template <typename DataType>
+read_lock  lockForReading(LSL_streamer::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
+template <typename DataType>
+write_lock lockForWriting(LSL_streamer::Inlet<DataType>& inlet_) { return write_lock(inlet_._mutex); }
+template <typename DataType>
+std::vector<DataType>& getBuffer(LSL_streamer::Inlet<DataType>& inlet_)
+{
+    return inlet_._buffer;
+}
+template <typename DataType>
+std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator>
+getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, size_t NSamp_, Titta::BufferSide side_)
+{
+    auto startIt = std::begin(buf_);
+    auto   endIt = std::end(buf_);
+    auto nSamp   = std::min(NSamp_, std::size(buf_));
+
+    switch (side_)
+    {
+    case Titta::BufferSide::Start:
+        endIt   = std::next(startIt, nSamp);
+        break;
+    case Titta::BufferSide::End:
+        startIt = std::prev(endIt  , nSamp);
+        break;
+    default:
+        DoExitWithMsg("LSL_streamer::::cpp::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
+        break;
+    }
+    return { startIt, endIt };
+}
+
+template <typename DataType>
+std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator, bool>
+getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
+{
+    // !NB: appropriate locking is responsibility of caller!
+    // find elements within given range of time stamps, both sides inclusive.
+    // Since returns are iterators, what is returned is first matching element until one past last matching element
+    // 1. get buffer to traverse, if empty, return
+    auto startIt = std::begin(buf_);
+    auto   endIt = std::end(buf_);
+    if (std::empty(buf_))
+        return {startIt,endIt, true};
+
+    // 2. see which member variable to access
+    int64_t DataType::* field;
+    if (timeIsLocalTime_)
+        field = &DataType::local_system_time_stamp;
+    else
+        field = &DataType::remote_system_time_stamp;
+
+    // 3. check if requested times are before or after vector start and end
+    bool inclFirst = timeStart_ <= buf_.front().*field;
+    bool inclLast  = timeEnd_   >= buf_.back().*field;
+
+    // 4. if start time later than beginning of samples, or end time earlier, find correct iterators
+    if (!inclFirst)
+        startIt = std::lower_bound(startIt, endIt, timeStart_, [&field](const DataType& a_, const int64_t& b_) {return a_.*field < b_;});
+    if (!inclLast)
+        endIt   = std::upper_bound(startIt, endIt, timeEnd_  , [&field](const int64_t& a_, const DataType& b_) {return a_ < b_.*field;});
+
+    // 5. done, return
+    return {startIt, endIt, inclFirst&&inclLast};
+}
+
 template <typename T>
 std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
 {
