@@ -1300,10 +1300,14 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
 
     if (created)
+    {
+        // start the stream
+        created->open_stream();
         // immediately start time offset collection, we'll need that
-        created->time_correction(2.);
+        created->time_correction();
+    }
 
-    return 0;
+    return id;
 #undef MAKE_INLET
 }
 
