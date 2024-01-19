@@ -1387,7 +1387,7 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
     // visit with templated lambda that allows us to get the data type, then
     // check if type is positioning, error, else forward. May need to split in two
     // overloaded lambdas actually, first for positioning, then templated generic
-    switch (const auto stream = getInletType(id_))
+    switch (getInletType(id_))
     {
         case Titta::Stream::Gaze:
     case Titta::Stream::EyeOpenness:
