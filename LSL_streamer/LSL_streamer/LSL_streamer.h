@@ -55,9 +55,9 @@ public:
     void stopOutlet(Titta::Stream stream_);
 
     //// inlets
-    // query what streams are available (optionally filter by type)
-    std::vector<lsl::stream_info> getRemoteStreams(std::optional<std::string> stream_ = {}, bool snake_case_on_stream_not_found = false);
-    std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
+    // query what streams are available (optionally filter by type, empty string means no filter)
+    static std::vector<lsl::stream_info> getRemoteStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
+    static std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
     // subscribe to stream
     [[nodiscard]] uint32_t startListening(lsl::stream_info streamInfo_);
 

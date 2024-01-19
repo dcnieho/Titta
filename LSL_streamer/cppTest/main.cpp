@@ -34,6 +34,19 @@ int main(int argc, char** argv)
             tobii_lsl.startOutlet(Titta::Stream::TimeSync);
             tobii_lsl.startOutlet(Titta::Stream::Positioning);
 
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            auto streams = LSL_streamer::getRemoteStreams("");
+            for (auto& s: streams)
+            {
+                std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
+            }
+            std::cout << "----" << std::endl;
+            streams = LSL_streamer::getRemoteStreams("gaze");
+            for (auto& s : streams)
+            {
+                std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
+            }
+
             for (int i = 0; i < 60; i++)
             {
                 std::cout << "sleep" << std::endl;

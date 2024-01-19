@@ -1081,6 +1081,7 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 }
 
 
+/* inlet stuff starts here */
 namespace
 {
 template <typename T>
@@ -1131,7 +1132,6 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t
 }
 }
 
-
 template <typename DataType>
 LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
 {
@@ -1140,6 +1140,28 @@ LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
 
     return std::get<Inlet<DataType>>(_inStreams.at(id_));
 }
+
+std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, bool snake_case_on_stream_not_found)
+{
+    if (!stream_.empty())
+        return getRemoteStreams(Titta::stringToStream(stream_, snake_case_on_stream_not_found));
+    else
+        return getRemoteStreams(std::nullopt);
+}
+std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta::Stream> stream_)
+{
+    auto streams = lsl::resolve_streams(1.0);
+    // filter if wanted
+    if (stream_.has_value())
+    {
+        auto streamName = Titta::streamToString(*stream_);
+        auto query = std::format("name='Tobii_{}'", streamName);
+        auto ret = std::ranges::remove_if(streams, [&query](auto s_) { return !s_.matches_query(query.c_str()); });
+        streams.erase(ret.begin(), ret.end());
+    }
+    return streams;
+}
+
 
 template <typename DataType>
 std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
