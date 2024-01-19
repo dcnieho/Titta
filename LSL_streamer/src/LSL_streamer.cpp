@@ -1045,9 +1045,10 @@ Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
 }
 void checkInletType(LSL_streamer::AllInlets& inlet_, Titta::Stream stream_, uint32_t id_)
 {
-#define CHECK_TYPE(type) case type:\
-    checkInletType<TittaStreamToLSLInletType_t<type>>(inlet_, id_);\
-    break;
+#define CHECK_TYPE(type) \
+    case type:\
+        checkInletType<TittaStreamToLSLInletType_t<type>>(inlet_, id_);\
+        break;
 
     switch (stream_)
     {
