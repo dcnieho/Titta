@@ -1084,6 +1084,12 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 /* inlet stuff starts here */
 namespace
 {
+void filterStreams(std::vector<lsl::stream_info>& streams_, std::string_view filterStr_)
+{
+    auto ret = std::ranges::remove_if(streams_, [&filterStr_](auto s_) { return !s_.matches_query(filterStr_.data()); });
+    streams_.erase(ret.begin(), ret.end());
+}
+
 template <typename T>
 std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
 {
@@ -1154,10 +1160,9 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
     // filter if wanted
     if (stream_.has_value())
     {
-        auto streamName = Titta::streamToString(*stream_);
-        auto query = std::format("name='Tobii_{}'", streamName);
-        auto ret = std::ranges::remove_if(streams, [&query](auto s_) { return !s_.matches_query(query.c_str()); });
-        streams.erase(ret.begin(), ret.end());
+        const auto streamName = Titta::streamToString(*stream_);
+        const auto query = std::format("name='Tobii_{}'", streamName);
+        filterStreams(streams, query);
     }
     return streams;
 }
