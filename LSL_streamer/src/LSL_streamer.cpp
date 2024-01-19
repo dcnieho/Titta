@@ -1240,10 +1240,10 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
     if (stream_.has_value())
     {
         const auto streamName = std::format("Tobii_{}", Titta::streamToString(*stream_));
-        return lsl::resolve_stream("name", streamName, 0, 1.);
+        return lsl::resolve_stream("name", streamName, 0, 2.);
     }
     else
-        return lsl::resolve_streams(1.);
+        return lsl::resolve_streams(2.);
 }
 
 uint32_t LSL_streamer::startListening(std::string streamSourceID_)
@@ -1252,7 +1252,7 @@ uint32_t LSL_streamer::startListening(std::string streamSourceID_)
         DoExitWithMsg("LSL_streamer::startListening: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
-    const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 1.);
+    const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 2.);
     if (streams.empty())
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream with source ID {} could not be found", streamSourceID_));
     else if (streams.size()>1)
@@ -1302,9 +1302,9 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
     if (created)
     {
         // start the stream
-        created->open_stream();
+        created->open_stream(5.);
         // immediately start time offset collection, we'll need that
-        created->time_correction();
+        created->time_correction(5.);
     }
 
     return id;
@@ -1326,7 +1326,7 @@ lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
         }, inlet);
 
     // return it's stream info
-    return lsl_inlet.info(1.);
+    return lsl_inlet.info(2.);
 }
 
 template <typename DataType>
