@@ -202,8 +202,8 @@ void LSL_streamer::Init()
 
     // should be well within a millisecond (actually, if different clocks are used
     // it would be super wrong), so check
-    if (average > 0.001)
-        DoExitWithMsg("LSL and Tobii/Titta clocks are not the same, or you are having some serious clock trouble. Cannot continue");
+    if (std::abs(average) > 0.001)
+        DoExitWithMsg(std::format("LSL and Tobii/Titta clocks are not the same (average offset over {} samples was {:.3f} s), or you are having some serious clock trouble. Cannot continue", nSample, average));
 }
 
 
