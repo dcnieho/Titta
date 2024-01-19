@@ -1084,12 +1084,6 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 /* inlet stuff starts here */
 namespace
 {
-void filterStreams(std::vector<lsl::stream_info>& streams_, std::string_view filterStr_)
-{
-    auto ret = std::ranges::remove_if(streams_, [&filterStr_](auto s_) { return !s_.matches_query(filterStr_.data()); });
-    streams_.erase(ret.begin(), ret.end());
-}
-
 template <typename T>
 std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::iterator startIt_, typename std::vector<T>::iterator endIt_)
 {
@@ -1156,15 +1150,14 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_
 }
 std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta::Stream> stream_)
 {
-    auto streams = lsl::resolve_streams(1.0);
     // filter if wanted
     if (stream_.has_value())
     {
-        const auto streamName = Titta::streamToString(*stream_);
-        const auto query = std::format("name='Tobii_{}'", streamName);
-        filterStreams(streams, query);
+        const auto streamName = std::format("Tobii_{}", Titta::streamToString(*stream_));
+        return lsl::resolve_stream("name", streamName, 0, 1.);
     }
-    return streams;
+    else
+        return lsl::resolve_streams(1.);
 }
 
 uint32_t LSL_streamer::startListening(std::string streamSourceID_)
@@ -1173,9 +1166,7 @@ uint32_t LSL_streamer::startListening(std::string streamSourceID_)
         DoExitWithMsg("LSL_streamer::startListening: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
-    auto streams = lsl::resolve_streams(1.0);
-    const auto query = std::format("source_id='{}'", streamSourceID_);
-    filterStreams(streams, query);
+    const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 1.);
     if (streams.empty())
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream with source ID {} could not be found", streamSourceID_));
     else if (streams.size()>1)
