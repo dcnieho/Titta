@@ -1167,6 +1167,27 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
     return streams;
 }
 
+uint32_t LSL_streamer::startListening(std::string streamSourceID_)
+{
+    if (streamSourceID_.empty())
+        DoExitWithMsg("LSL_streamer::startListening: must specify stream source ID, cannot be empty");
+
+    // find stream with specified source ID
+    auto streams = lsl::resolve_streams(1.0);
+    const auto query = std::format("source_id='{}'", streamSourceID_);
+    filterStreams(streams, query);
+    if (streams.empty())
+        DoExitWithMsg(std::format("LSL_streamer::startListening: stream with source ID {} could not be found", streamSourceID_));
+    else if (streams.size()>1)
+        DoExitWithMsg(std::format("LSL_streamer::startListening: more than one stream with source ID {} found", streamSourceID_));
+
+    // start listening
+    return startListening(streams[0]);
+}
+uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
+{
+    return 0;
+}
 
 template <typename DataType>
 std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)

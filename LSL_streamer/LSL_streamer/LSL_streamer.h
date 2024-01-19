@@ -60,6 +60,7 @@ public:
     static std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
     // subscribe to stream
     [[nodiscard]] uint32_t startListening(lsl::stream_info streamInfo_);
+    [[nodiscard]] uint32_t startListening(std::string streamSourceID_);
 
     // consume samples (by default all)
     template <typename DataType>    // e.g. Titta::gaze
