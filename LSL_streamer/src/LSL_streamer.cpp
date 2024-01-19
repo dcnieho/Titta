@@ -265,7 +265,7 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
         nChannel,
         hasFreq ? _localEyeTracker.frequency : lsl::IRREGULAR_RATE,
         format,
-        std::format("{}@{}", lslStreamName, _localEyeTracker.serialNumber));
+        std::format("LSL_streamer:{}@{}", lslStreamName, _localEyeTracker.serialNumber));
 
     // create meta-data
     info.desc()
