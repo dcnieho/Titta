@@ -2,9 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <string_view>
-#include <sstream>
+#include <numeric>
 #include <map>
-#include <cstring>
 
 #include "Titta/utils.h"
 
@@ -174,7 +173,37 @@ uint32_t LSL_streamer::getID()
 }
 void LSL_streamer::Init()
 {
+    // check tobii/titta clock and lsl clock are the same
+    // 1. warm up clocks by calling them once
+    Titta::getSystemTimestamp();
+    lsl::local_clock();
 
+    // acquire a bunch of samples, in both orders of calling
+    constexpr size_t nSample = 20;
+    std::array<double, nSample> tobiiTime;
+    std::array<double, nSample> lslTime;
+
+    for (size_t i = 0; i < nSample / 2; i++)
+    {
+        tobiiTime[i] = Titta::getSystemTimestamp() / 1'000'000.;
+        lslTime[i] = lsl::local_clock();
+    }
+    for (size_t i = nSample / 2; i < nSample; i++)
+    {
+        lslTime[i] = lsl::local_clock();
+        tobiiTime[i] = Titta::getSystemTimestamp() / 1'000'000.;
+    }
+    // get differences
+    std::array<double, nSample> diff;
+    std::ranges::transform(tobiiTime, lslTime, diff.begin(), std::minus{});
+
+    // get average value
+    auto average = std::reduce(diff.begin(), diff.end(), 0.) / nSample;
+
+    // should be well within a millisecond (actually, if different clocks are used
+    // it would be super wrong), so check
+    if (average > 0.001)
+        DoExitWithMsg("LSL and Tobii/Titta clocks are not the same, or you are having some serious clock trouble. Cannot continue");
 }
 
 
@@ -955,7 +984,7 @@ void LSL_streamer::pushSample(Titta::positioning sample_)
         sample_.right_eye.user_position.x, sample_.right_eye.user_position.y, sample_.right_eye.user_position.z,
         static_cast<float>(sample_.right_eye.validity == TOBII_RESEARCH_VALIDITY_VALID)
     };
-    _outStreams.at(Titta::Stream::Positioning).push_sample(sample);
+    _outStreams.at(Titta::Stream::Positioning).push_sample(sample); // this stream doesn't have a timestamp
 }
 
 bool LSL_streamer::stop(Titta::Stream stream_)
