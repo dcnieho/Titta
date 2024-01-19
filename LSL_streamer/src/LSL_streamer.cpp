@@ -1167,7 +1167,7 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t
         return;
 
     // find applicable range
-    auto [startIt, endIt, whole] = getIteratorsFromTimeRange<DataType>(timeStart_, timeEnd_, timeIsLocalTime_);
+    auto [startIt, endIt, whole] = getIteratorsFromTimeRange(buf, timeStart_, timeEnd_, timeIsLocalTime_);
     // clear the flagged bit
     if (whole)
         buf.clear();
@@ -1362,16 +1362,18 @@ std::vector<DataType> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<in
 void LSL_streamer::clear(uint32_t id_)
 {
     // visit with generic lambda so we get the inlet, lock and cal clear() on its buffer
-    /*if (stream_ == Stream::Positioning)
+    auto stream = getInletType(id_);
+    if (stream == Titta::Stream::Positioning)
     {
-        auto l      = lockForWriting<positioning>();    // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
-        auto& buf   = getBuffer<positioning>();
+        auto& inlet = getInlet<positioning>(id_);
+        auto l      = lockForWriting(inlet);    // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
+        auto& buf   = getBuffer(inlet);
         if (std::empty(buf))
             return;
         buf.clear();
     }
     else
-        clearTimeRange(stream_);*/
+        clearTimeRange(id_);
 }
 void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
@@ -1383,25 +1385,25 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
     // visit with templated lambda that allows us to get the data type, then
     // check if type is positioning, error, else forward. May need to split in two
     // overloaded lambdas actually, first for positioning, then templated generic
-    /*switch (stream_)
+    switch (const auto stream = getInletType(id_))
     {
-        case Stream::Gaze:
-        case Stream::EyeOpenness:
-            clearVec<gaze>(timeStart, timeEnd);
+        case Titta::Stream::Gaze:
+    case Titta::Stream::EyeOpenness:
+            clearVec(getInlet<LSL_streamer::gaze>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
-        case Stream::EyeImage:
-            clearVec<eyeImage>(timeStart, timeEnd);
+        case Titta::Stream::EyeImage:
+            clearVec(getInlet<LSL_streamer::eyeImage>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
-        case Stream::ExtSignal:
-            clearVec<extSignal>(timeStart, timeEnd);
+        case Titta::Stream::ExtSignal:
+            clearVec(getInlet<LSL_streamer::extSignal>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
-        case Stream::TimeSync:
-            clearVec<timeSync>(timeStart, timeEnd);
+        case Titta::Stream::TimeSync:
+            clearVec(getInlet<LSL_streamer::timeSync>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
-        case Stream::Positioning:
+        case Titta::Stream::Positioning:
             DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
             break;
-    }*/
+    }
 }
 
 // gaze data (including eye openness), instantiate templated functions
