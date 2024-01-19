@@ -1241,43 +1241,45 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
     if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
 
+# define MAKE_INLET(type) \
+    _inStreams.emplace(id, \
+        std::make_unique<AllInlets>(std::in_place_type<Inlet<type>>, streamInfo_) \
+    ); \
+    created = &getInlet<type>(id)._inlet;
+
     // subscribe to the stream
     auto id = getID();
     auto stype = streamInfo_.type();
+    lsl::stream_inlet* created = nullptr;
     if (stype =="Gaze")
     {
-        _inStreams.emplace(id,
-            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::gaze>>, streamInfo_)
-        );
+        MAKE_INLET(LSL_streamer::gaze)
     }
     else if (stype == "VideoCompressed" || stype == "VideoRaw")
     {
-        _inStreams.emplace(id,
-            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::eyeImage>>, streamInfo_)
-        );
+        MAKE_INLET(LSL_streamer::eyeImage)
     }
     else if (stype == "TTL")
     {
-        _inStreams.emplace(id,
-            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::extSignal>>, streamInfo_)
-        );
+        MAKE_INLET(LSL_streamer::extSignal)
     }
     else if (stype == "TimeSync")
     {
-        _inStreams.emplace(id,
-            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::timeSync>>, streamInfo_)
-        );
+        MAKE_INLET(LSL_streamer::timeSync)
     }
     else if (stype == "Positioning")
     {
-        _inStreams.emplace(id,
-            std::make_unique<AllInlets>(std::in_place_type<Inlet<LSL_streamer::positioning>>, streamInfo_)
-        );
+        MAKE_INLET(LSL_streamer::positioning)
     }
     else
         DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
 
+    if (created)
+        // immediately start time offset collection, we'll need that
+        created->time_correction(2.);
+
     return 0;
+#undef MAKE_INLET
 }
 
 Titta::Stream LSL_streamer::getInletType(uint32_t id_)
