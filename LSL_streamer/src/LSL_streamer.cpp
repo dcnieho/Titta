@@ -1088,11 +1088,11 @@ void checkInletType(LSL_streamer::AllInlets& inlet_, Titta::Stream stream_, uint
 #undef CHECK_TYPE
 }
 
-lsl::stream_inlet& getRawInlet(LSL_streamer::AllInlets& inlet_)
+lsl::stream_inlet& getLSLInlet(LSL_streamer::AllInlets& inlet_)
 {
     return std::visit(
         [](auto& in_) -> lsl::stream_inlet& {
-            return in_._inlet;
+            return in_._lsl_inlet;
         }, inlet_);
 }
 
@@ -1284,7 +1284,7 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
         std::make_unique<AllInlets>(std::in_place_type<Inlet<type>>, streamInfo_) \
     ); \
     auto& inlet = getInlet<type>(id); \
-    createdInlet = &inlet._inlet; \
+    createdInlet = &inlet._lsl_inlet; \
     getBuffer<type>(inlet).reserve(initialBufferSize_.value_or(defaults::defaultName));
 
     // subscribe to the stream
@@ -1339,7 +1339,7 @@ lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
     auto& inlet = getAllInletsVariant(id_);
     lsl::stream_inlet& lsl_inlet = std::visit(
         [](auto& in_) -> lsl::stream_inlet& {
-            return in_._inlet;
+            return in_._lsl_inlet;
         }, inlet);
 
     // return it's stream info
@@ -1348,7 +1348,7 @@ lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
 
 void LSL_streamer::startListening(uint32_t id_)
 {
-    auto& inlet = getRawInlet(getAllInletsVariant(id_));
+    auto& inlet = getLSLInlet(getAllInletsVariant(id_));
     inlet.open_stream(5.);
     // start thread, etc
 }
@@ -1466,7 +1466,7 @@ void LSL_streamer::stopListening(uint32_t id_, std::optional<bool> clearBuffer_)
     // deal with default arguments
     auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
-    auto& inlet = getRawInlet(getAllInletsVariant(id_));
+    auto& inlet = getLSLInlet(getAllInletsVariant(id_));
 
     // stop thread
 

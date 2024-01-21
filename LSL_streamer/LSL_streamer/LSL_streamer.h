@@ -32,10 +32,10 @@ class LSL_streamer
     {
     public:
         Inlet(const lsl::stream_info& streamInfo_) :
-            _inlet(streamInfo_)
+            _lsl_inlet(streamInfo_)
         {}
 
-        lsl::stream_inlet       _inlet;
+        lsl::stream_inlet       _lsl_inlet;
         std::vector<DataType>   _buffer;
         mutex_type              _mutex;
     };
@@ -149,7 +149,7 @@ private:
     static uint32_t getID();
     // helper
     template <typename DataType>
-    friend void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_);
+    friend void checkInletType(AllInlets& inlet_, uint32_t id_);
     AllInlets& getAllInletsVariant(uint32_t id_);
     template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_);
