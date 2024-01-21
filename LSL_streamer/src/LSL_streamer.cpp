@@ -1038,20 +1038,9 @@ void LSL_streamer::stopOutlet(Titta::Stream stream_)
 
 
 /* inlet stuff starts here */
-template <typename DataType>
-void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_); // fwd declare
 namespace
 {
 template <class...> constexpr std::false_type always_false{};
-template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze>        { using type = LSL_streamer::gaze; };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = LSL_streamer::gaze; };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage>    { using type = LSL_streamer::eyeImage; };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::ExtSignal>   { using type = LSL_streamer::extSignal; };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::TimeSync>    { using type = LSL_streamer::timeSync; };
-template <>                struct TittaStreamToLSLInletType<Titta::Stream::Positioning> { using type = LSL_streamer::positioning; };
-template <Titta::Stream T>
-using TittaStreamToLSLInletType_t = typename TittaStreamToLSLInletType<T>::type;
 template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value; };
 template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze>        { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
 template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage>    { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
@@ -1068,24 +1057,6 @@ Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
         return LSLInletTypeToTittaStream_v<T>;
     }
     , inlet_);
-}
-void checkInletType(LSL_streamer::AllInlets& inlet_, Titta::Stream stream_, uint32_t id_)
-{
-#define CHECK_TYPE(type) \
-    case type:\
-        checkInletType<TittaStreamToLSLInletType_t<type>>(inlet_, id_);\
-        break;
-
-    switch (stream_)
-    {
-        CHECK_TYPE(Titta::Stream::Gaze)
-        CHECK_TYPE(Titta::Stream::EyeOpenness)
-        CHECK_TYPE(Titta::Stream::EyeImage)
-        CHECK_TYPE(Titta::Stream::ExtSignal)
-        CHECK_TYPE(Titta::Stream::TimeSync)
-        CHECK_TYPE(Titta::Stream::Positioning)
-    }
-#undef CHECK_TYPE
 }
 
 lsl::stream_inlet& getLSLInlet(LSL_streamer::AllInlets& inlet_)
@@ -1221,7 +1192,7 @@ void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_)
     }
 }
 
-LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_)
+LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_) const
 {
     if (!_inStreams.contains(id_))
         DoExitWithMsg(std::format("No inlet with id {} is known", id_));
@@ -1229,7 +1200,7 @@ LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_)
     return *_inStreams.at(id_);
 }
 template <typename DataType>
-LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_)
+LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_) const
 {
     auto& allInlets = getAllInletsVariant(id_);
     checkInletType<DataType>(allInlets, id_);
@@ -1328,12 +1299,12 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
 #undef MAKE_INLET
 }
 
-Titta::Stream LSL_streamer::getInletType(uint32_t id_)
+Titta::Stream LSL_streamer::getInletType(uint32_t id_) const
 {
     return getInletTypeImpl(getAllInletsVariant(id_));
 }
 
-lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
+lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
 {
     // get inlet
     auto& inlet = getAllInletsVariant(id_);

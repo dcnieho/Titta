@@ -89,8 +89,8 @@ public:
     [[nodiscard]] uint32_t createListener(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
 
     // info about inlet (desc is set now)
-    lsl::stream_info getInletInfo(uint32_t id_);
-    Titta::Stream    getInletType(uint32_t id_);
+    lsl::stream_info getInletInfo(uint32_t id_) const;
+    Titta::Stream    getInletType(uint32_t id_) const;
 
     // actually start pulling samples from it
     void startListening(uint32_t id_);
@@ -150,9 +150,9 @@ private:
     // helper
     template <typename DataType>
     friend void checkInletType(AllInlets& inlet_, uint32_t id_);
-    AllInlets& getAllInletsVariant(uint32_t id_);
+    AllInlets& getAllInletsVariant(uint32_t id_) const;
     template <typename DataType>
-    Inlet<DataType>& getInlet(uint32_t id_);
+    Inlet<DataType>& getInlet(uint32_t id_) const;
 
 
 private:
