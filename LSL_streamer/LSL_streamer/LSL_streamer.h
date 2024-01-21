@@ -84,9 +84,9 @@ public:
     // query what streams are available (optionally filter by type, empty string means no filter)
     static std::vector<lsl::stream_info> getRemoteStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
     static std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
-    // subscribe to stream
-    [[nodiscard]] uint32_t createListener(lsl::stream_info streamInfo_, std::optional<bool> doStartListening_ = std::nullopt);
-    [[nodiscard]] uint32_t createListener(std::string streamSourceID_, std::optional<bool> doStartListening_ = std::nullopt);
+    // subscribe to stream, allocate buffer resources
+    [[nodiscard]] uint32_t createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+    [[nodiscard]] uint32_t createListener(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
 
     // info about inlet (desc is set now)
     lsl::stream_info getInletInfo(uint32_t id_);

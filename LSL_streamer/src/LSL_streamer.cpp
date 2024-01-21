@@ -17,7 +17,7 @@ namespace
         constexpr size_t                gazeBufSize             = 2<<19;        // about half an hour at 600Hz
 
         constexpr size_t                eyeImageBufSize         = 2<<11;        // about seven minutes at 2*5Hz
-        constexpr bool                  eyeImageAsGIF           = false;
+        constexpr bool                  eyeImageAsGIF           = false;        // NB: this is for outlet, not inlet
 
         constexpr size_t                extSignalBufSize        = 2<<9;
 
@@ -1256,7 +1256,7 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
         return lsl::resolve_streams(2.);
 }
 
-uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional<bool> startListening_)
+uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional<size_t> initialBufferSize_, std::optional<bool> startListening_)
 {
     if (streamSourceID_.empty())
         DoExitWithMsg("LSL_streamer::createListener: must specify stream source ID, cannot be empty");
@@ -1269,9 +1269,9 @@ uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional
         DoExitWithMsg(std::format("LSL_streamer::createListener: more than one stream with source ID {} found", streamSourceID_));
 
     // start listening
-    return createListener(streams[0], startListening_);
+    return createListener(streams[0], initialBufferSize_, startListening_);
 }
-uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optional<bool> doStartListening_)
+uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
 {
     // deal with default arguments
     const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
@@ -1279,43 +1279,45 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
     if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
         DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
 
-# define MAKE_INLET(type) \
+# define MAKE_INLET(type, defaultName) \
     _inStreams.emplace(id, \
         std::make_unique<AllInlets>(std::in_place_type<Inlet<type>>, streamInfo_) \
     ); \
-    created = &getInlet<type>(id)._inlet;
+    auto& inlet = getInlet<type>(id); \
+    createdInlet = &inlet._inlet; \
+    getBuffer<type>(inlet).reserve(initialBufferSize_.value_or(defaults::defaultName));
 
     // subscribe to the stream
     const auto id = getID();
     const auto sType = streamInfo_.type();
-    lsl::stream_inlet* created = nullptr;
+    lsl::stream_inlet* createdInlet = nullptr;
     if (sType =="Gaze")
     {
-        MAKE_INLET(LSL_streamer::gaze)
+        MAKE_INLET(LSL_streamer::gaze, gazeBufSize)
     }
     else if (sType == "VideoCompressed" || sType == "VideoRaw")
     {
-        MAKE_INLET(LSL_streamer::eyeImage)
+        MAKE_INLET(LSL_streamer::eyeImage, eyeImageBufSize)
     }
     else if (sType == "TTL")
     {
-        MAKE_INLET(LSL_streamer::extSignal)
+        MAKE_INLET(LSL_streamer::extSignal, extSignalBufSize)
     }
     else if (sType == "TimeSync")
     {
-        MAKE_INLET(LSL_streamer::timeSync)
+        MAKE_INLET(LSL_streamer::timeSync, timeSyncBufSize)
     }
     else if (sType == "Positioning")
     {
-        MAKE_INLET(LSL_streamer::positioning)
+        MAKE_INLET(LSL_streamer::positioning, positioningBufSize)
     }
     else
         DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), sType));
 
-    if (created)
+    if (createdInlet)
     {
         // immediately start time offset collection, we'll need that
-        created->time_correction(5.);
+        createdInlet->time_correction(5.);
 
         // start the stream
         if (doStartListening)
