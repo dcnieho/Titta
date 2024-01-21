@@ -85,12 +85,15 @@ public:
     static std::vector<lsl::stream_info> getRemoteStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
     static std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
     // subscribe to stream
-    [[nodiscard]] uint32_t startListening(lsl::stream_info streamInfo_);
-    [[nodiscard]] uint32_t startListening(std::string streamSourceID_);
+    [[nodiscard]] uint32_t createListener(lsl::stream_info streamInfo_, std::optional<bool> doStartListening_ = std::nullopt);
+    [[nodiscard]] uint32_t createListener(std::string streamSourceID_, std::optional<bool> doStartListening_ = std::nullopt);
 
     // info about inlet (desc is set now)
     lsl::stream_info getInletInfo(uint32_t id_);
     Titta::Stream    getInletType(uint32_t id_);
+
+    // actually start pulling samples from it
+    void startListening(uint32_t id_);
 
     // consume samples (by default all)
     template <typename DataType>    // e.g. LSL_streamer::gaze
@@ -111,8 +114,11 @@ public:
     // clear contents buffer within given timestamps (inclusive, by default whole buffer)
     void clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
-    // stop, optionally deletes the buffer
-    bool stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
+    // stop, optionally deletes the buffer. Can be continued with startListening()
+    void stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
+
+    // delete the listener and associated resources
+    void deleteListener(uint32_t);
 
 
 private:

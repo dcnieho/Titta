@@ -12,30 +12,32 @@ namespace
     // default argument values
     namespace defaults
     {
-        constexpr size_t                sampleBufSize             = 2<<19;        // about half an hour at 600Hz
+        constexpr bool                  createStartsListening   = false;
 
-        constexpr size_t                eyeImageBufSize           = 2<<11;        // about seven minutes at 2*5Hz
-        constexpr bool                  eyeImageAsGIF             = false;
+        constexpr size_t                gazeBufSize             = 2<<19;        // about half an hour at 600Hz
 
-        constexpr size_t                extSignalBufSize          = 2<<9;
+        constexpr size_t                eyeImageBufSize         = 2<<11;        // about seven minutes at 2*5Hz
+        constexpr bool                  eyeImageAsGIF           = false;
 
-        constexpr size_t                timeSyncBufSize           = 2<<9;
+        constexpr size_t                extSignalBufSize        = 2<<9;
 
-        constexpr size_t                positioningBufSize        = 2<<11;
+        constexpr size_t                timeSyncBufSize         = 2<<9;
 
-        constexpr int64_t               clearTimeRangeStart       = 0;
-        constexpr int64_t               clearTimeRangeEnd         = std::numeric_limits<int64_t>::max();
+        constexpr size_t                positioningBufSize      = 2<<11;
 
-        constexpr bool                  stopBufferEmpties         = false;
-        constexpr Titta::BufferSide     consumeSide               = Titta::BufferSide::Start;
-        constexpr size_t                consumeNSamp              = -1;           // this overflows on purpose, consume all samples is default
-        constexpr int64_t               consumeTimeRangeStart     = 0;
-        constexpr int64_t               consumeTimeRangeEnd       = std::numeric_limits<int64_t>::max();
-        constexpr Titta::BufferSide     peekSide                  = Titta::BufferSide::End;
-        constexpr size_t                peekNSamp                 = 1;
-        constexpr int64_t               peekTimeRangeStart        = 0;
-        constexpr int64_t               peekTimeRangeEnd          = std::numeric_limits<int64_t>::max();
-        constexpr bool                  timeIsLocalTime           = true;
+        constexpr int64_t               clearTimeRangeStart     = 0;
+        constexpr int64_t               clearTimeRangeEnd       = std::numeric_limits<int64_t>::max();
+
+        constexpr bool                  stopBufferEmpties       = false;
+        constexpr Titta::BufferSide     consumeSide             = Titta::BufferSide::Start;
+        constexpr size_t                consumeNSamp            = -1;           // this overflows on purpose, consume all samples is default
+        constexpr int64_t               consumeTimeRangeStart   = 0;
+        constexpr int64_t               consumeTimeRangeEnd     = std::numeric_limits<int64_t>::max();
+        constexpr Titta::BufferSide     peekSide                = Titta::BufferSide::End;
+        constexpr size_t                peekNSamp               = 1;
+        constexpr int64_t               peekTimeRangeStart      = 0;
+        constexpr int64_t               peekTimeRangeEnd        = std::numeric_limits<int64_t>::max();
+        constexpr bool                  timeIsLocalTime         = true;
     }
 }
 
@@ -1086,6 +1088,14 @@ void checkInletType(LSL_streamer::AllInlets& inlet_, Titta::Stream stream_, uint
 #undef CHECK_TYPE
 }
 
+lsl::stream_inlet& getRawInlet(LSL_streamer::AllInlets& inlet_)
+{
+    return std::visit(
+        [](auto& in_) -> lsl::stream_inlet& {
+            return in_._inlet;
+        }, inlet_);
+}
+
 // helpers to make the below generic
 template <typename DataType>
 read_lock  lockForReading(LSL_streamer::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
@@ -1246,25 +1256,28 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
         return lsl::resolve_streams(2.);
 }
 
-uint32_t LSL_streamer::startListening(std::string streamSourceID_)
+uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional<bool> startListening_)
 {
     if (streamSourceID_.empty())
-        DoExitWithMsg("LSL_streamer::startListening: must specify stream source ID, cannot be empty");
+        DoExitWithMsg("LSL_streamer::createListener: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
     const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 2.);
     if (streams.empty())
-        DoExitWithMsg(std::format("LSL_streamer::startListening: stream with source ID {} could not be found", streamSourceID_));
+        DoExitWithMsg(std::format("LSL_streamer::createListener: stream with source ID {} could not be found", streamSourceID_));
     else if (streams.size()>1)
-        DoExitWithMsg(std::format("LSL_streamer::startListening: more than one stream with source ID {} found", streamSourceID_));
+        DoExitWithMsg(std::format("LSL_streamer::createListener: more than one stream with source ID {} found", streamSourceID_));
 
     // start listening
-    return startListening(streams[0]);
+    return createListener(streams[0], startListening_);
 }
-uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
+uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optional<bool> doStartListening_)
 {
+    // deal with default arguments
+    const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
+
     if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
-        DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
+        DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
 
 # define MAKE_INLET(type) \
     _inStreams.emplace(id, \
@@ -1273,38 +1286,40 @@ uint32_t LSL_streamer::startListening(lsl::stream_info streamInfo_)
     created = &getInlet<type>(id)._inlet;
 
     // subscribe to the stream
-    auto id = getID();
-    auto stype = streamInfo_.type();
+    const auto id = getID();
+    const auto sType = streamInfo_.type();
     lsl::stream_inlet* created = nullptr;
-    if (stype =="Gaze")
+    if (sType =="Gaze")
     {
         MAKE_INLET(LSL_streamer::gaze)
     }
-    else if (stype == "VideoCompressed" || stype == "VideoRaw")
+    else if (sType == "VideoCompressed" || sType == "VideoRaw")
     {
         MAKE_INLET(LSL_streamer::eyeImage)
     }
-    else if (stype == "TTL")
+    else if (sType == "TTL")
     {
         MAKE_INLET(LSL_streamer::extSignal)
     }
-    else if (stype == "TimeSync")
+    else if (sType == "TimeSync")
     {
         MAKE_INLET(LSL_streamer::timeSync)
     }
-    else if (stype == "Positioning")
+    else if (sType == "Positioning")
     {
         MAKE_INLET(LSL_streamer::positioning)
     }
     else
-        DoExitWithMsg(std::format("LSL_streamer::startListening: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), stype));
+        DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), sType));
 
     if (created)
     {
-        // start the stream
-        created->open_stream(5.);
         // immediately start time offset collection, we'll need that
         created->time_correction(5.);
+
+        // start the stream
+        if (doStartListening)
+            startListening(id);
     }
 
     return id;
@@ -1328,6 +1343,14 @@ lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_)
     // return it's stream info
     return lsl_inlet.info(2.);
 }
+
+void LSL_streamer::startListening(uint32_t id_)
+{
+    auto& inlet = getRawInlet(getAllInletsVariant(id_));
+    inlet.open_stream(5.);
+    // start thread, etc
+}
+
 
 template <typename DataType>
 std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
@@ -1434,6 +1457,36 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
             DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
             break;
     }
+}
+
+void LSL_streamer::stopListening(uint32_t id_, std::optional<bool> clearBuffer_)
+{
+    // deal with default arguments
+    auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
+
+    auto& inlet = getRawInlet(getAllInletsVariant(id_));
+
+    // stop thread
+
+    // close stream
+    inlet.close_stream();
+
+    // flush to be sure there's nothing stale left in LSL's buffers that would appear when we restart
+    inlet.flush();
+
+
+    // clean up if wanted
+    if (clearBuffer)
+        clear(id_);
+}
+
+void LSL_streamer::deleteListener(uint32_t id_)
+{
+    stopListening(id_);
+    // stop time syncer
+
+    // delete entry to clean it all up
+    _inStreams.erase(id_);
 }
 
 // gaze data (including eye openness), instantiate templated functions
