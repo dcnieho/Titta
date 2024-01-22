@@ -505,15 +505,15 @@ classdef Titta < handle
             %    INSTANCE = Titta.init() uses the currently active settings to 
             %    search and connect to the indicated Tobii eye tracker and
             %    initializes it. 
-			% 
-			%    INSTANCE = Titta.init(ADDRESS) bypasses the search for all
-			%    connected eyetrackers and opens the tracker at the
-			%    specified ADDRESS. Default: []
-            % 
+            %
+            %    INSTANCE = Titta.init(ADDRESS) bypasses the search for all
+            %    connected eyetrackers and opens the tracker at the
+            %    specified ADDRESS. Default: []
+            %
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
             
-			% empty address by default
-			if ~exist('address','var'); address = []; end
+            % empty address by default
+            if nargin < 2; address = []; end
 
             % Load in our callback buffer mex
             obj.buffer = TittaMex();
@@ -581,13 +581,13 @@ classdef Titta < handle
                     qTracker = qModel;
                     break;
                 end
-			end
+            end
 
-			if isempty(address)
-            	theTracker = trackers(qTracker);
-			else
-				theTracker.address = address;
-			end
+            if isempty(address)
+                theTracker = trackers(qTracker);
+            else
+                theTracker.address = address;
+            end
 
             % provide callback buffer mex with eye tracker
             obj.buffer.init(theTracker.address);
