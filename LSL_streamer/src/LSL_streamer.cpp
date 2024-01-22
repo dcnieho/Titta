@@ -39,6 +39,52 @@ namespace
         constexpr int64_t               peekTimeRangeEnd        = std::numeric_limits<int64_t>::max();
         constexpr bool                  timeIsLocalTime         = true;
     }
+
+    template <class...> constexpr std::false_type always_false{};
+
+    template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze> { using type = LSL_streamer::gaze; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = LSL_streamer::gaze; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage> { using type = LSL_streamer::eyeImage; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::ExtSignal> { using type = LSL_streamer::extSignal; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::TimeSync> { using type = LSL_streamer::timeSync; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Positioning> { using type = LSL_streamer::positioning; };
+    template <Titta::Stream T>
+    using TittaStreamToLSLInletType_t = typename TittaStreamToLSLInletType<T>::type;
+
+    template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value = Titta::Stream::Unknown; };
+    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze> { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
+    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage> { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
+    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::extSignal> { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
+    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::timeSync> { static constexpr Titta::Stream value = Titta::Stream::TimeSync; };
+    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::positioning> { static constexpr Titta::Stream value = Titta::Stream::Positioning; };
+    template <typename T>
+    constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
+
+    template <typename T> struct LSLInletTypeNumSamples { static_assert(always_false<T>, "LSLInletTypeNumSamples not implemented for this type"); static constexpr size_t value = 0; };
+    template <>           struct LSLInletTypeNumSamples<LSL_streamer::gaze> { static constexpr size_t value = 43; };
+    template <>           struct LSLInletTypeNumSamples<LSL_streamer::eyeImage> { static constexpr size_t value = 0; };
+    template <>           struct LSLInletTypeNumSamples<LSL_streamer::extSignal> { static constexpr size_t value = 4; };
+    template <>           struct LSLInletTypeNumSamples<LSL_streamer::timeSync> { static constexpr size_t value = 3; };
+    template <>           struct LSLInletTypeNumSamples<LSL_streamer::positioning> { static constexpr size_t value = 8; };
+    template <typename T>
+    constexpr size_t LSLInletTypeNumSamples_v = LSLInletTypeNumSamples<T>::value;
+
+    template <typename T> struct LSLInletTypeToChannelFormat { static_assert(always_false<T>, "LSLInletTypeToChannelFormat not implemented for this type"); static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
+    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::gaze> { static constexpr enum lsl::channel_format_t value = lsl::cf_double64; };
+    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::eyeImage> { static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
+    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::extSignal> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
+    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::timeSync> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
+    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::positioning> { static constexpr enum lsl::channel_format_t value = lsl::cf_float32; };
+    template <typename T>
+    constexpr enum lsl::channel_format_t LSLInletTypeToChannelFormat_v = LSLInletTypeToChannelFormat<T>::value;
+
+    template <enum lsl::channel_format_t T> struct LSLChannelFormatToCppType { static_assert(always_false<T>, "LSLChannelFormatToCppType not implemented for this enum value: this channel format is not supported by LSL_streamer"); };
+    template <>                struct LSLChannelFormatToCppType<lsl::cf_float32> { using type = float; };
+    template <>                struct LSLChannelFormatToCppType<lsl::cf_double64> { using type = double; };
+    template <>                struct LSLChannelFormatToCppType<lsl::cf_int64> { using type = int64_t; };
+    template <enum lsl::channel_format_t T>
+    using LSLChannelFormatToCppType_t = typename LSLChannelFormatToCppType<T>::type;
 }
 
 // callbacks
@@ -244,33 +290,37 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
 
     std::string type;
     int nChannel = 0;
-    auto format = lsl::cf_float32;
+    enum lsl::channel_format_t format = lsl::cf_undefined;
     switch (stream_)
     {
     case Titta::Stream::Gaze:
     case Titta::Stream::EyeOpenness:
         type = "Gaze";
-        nChannel = 42;
+        nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::Gaze>>;
+        format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Gaze>>;
         break;
     case Titta::Stream::EyeImage:
         if (asGif_)
             type = "VideoCompressed";
         else
             type = "VideoRaw";
+        nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::EyeImage>>;
+        format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::EyeImage>>;
         break;
     case Titta::Stream::ExtSignal:
         type = "TTL";
-        nChannel = 2;
-        format = lsl::cf_int64;
+        nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::ExtSignal>>;
+        format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::ExtSignal>>;
         break;
     case Titta::Stream::TimeSync:
         type = "TimeSync";
-        nChannel = 3;
-        format = lsl::cf_int64;
+        nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::TimeSync>>;
+        format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::TimeSync>>;
         break;
     case Titta::Stream::Positioning:
         type = "Positioning";
-        nChannel = 8;
+        nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::Positioning>>;
+        format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Positioning>>;
         break;
     default:
         DoExitWithMsg(std::format("LSL_streamer::cpp::startOutlet: opening an outlet for {} stream is not supported.", Titta::streamToString(stream_)));
@@ -534,8 +584,15 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
             .append_child_value("type", "TimeStamp")
             .append_child_value("unit", "us");
         channels.append_child("channel")
+            .append_child_value("label", "system_time_stamp")
+            .append_child_value("type", "TimeStamp")
+            .append_child_value("unit", "us");
+        channels.append_child("channel")
             .append_child_value("label", "value")
             .append_child_value("type", "TTLIn");
+        channels.append_child("channel")
+            .append_child_value("label", "change_type")
+            .append_child_value("type", "flag");
         break;
     case Titta::Stream::TimeSync:
         channels.append_child("channel")
@@ -886,30 +943,35 @@ void LSL_streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const 
 
 void LSL_streamer::pushSample(const Titta::gaze& sample_)
 {
-    const float sample[] = {
+    using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Gaze>;
+    using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
+
+    const data_t sample[LSLInletTypeNumSamples_v<lsl_inlet_type>] = {
         sample_.left_eye.gaze_point.position_on_display_area.x, sample_.left_eye.gaze_point.position_on_display_area.y,
         sample_.left_eye.gaze_point.position_in_user_coordinates.x, sample_.left_eye.gaze_point.position_in_user_coordinates.y, sample_.left_eye.gaze_point.position_in_user_coordinates.z,
-        static_cast<float>(sample_.left_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.left_eye.gaze_point.available),
+        static_cast<data_t>(sample_.left_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.gaze_point.available),
         sample_.left_eye.pupil.diameter,
-        static_cast<float>(sample_.left_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.left_eye.pupil.available),
+        static_cast<data_t>(sample_.left_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.pupil.available),
         sample_.left_eye.gaze_origin.position_in_user_coordinates.x, sample_.left_eye.gaze_origin.position_in_user_coordinates.y, sample_.left_eye.gaze_origin.position_in_user_coordinates.z,
         sample_.left_eye.gaze_origin.position_in_track_box_coordinates.x, sample_.left_eye.gaze_origin.position_in_track_box_coordinates.y, sample_.left_eye.gaze_origin.position_in_track_box_coordinates.z,
-        static_cast<float>(sample_.left_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.left_eye.gaze_origin.available),
+        static_cast<data_t>(sample_.left_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.gaze_origin.available),
         sample_.left_eye.eye_openness.diameter,
-        static_cast<float>(sample_.left_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.left_eye.eye_openness.available),
+        static_cast<data_t>(sample_.left_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.eye_openness.available),
 
         sample_.right_eye.gaze_point.position_on_display_area.x, sample_.right_eye.gaze_point.position_on_display_area.y,
         sample_.right_eye.gaze_point.position_in_user_coordinates.x, sample_.right_eye.gaze_point.position_in_user_coordinates.y, sample_.right_eye.gaze_point.position_in_user_coordinates.z,
-        static_cast<float>(sample_.right_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.gaze_point.available),
+        static_cast<data_t>(sample_.right_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.gaze_point.available),
         sample_.right_eye.pupil.diameter,
-        static_cast<float>(sample_.right_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.pupil.available),
+        static_cast<data_t>(sample_.right_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.pupil.available),
         sample_.right_eye.gaze_origin.position_in_user_coordinates.x, sample_.right_eye.gaze_origin.position_in_user_coordinates.y, sample_.right_eye.gaze_origin.position_in_user_coordinates.z,
         sample_.right_eye.gaze_origin.position_in_track_box_coordinates.x, sample_.right_eye.gaze_origin.position_in_track_box_coordinates.y, sample_.right_eye.gaze_origin.position_in_track_box_coordinates.z,
-        static_cast<float>(sample_.right_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.gaze_origin.available),
+        static_cast<data_t>(sample_.right_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.gaze_origin.available),
         sample_.right_eye.eye_openness.diameter,
-        static_cast<float>(sample_.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<float>(sample_.right_eye.eye_openness.available),
+        static_cast<data_t>(sample_.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.eye_openness.available),
+
+        static_cast<data_t>(sample_.device_time_stamp) / 1'000'000.
     };
-    _outStreams.at(Titta::Stream::Gaze).push_sample(sample, sample_.system_time_stamp/1'000'000.);
+    _outStreams.at(Titta::Stream::Gaze).push_sample(sample, static_cast<double>(sample_.system_time_stamp)/1'000'000.);
 }
 void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
 {
@@ -917,21 +979,30 @@ void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
 }
 void LSL_streamer::pushSample(const Titta::extSignal& sample_)
 {
-    const int64_t sample[] = {
-        sample_.device_time_stamp, sample_.value
+    using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::ExtSignal>;
+    using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
+
+    const data_t sample[LSLInletTypeNumSamples_v<lsl_inlet_type>] = {
+        sample_.device_time_stamp, sample_.system_time_stamp, sample_.value, sample_.change_type
     };
-    _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, sample_.system_time_stamp / 1'000'000.);
+    _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, static_cast<double>(sample_.system_time_stamp) / 1'000'000.);
 }
 void LSL_streamer::pushSample(const Titta::timeSync& sample_)
 {
-    const int64_t sample[] = {
+    using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::TimeSync>;
+    using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
+
+    const data_t sample[LSLInletTypeNumSamples_v<lsl_inlet_type>] = {
         sample_.system_request_time_stamp, sample_.device_time_stamp, sample_.system_response_time_stamp
     };
-    _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, sample_.system_request_time_stamp / 1'000'000.);
+    _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, static_cast<double>(sample_.system_request_time_stamp) / 1'000'000.);
 }
 void LSL_streamer::pushSample(const Titta::positioning& sample_)
 {
-    const float sample[] = {
+    using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Positioning>;
+    using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
+
+    const data_t sample[LSLInletTypeNumSamples_v<lsl_inlet_type>] = {
         sample_.left_eye.user_position.x, sample_.left_eye.user_position.y, sample_.left_eye.user_position.z,
         static_cast<float>(sample_.left_eye.validity == TOBII_RESEARCH_VALIDITY_VALID),
         sample_.right_eye.user_position.x, sample_.right_eye.user_position.y, sample_.right_eye.user_position.z,
@@ -1040,16 +1111,6 @@ void LSL_streamer::stopOutlet(const Titta::Stream stream_)
 /* inlet stuff starts here */
 namespace
 {
-template <class...> constexpr std::false_type always_false{};
-template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value; };
-template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze>        { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
-template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage>    { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
-template <>           struct LSLInletTypeToTittaStream<LSL_streamer::extSignal>   { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
-template <>           struct LSLInletTypeToTittaStream<LSL_streamer::timeSync>    { static constexpr Titta::Stream value = Titta::Stream::TimeSync; };
-template <>           struct LSLInletTypeToTittaStream<LSL_streamer::positioning> { static constexpr Titta::Stream value = Titta::Stream::Positioning; };
-template <typename T>
-constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
-
 Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
 {
     return std::visit(
