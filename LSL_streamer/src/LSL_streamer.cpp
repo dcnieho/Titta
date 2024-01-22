@@ -1498,15 +1498,15 @@ void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBu
     // deal with default arguments
     const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
-    auto& inlet = getLSLInlet(getAllInletsVariant(id_));
+    auto& lsl_inlet = getLSLInlet(getAllInletsVariant(id_));
 
     // stop thread
 
     // close stream
-    inlet.close_stream();
+    lsl_inlet.close_stream();
 
     // flush to be sure there's nothing stale left in LSL's buffers that would appear when we restart
-    inlet.flush();
+    lsl_inlet.flush();
 
     // clean up if wanted
     if (clearBuffer)
