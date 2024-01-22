@@ -46,7 +46,7 @@ void LSLGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         instance->receiveSample(gaze_data_, nullptr);
     }
 }
@@ -54,7 +54,7 @@ void LSLEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* 
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         instance->receiveSample(nullptr, openness_data_);
     }
 }
@@ -62,7 +62,7 @@ void LSLEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -71,7 +71,7 @@ void LSLEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_dat
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -80,7 +80,7 @@ void LSLExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* us
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         if (instance->isStreaming(Titta::Stream::ExtSignal))
             instance->pushSample(*ext_signal_);
     }
@@ -89,7 +89,7 @@ void LSLTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, 
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         if (instance->isStreaming(Titta::Stream::TimeSync))
             instance->pushSample(*time_sync_data_);
     }
@@ -98,7 +98,7 @@ void LSLPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void
 {
     if (user_data)
     {
-        auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<LSL_streamer*>(user_data);
         if (instance->isStreaming(Titta::Stream::Positioning))
             instance->pushSample(*position_data_);
     }
@@ -108,7 +108,7 @@ void LSLPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void
 TobiiResearchSDKVersion LSL_streamer::getTobiiSDKVersion()
 {
     TobiiResearchSDKVersion sdk_version;
-    TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
+    const TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Titta::cpp: Cannot get Tobii SDK version", status);
     return sdk_version;
@@ -193,7 +193,7 @@ void LSL_streamer::CheckClocks()
     std::ranges::transform(tobiiTime, lslTime, diff.begin(), std::minus{});
 
     // get average value
-    auto average = std::reduce(diff.begin(), diff.end(), 0.) / nSample;
+    const auto average = std::reduce(diff.begin(), diff.end(), 0.) / nSample;
 
     // should be well within a millisecond (actually, if different clocks are used
     // it would be super wrong), so check
@@ -208,7 +208,7 @@ void LSL_streamer::connect(std::string address_)
         DoExitWithMsg("Already connected to an eye tracker, cannot connect again");
 
     TobiiResearchEyeTracker* et;
-    TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
+    const TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
     if (status != TOBII_RESEARCH_STATUS_OK)
         ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
     connect(et);
@@ -224,11 +224,11 @@ void LSL_streamer::connect(TobiiResearchEyeTracker* et_)
 }
 
 
-bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, bool snake_case_on_stream_not_found /*= false*/)
+bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
 {
-    return startOutlet(Titta::stringToStream(stream_, snake_case_on_stream_not_found), asGif_);
+    return startOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found), asGif_);
 }
-bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_)
+bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     if (!_localEyeTracker)
         DoExitWithMsg("Not connected to an eye tracker, cannot start an outlet");
@@ -238,7 +238,7 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
         return false;
 
     // for gaze signal, get info about the eye tracker's gaze stream
-    auto hasFreq = stream_ == Titta::Stream::Gaze || stream_ == Titta::Stream::EyeOpenness;
+    const auto hasFreq = stream_ == Titta::Stream::Gaze || stream_ == Titta::Stream::EyeOpenness;
     if (hasFreq)
         _localEyeTracker->refreshInfo();
 
@@ -604,7 +604,7 @@ bool LSL_streamer::startOutlet(Titta::Stream stream_, std::optional<bool> asGif_
 }
 
 
-void LSL_streamer::setIncludeEyeOpennessInGaze(bool include_)
+void LSL_streamer::setIncludeEyeOpennessInGaze(const bool include_)
 {
     if (!_localEyeTracker)
         DoExitWithMsg("Not connected to an eye tracker, no possible to set outlet options");
@@ -623,7 +623,7 @@ void LSL_streamer::setIncludeEyeOpennessInGaze(bool include_)
         start(Titta::Stream::EyeOpenness);
 }
 
-bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
+bool LSL_streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -660,7 +660,7 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
             else
             {
                 // deal with default arguments
-                auto asGif = asGif_.value_or(defaults::eyeImageAsGIF);
+                const auto asGif = asGif_.value_or(defaults::eyeImageAsGIF);
 
                 // if already recording and switching from gif to normal or other way, first stop old stream
                 if (_streamingEyeImages)
@@ -744,27 +744,27 @@ bool LSL_streamer::start(Titta::Stream stream_, std::optional<bool> asGif_)
 
 // tobii to own type helpers
 namespace {
-    void convert(TobiiTypes::gazePoint& out_, TobiiResearchGazePoint in_)
+    void convert(TobiiTypes::gazePoint& out_, const TobiiResearchGazePoint& in_)
     {
         out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
         out_.position_on_display_area       = in_.position_on_display_area;
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::pupilData& out_, TobiiResearchPupilData in_)
+    void convert(TobiiTypes::pupilData& out_, const TobiiResearchPupilData& in_)
     {
         out_.diameter                       = in_.diameter;
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::gazeOrigin& out_, TobiiResearchGazeOrigin in_)
+    void convert(TobiiTypes::gazeOrigin& out_, const TobiiResearchGazeOrigin& in_)
     {
         out_.position_in_track_box_coordinates = in_.position_in_track_box_coordinates;
         out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
         out_.validity                       = in_.validity;
         out_.available                      = true;
     }
-    void convert(TobiiTypes::eyeOpenness& out_, TobiiResearchEyeOpennessData* in_, bool leftEye_)
+    void convert(TobiiTypes::eyeOpenness& out_, const TobiiResearchEyeOpennessData* in_, const bool leftEye_)
     {
         if (leftEye_)
         {
@@ -778,7 +778,7 @@ namespace {
         }
         out_.available = true;
     }
-    void convert(TobiiTypes::eyeData& out_, TobiiResearchEyeData in_)
+    void convert(TobiiTypes::eyeData& out_, const TobiiResearchEyeData& in_)
     {
         convert(out_.gaze_point, in_.gaze_point);
         convert(out_.pupil, in_.pupil_data);
@@ -786,16 +786,16 @@ namespace {
     }
 }
 
-void LSL_streamer::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_)
+void LSL_streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
 {
-    auto needStage = _streamingGaze && _streamingEyeOpenness;
+    const auto needStage = _streamingGaze && _streamingEyeOpenness;
     if (!needStage && !_gazeStagingEmpty)
     {
         // if any data in staging area but no longer expecting to merge, flush to output
         if (isStreaming(Titta::Stream::Gaze))
         {
-            for (auto& samp : _gazeStaging)
-                pushSample(samp);
+            for (const auto& sample : _gazeStaging)
+                pushSample(sample);
         }
         _gazeStaging.clear();
         _gazeStagingEmpty = true;
@@ -819,20 +819,20 @@ void LSL_streamer::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearc
                 // 1. a sample older than this     gaze     sample for which eye openness is already available, or
                 // 2. a sample older than this eye openness sample for which     gaze     is already available;
                 // emit it, continue searching
-                emitBuffer.push_back(std::move(*it));
+                emitBuffer.push_back(*it);
                 it = _gazeStaging.erase(it);
             }
             else if ((!!gaze_data_     && it->device_time_stamp ==     gaze_data_->device_time_stamp) ||
                      (!!openness_data_ && it->device_time_stamp == openness_data_->device_time_stamp))
             {
                 // found, this is the one we want. Move to output, take pointer to it as we'll be adding to it
-                emitBuffer.push_back(std::move(*it));
+                emitBuffer.push_back(*it);
                 it = _gazeStaging.erase(it);
                 sample = &emitBuffer.back();
                 break;
             }
             else
-                it++;
+                ++it;
         }
     }
     if (!sample)
@@ -879,12 +879,12 @@ void LSL_streamer::receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearc
     if (!emitBuffer.empty())
     {
         if (isStreaming(Titta::Stream::Gaze))
-            for (auto& samp : emitBuffer)
+            for (const auto& samp : emitBuffer)
                 pushSample(samp);
     }
 }
 
-void LSL_streamer::pushSample(Titta::gaze sample_)
+void LSL_streamer::pushSample(const Titta::gaze& sample_)
 {
     const float sample[] = {
         sample_.left_eye.gaze_point.position_on_display_area.x, sample_.left_eye.gaze_point.position_on_display_area.y,
@@ -915,21 +915,21 @@ void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
 {
 
 }
-void LSL_streamer::pushSample(Titta::extSignal sample_)
+void LSL_streamer::pushSample(const Titta::extSignal& sample_)
 {
     const int64_t sample[] = {
         sample_.device_time_stamp, sample_.value
     };
     _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, sample_.system_time_stamp / 1'000'000.);
 }
-void LSL_streamer::pushSample(Titta::timeSync sample_)
+void LSL_streamer::pushSample(const Titta::timeSync& sample_)
 {
     const int64_t sample[] = {
         sample_.system_request_time_stamp, sample_.device_time_stamp, sample_.system_response_time_stamp
     };
     _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, sample_.system_request_time_stamp / 1'000'000.);
 }
-void LSL_streamer::pushSample(Titta::positioning sample_)
+void LSL_streamer::pushSample(const Titta::positioning& sample_)
 {
     const float sample[] = {
         sample_.left_eye.user_position.x, sample_.left_eye.user_position.y, sample_.left_eye.user_position.z,
@@ -940,7 +940,7 @@ void LSL_streamer::pushSample(Titta::positioning sample_)
     _outStreams.at(Titta::Stream::Positioning).push_sample(sample); // this stream doesn't have a timestamp
 }
 
-bool LSL_streamer::stop(Titta::Stream stream_)
+bool LSL_streamer::stop(const Titta::Stream stream_)
 {
     TobiiResearchStatus result = TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -972,7 +972,7 @@ bool LSL_streamer::stop(Titta::Stream stream_)
         break;
     }
 
-    bool success = result==TOBII_RESEARCH_STATUS_OK;
+    const bool success = result==TOBII_RESEARCH_STATUS_OK;
     if (stateVar && success)
         *stateVar = false;
 
@@ -985,11 +985,11 @@ bool LSL_streamer::stop(Titta::Stream stream_)
     return success;
 }
 
-bool LSL_streamer::isStreaming(std::string stream_, bool snake_case_on_stream_not_found /*= false*/) const
+bool LSL_streamer::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
 {
-    return isStreaming(Titta::stringToStream(stream_, snake_case_on_stream_not_found));
+    return isStreaming(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
 }
-bool LSL_streamer::isStreaming(Titta::Stream stream_) const
+bool LSL_streamer::isStreaming(const Titta::Stream stream_) const
 {
     bool isStreaming = false;
     switch (stream_)
@@ -1018,12 +1018,12 @@ bool LSL_streamer::isStreaming(Titta::Stream stream_) const
     return isStreaming && ((stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_));
 }
 
-void LSL_streamer::stopOutlet(std::string stream_, bool snake_case_on_stream_not_found /*= false*/)
+void LSL_streamer::stopOutlet(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
 {
-    stopOutlet(Titta::stringToStream(stream_, snake_case_on_stream_not_found));
+    stopOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
 }
 
-void LSL_streamer::stopOutlet(Titta::Stream stream_)
+void LSL_streamer::stopOutlet(const Titta::Stream stream_)
 {
     if (!_localEyeTracker)
         return;
@@ -1079,11 +1079,11 @@ std::vector<DataType>& getBuffer(LSL_streamer::Inlet<DataType>& inlet_)
 }
 template <typename DataType>
 std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator>
-getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, size_t NSamp_, Titta::BufferSide side_)
+getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, const size_t NSamp_, const Titta::BufferSide side_)
 {
-    auto startIt = std::begin(buf_);
-    auto   endIt = std::end(buf_);
-    auto nSamp   = std::min(NSamp_, std::size(buf_));
+    auto startIt    = std::begin(buf_);
+    auto   endIt    = std::end(buf_);
+    const auto nSamp= std::min(NSamp_, std::size(buf_));
 
     switch (side_)
     {
@@ -1102,7 +1102,7 @@ getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, size_t NSamp_, Titta:
 
 template <typename DataType>
 std::tuple<typename std::vector<DataType>::iterator, typename std::vector<DataType>::iterator, bool>
-getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
+getIteratorsFromTimeRange(std::vector<DataType>& buf_, const int64_t timeStart_, const int64_t timeEnd_, const bool timeIsLocalTime_)
 {
     // !NB: appropriate locking is responsibility of caller!
     // find elements within given range of time stamps, both sides inclusive.
@@ -1121,8 +1121,8 @@ getIteratorsFromTimeRange(std::vector<DataType>& buf_, int64_t timeStart_, int64
         field = &DataType::remote_system_time_stamp;
 
     // 3. check if requested times are before or after vector start and end
-    bool inclFirst = timeStart_ <= buf_.front().*field;
-    bool inclLast  = timeEnd_   >= buf_.back().*field;
+    const bool inclFirst = timeStart_ <= buf_.front().*field;
+    const bool inclLast  = timeEnd_   >= buf_.back().*field;
 
     // 4. if start time later than beginning of samples, or end time earlier, find correct iterators
     if (!inclFirst)
@@ -1141,8 +1141,8 @@ std::vector<T> consumeFromVec(std::vector<T>& buf_, typename std::vector<T>::ite
         return std::vector<T>{};
 
     // move out the indicated elements
-    bool whole = startIt_ == std::begin(buf_) && endIt_ == std::end(buf_);
-    if (whole)
+    if (startIt_==std::begin(buf_) && endIt_==std::end(buf_))
+        // whole buffer
         return std::vector<T>(std::move(buf_));
     else
     {
@@ -1165,7 +1165,7 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, const typename std::vecto
 }
 
 template <typename DataType>
-void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t timeEnd_, bool timeIsLocalTime_)
+void clearVec(LSL_streamer::Inlet<DataType>& inlet_, const int64_t timeStart_, const int64_t timeEnd_, const bool timeIsLocalTime_)
 {
     auto l = lockForWriting(inlet_);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer(inlet_);
@@ -1182,17 +1182,17 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, int64_t timeStart_, int64_t
 }
 }
 template <typename DataType>
-void checkInletType(LSL_streamer::AllInlets& inlet_, uint32_t id_)
+void checkInletType(LSL_streamer::AllInlets& inlet_, const uint32_t id_)
 {
     if (!std::holds_alternative<LSL_streamer::Inlet<DataType>>(inlet_))
     {
-        auto wanted = LSLInletTypeToTittaStream_v<DataType>;
-        auto actual = getInletTypeImpl(inlet_);
+        const auto wanted = LSLInletTypeToTittaStream_v<DataType>;
+        const auto actual = getInletTypeImpl(inlet_);
         DoExitWithMsg(std::format("Inlet with id {} should be of type {}, but the inlet associated with that ID instead was of type {}. Fatal error", id_, Titta::streamToString(wanted), Titta::streamToString(actual)));
     }
 }
 
-LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_) const
+LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(const uint32_t id_) const
 {
     if (!_inStreams.contains(id_))
         DoExitWithMsg(std::format("No inlet with id {} is known", id_));
@@ -1200,7 +1200,7 @@ LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(uint32_t id_) const
     return *_inStreams.at(id_);
 }
 template <typename DataType>
-LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_) const
+LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(const uint32_t id_) const
 {
     auto& allInlets = getAllInletsVariant(id_);
     checkInletType<DataType>(allInlets, id_);
@@ -1208,10 +1208,10 @@ LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(uint32_t id_) const
     return std::get<Inlet<DataType>>(allInlets);
 }
 
-std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, bool snake_case_on_stream_not_found)
+std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, const bool snake_case_on_stream_not_found)
 {
     if (!stream_.empty())
-        return getRemoteStreams(Titta::stringToStream(stream_, snake_case_on_stream_not_found));
+        return getRemoteStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
     else
         return getRemoteStreams(std::nullopt);
 }
@@ -1299,12 +1299,12 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
 #undef MAKE_INLET
 }
 
-Titta::Stream LSL_streamer::getInletType(uint32_t id_) const
+Titta::Stream LSL_streamer::getInletType(const uint32_t id_) const
 {
     return getInletTypeImpl(getAllInletsVariant(id_));
 }
 
-lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
+lsl::stream_info LSL_streamer::getInletInfo(const uint32_t id_) const
 {
     // get inlet
     auto& inlet = getAllInletsVariant(id_);
@@ -1317,7 +1317,7 @@ lsl::stream_info LSL_streamer::getInletInfo(uint32_t id_) const
     return lsl_inlet.info(2.);
 }
 
-void LSL_streamer::startListening(uint32_t id_)
+void LSL_streamer::startListening(const uint32_t id_)
 {
     auto& inlet = getLSLInlet(getAllInletsVariant(id_));
     inlet.open_stream(5.);
@@ -1326,11 +1326,11 @@ void LSL_streamer::startListening(uint32_t id_)
 
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
+std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
-    auto N      = NSamp_.value_or(defaults::consumeNSamp);
-    auto side   = side_.value_or(defaults::consumeSide);
+    const auto N    = NSamp_.value_or(defaults::consumeNSamp);
+    const auto side = side_ .value_or(defaults::consumeSide);
 
     auto& inlet = getInlet<DataType>(id_);
     auto l      = lockForWriting(inlet);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
@@ -1340,12 +1340,12 @@ std::vector<DataType> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t>
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
-    auto timeStart      = timeStart_      .value_or(defaults::consumeTimeRangeStart);
-    auto timeEnd        = timeEnd_        .value_or(defaults::consumeTimeRangeEnd);
-    auto timeIsLocalTime= timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
+    const auto timeStart        = timeStart_      .value_or(defaults::consumeTimeRangeStart);
+    const auto timeEnd          = timeEnd_        .value_or(defaults::consumeTimeRangeEnd);
+    const auto timeIsLocalTime  = timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
 
     auto& inlet = getInlet<DataType>(id_);
     auto l      = lockForWriting(inlet);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
@@ -1356,11 +1356,11 @@ std::vector<DataType> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional
 }
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
+std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
-    auto N      = NSamp_.value_or(defaults::peekNSamp);
-    auto side   = side_.value_or(defaults::peekSide);
+    const auto N    = NSamp_.value_or(defaults::peekNSamp);
+    const auto side = side_ .value_or(defaults::peekSide);
 
     auto& inlet = getInlet<DataType>(id_);
     auto l      = lockForReading(inlet);
@@ -1370,7 +1370,7 @@ std::vector<DataType> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NS
     return peekFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> LSL_streamer::peekTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     auto timeStart       = timeStart_      .value_or(defaults::peekTimeRangeStart);
@@ -1385,10 +1385,10 @@ std::vector<DataType> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<in
     return peekFromVec(buf, startIt, endIt);
 }
 
-void LSL_streamer::clear(uint32_t id_)
+void LSL_streamer::clear(const uint32_t id_)
 {
     // visit with generic lambda so we get the inlet, lock and cal clear() on its buffer
-    auto stream = getInletType(id_);
+    const auto stream = getInletType(id_);
     if (stream == Titta::Stream::Positioning)
     {
         auto& inlet = getInlet<positioning>(id_);
@@ -1401,12 +1401,12 @@ void LSL_streamer::clear(uint32_t id_)
     else
         clearTimeRange(id_);
 }
-void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+void LSL_streamer::clearTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
-    auto timeStart       = timeStart_      .value_or(defaults::clearTimeRangeStart);
-    auto timeEnd         = timeEnd_        .value_or(defaults::clearTimeRangeEnd);
-    auto timeIsLocalTime = timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
+    const auto timeStart        = timeStart_      .value_or(defaults::clearTimeRangeStart);
+    const auto timeEnd          = timeEnd_        .value_or(defaults::clearTimeRangeEnd);
+    const auto timeIsLocalTime  = timeIsLocalTime_.value_or(defaults::timeIsLocalTime);
 
     // visit with templated lambda that allows us to get the data type, then
     // check if type is positioning, error, else forward. May need to split in two
@@ -1432,10 +1432,10 @@ void LSL_streamer::clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart
     }
 }
 
-void LSL_streamer::stopListening(uint32_t id_, std::optional<bool> clearBuffer_)
+void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBuffer_)
 {
     // deal with default arguments
-    auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
+    const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
     auto& inlet = getLSLInlet(getAllInletsVariant(id_));
 
@@ -1447,13 +1447,12 @@ void LSL_streamer::stopListening(uint32_t id_, std::optional<bool> clearBuffer_)
     // flush to be sure there's nothing stale left in LSL's buffers that would appear when we restart
     inlet.flush();
 
-
     // clean up if wanted
     if (clearBuffer)
         clear(id_);
 }
 
-void LSL_streamer::deleteListener(uint32_t id_)
+void LSL_streamer::deleteListener(const uint32_t id_)
 {
     stopListening(id_);
     // stop time syncer

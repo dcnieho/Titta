@@ -133,13 +133,13 @@ private:
     friend void LSLTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
     friend void LSLPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
     // gaze + eye openness receiver
-    void receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_);
+    void receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_);
     // data pushers
-    void pushSample(Titta::gaze sample_);
+    void pushSample(const Titta::gaze& sample_);
     void pushSample(Titta::eyeImage&& sample_);
-    void pushSample(Titta::extSignal sample_);
-    void pushSample(Titta::timeSync sample_);
-    void pushSample(Titta::positioning sample_);
+    void pushSample(const Titta::extSignal& sample_);
+    void pushSample(const Titta::timeSync& sample_);
+    void pushSample(const Titta::positioning& sample_);
     // callback registration and deregistration
     bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
     bool stop(Titta::Stream stream_);
