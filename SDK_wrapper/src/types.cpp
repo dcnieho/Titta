@@ -16,23 +16,23 @@ namespace TobiiTypes
     };
 
     eyeTracker::eyeTracker(std::string deviceName_, std::string serialNumber_, std::string model_, std::string firmwareVersion_, std::string runtimeVersion_, std::string address_,
-        float frequency_, std::string trackingMode_, TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_) :
-        deviceName(deviceName_),
-        serialNumber(serialNumber_),
-        model(model_),
-        firmwareVersion(firmwareVersion_),
-        runtimeVersion(runtimeVersion_),
-        address(address_),
+        const float frequency_, std::string trackingMode_, const TobiiResearchCapabilities capabilities_, std::vector<float> supportedFrequencies_, std::vector<std::string> supportedModes_) :
+        deviceName(std::move(deviceName_)),
+        serialNumber(std::move(serialNumber_)),
+        model(std::move(model_)),
+        firmwareVersion(std::move(firmwareVersion_)),
+        runtimeVersion(std::move(runtimeVersion_)),
+        address(std::move(address_)),
         frequency(frequency_),
-        trackingMode(trackingMode_),
+        trackingMode(std::move(trackingMode_)),
         capabilities(capabilities_),
-        supportedFrequencies(supportedFrequencies_),
-        supportedModes(supportedModes_)
+        supportedFrequencies(std::move(supportedFrequencies_)),
+        supportedModes(std::move(supportedModes_))
     {}
 
     void eyeTracker::refreshInfo(std::optional<std::string> paramToRefresh_ /*= std::nullopt*/)
     {
-        bool singleOpt = paramToRefresh_.has_value();
+        const bool singleOpt = paramToRefresh_.has_value();
         // get all info about the eye tracker
         TobiiResearchStatus status;
         // first bunch of strings

@@ -3,7 +3,6 @@
 #include <deque>
 #include <array>
 #include <string>
-#include <limits>
 #include <tuple>
 #include <optional>
 #include <thread>
@@ -12,7 +11,6 @@
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
-#include <tobii_research_calibration.h>
 #pragma comment(lib, "tobii_research.lib")
 #ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
@@ -55,9 +53,9 @@ public:
     };
     // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
     static Titta::Stream stringToStream(std::string stream_, bool snake_case_on_stream_not_found = false);
-    static std::string streamToString(Titta::Stream stream_, bool snakeCase=false);    // by default output camelCase, if true, output snake_case
-    static std::vector<std::string> getAllStreams(bool snakeCase = false);
-    static std::string getAllStreamsString(const char* quoteChar_ = "\"", bool snakeCase = false);
+    static std::string streamToString(Titta::Stream stream_, bool snakeCase_=false);    // by default output camelCase, if true, output snake_case
+    static std::vector<std::string> getAllStreams(bool snakeCase_ = false);
+    static std::string getAllStreamsString(const char* quoteChar_ = "\"", bool snakeCase_ = false);
 
     // side of buffer to get samples from
     enum class BufferSide
@@ -89,9 +87,9 @@ public:
 
     //// eye-tracker specific getters and setters
     // getters
-    const TobiiTypes::eyeTracker getEyeTrackerInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
-    const TobiiResearchTrackBox getTrackBox() const;
-    const TobiiResearchDisplayArea getDisplayArea() const;
+    TobiiTypes::eyeTracker getEyeTrackerInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
+    TobiiResearchTrackBox getTrackBox() const;
+    TobiiResearchDisplayArea getDisplayArea() const;
     // setters. NB: these trigger a refresh of eye tracker info
     void setDeviceName(std::string deviceName_);
     void setFrequency(float frequency_);
@@ -102,7 +100,7 @@ public:
 
     //// calibration
     bool enterCalibrationMode(bool doMonocular_);
-    bool isInCalibrationMode(std::optional<bool> issueErrorIfNot_);
+    bool isInCalibrationMode(std::optional<bool> issueErrorIfNot_) const;
     bool leaveCalibrationMode(std::optional<bool> force_);
     void calibrationCollectData(std::array<float, 2> coordinates_, std::optional<std::string> eye_);
     void calibrationDiscardData(std::array<float, 2> coordinates_, std::optional<std::string> eye_);
@@ -156,20 +154,20 @@ public:
 private:
     void Init();
     // Tobii callbacks need to be friends
-    friend void TittaGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data);
-    friend void TittaEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data);
-    friend void TittaEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data);
-    friend void TittaEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data);
-    friend void TittaExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data);
-    friend void TittaTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
-    friend void TittaPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data);
+    friend void TittaGazeCallback       (TobiiResearchGazeData*                     gaze_data_, void* user_data_);
+    friend void TittaEyeOpennessCallback(TobiiResearchEyeOpennessData*          openness_data_, void* user_data_);
+    friend void TittaEyeImageCallback   (TobiiResearchEyeImage*                     eye_image_, void* user_data_);
+    friend void TittaEyeImageGifCallback(TobiiResearchEyeImageGif*                  eye_image_, void* user_data_);
+    friend void TittaExtSignalCallback  (TobiiResearchExternalSignalData*          ext_signal_, void* user_data_);
+    friend void TittaTimeSyncCallback   (TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data_);
+    friend void TittaPositioningCallback(TobiiResearchUserPositionGuide*        position_data_, void* user_data_);
     friend void TittaLogCallback        (int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, const char* message_);
-    friend void TittaStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data);
-    friend void TittaNotificationCallback(TobiiResearchNotification*             notification_, void* user_data);
+    friend void TittaStreamErrorCallback(TobiiResearchStreamErrorData*              errorData_, void* user_data_);
+    friend void TittaNotificationCallback(TobiiResearchNotification*             notification_, void* user_data_);
     // calibration
     void calibrationThread();
     // gaze + eye openness receiver
-    void receiveSample(TobiiResearchGazeData* gaze_data_, TobiiResearchEyeOpennessData* openness_data_);
+    void receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_);
     //// generic functions for internal use
     // helpers
     template <typename T>  mutex_type&      getMutex();
@@ -186,7 +184,7 @@ private:
     template <typename T>  void             clearImpl(int64_t timeStart_, int64_t timeEnd_);
 
 private:
-    TobiiTypes::eyeTracker      _eyetracker;
+    TobiiTypes::eyeTracker      _eyeTracker;
 
     bool                        _recordingGaze          = false;
     bool                        _recordingEyeOpenness   = false;

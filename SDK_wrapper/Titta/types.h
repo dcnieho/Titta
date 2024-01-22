@@ -140,7 +140,7 @@ namespace TobiiTypes
             data_size(0),
             _eyeIm({nullptr,std::free})
         {}
-        eyeImage(TobiiResearchEyeImage* e_) :
+        eyeImage(const TobiiResearchEyeImage* e_) :
             is_gif(false),
             device_time_stamp(e_->device_time_stamp),
             system_time_stamp(e_->system_time_stamp),
@@ -158,7 +158,7 @@ namespace TobiiTypes
         {
             std::memcpy(_eyeIm.get(), e_->data, e_->data_size);
         }
-        eyeImage(TobiiResearchEyeImageGif* e_) :
+        eyeImage(const TobiiResearchEyeImageGif* e_) :
             is_gif(true),
             device_time_stamp(e_->device_time_stamp),
             system_time_stamp(e_->system_time_stamp),
@@ -205,7 +205,7 @@ namespace TobiiTypes
         // get eye image data
         void* data() const { return _eyeIm.get(); }
         // set eye image data
-        void setData(const uint8_t* data_, size_t nBytes_)
+        void setData(const uint8_t* data_, const size_t nBytes_)
         {
             if (nBytes_)
             {
@@ -215,24 +215,24 @@ namespace TobiiTypes
             }
         }
 
-        friend void swap(eyeImage& first, eyeImage& second)
+        friend void swap(eyeImage& first_, eyeImage& second_)
         {
             using std::swap;
 
-            swap(first.is_gif, second.is_gif);
-            swap(first.device_time_stamp, second.device_time_stamp);
-            swap(first.system_time_stamp, second.system_time_stamp);
-            swap(first.bits_per_pixel, second.bits_per_pixel);
-            swap(first.padding_per_pixel, second.padding_per_pixel);
-            swap(first.width, second.width);
-            swap(first.height, second.height);
-            swap(first.region_id, second.region_id);
-            swap(first.region_top, second.region_top);
-            swap(first.region_left, second.region_left);
-            swap(first.type, second.type);
-            swap(first.camera_id, second.camera_id);
-            swap(first.data_size, second.data_size);
-            swap(first._eyeIm, second._eyeIm);
+            swap(first_.is_gif, second_.is_gif);
+            swap(first_.device_time_stamp, second_.device_time_stamp);
+            swap(first_.system_time_stamp, second_.system_time_stamp);
+            swap(first_.bits_per_pixel, second_.bits_per_pixel);
+            swap(first_.padding_per_pixel, second_.padding_per_pixel);
+            swap(first_.width, second_.width);
+            swap(first_.height, second_.height);
+            swap(first_.region_id, second_.region_id);
+            swap(first_.region_top, second_.region_top);
+            swap(first_.region_left, second_.region_left);
+            swap(first_.type, second_.type);
+            swap(first_.camera_id, second_.camera_id);
+            swap(first_.data_size, second_.data_size);
+            swap(first_._eyeIm, second_._eyeIm);
         }
 
     public:
@@ -259,11 +259,11 @@ namespace TobiiTypes
     {
     public:
         logMessage() = default;
-        logMessage(int64_t system_time_stamp_, TobiiResearchLogSource source_, TobiiResearchLogLevel level_, std::string message_) :
+        logMessage(const int64_t system_time_stamp_, const TobiiResearchLogSource source_, const TobiiResearchLogLevel level_, std::string message_) :
             system_time_stamp(system_time_stamp_),
             source(source_),
             level(level_),
-            message(message_)
+            message(std::move(message_))
         {}
 
     public:
@@ -279,12 +279,12 @@ namespace TobiiTypes
     {
     public:
         streamErrorMessage() = default;
-        streamErrorMessage(std::string serial_, int64_t system_time_stamp_, TobiiResearchStreamError error_, TobiiResearchStreamErrorSource source_, std::string message_) :
-            machine_serial(serial_),
+        streamErrorMessage(std::string serial_, const int64_t system_time_stamp_, const TobiiResearchStreamError error_, const TobiiResearchStreamErrorSource source_, std::string message_) :
+            machine_serial(std::move(serial_)),
             system_time_stamp(system_time_stamp_),
             error(error_),
             source(source_),
-            message(message_)
+            message(std::move(message_))
         {}
 
     public:
@@ -300,7 +300,7 @@ namespace TobiiTypes
     {
     public:
         notification() = default;
-        notification(TobiiResearchNotification notification_) :
+        notification(const TobiiResearchNotification notification_) :
             system_time_stamp(notification_.system_time_stamp),
             notification_type(notification_.notification_type)
         {
@@ -312,7 +312,7 @@ namespace TobiiTypes
             else if (notification_type==TOBII_RESEARCH_NOTIFICATION_GAZE_OUTPUT_FREQUENCY_CHANGED)
                 output_frequency = notification_.value.output_frequency;
         }
-        notification(int64_t system_time_stamp_, TobiiResearchNotificationType notification_type_, std::optional<float> output_frequency_, std::optional<TobiiResearchDisplayArea> display_area_, std::optional<std::string> errors_or_warnings_) :
+        notification(const int64_t system_time_stamp_, const TobiiResearchNotificationType notification_type_, std::optional<float> output_frequency_, std::optional<TobiiResearchDisplayArea> display_area_, std::optional<std::string> errors_or_warnings_) :
             system_time_stamp(system_time_stamp_),
             notification_type(notification_type_),
             output_frequency(output_frequency_),
@@ -334,11 +334,11 @@ namespace TobiiTypes
     struct CalibrationPoint
     {
         CalibrationPoint() = default;
-        CalibrationPoint(TobiiResearchNormalizedPoint2D pos_, std::vector<TobiiResearchCalibrationSample> samples_) :
+        CalibrationPoint(const TobiiResearchNormalizedPoint2D pos_, std::vector<TobiiResearchCalibrationSample> samples_) :
             position_on_display_area(pos_),
-            calibration_samples(samples_)
+            calibration_samples(std::move(samples_))
         {}
-        CalibrationPoint(TobiiResearchCalibrationPoint in_)
+        CalibrationPoint(const TobiiResearchCalibrationPoint in_)
         {
             position_on_display_area = in_.position_on_display_area;
             if (in_.calibration_samples)
@@ -352,11 +352,11 @@ namespace TobiiTypes
     struct CalibrationResult
     {
         CalibrationResult() = default;
-        CalibrationResult(std::vector<CalibrationPoint> points_, TobiiResearchCalibrationStatus status_) :
-            calibration_points(points_),
+        CalibrationResult(std::vector<CalibrationPoint> points_, const TobiiResearchCalibrationStatus status_) :
+            calibration_points(std::move(points_)),
             status(status_)
         {}
-        CalibrationResult(TobiiResearchCalibrationResult* in_)
+        CalibrationResult(const TobiiResearchCalibrationResult* in_)
         {
             if (in_)
             {

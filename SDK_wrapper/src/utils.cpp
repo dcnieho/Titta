@@ -11,7 +11,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchStatusInfo lookupTobiiResearchStatus(TobiiResearchStatus in_)
+    TobiiResearchStatusInfo lookupTobiiResearchStatus(const TobiiResearchStatus in_)
     {
         switch (in_)
         {
@@ -137,7 +137,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchLogSourceInfo lookupTobiiResearchLogSource(TobiiResearchLogSource in_)
+    TobiiResearchLogSourceInfo lookupTobiiResearchLogSource(const TobiiResearchLogSource in_)
     {
         switch (in_)
         {
@@ -165,7 +165,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchLogLevelInfo lookupTobiiResearchLogLevel(TobiiResearchLogLevel in_)
+    TobiiResearchLogLevelInfo lookupTobiiResearchLogLevel(const TobiiResearchLogLevel in_)
     {
         switch (in_)
         {
@@ -197,7 +197,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchStreamErrorInfo lookupTobiiResearchStreamError(TobiiResearchStreamError in_)
+    TobiiResearchStreamErrorInfo lookupTobiiResearchStreamError(const TobiiResearchStreamError in_)
     {
         switch (in_)
         {
@@ -231,7 +231,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchStreamErrorSourceInfo lookupTobiiResearchStreamErrorSource(TobiiResearchStreamErrorSource in_)
+    TobiiResearchStreamErrorSourceInfo lookupTobiiResearchStreamErrorSource(const TobiiResearchStreamErrorSource in_)
     {
         switch (in_)
         {
@@ -271,7 +271,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchNotificationTypeInfo lookupTobiiResearchNotificationType(TobiiResearchNotificationType in_)
+    TobiiResearchNotificationTypeInfo lookupTobiiResearchNotificationType(const TobiiResearchNotificationType in_)
     {
         switch (in_)
         {
@@ -317,7 +317,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchEyeImageTypeInfo lookupTobiiResearchEyeImage(TobiiResearchEyeImageType in_)
+    TobiiResearchEyeImageTypeInfo lookupTobiiResearchEyeImage(const TobiiResearchEyeImageType in_)
     {
         switch (in_)
         {
@@ -347,7 +347,7 @@ namespace
         const char* _cErrorTxt; /* Explanatory text for error */
     };
 
-    TobiiResearchLicenseValidationResultInfo lookupTobiiResearchLicenseValidationResult(TobiiResearchLicenseValidationResult in_)
+    TobiiResearchLicenseValidationResultInfo lookupTobiiResearchLicenseValidationResult(const TobiiResearchLicenseValidationResult in_)
     {
         switch (in_)
         {
@@ -383,88 +383,88 @@ namespace
     }
 }
 
-std::string TobiiResearchStatusToString(TobiiResearchStatus in_)
+std::string TobiiResearchStatusToString(const TobiiResearchStatus in_)
 {
     return lookupTobiiResearchStatus(in_)._cName;
 }
 
-std::string TobiiResearchStatusToExplanation(TobiiResearchStatus in_)
+std::string TobiiResearchStatusToExplanation(const TobiiResearchStatus in_)
 {
     return lookupTobiiResearchStatus(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchLogSourceToString(TobiiResearchLogSource in_)
+std::string TobiiResearchLogSourceToString(const TobiiResearchLogSource in_)
 {
     return lookupTobiiResearchLogSource(in_)._cName;
 }
 
-std::string TobiiResearchLogSourceToExplanation(TobiiResearchLogSource in_)
+std::string TobiiResearchLogSourceToExplanation(const TobiiResearchLogSource in_)
 {
     return lookupTobiiResearchLogSource(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchLogLevelToString(TobiiResearchLogLevel in_)
+std::string TobiiResearchLogLevelToString(const TobiiResearchLogLevel in_)
 {
     return lookupTobiiResearchLogLevel(in_)._cName;
 }
 
-std::string TobiiResearchLogLevelToExplanation(TobiiResearchLogLevel in_)
+std::string TobiiResearchLogLevelToExplanation(const TobiiResearchLogLevel in_)
 {
     return lookupTobiiResearchLogLevel(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchStreamErrorToString(TobiiResearchStreamError in_)
+std::string TobiiResearchStreamErrorToString(const TobiiResearchStreamError in_)
 {
     return lookupTobiiResearchStreamError(in_)._cName;
 }
 
-std::string TobiiResearchStreamErrorToExplanation(TobiiResearchStreamError in_)
+std::string TobiiResearchStreamErrorToExplanation(const TobiiResearchStreamError in_)
 {
     return lookupTobiiResearchStreamError(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchStreamErrorSourceToString(TobiiResearchStreamErrorSource in_)
+std::string TobiiResearchStreamErrorSourceToString(const TobiiResearchStreamErrorSource in_)
 {
     return lookupTobiiResearchStreamErrorSource(in_)._cName;
 }
 
-std::string TobiiResearchStreamErrorSourceToExplanation(TobiiResearchStreamErrorSource in_)
+std::string TobiiResearchStreamErrorSourceToExplanation(const TobiiResearchStreamErrorSource in_)
 {
     return lookupTobiiResearchStreamErrorSource(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchNotificationToString(TobiiResearchNotificationType in_)
+std::string TobiiResearchNotificationToString(const TobiiResearchNotificationType in_)
 {
     return lookupTobiiResearchNotificationType(in_)._cName;
 }
 
-std::string TobiiResearchNotificationToExplanation(TobiiResearchNotificationType in_)
+std::string TobiiResearchNotificationToExplanation(const TobiiResearchNotificationType in_)
 {
     return lookupTobiiResearchNotificationType(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchEyeImageToString(TobiiResearchEyeImageType in_)
+std::string TobiiResearchEyeImageToString(const TobiiResearchEyeImageType in_)
 {
     return lookupTobiiResearchEyeImage(in_)._cName;
 }
 
-std::string TobiiResearchEyeImageToExplanation(TobiiResearchEyeImageType in_)
+std::string TobiiResearchEyeImageToExplanation(const TobiiResearchEyeImageType in_)
 {
     return lookupTobiiResearchEyeImage(in_)._cErrorTxt;
 }
 
-std::string TobiiResearchLicenseValidationResultToString(TobiiResearchLicenseValidationResult in_)
+std::string TobiiResearchLicenseValidationResultToString(const TobiiResearchLicenseValidationResult in_)
 {
     return lookupTobiiResearchLicenseValidationResult(in_)._cName;
 }
 
-std::string TobiiResearchLicenseValidationResultToExplanation(TobiiResearchLicenseValidationResult in_)
+std::string TobiiResearchLicenseValidationResultToExplanation(const TobiiResearchLicenseValidationResult in_)
 {
     return lookupTobiiResearchLicenseValidationResult(in_)._cErrorTxt;
 }
 
 // deal with error messages
-[[ noreturn ]] void ErrorExit(std::string_view errMsg_, TobiiResearchStatus errCode_)
+[[ noreturn ]] void ErrorExit(std::string_view errMsg_, const TobiiResearchStatus errCode_)
 {
     std::stringstream os;
     os << "Titta::cpp Error: " << errMsg_ << std::endl;
