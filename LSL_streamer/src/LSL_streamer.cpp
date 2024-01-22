@@ -4,6 +4,7 @@
 #include <string_view>
 #include <numeric>
 #include <map>
+#include <ranges>
 
 #include "Titta/utils.h"
 
@@ -206,6 +207,10 @@ LSL_streamer::~LSL_streamer()
     stopOutlet(Titta::Stream::ExtSignal);
     stopOutlet(Titta::Stream::TimeSync);
     stopOutlet(Titta::Stream::Positioning);
+
+    // stop all inlets
+    for (const auto& id : _inStreams | std::views::keys)
+        deleteListener(id);
 }
 uint32_t LSL_streamer::getID()
 {
@@ -1111,6 +1116,10 @@ void LSL_streamer::stopOutlet(const Titta::Stream stream_)
 /* inlet stuff starts here */
 namespace
 {
+inline int64_t timeStampSecondsToUs(double ts_)
+{
+    return static_cast<int64_t>(ts_ * 1'000'000);
+}
 Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
 {
     return std::visit(
@@ -1268,6 +1277,20 @@ LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(const uint32_t id_) const
 
     return std::get<Inlet<DataType>>(allInlets);
 }
+std::unique_ptr<std::thread>& LSL_streamer::getWorkerThread(LSL_streamer::AllInlets& inlet_)
+{
+    return std::visit(
+        [](auto& in_) -> std::unique_ptr<std::thread>&{
+            return in_._recorder;
+        }, inlet_);
+}
+void LSL_streamer::setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
+{
+    std::visit(
+        [](auto& in_){
+            in_._recorder_should_stop = true;
+        }, inlet_);
+}
 
 std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, const bool snake_case_on_stream_not_found)
 {
@@ -1380,9 +1403,177 @@ lsl::stream_info LSL_streamer::getInletInfo(const uint32_t id_) const
 
 void LSL_streamer::startListening(const uint32_t id_)
 {
-    auto& inlet = getLSLInlet(getAllInletsVariant(id_));
-    inlet.open_stream(5.);
-    // start thread, etc
+    auto& inlet = getAllInletsVariant(id_);
+    // ignore if listener already started
+    if (getWorkerThread(inlet))
+        return;
+
+    // start receiving samples
+    auto& lslInlet = getLSLInlet(inlet);
+    lslInlet.open_stream(5.);
+
+    // start recorder thread
+    switch (getInletType(id_))
+    {
+    case Titta::Stream::Gaze:
+    case Titta::Stream::EyeOpenness:
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<gaze>, this, id_);
+        break;
+    case Titta::Stream::EyeImage:
+        break;
+    case Titta::Stream::ExtSignal:
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<extSignal>, this, id_);
+        break;
+    case Titta::Stream::TimeSync:
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<timeSync>, this, id_);
+        break;
+    case Titta::Stream::Positioning:
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<positioning>, this, id_);
+        break;
+    }
+}
+
+template <typename DataType>
+void LSL_streamer::recorderThreadFunc(const uint32_t id_)
+{
+    using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<DataType>>;
+    constexpr size_t numElem = LSLInletTypeNumSamples_v<DataType>;
+    using array_t = data_t[numElem];
+    auto& inlet = getInlet<DataType>(id_);
+    while (!inlet._recorder_should_stop)
+    {
+        array_t sample = { 0 };
+        auto remoteT = inlet._lsl_inlet.pull_sample<data_t,numElem>(sample, 0.1);
+        if (remoteT <= 0.)
+            continue;
+        auto tCorr = inlet._lsl_inlet.time_correction(0);
+        // now parse into type
+        if constexpr (std::is_same_v<DataType, gaze>)
+        {
+            data_t* ptr = sample;
+            inlet._buffer.emplace_back(LSL_streamer::gaze{
+                {
+                    {   // left eye
+                        {   // gazePoint
+                            {   // position_on_display_area
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            {   // position_in_user_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // pupilData
+                            static_cast<float>(*ptr++),
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // gazeOrigin
+                            {   // position_in_user_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            {   // position_in_track_box_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // eyeOpenness
+                            static_cast<float>(*ptr++),
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                    },
+                    // right eye
+                    {
+                        {   // gazePoint
+                            {   // position_on_display_area
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            {   // position_in_user_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // pupilData
+                            static_cast<float>(*ptr++),
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // gazeOrigin
+                            {   // position_in_user_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            {   // position_in_track_box_coordinates
+                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
+                            },
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                        {   // eyeOpenness
+                            static_cast<float>(*ptr++),
+                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr == 1.
+                        },
+                    },
+                    // device time
+                    timeStampSecondsToUs(*ptr),
+                    // system timestamp, transmitted as remote time
+                    timeStampSecondsToUs(remoteT),
+                },
+            timeStampSecondsToUs(remoteT),
+            timeStampSecondsToUs(remoteT + tCorr)
+            });
+        }
+        else if constexpr (std::is_same_v<DataType, LSL_streamer::eyeImage>)
+        {
+
+        }
+        else if constexpr (std::is_same_v<DataType, LSL_streamer::extSignal>)
+        {
+            data_t* ptr = sample;
+            inlet._buffer.emplace_back(LSL_streamer::extSignal{
+                {
+                    *ptr++, *ptr++, static_cast<uint32_t>(*ptr++), *ptr==TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED? TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED: *ptr == TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE? TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE: TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED
+                },
+                timeStampSecondsToUs(remoteT),
+                timeStampSecondsToUs(remoteT + tCorr)
+            });
+        }
+        else if constexpr (std::is_same_v<DataType, LSL_streamer::timeSync>)
+        {
+            data_t* ptr = sample;
+            inlet._buffer.emplace_back(LSL_streamer::timeSync{
+                {
+                    *ptr++, *ptr++, *ptr
+                },
+                timeStampSecondsToUs(remoteT),
+                timeStampSecondsToUs(remoteT + tCorr)
+            });
+        }
+        else if constexpr (std::is_same_v<DataType, LSL_streamer::positioning>)
+        {
+            data_t* ptr = sample;
+            inlet._buffer.emplace_back(LSL_streamer::positioning{
+                {
+                    // left eye
+                    {
+                        {*ptr++, *ptr++, *ptr++},
+                        *ptr++==1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
+                    },
+                    // right eye
+                    {
+                        {*ptr++, *ptr++, *ptr++},
+                        *ptr==1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
+                    }
+                },
+                timeStampSecondsToUs(remoteT),
+                timeStampSecondsToUs(remoteT + tCorr)
+            });
+        }
+    }
 }
 
 
@@ -1498,9 +1689,12 @@ void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBu
     // deal with default arguments
     const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
-    auto& lsl_inlet = getLSLInlet(getAllInletsVariant(id_));
+    auto& inlet = getAllInletsVariant(id_);
+    auto& lsl_inlet = getLSLInlet(inlet);
 
     // stop thread
+    setWorkerThreadStopFlag(inlet);
+    getWorkerThread(inlet)->join();
 
     // close stream
     lsl_inlet.close_stream();

@@ -49,13 +49,17 @@ int main(int argc, char** argv)
             std::cout << streams[0].as_xml() << std::endl;
             auto id = tobii_lsl.createListener(streams[0].source_id());
             std::cout << tobii_lsl.getInletInfo(id).as_xml() << std::endl;
+            tobii_lsl.startListening(id);
 
-            for (int i = 0; i < 60; i++)
+            for (int i = 0; i < 3; i++)
             {
                 std::cout << "sleep" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
             std::cout << "done" << std::endl;
+            auto data = tobii_lsl.consumeN<LSL_streamer::gaze>(id, 1);
+
+            tobii_lsl.deleteListener(id);
         }
         else
             std::cout << "no eye tracker" << std::endl;

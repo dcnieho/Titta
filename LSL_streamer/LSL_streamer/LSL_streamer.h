@@ -7,6 +7,7 @@
 #include <atomic>
 #include <variant>
 #include <memory>
+#include <thread>
 #include <tobii_research.h>
 #include <tobii_research_streams.h>
 #pragma comment(lib, "tobii_research.lib")
@@ -35,9 +36,11 @@ class LSL_streamer
             _lsl_inlet(streamInfo_)
         {}
 
-        lsl::stream_inlet       _lsl_inlet;
-        std::vector<DataType>   _buffer;
-        mutex_type              _mutex;
+        lsl::stream_inlet               _lsl_inlet;
+        std::vector<DataType>           _buffer;
+        mutex_type                      _mutex;
+        std::unique_ptr<std::thread>    _recorder;
+        std::atomic<bool>               _recorder_should_stop;
     };
 
 public:
@@ -46,7 +49,7 @@ public:
     using eyeImage      = LSLTypes::eyeImage;   // getInletType() -> Titta::Stream::EyeImage
     using extSignal     = LSLTypes::extSignal;  // getInletType() -> Titta::Stream::ExtSignal
     using timeSync      = LSLTypes::timeSync;   // getInletType() -> Titta::Stream::TimeSync
-    using positioning   = Titta::positioning;   // getInletType() -> Titta::Stream::Positioning
+    using positioning   = LSLTypes::positioning;// getInletType() -> Titta::Stream::Positioning
     using AllInlets = std::variant<
                         Inlet<gaze>,
                         Inlet<eyeImage>,
@@ -151,8 +154,13 @@ private:
     template <typename DataType>
     friend void checkInletType(AllInlets& inlet_, uint32_t id_);
     AllInlets& getAllInletsVariant(uint32_t id_) const;
+    static std::unique_ptr<std::thread>& getWorkerThread(AllInlets& inlet_);
+    static void setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_);
     template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_) const;
+    // worker function
+    template <typename DataType>
+    void recorderThreadFunc(uint32_t id_);
 
 
 private:
