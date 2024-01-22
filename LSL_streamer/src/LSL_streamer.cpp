@@ -1414,7 +1414,7 @@ void LSL_streamer::clearTimeRange(const uint32_t id_, std::optional<int64_t> tim
     switch (getInletType(id_))
     {
         case Titta::Stream::Gaze:
-    case Titta::Stream::EyeOpenness:
+        case Titta::Stream::EyeOpenness:
             clearVec(getInlet<LSL_streamer::gaze>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::EyeImage:
