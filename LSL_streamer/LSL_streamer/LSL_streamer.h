@@ -97,6 +97,7 @@ public:
 
     // actually start pulling samples from it
     void startListening(uint32_t id_);
+    bool isListening(uint32_t id_) const;
 
     // consume samples (by default all)
     template <typename DataType>    // e.g. LSL_streamer::gaze
@@ -155,6 +156,7 @@ private:
     friend void checkInletType(AllInlets& inlet_, uint32_t id_);
     AllInlets& getAllInletsVariant(uint32_t id_) const;
     static std::unique_ptr<std::thread>& getWorkerThread(AllInlets& inlet_);
+    static bool getWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_);
     static void setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_);
     template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_) const;

@@ -1284,6 +1284,13 @@ std::unique_ptr<std::thread>& LSL_streamer::getWorkerThread(LSL_streamer::AllInl
             return in_._recorder;
         }, inlet_);
 }
+bool LSL_streamer::getWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
+{
+    return std::visit(
+        [](auto& in_) -> bool {
+            return in_._recorder_should_stop;
+        }, inlet_);
+}
 void LSL_streamer::setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
 {
     std::visit(
@@ -1431,6 +1438,12 @@ void LSL_streamer::startListening(const uint32_t id_)
         getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<positioning>, this, id_);
         break;
     }
+}
+
+bool LSL_streamer::isListening(const uint32_t id_) const
+{
+    auto& inlet = getAllInletsVariant(id_);
+    return getWorkerThread(inlet) && getWorkerThreadStopFlag(inlet);
 }
 
 template <typename DataType>
