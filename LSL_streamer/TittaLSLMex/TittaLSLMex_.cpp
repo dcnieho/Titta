@@ -569,6 +569,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::positioning>(id, nSamp, side));
                 return;
             }
+            return;
         }
         case Action::ConsumeTimeRange:
         {
@@ -609,8 +610,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 return;
             case Titta::Stream::Positioning:
                 throw "consumeTimeRange: not supported for positioning stream.";
-                return;
             }
+            return;
         }
         case Action::PeekN:
         {
@@ -661,6 +662,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::positioning>(id, nSamp, side));
                 return;
             }
+            return;
         }
         case Action::PeekTimeRange:
         {
@@ -701,8 +703,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 return;
             case Titta::Stream::Positioning:
                 throw "peekTimeRange: not supported for positioning stream.";
-                return;
             }
+            return;
         }
         case Action::Clear:
         {
