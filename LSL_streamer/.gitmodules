@@ -1,0 +1,9 @@
+[submodule "submodules/Titta"]
+	path = submodules/Titta
+	url = https://github.com/dcnieho/Titta.git
+[submodule "deps/include/readerwriterqueue"]
+	path = deps/include/readerwriterqueue
+	url = https://github.com/cameron314/readerwriterqueue.git
+[submodule "deps/include/cpp_mex_helpers"]
+	path = deps/include/cpp_mex_helpers
+	url = https://github.com/dcnieho/cpp_mex_helpers.git
