@@ -576,7 +576,7 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
             .append_child_value("eye", "right")
             .append_child_value("type", "AvailableFlag")
             .append_child_value("unit", "bool");
-
+        break;
     case Titta::Stream::EyeImage:
         if (asGif_)
             type = "VideoCompressed";
