@@ -1311,6 +1311,8 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
     // filter if wanted
     if (stream_.has_value())
     {
+        if (*stream_!=Titta::Stream::Gaze && *stream_!=Titta::Stream::EyeImage && *stream_!=Titta::Stream::ExtSignal && *stream_!=Titta::Stream::TimeSync && *stream_!=Titta::Stream::Positioning)
+            DoExitWithMsg(std::format("LSL_streamer::cpp::getRemoteStreams: {} streams are not supported.", Titta::streamToString(*stream_)));
         const auto streamName = std::format("Tobii_{}", Titta::streamToString(*stream_));
         return lsl::resolve_stream("name", streamName, 0, 2.);
     }
