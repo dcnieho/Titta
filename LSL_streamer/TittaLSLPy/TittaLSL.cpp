@@ -257,6 +257,36 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::positioning> data_)
     return out;
 }
 
+py::dict StructToDict(const lsl::stream_info& data_)
+{
+    py::dict d;
+    d["name"] = data_.name();
+    d["type"] = data_.type();
+    d["channel_count"] = data_.channel_count();
+    d["nominal_srate"] = data_.nominal_srate();
+    d["channel_format"] = data_.channel_format();
+    d["source_id"] = data_.source_id();
+    d["version"] = data_.version();
+    d["created_at"] = data_.created_at();
+    d["uid"] = data_.uid();
+    d["session_id"] = data_.session_id();
+    d["hostname"] = data_.hostname();
+    d["xml"] = data_.as_xml();
+    d["channel_bytes"] = data_.channel_bytes();
+    d["sample_bytes"] = data_.sample_bytes();
+    return d;
+}
+
+py::list StructVectorToList(const std::vector<lsl::stream_info>& data_)
+{
+    py::list out;
+
+    for (auto&& i : data_)
+        out.append(StructToDict(i));
+
+    return out;
+}
+
 
 
 // start module scope
@@ -267,12 +297,23 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::positioning> data_)
 #endif
 PYBIND11_MODULE(MODULE_NAME, m)
 {
+    py::enum_<lsl::channel_format_t>(m, "channel_format")
+        .value("float32", lsl::cf_float32)
+        .value("double64", lsl::cf_double64)
+        .value("string", lsl::cf_string)
+        .value("int32", lsl::cf_int32)
+        .value("int16", lsl::cf_int16)
+        .value("int8", lsl::cf_int8)
+        .value("int64", lsl::cf_int64)
+        .value("undefined", lsl::cf_undefined)
+        ;
+    // NB: stream type is already exported by TittaPy, no need for us to also create it (actually not possible, would clash on import)
 
     //// global SDK functions
     m.def("get_Tobii_SDK_version", []() { const auto v = LSL_streamer::getTobiiSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
     m.def("get_LSL_version", &LSL_streamer::getLSLVersion);
-    //m.def("get_remote_streams", [](std::optional<std::string> stream_) { return LSL_streamer::getRemoteStreams(stream_ ? *stream_ : ""); },
-    //    py::arg_v("stream_type", std::nullopt, "None"));
+    m.def("get_remote_streams", [](std::optional<std::string> stream_) { return StructVectorToList(LSL_streamer::getRemoteStreams(stream_ ? *stream_ : "")); },
+        py::arg_v("stream_type", std::nullopt, "None"));
 
     // outlets
     auto cLSL = py::class_<LSL_streamer>(m, "LSLStreamer")
@@ -305,7 +346,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("create_listener", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&LSL_streamer::createListener),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
 
-        .def("get_inlet_info", py::overload_cast<uint32_t>(&LSL_streamer::getInletInfo, py::const_),
+        .def("get_inlet_info", [](const LSL_streamer& instance, uint32_t id_) { return StructToDict(instance.getInletInfo(id_)); },
             "inlet_id"_a)
         .def("get_inlet_type", py::overload_cast<uint32_t>(&LSL_streamer::getInletType, py::const_),
             "inlet_id"_a)
