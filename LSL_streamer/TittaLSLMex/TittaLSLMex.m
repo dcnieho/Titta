@@ -125,14 +125,14 @@ classdef TittaLSLMex < handle
             % addressOrInstance can be an address of a Tobii eye tracker to
             % connect to or a Titta or TittaMex instance that is connected
             % to the eye tracker you want to stream from
-            if isa(str,'Titta')
+            if isa(addressOrInstance,'Titta')
                 assert(~isempty(addressOrInstance.buffer),'Can''t get the connected eye tracker: you passed a Titta instance, but this instance was not yet initialized and is thus not connected to an eye tracker.')
-                address = addressOrInstance.buffer.address;
+                addressOrInstance = addressOrInstance.buffer.address;
             elseif isa(addressOrInstance,'TittaMex')
-                address = addressOrInstance.address;
+                addressOrInstance = addressOrInstance.address;
             end
-            address = ensureStringIsChar(address);
-            this.instanceHandle = this.cppmethodGlobal('new',address);
+            addressOrInstance = ensureStringIsChar(addressOrInstance);
+            this.instanceHandle = this.cppmethodGlobal('new',addressOrInstance);
         end
         function success = startOutlet(this,stream,asGif)
             % optional buffer size input, and optional input to request
