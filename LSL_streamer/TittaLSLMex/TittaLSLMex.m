@@ -1,4 +1,4 @@
-% LSLMex is part of Titta, a toolbox providing convenient access to
+% TittaLSLMex is part of Titta, a toolbox providing convenient access to
 % eye tracking functionality using Tobii eye trackers 
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
@@ -10,7 +10,7 @@
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
 
-classdef LSLMex < handle
+classdef TittaLSLMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
     end
@@ -32,7 +32,7 @@ classdef LSLMex < handle
             % http://stackoverflow.com/a/19307825/2778484
             funInfo = functions(mexFnc);
             if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
-                error('LSLMex:invalidMEXFunction','Invalid MEX file "%s" for function %s.',funInfo.file,funInfo.function);
+                error('TittaLSLMex:invalidMEXFunction','Invalid MEX file "%s" for function %s.',funInfo.file,funInfo.function);
             end
         end
     end
@@ -40,7 +40,7 @@ classdef LSLMex < handle
     methods (Access = protected, Sealed = true)
         function varargout = cppmethod(this, methodName, varargin)
             if isempty(this.instanceHandle)
-                error('LSLMex:invalidHandle','No class handle. Did you call init yet?');
+                error('TittaLSLMex:invalidHandle','No class handle. Did you call init yet?');
             end
             [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, this.instanceHandle, varargin{:});
         end
@@ -52,8 +52,8 @@ classdef LSLMex < handle
     
     methods
         %% Matlab interface
-        function this = LSLMex(debugMode)
-            % debugmode is for developer of LSLMex only, no use for
+        function this = TittaLSLMex(debugMode)
+            % debugmode is for developer of TittaLSLMex only, no use for
             % end users
             if nargin<1 || isempty(debugMode)
                 debugMode = false;
@@ -62,9 +62,9 @@ classdef LSLMex < handle
             end
             % determine what mex file to call
             if debugMode
-                mexFnc = 'LSLMex_d';
+                mexFnc = 'TittaLSLMex_d';
             else
-                mexFnc = 'LSLMex_';
+                mexFnc = 'TittaLSLMex_';
             end
             
             % construct C++ class instance
@@ -138,7 +138,7 @@ classdef LSLMex < handle
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
             if nargin<2
-                error('LSLMex::startOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::startOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(asGif)
@@ -152,13 +152,13 @@ classdef LSLMex < handle
         end
         function status = isStreaming(this,stream)
             if nargin<2
-                error('LSLMex::isStreaming: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::isStreaming: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             status = this.cppmethod('isStreaming',ensureStringIsChar(stream));
         end
         function stopOutlet(this,stream)
             if nargin<2
-                error('LSLMex::stopOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::stopOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             this.cppmethod('stopOutlet',ensureStringIsChar(stream));
         end
@@ -169,7 +169,7 @@ classdef LSLMex < handle
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
             if nargin<2
-                error('LSLMex::createInlet: must provide an LSL stream source identifier string.');
+                error('TittaLSLMex::createInlet: must provide an LSL stream source identifier string.');
             end
             streamSourceID = ensureStringIsChar(streamSourceID);
             if nargin>3 && ~isempty(doStartListening)
@@ -183,26 +183,26 @@ classdef LSLMex < handle
 
         function streamInfo = getInletInfo(this,id)
             if nargin<2
-                error('LSLMex::getInletInfo: must provide an inlet id.');
+                error('TittaLSLMex::getInletInfo: must provide an inlet id.');
             end
             streamInfo = this.cppmethod('getInletInfo',uint32(id));
         end
         function stream = getInletType(this,id)
             if nargin<2
-                error('LSLMex::getInletType: must provide an inlet id.');
+                error('TittaLSLMex::getInletType: must provide an inlet id.');
             end
             stream = this.cppmethod('getInletType',uint32(id));
         end
 
         function startListening(this,id)
             if nargin<2
-                error('LSLMex::startListening: must provide an inlet id.');
+                error('TittaLSLMex::startListening: must provide an inlet id.');
             end
             this.cppmethod('startListening',uint32(id));
         end
         function status = isListening(this,id)
             if nargin<2
-                error('LSLMex::isListening: must provide an inlet id.');
+                error('TittaLSLMex::isListening: must provide an inlet id.');
             end
             status = this.cppmethod('isListening',uint32(id));
         end
@@ -214,7 +214,7 @@ classdef LSLMex < handle
             %          Values: 'start' or 'end'
             %          Default: 'start'
             if nargin<2
-                error('LSLMex::consumeN: must provide an inlet id.');
+                error('TittaLSLMex::consumeN: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>3 && ~isempty(side)
@@ -228,7 +228,7 @@ classdef LSLMex < handle
         function data = consumeTimeRange(this,id,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
-                error('LSLMex::consumeTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::consumeTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>3 && ~isempty(endT)
@@ -247,7 +247,7 @@ classdef LSLMex < handle
             %          Values: 'start' or 'end'
             %          Default: 'end'
             if nargin<2
-                error('LSLMex::peekN: must provide an inlet id.');
+                error('TittaLSLMex::peekN: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>3 && ~isempty(side)
@@ -261,7 +261,7 @@ classdef LSLMex < handle
         function data = peekTimeRange(this,id,startT,endT)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
-                error('LSLMex::peekTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::peekTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>3 && ~isempty(endT)
@@ -275,14 +275,14 @@ classdef LSLMex < handle
 
         function clear(this,id)
             if nargin<2
-                error('LSLMex::clear: must provide an inlet id.');
+                error('TittaLSLMex::clear: must provide an inlet id.');
             end
             this.cppmethod('clear',uint32(id));
         end
         function clearTimeRange(this,id,startT,endT)
             % optional start and end time inputs. Default: whole buffer
             if nargin<2
-                error('LSLMex::clearTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::clearTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>3 && ~isempty(endT)
@@ -298,7 +298,7 @@ classdef LSLMex < handle
             % optional boolean input indicating whether buffer should be
             % cleared out
             if nargin<2
-                error('LSLMex::stopListening: must provide an inlet id.');
+                error('TittaLSLMex::stopListening: must provide an inlet id.');
             end
             id = uint32(id);
             if nargin>2 && ~isempty(doClearBuffer)
@@ -309,7 +309,7 @@ classdef LSLMex < handle
         end
         function deleteListener(this,id)
             if nargin<2
-                error('LSLMex::deleteListener: must provide an inlet id.');
+                error('TittaLSLMex::deleteListener: must provide an inlet id.');
             end
             this.cppmethod('deleteListener',uint32(id));
         end

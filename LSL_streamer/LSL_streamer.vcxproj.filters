@@ -20,7 +20,10 @@
       <UniqueIdentifier>{9f96eb20-613b-429b-8f67-c72440b11651}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\include\Titta">
-      <UniqueIdentifier>{dcd64695-3b1f-4010-a258-d59e7d5aeefb}</UniqueIdentifier>
+      <UniqueIdentifier>{d3479a53-cc62-4e75-b313-6b6584549e10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\Tobii">
+      <UniqueIdentifier>{77e33004-44fa-45c6-8a84-058cbe7e021c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -59,29 +62,29 @@
     <ClInclude Include="deps\include\lsl_cpp.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
-    <ClInclude Include="deps\include\tobii_research.h">
-      <Filter>Header Files\include</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\tobii_research_calibration.h">
-      <Filter>Header Files\include</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\tobii_research_eyetracker.h">
-      <Filter>Header Files\include</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\tobii_research_streams.h">
-      <Filter>Header Files\include</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\Titta\Titta.h">
-      <Filter>Header Files\include\Titta</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\Titta\types.h">
-      <Filter>Header Files\include\Titta</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\include\Titta\utils.h">
-      <Filter>Header Files\include\Titta</Filter>
-    </ClInclude>
     <ClInclude Include="LSL_streamer\types.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\Titta\Titta.h">
+      <Filter>Header Files\include\Titta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\Titta\types.h">
+      <Filter>Header Files\include\Titta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\Titta\utils.h">
+      <Filter>Header Files\include\Titta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\deps\include\tobii_research_calibration.h">
+      <Filter>Header Files\include\Tobii</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\deps\include\tobii_research_eyetracker.h">
+      <Filter>Header Files\include\Tobii</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\deps\include\tobii_research_streams.h">
+      <Filter>Header Files\include\Tobii</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK_wrapper\deps\include\tobii_research.h">
+      <Filter>Header Files\include\Tobii</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

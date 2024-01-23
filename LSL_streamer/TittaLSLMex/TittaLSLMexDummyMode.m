@@ -1,4 +1,4 @@
-% LSLMex is part of Titta, a toolbox providing convenient access to
+% TittaLSLMex is part of Titta, a toolbox providing convenient access to
 % eye tracking functionality using Tobii eye trackers
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
@@ -10,7 +10,7 @@
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
 
-classdef LSLMexDummyMode < LSLMex
+classdef TittaLSLMexDummyMode < TittaLSLMex
     properties (Access = protected, Hidden = true)
         isRecordingGaze = false;
         isInCalMode     = false;
@@ -18,21 +18,21 @@ classdef LSLMexDummyMode < LSLMex
 
     methods
         % Use the name of your MEX file here
-        function this = LSLMexDummyMode(~)
+        function this = TittaLSLMexDummyMode(~)
             % construct default base class, none of its properties are
             % relevant when in dummy mode
-            this = this@LSLMex();
+            this = this@TittaLSLMex();
 
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
-            thisInfo    = ?LSLMexDummyMode;
+            thisInfo    = ?TittaLSLMexDummyMode;
             thisMethods = thisInfo.MethodList;
-            superInfo   = ?LSLMex;
+            superInfo   = ?TittaLSLMex;
             superMethods= superInfo.MethodList;
             % for both, remove their constructors from list and limit
             % to only public methods
-            superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'LSLMex'})) = [];
-            thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'LSLMexDummyMode'})) = [];
+            superMethods(~strcmp({superMethods.Access},'public') | (~~[superMethods.Static]) | ismember({superMethods.Name},{'TittaLSLMex'})) = [];
+            thisMethods (~strcmp( {thisMethods.Access},'public') | (~~ [thisMethods.Static]) | ismember( {thisMethods.Name},{'TittaLSLMexDummyMode'})) = [];
             % for methods of this dummy mode class, also remove methods
             % defined by superclass. and for both remove all those from
             % handle class
@@ -102,7 +102,7 @@ classdef LSLMexDummyMode < LSLMex
         end
         function success = startOutlet(this,stream,~)
             if nargin<2
-                error('LSLMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::startOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             success = checkValidStream(this,stream);
         end
@@ -110,14 +110,14 @@ classdef LSLMexDummyMode < LSLMex
         end
         function status = isStreaming(this,stream)
             if nargin<2
-                error('LSLMex::consumeTimeRange: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::isStreaming: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
             status = false;
         end
         function stopOutlet(this,stream)
             if nargin<2
-                error('LSLMex::stopOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSLMex::stopOutlet: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             checkValidStream(this,stream);
         end
@@ -126,39 +126,39 @@ classdef LSLMexDummyMode < LSLMex
         %% inlets
         function id = createInlet(~,~,~,~)
             if nargin<2
-                error('LSLMex::createInlet: must provide an LSL stream source identifier string.');
+                error('TittaLSLMex::createInlet: must provide an LSL stream source identifier string.');
             end
             id = uint32(1);
         end
 
         function streamInfo = getInletInfo(~,~)
             if nargin<2
-                error('LSLMex::getInletInfo: must provide an inlet id.');
+                error('TittaLSLMex::getInletInfo: must provide an inlet id.');
             end
             streamInfo = [];
         end
         function stream = getInletType(~,~)
             if nargin<2
-                error('LSLMex::getInletType: must provide an inlet id.');
+                error('TittaLSLMex::getInletType: must provide an inlet id.');
             end
             stream = '';
         end
 
         function startListening(~,~)
             if nargin<2
-                error('LSLMex::startListening: must provide an inlet id.');
+                error('TittaLSLMex::startListening: must provide an inlet id.');
             end
         end
         function status = isListening(~,~)
             if nargin<2
-                error('LSLMex::isListening: must provide an inlet id.');
+                error('TittaLSLMex::isListening: must provide an inlet id.');
             end
             status = false;
         end
 
         function data = consumeN(this,~,~,side)
             if nargin<2
-                error('LSLMex::consumeN: must provide an inlet id.');
+                error('TittaLSLMex::consumeN: must provide an inlet id.');
             end
             if nargin>3
                 checkValidBufferSide(this,side);
@@ -167,13 +167,13 @@ classdef LSLMexDummyMode < LSLMex
         end
         function data = consumeTimeRange(~,~,~,~)
             if nargin<2
-                error('LSLMex::consumeTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::consumeTimeRange: must provide an inlet id.');
             end
             data = [];
         end
         function data = peekN(this,~,~,side)
             if nargin<2
-                error('LSLMex::peekN: must provide an inlet id.');
+                error('TittaLSLMex::peekN: must provide an inlet id.');
             end
             if nargin>3
                 checkValidBufferSide(this,side);
@@ -182,28 +182,28 @@ classdef LSLMexDummyMode < LSLMex
         end
         function data = peekTimeRange(~,~,~,~)
             if nargin<2
-                error('LSLMex::peekTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::peekTimeRange: must provide an inlet id.');
             end
             data = [];
         end
         function clear(~,~)
             if nargin<2
-                error('LSLMex::clear: must provide an inlet id.');
+                error('TittaLSLMex::clear: must provide an inlet id.');
             end
         end
         function clearTimeRange(~,~,~,~)
             if nargin<2
-                error('LSLMex::clearTimeRange: must provide an inlet id.');
+                error('TittaLSLMex::clearTimeRange: must provide an inlet id.');
             end
         end
         function stopListening(~,~,~)
             if nargin<2
-                error('LSLMex::stopListening: must provide an inlet id.');
+                error('TittaLSLMex::stopListening: must provide an inlet id.');
             end
         end
         function deleteListener(~,~)
             if nargin<2
-                error('LSLMex::deleteListener: must provide an inlet id.');
+                error('TittaLSLMex::deleteListener: must provide an inlet id.');
             end
         end
     end

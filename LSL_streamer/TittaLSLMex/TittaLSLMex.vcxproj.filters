@@ -21,56 +21,56 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\always_false.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\always_false.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\get_field_nested.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\get_field_nested.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\include_matlab.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\include_matlab.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\invocable_traits.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\invocable_traits.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_container_trait.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\is_container_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\is_specialization_trait.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\is_specialization_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\mem_var_trait.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\mem_var_trait.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_input_getter.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\mex_input_getter.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\mex_type_utils.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\mex_type_utils_fwd.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\pack_utils.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\pack_utils.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\cpp_mex_helpers\replace_specialization_type.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\replace_specialization_type.h">
       <Filter>Header Files\cpp_mex_helpers</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\include\tobii_elem_count.h">
+    <ClInclude Include="..\..\SDK_wrapper\deps\include\tobii_elem_count.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LSLMex.m">
+    <None Include="TittaLSLMex.m">
       <Filter>m-files</Filter>
     </None>
-    <None Include="LSLMexDummyMode.m">
+    <None Include="TittaLSLMexDummyMode.m">
       <Filter>m-files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="LSLMex_.cpp">
+    <ClCompile Include="TittaLSLMex_.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

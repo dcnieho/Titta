@@ -23,34 +23,34 @@ else
     inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
         '-v'
         '-outdir'
-        fullfile(myDir,'LSLMex','64',platform)
+        fullfile(myDir,'TittaLSLMex','64',platform)
         '-DBUILD_FROM_SCRIPT'
         sprintf('-I"%s"',fullfile(myDir,'deps','include'))
         sprintf('-I"%s"',myDir)
-        sprintf('-I"%s"',fullfile(myDir,'submodules','Titta','SDK_wrapper'))
-        sprintf('-I"%s"',fullfile(myDir,'submodules','Titta','SDK_wrapper','deps','include'))
-        fullfile('LSLMex','LSLMex_.cpp')
+        sprintf('-I"%s"',fullfile(myDir,'..','SDK_wrapper'))
+        sprintf('-I"%s"',fullfile(myDir,'..','SDK_wrapper','deps','include'))
+        fullfile('TittaLSLMex','TittaLSLMex_.cpp')
         fullfile('src','*.cpp')
-        fullfile('submodules','Titta','SDK_wrapper','src','*.cpp')
+        fullfile('..','SDK_wrapper','src','*.cpp')
         }.';
 
     if isWin
         inpArgs = [inpArgs {
             'COMPFLAGS="$COMPFLAGS /std:c++latest /Gy /Oi /GL /permissive- /O2"'
             sprintf('-L"%s"',fullfile(myDir,'deps','lib'))
-            sprintf('-L"%s"',fullfile(myDir,'submodules','Titta','SDK_wrapper','deps','lib'))
+            sprintf('-L"%s"',fullfile(myDir,'..','SDK_wrapper','deps','lib'))
             'LINKFLAGS="$LINKFLAGS /LTCG /OPT:REF /OPT:ICF"'}.'];
     elseif isLinux
         inpArgs = [inpArgs {
             'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
-            sprintf('-L%s',fullfile(myDir,'submodules','Titta','SDK_wrapper','TittaMex','64',platform))
+            sprintf('-L%s',fullfile(myDir,'..','SDK_wrapper','TittaMex','64',platform))
             '-ltobii_research'}.'];
     elseif isOSX
         inpArgs = [inpArgs {
             'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
             'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
-            sprintf('-L%s',fullfile(myDir,'submodules','Titta','SDK_wrapper','TittaMex','64',platform))
+            sprintf('-L%s',fullfile(myDir,'..','SDK_wrapper','TittaMex','64',platform))
             '-ltobii_research'}.'];
     end
     mex(inpArgs{:});
