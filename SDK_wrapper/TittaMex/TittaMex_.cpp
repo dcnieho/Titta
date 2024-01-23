@@ -460,13 +460,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::GetAllStreamsString:
         {
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            if (nrhs > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                    throw "getAllStreamsString: Expected first argument to be a char scalar.";
+                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
+                    throw "getAllStreamsString: Expected first argument to be a char scalar or empty char array.";
 
                 char quoteChar[2] = { "\0" };
-                quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                if (!mxIsEmpty(prhs[1]))
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
 
                 if (nrhs > 2 && !mxIsEmpty(prhs[2]))
                 {
@@ -485,12 +486,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::GetAllBufferSidesString:
         {
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            if (nrhs > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
-                    throw "getAllBufferSidesString: Expected first argument to be a char scalar.";
+                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
+                    throw "getAllBufferSidesString: Expected first argument to be a char scalar or empty char array.";
                 char quoteChar[2] = { "\0" };
-                quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                if (!mxIsEmpty(prhs[1]))
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
                 plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
             }
             else
@@ -782,8 +784,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
                     throw "start: Expected second argument to be a uint64 scalar.";
                 auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
-                if (temp > SIZE_MAX)
-                    throw "start: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
                 bufSize = static_cast<size_t>(temp);
             }
             std::optional<bool> asGif;
