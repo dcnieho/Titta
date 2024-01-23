@@ -165,7 +165,7 @@ classdef TittaLSLMexDummyMode < TittaLSLMex
             end
             data = [];
         end
-        function data = consumeTimeRange(~,~,~,~)
+        function data = consumeTimeRange(~,~,~,~,~)
             if nargin<2
                 error('TittaLSLMex::consumeTimeRange: must provide an inlet id.');
             end
@@ -180,7 +180,7 @@ classdef TittaLSLMexDummyMode < TittaLSLMex
             end
             data = [];
         end
-        function data = peekTimeRange(~,~,~,~)
+        function data = peekTimeRange(~,~,~,~,~)
             if nargin<2
                 error('TittaLSLMex::peekTimeRange: must provide an inlet id.');
             end
@@ -191,7 +191,7 @@ classdef TittaLSLMexDummyMode < TittaLSLMex
                 error('TittaLSLMex::clear: must provide an inlet id.');
             end
         end
-        function clearTimeRange(~,~,~,~)
+        function clearTimeRange(~,~,~,~,~)
             if nargin<2
                 error('TittaLSLMex::clearTimeRange: must provide an inlet id.');
             end
