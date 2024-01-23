@@ -78,7 +78,7 @@ namespace
     std::unique_ptr<std::vector<Titta*>> g_allInstances = std::make_unique<std::vector<Titta*>>();
 }
 
-Titta::Stream Titta::stringToStream(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
+Titta::Stream Titta::stringToStream(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/, const bool forLSL_ /*= false*/)
 {
     auto it = streamMapCamelCase.find(stream_);
     if (it == streamMapCamelCase.end())
@@ -87,7 +87,7 @@ Titta::Stream Titta::stringToStream(std::string stream_, const bool snake_case_o
         if (it == streamMapSnakeCase.end())
         {
             DoExitWithMsg(
-                R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"", snake_case_on_stream_not_found)
+                R"(Titta::cpp: Requested stream ")" + stream_ + R"(" is not recognized. Supported streams are: )" + Titta::getAllStreamsString("\"", snake_case_on_stream_not_found, forLSL_)
             );
         }
     }
@@ -104,22 +104,23 @@ std::string Titta::streamToString(Titta::Stream stream_, const bool snakeCase_ /
     return v.first;
 }
 
-std::vector<std::string> Titta::getAllStreams(const bool snakeCase_ /*= false*/)
+std::vector<std::string> Titta::getAllStreams(const bool snakeCase_ /*= false*/, const bool forLSL_ /*= false*/)
 {
     using val_t = typename std::underlying_type<Titta::Stream>::type;
     std::vector<std::string> out;
 
     for (auto val = static_cast<val_t>(Titta::Stream::Gaze); val < static_cast<val_t>(Titta::Stream::Last); val++)
-        out.push_back(Titta::streamToString(static_cast<Titta::Stream>(val), snakeCase_));
+        if (!forLSL_ || !(val==static_cast<val_t>(Titta::Stream::EyeOpenness) || val==static_cast<val_t>(Titta::Stream::Notification)))
+            out.push_back(Titta::streamToString(static_cast<Titta::Stream>(val), snakeCase_));
 
     return out;
 }
 
-std::string Titta::getAllStreamsString(const char* quoteChar_ /*= "\""*/, const bool snakeCase_ /*= false*/)
+std::string Titta::getAllStreamsString(const char* quoteChar_ /*= "\""*/, const bool snakeCase_ /*= false*/, const bool forLSL_ /*= false*/)
 {
     std::string out;
     bool first = true;
-    for (auto const& s : Titta::getAllStreams(snakeCase_))
+    for (auto const& s : Titta::getAllStreams(snakeCase_, forLSL_))
     {
         if (first)
             first = false;

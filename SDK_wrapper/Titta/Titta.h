@@ -52,10 +52,10 @@ public:
         Last            // fake value for iteration
     };
     // "gaze", "eyeOpenness", "eyeImage", "externalSignal", "timeSync", "positioning", or "notification"
-    static Titta::Stream stringToStream(std::string stream_, bool snake_case_on_stream_not_found = false);
-    static std::string streamToString(Titta::Stream stream_, bool snakeCase_=false);    // by default output camelCase, if true, output snake_case
-    static std::vector<std::string> getAllStreams(bool snakeCase_ = false);
-    static std::string getAllStreamsString(const char* quoteChar_ = "\"", bool snakeCase_ = false);
+    static Titta::Stream stringToStream(std::string stream_, bool snake_case_on_stream_not_found = false, bool forLSL_ = false);
+    static std::string streamToString(Titta::Stream stream_, bool snakeCase_ = false);      // by default output camelCase, if true, output snake_case
+    static std::vector<std::string> getAllStreams(bool snakeCase_ = false, bool forLSL_ = false);
+    static std::string getAllStreamsString(const char* quoteChar_ = "\"", bool snakeCase_ = false, bool forLSL_ = false);
 
     // side of buffer to get samples from
     enum class BufferSide
