@@ -98,15 +98,15 @@ std::string Titta::streamToString(Titta::Stream stream_, const bool snakeCase_ /
 {
     std::pair<std::string, Titta::Stream> v;
     if (snakeCase_)
-        v = *find_if(streamMapSnakeCase.begin(), streamMapSnakeCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
+        v = *std::ranges::find_if(streamMapSnakeCase, [&stream_](auto p_) {return p_.second == stream_;});
     else
-        v = *find_if(streamMapCamelCase.begin(), streamMapCamelCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
+        v = *std::ranges::find_if(streamMapCamelCase, [&stream_](auto p_) {return p_.second == stream_;});
     return v.first;
 }
 
 std::vector<std::string> Titta::getAllStreams(const bool snakeCase_ /*= false*/, const bool forLSL_ /*= false*/)
 {
-    using val_t = typename std::underlying_type<Titta::Stream>::type;
+    using val_t = std::underlying_type_t<Titta::Stream>;
     std::vector<std::string> out;
 
     for (auto val = static_cast<val_t>(Titta::Stream::Gaze); val < static_cast<val_t>(Titta::Stream::Last); val++)
@@ -150,7 +150,7 @@ std::string Titta::bufferSideToString(Titta::BufferSide bufferSide_)
 
 std::vector<std::string> Titta::getAllBufferSides()
 {
-    using val_t = typename std::underlying_type<Titta::BufferSide>::type;
+    using val_t = std::underlying_type_t<Titta::BufferSide>;
     std::vector<std::string> out;
 
     for (auto val = static_cast<val_t>(Titta::BufferSide::Start); val < static_cast<val_t>(Titta::BufferSide::Last); val++)
@@ -264,7 +264,7 @@ void TittaNotificationCallback(TobiiResearchNotification* notification_, void* u
 {
     if (user_data_)
     {
-        auto instance = static_cast<Titta*>(user_data_);
+        const auto instance = static_cast<Titta*>(user_data_);
         auto l = instance->lockForWriting<Titta::notification>();
         instance->_notification.emplace_back(*notification_);
     }
@@ -317,7 +317,7 @@ bool Titta::startLogging(std::optional<size_t> initialBufferSize_)
     if (g_allInstances)
     {
         // also start stream error logging on all instances
-        for (auto inst : *g_allInstances)
+        for (const auto inst : *g_allInstances)
             if (inst->_eyeTracker.et)
                 tobii_research_subscribe_to_stream_errors(inst->_eyeTracker.et, TittaStreamErrorCallback, inst->_eyeTracker.et);
     }
@@ -349,7 +349,7 @@ bool Titta::stopLogging()
     if (g_allInstances)
     {
         // also stop stream error logging on all instances
-        for (auto inst: *g_allInstances)
+        for (const auto inst: *g_allInstances)
             if (inst->_eyeTracker.et)
                 tobii_research_unsubscribe_from_stream_errors(inst->_eyeTracker.et, TittaStreamErrorCallback);
     }
@@ -411,7 +411,7 @@ Titta::~Titta()
 
     if (g_allInstances)
     {
-        const auto it = std::find(g_allInstances->begin(), g_allInstances->end(), this);
+        const auto it = std::ranges::find(*g_allInstances, this);
         if (it != g_allInstances->end())
             g_allInstances->erase(it, it + 1);
     }
@@ -443,7 +443,7 @@ void Titta::Init()
 TobiiTypes::eyeTracker Titta::getEyeTrackerInfo(std::optional<std::string> paramToRefresh_ /*= std::nullopt*/)
 {
     // refresh ET info to make sure its up to date
-    _eyeTracker.refreshInfo(paramToRefresh_);
+    _eyeTracker.refreshInfo(std::move(paramToRefresh_));
 
     return _eyeTracker;
 }
