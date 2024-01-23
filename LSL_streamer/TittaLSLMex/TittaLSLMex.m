@@ -225,13 +225,15 @@ classdef TittaLSLMex < handle
                 data = this.cppmethod('consumeN',id);
             end
         end
-        function data = consumeTimeRange(this,id,startT,endT)
+        function data = consumeTimeRange(this,id,startT,endT,timeIsLocalTime)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
                 error('TittaLSLMex::consumeTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
-            if nargin>3 && ~isempty(endT)
+            if nargin>4 && ~isempty(timeIsLocalTime)
+                data = this.cppmethod('consumeTimeRange',id,int64(startT),int64(endT),logical(timeIsLocalTime));
+            elseif nargin>3 && ~isempty(endT)
                 data = this.cppmethod('consumeTimeRange',id,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
                 data = this.cppmethod('consumeTimeRange',id,int64(startT));
@@ -258,13 +260,15 @@ classdef TittaLSLMex < handle
                 data = this.cppmethod('peekN',id);
             end
         end
-        function data = peekTimeRange(this,id,startT,endT)
+        function data = peekTimeRange(this,id,startT,endT,timeIsLocalTime)
             % optional inputs startT and endT. Default: whole buffer
             if nargin<2
                 error('TittaLSLMex::peekTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
-            if nargin>3 && ~isempty(endT)
+            if nargin>4 && ~isempty(timeIsLocalTime)
+                data = this.cppmethod('peekTimeRange',id,int64(startT),int64(endT),logical(timeIsLocalTime));
+            elseif nargin>3 && ~isempty(endT)
                 data = this.cppmethod('peekTimeRange',id,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
                 data = this.cppmethod('peekTimeRange',id,int64(startT));
@@ -279,13 +283,15 @@ classdef TittaLSLMex < handle
             end
             this.cppmethod('clear',uint32(id));
         end
-        function clearTimeRange(this,id,startT,endT)
+        function clearTimeRange(this,id,startT,endT,timeIsLocalTime)
             % optional start and end time inputs. Default: whole buffer
             if nargin<2
                 error('TittaLSLMex::clearTimeRange: must provide an inlet id.');
             end
             id = uint32(id);
-            if nargin>3 && ~isempty(endT)
+            if nargin>4 && ~isempty(timeIsLocalTime)
+                this.cppmethod('clearTimeRange',id,int64(startT),int64(endT),logical(timeIsLocalTime));
+            elseif nargin>3 && ~isempty(endT)
                 this.cppmethod('clearTimeRange',id,int64(startT),int64(endT));
             elseif nargin>2 && ~isempty(startT)
                 this.cppmethod('clearTimeRange',id,int64(startT));

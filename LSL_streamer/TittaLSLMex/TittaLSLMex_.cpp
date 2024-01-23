@@ -592,21 +592,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     throw "consumeTimeRange: Expected third argument to be a int64 scalar.";
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
+            std::optional<bool> timeIsLocalTime;
+            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
+            {
+                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
+                    throw "stopListening: Expected fourth argument to be a logical scalar.";
+                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
+            }
 
             switch (instance->getInletType(id))
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::Positioning:
                 throw "consumeTimeRange: not supported for positioning stream.";
@@ -685,21 +692,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     throw "peekTimeRange: Expected third argument to be a int64 scalar.";
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
+            std::optional<bool> timeIsLocalTime;
+            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
+            {
+                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
+                    throw "stopListening: Expected fourth argument to be a logical scalar.";
+                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
+            }
 
             switch (instance->getInletType(id))
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::Positioning:
                 throw "peekTimeRange: not supported for positioning stream.";
@@ -734,9 +748,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     throw "clearTimeRange: Expected third argument to be a int64 scalar.";
                 timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
             }
+            std::optional<bool> timeIsLocalTime;
+            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
+            {
+                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
+                    throw "stopListening: Expected fourth argument to be a logical scalar.";
+                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
+            }
 
             // get data stream identifier string, clear buffer
-            instance->clearTimeRange(id, timeStart, timeEnd);
+            instance->clearTimeRange(id, timeStart, timeEnd, timeIsLocalTime);
             break;
         }
         case Action::StopListening:
