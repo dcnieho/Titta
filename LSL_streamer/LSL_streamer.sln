@@ -15,6 +15,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppTest", "cppTest\cppTest.
 		{C86B8529-65A4-4727-A94F-35DDC464350F} = {C86B8529-65A4-4727-A94F-35DDC464350F}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LSLMex", "LSLMex\LSLMex.vcxproj", "{6BFD8CDB-B2F3-4917-BC23-3273444ED97B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C86B8529-65A4-4727-A94F-35DDC464350F} = {C86B8529-65A4-4727-A94F-35DDC464350F}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,6 +38,10 @@ Global
 		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Debug|x64.Build.0 = Debug|x64
 		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Release|x64.ActiveCfg = Release|x64
 		{5E258B04-1EA2-4051-8B69-AD85FE0A0554}.Release|x64.Build.0 = Release|x64
+		{6BFD8CDB-B2F3-4917-BC23-3273444ED97B}.Debug|x64.ActiveCfg = Debug|x64
+		{6BFD8CDB-B2F3-4917-BC23-3273444ED97B}.Debug|x64.Build.0 = Debug|x64
+		{6BFD8CDB-B2F3-4917-BC23-3273444ED97B}.Release|x64.ActiveCfg = Release|x64
+		{6BFD8CDB-B2F3-4917-BC23-3273444ED97B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
