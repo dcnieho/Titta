@@ -277,7 +277,7 @@ void LSL_streamer::connect(TobiiResearchEyeTracker* et_)
 
 bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
 {
-    return startOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found), asGif_);
+    return startOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true), asGif_);
 }
 bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
@@ -1063,7 +1063,7 @@ bool LSL_streamer::stop(const Titta::Stream stream_)
 
 bool LSL_streamer::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
 {
-    return isStreaming(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
+    return isStreaming(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
 bool LSL_streamer::isStreaming(const Titta::Stream stream_) const
 {
@@ -1096,7 +1096,7 @@ bool LSL_streamer::isStreaming(const Titta::Stream stream_) const
 
 void LSL_streamer::stopOutlet(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
 {
-    stopOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
+    stopOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
 
 void LSL_streamer::stopOutlet(const Titta::Stream stream_)
@@ -1302,7 +1302,7 @@ void LSL_streamer::setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
 std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, const bool snake_case_on_stream_not_found)
 {
     if (!stream_.empty())
-        return getRemoteStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found));
+        return getRemoteStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
     else
         return getRemoteStreams(std::nullopt);
 }
