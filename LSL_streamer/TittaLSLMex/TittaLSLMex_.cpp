@@ -923,20 +923,20 @@ namespace mxTypes
         const char* fieldNames[] = { "name","type","channel_count","nominal_srate","channel_format","source_id","version","created_at","uid","session_id","hostname","xml","channel_bytes","sample_bytes" };
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.name()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.type()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.channel_count()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.nominal_srate()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.channel_format()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.source_id()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.version()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.created_at()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.uid()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.session_id()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.hostname()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.channel_bytes()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.sample_bytes()));
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.as_xml()));
+        mxSetFieldByNumber(out, 0,  0, ToMatlab(data_.name()));
+        mxSetFieldByNumber(out, 0,  1, ToMatlab(data_.type()));
+        mxSetFieldByNumber(out, 0,  2, ToMatlab(data_.channel_count()));
+        mxSetFieldByNumber(out, 0,  3, ToMatlab(data_.nominal_srate()));
+        mxSetFieldByNumber(out, 0,  4, ToMatlab(data_.channel_format()));
+        mxSetFieldByNumber(out, 0,  5, ToMatlab(data_.source_id()));
+        mxSetFieldByNumber(out, 0,  6, ToMatlab(data_.version()));
+        mxSetFieldByNumber(out, 0,  7, ToMatlab(data_.created_at()));
+        mxSetFieldByNumber(out, 0,  8, ToMatlab(data_.uid()));
+        mxSetFieldByNumber(out, 0,  9, ToMatlab(data_.session_id()));
+        mxSetFieldByNumber(out, 0, 10, ToMatlab(data_.hostname()));
+        mxSetFieldByNumber(out, 0, 11, ToMatlab(data_.channel_bytes()));
+        mxSetFieldByNumber(out, 0, 12, ToMatlab(data_.sample_bytes()));
+        mxSetFieldByNumber(out, 0, 13, ToMatlab(data_.as_xml()));
 
         return out;
     }
