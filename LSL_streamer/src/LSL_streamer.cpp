@@ -41,9 +41,10 @@ namespace
         constexpr bool                  timeIsLocalTime         = true;
     }
 
-    template <class...> constexpr std::false_type always_false{};
+    template <class...> constexpr std::false_type always_false_t{};
+    template <auto...> constexpr std::false_type always_false_nt{};
 
-    template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
+    template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false_nt<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
     template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze> { using type = LSL_streamer::gaze; };
     template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = LSL_streamer::gaze; };
     template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage> { using type = LSL_streamer::eyeImage; };
@@ -53,7 +54,7 @@ namespace
     template <Titta::Stream T>
     using TittaStreamToLSLInletType_t = typename TittaStreamToLSLInletType<T>::type;
 
-    template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value = Titta::Stream::Unknown; };
+    template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false_t<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value = Titta::Stream::Unknown; };
     template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze> { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
     template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage> { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
     template <>           struct LSLInletTypeToTittaStream<LSL_streamer::extSignal> { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
@@ -62,7 +63,7 @@ namespace
     template <typename T>
     constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
 
-    template <typename T> struct LSLInletTypeNumSamples { static_assert(always_false<T>, "LSLInletTypeNumSamples not implemented for this type"); static constexpr size_t value = 0; };
+    template <typename T> struct LSLInletTypeNumSamples { static_assert(always_false_t<T>, "LSLInletTypeNumSamples not implemented for this type"); static constexpr size_t value = 0; };
     template <>           struct LSLInletTypeNumSamples<LSL_streamer::gaze> { static constexpr size_t value = 43; };
     template <>           struct LSLInletTypeNumSamples<LSL_streamer::eyeImage> { static constexpr size_t value = 0; };
     template <>           struct LSLInletTypeNumSamples<LSL_streamer::extSignal> { static constexpr size_t value = 4; };
@@ -71,7 +72,7 @@ namespace
     template <typename T>
     constexpr size_t LSLInletTypeNumSamples_v = LSLInletTypeNumSamples<T>::value;
 
-    template <typename T> struct LSLInletTypeToChannelFormat { static_assert(always_false<T>, "LSLInletTypeToChannelFormat not implemented for this type"); static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
+    template <typename T> struct LSLInletTypeToChannelFormat { static_assert(always_false_t<T>, "LSLInletTypeToChannelFormat not implemented for this type"); static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
     template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::gaze> { static constexpr enum lsl::channel_format_t value = lsl::cf_double64; };
     template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::eyeImage> { static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
     template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::extSignal> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
@@ -80,7 +81,7 @@ namespace
     template <typename T>
     constexpr enum lsl::channel_format_t LSLInletTypeToChannelFormat_v = LSLInletTypeToChannelFormat<T>::value;
 
-    template <enum lsl::channel_format_t T> struct LSLChannelFormatToCppType { static_assert(always_false<T>, "LSLChannelFormatToCppType not implemented for this enum value: this channel format is not supported by LSL_streamer"); };
+    template <enum lsl::channel_format_t T> struct LSLChannelFormatToCppType { static_assert(always_false_nt<T>, "LSLChannelFormatToCppType not implemented for this enum value: this channel format is not supported by LSL_streamer"); };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_float32> { using type = float; };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_double64> { using type = double; };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_int64> { using type = int64_t; };
