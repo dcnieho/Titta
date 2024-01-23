@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyd
+*.pkl
+tobii_research.dll
+lsl.dll
