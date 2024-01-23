@@ -148,7 +148,7 @@ namespace {
         CheckStream,
         CheckBufferSide,
         // data stream info
-        getAllStreamsString,
+        GetAllStreamsString,
         GetAllBufferSidesString,
 
         //// eye-tracker specific getters and setters
@@ -221,7 +221,7 @@ namespace {
         { "checkStream",                    Action::CheckStream },
         { "checkBufferSide",                Action::CheckBufferSide },
         // data stream info
-        { "getAllStreamsString",            Action::getAllStreamsString },
+        { "getAllStreamsString",            Action::GetAllStreamsString },
         { "getAllBufferSidesString",        Action::GetAllBufferSidesString },
 
         //// eye-tracker specific getters and setters
@@ -339,7 +339,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
             action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
             action != Action::CheckStream && action != Action::CheckBufferSide &&
-            action != Action::getAllStreamsString && action != Action::GetAllBufferSidesString)
+            action != Action::GetAllStreamsString && action != Action::GetAllBufferSidesString)
         {
             instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
             instance = instIt->second;
@@ -458,7 +458,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             plhs[0] = mxCreateLogicalScalar(true);
             return;
         }
-        case Action::getAllStreamsString:
+        case Action::GetAllStreamsString:
         {
             if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
