@@ -1,7 +1,7 @@
 Usage instructions for using the Titta class are found in [the Titta documentation](../readme.md).
 
 ### Working on the source
-The enclosed `TittaMex.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.4.3).
+The enclosed `Titta.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
 
 ### Building the mex files
 Run `makeTittaMex.m` to build the mex file.
@@ -14,7 +14,7 @@ For compatibility with an earlier version of Ubuntu, either install the right GL
 
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
-- `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2022a`
+- `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2023b`
 - `PYTHON_ROOT`: `C:\Program Files\PsychoPy`
 
 ### Dependencies
@@ -23,9 +23,9 @@ readerwriterqueue located at `deps/include/readerwriterqueue` is required for co
 
 #### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
 To update the Tobii Pro C SDK used to build Titta against, you need to manually put the some files in the right place:
-1. The \*.h include files are placed in `\TittaMex\deps\include`
-2. The Windows `Tobii_C_SDK\64\lib\tobii_research.lib` link library is placed in `\TittaMex\deps\lib`.
-3. The \*.dll and \*.so files are placed in the respective output directories, `\TittaMex\TittaMex\64\Windows` and `\TittaMex\TittaMex\64\Linux`, respectively.
+1. The \*.h include files are placed in `\SDK_wrapper\deps\include`
+2. The Windows `Tobii_C_SDK\64\lib\tobii_research.lib` link library is placed in `\SDK_wrapper\deps\lib`.
+3. The \*.dll and \*.so files are placed in the respective output directories, `\SDK_wrapper\TittaMex\64\Windows` and `\SDK_wrapper\TittaMex\64\Linux`, respectively.
 
 #### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
 Please note that the code for the Python wrapper is currently not actively maintained and will not build as is now. However, assuming its updated, the following steps will build the code:
