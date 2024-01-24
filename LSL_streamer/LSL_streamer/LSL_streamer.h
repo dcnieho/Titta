@@ -10,7 +10,7 @@
 #include <thread>
 #include <tobii_research.h>
 #include <tobii_research_streams.h>
-#pragma comment(lib, "tobii_research.lib")
+#pragma comment(lib, "lsl.lib")
 #ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
 #       pragma comment(lib, "LSL_streamer_d.lib")
