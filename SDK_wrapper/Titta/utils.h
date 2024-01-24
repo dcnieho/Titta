@@ -6,11 +6,11 @@
 #include <tobii_research_streams.h>
 
 template<typename ... Args>
-std::string string_format(const std::string& format, Args ... args)
+std::string string_format(char const* const format, Args ... args)
 {
-    const auto size = static_cast<size_t>(snprintf(nullptr, 0, format.c_str(), args ...)) + 1; // Extra space for '\0'
+    const auto size = static_cast<size_t>(snprintf(nullptr, 0, format, args ...)) + 1; // Extra space for '\0'
     const std::unique_ptr<char[]> buf(new char[size]);
-    snprintf(buf.get(), size, format.c_str(), args ...);
+    snprintf(buf.get(), size, format, args ...);
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
