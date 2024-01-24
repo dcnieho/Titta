@@ -744,7 +744,7 @@ std::optional<TobiiTypes::CalibrationWorkResult> Titta::calibrationRetrieveResul
     if (_calibrationWorkResultQueue.try_dequeue(out))
     {
         if (makeStatusString_)
-            out.statusString = string_format("Tobii SDK code: %d: %s (%s)", static_cast<int>(out.status), TobiiResearchStatusToString(out.status), TobiiResearchStatusToExplanation(out.status));;
+            out.statusString = string_format("Tobii SDK code: %d: %s (%s)", static_cast<int>(out.status), TobiiResearchStatusToString(out.status).c_str(), TobiiResearchStatusToExplanation(out.status).c_str());
         return out;
     }
     else

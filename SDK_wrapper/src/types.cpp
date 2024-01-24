@@ -144,6 +144,6 @@ namespace TobiiTypes
 
         if (singleOpt && !used)
             // a single option is specified but unknown, emit error
-            DoExitWithMsg(string_format("Titta::cpp::eyeTracker::refreshInfo: Option %s unknown.", *paramToRefresh_));
+            DoExitWithMsg(string_format("Titta::cpp::eyeTracker::refreshInfo: Option %s unknown.", paramToRefresh_->c_str()));
     }
 }
