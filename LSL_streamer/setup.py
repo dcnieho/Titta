@@ -57,7 +57,7 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto', '-ltobii_research', '-lliblsl'],
+        'unix': ['-flto', '-ltobii_research', '-llsl'],
     }
     if isOSX:
         c_opts['unix'].append('-mmacosx-version-min=11')

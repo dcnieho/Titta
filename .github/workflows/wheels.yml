@@ -20,20 +20,20 @@ jobs:
       with:
         submodules: true
 
-    - uses: pypa/cibuildwheel@v2.16.2
-      with:
-        package-dir: SDK_wrapper
-      env:
-        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
+    # - uses: pypa/cibuildwheel@v2.16.2
+    #   with:
+    #     package-dir: SDK_wrapper
+    #   env:
+    #     CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
 
-        CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
-        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
+    #     CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
+    #     CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
 
-        CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
-        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib
+    #     CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+    #     CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib
 
-        CIBW_BEFORE_BUILD_MACOS: uname -a
-        MACOSX_DEPLOYMENT_TARGET: 10.14
+    #     CIBW_BEFORE_BUILD_MACOS: uname -a
+    #     MACOSX_DEPLOYMENT_TARGET: 10.14
 
     - uses: pypa/cibuildwheel@v2.16.2
       with:
