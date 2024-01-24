@@ -1233,7 +1233,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
     {
         const char* fieldNames[] = {"deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","frequency","trackingMode","capabilities","supportedFrequencies","supportedModes"};
-        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         for (size_t i = 0; i!=data_.size(); i++)
         {
@@ -1284,7 +1284,7 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchTrackBox data_)
     {
         const char* fieldNames[] = {"backLowerLeft","backLowerRight","backUpperLeft","backUpperRight","frontLowerLeft","frontLowerRight","frontUpperLeft","frontUpperRight"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.back_lower_left));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.back_lower_right));
@@ -1300,7 +1300,7 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiResearchDisplayArea data_)
     {
         const char* fieldNames[] = {"height","width","bottomLeft","bottomRight","topLeft","topRight"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(static_cast<double>(data_.height)));
         mxSetFieldByNumber(out, 0, 1, ToMatlab(static_cast<double>(data_.width)));
@@ -1328,7 +1328,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<Titta::gaze> data_)
     {
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","left","right"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. all device timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &Titta::gaze::device_time_stamp));
@@ -1348,11 +1348,11 @@ namespace mxTypes
         const char* fieldNamesPup[] = {"diameter","valid","available" };
         const char* fieldNamesGO[] = { "inUserCoords","inTrackBoxCoords","valid","available" };
         const char* fieldNamesEO[] = { "diameter","valid","available" };
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNamesEye), fieldNamesEye);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEye)), fieldNamesEye);
         mxArray* temp;
 
         // 1. gazePoint
-        mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, std::size(fieldNamesGP), fieldNamesGP));
+        mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGP)), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
         mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area, 0.));              // 0. causes values to be stored as double
         // 1.2 gazePoint.inUserCoords
@@ -1363,7 +1363,7 @@ namespace mxTypes
         mxSetFieldByNumber(temp, 0, 3, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available));
 
         // 2. pupil
-        mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, std::size(fieldNamesPup), fieldNamesPup));
+        mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesPup)), fieldNamesPup));
         // 2.1 pupil.diameter
         mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
         // 2.2 pupil.validity
@@ -1372,7 +1372,7 @@ namespace mxTypes
         mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
 
         // 3. gazeOrigin
-        mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, std::size(fieldNamesGO), fieldNamesGO));
+        mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGO)), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
         mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
         // 3.2 gazeOrigin.inTrackBoxCoords
@@ -1383,7 +1383,7 @@ namespace mxTypes
         mxSetFieldByNumber(temp, 0, 3, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
 
         // 4. eyeOpenness
-        mxSetFieldByNumber(out, 0, 3, temp = mxCreateStructMatrix(1, 1, std::size(fieldNamesEO), fieldNamesEO));
+        mxSetFieldByNumber(out, 0, 3, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEO)), fieldNamesEO));
         // 4.1 eye_openness.diameter
         mxSetFieldByNumber(temp, 0, 0, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter, 0.));                             // 0. causes values to be stored as double
         // 4.2 eye_openness.validity
@@ -1404,12 +1404,12 @@ namespace mxTypes
         if (allGif)
         {
             const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","type","cameraID","isGif","image"};
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
         else
         {
             const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
 
         // all simple fields
@@ -1437,7 +1437,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<Titta::extSignal> data_)
     {
         const char* fieldNames[] = {"deviceTimeStamp","systemTimeStamp","value","changeType"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. device timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchExternalSignalData::device_time_stamp));
@@ -1454,7 +1454,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<Titta::timeSync> data_)
     {
         const char* fieldNames[] = {"systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. system request timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
@@ -1469,7 +1469,7 @@ namespace mxTypes
     mxArray* FieldToMatlab(const std::vector<TobiiResearchUserPositionGuide>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
     {
         const char* fieldNames[] = {"user_position","valid"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 user_position
         mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
@@ -1482,7 +1482,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<Titta::positioning> data_)
     {
         const char* fieldNames[] = {"left","right"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. left  eye data
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchUserPositionGuide::left_eye));
@@ -1495,7 +1495,7 @@ namespace mxTypes
     mxArray* ToMatlab(Titta::logMessage data_)
     {
         const char* fieldNames[] = {"type","machineSerialNumber","systemTimeStamp","source","levelOrError","message"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. type
         mxSetFieldByNumber(out, 0, 0, ToMatlab(std::string("log message")));
@@ -1516,7 +1516,7 @@ namespace mxTypes
     mxArray* ToMatlab(Titta::streamError data_)
     {
         const char* fieldNames[] = {"type","machineSerialNumber","systemTimeStamp","source","levelOrError","message"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. type
         mxSetFieldByNumber(out, 0, 0, ToMatlab(std::string("stream error")));
@@ -1538,7 +1538,7 @@ namespace mxTypes
         if (idx_ == 0)
         {
             const char* fieldNames[] = { "systemTimeStamp","notification","explanation","value" };
-            storage_ = mxCreateStructMatrix(size_, 1, std::size(fieldNames), fieldNames);
+            storage_ = mxCreateStructMatrix(size_, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
             if (size_ == 0)
                 return storage_;
         }
@@ -1612,17 +1612,17 @@ namespace mxTypes
         if (hasCalResult)
         {
             const char* fieldNames[] = { "workItem","status","statusString","calibrationResult" };
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
         else if (hasCalData)
         {
             const char* fieldNames[] = { "workItem","status","statusString","calibrationData" };
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
         else
         {
             const char* fieldNames[] = { "workItem","status","statusString" };
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.workItem));
@@ -1651,23 +1651,23 @@ namespace mxTypes
             if (hasEye)
             {
                 const char* fieldNames[] = { "action","coordinates","eye" };
-                out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+                out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
             }
             else
             {
                 const char* fieldNames[] = { "action","coordinates" };
-                out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+                out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
             }
         }
         else if (hasCalData)
         {
             const char* fieldNames[] = { "action","calibrationData" };
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
         else
         {
             const char* fieldNames[] = { "action" };
-            out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
 
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.action));
@@ -1722,7 +1722,7 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiTypes::CalibrationResult data_)
     {
         const char* fieldNames[] = {"status","points"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. status
         mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.status));
@@ -1756,7 +1756,7 @@ namespace mxTypes
         if (idx_ == 0)
         {
             const char* fieldNames[] = { "position","samples" };
-            storage_ = mxCreateStructMatrix(size_, 1, std::size(fieldNames), fieldNames);
+            storage_ = mxCreateStructMatrix(size_, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
             if (size_ == 0)
                 return storage_;
         }
@@ -1773,7 +1773,7 @@ namespace mxTypes
     mxArray* ToMatlab(std::vector<TobiiResearchCalibrationSample> data_)
     {
         const char* fieldNames[] = {"left","right"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. left  eye data
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchCalibrationSample::left_eye));
@@ -1785,7 +1785,7 @@ namespace mxTypes
     mxArray* FieldToMatlab(std::vector<TobiiResearchCalibrationSample> data_, bool rowVector_, TobiiResearchCalibrationEyeData TobiiResearchCalibrationSample::* field_)
     {
         const char* fieldNames[] = {"position","validity"};
-        mxArray* out = mxCreateStructMatrix(1, 1, std::size(fieldNames), fieldNames);
+        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 position on display area
         mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiResearchCalibrationEyeData::position_on_display_area, 0.));     // 0. causes values to be stored as double
