@@ -57,14 +57,14 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto', '-ltobii_research'],
+        'unix': ['-flto', '-ltobii_research', '-lliblsl'],
     }
     if isOSX:
         c_opts['unix'].append('-mmacosx-version-min=11')
         # set rpath so that delocate can find .dylib
-        l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''./SDK_wrapper/TittaMex/64/OSX/''','-dead_strip'])
+        l_opts['unix'].extend(['-L./TittaLSLMex/64/OSX/', '-Wl,-rpath,''./LSL_streamer/TittaLSLMex/64/OSX/'',-rpath,''./SDK_wrapper/TittaMex/64/OSX/''','-dead_strip'])
     else:
-        l_opts['unix'].extend(['-L./TittaMex/64/Linux/', '-Wl,--gc-sections'])
+        l_opts['unix'].extend(['-L./TittaLSLMex/64/Linux/', '-L../SDK_wrapper/TittaMex/64/Linux/', '-Wl,--gc-sections'])
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
