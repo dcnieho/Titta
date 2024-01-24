@@ -98,9 +98,9 @@ std::string Titta::streamToString(Titta::Stream stream_, const bool snakeCase_ /
 {
     std::pair<std::string, Titta::Stream> v;
     if (snakeCase_)
-        v = *std::ranges::find_if(streamMapSnakeCase, [&stream_](auto p_) {return p_.second == stream_;});
+        v = *find_if(streamMapSnakeCase.begin(), streamMapSnakeCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
     else
-        v = *std::ranges::find_if(streamMapCamelCase, [&stream_](auto p_) {return p_.second == stream_;});
+        v = *find_if(streamMapCamelCase.begin(), streamMapCamelCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
     return v.first;
 }
 
@@ -411,7 +411,7 @@ Titta::~Titta()
 
     if (g_allInstances)
     {
-        const auto it = std::ranges::find(*g_allInstances, this);
+        const auto it = std::find(g_allInstances->begin(), g_allInstances->end(), this);
         if (it != g_allInstances->end())
             g_allInstances->erase(it, it + 1);
     }
