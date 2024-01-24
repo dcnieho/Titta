@@ -448,5 +448,5 @@ std::string TobiiResearchLicenseValidationResultToExplanation(const TobiiResearc
 // deal with error messages
 [[ noreturn ]] void ErrorExit(std::string_view errMsg_, const TobiiResearchStatus errCode_)
 {
-    DoExitWithMsg(string_format("Titta::cpp Error: %s\nError code: %d: %s (%s)", errMsg_, errCode_,TobiiResearchStatusToString(errCode_).c_str(),TobiiResearchStatusToExplanation(errCode_).c_str()));
+    DoExitWithMsg(string_format("Titta::cpp Error: %s\nError code: %d: %s (%s)", errMsg_.data(), errCode_, TobiiResearchStatusToString(errCode_).c_str(), TobiiResearchStatusToExplanation(errCode_).c_str()));
 }
