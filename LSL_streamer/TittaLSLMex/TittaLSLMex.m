@@ -164,20 +164,20 @@ classdef TittaLSLMex < handle
         end
         
         %% inlets
-        function id = createInlet(this,streamSourceID,initialBufferSize,doStartListening)
+        function id = createListener(this,streamSourceID,initialBufferSize,doStartListening)
             % optional buffer size input, and optional input to request
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
             if nargin<2
-                error('TittaLSLMex::createInlet: must provide an LSL stream source identifier string.');
+                error('TittaLSLMex::createListener: must provide an LSL stream source identifier string.');
             end
             streamSourceID = ensureStringIsChar(streamSourceID);
             if nargin>3 && ~isempty(doStartListening)
-                id = this.cppmethod('startOutlet',streamSourceID,uint64(initialBufferSize),logical(doStartListening));
+                id = this.cppmethod('createListener',streamSourceID,uint64(initialBufferSize),logical(doStartListening));
             elseif nargin>2 && ~isempty(initialBufferSize)
-                id = this.cppmethod('startOutlet',streamSourceID,uint64(initialBufferSize));
+                id = this.cppmethod('createListener',streamSourceID,uint64(initialBufferSize));
             else
-                id = this.cppmethod('startOutlet',streamSourceID);
+                id = this.cppmethod('createListener',streamSourceID);
             end
         end
 
