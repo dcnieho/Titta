@@ -44,14 +44,16 @@ else
         inpArgs = [inpArgs {
             'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
-            sprintf('-L%s',fullfile(myDir,'..','SDK_wrapper','TittaMex','64',platform))
-            '-ltobii_research'}.'];
+            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','64',platform))
+            '-ltobii_research'
+            '-llsl'}.'];
     elseif isOSX
         inpArgs = [inpArgs {
             'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
             'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
-            sprintf('-L%s',fullfile(myDir,'..','SDK_wrapper','TittaMex','64',platform))
-            '-ltobii_research'}.'];
+            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','64',platform))
+            '-ltobii_research'
+            '-llsl'}.'];
     end
     mex(inpArgs{:});
 end
