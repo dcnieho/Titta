@@ -45,7 +45,7 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows;.\\LSL_streamer\\TittaLSLMex\\64\\Windows {wheel}"
 
         CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
-        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib
+        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ./SDK_wrapper/TittaMex/64/Linux/liblsl.so /usr/lib && ldconfig -n -v /usr/lib
 
         CIBW_BEFORE_BUILD_MACOS: uname -a
         MACOSX_DEPLOYMENT_TARGET: 10.14
