@@ -210,7 +210,7 @@ LSL_streamer::~LSL_streamer()
     stopOutlet(Titta::Stream::Positioning);
 
     // stop all inlets
-    for (const auto& id : _inStreams | std::views::keys)
+    for (const auto& [id, _] : _inStreams)
         deleteListener(id);
 }
 uint32_t LSL_streamer::getID()
@@ -242,7 +242,7 @@ void LSL_streamer::CheckClocks()
     }
     // get differences
     std::array<double, nSample> diff;
-    std::ranges::transform(tobiiTime, lslTime, diff.begin(), std::minus{});
+    std::transform(tobiiTime.begin(), tobiiTime.end(), lslTime.begin(), diff.begin(), std::minus<double>{});
 
     // get average value
     const auto average = std::reduce(diff.begin(), diff.end(), 0.) / nSample;
