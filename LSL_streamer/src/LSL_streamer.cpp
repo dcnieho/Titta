@@ -1459,7 +1459,7 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
     while (!inlet._recorder_should_stop)
     {
         array_t sample = { 0 };
-        auto remoteT = inlet._lsl_inlet.pull_sample<data_t,numElem>(sample, 0.1);
+        auto remoteT = inlet._lsl_inlet.template pull_sample<data_t,numElem>(sample, 0.1);
         if (remoteT <= 0.)
             continue;
         auto tCorr = inlet._lsl_inlet.time_correction(0);
