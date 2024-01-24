@@ -21,8 +21,8 @@ using namespace pybind11::literals;
 #include "tobii_elem_count.h"
 
 
-
-
+namespace
+{
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
 template<bool UseArray, typename V, typename... Fs>
 void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
@@ -158,7 +158,7 @@ void outputEyeImages(py::dict& out_, const std::vector<Titta::eyeImage>& data_, 
 
 
 
-py::dict StructVectorToDict(std::vector<Titta::gaze> data_)
+py::dict StructVectorToDict(std::vector<Titta::gaze>&& data_)
 {
     py::dict out;
 
@@ -174,12 +174,12 @@ py::dict StructVectorToDict(std::vector<Titta::gaze> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<Titta::eyeImage> data_)
+py::dict StructVectorToDict(std::vector<Titta::eyeImage>&& data_)
 {
     py::dict out;
 
     // check if all gif, then don't output unneeded fields
-    bool allGif = allEquals(data_, &Titta::eyeImage::is_gif, true);
+    const bool allGif = allEquals(data_, &Titta::eyeImage::is_gif, true);
 
     FieldToNpArray<true>(out, data_, "device_time_stamp", &Titta::eyeImage::device_time_stamp);
     FieldToNpArray<true>(out, data_, "system_time_stamp", &Titta::eyeImage::system_time_stamp);
@@ -199,7 +199,7 @@ py::dict StructVectorToDict(std::vector<Titta::eyeImage> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<Titta::extSignal> data_)
+py::dict StructVectorToDict(std::vector<Titta::extSignal>&& data_)
 {
     py::dict out;
 
@@ -211,7 +211,7 @@ py::dict StructVectorToDict(std::vector<Titta::extSignal> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<Titta::timeSync> data_)
+py::dict StructVectorToDict(std::vector<Titta::timeSync>&& data_)
 {
     py::dict out;
 
@@ -222,7 +222,7 @@ py::dict StructVectorToDict(std::vector<Titta::timeSync> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<Titta::positioning> data_)
+py::dict StructVectorToDict(std::vector<Titta::positioning>&& data_)
 {
     py::dict out;
 
@@ -234,7 +234,7 @@ py::dict StructVectorToDict(std::vector<Titta::positioning> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<Titta::notification> data_)
+py::dict StructVectorToDict(std::vector<Titta::notification>&& data_)
 {
     py::dict out;
 
@@ -272,20 +272,14 @@ py::dict StructToDict(const Titta::streamError& data_)
     return d;
 }
 
-py::list StructVectorToList(const std::vector<std::variant<TobiiTypes::logMessage, TobiiTypes::streamErrorMessage>>& data_)
+py::list StructVectorToList(std::vector<std::variant<TobiiTypes::logMessage, TobiiTypes::streamErrorMessage>>&& data_)
 {
     py::list out;
 
-    if (data_.size())
-        for (auto&& item : data_)
-            out.append(std::visit([](auto& a) {return StructToDict(a); }, item));
+    for (auto&& item : data_)
+        out.append(std::visit([](auto& a_) {return StructToDict(a_); }, item));
 
     return out;
-}
-
-py::list StructToList(const TobiiResearchNormalizedPoint2D& data_)
-{
-    return py::cast(std::array<float, 2>{data_.x, data_.y});
 }
 
 py::list StructToList(const TobiiResearchPoint3D& data_)
@@ -439,7 +433,7 @@ py::dict StructToDict(const TobiiResearchDisplayArea& data_)
 
     return d;
 }
-
+}
 
 
 // start module scope
@@ -574,7 +568,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         ;
 
     //// global SDK functions
-    m.def("get_SDK_version", []() { auto v = Titta::getSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
+    m.def("get_SDK_version", []() { const auto v = Titta::getSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
     m.def("get_system_timestamp", &Titta::getSystemTimestamp);
     m.def("find_all_eye_trackers", []() {return StructVectorToList(Titta::findAllEyeTrackers()); });
     m.def("get_eye_tracker_from_address", [](std::string address_) {return StructToDict(Titta::getEyeTrackerFromAddress(std::move(address_))); });
@@ -663,7 +657,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "include"_a)
 
         // start stream
-        .def("start", [](Titta& instance_, std::string stream_, std::optional<size_t> init_buf_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), init_buf_, as_gif_, true); },
+        .def("start", [](Titta& instance_, std::string stream_, const std::optional<size_t> init_buf_, const std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), init_buf_, as_gif_, true); },
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
         .def("start", py::overload_cast<Titta::Stream, std::optional<size_t>, std::optional<bool>>(&Titta::start),
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
