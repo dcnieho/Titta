@@ -6,6 +6,10 @@ on:
     types:
       - published
 
+env:
+  LSL_RELEASE_URL: 'https://github.com/sccn/liblsl/releases/download/v1.16.2/'
+  LSL_RELEASE: '1.16.2'
+
 jobs:
   build_wheels:
     name: Wheels on ${{ matrix.os }}
@@ -45,7 +49,7 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows;.\\LSL_streamer\\TittaLSLMex\\64\\Windows {wheel}"
 
         CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
-        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib
+        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so /usr/lib && ldconfig -n -v /usr/lib && ub_codename=$(lsb_release -c -s) && curl -L ${LSL_RELEASE_URL}/liblsl-${LSL_RELEASE}-${ub_codename}_amd64.deb -o liblsl.deb && apt install liblsl.dep
 
         CIBW_BEFORE_BUILD_MACOS: uname -a
         MACOSX_DEPLOYMENT_TARGET: 10.14
