@@ -28,6 +28,7 @@
 
 class LSL_streamer
 {
+public:
     template <class DataType>
     class Inlet
     {
@@ -43,7 +44,6 @@ class LSL_streamer
         std::atomic<bool>               _recorder_should_stop;
     };
 
-public:
     // short names for very long Tobii data types
     using gaze          = LSLTypes::gaze;       // getInletType() -> Titta::Stream::Gaze
     using eyeImage      = LSLTypes::eyeImage;   // getInletType() -> Titta::Stream::EyeImage
