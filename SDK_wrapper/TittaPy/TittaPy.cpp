@@ -608,19 +608,19 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         //// eye-tracker specific getters and setters
         .def_property_readonly("info", &Titta::getEyeTrackerInfo)
-        .def_property("device_name", [](Titta& instance_) { return instance_.getEyeTrackerInfo("deviceName").deviceName; }, &Titta::setDeviceName)
-        .def_property_readonly("serial_number", [](Titta& instance_) { return instance_.getEyeTrackerInfo("serialNumber").serialNumber; })
-        .def_property_readonly("model", [](Titta& instance_) { return instance_.getEyeTrackerInfo("model").model; })
-        .def_property_readonly("firmware_version", [](Titta& instance_) { return instance_.getEyeTrackerInfo("firmwareVersion").firmwareVersion; })
-        .def_property_readonly("runtime_version", [](Titta& instance_) { return instance_.getEyeTrackerInfo("runtimeVersion").runtimeVersion; })
-        .def_property_readonly("address", [](Titta& instance_) { return instance_.getEyeTrackerInfo("address").address; })
-        .def_property_readonly("capabilities", [](Titta& instance_) { return CapabilitiesToList(instance_.getEyeTrackerInfo("capabilities").capabilities); })
-        .def_property_readonly("supported_frequencies", [](Titta& instance_) { return instance_.getEyeTrackerInfo("supportedFrequencies").supportedFrequencies; })
-        .def_property_readonly("supported_modes", [](Titta& instance_) { return instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
-        .def_property("frequency", [](Titta& instance_) { return instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
-        .def_property("tracking_mode", [](Titta& instance_) { return instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &Titta::setTrackingMode)
-        .def_property_readonly("track_box", [](Titta& instance_) { return StructToDict(instance_.getTrackBox()); })
-        .def_property_readonly("display_area", [](Titta& instance_) { return StructToDict(instance_.getDisplayArea()); })
+        .def_property         ("device_name",           [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("deviceName").deviceName; }, &Titta::setDeviceName)
+        .def_property_readonly("serial_number",         [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("serialNumber").serialNumber; })
+        .def_property_readonly("model",                 [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("model").model; })
+        .def_property_readonly("firmware_version",      [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("firmwareVersion").firmwareVersion; })
+        .def_property_readonly("runtime_version",       [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("runtimeVersion").runtimeVersion; })
+        .def_property_readonly("address",               [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("address").address; })
+        .def_property_readonly("capabilities",          [](Titta& instance_) { return CapabilitiesToList(instance_.getEyeTrackerInfo("capabilities").capabilities); })
+        .def_property_readonly("supported_frequencies", [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("supportedFrequencies").supportedFrequencies; })
+        .def_property_readonly("supported_modes",       [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
+        .def_property         ("frequency",             [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
+        .def_property         ("tracking_mode",         [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &Titta::setTrackingMode)
+        .def_property_readonly("track_box",             [](const Titta& instance_) { return StructToDict(instance_.getTrackBox()); })
+        .def_property_readonly("display_area",          [](const Titta& instance_) { return StructToDict(instance_.getDisplayArea()); })
         // modifiers
         .def("apply_licenses", &Titta::applyLicenses,
             "licenses"_a)
@@ -642,9 +642,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("calibration_apply_data", &Titta::calibrationApplyData,
             "cal_data"_a)
         .def("calibration_get_status", &Titta::calibrationGetStatus)
-        .def("calibration_retrieve_result", [](Titta& instance) -> std::optional<py::dict>
+        .def("calibration_retrieve_result", [](Titta& instance_) -> std::optional<py::dict>
             {
-                auto res = instance.calibrationRetrieveResult(true);
+                const auto res = instance_.calibrationRetrieveResult(true);
                 if (!res.has_value())
                     return {};
 
@@ -653,7 +653,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         //// data streams
         // query if stream is supported
-        .def("has_stream", [](const Titta& instance, std::string stream_) -> bool { return instance.hasStream(stream_, true); },
+        .def("has_stream", [](const Titta& instance_, std::string stream_) -> bool { return instance_.hasStream(std::move(stream_), true); },
             "stream"_a)
         .def("has_stream", py::overload_cast<Titta::Stream>(&Titta::hasStream, py::const_),
             "stream"_a)
@@ -663,20 +663,20 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "include"_a)
 
         // start stream
-        .def("start", [](Titta& instance, std::string stream_, std::optional<size_t> init_buf_, std::optional<bool> as_gif_) { return instance.start(stream_, init_buf_, as_gif_, true); },
+        .def("start", [](Titta& instance_, std::string stream_, std::optional<size_t> init_buf_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), init_buf_, as_gif_, true); },
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
         .def("start", py::overload_cast<Titta::Stream, std::optional<size_t>, std::optional<bool>>(&Titta::start),
             "stream"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("as_gif", std::nullopt, "None"))
 
         // request stream state
-        .def("is_recording", [](const Titta& instance, std::string stream_) -> bool { return instance.isRecording(stream_, true); },
+        .def("is_recording", [](const Titta& instance_, std::string stream_) -> bool { return instance_.isRecording(std::move(stream_), true); },
             "stream"_a)
         .def("is_recording", py::overload_cast<Titta::Stream>(&Titta::isRecording, py::const_),
             "stream"_a)
 
         // consume samples (by default all)
         .def("consume_N",
-            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 Titta::Stream stream;
@@ -715,7 +715,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         // consume samples within given timestamps (inclusive, by default whole buffer)
         .def("consume_time_range",
-            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_)
             -> py::dict
             {
                 Titta::Stream stream;
@@ -746,7 +746,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
         .def("peek_N",
-            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 Titta::Stream stream;
@@ -785,7 +785,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         // peek samples within given timestamps (inclusive, by default whole buffer)
         .def("peek_time_range",
-            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_)
+            [](Titta& instance_, std::variant<std::string, Titta::Stream> stream_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_)
             -> py::dict
             {
                 Titta::Stream stream;
@@ -815,19 +815,19 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // clear all buffer contents
-        .def("clear", [](Titta& instance, std::string stream_) { return instance.clear(stream_, true); },
+        .def("clear", [](Titta& instance_, std::string stream_) { return instance_.clear(std::move(stream_), true); },
             "stream"_a)
         .def("clear", py::overload_cast<Titta::Stream>(&Titta::clear),
             "stream"_a)
 
         // clear contents buffer within given timestamps (inclusive, by default whole buffer)
-        .def("clear_time_range", [](Titta& instance, std::string stream_, std::optional<int64_t> ts_, std::optional<int64_t> te_) { return instance.clearTimeRange(stream_, ts_, te_, true); },
+        .def("clear_time_range", [](Titta& instance_, std::string stream_, const std::optional<int64_t> ts_, const std::optional<int64_t> te_) { return instance_.clearTimeRange(std::move(stream_), ts_, te_, true); },
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
         .def("clear_time_range", py::overload_cast<Titta::Stream, std::optional<int64_t>, std::optional<int64_t>>(&Titta::clearTimeRange),
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"))
 
         // stop, optionally deletes the buffer
-        .def("stop", [](Titta& instance, std::string stream_, std::optional<bool> clearBuf_) { return instance.stop(stream_, clearBuf_, true); },
+        .def("stop", [](Titta& instance_, std::string stream_, const std::optional<bool> clearBuf_) { return instance_.stop(std::move(stream_), clearBuf_, true); },
             "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
         .def("stop", py::overload_cast<Titta::Stream, std::optional<bool>>(&Titta::stop),
             "stream"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
