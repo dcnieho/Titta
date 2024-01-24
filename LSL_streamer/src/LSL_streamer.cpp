@@ -1477,13 +1477,13 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                             {   // position_in_user_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // pupilData
                             static_cast<float>(*ptr++),
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // gazeOrigin
                             {   // position_in_user_coordinates
@@ -1492,13 +1492,13 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                             {   // position_in_track_box_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // eyeOpenness
                             static_cast<float>(*ptr++),
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                     },
                     // right eye
@@ -1510,13 +1510,13 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                             {   // position_in_user_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // pupilData
                             static_cast<float>(*ptr++),
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // gazeOrigin
                             {   // position_in_user_coordinates
@@ -1525,13 +1525,13 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                             {   // position_in_track_box_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                         {   // eyeOpenness
                             static_cast<float>(*ptr++),
-                            *ptr == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
-                            *ptr == 1.
+                            *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
+                            *ptr++ == 1.
                         },
                     },
                     // device time
@@ -1577,12 +1577,12 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                     // left eye
                     {
                         {*ptr++, *ptr++, *ptr++},
-                        *ptr++==1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
+                        *ptr++ == 1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
                     },
                     // right eye
                     {
                         {*ptr++, *ptr++, *ptr++},
-                        *ptr==1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
+                        *ptr   == 1.f ? TOBII_RESEARCH_VALIDITY_VALID: TOBII_RESEARCH_VALIDITY_INVALID
                     }
                 },
                 timeStampSecondsToUs(remoteT),
