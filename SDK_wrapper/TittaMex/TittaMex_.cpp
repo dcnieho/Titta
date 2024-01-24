@@ -143,7 +143,7 @@ namespace {
         GetSDKVersion,
         GetSystemTimestamp,
         FindAllEyeTrackers,
-        GetEyeTrackersFromAddress,
+        GetEyeTrackerFromAddress,
         // logging
         StartLogging,
         GetLog,
@@ -217,7 +217,7 @@ namespace {
         { "getSDKVersion",                  Action::GetSDKVersion },
         { "getSystemTimestamp",             Action::GetSystemTimestamp },
         { "findAllEyeTrackers",             Action::FindAllEyeTrackers },
-        { "getEyeTrackersFromAddress",      Action::GetEyeTrackersFromAddress },
+        { "getEyeTrackerFromAddress",       Action::GetEyeTrackerFromAddress },
         // logging
         { "startLogging",                   Action::StartLogging },
         { "getLog",                         Action::GetLog },
@@ -339,7 +339,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         InstancePtrType instance;
         if (action != Action::Touch && action != Action::New &&
             action != Action::GetSDKVersion && action != Action::GetSystemTimestamp &&
-            action != Action::FindAllEyeTrackers && action != Action::GetEyeTrackersFromAddress &&
+            action != Action::FindAllEyeTrackers && action != Action::GetEyeTrackerFromAddress &&
             action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
             action != Action::CheckStream && action != Action::CheckBufferSide &&
             action != Action::GetAllStreamsString && action != Action::GetAllBufferSidesString)
@@ -397,7 +397,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             plhs[0] = mxTypes::ToMatlab(Titta::findAllEyeTrackers());
             break;
         }
-        case Action::GetEyeTrackersFromAddress:
+        case Action::GetEyeTrackerFromAddress:
         {
             if (nrhs < 2 || !mxIsChar(prhs[1]))
                 throw "TittaMex: Second argument must be a string.";
@@ -406,7 +406,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             auto insResult = instanceTab.insert({ ++handleVal, std::make_shared<ClassType>(address) });
             mxFree(address);
 
-            plhs[0] = mxTypes::ToMatlab(Titta::getEyeTrackersFromAddress(address));
+            plhs[0] = mxTypes::ToMatlab(Titta::getEyeTrackerFromAddress(address));
             break;
         }
         case Action::StartLogging:

@@ -522,7 +522,7 @@ classdef Titta < handle
             if qHaveAddress
                 % if user provided an eye tracker address to connect to,
                 % get info about this eye tracker
-                trackers = obj.buffer.getEyeTrackersFromAddress(address);
+                trackers = obj.buffer.getEyeTrackerFromAddress(address);
             end
             iTry = 1;
             if exist('WaitSecs','file')==3

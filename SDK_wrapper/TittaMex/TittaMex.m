@@ -131,8 +131,8 @@ classdef TittaMex < handle
         function eyeTrackerList = findAllEyeTrackers(this)
             eyeTrackerList = this.cppmethodGlobal('findAllEyeTrackers');
         end
-        function eyeTracker = getEyeTrackersFromAddress(this,address)
-            eyeTracker = this.cppmethodGlobal('getEyeTrackersFromAddress',ensureStringIsChar(address));
+        function eyeTracker = getEyeTrackerFromAddress(this,address)
+            eyeTracker = this.cppmethodGlobal('getEyeTrackerFromAddress',ensureStringIsChar(address));
         end
         % logging
         function success = startLogging(this,initialBufferSize)

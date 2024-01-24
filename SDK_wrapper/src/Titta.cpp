@@ -299,7 +299,7 @@ std::vector<TobiiTypes::eyeTracker> Titta::findAllEyeTrackers()
 
     return eyeTrackers;
 }
-TobiiTypes::eyeTracker Titta::getEyeTrackersFromAddress(std::string address_)
+TobiiTypes::eyeTracker Titta::getEyeTrackerFromAddress(std::string address_)
 {
     TobiiResearchEyeTracker* et;
     const TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);

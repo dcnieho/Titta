@@ -80,7 +80,7 @@ public:
     static TobiiResearchSDKVersion getSDKVersion();
     static int64_t getSystemTimestamp();
     static std::vector<TobiiTypes::eyeTracker> findAllEyeTrackers();
-    static TobiiTypes::eyeTracker getEyeTrackersFromAddress(std::string address_);
+    static TobiiTypes::eyeTracker getEyeTrackerFromAddress(std::string address_);
     // logging
     static bool startLogging(std::optional<size_t> initialBufferSize_ = std::nullopt);
     static std::vector<Titta::allLogTypes> getLog(std::optional<bool> clearLog_ = std::nullopt);
