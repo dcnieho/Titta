@@ -508,36 +508,42 @@ classdef Titta < handle
             %
             %    INSTANCE = Titta.init(ADDRESS) bypasses the search for all
             %    connected eyetrackers and opens the tracker at the
-            %    specified ADDRESS. Default: []
+            %    specified ADDRESS.
             %
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
-            
-            % empty address by default
-            if nargin < 2; address = []; end
 
             % Load in our callback buffer mex
             obj.buffer = TittaMex();
             obj.buffer.startLogging();
             
             % Connect to eyetracker
+            trackers = [];
+            qHaveAddress = nargin>=2;
+            if qHaveAddress
+                % if user provided an eye tracker address to connect to,
+                % get info about this eye tracker
+                trackers = obj.buffer.getEyeTrackersFromAddress(address);
+            end
             iTry = 1;
             if exist('WaitSecs','file')==3
                 wfunc = @(x) WaitSecs('YieldSecs',x);
             else
                 wfunc = @pause;
             end
-            while isempty(address)
-                if iTry<obj.settings.nTryReConnect+1
+            while true
+                if iTry<obj.settings.nTryReConnect+1 && ~qHaveAddress
                     func = @warning;
                 else
                     func = @error;
                 end
                 % see which eye trackers are available
-                trackers = obj.buffer.findAllEyeTrackers();
-                % find macthing eye-tracker, first by model
+                if ~qHaveAddress
+                    trackers = obj.buffer.findAllEyeTrackers();
+                end
+                % find matching eye-tracker, first by model
                 if isempty(trackers) || ~any(strcmp({trackers.model},obj.settings.tracker))
                     extra = '';
-                    if iTry==obj.settings.nTryReConnect+1
+                    if iTry==obj.settings.nTryReConnect+1 || qHaveAddress
                         if ~isempty(trackers)
                             extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.model));
                         else
@@ -566,7 +572,7 @@ classdef Titta < handle
                     
                     if ~any(qTracker)
                         extra = '';
-                        if iTry==obj.settings.nTryReConnect+1
+                        if iTry==obj.settings.nTryReConnect+1 || qHaveAddress
                             extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.serialNumber));
                         end
                         func('Titta: No eye trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
@@ -582,12 +588,8 @@ classdef Titta < handle
                     break;
                 end
             end
-
-            if isempty(address)
-                theTracker = trackers(qTracker);
-            else
-                theTracker.address = address;
-            end
+            % get our instance
+            theTracker = trackers(qTracker);
 
             % provide callback buffer mex with eye tracker
             obj.buffer.init(theTracker.address);
@@ -623,7 +625,7 @@ classdef Titta < handle
                 theTracker = obj.buffer.getEyeTrackerInfo();
             end
             
-            % set tracker specific internal paramters
+            % set tracker-specific internal paramters
             switch obj.settings.tracker
                 case 'Tobii Pro Fusion'
                     obj.eyeImageCanvasSize = [600 300];    % width x height
