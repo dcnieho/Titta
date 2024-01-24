@@ -73,12 +73,22 @@
 
 namespace mxTypes
 {
+    // template specializations
+    // NB: to get types output as a struct, specialize typeToMxClass for them (set mxClassID value = mxSTRUCT_CLASS)
+    // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
+    // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
+    template <>
+    struct typeToMxClass<lsl::stream_info> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+
+    template <>
+    struct typeNeedsMxCellStorage<lsl::stream_info> { static constexpr bool value = false; };
+
     // forward declarations
     template<typename Cont, typename... Fs>
     mxArray* TobiiFieldToMatlab(const Cont& data_, bool rowVectors_, Fs... fields);
 
     mxArray* ToMatlab(TobiiResearchSDKVersion                               data_);
-    mxArray* ToMatlab(lsl::stream_info                                      data_);
+    mxArray* ToMatlab(lsl::stream_info data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(lsl::channel_format_t                                 data_);
     mxArray* ToMatlab(Titta::Stream                                         data_);
 
@@ -912,27 +922,32 @@ namespace mxTypes
         return ToMatlab(string_format("%d.%d.%d.%d", data_.major, data_.minor, data_.revision, data_.build));
     }
 
-    mxArray* ToMatlab(lsl::stream_info data_)
+    mxArray* ToMatlab(lsl::stream_info data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
-        const char* fieldNames[] = { "name","type","channel_count","nominal_srate","channel_format","source_id","version","created_at","uid","session_id","hostname","xml","channel_bytes","sample_bytes" };
-        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
+        if (idx_ == 0)
+        {
+            const char* fieldNames[] = { "name","type","channel_count","nominal_srate","channel_format","source_id","version","created_at","uid","session_id","hostname","xml","channel_bytes","sample_bytes" };
+            storage_ = mxCreateStructMatrix(size_, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
+            if (size_ == 0)
+                return storage_;
+        }
 
-        mxSetFieldByNumber(out, 0,  0, ToMatlab(data_.name()));
-        mxSetFieldByNumber(out, 0,  1, ToMatlab(data_.type()));
-        mxSetFieldByNumber(out, 0,  2, ToMatlab(data_.channel_count()));
-        mxSetFieldByNumber(out, 0,  3, ToMatlab(data_.nominal_srate()));
-        mxSetFieldByNumber(out, 0,  4, ToMatlab(data_.channel_format()));
-        mxSetFieldByNumber(out, 0,  5, ToMatlab(data_.source_id()));
-        mxSetFieldByNumber(out, 0,  6, ToMatlab(data_.version()));
-        mxSetFieldByNumber(out, 0,  7, ToMatlab(data_.created_at()));
-        mxSetFieldByNumber(out, 0,  8, ToMatlab(data_.uid()));
-        mxSetFieldByNumber(out, 0,  9, ToMatlab(data_.session_id()));
-        mxSetFieldByNumber(out, 0, 10, ToMatlab(data_.hostname()));
-        mxSetFieldByNumber(out, 0, 11, ToMatlab(data_.channel_bytes()));
-        mxSetFieldByNumber(out, 0, 12, ToMatlab(data_.sample_bytes()));
-        mxSetFieldByNumber(out, 0, 13, ToMatlab(data_.as_xml()));
+        mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.name()));
+        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(data_.type()));
+        mxSetFieldByNumber(storage_, idx_, 2, ToMatlab(data_.channel_count()));
+        mxSetFieldByNumber(storage_, idx_, 3, ToMatlab(data_.nominal_srate()));
+        mxSetFieldByNumber(storage_, idx_, 4, ToMatlab(data_.channel_format()));
+        mxSetFieldByNumber(storage_, idx_, 5, ToMatlab(data_.source_id()));
+        mxSetFieldByNumber(storage_, idx_, 6, ToMatlab(data_.version()));
+        mxSetFieldByNumber(storage_, idx_, 7, ToMatlab(data_.created_at()));
+        mxSetFieldByNumber(storage_, idx_, 8, ToMatlab(data_.uid()));
+        mxSetFieldByNumber(storage_, idx_, 9, ToMatlab(data_.session_id()));
+        mxSetFieldByNumber(storage_, idx_, 10, ToMatlab(data_.hostname()));
+        mxSetFieldByNumber(storage_, idx_, 11, ToMatlab(data_.channel_bytes()));
+        mxSetFieldByNumber(storage_, idx_, 12, ToMatlab(data_.sample_bytes()));
+        mxSetFieldByNumber(storage_, idx_, 13, ToMatlab(data_.as_xml()));
 
-        return out;
+        return storage_;
     }
     mxArray* ToMatlab(lsl::channel_format_t data_)
     {
