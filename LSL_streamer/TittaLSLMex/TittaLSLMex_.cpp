@@ -489,7 +489,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             }
 
             char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->createListener(bufferCstr, bufSize, doStartListening));
+            plhs[0] = mxTypes::ToMatlab(instance->createListener(bufferCstr, bufSize, doStartListening));
             mxFree(bufferCstr);
             return;
         }
