@@ -1,4 +1,4 @@
-// MEX wrapper for LSL_streamer.
+// MEX wrapper for TittaLSL.
 // based on class_wrapper_template.cpp
 // "Example of using a C++ class via a MEX-file"
 // by Jonathan Chappelow (chappjc)
@@ -69,7 +69,7 @@
 // converting data to matlab. First here user extensions, then include with generic code driving this
 // extend set of function to convert C++ data to matlab
 #include "cpp_mex_helpers/mex_type_utils_fwd.h"
-#include "LSL_streamer/LSL_streamer.h"
+#include "TittaLSL/TittaLSL.h"
 
 namespace mxTypes
 {
@@ -87,23 +87,23 @@ namespace mxTypes
     template<typename Cont, typename... Fs>
     mxArray* TobiiFieldToMatlab(const Cont& data_, bool rowVectors_, Fs... fields);
 
-    mxArray* ToMatlab(TobiiResearchSDKVersion                               data_);
+    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
     mxArray* ToMatlab(lsl::stream_info data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
-    mxArray* ToMatlab(lsl::channel_format_t                                 data_);
-    mxArray* ToMatlab(Titta::Stream                                         data_);
+    mxArray* ToMatlab(lsl::channel_format_t                             data_);
+    mxArray* ToMatlab(Titta::Stream                                     data_);
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::gaze           >            data_);
-    mxArray* FieldToMatlab(const std::vector<LSL_streamer::gaze>&           data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
-    mxArray* ToMatlab(std::vector<LSL_streamer::eyeImage       >            data_);
-    mxArray* ToMatlab(std::vector<LSL_streamer::extSignal      >            data_);
-    mxArray* ToMatlab(std::vector<LSL_streamer::timeSync       >            data_);
-    mxArray* ToMatlab(std::vector<LSL_streamer::positioning    >            data_);
-    mxArray* FieldToMatlab(const std::vector<LSL_streamer::positioning>&    data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_);
+    mxArray* ToMatlab(std::vector<TittaLSL::gaze           >            data_);
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::gaze>&           data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
+    mxArray* ToMatlab(std::vector<TittaLSL::eyeImage       >            data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::extSignal      >            data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::timeSync       >            data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::positioning    >            data_);
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::positioning>&    data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_);
 }
 #include "cpp_mex_helpers/mex_type_utils.h"
 
 namespace {
-    using ClassType         = LSL_streamer;
+    using ClassType         = TittaLSL;
     using HandleType        = unsigned int;
     using InstancePtrType   = std::shared_ptr<ClassType>;
     using InstanceMapType   = std::map<HandleType, InstancePtrType>;
@@ -315,12 +315,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         case Action::GetTobiiSDKVersion:
         {
-            plhs[0] = mxTypes::ToMatlab(LSL_streamer::getTobiiSDKVersion());
+            plhs[0] = mxTypes::ToMatlab(TittaLSL::getTobiiSDKVersion());
             break;
         }
         case Action::GetLSLVersion:
         {
-            plhs[0] = mxTypes::ToMatlab(LSL_streamer::getLSLVersion());
+            plhs[0] = mxTypes::ToMatlab(TittaLSL::getLSLVersion());
             break;
         }
         case Action::GetRemoteStreams:
@@ -334,7 +334,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 stream = c_stream;
                 mxFree(c_stream);
             }
-            plhs[0] = mxTypes::ToMatlab(LSL_streamer::getRemoteStreams(stream ? *stream :""));
+            plhs[0] = mxTypes::ToMatlab(TittaLSL::getRemoteStreams(stream ? *stream :""));
             break;
         }
 
@@ -560,19 +560,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             switch (instance->getInletType(id))
             {
             case Titta::Stream::Gaze:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::gaze>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::gaze>(id, nSamp, side));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::eyeImage>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::eyeImage>(id, nSamp, side));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::extSignal>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::extSignal>(id, nSamp, side));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::timeSync>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::timeSync>(id, nSamp, side));
                 return;
             case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<LSL_streamer::positioning>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::positioning>(id, nSamp, side));
                 return;
             }
             return;
@@ -610,16 +610,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::Positioning:
                 throw "consumeTimeRange: not supported for positioning stream.";
@@ -660,19 +660,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::gaze>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::gaze>(id, nSamp, side));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::eyeImage>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::eyeImage>(id, nSamp, side));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::extSignal>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::extSignal>(id, nSamp, side));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::timeSync>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::timeSync>(id, nSamp, side));
                 return;
             case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<LSL_streamer::positioning>(id, nSamp, side));
+                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::positioning>(id, nSamp, side));
                 return;
             }
             return;
@@ -710,16 +710,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<LSL_streamer::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
+                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
                 return;
             case Titta::Stream::Positioning:
                 throw "peekTimeRange: not supported for positioning stream.";
@@ -812,7 +812,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     catch (...)
     {
-        mexErrMsgTxt("LSL_streamer: Unknown exception occurred");
+        mexErrMsgTxt("TittaLSL: Unknown exception occurred");
     }
 }
 
@@ -829,18 +829,18 @@ namespace
         return true;
     }
 
-    mxArray* eyeImagesToMatlab(const std::vector<LSL_streamer::eyeImage>& data_)
+    mxArray* eyeImagesToMatlab(const std::vector<TittaLSL::eyeImage>& data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].eyeImageData.data_size;
-        bool same = allEquals(data_, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::data_size, sz);
+        bool same = allEquals(data_, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::data_size, sz);
         // 2. then copy over the images to matlab
         mxArray* out;
         if (data_[0].eyeImageData.bits_per_pixel + data_[0].eyeImageData.padding_per_pixel != 8)
-            throw "LSL_streamer: eyeImagesToMatlab: non-8bit images not implemented";
+            throw "TittaLSL: eyeImagesToMatlab: non-8bit images not implemented";
         if (same)
         {
             auto storage = static_cast<uint8_t*>(mxGetData(out = mxCreateUninitNumericMatrix(static_cast<size_t>(data_[0].eyeImageData.width)*data_[0].eyeImageData.height, data_.size(), mxUINT8_CLASS, mxREAL)));
@@ -978,19 +978,19 @@ namespace mxTypes
         return ToMatlab(Titta::streamToString(data_));
     }
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::gaze> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::gaze> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. all remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::gaze::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::gaze::remote_system_time_stamp));
         // 2. all local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::gaze::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::gaze::local_system_time_stamp));
         // 3. all device timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &LSL_streamer::gaze::gazeData, &Titta::gaze::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::gaze::gazeData, &Titta::gaze::device_time_stamp));
         // 4. all system timestamps
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &LSL_streamer::gaze::gazeData, &Titta::gaze::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::gaze::gazeData, &Titta::gaze::system_time_stamp));
         // 5. left  eye data
         mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &Titta::gaze::left_eye));
         // 6. right eye data
@@ -998,7 +998,7 @@ namespace mxTypes
 
         return out;
     }
-    mxArray* FieldToMatlab(const std::vector<LSL_streamer::gaze>& data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_)
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::gaze>& data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin","eyeOpenness"};
         const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid","available" };
@@ -1011,50 +1011,50 @@ namespace mxTypes
         // 1. gazePoint
         mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGP)), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area, 0.));              // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area, 0.));              // 0. causes values to be stored as double
         // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates, 0.));          // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates, 0.));          // 0. causes values to be stored as double
         // 1.3 gazePoint.validity
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 1.4 gazePoint.available
-        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available));
+        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesPup)), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
         // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 2.3 pupil.available
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
 
         // 3. gazeOrigin
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGO)), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
         // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates, 0.));   // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates, 0.));   // 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 3.4 gazeOrigin.available
-        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
+        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
 
         // 4. eyeOpenness
         mxSetFieldByNumber(out, 0, 3, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEO)), fieldNamesEO));
         // 4.1 eye_openness.diameter
-        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter, 0.));                             // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter, 0.));                             // 0. causes values to be stored as double
         // 4.2 eye_openness.validity
-        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 4.3 eye_openness.available
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &LSL_streamer::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::eyeImage> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::eyeImage> data_)
     {
         // check if all gif, then don't output unneeded fields
-        bool allGif = allEquals(data_, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
+        bool allGif = allEquals(data_, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
 
         // fieldnames for all structs
         mxArray* out;
@@ -1070,91 +1070,91 @@ namespace mxTypes
         }
 
         // all simple fields
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::remote_system_time_stamp));
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::local_system_time_stamp));
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::region_top, 0.));            // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::region_left, 0.));           // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::eyeImage::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::eyeImage::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_top, 0.));            // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_left, 0.));           // 0. causes values to be stored as double
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0,  7, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel, 0.));    // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  8, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel, 0.)); // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  9, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::width, 0.));             // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 10, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::height, 0.));            // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  7, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel, 0.));    // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  8, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel, 0.)); // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  9, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::width, 0.));             // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 10, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::height, 0.));            // 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0,  7 + off, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
-        mxSetFieldByNumber(out, 0,  8 + off, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0,  9 + off, FieldToMatlab(data_, true, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::is_gif));
+        mxSetFieldByNumber(out, 0,  7 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
+        mxSetFieldByNumber(out, 0,  8 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0,  9 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif));
         mxSetFieldByNumber(out, 0, 10 + off, eyeImagesToMatlab(data_));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::extSignal> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::extSignal> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::extSignal::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::extSignal::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::extSignal::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::extSignal::local_system_time_stamp));
         // 3. device timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &LSL_streamer::extSignal::extSignalData, &TobiiResearchExternalSignalData::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::device_time_stamp));
         // 4. system timestamps
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &LSL_streamer::extSignal::extSignalData, &TobiiResearchExternalSignalData::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::system_time_stamp));
         // 5. external signal values
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &LSL_streamer::extSignal::extSignalData, &TobiiResearchExternalSignalData::value));
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::value));
         // 6. value change type
-        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &LSL_streamer::extSignal::extSignalData, &TobiiResearchExternalSignalData::change_type, uint8_t{}));      // cast enum values to uint8
+        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::change_type, uint8_t{}));      // cast enum values to uint8
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::timeSync> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::timeSync> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::timeSync::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::timeSync::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::timeSync::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::timeSync::local_system_time_stamp));
         // 3. system request timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
         // 4. device timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::device_time_stamp));
         // 5. system response timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &LSL_streamer::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
 
         return out;
     }
 
-    mxArray* FieldToMatlab(const std::vector<LSL_streamer::positioning>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::positioning>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
     {
         const char* fieldNames[] = {"user_position","valid"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 user_position
-        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &LSL_streamer::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
         // 2 validity
-        mxSetFieldByNumber(out, 0, 1,      FieldToMatlab(data_, rowVector_, &LSL_streamer::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(out, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<LSL_streamer::positioning> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::positioning> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &LSL_streamer::positioning::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::positioning::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &LSL_streamer::positioning::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::positioning::local_system_time_stamp));
         // 3. left  eye data
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchUserPositionGuide::left_eye));
         // 4. right eye data

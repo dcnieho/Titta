@@ -27,12 +27,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\LSL_streamer.cpp">
+    <ClCompile Include="src\TittaLSL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LSL_streamer\LSL_streamer.h">
+    <ClInclude Include="TittaLSL\TittaLSL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="deps\include\lsl\streaminfo.h">
@@ -62,7 +62,7 @@
     <ClInclude Include="deps\include\lsl_cpp.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
-    <ClInclude Include="LSL_streamer\types.h">
+    <ClInclude Include="TittaLSL\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SDK_wrapper\Titta\Titta.h">

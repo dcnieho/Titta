@@ -44,14 +44,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.pyd</TargetExt>
-    <TargetName>TittaLSL_d</TargetName>
+    <TargetName>TittaLSLPy_d</TargetName>
     <OutDir>.</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>TittaLSL</TargetName>
+    <TargetName>TittaLSLPy</TargetName>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -106,7 +106,7 @@ xcopy ..\..\SDK_wrapper\TittaPy\TittaPy.pyd . /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TittaLSL.cpp" />
+    <ClCompile Include="TittaLSLPy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\.github\dependabot.yml" />

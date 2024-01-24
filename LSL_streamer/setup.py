@@ -29,8 +29,8 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'TittaLSL',
-        ['../SDK_wrapper/src/Titta.cpp','../SDK_wrapper/src/types.cpp','../SDK_wrapper/src/utils.cpp','src/LSL_streamer.cpp','TittaLSLPy/TittaLSL.cpp'],
+        'TittaLSLPy',
+        ['../SDK_wrapper/src/Titta.cpp','../SDK_wrapper/src/types.cpp','../SDK_wrapper/src/utils.cpp','src/TittaLSL.cpp','TittaLSLPy/TittaLSLPy.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
@@ -80,7 +80,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 setup(
-    name='TittaLSL',
+    name='TittaLSLPy',
     version=__version__,
     author='Diederick C. Niehorster',
     author_email='diederick_c.niehorster@humlab.lu.se',

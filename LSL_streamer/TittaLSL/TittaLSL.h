@@ -13,20 +13,20 @@
 #pragma comment(lib, "lsl.lib")
 #ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
-#       pragma comment(lib, "LSL_streamer_d.lib")
+#       pragma comment(lib, "TittaLSL_d.lib")
 #   else
-#       pragma comment(lib, "LSL_streamer.lib")
+#       pragma comment(lib, "TittaLSL.lib")
 #   endif
 #endif
 
 #include "Titta/types.h"
 #include "Titta/Titta.h"
-#include "LSL_streamer/types.h"
+#include "TittaLSL/types.h"
 
 #include "lsl_cpp.h"
 
 
-class LSL_streamer
+class TittaLSL
 {
 public:
     template <class DataType>
@@ -59,11 +59,11 @@ public:
                     >;
 
 public:
-    LSL_streamer() = default;
-    LSL_streamer(std::string address_);
-    LSL_streamer(TobiiResearchEyeTracker* et_);
-    LSL_streamer(const TobiiTypes::eyeTracker& et_);
-    ~LSL_streamer();
+    TittaLSL() = default;
+    TittaLSL(std::string address_);
+    TittaLSL(TobiiResearchEyeTracker* et_);
+    TittaLSL(const TobiiTypes::eyeTracker& et_);
+    ~TittaLSL();
 
 
     //// global SDK functions
@@ -100,7 +100,7 @@ public:
     bool isListening(uint32_t id_) const;
 
     // consume samples (by default all)
-    template <typename DataType>    // e.g. LSL_streamer::gaze
+    template <typename DataType>    // e.g. TittaLSL::gaze
     std::vector<DataType> consumeN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
     // consume samples within given timestamps (inclusive, by default whole buffer)
     template <typename DataType>
@@ -156,8 +156,8 @@ private:
     friend void checkInletType(AllInlets& inlet_, uint32_t id_);
     AllInlets& getAllInletsVariant(uint32_t id_) const;
     static std::unique_ptr<std::thread>& getWorkerThread(AllInlets& inlet_);
-    static bool getWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_);
-    static void setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_);
+    static bool getWorkerThreadStopFlag(TittaLSL::AllInlets& inlet_);
+    static void setWorkerThreadStopFlag(TittaLSL::AllInlets& inlet_);
     template <typename DataType>
     Inlet<DataType>& getInlet(uint32_t id_) const;
     // worker function

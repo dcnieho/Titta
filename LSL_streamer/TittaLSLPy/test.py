@@ -4,13 +4,13 @@ import time
 import TittaPy
 from TittaPy import EyeTracker
 
-import TittaLSL
-from TittaLSL import LSLStreamer
+import TittaLSLPy
+from TittaLSLPy import TittaLSL
 
 #help(TittaPy)
 #help(EyeTracker)
+#help(TittaLSLPy)
 #help(TittaLSL)
-#help(LSLStreamer)
 #exit()
 
 
@@ -20,12 +20,12 @@ print(ets)
 #EThndl = EyeTracker(ets[0]['address'])
 
 # test static functions
-print(TittaLSL.__version__)
-print(TittaLSL.get_Tobii_SDK_version())
-print(TittaLSL.get_LSL_version())
+print(TittaLSLPy.__version__)
+print(TittaLSLPy.get_Tobii_SDK_version())
+print(TittaLSLPy.get_LSL_version())
 
 # make class instance and exercise outlet
-lsl = LSLStreamer()
+lsl = TittaLSL()
 lsl.connect(ets[0]['address'])
 print(lsl.is_streaming('gaze'))
 print(lsl.is_streaming(EyeTracker.stream.gaze))

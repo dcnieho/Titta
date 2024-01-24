@@ -1,4 +1,4 @@
-#include "LSL_streamer/LSL_streamer.h"
+#include "TittaLSL/TittaLSL.h"
 #include <vector>
 #include <algorithm>
 #include <string_view>
@@ -44,44 +44,44 @@ namespace
     template <class...> constexpr std::false_type always_false_t{};
     template <auto...> constexpr std::false_type always_false_nt{};
 
-    template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false_nt<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an LSL_streamer inlet"); };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze> { using type = LSL_streamer::gaze; };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = LSL_streamer::gaze; };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage> { using type = LSL_streamer::eyeImage; };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::ExtSignal> { using type = LSL_streamer::extSignal; };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::TimeSync> { using type = LSL_streamer::timeSync; };
-    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Positioning> { using type = LSL_streamer::positioning; };
+    template <Titta::Stream T> struct TittaStreamToLSLInletType { static_assert(always_false_nt<T>, "TittaStreamToLSLInletType not implemented for this enum value: this stream type is not supported as an TittaLSL inlet"); };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Gaze> { using type = TittaLSL::gaze; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeOpenness> { using type = TittaLSL::gaze; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::EyeImage> { using type = TittaLSL::eyeImage; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::ExtSignal> { using type = TittaLSL::extSignal; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::TimeSync> { using type = TittaLSL::timeSync; };
+    template <>                struct TittaStreamToLSLInletType<Titta::Stream::Positioning> { using type = TittaLSL::positioning; };
     template <Titta::Stream T>
     using TittaStreamToLSLInletType_t = typename TittaStreamToLSLInletType<T>::type;
 
     template <typename T> struct LSLInletTypeToTittaStream { static_assert(always_false_t<T>, "LSLInletTypeToTittaStream not implemented for this type"); static constexpr Titta::Stream value = Titta::Stream::Unknown; };
-    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::gaze> { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
-    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::eyeImage> { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
-    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::extSignal> { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
-    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::timeSync> { static constexpr Titta::Stream value = Titta::Stream::TimeSync; };
-    template <>           struct LSLInletTypeToTittaStream<LSL_streamer::positioning> { static constexpr Titta::Stream value = Titta::Stream::Positioning; };
+    template <>           struct LSLInletTypeToTittaStream<TittaLSL::gaze> { static constexpr Titta::Stream value = Titta::Stream::Gaze; };
+    template <>           struct LSLInletTypeToTittaStream<TittaLSL::eyeImage> { static constexpr Titta::Stream value = Titta::Stream::EyeImage; };
+    template <>           struct LSLInletTypeToTittaStream<TittaLSL::extSignal> { static constexpr Titta::Stream value = Titta::Stream::ExtSignal; };
+    template <>           struct LSLInletTypeToTittaStream<TittaLSL::timeSync> { static constexpr Titta::Stream value = Titta::Stream::TimeSync; };
+    template <>           struct LSLInletTypeToTittaStream<TittaLSL::positioning> { static constexpr Titta::Stream value = Titta::Stream::Positioning; };
     template <typename T>
     constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
 
     template <typename T> struct LSLInletTypeNumSamples { static_assert(always_false_t<T>, "LSLInletTypeNumSamples not implemented for this type"); static constexpr size_t value = 0; };
-    template <>           struct LSLInletTypeNumSamples<LSL_streamer::gaze> { static constexpr size_t value = 43; };
-    template <>           struct LSLInletTypeNumSamples<LSL_streamer::eyeImage> { static constexpr size_t value = 0; };
-    template <>           struct LSLInletTypeNumSamples<LSL_streamer::extSignal> { static constexpr size_t value = 4; };
-    template <>           struct LSLInletTypeNumSamples<LSL_streamer::timeSync> { static constexpr size_t value = 3; };
-    template <>           struct LSLInletTypeNumSamples<LSL_streamer::positioning> { static constexpr size_t value = 8; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::gaze> { static constexpr size_t value = 43; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::eyeImage> { static constexpr size_t value = 0; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::extSignal> { static constexpr size_t value = 4; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::timeSync> { static constexpr size_t value = 3; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::positioning> { static constexpr size_t value = 8; };
     template <typename T>
     constexpr size_t LSLInletTypeNumSamples_v = LSLInletTypeNumSamples<T>::value;
 
     template <typename T> struct LSLInletTypeToChannelFormat { static_assert(always_false_t<T>, "LSLInletTypeToChannelFormat not implemented for this type"); static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
-    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::gaze> { static constexpr enum lsl::channel_format_t value = lsl::cf_double64; };
-    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::eyeImage> { static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
-    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::extSignal> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
-    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::timeSync> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
-    template <>           struct LSLInletTypeToChannelFormat<LSL_streamer::positioning> { static constexpr enum lsl::channel_format_t value = lsl::cf_float32; };
+    template <>           struct LSLInletTypeToChannelFormat<TittaLSL::gaze> { static constexpr enum lsl::channel_format_t value = lsl::cf_double64; };
+    template <>           struct LSLInletTypeToChannelFormat<TittaLSL::eyeImage> { static constexpr enum lsl::channel_format_t value = lsl::cf_undefined; };
+    template <>           struct LSLInletTypeToChannelFormat<TittaLSL::extSignal> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
+    template <>           struct LSLInletTypeToChannelFormat<TittaLSL::timeSync> { static constexpr enum lsl::channel_format_t value = lsl::cf_int64; };
+    template <>           struct LSLInletTypeToChannelFormat<TittaLSL::positioning> { static constexpr enum lsl::channel_format_t value = lsl::cf_float32; };
     template <typename T>
     constexpr enum lsl::channel_format_t LSLInletTypeToChannelFormat_v = LSLInletTypeToChannelFormat<T>::value;
 
-    template <enum lsl::channel_format_t T> struct LSLChannelFormatToCppType { static_assert(always_false_nt<T>, "LSLChannelFormatToCppType not implemented for this enum value: this channel format is not supported by LSL_streamer"); };
+    template <enum lsl::channel_format_t T> struct LSLChannelFormatToCppType { static_assert(always_false_nt<T>, "LSLChannelFormatToCppType not implemented for this enum value: this channel format is not supported by TittaLSL"); };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_float32> { using type = float; };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_double64> { using type = double; };
     template <>                struct LSLChannelFormatToCppType<lsl::cf_int64> { using type = int64_t; };
@@ -94,7 +94,7 @@ void LSLGazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         instance->receiveSample(gaze_data_, nullptr);
     }
 }
@@ -102,7 +102,7 @@ void LSLEyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* 
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         instance->receiveSample(nullptr, openness_data_);
     }
 }
@@ -110,7 +110,7 @@ void LSLEyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -119,7 +119,7 @@ void LSLEyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_dat
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -128,7 +128,7 @@ void LSLExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* us
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         if (instance->isStreaming(Titta::Stream::ExtSignal))
             instance->pushSample(*ext_signal_);
     }
@@ -137,7 +137,7 @@ void LSLTimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, 
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         if (instance->isStreaming(Titta::Stream::TimeSync))
             instance->pushSample(*time_sync_data_);
     }
@@ -146,14 +146,14 @@ void LSLPositioningCallback(TobiiResearchUserPositionGuide* position_data_, void
 {
     if (user_data)
     {
-        const auto instance = static_cast<LSL_streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL*>(user_data);
         if (instance->isStreaming(Titta::Stream::Positioning))
             instance->pushSample(*position_data_);
     }
 }
 
 // info getter static functions
-TobiiResearchSDKVersion LSL_streamer::getTobiiSDKVersion()
+TobiiResearchSDKVersion TittaLSL::getTobiiSDKVersion()
 {
     TobiiResearchSDKVersion sdk_version;
     const TobiiResearchStatus status = tobii_research_get_sdk_version(&sdk_version);
@@ -161,7 +161,7 @@ TobiiResearchSDKVersion LSL_streamer::getTobiiSDKVersion()
         ErrorExit("Titta::cpp: Cannot get Tobii SDK version", status);
     return sdk_version;
 }
-int32_t LSL_streamer::getLSLVersion()
+int32_t TittaLSL::getLSLVersion()
 {
     return lsl::library_version();
 }
@@ -169,7 +169,7 @@ int32_t LSL_streamer::getLSLVersion()
 namespace
 {
     // eye image helpers
-    TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, LSL_streamer* instance_, const bool asGif_)
+    TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, TittaLSL* instance_, const bool asGif_)
     {
         if (asGif_)
             return tobii_research_subscribe_to_eye_image_as_gif(eyeTracker_, LSLEyeImageGifCallback, instance_);
@@ -188,19 +188,19 @@ namespace
 
 
 
-LSL_streamer::LSL_streamer(std::string address_)
+TittaLSL::TittaLSL(std::string address_)
 {
     connect(std::move(address_));
 }
-LSL_streamer::LSL_streamer(TobiiResearchEyeTracker* et_)
+TittaLSL::TittaLSL(TobiiResearchEyeTracker* et_)
 {
     connect(et_);
 }
-LSL_streamer::LSL_streamer(const TobiiTypes::eyeTracker& et_)
+TittaLSL::TittaLSL(const TobiiTypes::eyeTracker& et_)
 {
     connect(et_.et);
 }
-LSL_streamer::~LSL_streamer()
+TittaLSL::~TittaLSL()
 {
     stopOutlet(Titta::Stream::Gaze);
     stopOutlet(Titta::Stream::EyeOpenness);
@@ -213,12 +213,12 @@ LSL_streamer::~LSL_streamer()
     for (const auto& [id, _] : _inStreams)
         deleteListener(id);
 }
-uint32_t LSL_streamer::getID()
+uint32_t TittaLSL::getID()
 {
     static std::atomic<uint32_t> lastID = 0;
     return lastID++;
 }
-void LSL_streamer::CheckClocks()
+void TittaLSL::CheckClocks()
 {
     // check tobii/titta clock and lsl clock are the same
     // 1. warm up clocks by calling them once
@@ -254,7 +254,7 @@ void LSL_streamer::CheckClocks()
 }
 
 
-void LSL_streamer::connect(std::string address_)
+void TittaLSL::connect(std::string address_)
 {
     if (_localEyeTracker)
         DoExitWithMsg("Already connected to an eye tracker, cannot connect again");
@@ -266,7 +266,7 @@ void LSL_streamer::connect(std::string address_)
     connect(et);
 }
 
-void LSL_streamer::connect(TobiiResearchEyeTracker* et_)
+void TittaLSL::connect(TobiiResearchEyeTracker* et_)
 {
     if (_localEyeTracker)
         DoExitWithMsg("Already connected to an eye tracker, cannot connect again");
@@ -276,11 +276,11 @@ void LSL_streamer::connect(TobiiResearchEyeTracker* et_)
 }
 
 
-bool LSL_streamer::startOutlet(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
+bool TittaLSL::startOutlet(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
 {
     return startOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true), asGif_);
 }
-bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool TittaLSL::startOutlet(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     if (!_localEyeTracker)
         DoExitWithMsg("Not connected to an eye tracker, cannot start an outlet");
@@ -329,7 +329,7 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
         format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Positioning>>;
         break;
     default:
-        DoExitWithMsg(string_format("LSL_streamer::cpp::startOutlet: opening an outlet for %s stream is not supported.", Titta::streamToString(stream_).c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::startOutlet: opening an outlet for %s stream is not supported.", Titta::streamToString(stream_).c_str()));
         break;
     }
 
@@ -341,7 +341,7 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
         nChannel,
         hasFreq ? _localEyeTracker->frequency : lsl::IRREGULAR_RATE,
         format,
-        string_format("LSL_streamer:%s@%s", lslStreamName.c_str(), _localEyeTracker->serialNumber.c_str()));
+        string_format("TittaLSL:%s@%s", lslStreamName.c_str(), _localEyeTracker->serialNumber.c_str()));
 
     // create meta-data
     info.desc()
@@ -667,14 +667,14 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
 }
 
 
-void LSL_streamer::setIncludeEyeOpennessInGaze(const bool include_)
+void TittaLSL::setIncludeEyeOpennessInGaze(const bool include_)
 {
     if (!_localEyeTracker)
         DoExitWithMsg("Not connected to an eye tracker, no possible to set outlet options");
 
     if (include_ && !(_localEyeTracker->capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA))
         DoExitWithMsg(
-            "LSL_streamer::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " + Titta::streamToString(Titta::Stream::EyeOpenness) + " stream, this eye tracker does not provide it"
+            "TittaLSL::cpp::setIncludeEyeOpennessInGaze: Cannot request to record the " + Titta::streamToString(Titta::Stream::EyeOpenness) + " stream, this eye tracker does not provide it"
         );
 
     _includeEyeOpennessInGaze = include_;
@@ -686,7 +686,7 @@ void LSL_streamer::setIncludeEyeOpennessInGaze(const bool include_)
         start(Titta::Stream::EyeOpenness);
 }
 
-bool LSL_streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool TittaLSL::start(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -780,7 +780,7 @@ bool LSL_streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_
         }
         default:
         {
-            DoExitWithMsg("LSL_streamer::cpp::start: Cannot start sending " + Titta::streamToString(stream_) + " stream, not supported to send via outlet");
+            DoExitWithMsg("TittaLSL::cpp::start: Cannot start sending " + Titta::streamToString(stream_) + " stream, not supported to send via outlet");
             break;
         }
     }
@@ -789,7 +789,7 @@ bool LSL_streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_
         *stateVar = result==TOBII_RESEARCH_STATUS_OK;
 
     if (result != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("LSL_streamer::cpp::start: Cannot start recording " + Titta::streamToString(stream_) + " stream", result);
+        ErrorExit("TittaLSL::cpp::start: Cannot start recording " + Titta::streamToString(stream_) + " stream", result);
     else
     {
         // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
@@ -849,7 +849,7 @@ namespace {
     }
 }
 
-void LSL_streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
+void TittaLSL::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
 {
     const auto needStage = _streamingGaze && _streamingEyeOpenness;
     if (!needStage && !_gazeStagingEmpty)
@@ -947,7 +947,7 @@ void LSL_streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const 
     }
 }
 
-void LSL_streamer::pushSample(const Titta::gaze& sample_)
+void TittaLSL::pushSample(const Titta::gaze& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Gaze>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -979,11 +979,11 @@ void LSL_streamer::pushSample(const Titta::gaze& sample_)
     };
     _outStreams.at(Titta::Stream::Gaze).push_sample(sample, static_cast<double>(sample_.system_time_stamp)/1'000'000.);
 }
-void LSL_streamer::pushSample(Titta::eyeImage&& sample_)
+void TittaLSL::pushSample(Titta::eyeImage&& sample_)
 {
 
 }
-void LSL_streamer::pushSample(const Titta::extSignal& sample_)
+void TittaLSL::pushSample(const Titta::extSignal& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::ExtSignal>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -993,7 +993,7 @@ void LSL_streamer::pushSample(const Titta::extSignal& sample_)
     };
     _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, static_cast<double>(sample_.system_time_stamp) / 1'000'000.);
 }
-void LSL_streamer::pushSample(const Titta::timeSync& sample_)
+void TittaLSL::pushSample(const Titta::timeSync& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::TimeSync>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -1003,7 +1003,7 @@ void LSL_streamer::pushSample(const Titta::timeSync& sample_)
     };
     _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, static_cast<double>(sample_.system_request_time_stamp) / 1'000'000.);
 }
-void LSL_streamer::pushSample(const Titta::positioning& sample_)
+void TittaLSL::pushSample(const Titta::positioning& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Positioning>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -1017,7 +1017,7 @@ void LSL_streamer::pushSample(const Titta::positioning& sample_)
     _outStreams.at(Titta::Stream::Positioning).push_sample(sample); // this stream doesn't have a timestamp
 }
 
-bool LSL_streamer::stop(const Titta::Stream stream_)
+bool TittaLSL::stop(const Titta::Stream stream_)
 {
     TobiiResearchStatus result = TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -1062,11 +1062,11 @@ bool LSL_streamer::stop(const Titta::Stream stream_)
     return success;
 }
 
-bool LSL_streamer::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
+bool TittaLSL::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
 {
     return isStreaming(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
-bool LSL_streamer::isStreaming(const Titta::Stream stream_) const
+bool TittaLSL::isStreaming(const Titta::Stream stream_) const
 {
     bool isStreaming = false;
     switch (stream_)
@@ -1095,12 +1095,12 @@ bool LSL_streamer::isStreaming(const Titta::Stream stream_) const
     return isStreaming && ((stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_));
 }
 
-void LSL_streamer::stopOutlet(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
+void TittaLSL::stopOutlet(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
 {
     stopOutlet(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
 
-void LSL_streamer::stopOutlet(const Titta::Stream stream_)
+void TittaLSL::stopOutlet(const Titta::Stream stream_)
 {
     if (!_localEyeTracker)
         return;
@@ -1121,16 +1121,16 @@ inline int64_t timeStampSecondsToUs(double ts_)
 {
     return static_cast<int64_t>(ts_ * 1'000'000);
 }
-Titta::Stream getInletTypeImpl(LSL_streamer::AllInlets& inlet_)
+Titta::Stream getInletTypeImpl(TittaLSL::AllInlets& inlet_)
 {
     return std::visit(
-        [] <typename T>(LSL_streamer::Inlet<T>&) {
+        [] <typename T>(TittaLSL::Inlet<T>&) {
         return LSLInletTypeToTittaStream_v<T>;
     }
     , inlet_);
 }
 
-lsl::stream_inlet& getLSLInlet(LSL_streamer::AllInlets& inlet_)
+lsl::stream_inlet& getLSLInlet(TittaLSL::AllInlets& inlet_)
 {
     return std::visit(
         [](auto& in_) -> lsl::stream_inlet& {
@@ -1140,11 +1140,11 @@ lsl::stream_inlet& getLSLInlet(LSL_streamer::AllInlets& inlet_)
 
 // helpers to make the below generic
 template <typename DataType>
-read_lock  lockForReading(LSL_streamer::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
+read_lock  lockForReading(TittaLSL::Inlet<DataType>& inlet_) { return  read_lock(inlet_._mutex); }
 template <typename DataType>
-write_lock lockForWriting(LSL_streamer::Inlet<DataType>& inlet_) { return write_lock(inlet_._mutex); }
+write_lock lockForWriting(TittaLSL::Inlet<DataType>& inlet_) { return write_lock(inlet_._mutex); }
 template <typename DataType>
-std::vector<DataType>& getBuffer(LSL_streamer::Inlet<DataType>& inlet_)
+std::vector<DataType>& getBuffer(TittaLSL::Inlet<DataType>& inlet_)
 {
     return inlet_._buffer;
 }
@@ -1165,7 +1165,7 @@ getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, const size_t NSamp_, 
         startIt = std::prev(endIt  , nSamp);
         break;
     default:
-        DoExitWithMsg("LSL_streamer::::cpp::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
+        DoExitWithMsg("TittaLSL::::cpp::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
         break;
     }
     return { startIt, endIt };
@@ -1236,7 +1236,7 @@ std::vector<T> peekFromVec(const std::vector<T>& buf_, const typename std::vecto
 }
 
 template <typename DataType>
-void clearVec(LSL_streamer::Inlet<DataType>& inlet_, const int64_t timeStart_, const int64_t timeEnd_, const bool timeIsLocalTime_)
+void clearVec(TittaLSL::Inlet<DataType>& inlet_, const int64_t timeStart_, const int64_t timeEnd_, const bool timeIsLocalTime_)
 {
     auto l = lockForWriting(inlet_);  // NB: if C++ std gains upgrade_lock, replace this with upgrade lock that is converted to unique lock only after range is determined
     auto& buf = getBuffer(inlet_);
@@ -1253,9 +1253,9 @@ void clearVec(LSL_streamer::Inlet<DataType>& inlet_, const int64_t timeStart_, c
 }
 }
 template <typename DataType>
-void checkInletType(LSL_streamer::AllInlets& inlet_, const uint32_t id_)
+void checkInletType(TittaLSL::AllInlets& inlet_, const uint32_t id_)
 {
-    if (!std::holds_alternative<LSL_streamer::Inlet<DataType>>(inlet_))
+    if (!std::holds_alternative<TittaLSL::Inlet<DataType>>(inlet_))
     {
         const auto wanted = LSLInletTypeToTittaStream_v<DataType>;
         const auto actual = getInletTypeImpl(inlet_);
@@ -1263,7 +1263,7 @@ void checkInletType(LSL_streamer::AllInlets& inlet_, const uint32_t id_)
     }
 }
 
-LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(const uint32_t id_) const
+TittaLSL::AllInlets& TittaLSL::getAllInletsVariant(const uint32_t id_) const
 {
     if (!_inStreams.contains(id_))
         DoExitWithMsg(string_format("No inlet with id %lu is known", id_));
@@ -1271,28 +1271,28 @@ LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(const uint32_t id_) c
     return *_inStreams.at(id_);
 }
 template <typename DataType>
-LSL_streamer::Inlet<DataType>& LSL_streamer::getInlet(const uint32_t id_) const
+TittaLSL::Inlet<DataType>& TittaLSL::getInlet(const uint32_t id_) const
 {
     auto& allInlets = getAllInletsVariant(id_);
     checkInletType<DataType>(allInlets, id_);
 
     return std::get<Inlet<DataType>>(allInlets);
 }
-std::unique_ptr<std::thread>& LSL_streamer::getWorkerThread(LSL_streamer::AllInlets& inlet_)
+std::unique_ptr<std::thread>& TittaLSL::getWorkerThread(TittaLSL::AllInlets& inlet_)
 {
     return std::visit(
         [](auto& in_) -> std::unique_ptr<std::thread>&{
             return in_._recorder;
         }, inlet_);
 }
-bool LSL_streamer::getWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
+bool TittaLSL::getWorkerThreadStopFlag(TittaLSL::AllInlets& inlet_)
 {
     return std::visit(
         [](auto& in_) -> bool {
             return in_._recorder_should_stop;
         }, inlet_);
 }
-void LSL_streamer::setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
+void TittaLSL::setWorkerThreadStopFlag(TittaLSL::AllInlets& inlet_)
 {
     std::visit(
         [](auto& in_){
@@ -1300,20 +1300,20 @@ void LSL_streamer::setWorkerThreadStopFlag(LSL_streamer::AllInlets& inlet_)
         }, inlet_);
 }
 
-std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_, const bool snake_case_on_stream_not_found)
+std::vector<lsl::stream_info> TittaLSL::getRemoteStreams(std::string stream_, const bool snake_case_on_stream_not_found)
 {
     if (!stream_.empty())
         return getRemoteStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
     else
         return getRemoteStreams(std::nullopt);
 }
-std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(const std::optional<Titta::Stream> stream_)
+std::vector<lsl::stream_info> TittaLSL::getRemoteStreams(const std::optional<Titta::Stream> stream_)
 {
     // filter if wanted
     if (stream_.has_value())
     {
         if (*stream_!=Titta::Stream::Gaze && *stream_!=Titta::Stream::EyeImage && *stream_!=Titta::Stream::ExtSignal && *stream_!=Titta::Stream::TimeSync && *stream_!=Titta::Stream::Positioning)
-            DoExitWithMsg(string_format("LSL_streamer::cpp::getRemoteStreams: %s streams are not supported.", Titta::streamToString(*stream_).c_str()));
+            DoExitWithMsg(string_format("TittaLSL::cpp::getRemoteStreams: %s streams are not supported.", Titta::streamToString(*stream_).c_str()));
         const auto streamName = string_format("Tobii_%s", Titta::streamToString(*stream_).c_str());
         return lsl::resolve_stream("name", streamName, 0, 2.);
     }
@@ -1321,28 +1321,28 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(const std::optional
         return lsl::resolve_streams(2.);
 }
 
-uint32_t LSL_streamer::createListener(std::string streamSourceID_, const std::optional<size_t> initialBufferSize_, const std::optional<bool> startListening_)
+uint32_t TittaLSL::createListener(std::string streamSourceID_, const std::optional<size_t> initialBufferSize_, const std::optional<bool> startListening_)
 {
     if (streamSourceID_.empty())
-        DoExitWithMsg("LSL_streamer::createListener: must specify stream source ID, cannot be empty");
+        DoExitWithMsg("TittaLSL::createListener: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
     const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 2.);
     if (streams.empty())
-        DoExitWithMsg(string_format("LSL_streamer::createListener: stream with source ID %s could not be found", streamSourceID_.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::createListener: stream with source ID %s could not be found", streamSourceID_.c_str()));
     else if (streams.size()>1)
-        DoExitWithMsg(string_format("LSL_streamer::createListener: more than one stream with source ID %s found", streamSourceID_.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::createListener: more than one stream with source ID %s found", streamSourceID_.c_str()));
 
     // start listening
     return createListener(streams[0], initialBufferSize_, startListening_);
 }
-uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
+uint32_t TittaLSL::createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
 {
     // deal with default arguments
     const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
 
-    if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
-        DoExitWithMsg(string_format("LSL_streamer::createListener: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
+    if (!streamInfo_.source_id().starts_with("TittaLSL:Tobii_"))
+        DoExitWithMsg(string_format("TittaLSL::createListener: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
 
 # define MAKE_INLET(type, defaultName) \
     _inStreams.emplace(id, \
@@ -1358,26 +1358,26 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
     lsl::stream_inlet* createdInlet = nullptr;
     if (sType =="Gaze")
     {
-        MAKE_INLET(LSL_streamer::gaze, gazeBufSize)
+        MAKE_INLET(TittaLSL::gaze, gazeBufSize)
     }
     else if (sType == "VideoCompressed" || sType == "VideoRaw")
     {
-        MAKE_INLET(LSL_streamer::eyeImage, eyeImageBufSize)
+        MAKE_INLET(TittaLSL::eyeImage, eyeImageBufSize)
     }
     else if (sType == "TTL")
     {
-        MAKE_INLET(LSL_streamer::extSignal, extSignalBufSize)
+        MAKE_INLET(TittaLSL::extSignal, extSignalBufSize)
     }
     else if (sType == "TimeSync")
     {
-        MAKE_INLET(LSL_streamer::timeSync, timeSyncBufSize)
+        MAKE_INLET(TittaLSL::timeSync, timeSyncBufSize)
     }
     else if (sType == "Positioning")
     {
-        MAKE_INLET(LSL_streamer::positioning, positioningBufSize)
+        MAKE_INLET(TittaLSL::positioning, positioningBufSize)
     }
     else
-        DoExitWithMsg(string_format("LSL_streamer::createListener: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::createListener: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
 
     if (createdInlet)
     {
@@ -1393,12 +1393,12 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
 #undef MAKE_INLET
 }
 
-Titta::Stream LSL_streamer::getInletType(const uint32_t id_) const
+Titta::Stream TittaLSL::getInletType(const uint32_t id_) const
 {
     return getInletTypeImpl(getAllInletsVariant(id_));
 }
 
-lsl::stream_info LSL_streamer::getInletInfo(const uint32_t id_) const
+lsl::stream_info TittaLSL::getInletInfo(const uint32_t id_) const
 {
     // get inlet
     auto& inlet = getAllInletsVariant(id_);
@@ -1411,7 +1411,7 @@ lsl::stream_info LSL_streamer::getInletInfo(const uint32_t id_) const
     return lslInlet.info(2.);
 }
 
-void LSL_streamer::startListening(const uint32_t id_)
+void TittaLSL::startListening(const uint32_t id_)
 {
     auto& inlet = getAllInletsVariant(id_);
     // ignore if listener already started
@@ -1427,30 +1427,30 @@ void LSL_streamer::startListening(const uint32_t id_)
     {
     case Titta::Stream::Gaze:
     case Titta::Stream::EyeOpenness:
-        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<gaze>, this, id_);
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&TittaLSL::recorderThreadFunc<gaze>, this, id_);
         break;
     case Titta::Stream::EyeImage:
         break;
     case Titta::Stream::ExtSignal:
-        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<extSignal>, this, id_);
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&TittaLSL::recorderThreadFunc<extSignal>, this, id_);
         break;
     case Titta::Stream::TimeSync:
-        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<timeSync>, this, id_);
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&TittaLSL::recorderThreadFunc<timeSync>, this, id_);
         break;
     case Titta::Stream::Positioning:
-        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&LSL_streamer::recorderThreadFunc<positioning>, this, id_);
+        getInlet<gaze>(id_)._recorder = std::make_unique<std::thread>(&TittaLSL::recorderThreadFunc<positioning>, this, id_);
         break;
     }
 }
 
-bool LSL_streamer::isListening(const uint32_t id_) const
+bool TittaLSL::isListening(const uint32_t id_) const
 {
     auto& inlet = getAllInletsVariant(id_);
     return getWorkerThread(inlet) && getWorkerThreadStopFlag(inlet);
 }
 
 template <typename DataType>
-void LSL_streamer::recorderThreadFunc(const uint32_t id_)
+void TittaLSL::recorderThreadFunc(const uint32_t id_)
 {
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<DataType>>;
     constexpr size_t numElem = LSLInletTypeNumSamples_v<DataType>;
@@ -1467,7 +1467,7 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
         if constexpr (std::is_same_v<DataType, gaze>)
         {
             data_t* ptr = sample;
-            inlet._buffer.emplace_back(LSL_streamer::gaze{
+            inlet._buffer.emplace_back(TittaLSL::gaze{
                 {
                     {   // left eye
                         {   // gazePoint
@@ -1543,14 +1543,14 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
             timeStampSecondsToUs(remoteT + tCorr)
             });
         }
-        else if constexpr (std::is_same_v<DataType, LSL_streamer::eyeImage>)
+        else if constexpr (std::is_same_v<DataType, TittaLSL::eyeImage>)
         {
 
         }
-        else if constexpr (std::is_same_v<DataType, LSL_streamer::extSignal>)
+        else if constexpr (std::is_same_v<DataType, TittaLSL::extSignal>)
         {
             data_t* ptr = sample;
-            inlet._buffer.emplace_back(LSL_streamer::extSignal{
+            inlet._buffer.emplace_back(TittaLSL::extSignal{
                 {
                     *ptr++, *ptr++, static_cast<uint32_t>(*ptr++), *ptr==TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED? TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED: *ptr == TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE? TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE: TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED
                 },
@@ -1558,10 +1558,10 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                 timeStampSecondsToUs(remoteT + tCorr)
             });
         }
-        else if constexpr (std::is_same_v<DataType, LSL_streamer::timeSync>)
+        else if constexpr (std::is_same_v<DataType, TittaLSL::timeSync>)
         {
             data_t* ptr = sample;
-            inlet._buffer.emplace_back(LSL_streamer::timeSync{
+            inlet._buffer.emplace_back(TittaLSL::timeSync{
                 {
                     *ptr++, *ptr++, *ptr
                 },
@@ -1569,10 +1569,10 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
                 timeStampSecondsToUs(remoteT + tCorr)
             });
         }
-        else if constexpr (std::is_same_v<DataType, LSL_streamer::positioning>)
+        else if constexpr (std::is_same_v<DataType, TittaLSL::positioning>)
         {
             data_t* ptr = sample;
-            inlet._buffer.emplace_back(LSL_streamer::positioning{
+            inlet._buffer.emplace_back(TittaLSL::positioning{
                 {
                     // left eye
                     {
@@ -1594,7 +1594,7 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
 
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
+std::vector<DataType> TittaLSL::consumeN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
     const auto N    = NSamp_.value_or(defaults::consumeNSamp);
@@ -1608,7 +1608,7 @@ std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, const std::opti
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> TittaLSL::consumeTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     const auto timeStart        = timeStart_      .value_or(defaults::consumeTimeRangeStart);
@@ -1624,7 +1624,7 @@ std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, const s
 }
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
+std::vector<DataType> TittaLSL::peekN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
     const auto N    = NSamp_.value_or(defaults::peekNSamp);
@@ -1638,7 +1638,7 @@ std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, const std::optiona
     return peekFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> TittaLSL::peekTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     auto timeStart       = timeStart_      .value_or(defaults::peekTimeRangeStart);
@@ -1653,7 +1653,7 @@ std::vector<DataType> LSL_streamer::peekTimeRange(const uint32_t id_, const std:
     return peekFromVec(buf, startIt, endIt);
 }
 
-void LSL_streamer::clear(const uint32_t id_)
+void TittaLSL::clear(const uint32_t id_)
 {
     // visit with generic lambda so we get the inlet, lock and cal clear() on its buffer
     const auto stream = getInletType(id_);
@@ -1669,7 +1669,7 @@ void LSL_streamer::clear(const uint32_t id_)
     else
         clearTimeRange(id_);
 }
-void LSL_streamer::clearTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+void TittaLSL::clearTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     const auto timeStart        = timeStart_      .value_or(defaults::clearTimeRangeStart);
@@ -1683,16 +1683,16 @@ void LSL_streamer::clearTimeRange(const uint32_t id_, const std::optional<int64_
     {
         case Titta::Stream::Gaze:
         case Titta::Stream::EyeOpenness:
-            clearVec(getInlet<LSL_streamer::gaze>(id_), timeStart, timeEnd, timeIsLocalTime);
+            clearVec(getInlet<TittaLSL::gaze>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::EyeImage:
-            clearVec(getInlet<LSL_streamer::eyeImage>(id_), timeStart, timeEnd, timeIsLocalTime);
+            clearVec(getInlet<TittaLSL::eyeImage>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::ExtSignal:
-            clearVec(getInlet<LSL_streamer::extSignal>(id_), timeStart, timeEnd, timeIsLocalTime);
+            clearVec(getInlet<TittaLSL::extSignal>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::TimeSync:
-            clearVec(getInlet<LSL_streamer::timeSync>(id_), timeStart, timeEnd, timeIsLocalTime);
+            clearVec(getInlet<TittaLSL::timeSync>(id_), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::Positioning:
             DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
@@ -1700,7 +1700,7 @@ void LSL_streamer::clearTimeRange(const uint32_t id_, const std::optional<int64_
     }
 }
 
-void LSL_streamer::stopListening(const uint32_t id_, const std::optional<bool> clearBuffer_)
+void TittaLSL::stopListening(const uint32_t id_, const std::optional<bool> clearBuffer_)
 {
     // deal with default arguments
     const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
@@ -1726,7 +1726,7 @@ void LSL_streamer::stopListening(const uint32_t id_, const std::optional<bool> c
         clear(id_);
 }
 
-void LSL_streamer::deleteListener(const uint32_t id_)
+void TittaLSL::deleteListener(const uint32_t id_)
 {
     stopListening(id_);
 
@@ -1735,32 +1735,32 @@ void LSL_streamer::deleteListener(const uint32_t id_)
 }
 
 // gaze data (including eye openness), instantiate templated functions
-template std::vector<LSL_streamer::gaze> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::gaze> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSL_streamer::gaze> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::gaze> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::gaze> TittaLSL::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::gaze> TittaLSL::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::gaze> TittaLSL::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::gaze> TittaLSL::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // eye images, instantiate templated functions
-template std::vector<LSL_streamer::eyeImage> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::eyeImage> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSL_streamer::eyeImage> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::eyeImage> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::eyeImage> TittaLSL::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::eyeImage> TittaLSL::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::eyeImage> TittaLSL::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::eyeImage> TittaLSL::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // external signals, instantiate templated functions
-template std::vector<LSL_streamer::extSignal> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::extSignal> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSL_streamer::extSignal> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::extSignal> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::extSignal> TittaLSL::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::extSignal> TittaLSL::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::extSignal> TittaLSL::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::extSignal> TittaLSL::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // time sync data, instantiate templated functions
-template std::vector<LSL_streamer::timeSync> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::timeSync> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
-template std::vector<LSL_streamer::timeSync> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-template std::vector<LSL_streamer::timeSync> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::timeSync> TittaLSL::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::timeSync> TittaLSL::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
+template std::vector<TittaLSL::timeSync> TittaLSL::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+template std::vector<TittaLSL::timeSync> TittaLSL::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_);
 
 // positioning data, instantiate templated functions
 // NB: positioning data does not have timestamps, so the Time Range version of the below functions are not defined for the positioning stream
-template std::vector<LSL_streamer::positioning> LSL_streamer::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-//template std::vector<LSL_streamer::positioning> LSL_streamer::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
-template std::vector<LSL_streamer::positioning> LSL_streamer::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
-//template std::vector<LSL_streamer::positioning> LSL_streamer::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TittaLSL::positioning> TittaLSL::consumeN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+//template std::vector<TittaLSL::positioning> TittaLSL::consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);
+template std::vector<TittaLSL::positioning> TittaLSL::peekN(uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_);
+//template std::vector<TittaLSL::positioning> TittaLSL::peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_);

@@ -21,7 +21,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TittaLSL.cpp">
+    <ClCompile Include="TittaLSLPy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

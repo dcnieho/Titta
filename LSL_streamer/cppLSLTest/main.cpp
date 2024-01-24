@@ -1,4 +1,4 @@
-#include "LSL_streamer/LSL_streamer.h"
+#include "TittaLSL/TittaLSL.h"
 
 #include <Titta/Titta.h>
 
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
         if (!eyeTrackers.empty())
         {
             std::cout << "connecting to: " << eyeTrackers[0].deviceName << std::endl;
-            auto tobii_lsl = LSL_streamer(eyeTrackers[0]);
+            auto tobii_lsl = TittaLSL(eyeTrackers[0]);
 
             std::cout << "starting stream" << std::endl;
             tobii_lsl.setIncludeEyeOpennessInGaze(true);
@@ -35,13 +35,13 @@ int main(int argc, char** argv)
             tobii_lsl.startOutlet(Titta::Stream::Positioning);
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            auto streams = LSL_streamer::getRemoteStreams("");
+            auto streams = TittaLSL::getRemoteStreams("");
             for (auto& s: streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
             }
             std::cout << "----" << std::endl;
-            streams = LSL_streamer::getRemoteStreams("gaze");
+            streams = TittaLSL::getRemoteStreams("gaze");
             for (auto& s : streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
             std::cout << "done" << std::endl;
-            auto data = tobii_lsl.consumeN<LSL_streamer::gaze>(id, 1);
+            auto data = tobii_lsl.consumeN<TittaLSL::gaze>(id, 1);
 
             tobii_lsl.deleteListener(id);
         }
