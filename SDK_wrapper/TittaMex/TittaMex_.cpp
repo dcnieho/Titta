@@ -76,10 +76,14 @@ namespace mxTypes
     // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
     // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
     template <>
+    struct typeToMxClass<TobiiTypes::eyeTracker> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+    template <>
     struct typeToMxClass<TobiiTypes::CalibrationPoint> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
     template <>
     struct typeToMxClass<Titta::notification> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
 
+    template <>
+    struct typeNeedsMxCellStorage<TobiiTypes::eyeTracker> { static constexpr bool value = false; };
     template <>
     struct typeNeedsMxCellStorage<TobiiTypes::CalibrationPoint> { static constexpr bool value = false; };
     template <>
@@ -90,7 +94,7 @@ namespace mxTypes
     mxArray* TobiiFieldToMatlab(const Cont& data_, bool rowVectors_, Fs... fields);
 
     mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
-    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker>               data_);
+    mxArray* ToMatlab(TobiiTypes::eyeTracker data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(TobiiResearchCapabilities                         data_);
 
     mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
@@ -139,6 +143,7 @@ namespace {
         GetSDKVersion,
         GetSystemTimestamp,
         FindAllEyeTrackers,
+        GetEyeTrackersFromAddress,
         // logging
         StartLogging,
         GetLog,
@@ -212,6 +217,7 @@ namespace {
         { "getSDKVersion",                  Action::GetSDKVersion },
         { "getSystemTimestamp",             Action::GetSystemTimestamp },
         { "findAllEyeTrackers",             Action::FindAllEyeTrackers },
+        { "getEyeTrackersFromAddress",      Action::GetEyeTrackersFromAddress },
         // logging
         { "startLogging",                   Action::StartLogging },
         { "getLog",                         Action::GetLog },
@@ -332,7 +338,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         InstanceMapType::const_iterator instIt;
         InstancePtrType instance;
         if (action != Action::Touch && action != Action::New &&
-            action != Action::GetSDKVersion && action != Action::GetSystemTimestamp && action != Action::FindAllEyeTrackers &&
+            action != Action::GetSDKVersion && action != Action::GetSystemTimestamp &&
+            action != Action::FindAllEyeTrackers && action != Action::GetEyeTrackersFromAddress &&
             action != Action::StartLogging && action != Action::GetLog && action != Action::StopLogging &&
             action != Action::CheckStream && action != Action::CheckBufferSide &&
             action != Action::GetAllStreamsString && action != Action::GetAllBufferSidesString)
@@ -388,6 +395,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::FindAllEyeTrackers:
         {
             plhs[0] = mxTypes::ToMatlab(Titta::findAllEyeTrackers());
+            break;
+        }
+        case Action::GetEyeTrackersFromAddress:
+        {
+            if (nrhs < 2 || !mxIsChar(prhs[1]))
+                throw "TittaMex: Second argument must be a string.";
+
+            char* address = mxArrayToString(prhs[1]);
+            auto insResult = instanceTab.insert({ ++handleVal, std::make_shared<ClassType>(address) });
+            mxFree(address);
+
+            plhs[0] = mxTypes::ToMatlab(Titta::getEyeTrackersFromAddress(address));
             break;
         }
         case Action::StartLogging:
@@ -1230,27 +1249,29 @@ namespace mxTypes
     {
         return ToMatlab(string_format("%d.%d.%d.%d", data_.major, data_.minor, data_.revision, data_.build));
     }
-    mxArray* ToMatlab(std::vector<TobiiTypes::eyeTracker> data_)
+    mxArray* ToMatlab(TobiiTypes::eyeTracker data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
-        const char* fieldNames[] = {"deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","frequency","trackingMode","capabilities","supportedFrequencies","supportedModes"};
-        mxArray* out = mxCreateStructMatrix(static_cast<mwSize>(data_.size()), 1, static_cast<int>(std::size(fieldNames)), fieldNames);
-
-        for (size_t i = 0; i!=data_.size(); i++)
+        if (idx_ == 0)
         {
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  0, ToMatlab(data_[i].deviceName));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  1, ToMatlab(data_[i].serialNumber));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  2, ToMatlab(data_[i].model));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  3, ToMatlab(data_[i].firmwareVersion));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  4, ToMatlab(data_[i].runtimeVersion));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  5, ToMatlab(data_[i].address));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  6, ToMatlab(static_cast<double>(data_[i].frequency)));    // output as double, not single
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  7, ToMatlab(data_[i].trackingMode));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  8, ToMatlab(data_[i].capabilities));
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i),  9, ToMatlab(std::vector<double>(data_[i].supportedFrequencies.begin(), data_[i].supportedFrequencies.end()))); // return frequencies as double, not single, precision
-            mxSetFieldByNumber(out, static_cast<mwIndex>(i), 10, ToMatlab(data_[i].supportedModes));
+            const char* fieldNames[] = { "deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","frequency","trackingMode","capabilities","supportedFrequencies","supportedModes" };
+            storage_ = mxCreateStructMatrix(size_, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
+            if (size_ == 0)
+                return storage_;
         }
 
-        return out;
+        mxSetFieldByNumber(storage_, idx_,  0, ToMatlab(data_.deviceName));
+        mxSetFieldByNumber(storage_, idx_,  1, ToMatlab(data_.serialNumber));
+        mxSetFieldByNumber(storage_, idx_,  2, ToMatlab(data_.model));
+        mxSetFieldByNumber(storage_, idx_,  3, ToMatlab(data_.firmwareVersion));
+        mxSetFieldByNumber(storage_, idx_,  4, ToMatlab(data_.runtimeVersion));
+        mxSetFieldByNumber(storage_, idx_,  5, ToMatlab(data_.address));
+        mxSetFieldByNumber(storage_, idx_,  6, ToMatlab(static_cast<double>(data_.frequency)));    // output as double, not single
+        mxSetFieldByNumber(storage_, idx_,  7, ToMatlab(data_.trackingMode));
+        mxSetFieldByNumber(storage_, idx_,  8, ToMatlab(data_.capabilities));
+        mxSetFieldByNumber(storage_, idx_,  9, ToMatlab(std::vector<double>(data_.supportedFrequencies.begin(), data_.supportedFrequencies.end()))); // return frequencies as double, not single, precision
+        mxSetFieldByNumber(storage_, idx_, 10, ToMatlab(data_.supportedModes));
+
+        return storage_;
     }
 
     mxArray* ToMatlab(TobiiResearchCapabilities data_)

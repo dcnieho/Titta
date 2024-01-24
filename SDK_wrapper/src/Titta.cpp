@@ -299,6 +299,14 @@ std::vector<TobiiTypes::eyeTracker> Titta::findAllEyeTrackers()
 
     return eyeTrackers;
 }
+TobiiTypes::eyeTracker Titta::getEyeTrackersFromAddress(std::string address_)
+{
+    TobiiResearchEyeTracker* et;
+    const TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
+    return et;
+}
 
 // logging static functions
 bool Titta::startLogging(std::optional<size_t> initialBufferSize_)
