@@ -23,16 +23,6 @@ using namespace pybind11::literals;
 
 
 
-template<typename ... Args>
-std::string string_format(const std::string& format, Args ... args)
-{
-    auto size = static_cast<size_t>(snprintf(nullptr, 0, format.c_str(), args ...)) + 1; // Extra space for '\0'
-    std::unique_ptr<char[]> buf(new char[size]);
-    snprintf(buf.get(), size, format.c_str(), args ...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
-
-
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
 template<bool UseArray, typename V, typename... Fs>
 void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)

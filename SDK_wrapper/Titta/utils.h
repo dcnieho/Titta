@@ -1,8 +1,18 @@
 #pragma once
 #include <string>
+#include <memory>
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
+
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+    const auto size = static_cast<size_t>(snprintf(nullptr, 0, format.c_str(), args ...)) + 1; // Extra space for '\0'
+    const std::unique_ptr<char[]> buf(new char[size]);
+    snprintf(buf.get(), size, format.c_str(), args ...);
+    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
 
 std::string TobiiResearchStatusToString     (TobiiResearchStatus trs_);
 std::string TobiiResearchStatusToExplanation(TobiiResearchStatus trs_);
