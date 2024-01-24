@@ -1307,7 +1307,7 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::string stream_
     else
         return getRemoteStreams(std::nullopt);
 }
-std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta::Stream> stream_)
+std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(const std::optional<Titta::Stream> stream_)
 {
     // filter if wanted
     if (stream_.has_value())
@@ -1321,7 +1321,7 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
         return lsl::resolve_streams(2.);
 }
 
-uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional<size_t> initialBufferSize_, std::optional<bool> startListening_)
+uint32_t LSL_streamer::createListener(std::string streamSourceID_, const std::optional<size_t> initialBufferSize_, const std::optional<bool> startListening_)
 {
     if (streamSourceID_.empty())
         DoExitWithMsg("LSL_streamer::createListener: must specify stream source ID, cannot be empty");
@@ -1402,13 +1402,13 @@ lsl::stream_info LSL_streamer::getInletInfo(const uint32_t id_) const
 {
     // get inlet
     auto& inlet = getAllInletsVariant(id_);
-    lsl::stream_inlet& lsl_inlet = std::visit(
+    lsl::stream_inlet& lslInlet = std::visit(
         [](auto& in_) -> lsl::stream_inlet& {
             return in_._lsl_inlet;
         }, inlet);
 
     // return it's stream info
-    return lsl_inlet.info(2.);
+    return lslInlet.info(2.);
 }
 
 void LSL_streamer::startListening(const uint32_t id_)
@@ -1594,7 +1594,7 @@ void LSL_streamer::recorderThreadFunc(const uint32_t id_)
 
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
+std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
     const auto N    = NSamp_.value_or(defaults::consumeNSamp);
@@ -1608,7 +1608,7 @@ std::vector<DataType> LSL_streamer::consumeN(const uint32_t id_, std::optional<s
     return consumeFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     const auto timeStart        = timeStart_      .value_or(defaults::consumeTimeRangeStart);
@@ -1624,7 +1624,7 @@ std::vector<DataType> LSL_streamer::consumeTimeRange(const uint32_t id_, std::op
 }
 
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, std::optional<size_t> NSamp_, std::optional<Titta::BufferSide> side_)
+std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, const std::optional<size_t> NSamp_, const std::optional<Titta::BufferSide> side_)
 {
     // deal with default arguments
     const auto N    = NSamp_.value_or(defaults::peekNSamp);
@@ -1638,7 +1638,7 @@ std::vector<DataType> LSL_streamer::peekN(const uint32_t id_, std::optional<size
     return peekFromVec(buf, startIt, endIt);
 }
 template <typename DataType>
-std::vector<DataType> LSL_streamer::peekTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+std::vector<DataType> LSL_streamer::peekTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     auto timeStart       = timeStart_      .value_or(defaults::peekTimeRangeStart);
@@ -1669,7 +1669,7 @@ void LSL_streamer::clear(const uint32_t id_)
     else
         clearTimeRange(id_);
 }
-void LSL_streamer::clearTimeRange(const uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+void LSL_streamer::clearTimeRange(const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
 {
     // deal with default arguments
     const auto timeStart        = timeStart_      .value_or(defaults::clearTimeRangeStart);
@@ -1700,7 +1700,7 @@ void LSL_streamer::clearTimeRange(const uint32_t id_, std::optional<int64_t> tim
     }
 }
 
-void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBuffer_)
+void LSL_streamer::stopListening(const uint32_t id_, const std::optional<bool> clearBuffer_)
 {
     // deal with default arguments
     const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
