@@ -22,9 +22,8 @@ using namespace pybind11::literals;
 #include "tobii_elem_count.h"
 
 
-
-
-
+namespace
+{
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
 template<bool UseArray, typename V, typename... Fs>
 void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
@@ -59,7 +58,7 @@ void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::stri
 }
 
 template<typename V, typename... Fs>
-void TobiiFieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
+void TobiiFieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields_)
 {
     // get type member variable accessed through the last pointer-to-member-variable in the parameter pack (this is not necessarily the last type in the parameter pack as that can also be the type tag if the user explicitly requested a return type)
     using memVar = std::conditional_t<std::is_member_object_pointer_v<last<0, V, Fs...>>, last<0, V, Fs...>, last<1, V, Fs...>>;
@@ -70,12 +69,12 @@ void TobiiFieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std:
     // this is one of the 2D/3D point types
     // determine what return type we get
     // NB: appending extra field to access leads to wrong order if type tag was provided by user. nested_field::getWrapper detects this and corrects for it
-    using U = decltype(nested_field::getWrapper(std::declval<V>(), std::forward<Fs>(fields)..., &retT::x));
+    using U = decltype(nested_field::getWrapper(std::declval<V>(), std::forward<Fs>(fields_)..., &retT::x));
 
-    FieldToNpArray<true>(out_, data_, name_ + "_x", std::forward<Fs>(fields)..., &retT::x);
-    FieldToNpArray<true>(out_, data_, name_ + "_y", std::forward<Fs>(fields)..., &retT::y);
+    FieldToNpArray<true>(out_, data_, name_ + "_x", std::forward<Fs>(fields_)..., &retT::x);
+    FieldToNpArray<true>(out_, data_, name_ + "_y", std::forward<Fs>(fields_)..., &retT::y);
     if constexpr (numElements == 3)
-        FieldToNpArray<true>(out_, data_, name_ + "_z", std::forward<Fs>(fields)..., &retT::z);
+        FieldToNpArray<true>(out_, data_, name_ + "_z", std::forward<Fs>(fields_)..., &retT::z);
 }
 
 void FieldToNpArray(py::dict& out_, const std::vector<LSL_streamer::gaze>& data_, const std::string& name_, TobiiTypes::eyeData Titta::gaze::* field_)
@@ -160,7 +159,7 @@ void outputEyeImages(py::dict& out_, const std::vector<LSL_streamer::eyeImage>& 
 
 
 
-py::dict StructVectorToDict(std::vector<LSL_streamer::gaze> data_)
+py::dict StructVectorToDict(std::vector<LSL_streamer::gaze>&& data_)
 {
     py::dict out;
 
@@ -180,12 +179,12 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::gaze> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<LSL_streamer::eyeImage> data_)
+py::dict StructVectorToDict(std::vector<LSL_streamer::eyeImage>&& data_)
 {
     py::dict out;
 
     // check if all gif, then don't output unneeded fields
-    bool allGif = allEquals(data_, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
+    const bool allGif = allEquals(data_, &LSL_streamer::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
 
     FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &LSL_streamer::eyeImage::remote_system_time_stamp);
     FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &LSL_streamer::eyeImage::local_system_time_stamp);
@@ -207,7 +206,7 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::eyeImage> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<LSL_streamer::extSignal> data_)
+py::dict StructVectorToDict(std::vector<LSL_streamer::extSignal>&& data_)
 {
     py::dict out;
 
@@ -221,7 +220,7 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::extSignal> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<LSL_streamer::timeSync> data_)
+py::dict StructVectorToDict(std::vector<LSL_streamer::timeSync>&& data_)
 {
     py::dict out;
 
@@ -234,7 +233,7 @@ py::dict StructVectorToDict(std::vector<LSL_streamer::timeSync> data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<LSL_streamer::positioning> data_)
+py::dict StructVectorToDict(std::vector<LSL_streamer::positioning>&& data_)
 {
     py::dict out;
 
@@ -268,7 +267,7 @@ py::dict StructToDict(const lsl::stream_info& data_)
     return d;
 }
 
-py::list StructVectorToList(const std::vector<lsl::stream_info>& data_)
+py::list StructVectorToList(std::vector<lsl::stream_info>&& data_)
 {
     py::list out;
 
@@ -277,7 +276,7 @@ py::list StructVectorToList(const std::vector<lsl::stream_info>& data_)
 
     return out;
 }
-
+}
 
 
 // start module scope
@@ -315,12 +314,12 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("connect", py::overload_cast<std::string>(&LSL_streamer::connect),
             "address"_a)
 
-        .def("start_outlet", [](LSL_streamer& instance, std::string stream_, std::optional<bool> as_gif_) { return instance.startOutlet(std::move(stream_), as_gif_, true); },
+        .def("start_outlet", [](LSL_streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.startOutlet(std::move(stream_), as_gif_, true); },
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
         .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&LSL_streamer::startOutlet),
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
 
-        .def("is_streaming", [](const LSL_streamer& instance, std::string stream_) -> bool { return instance.isStreaming(std::move(stream_), true); },
+        .def("is_streaming", [](const LSL_streamer& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
             "stream"_a)
         .def("is_streaming", py::overload_cast<Titta::Stream>(&LSL_streamer::isStreaming, py::const_),
             "stream"_a)
@@ -328,7 +327,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("set_include_eye_openness_in_gaze", &LSL_streamer::setIncludeEyeOpennessInGaze,
             "include"_a)
 
-        .def("stop_outlet", [](LSL_streamer& instance, std::string stream_) { instance.stopOutlet(std::move(stream_), true); },
+        .def("stop_outlet", [](LSL_streamer& instance_, std::string stream_) { instance_.stopOutlet(std::move(stream_), true); },
             "stream"_a)
         .def("stop_outlet", py::overload_cast<Titta::Stream>(&LSL_streamer::stopOutlet),
             "stream"_a)
@@ -337,7 +336,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("create_listener", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&LSL_streamer::createListener),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
 
-        .def("get_inlet_info", [](const LSL_streamer& instance, uint32_t id_) { return StructToDict(instance.getInletInfo(id_)); },
+        .def("get_inlet_info", [](const LSL_streamer& instance_, const uint32_t id_) { return StructToDict(instance_.getInletInfo(id_)); },
             "inlet_id"_a)
         .def("get_inlet_type", py::overload_cast<uint32_t>(&LSL_streamer::getInletType, py::const_),
             "inlet_id"_a)
@@ -349,7 +348,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "inlet_id"_a)
 
         .def("consume_N",
-            [](LSL_streamer& instance_, uint32_t id_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](LSL_streamer& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -379,7 +378,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             },
             "inlet_id"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("consume_time_range",
-            [](LSL_streamer& instance_, uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+            [](LSL_streamer& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
                 switch (instance_.getInletType(id_))
@@ -401,7 +400,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
         .def("peek_N",
-            [](LSL_streamer& instance_, uint32_t id_, std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](LSL_streamer& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -431,7 +430,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             },
             "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("peek_time_range",
-            [](LSL_streamer& instance_, uint32_t id_, std::optional<int64_t> timeStart_, std::optional<int64_t> timeEnd_, std::optional<bool> timeIsLocalTime_)
+            [](LSL_streamer& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
                 switch (instance_.getInletType(id_))
