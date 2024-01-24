@@ -250,7 +250,7 @@ void LSL_streamer::CheckClocks()
     // should be well within a millisecond (actually, if different clocks are used
     // it would be super wrong), so check
     if (std::abs(average) > 0.001)
-        DoExitWithMsg(std::format("LSL and Tobii/Titta clocks are not the same (average offset over {} samples was {:.3f} s), or you are having some serious clock trouble. Cannot continue", nSample, average));
+        DoExitWithMsg(string_format("LSL and Tobii/Titta clocks are not the same (average offset over {} samples was {:.3f} s), or you are having some serious clock trouble. Cannot continue", nSample, average));
 }
 
 
@@ -329,19 +329,19 @@ bool LSL_streamer::startOutlet(const Titta::Stream stream_, std::optional<bool> 
         format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Positioning>>;
         break;
     default:
-        DoExitWithMsg(std::format("LSL_streamer::cpp::startOutlet: opening an outlet for {} stream is not supported.", Titta::streamToString(stream_)));
+        DoExitWithMsg(string_format("LSL_streamer::cpp::startOutlet: opening an outlet for {} stream is not supported.", Titta::streamToString(stream_)));
         break;
     }
 
     // set up the outlet
-    auto streamName = Titta::streamToString(stream_);
-    auto lslStreamName = std::format("Tobii_{}", streamName);
+    const auto streamName = Titta::streamToString(stream_);
+    const auto lslStreamName = string_format("Tobii_{}", streamName);
     lsl::stream_info info(lslStreamName,
         type,
         nChannel,
         hasFreq ? _localEyeTracker->frequency : lsl::IRREGULAR_RATE,
         format,
-        std::format("LSL_streamer:{}@{}", lslStreamName, _localEyeTracker->serialNumber));
+        string_format("LSL_streamer:{}@{}", lslStreamName, _localEyeTracker->serialNumber));
 
     // create meta-data
     info.desc()
@@ -1259,14 +1259,14 @@ void checkInletType(LSL_streamer::AllInlets& inlet_, const uint32_t id_)
     {
         const auto wanted = LSLInletTypeToTittaStream_v<DataType>;
         const auto actual = getInletTypeImpl(inlet_);
-        DoExitWithMsg(std::format("Inlet with id {} should be of type {}, but the inlet associated with that ID instead was of type {}. Fatal error", id_, Titta::streamToString(wanted), Titta::streamToString(actual)));
+        DoExitWithMsg(string_format("Inlet with id {} should be of type {}, but the inlet associated with that ID instead was of type {}. Fatal error", id_, Titta::streamToString(wanted), Titta::streamToString(actual)));
     }
 }
 
 LSL_streamer::AllInlets& LSL_streamer::getAllInletsVariant(const uint32_t id_) const
 {
     if (!_inStreams.contains(id_))
-        DoExitWithMsg(std::format("No inlet with id {} is known", id_));
+        DoExitWithMsg(string_format("No inlet with id {} is known", id_));
 
     return *_inStreams.at(id_);
 }
@@ -1313,8 +1313,8 @@ std::vector<lsl::stream_info> LSL_streamer::getRemoteStreams(std::optional<Titta
     if (stream_.has_value())
     {
         if (*stream_!=Titta::Stream::Gaze && *stream_!=Titta::Stream::EyeImage && *stream_!=Titta::Stream::ExtSignal && *stream_!=Titta::Stream::TimeSync && *stream_!=Titta::Stream::Positioning)
-            DoExitWithMsg(std::format("LSL_streamer::cpp::getRemoteStreams: {} streams are not supported.", Titta::streamToString(*stream_)));
-        const auto streamName = std::format("Tobii_{}", Titta::streamToString(*stream_));
+            DoExitWithMsg(string_format("LSL_streamer::cpp::getRemoteStreams: {} streams are not supported.", Titta::streamToString(*stream_)));
+        const auto streamName = string_format("Tobii_{}", Titta::streamToString(*stream_));
         return lsl::resolve_stream("name", streamName, 0, 2.);
     }
     else
@@ -1329,9 +1329,9 @@ uint32_t LSL_streamer::createListener(std::string streamSourceID_, std::optional
     // find stream with specified source ID
     const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 2.);
     if (streams.empty())
-        DoExitWithMsg(std::format("LSL_streamer::createListener: stream with source ID {} could not be found", streamSourceID_));
+        DoExitWithMsg(string_format("LSL_streamer::createListener: stream with source ID {} could not be found", streamSourceID_));
     else if (streams.size()>1)
-        DoExitWithMsg(std::format("LSL_streamer::createListener: more than one stream with source ID {} found", streamSourceID_));
+        DoExitWithMsg(string_format("LSL_streamer::createListener: more than one stream with source ID {} found", streamSourceID_));
 
     // start listening
     return createListener(streams[0], initialBufferSize_, startListening_);
@@ -1342,7 +1342,7 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
     const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
 
     if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
-        DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
+        DoExitWithMsg(string_format("LSL_streamer::createListener: stream {} (source_id: {}) is not an LSL_streamer stream, cannot be used.", streamInfo_.name(), streamInfo_.source_id()));
 
 # define MAKE_INLET(type, defaultName) \
     _inStreams.emplace(id, \
@@ -1377,7 +1377,7 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
         MAKE_INLET(LSL_streamer::positioning, positioningBufSize)
     }
     else
-        DoExitWithMsg(std::format("LSL_streamer::createListener: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), sType));
+        DoExitWithMsg(string_format("LSL_streamer::createListener: stream {} (source_id: {}) has type {}, which is not understood.", streamInfo_.name(), streamInfo_.source_id(), sType));
 
     if (createdInlet)
     {

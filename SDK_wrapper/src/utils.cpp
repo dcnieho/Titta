@@ -1,7 +1,5 @@
 #include "Titta/utils.h"
 
-#include <sstream>
-
 namespace
 {
     struct TobiiResearchStatusInfo
@@ -122,9 +120,7 @@ namespace
                 return TobiiResearchStatusInfo{"TOBII_RESEARCH_STATUS_UNKNOWN", static_cast<int>(TOBII_RESEARCH_STATUS_UNKNOWN), "Unknown error"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::lookupTobiiResearchStatus: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchStatus: code %d unknown", in_));
                 return TobiiResearchStatusInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
@@ -150,9 +146,7 @@ namespace
                 return TobiiResearchLogSourceInfo{"TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE", static_cast<int>(TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE), "The log message is from the firmware upgrade module"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::lookupTobiiResearchLogSource: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchLogSource: code %d unknown", in_));
                 return TobiiResearchLogSourceInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
@@ -182,9 +176,7 @@ namespace
                 return TobiiResearchLogLevelInfo{"TOBII_RESEARCH_LOG_LEVEL_TRACE", static_cast<int>(TOBII_RESEARCH_LOG_LEVEL_TRACE), "Trace message"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::lookupTobiiResearchLogLevel: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchLogLevel: code %d unknown", in_));
                 return TobiiResearchLogLevelInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
@@ -216,9 +208,7 @@ namespace
                 return TobiiResearchStreamErrorInfo{"TOBII_RESEARCH_STREAM_ERROR_USER_ERROR", static_cast<int>(TOBII_RESEARCH_STREAM_ERROR_USER_ERROR), "Indicates that the user threw an exception in the callback"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::lookupTobiiResearchStreamError: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchStreamError: code %d unknown", in_));
                 return TobiiResearchStreamErrorInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
@@ -256,9 +246,7 @@ namespace
                 return TobiiResearchStreamErrorSourceInfo{"TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE", static_cast<int>(TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE), "Error when subscribing to event for user position guide"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::lookupTobiiResearchStreamErrorSourceInfo: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchStreamErrorSourceInfo: code %d unknown", in_));
                 return TobiiResearchStreamErrorSourceInfo{"", static_cast<int>(-999), ""};  // to shut up compiler warnings
             }
         }
@@ -302,9 +290,7 @@ namespace
             return TobiiResearchNotificationTypeInfo{ "TOBII_RESEARCH_NOTIFICATION_UNKNOWN", static_cast<int>(TOBII_RESEARCH_NOTIFICATION_UNKNOWN), " " };
         default:
         {
-            std::stringstream os;
-            os << "Titta::cpp::lookupTobiiResearchNotificationType: code " << in_ << " unknown";
-            DoExitWithMsg(os.str());
+            DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchNotificationType: code %d unknown", in_));
             return TobiiResearchNotificationTypeInfo{ "", static_cast<int>(-999), "" };  // to shut up compiler warnings
         }
         }
@@ -332,9 +318,7 @@ namespace
             return TobiiResearchEyeImageTypeInfo{ "TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN", static_cast<int>(TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN), "The eye image has an unexpected type" };
         default:
         {
-            std::stringstream os;
-            os << "Titta::cpp::lookupTobiiResearchEyeImage: code " << in_ << " unknown";
-            DoExitWithMsg(os.str());
+            DoExitWithMsg(string_format("Titta::cpp::lookupTobiiResearchEyeImage: code %d unknown", in_));
             return TobiiResearchEyeImageTypeInfo{ "", static_cast<int>(-999), "" };  // to shut up compiler warnings
         }
         }
@@ -374,9 +358,7 @@ namespace
                 return TobiiResearchLicenseValidationResultInfo{"TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN", static_cast<int>(TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN), "The license validation returned an unexpected result"};
             default:
             {
-                std::stringstream os;
-                os << "Titta::cpp::TobiiResearchLicenseValidationResult: code " << in_ << " unknown";
-                DoExitWithMsg(os.str());
+                DoExitWithMsg(string_format("Titta::cpp::TobiiResearchLicenseValidationResult: code %d unknown", in_));
                 return TobiiResearchLicenseValidationResultInfo{ "", static_cast<int>(-999), "" };  // to shut up compiler warnings
             }
         }
@@ -466,9 +448,5 @@ std::string TobiiResearchLicenseValidationResultToExplanation(const TobiiResearc
 // deal with error messages
 [[ noreturn ]] void ErrorExit(std::string_view errMsg_, const TobiiResearchStatus errCode_)
 {
-    std::stringstream os;
-    os << "Titta::cpp Error: " << errMsg_ << std::endl;
-    os << "Error code: " << static_cast<int>(errCode_) << ": " << TobiiResearchStatusToString(errCode_) << " (" << TobiiResearchStatusToExplanation(errCode_) << ")" << std::endl;
-
-    DoExitWithMsg(os.str());
+    DoExitWithMsg(string_format("Titta::cpp Error: %s\nError code: %d: %s (%s)", errMsg_, errCode_,TobiiResearchStatusToString(errCode_),TobiiResearchStatusToExplanation(errCode_)));
 }

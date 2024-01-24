@@ -52,7 +52,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <sstream>
 #include <atomic>
 #include <cstring>
 #include <cinttypes>
@@ -207,10 +206,7 @@ namespace {
     {
         auto it = m.find(h);
         if (it == m.end())
-        {
-            std::stringstream ss; ss << "No instance corresponding to handle " << h << " found.";
-            throw ss.str();
-        }
+            throw string_format("No instance corresponding to handle %u found.", h);
         return it;
     }
 
@@ -913,9 +909,7 @@ namespace mxTypes
 
     mxArray* ToMatlab(TobiiResearchSDKVersion data_)
     {
-        std::stringstream ss;
-        ss << data_.major << "." << data_.minor << "." << data_.revision << "." << data_.build;
-        return ToMatlab(ss.str());
+        return ToMatlab(string_format("%d.%d.%d.%d", data_.major, data_.minor, data_.revision, data_.build));
     }
 
     mxArray* ToMatlab(lsl::stream_info data_)

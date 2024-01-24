@@ -1,7 +1,5 @@
 #include "Titta/types.h"
 
-#include <sstream>
-
 #include "Titta/utils.h"
 
 namespace TobiiTypes
@@ -145,11 +143,7 @@ namespace TobiiTypes
         used = used || (singleOpt && paramToRefresh_ == "supportedModes");
 
         if (singleOpt && !used)
-        {
             // a single option is specified but unknown, emit error
-            std::stringstream os;
-            os << "Titta::cpp::eyeTracker::refreshInfo: Option " << paramToRefresh_.value() << " unknown.";
-            DoExitWithMsg(os.str());
-        }
+            DoExitWithMsg(string_format("Titta::cpp::eyeTracker::refreshInfo: Option %s unknown.", *paramToRefresh_));
     }
 }

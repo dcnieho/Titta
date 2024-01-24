@@ -2,7 +2,6 @@
 #include <vector>
 #include <algorithm>
 #include <string_view>
-#include <sstream>
 #include <map>
 #include <cstring>
 
@@ -423,12 +422,10 @@ void Titta::Init()
         // log version of SDK dll that is being used
         if (Titta::_logMessages)
         {
-            TobiiResearchSDKVersion version;
-            tobii_research_get_sdk_version(&version);
-            std::stringstream os;
-            os << "Using C SDK version: " << version.major << "." << version.minor << "." << version.revision << "." << version.build;
+            TobiiResearchSDKVersion v;
+            tobii_research_get_sdk_version(&v);
             auto l = lockForWriting<Titta::logMessage>();
-            Titta::_logMessages->emplace_back(Titta::logMessage(0, TOBII_RESEARCH_LOG_SOURCE_SDK, TOBII_RESEARCH_LOG_LEVEL_INFORMATION, os.str()));
+            Titta::_logMessages->emplace_back(Titta::logMessage(0, TOBII_RESEARCH_LOG_SOURCE_SDK, TOBII_RESEARCH_LOG_LEVEL_INFORMATION, string_format("Using C SDK version: %d.%d.%d.%d", v.major, v.minor, v.revision, v.build)));
         }
 
         // start stream error logging
@@ -747,11 +744,7 @@ std::optional<TobiiTypes::CalibrationWorkResult> Titta::calibrationRetrieveResul
     if (_calibrationWorkResultQueue.try_dequeue(out))
     {
         if (makeStatusString_)
-        {
-            std::stringstream os;
-            os << "Tobii SDK code: " << static_cast<int>(out.status) << ": " << TobiiResearchStatusToString(out.status) << " (" << TobiiResearchStatusToExplanation(out.status) << ")";
-            out.statusString = os.str();
-        }
+            out.statusString = string_format("Tobii SDK code: %d: %s (%s)", static_cast<int>(out.status), TobiiResearchStatusToString(out.status), TobiiResearchStatusToExplanation(out.status));;
         return out;
     }
     else
