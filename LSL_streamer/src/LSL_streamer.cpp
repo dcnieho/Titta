@@ -1341,7 +1341,7 @@ uint32_t LSL_streamer::createListener(lsl::stream_info streamInfo_, std::optiona
     // deal with default arguments
     const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
 
-    if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_") or true)
+    if (!streamInfo_.source_id().starts_with("LSL_streamer:Tobii_"))
         DoExitWithMsg(string_format("LSL_streamer::createListener: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
 
 # define MAKE_INLET(type, defaultName) \
