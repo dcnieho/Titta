@@ -385,27 +385,28 @@ py::list CapabilitiesToList(TobiiResearchCapabilities data_)
     return l;
 }
 
+py::dict StructToDict(const TobiiTypes::eyeTracker& data_)
+{
+    py::dict d;
+    d["device_name"] = data_.deviceName;
+    d["serial_number"] = data_.serialNumber;
+    d["model"] = data_.model;
+    d["firmware_version"] = data_.firmwareVersion;
+    d["runtime_version"] = data_.runtimeVersion;
+    d["address"] = data_.address;
+    d["frequency"] = data_.frequency;
+    d["tracking_mode"] = data_.trackingMode;
+    d["capabilities"] = CapabilitiesToList(data_.capabilities);
+    d["supported_frequencies"] = data_.supportedFrequencies;
+    d["supported_modes"] = data_.supportedModes;
+    return d;
+}
 py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
 {
     py::list out;
 
     for (auto&& i : data_)
-    {
-        py::dict d;
-        d["device_name"] = i.deviceName;
-        d["serial_number"] = i.serialNumber;
-        d["model"] = i.model;
-        d["firmware_version"] = i.firmwareVersion;
-        d["runtime_version"] = i.runtimeVersion;
-        d["address"] = i.address;
-        d["frequency"] = i.frequency;
-        d["tracking_mode"] = i.trackingMode;
-        d["capabilities"] = CapabilitiesToList(i.capabilities);
-        d["supported_frequencies"] = i.supportedFrequencies;
-        d["supported_modes"] = i.supportedModes;
-
-        out.append(d);
-    }
+        out.append(StructToDict(i));
 
     return out;
 }
@@ -576,6 +577,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     m.def("get_SDK_version", []() { auto v = Titta::getSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
     m.def("get_system_timestamp", &Titta::getSystemTimestamp);
     m.def("find_all_eye_trackers", []() {return StructVectorToList(Titta::findAllEyeTrackers()); });
+    m.def("get_eye_tracker_from_address", [](std::string address_) {return StructToDict(Titta::getEyeTrackerFromAddress(std::move(address_))); });
     // logging
     m.def("start_logging", &Titta::startLogging,
         py::arg_v("initial_buffer_size", std::nullopt, "None"));
