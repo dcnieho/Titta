@@ -1705,18 +1705,21 @@ void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBu
     // deal with default arguments
     const auto clearBuffer = clearBuffer_.value_or(defaults::stopBufferEmpties);
 
-    auto& inlet = getAllInletsVariant(id_);
-    auto& lsl_inlet = getLSLInlet(inlet);
+    if (isListening(id_))
+    {
+        auto& inlet = getAllInletsVariant(id_);
+        auto& lsl_inlet = getLSLInlet(inlet);
 
-    // stop thread
-    setWorkerThreadStopFlag(inlet);
-    getWorkerThread(inlet)->join();
+        // stop thread
+        setWorkerThreadStopFlag(inlet);
+        getWorkerThread(inlet)->join();
 
-    // close stream
-    lsl_inlet.close_stream();
+        // close stream
+        lsl_inlet.close_stream();
 
-    // flush to be sure there's nothing stale left in LSL's buffers that would appear when we restart
-    lsl_inlet.flush();
+        // flush to be sure there's nothing stale left in LSL's buffers that would appear when we restart
+        lsl_inlet.flush();
+    }
 
     // clean up if wanted
     if (clearBuffer)
@@ -1726,7 +1729,6 @@ void LSL_streamer::stopListening(const uint32_t id_, std::optional<bool> clearBu
 void LSL_streamer::deleteListener(const uint32_t id_)
 {
     stopListening(id_);
-    // stop time syncer
 
     // delete entry to clean it all up
     _inStreams.erase(id_);
