@@ -25,9 +25,9 @@ namespace
 {
 // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
 template<bool UseArray, typename V, typename... Fs>
-void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields)
+void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::string& name_, Fs... fields_)
 {
-    using U = decltype(nested_field::getWrapper(std::declval<V>(), fields...));
+    using U = decltype(nested_field::getWrapper(std::declval<V>(), fields_...));
     auto nElem = static_cast<py::ssize_t>(data_.size());
 
     if constexpr (UseArray)
@@ -39,7 +39,7 @@ void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::stri
         {
             auto storage = a.mutable_data();
             for (auto&& item : data_)
-                (*storage++) = nested_field::getWrapper(item, fields...);
+                (*storage++) = nested_field::getWrapper(item, fields_...);
         }
 
         out_[name_.c_str()] = a;
@@ -50,7 +50,7 @@ void FieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std::stri
 
         if (data_.size())
             for (auto&& item : data_)
-                l.append(nested_field::getWrapper(item, fields...));
+                l.append(nested_field::getWrapper(item, fields_...));
 
         out_[name_.c_str()] = l;
     }
