@@ -143,7 +143,7 @@ namespace TittaLSL
         // actually start pulling samples from it
         void start();
 
-        bool isListening() const;
+        bool isRecording() const;
 
         // consume samples (by default all)
         template <typename DataType>    // e.g. TittaLSL::Receiver::gaze

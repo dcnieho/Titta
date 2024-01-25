@@ -182,7 +182,7 @@ namespace {
         GetInfo,
         GetType,
         // Start,
-        IsListening,
+        IsRecording,
         ConsumeN,
         ConsumeTimeRange,
         PeekN,
@@ -220,7 +220,7 @@ namespace {
         { "getInfo",                        Action::GetInfo },
         { "getType",                        Action::GetType },
         { "start",                          Action::Start },
-        { "isListening",                    Action::IsListening },
+        { "isRecording",                    Action::IsRecording },
         { "consumeN",                       Action::ConsumeN },
         { "consumeTimeRange",               Action::ConsumeTimeRange },
         { "peekN",                          Action::PeekN },
@@ -581,9 +581,9 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 receiverInstance->start();
                                 return;
                             }
-                            case Action::IsListening:
+                            case Action::IsRecording:
                             {
-                                plhs_[0] = mxCreateLogicalScalar(receiverInstance->isListening());
+                                plhs_[0] = mxCreateLogicalScalar(receiverInstance->isRecording());
                                 return;
                             }
                             case Action::ConsumeN:

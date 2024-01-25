@@ -1424,7 +1424,7 @@ void Receiver::start()
     }
 }
 
-bool Receiver::isListening() const
+bool Receiver::isRecording() const
 {
     auto& inlet = *_inlet;
     return getWorkerThread(inlet) && !getWorkerThreadStopFlag(inlet);

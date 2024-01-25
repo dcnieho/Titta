@@ -406,7 +406,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         .def("start", &TittaLSL::Receiver::start)
 
-        .def("is_listening", py::overload_cast<>(&TittaLSL::Receiver::isListening, py::const_))
+        .def("is_recording", py::overload_cast<>(&TittaLSL::Receiver::isRecording, py::const_))
 
         .def("consume_N",
             [](TittaLSL::Receiver& instance_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
