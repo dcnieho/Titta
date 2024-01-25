@@ -38,7 +38,7 @@
     <None Include="TittaLSLMexDummyMode.m" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TittaLSLMex_.cpp" />
+    <ClCompile Include="TittaLSLMex.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
