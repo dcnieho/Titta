@@ -310,7 +310,7 @@ namespace {
     }
 }
 
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 {
     try
     {
@@ -320,11 +320,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             registeredAtExit = true;
         }
 
-        if (nrhs < 1 || !mxIsChar(prhs[0]))
+        if (nrhs_ < 1 || !mxIsChar(prhs_[0]))
             throw "First input must be an action string ('new', 'delete', or a method name).";
 
         // get action string
-        char* actionCstr = mxArrayToString(prhs[0]);
+        char* actionCstr = mxArrayToString(prhs_[0]);
         std::string actionStr(actionCstr);
         mxFree(actionCstr);
 
@@ -344,7 +344,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             action != Action::CheckStream && action != Action::CheckBufferSide &&
             action != Action::GetAllStreamsString && action != Action::GetAllBufferSidesString)
         {
-            instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
+            instIt = checkHandle(instanceTab, getHandle(nrhs_, prhs_));
             instance = instIt->second;
         }
 
@@ -356,10 +356,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             break;
         case Action::New:
         {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
+            if (nrhs_ < 2 || !mxIsChar(prhs_[1]))
                 throw "TittaMex: Second argument must be a string.";
 
-            char* address = mxArrayToString(prhs[1]);
+            char* address = mxArrayToString(prhs_[1]);
             auto insResult = instanceTab.insert({ ++handleVal, std::make_shared<ClassType>(address) });
             mxFree(address);
 
@@ -369,7 +369,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 mexLock(); // add to the lock count
 
             // return the handle
-            plhs[0] = mxTypes::ToMatlab(insResult.first->first);
+            plhs_[0] = mxTypes::ToMatlab(insResult.first->first);
 
             break;
         }
@@ -378,140 +378,140 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             instanceTab.erase(instIt);      // erase from map
             instance.reset();               // decrement ref count of shared pointer, should cause it to delete instance itself
             mexUnlock();
-            plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
+            plhs_[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
             break;
         }
 
         case Action::GetSDKVersion:
         {
-            plhs[0] = mxTypes::ToMatlab(Titta::getSDKVersion());
+            plhs_[0] = mxTypes::ToMatlab(Titta::getSDKVersion());
             break;
         }
         case Action::GetSystemTimestamp:
         {
-            plhs[0] = mxTypes::ToMatlab(Titta::getSystemTimestamp());
+            plhs_[0] = mxTypes::ToMatlab(Titta::getSystemTimestamp());
             break;
         }
         case Action::FindAllEyeTrackers:
         {
-            plhs[0] = mxTypes::ToMatlab(Titta::findAllEyeTrackers());
+            plhs_[0] = mxTypes::ToMatlab(Titta::findAllEyeTrackers());
             break;
         }
         case Action::GetEyeTrackerFromAddress:
         {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
+            if (nrhs_ < 2 || !mxIsChar(prhs_[1]))
                 throw "TittaMex: Second argument must be a string.";
 
-            char* address = mxArrayToString(prhs[1]);
+            char* address = mxArrayToString(prhs_[1]);
             auto insResult = instanceTab.insert({ ++handleVal, std::make_shared<ClassType>(address) });
             mxFree(address);
 
-            plhs[0] = mxTypes::ToMatlab(Titta::getEyeTrackerFromAddress(address));
+            plhs_[0] = mxTypes::ToMatlab(Titta::getEyeTrackerFromAddress(address));
             break;
         }
         case Action::StartLogging:
         {
             // get optional input argument
             std::optional<size_t> bufSize;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            if (nrhs_ > 1 && !mxIsEmpty(prhs_[1]))
             {
-                if (!mxIsUint64(prhs[1]) || mxIsComplex(prhs[1]) || !mxIsScalar(prhs[1]))
+                if (!mxIsUint64(prhs_[1]) || mxIsComplex(prhs_[1]) || !mxIsScalar(prhs_[1]))
                     throw "startLogging: Expected first argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[1]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[1]));
                 if (temp > SIZE_MAX)
                     throw "startLogging: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
                 bufSize = static_cast<size_t>(temp);
             }
 
-            plhs[0] = mxCreateLogicalScalar(Titta::startLogging(bufSize));
+            plhs_[0] = mxCreateLogicalScalar(Titta::startLogging(bufSize));
             return;
         }
         case Action::GetLog:
         {
             // get optional input argument
             std::optional<bool> clearBuffer;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
+            if (nrhs_ > 1 && !mxIsEmpty(prhs_[1]))
             {
-                if (!(mxIsDouble(prhs[1]) && !mxIsComplex(prhs[1]) && mxIsScalar(prhs[1])) && !mxIsLogicalScalar(prhs[1]))
+                if (!(mxIsDouble(prhs_[1]) && !mxIsComplex(prhs_[1]) && mxIsScalar(prhs_[1])) && !mxIsLogicalScalar(prhs_[1]))
                     throw "getLog: Expected first argument to be a logical scalar.";
-                clearBuffer = mxIsLogicalScalarTrue(prhs[1]);
+                clearBuffer = mxIsLogicalScalarTrue(prhs_[1]);
             }
 
-            plhs[0] = mxTypes::ToMatlab(Titta::getLog(clearBuffer));
+            plhs_[0] = mxTypes::ToMatlab(Titta::getLog(clearBuffer));
             return;
         }
         case Action::StopLogging:
-            plhs[0] = mxCreateLogicalScalar(Titta::stopLogging());
+            plhs_[0] = mxCreateLogicalScalar(Titta::stopLogging());
             return;
         case Action::CheckStream:
         {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
+            if (nrhs_ < 2 || !mxIsChar(prhs_[1]))
             {
                 std::string err = "checkStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, check if valid
-            char* bufferCstr = mxArrayToString(prhs[1]);
+            char* bufferCstr = mxArrayToString(prhs_[1]);
             Titta::stringToStream(bufferCstr);
             mxFree(bufferCstr);
-            plhs[0] = mxCreateLogicalScalar(true);
+            plhs_[0] = mxCreateLogicalScalar(true);
             return;
         }
         case Action::CheckBufferSide:
         {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
+            if (nrhs_ < 2 || !mxIsChar(prhs_[1]))
             {
                 std::string err = "checkBufferSide: First input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, check if valid
-            char* bufferCstr = mxArrayToString(prhs[1]);
+            char* bufferCstr = mxArrayToString(prhs_[1]);
             Titta::stringToBufferSide(bufferCstr);
             mxFree(bufferCstr);
-            plhs[0] = mxCreateLogicalScalar(true);
+            plhs_[0] = mxCreateLogicalScalar(true);
             return;
         }
         case Action::GetAllStreamsString:
         {
-            if (nrhs > 1)
+            if (nrhs_ > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
+                if (!mxIsChar(prhs_[1]) || mxIsComplex(prhs_[1]) || (!mxIsScalar(prhs_[1]) && !mxIsEmpty(prhs_[1])))
                     throw "getAllStreamsString: Expected first argument to be a char scalar or empty char array.";
 
                 char quoteChar[2] = { "\0" };
-                if (!mxIsEmpty(prhs[1]))
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
+                if (!mxIsEmpty(prhs_[1]))
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs_[1]));
 
-                if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
                 {
-                    if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
+                    if (!(mxIsDouble(prhs_[2]) && !mxIsComplex(prhs_[2]) && mxIsScalar(prhs_[2])) && !mxIsLogicalScalar(prhs_[2]))
                         throw "getAllStreamsString: Expected second argument to be a logical scalar.";
-                    bool snakeCase = mxIsLogicalScalarTrue(prhs[2]);
+                    bool snakeCase = mxIsLogicalScalarTrue(prhs_[2]);
 
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, snakeCase));
+                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, snakeCase));
                 }
                 else
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar));
+                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar));
             }
             else
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString());
+                plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString());
             return;
         }
         case Action::GetAllBufferSidesString:
         {
-            if (nrhs > 1)
+            if (nrhs_ > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
+                if (!mxIsChar(prhs_[1]) || mxIsComplex(prhs_[1]) || (!mxIsScalar(prhs_[1]) && !mxIsEmpty(prhs_[1])))
                     throw "getAllBufferSidesString: Expected first argument to be a char scalar or empty char array.";
                 char quoteChar[2] = { "\0" };
-                if (!mxIsEmpty(prhs[1]))
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
+                if (!mxIsEmpty(prhs_[1]))
+                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs_[1]));
+                plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
             }
             else
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
+                plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
             return;
         }
 
@@ -520,42 +520,42 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             // put in vector so we don't have write another ToMatlab()
             std::vector<TobiiTypes::eyeTracker> temp;
             temp.push_back(instance->getEyeTrackerInfo());
-            plhs[0] = mxTypes::ToMatlab(temp);
+            plhs_[0] = mxTypes::ToMatlab(temp);
             break;
         }
         case Action::GetDeviceName:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("deviceName").deviceName);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("deviceName").deviceName);
             break;
         }
         case Action::GetSerialNumber:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("serialNumber").serialNumber);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("serialNumber").serialNumber);
             break;
         }
         case Action::GetModel:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("model").model);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("model").model);
             break;
         }
         case Action::GetFirmwareVersion:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("firmwareVersion").firmwareVersion);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("firmwareVersion").firmwareVersion);
             break;
         }
         case Action::GetRuntimeVersion:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("runtimeVersion").runtimeVersion);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("runtimeVersion").runtimeVersion);
             break;
         }
         case Action::GetAddress:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("address").address);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("address").address);
             break;
         }
         case Action::GetCapabilities:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("capabilities").capabilities);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("capabilities").capabilities);
             break;
         }
         case Action::GetSupportedFrequencies:
@@ -564,40 +564,40 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             std::vector<double> freqs;
             for (float f : instance->getEyeTrackerInfo("supportedFrequencies").supportedFrequencies)
                 freqs.push_back(static_cast<double>(f));
-            plhs[0] = mxTypes::ToMatlab(freqs);
+            plhs_[0] = mxTypes::ToMatlab(freqs);
             break;
         }
         case Action::GetSupportedModes:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("supportedModes").supportedModes);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("supportedModes").supportedModes);
             break;
         }
         case Action::GetFrequency:
         {
-            plhs[0] = mxTypes::ToMatlab(static_cast<double>(instance->getEyeTrackerInfo("frequency").frequency));
+            plhs_[0] = mxTypes::ToMatlab(static_cast<double>(instance->getEyeTrackerInfo("frequency").frequency));
             break;
         }
         case Action::GetTrackingMode:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("trackingMode").trackingMode);
+            plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("trackingMode").trackingMode);
             break;
         }
         case Action::GetTrackBox:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getTrackBox());
+            plhs_[0] = mxTypes::ToMatlab(instance->getTrackBox());
             break;
         }
         case Action::GetDisplayArea:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->getDisplayArea());
+            plhs_[0] = mxTypes::ToMatlab(instance->getDisplayArea());
             break;
         }
         case Action::SetDeviceName:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsChar(prhs_[2]))
                 throw "setDeviceName: Expected second argument to be a string.";
 
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             instance->setDeviceName(bufferCstr);
             mxFree(bufferCstr);
             break;
@@ -605,35 +605,35 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case Action::SetFrequency:
         {
             double freq = 0.;
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || !mxIsScalar(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsDouble(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
                 throw "setFrequency: Expected second argument to be a double scalar.";
-            freq = *static_cast<double*>(mxGetData(prhs[2]));
+            freq = *static_cast<double*>(mxGetData(prhs_[2]));
 
             instance->setFrequency(static_cast<float>(freq));
             break;
         }
         case Action::SetTrackingMode:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsChar(prhs_[2]))
                 throw "setTrackingMode: Expected second argument to be a string.";
 
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             instance->setTrackingMode(bufferCstr);
             mxFree(bufferCstr);
             break;
         }
         case Action::ApplyLicenses:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsCell(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsCell(prhs_[2]))
                 throw "applyLicenses: Expected second argument to be a cell.";
 
             std::vector<std::vector<uint8_t>> licenses;
 
             // get how many elements the cell has, iterate over them (don't care about shape)
-            const auto nElem = static_cast<mwIndex>(mxGetNumberOfElements(prhs[2]));
+            const auto nElem = static_cast<mwIndex>(mxGetNumberOfElements(prhs_[2]));
             for (mwIndex i = 0; i < nElem; i++)
             {
-                mxArray* cellElement = mxGetCell(prhs[2], i);
+                mxArray* cellElement = mxGetCell(prhs_[2], i);
                 if (!cellElement)
                     throw "applyLicenses: All cell elements should be non-empty.";
                 // we've got some kind of cell content, lets check it, and then access it
@@ -644,7 +644,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 licenses.emplace_back(in, in + mxGetNumberOfElements(cellElement));
             }
 
-            plhs[0] = mxTypes::ToMatlab(instance->applyLicenses(licenses));
+            plhs_[0] = mxTypes::ToMatlab(instance->applyLicenses(licenses));
             break;
         }
         case Action::ClearLicenses:
@@ -655,53 +655,53 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         case Action::EnterCalibrationMode:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsScalar(prhs_[2]) || !mxIsLogicalScalar(prhs_[2]))
                 throw "enterCalibrationMode: First argument must be a logical scalar.";
 
-            bool doMonocular = mxIsLogicalScalarTrue(prhs[2]);
-            plhs[0] = mxTypes::ToMatlab(instance->enterCalibrationMode(doMonocular));
+            bool doMonocular = mxIsLogicalScalarTrue(prhs_[2]);
+            plhs_[0] = mxTypes::ToMatlab(instance->enterCalibrationMode(doMonocular));
             break;
         }
         case Action::IsInCalibrationMode:
         {
             std::optional<bool> issueErrorIfNot;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
             {
-                if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsScalar(prhs_[2]) || !mxIsLogicalScalar(prhs_[2]))
                     throw "isInCalibrationMode: First argument must be a logical scalar.";
-                issueErrorIfNot = mxIsLogicalScalarTrue(prhs[2]);
+                issueErrorIfNot = mxIsLogicalScalarTrue(prhs_[2]);
             }
 
-            plhs[0] = mxTypes::ToMatlab(instance->isInCalibrationMode(issueErrorIfNot));
+            plhs_[0] = mxTypes::ToMatlab(instance->isInCalibrationMode(issueErrorIfNot));
             break;
         }
         case Action::LeaveCalibrationMode:
         {
             std::optional<bool> force;
-            if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+            if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
             {
-                if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+                if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsScalar(prhs_[2]) || !mxIsLogicalScalar(prhs_[2]))
                     throw "leaveCalibrationMode: First argument must be a logical scalar.";
-                force = mxIsLogicalScalarTrue(prhs[2]);
+                force = mxIsLogicalScalarTrue(prhs_[2]);
             }
 
-            plhs[0] = mxTypes::ToMatlab(instance->leaveCalibrationMode(force));
+            plhs_[0] = mxTypes::ToMatlab(instance->leaveCalibrationMode(force));
             break;
         }
         case Action::CalibrationCollectData:
         {
-            if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
+            if (nrhs_ < 3 || !mxIsDouble(prhs_[2]) || mxIsComplex(prhs_[2]) || mxGetNumberOfElements(prhs_[2]) != 2)
                 throw "calibrationCollectData: First argument must be a 2-element double array.";
-            double* dat = static_cast<double*>(mxGetData(prhs[2]));
+            double* dat = static_cast<double*>(mxGetData(prhs_[2]));
             std::array<float, 2> point{ static_cast<float>(*dat), static_cast<float>(*(dat + 1)) };
 
             // get optional input argument
             std::optional<std::string> eye;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsChar(prhs[3]))
+                if (!mxIsChar(prhs_[3]))
                     throw "calibrationCollectData: Expected second argument to be a char array.";
-                char* ceye = mxArrayToString(prhs[3]);
+                char* ceye = mxArrayToString(prhs_[3]);
                 eye = ceye;
                 mxFree(ceye);
             }
@@ -711,18 +711,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::CalibrationDiscardData:
         {
-            if (nrhs < 3 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 2)
+            if (nrhs_ < 3 || !mxIsDouble(prhs_[2]) || mxIsComplex(prhs_[2]) || mxGetNumberOfElements(prhs_[2]) != 2)
                 throw "calibrationDiscardData: First argument must be a 2-element double array.";
-            double* dat = static_cast<double*>(mxGetData(prhs[2]));
+            double* dat = static_cast<double*>(mxGetData(prhs_[2]));
             std::array<float, 2> point{ static_cast<float>(*dat), static_cast<float>(*(dat + 1)) };
 
             // get optional input argument
             std::optional<std::string> eye;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsChar(prhs[3]))
+                if (!mxIsChar(prhs_[3]))
                     throw "calibrationDiscardData: Expected second argument to be a char array.";
-                char* ceye = mxArrayToString(prhs[3]);
+                char* ceye = mxArrayToString(prhs_[3]);
                 eye = ceye;
                 mxFree(ceye);
             }
@@ -742,51 +742,51 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         case Action::CalibrationApplyData:
         {
-            if (nrhs < 3 || !mxIsUint8(prhs[2]) || mxIsComplex(prhs[2]) || mxIsEmpty(prhs[2]))
+            if (nrhs_ < 3 || !mxIsUint8(prhs_[2]) || mxIsComplex(prhs_[2]) || mxIsEmpty(prhs_[2]))
                 throw "calibrationApplyData: First argument must be a n-element uint8 array, as returned from calibrationGetData.";
-            uint8_t* in = static_cast<uint8_t*>(mxGetData(prhs[2]));
-            std::vector<uint8_t> calData{ in, in + mxGetNumberOfElements(prhs[2]) };
+            uint8_t* in = static_cast<uint8_t*>(mxGetData(prhs_[2]));
+            std::vector<uint8_t> calData{ in, in + mxGetNumberOfElements(prhs_[2]) };
 
             instance->calibrationApplyData(calData);
             break;
         }
         case Action::CalibrationGetStatus:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->calibrationGetStatus());
+            plhs_[0] = mxTypes::ToMatlab(instance->calibrationGetStatus());
             break;
         }
         case Action::CalibrationRetrieveResult:
         {
-            plhs[0] = mxTypes::ToMatlab(instance->calibrationRetrieveResult(true));
+            plhs_[0] = mxTypes::ToMatlab(instance->calibrationRetrieveResult(true));
             break;
         }
 
         case Action::HasStream:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "hasStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, call hasStream() on instance
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->hasStream(bufferCstr));
+            char* bufferCstr = mxArrayToString(prhs_[2]);
+            plhs_[0] = mxCreateLogicalScalar(instance->hasStream(bufferCstr));
             mxFree(bufferCstr);
             return;
         }
         case Action::SetIncludeEyeOpennessInGaze:
         {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsScalar(prhs_[2]) || !mxIsLogicalScalar(prhs_[2]))
                 throw "setIncludeEyeOpennessInGaze: First argument must be a logical scalar.";
 
-            bool include = mxIsLogicalScalarTrue(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->setIncludeEyeOpennessInGaze(include));
+            bool include = mxIsLogicalScalarTrue(prhs_[2]);
+            plhs_[0] = mxCreateLogicalScalar(instance->setIncludeEyeOpennessInGaze(include));
             break;
         }
         case Action::Start:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "start: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
@@ -794,74 +794,74 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
             // get optional input arguments
             std::optional<size_t> bufSize;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsUint64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "start: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
                 bufSize = static_cast<size_t>(temp);
             }
             std::optional<bool> asGif;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!(mxIsDouble(prhs[4]) && !mxIsComplex(prhs[4]) && mxIsScalar(prhs[4])) && !mxIsLogicalScalar(prhs[4]))
+                if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
                     throw "start: Expected third argument to be a logical scalar.";
-                asGif = mxIsLogicalScalarTrue(prhs[4]);
+                asGif = mxIsLogicalScalarTrue(prhs_[4]);
             }
 
             // get data stream identifier string, call start() on instance
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->start(bufferCstr, bufSize, asGif));
+            char* bufferCstr = mxArrayToString(prhs_[2]);
+            plhs_[0] = mxCreateLogicalScalar(instance->start(bufferCstr, bufSize, asGif));
             mxFree(bufferCstr);
             return;
         }
         case Action::IsRecording:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "isRecording: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, call isBuffering() on instance
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->isRecording(bufferCstr));
+            char* bufferCstr = mxArrayToString(prhs_[2]);
+            plhs_[0] = mxCreateLogicalScalar(instance->isRecording(bufferCstr));
             mxFree(bufferCstr);
             return;
         }
         case Action::ConsumeN:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "consumeN: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
             std::optional<size_t> nSamp;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsUint64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "consumeN: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
                 if (temp > SIZE_MAX)
                     throw "consumeN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
                 nSamp = static_cast<size_t>(temp);
             }
             std::optional<Titta::BufferSide> side;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!mxIsChar(prhs[4]))
+                if (!mxIsChar(prhs_[4]))
                 {
                     std::string err = "consumeN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
                     throw err;
                 }
-                char* bufferCstr = mxArrayToString(prhs[4]);
+                char* bufferCstr = mxArrayToString(prhs_[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);
             }
@@ -870,110 +870,110 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::gaze>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::gaze>(nSamp, side));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::eyeImage>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::eyeImage>(nSamp, side));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::extSignal>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::extSignal>(nSamp, side));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::timeSync>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::timeSync>(nSamp, side));
                 return;
             case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::positioning>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::positioning>(nSamp, side));
                 return;
             case Titta::Stream::Notification:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<Titta::notification>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeN<Titta::notification>(nSamp, side));
                 return;
             }
         }
         case Action::ConsumeTimeRange:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "consumeTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "consumeTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs_[3]));
             }
             std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                if (!mxIsInt64(prhs_[4]) || mxIsComplex(prhs_[4]) || !mxIsScalar(prhs_[4]))
                     throw "consumeTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[4]));
             }
 
             switch (stream)
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::gaze>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::gaze>(timeStart, timeEnd));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::eyeImage>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::eyeImage>(timeStart, timeEnd));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::extSignal>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::extSignal>(timeStart, timeEnd));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::timeSync>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::timeSync>(timeStart, timeEnd));
                 return;
             case Titta::Stream::Positioning:
                 throw "consumeTimeRange: not supported for positioning stream.";
                 return;
             case Titta::Stream::Notification:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::notification>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->consumeTimeRange<Titta::notification>(timeStart, timeEnd));
                 return;
             }
         }
         case Action::PeekN:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "peekN: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
             std::optional<size_t> nSamp;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsUint64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "peekN: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
+                auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
                 if (temp > SIZE_MAX)
                     throw "peekN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
                 nSamp = static_cast<size_t>(temp);
             }
             std::optional<Titta::BufferSide> side;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!mxIsChar(prhs[4]))
+                if (!mxIsChar(prhs_[4]))
                 {
                     std::string err = "peekN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
                     throw err;
                 }
-                char* bufferCstr = mxArrayToString(prhs[4]);
+                char* bufferCstr = mxArrayToString(prhs_[4]);
                 side = instance->stringToBufferSide(bufferCstr);
                 mxFree(bufferCstr);
             }
@@ -982,94 +982,94 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::gaze>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::gaze>(nSamp, side));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::eyeImage>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::eyeImage>(nSamp, side));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::extSignal>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::extSignal>(nSamp, side));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::timeSync>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::timeSync>(nSamp, side));
                 return;
             case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::positioning>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::positioning>(nSamp, side));
                 return;
             case Titta::Stream::Notification:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<Titta::notification>(nSamp, side));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekN<Titta::notification>(nSamp, side));
                 return;
             }
         }
         case Action::PeekTimeRange:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "peekTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             Titta::Stream stream = instance->stringToStream(bufferCstr);
             mxFree(bufferCstr);
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "peekTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs_[3]));
             }
             std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                if (!mxIsInt64(prhs_[4]) || mxIsComplex(prhs_[4]) || !mxIsScalar(prhs_[4]))
                     throw "peekTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[4]));
             }
 
             switch (stream)
             {
             case Titta::Stream::Gaze:
             case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::gaze>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::gaze>(timeStart, timeEnd));
                 return;
             case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::eyeImage>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::eyeImage>(timeStart, timeEnd));
                 return;
             case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::extSignal>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::extSignal>(timeStart, timeEnd));
                 return;
             case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::timeSync>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::timeSync>(timeStart, timeEnd));
                 return;
             case Titta::Stream::Positioning:
                 throw "peekTimeRange: not supported for positioning stream.";
                 return;
             case Titta::Stream::Notification:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::notification>(timeStart, timeEnd));
+                plhs_[0] = mxTypes::ToMatlab(instance->peekTimeRange<Titta::notification>(timeStart, timeEnd));
                 return;
             }
         }
         case Action::Clear:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "clear: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
             }
 
             // get data stream identifier string, clear buffer
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             instance->clear(bufferCstr);
             mxFree(bufferCstr);
             break;
         }
         case Action::ClearTimeRange:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "clearTimeRange: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
@@ -1077,29 +1077,29 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
             // get optional input arguments
             std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
+                if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
                     throw "clearTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
+                timeStart = *static_cast<int64_t*>(mxGetData(prhs_[3]));
             }
             std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
+            if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
             {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
+                if (!mxIsInt64(prhs_[4]) || mxIsComplex(prhs_[4]) || !mxIsScalar(prhs_[4]))
                     throw "clearTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
+                timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[4]));
             }
 
             // get data stream identifier string, clear buffer
-            char* bufferCstr = mxArrayToString(prhs[2]);
+            char* bufferCstr = mxArrayToString(prhs_[2]);
             instance->clearTimeRange(bufferCstr, timeStart, timeEnd);
             mxFree(bufferCstr);
             break;
         }
         case Action::Stop:
         {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
+            if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
             {
                 std::string err = "stop: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'") + ").";
                 throw err;
@@ -1107,16 +1107,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
             // get optional input argument
             std::optional<bool> clearBuffer;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
+            if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
             {
-                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
+                if (!(mxIsDouble(prhs_[3]) && !mxIsComplex(prhs_[3]) && mxIsScalar(prhs_[3])) && !mxIsLogicalScalar(prhs_[3]))
                     throw "stop: Expected second argument to be a logical scalar.";
-                clearBuffer = mxIsLogicalScalarTrue(prhs[3]);
+                clearBuffer = mxIsLogicalScalarTrue(prhs_[3]);
             }
 
             // get data stream identifier string, stop buffering
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->stop(bufferCstr, clearBuffer));
+            char* bufferCstr = mxArrayToString(prhs_[2]);
+            plhs_[0] = mxCreateLogicalScalar(instance->stop(bufferCstr, clearBuffer));
             mxFree(bufferCstr);
             break;
         }
