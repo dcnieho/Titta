@@ -354,6 +354,17 @@ PYBIND11_MODULE(MODULE_NAME, m)
     auto cStreamer = py::class_<TittaLSL::Streamer>(m, "Streamer")
         .def(py::init<std::string>(), "address"_a)
 
+        .def("__repr__",
+            [](TittaLSL::Streamer& instance_)
+            {
+                const auto et = instance_.getEyeTracker();
+                return string_format("<TittaLSL.Streamer (%s (%s) @ %.0f)>",
+                    et.model.c_str(),
+                    et.serialNumber.c_str(),
+                    et.frequency
+                    );
+            })
+
         .def("get_eye_tracker", [](TittaLSL::Streamer& instance_) { return StructToDict(instance_.getEyeTracker()); })
 
         // outlets
@@ -380,6 +391,12 @@ PYBIND11_MODULE(MODULE_NAME, m)
     auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver")
         .def(py::init<std::string, std::optional<size_t>, std::optional<bool>>(),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
+
+        .def("__repr__",
+            [](const TittaLSL::Receiver& instance_)
+            {
+                return string_format("<TittaLSL.Receiver (%s)>",Titta::streamToString(instance_.getType()).c_str());
+            })
 
         .def_static("get_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::GetStreams(stream_ ? *stream_ : "")); },
             py::arg_v("stream_type", std::nullopt, "None"))

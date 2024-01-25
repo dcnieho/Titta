@@ -35,11 +35,13 @@ print(streamer.is_streaming(EyeTracker.stream.gaze))
 streamer.start('gaze')
 print(streamer.is_streaming('gaze'))
 streamer.set_include_eye_openness_in_gaze(True)
+print(streamer)
 
 # exercise inlet
 remote_streams = Receiver.get_streams("gaze" if True else None)  # can filter so only streams of specific type are provided
 print(remote_streams)
 receiver = Receiver(remote_streams[0]["source_id"])
+print(receiver)
 print(receiver.get_info())
 print(receiver.get_type())
 receiver.start()
