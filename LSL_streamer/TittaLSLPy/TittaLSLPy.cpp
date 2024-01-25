@@ -332,7 +332,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def(py::init<std::string, std::optional<size_t>, std::optional<bool>>(),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
 
-        .def_static("get_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::getStreams(stream_ ? *stream_ : "")); },
+        .def_static("get_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::GetStreams(stream_ ? *stream_ : "")); },
             py::arg_v("stream_type", std::nullopt, "None"))
 
         .def("get_info", [](const TittaLSL::Receiver& instance_) { return StructToDict(instance_.getInfo()); })

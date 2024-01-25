@@ -35,13 +35,13 @@ int main(int argc, char** argv)
             lslStreamer.start(Titta::Stream::Positioning);
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            auto streams = TittaLSL::Receiver::getStreams("");
+            auto streams = TittaLSL::Receiver::GetStreams("");
             for (auto& s: streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
             }
             std::cout << "----" << std::endl;
-            streams = TittaLSL::Receiver::getStreams("gaze");
+            streams = TittaLSL::Receiver::GetStreams("gaze");
             for (auto& s : streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
