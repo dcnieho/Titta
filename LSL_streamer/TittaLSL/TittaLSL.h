@@ -114,11 +114,11 @@ namespace TittaLSL
         };
 
         // short names for very long Tobii data types
-        using gaze = LSLTypes::gaze;       // getType() -> Titta::Stream::Gaze
-        using eyeImage = LSLTypes::eyeImage;   // getType() -> Titta::Stream::EyeImage
-        using extSignal = LSLTypes::extSignal;  // getType() -> Titta::Stream::ExtSignal
-        using timeSync = LSLTypes::timeSync;   // getType() -> Titta::Stream::TimeSync
-        using positioning = LSLTypes::positioning;// getType() -> Titta::Stream::Positioning
+        using gaze          = LSLTypes::gaze;       // getType() -> Titta::Stream::Gaze
+        using eyeImage      = LSLTypes::eyeImage;   // getType() -> Titta::Stream::EyeImage
+        using extSignal     = LSLTypes::extSignal;  // getType() -> Titta::Stream::ExtSignal
+        using timeSync      = LSLTypes::timeSync;   // getType() -> Titta::Stream::TimeSync
+        using positioning   = LSLTypes::positioning;// getType() -> Titta::Stream::Positioning
         using AllInlets = std::variant<
             Inlet<gaze>,
             Inlet<eyeImage>,
