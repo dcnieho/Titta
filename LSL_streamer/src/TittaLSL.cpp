@@ -1437,13 +1437,38 @@ void Receiver::recorderThreadFunc()
     constexpr size_t numElem = LSLInletTypeNumSamples_v<DataType>;
     using array_t = data_t[numElem];
     auto& inlet = getInlet<DataType>();
+    double lastTCorr = -1.;
     while (!inlet._recorder_should_stop)
     {
         array_t sample = { 0 };
-        auto remoteT = inlet._lsl_inlet.template pull_sample<data_t,numElem>(sample, 0.1);
+        double remoteT = 0.;
+        double tCorr = 0.;
+        try
+        {
+            remoteT = inlet._lsl_inlet.template pull_sample<data_t, numElem>(sample, 0.1);
+        }
+        catch (const lsl::lost_error&)
+        {
+            break;
+        }
         if (remoteT <= 0.)
+            // no new sample available
             continue;
-        auto tCorr = inlet._lsl_inlet.time_correction(0);
+
+        try
+        {
+            tCorr = inlet._lsl_inlet.time_correction(0);
+        }
+        catch (const lsl::timeout_error&)
+        {
+            tCorr = lastTCorr;
+        }
+        catch (const lsl::lost_error&)
+        {
+            break;
+        }
+        lastTCorr = tCorr;
+
         // now parse into type
         if constexpr (std::is_same_v<DataType, TittaLSL::Receiver::gaze>)
         {
@@ -1571,6 +1596,8 @@ void Receiver::recorderThreadFunc()
             });
         }
     }
+    // also marked as stopped
+    inlet._recorder_should_stop = true;
 }
 
 
