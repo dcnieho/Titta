@@ -5,13 +5,13 @@ import TittaPy
 from TittaPy import EyeTracker
 
 import TittaLSLPy
-from TittaLSLPy import Streamer, Receiver
+from TittaLSLPy import Sender, Receiver
 
 #help(TittaPy)
 #help(EyeTracker)
 
 #help(TittaLSLPy)
-#help(Streamer)
+#help(Sender)
 #help(Receiver)
 
 #exit()
@@ -28,14 +28,14 @@ print(TittaLSLPy.get_Tobii_SDK_version())
 print(TittaLSLPy.get_LSL_version())
 
 # exercise outlet
-streamer = Streamer(ets[0]['address'])
-print(streamer.get_eye_tracker())
-print(streamer.is_streaming('gaze'))
-print(streamer.is_streaming(EyeTracker.stream.gaze))
-streamer.start('gaze')
-print(streamer.is_streaming('gaze'))
-streamer.set_include_eye_openness_in_gaze(True)
-print(streamer)
+sender = Sender(ets[0]['address'])
+print(sender.get_eye_tracker())
+print(sender.is_streaming('gaze'))
+print(sender.is_streaming(EyeTracker.stream.gaze))
+sender.start('gaze')
+print(sender.is_streaming('gaze'))
+sender.set_include_eye_openness_in_gaze(True)
+print(sender)
 
 # exercise inlet
 remote_streams = Receiver.get_streams("gaze" if True else None)  # can filter so only streams of specific type are provided
@@ -54,7 +54,7 @@ print(len(samples['remote_system_time_stamp']),samples['remote_system_time_stamp
 receiver.stop()
 
 # done with outlet also
-streamer.stop('gaze')
-print(streamer.is_streaming('gaze'))
+sender.stop('gaze')
+print(sender.is_streaming('gaze'))
 
 exit()

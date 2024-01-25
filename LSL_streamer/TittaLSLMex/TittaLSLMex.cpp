@@ -112,25 +112,25 @@ namespace {
     enum class ExportedType
     {
         Unknown,
-        Streamer,
+        Sender,
         Receiver
     };
     const std::map<std::string, ExportedType> exportedTypesMap =
     {
-        { "Streamer",   ExportedType::Streamer },
+        { "Sender",     ExportedType::Sender },
         { "Receiver",   ExportedType::Receiver },
     };
 
     template <class...> constexpr std::false_type always_false_t{};
     template <auto...> constexpr std::false_type always_false_nt{};
     template <ExportedType T> struct ExportedTypesEnumToClassType { static_assert(always_false_nt<T>, "ExportedTypesEnumToClassType not implemented for this enum value"); };
-    template <>                struct ExportedTypesEnumToClassType<ExportedType::Streamer> { using type = TittaLSL::Streamer; };
+    template <>                struct ExportedTypesEnumToClassType<ExportedType::Sender>   { using type = TittaLSL::Sender; };
     template <>                struct ExportedTypesEnumToClassType<ExportedType::Receiver> { using type = TittaLSL::Receiver; };
     template <ExportedType T>
     using ExportedTypesEnumToClassType_t = typename ExportedTypesEnumToClassType<T>::type;
 
     template <typename T> struct classToExportedTypeEnum { static_assert(always_false_t<T>, "typeToMxClass not implemented for this type"); static constexpr ExportedType value = ExportedType::Unknown; };
-    template <>           struct classToExportedTypeEnum<TittaLSL::Streamer> { static constexpr ExportedType value = ExportedType::Streamer; };
+    template <>           struct classToExportedTypeEnum<TittaLSL::Sender>   { static constexpr ExportedType value = ExportedType::Sender; };
     template <>           struct classToExportedTypeEnum<TittaLSL::Receiver> { static constexpr ExportedType value = ExportedType::Receiver; };
     template <typename T>
     constexpr ExportedType classToExportedTypeEnum_v = classToExportedTypeEnum<T>::value;
@@ -295,7 +295,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
         }
 
         // below when we get an instance from the map, we cast it to one of the below
-        std::shared_ptr<ExportedTypesEnumToClassType_t<ExportedType::Streamer>> streamerInstance;
+        std::shared_ptr<ExportedTypesEnumToClassType_t<ExportedType::Sender>>   senderInstance;
         std::shared_ptr<ExportedTypesEnumToClassType_t<ExportedType::Receiver>> receiverInstance;
 
 
@@ -325,8 +325,8 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
             // now retrieve the original instance pointer
             switch (type)
             {
-            case ExportedType::Streamer:
-                streamerInstance = std::static_pointer_cast<ExportedTypesEnumToClassType_t<ExportedType::Streamer>>(instance);
+            case ExportedType::Sender:
+                senderInstance = std::static_pointer_cast<ExportedTypesEnumToClassType_t<ExportedType::Sender>>(instance);
                 break;
             case ExportedType::Receiver:
                 receiverInstance = std::static_pointer_cast<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(instance);
@@ -367,12 +367,12 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                 instPtr_t newInstance = nullptr;
                 switch (type)
                 {
-                case ExportedType::Streamer:
+                case ExportedType::Sender:
                     {
                         if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
-                            throw "TittaLSL::Streamer::constructor: First argument must be a string.";
+                            throw "TittaLSL::Sender::constructor: First argument must be a string.";
                         char* address = mxArrayToString(prhs_[2]);
-                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Streamer>>(address);
+                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Sender>>(address);
                         mxFree(address);
                         break;
                     }
@@ -468,13 +468,13 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                 // all other Actions are executed per class (NB: some actions exist for multiple classes, such as start/stop)
                 switch (type)
                 {
-                    case ExportedType::Streamer:
+                    case ExportedType::Sender:
                         {
                             switch (action)
                             {
                             case Action::GetEyeTracker:
                             {
-                                plhs_[0] = mxTypes::ToMatlab(streamerInstance->getEyeTracker());
+                                plhs_[0] = mxTypes::ToMatlab(senderInstance->getEyeTracker());
                                 return;
                             }
                             case Action::Start:
@@ -492,7 +492,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 }
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                plhs_[0] = mxCreateLogicalScalar(streamerInstance->start(bufferCstr, asGif));
+                                plhs_[0] = mxCreateLogicalScalar(senderInstance->start(bufferCstr, asGif));
                                 mxFree(bufferCstr);
                                 return;
                             }
@@ -502,7 +502,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                     throw "setIncludeEyeOpennessInGaze: First argument must be a logical scalar.";
 
                                 bool include = mxIsLogicalScalarTrue(prhs_[2]);
-                                streamerInstance->setIncludeEyeOpennessInGaze(include);
+                                senderInstance->setIncludeEyeOpennessInGaze(include);
                                 break;
                             }
                             case Action::IsStreaming:
@@ -511,7 +511,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                     throw std::string("isStreaming: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                plhs_[0] = mxCreateLogicalScalar(streamerInstance->isStreaming(bufferCstr));
+                                plhs_[0] = mxCreateLogicalScalar(senderInstance->isStreaming(bufferCstr));
                                 mxFree(bufferCstr);
                                 return;
                             }
@@ -521,12 +521,12 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                     throw std::string("stop: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                streamerInstance->stop(bufferCstr);
+                                senderInstance->stop(bufferCstr);
                                 mxFree(bufferCstr);
                                 return;
                             }
                                 default:
-                                    throw "Unhandled TittaLSL::Streamer action: " + actionStr;
+                                    throw "Unhandled TittaLSL::Sender action: " + actionStr;
                                     break;
                             }
                         }

@@ -32,13 +32,13 @@ namespace TittaLSL
     TobiiResearchSDKVersion getTobiiSDKVersion();
     int32_t getLSLVersion();
 
-    class Streamer
+    class Sender
     {
     public:
-        Streamer(std::string address_);
-        Streamer(TobiiResearchEyeTracker* et_);
-        Streamer(const TobiiTypes::eyeTracker& et_);
-        ~Streamer();
+        Sender(std::string address_);
+        Sender(TobiiResearchEyeTracker* et_);
+        Sender(const TobiiTypes::eyeTracker& et_);
+        ~Sender();
 
         TobiiTypes::eyeTracker getEyeTracker();
 
@@ -168,7 +168,7 @@ namespace TittaLSL
         void stop(std::optional<bool> clearBuffer_ = std::nullopt);
 
     private:
-        void createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+        void create(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
 
         template <typename DataType>
         void checkInletType() const;

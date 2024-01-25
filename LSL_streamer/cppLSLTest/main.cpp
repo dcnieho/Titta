@@ -25,7 +25,7 @@ int main(int argc, char** argv)
         if (!eyeTrackers.empty())
         {
             std::cout << "connecting to: " << eyeTrackers[0].deviceName << std::endl;
-            auto lslStreamer = TittaLSL::Streamer(eyeTrackers[0]);
+            auto lslStreamer = TittaLSL::Sender(eyeTrackers[0]);
 
             std::cout << "starting stream" << std::endl;
             lslStreamer.setIncludeEyeOpennessInGaze(true);

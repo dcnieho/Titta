@@ -110,7 +110,7 @@ void GazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data)
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         instance->receiveSample(gaze_data_, nullptr);
     }
 }
@@ -118,7 +118,7 @@ void EyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* use
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         instance->receiveSample(nullptr, openness_data_);
     }
 }
@@ -126,7 +126,7 @@ void EyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -135,7 +135,7 @@ void EyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         if (instance->isStreaming(Titta::Stream::EyeImage))
             instance->pushSample(eye_image_);
     }
@@ -144,7 +144,7 @@ void ExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         if (instance->isStreaming(Titta::Stream::ExtSignal))
             instance->pushSample(*ext_signal_);
     }
@@ -153,7 +153,7 @@ void TimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, voi
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         if (instance->isStreaming(Titta::Stream::TimeSync))
             instance->pushSample(*time_sync_data_);
     }
@@ -162,7 +162,7 @@ void PositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* u
 {
     if (user_data)
     {
-        const auto instance = static_cast<TittaLSL::Streamer*>(user_data);
+        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
         if (instance->isStreaming(Titta::Stream::Positioning))
             instance->pushSample(*position_data_);
     }
@@ -171,7 +171,7 @@ void PositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* u
 namespace
 {
 // eye image helpers
-TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, TittaLSL::Streamer* instance_, const bool asGif_)
+TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, TittaLSL::Sender* instance_, const bool asGif_)
 {
     if (asGif_)
         return tobii_research_subscribe_to_eye_image_as_gif(eyeTracker_, TittaLSL::EyeImageGifCallback, instance_);
@@ -189,19 +189,19 @@ TobiiResearchStatus doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, 
 
 namespace TittaLSL
 {
-Streamer::Streamer(std::string address_)
+Sender::Sender(std::string address_)
 {
     connect(std::move(address_));
 }
-Streamer::Streamer(TobiiResearchEyeTracker* et_)
+Sender::Sender(TobiiResearchEyeTracker* et_)
 {
     connect(et_);
 }
-Streamer::Streamer(const TobiiTypes::eyeTracker& et_)
+Sender::Sender(const TobiiTypes::eyeTracker& et_)
 {
     connect(et_.et);
 }
-Streamer::~Streamer()
+Sender::~Sender()
 {
     stop(Titta::Stream::Gaze);
     stop(Titta::Stream::EyeOpenness);
@@ -211,7 +211,7 @@ Streamer::~Streamer()
     stop(Titta::Stream::Positioning);
 }
 
-void Streamer::CheckClocks()
+void Sender::CheckClocks()
 {
     // check tobii/titta clock and lsl clock are the same
     // 1. warm up clocks by calling them once
@@ -247,7 +247,7 @@ void Streamer::CheckClocks()
 }
 
 
-void Streamer::connect(std::string address_)
+void Sender::connect(std::string address_)
 {
     TobiiResearchEyeTracker* et;
     const TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
@@ -256,24 +256,24 @@ void Streamer::connect(std::string address_)
     connect(et);
 }
 
-void Streamer::connect(TobiiResearchEyeTracker* et_)
+void Sender::connect(TobiiResearchEyeTracker* et_)
 {
     _localEyeTracker = et_;
     CheckClocks();
 }
 
 
-TobiiTypes::eyeTracker Streamer::getEyeTracker()
+TobiiTypes::eyeTracker Sender::getEyeTracker()
 {
     _localEyeTracker.refreshInfo();
     return _localEyeTracker;
 }
 
-bool Streamer::start(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
+bool Sender::start(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
 {
     return start(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true), asGif_);
 }
-bool Streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     // if already streaming, don't start again
     if (isStreaming(stream_))
@@ -657,7 +657,7 @@ bool Streamer::start(const Titta::Stream stream_, std::optional<bool> asGif_)
 }
 
 
-void Streamer::setIncludeEyeOpennessInGaze(const bool include_)
+void Sender::setIncludeEyeOpennessInGaze(const bool include_)
 {
     if (include_ && !(_localEyeTracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA))
         DoExitWithMsg(
@@ -673,7 +673,7 @@ void Streamer::setIncludeEyeOpennessInGaze(const bool include_)
         attachCallback(Titta::Stream::EyeOpenness);
 }
 
-bool Streamer::attachCallback(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool Sender::attachCallback(const Titta::Stream stream_, std::optional<bool> asGif_)
 {
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -836,7 +836,7 @@ namespace {
     }
 }
 
-void Streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
+void Sender::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
 {
     const auto needStage = _streamingGaze && _streamingEyeOpenness;
     if (!needStage && !_gazeStagingEmpty)
@@ -934,7 +934,7 @@ void Streamer::receiveSample(const TobiiResearchGazeData* gaze_data_, const Tobi
     }
 }
 
-void Streamer::pushSample(const Titta::gaze& sample_)
+void Sender::pushSample(const Titta::gaze& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Gaze>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -966,11 +966,11 @@ void Streamer::pushSample(const Titta::gaze& sample_)
     };
     _outStreams.at(Titta::Stream::Gaze).push_sample(sample, static_cast<double>(sample_.system_time_stamp)/1'000'000.);
 }
-void Streamer::pushSample(Titta::eyeImage&& sample_)
+void Sender::pushSample(Titta::eyeImage&& sample_)
 {
 
 }
-void Streamer::pushSample(const Titta::extSignal& sample_)
+void Sender::pushSample(const Titta::extSignal& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::ExtSignal>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -980,7 +980,7 @@ void Streamer::pushSample(const Titta::extSignal& sample_)
     };
     _outStreams.at(Titta::Stream::ExtSignal).push_sample(sample, static_cast<double>(sample_.system_time_stamp) / 1'000'000.);
 }
-void Streamer::pushSample(const Titta::timeSync& sample_)
+void Sender::pushSample(const Titta::timeSync& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::TimeSync>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -990,7 +990,7 @@ void Streamer::pushSample(const Titta::timeSync& sample_)
     };
     _outStreams.at(Titta::Stream::TimeSync).push_sample(sample, static_cast<double>(sample_.system_request_time_stamp) / 1'000'000.);
 }
-void Streamer::pushSample(const Titta::positioning& sample_)
+void Sender::pushSample(const Titta::positioning& sample_)
 {
     using lsl_inlet_type = TittaStreamToLSLInletType_t<Titta::Stream::Positioning>;
     using data_t = LSLChannelFormatToCppType_t<LSLInletTypeToChannelFormat_v<lsl_inlet_type>>;
@@ -1004,7 +1004,7 @@ void Streamer::pushSample(const Titta::positioning& sample_)
     _outStreams.at(Titta::Stream::Positioning).push_sample(sample); // this stream doesn't have a timestamp
 }
 
-bool Streamer::removeCallback(const Titta::Stream stream_)
+bool Sender::removeCallback(const Titta::Stream stream_)
 {
     TobiiResearchStatus result = TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -1049,11 +1049,11 @@ bool Streamer::removeCallback(const Titta::Stream stream_)
     return success;
 }
 
-bool Streamer::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
+bool Sender::isStreaming(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/) const
 {
     return isStreaming(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
-bool Streamer::isStreaming(const Titta::Stream stream_) const
+bool Sender::isStreaming(const Titta::Stream stream_) const
 {
     bool isStreaming = false;
     switch (stream_)
@@ -1082,12 +1082,12 @@ bool Streamer::isStreaming(const Titta::Stream stream_) const
     return isStreaming && ((stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_));
 }
 
-void Streamer::stop(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
+void Sender::stop(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
 {
     stop(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
 
-void Streamer::stop(const Titta::Stream stream_)
+void Sender::stop(const Titta::Stream stream_)
 {
     // stop the callback
     removeCallback(stream_);
@@ -1251,13 +1251,13 @@ Receiver::Receiver(std::string streamSourceID_, const std::optional<size_t> init
     else if (streams.size()>1)
         DoExitWithMsg(string_format("TittaLSL::Receiver: more than one stream with source ID %s found", streamSourceID_.c_str()));
 
-    createListener(streams[0], initialBufferSize_, startListening_);
+    create(streams[0], initialBufferSize_, startListening_);
 }
 Receiver::Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
 {
-    createListener(std::move(streamInfo_), initialBufferSize_, doStartListening_);
+    create(std::move(streamInfo_), initialBufferSize_, doStartListening_);
 }
-void Receiver::createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
+void Receiver::create(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
 {
     // deal with default arguments
     const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
@@ -1295,7 +1295,7 @@ void Receiver::createListener(lsl::stream_info streamInfo_, std::optional<size_t
         MAKE_INLET(TittaLSL::Receiver::positioning, positioningBufSize)
     }
     else
-        DoExitWithMsg(string_format("TittaLSL::createListener: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::Receiver: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
 
     if (createdInlet)
     {

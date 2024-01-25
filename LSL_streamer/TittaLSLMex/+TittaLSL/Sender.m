@@ -1,4 +1,4 @@
-classdef Streamer < TittaLSL.detail.Base
+classdef Sender < TittaLSL.detail.Base
     properties (Dependent, SetAccess=private)
         eyeTracker
         streamingGaze
@@ -10,7 +10,7 @@ classdef Streamer < TittaLSL.detail.Base
     
     methods
         %% wrapper functions
-        function this = Streamer(addressOrInstance)
+        function this = Sender(addressOrInstance)
             % only needed when you want to stream _from_ an eye tracker,
             % not when you want to receive remote streams.
             % addressOrInstance can be an address of a Tobii eye tracker to
@@ -24,7 +24,7 @@ classdef Streamer < TittaLSL.detail.Base
             end
             addressOrInstance = ensureStringIsChar(addressOrInstance);
 
-            this.newInstance('Streamer', addressOrInstance);
+            this.newInstance('Sender', addressOrInstance);
         end
         
         
@@ -58,7 +58,7 @@ classdef Streamer < TittaLSL.detail.Base
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
             if nargin<2
-                error('TittaLSL::Streamer::start: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+                error('TittaLSL::Sender::start: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(asGif)
@@ -72,13 +72,13 @@ classdef Streamer < TittaLSL.detail.Base
         end
         function status = isStreaming(this,stream)
             if nargin<2
-                error('TittaLSL::Streamer::isStreaming: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+                error('TittaLSL::Sender::isStreaming: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             status = this.cppmethod('isStreaming',ensureStringIsChar(stream));
         end
         function stop(this,stream)
             if nargin<2
-                error('TittaLSL::Streamer::stop: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+                error('TittaLSL::Sender::stop: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             this.cppmethod('stop',ensureStringIsChar(stream));
         end

@@ -351,39 +351,39 @@ PYBIND11_MODULE(MODULE_NAME, m)
     m.def("get_LSL_version", &TittaLSL::getLSLVersion);
 
     // outlets
-    auto cStreamer = py::class_<TittaLSL::Streamer>(m, "Streamer")
+    auto cStreamer = py::class_<TittaLSL::Sender>(m, "Sender")
         .def(py::init<std::string>(), "address"_a)
 
         .def("__repr__",
-            [](TittaLSL::Streamer& instance_)
+            [](TittaLSL::Sender& instance_)
             {
                 const auto et = instance_.getEyeTracker();
-                return string_format("<TittaLSL.Streamer (%s (%s) @ %.0f)>",
+                return string_format("<TittaLSL.Sender (%s (%s) @ %.0f)>",
                     et.model.c_str(),
                     et.serialNumber.c_str(),
                     et.frequency
                     );
             })
 
-        .def("get_eye_tracker", [](TittaLSL::Streamer& instance_) { return StructToDict(instance_.getEyeTracker()); })
+        .def("get_eye_tracker", [](TittaLSL::Sender& instance_) { return StructToDict(instance_.getEyeTracker()); })
 
         // outlets
-        .def("start", [](TittaLSL::Streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), as_gif_, true); },
+        .def("start", [](TittaLSL::Sender& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), as_gif_, true); },
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
-        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Streamer::start),
+        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Sender::start),
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
 
-        .def("is_streaming", [](const TittaLSL::Streamer& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
+        .def("is_streaming", [](const TittaLSL::Sender& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
             "stream"_a)
-        .def("is_streaming", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::isStreaming, py::const_),
+        .def("is_streaming", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::isStreaming, py::const_),
             "stream"_a)
 
-        .def("set_include_eye_openness_in_gaze", &TittaLSL::Streamer::setIncludeEyeOpennessInGaze,
+        .def("set_include_eye_openness_in_gaze", &TittaLSL::Sender::setIncludeEyeOpennessInGaze,
             "include"_a)
 
-        .def("stop", [](TittaLSL::Streamer& instance_, std::string stream_) { instance_.stop(std::move(stream_), true); },
+        .def("stop", [](TittaLSL::Sender& instance_, std::string stream_) { instance_.stop(std::move(stream_), true); },
             "stream"_a)
-        .def("stop", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::stop),
+        .def("stop", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::stop),
             "stream"_a)
     ;
 
