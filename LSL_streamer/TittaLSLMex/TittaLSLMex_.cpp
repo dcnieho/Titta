@@ -78,8 +78,12 @@ namespace mxTypes
     // NB: if a vector of such types with typeToMxClass is passed, a cell-array with the structs in them will be produced
     // NB: if you want an array-of-structs instead, also specialize typeNeedsMxCellStorage for the type (set bool value = false)
     template <>
+    struct typeToMxClass<TobiiTypes::eyeTracker> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
+    template <>
     struct typeToMxClass<lsl::stream_info> { static constexpr mxClassID value = mxSTRUCT_CLASS; };
 
+    template <>
+    struct typeNeedsMxCellStorage<TobiiTypes::eyeTracker> { static constexpr bool value = false; };
     template <>
     struct typeNeedsMxCellStorage<lsl::stream_info> { static constexpr bool value = false; };
 
@@ -87,60 +91,97 @@ namespace mxTypes
     template<typename Cont, typename... Fs>
     mxArray* TobiiFieldToMatlab(const Cont& data_, bool rowVectors_, Fs... fields);
 
-    mxArray* ToMatlab(TobiiResearchSDKVersion                           data_);
-    mxArray* ToMatlab(lsl::stream_info data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
-    mxArray* ToMatlab(lsl::channel_format_t                             data_);
-    mxArray* ToMatlab(Titta::Stream                                     data_);
+    mxArray* ToMatlab(TobiiResearchSDKVersion                                   data_);
+    mxArray* ToMatlab(TobiiTypes::eyeTracker data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
+    mxArray* ToMatlab(lsl::stream_info       data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
+    mxArray* ToMatlab(TobiiResearchCapabilities                                 data_);
+    mxArray* ToMatlab(lsl::channel_format_t                                     data_);
+    mxArray* ToMatlab(Titta::Stream                                             data_);
 
-    mxArray* ToMatlab(std::vector<TittaLSL::gaze           >            data_);
-    mxArray* FieldToMatlab(const std::vector<TittaLSL::gaze>&           data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
-    mxArray* ToMatlab(std::vector<TittaLSL::eyeImage       >            data_);
-    mxArray* ToMatlab(std::vector<TittaLSL::extSignal      >            data_);
-    mxArray* ToMatlab(std::vector<TittaLSL::timeSync       >            data_);
-    mxArray* ToMatlab(std::vector<TittaLSL::positioning    >            data_);
-    mxArray* FieldToMatlab(const std::vector<TittaLSL::positioning>&    data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_);
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::gaze           >          data_);
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::gaze>&         data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::eyeImage       >          data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::extSignal      >          data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::timeSync       >          data_);
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::positioning    >          data_);
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::positioning>&  data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_);
 }
 #include "cpp_mex_helpers/mex_type_utils.h"
 
 namespace {
-    using ClassType         = TittaLSL;
-    using HandleType        = unsigned int;
-    using InstancePtrType   = std::shared_ptr<ClassType>;
-    using InstanceMapType   = std::map<HandleType, InstancePtrType>;
+    enum class ExportedType
+    {
+        Unknown,
+        Streamer,
+        Receiver
+    };
+    const std::map<std::string, ExportedType> exportedTypesMap =
+    {
+        { "Streamer",   ExportedType::Streamer },
+        { "Receiver",   ExportedType::Receiver },
+    };
+
+    template <class...> constexpr std::false_type always_false_t{};
+    template <auto...> constexpr std::false_type always_false_nt{};
+    template <ExportedType T> struct ExportedTypesEnumToClassType { static_assert(always_false_nt<T>, "ExportedTypesEnumToClassType not implemented for this enum value"); };
+    template <>                struct ExportedTypesEnumToClassType<ExportedType::Streamer> { using type = TittaLSL::Streamer; };
+    template <>                struct ExportedTypesEnumToClassType<ExportedType::Receiver> { using type = TittaLSL::Receiver; };
+    template <ExportedType T>
+    using ExportedTypesEnumToClassType_t = typename ExportedTypesEnumToClassType<T>::type;
+
+    template <typename T> struct classToExportedTypeEnum { static_assert(always_false_t<T>, "typeToMxClass not implemented for this type"); static constexpr ExportedType value = ExportedType::Unknown; };
+    template <>           struct classToExportedTypeEnum<TittaLSL::Streamer> { static constexpr ExportedType value = ExportedType::Streamer; };
+    template <>           struct classToExportedTypeEnum<TittaLSL::Receiver> { static constexpr ExportedType value = ExportedType::Receiver; };
+    template <typename T>
+    constexpr ExportedType classToExportedTypeEnum_v = classToExportedTypeEnum<T>::value;
+
+    std::string exportedTypeToString(const ExportedType type_)
+    {
+        auto v = std::ranges::find(exportedTypesMap, type_, &decltype(exportedTypesMap)::value_type::second);
+        if (v == exportedTypesMap.end())
+            return "unknown";
+        return v->first;
+    }
+
+    using handle_type = uint32_t;
+    using instPtr_t = std::shared_ptr<void>;
+    struct Instance
+    {
+        ExportedType type;
+        instPtr_t   instance;
+    };
+    using instanceMap_type = std::map<handle_type, Instance>;   // alternative to Instance as value in the map is to have a variant over the various shared_ptr types. That is more unwieldy later when getting instances out of the map than what i have to do now, bunch of static_pointer_casts
 
     // List actions
     enum class Action
     {
-        // MATLAB interface
+        //// wrapper actions
         Touch,
         New,
         Delete,
 
-        // global SDK functions
+        //// static functions
         GetTobiiSDKVersion,
         GetLSLVersion,
-        GetRemoteStreams,
 
-        // some functions that really just wrap Titta functions, for ease of use
-        // check functions for dummy mode
-        CheckStream,
-        CheckBufferSide,
+
+        //// some functions that really just wrap Titta functions, for ease of use
         // data stream info
         GetAllStreamsString,
         GetAllBufferSidesString,
 
-        // outlets
-        Connect,
-        StartOutlet,
+        //// outlets
+        GetEyeTracker,
+        Start,
         SetIncludeEyeOpennessInGaze,
         IsStreaming,
-        StopOutlet,
+        Stop,
 
-        // inlets
-        CreateListener,
-        GetInletInfo,
-        GetInletType,
-        StartListening,
+        //// inlets
+        GetStreams,
+        GetInfo,
+        GetType,
+        // Start,
         IsListening,
         ConsumeN,
         ConsumeTimeRange,
@@ -148,43 +189,37 @@ namespace {
         PeekTimeRange,
         Clear,
         ClearTimeRange,
-        StopListening,
-        DeleteListener
+        // Stop,
     };
 
     // Map string (first input argument to mexFunction) to an Action
     const std::map<std::string, Action> actionTypeMap =
     {
-        // MATLAB interface
+        //// wrapper actions
         { "touch",                          Action::Touch },
         { "new",                            Action::New },
         { "delete",                         Action::Delete },
 
-        // global SDK functions
-        { "getTobiiSDKVersion",             Action::GetTobiiSDKVersion },
-        { "getLSLVersion",                  Action::GetLSLVersion },
-        { "getRemoteStreams",               Action::GetRemoteStreams },
+        //// static functions
+        { "GetTobiiSDKVersion",             Action::GetTobiiSDKVersion },
+        { "GetLSLVersion",                  Action::GetLSLVersion },
 
-        // some functions that really just wrap Titta functions, for ease of use
-        // check functions for dummy mode
-        { "checkStream",                    Action::CheckStream },
-        { "checkBufferSide",                Action::CheckBufferSide },
-        // data stream info
+        //// convenience wrappers for Titta functions
         { "getAllStreamsString",            Action::GetAllStreamsString },
         { "getAllBufferSidesString",        Action::GetAllBufferSidesString },
 
-        // outlets
-        { "connect",                        Action::Connect },
-        { "startOutlet",                    Action::StartOutlet },
+        //// outlets
+        { "getEyeTracker",                  Action::GetEyeTracker },
+        { "start",                          Action::Start },
         { "setIncludeEyeOpennessInGaze",    Action::SetIncludeEyeOpennessInGaze },
         { "isStreaming",                    Action::IsStreaming },
-        { "stopOutlet",                     Action::StopOutlet },
+        { "stop",                           Action::Stop },
 
-        // inlets
-        { "createListener",                 Action::CreateListener },
-        { "getInletInfo",                   Action::GetInletInfo },
-        { "getInletType",                   Action::GetInletType },
-        { "startListening",                 Action::StartListening },
+        //// inlets
+        { "GetStreams",                     Action::GetStreams },
+        { "getInfo",                        Action::GetInfo },
+        { "getType",                        Action::GetType },
+        { "start",                          Action::Start },
         { "isListening",                    Action::IsListening },
         { "consumeN",                       Action::ConsumeN },
         { "consumeTimeRange",               Action::ConsumeTimeRange },
@@ -192,42 +227,47 @@ namespace {
         { "peekTimeRange",                  Action::PeekTimeRange },
         { "clear",                          Action::Clear },
         { "clearTimeRange",                 Action::ClearTimeRange },
-        { "stopListening",                  Action::StopListening },
-        { "deleteListener",                 Action::DeleteListener },
+        { "stop",                           Action::Stop },
     };
 
 
     // table mapping handles to instances
-    InstanceMapType instanceTab;
+    static instanceMap_type instanceTable;
     // for unique handles
-    std::atomic<HandleType> handleVal = {0};
-
-    // getHandle pulls the integer handle out of prhs[1]
-    HandleType getHandle(int nrhs, const mxArray *prhs[])
-    {
-        static_assert(std::is_same_v<HandleType, unsigned int>);   // to check next line is valid (we didn't change the handle type)
-        if (nrhs < 2 || !mxIsScalar(prhs[1]) || !mxIsUint32(prhs[1]))
-            throw "Specify an instance with an integer (uint32) handle.";
-        return *static_cast<HandleType*>(mxGetData(prhs[1]));
-    }
+    std::atomic<handle_type> lastHandleVal = { 0 };
 
     // checkHandle gets the position in the instance table
-    InstanceMapType::const_iterator checkHandle(const InstanceMapType& m, HandleType h)
+    instanceMap_type::const_iterator checkHandle(const instanceMap_type& m_, const handle_type h_)
     {
-        auto it = m.find(h);
-        if (it == m.end())
-            throw string_format("No instance corresponding to handle %u found.", h);
+        const auto it = m_.find(h_);
+        if (it == m_.end())
+            throw "TittaLSL::mex: No instance corresponding to handle " + std::to_string(h_) + " found.";
         return it;
+    }
+
+    template <typename T>
+    handle_type registerHandle(std::shared_ptr<T> newInstance_, const ExportedType type_)
+    {
+        auto [iter, inserted] = instanceTable.emplace(++lastHandleVal, Instance{ type_, newInstance_ });
+
+        if (!inserted) // sanity check
+            throw "Oh, bad news. Tried to add an existing handle."; // shouldn't ever happen
+
+        // add to the lock count
+        mexLock();
+
+        // return the handle
+        return iter->first;
     }
 
     bool registeredAtExit = false;
     void atExitCleanUp()
     {
-        instanceTab.clear();
+        instanceTable.clear();
     }
 }
 
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 {
     try
     {
@@ -237,30 +277,66 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             registeredAtExit = true;
         }
 
-        if (nrhs < 1 || !mxIsChar(prhs[0]))
-            throw "First input must be an action string ('new', 'delete', or a method name).";
+        if (nrhs_ < 1 || !mxIsChar(prhs_[0]))
+            throw "First input must be an action string ('touch', 'new', 'delete', or a method name).";
 
+        // get action
         // get action string
-        char* actionCstr = mxArrayToString(prhs[0]);
+        if (nrhs_ < 1 || !mxIsChar(prhs_[0]))
+            throw "First input must be an action string ('touch', 'new', 'delete', 'parameterInterface', or a method name).";
+        char* actionCstr = mxArrayToString(prhs_[0]);
         std::string actionStr(actionCstr);
         mxFree(actionCstr);
 
         // get corresponding action
-        auto it = actionTypeMap.find(actionStr);
-        if (it == actionTypeMap.end())
-            throw "Unrecognized action (not in actionTypeMap): " + actionStr;
-        Action action = it->second;
+        Action action;
+        {
+            auto it = actionTypeMap.find(actionStr);
+            if (it == actionTypeMap.end())
+                throw "Unrecognized action (not in actionTypeMap): " + std::string{ actionStr };
+            action = it->second;
+        }
+
+        // below when we get an instance from the map, we cast it to one of the below
+        std::shared_ptr<ExportedTypesEnumToClassType_t<ExportedType::Streamer>> streamerInstance;
+        std::shared_ptr<ExportedTypesEnumToClassType_t<ExportedType::Receiver>> receiverInstance;
+
 
         // If action is not "new" or others that don't require a handle, try to locate an existing instance based on input handle
-        InstanceMapType::const_iterator instIt;
-        InstancePtrType instance;
-        if (action != Action::Touch && action != Action::New &&
-            action != Action::GetTobiiSDKVersion && action != Action::GetLSLVersion && action != Action::GetRemoteStreams &&
-            action != Action::CheckStream && action != Action::CheckBufferSide &&
-            action != Action::GetAllStreamsString && action != Action::GetAllBufferSidesString)
+        // for static class members, set the type only
+        instanceMap_type::const_iterator instIt;
+        auto type = ExportedType::Unknown;
+        if (action == Action::Touch || action == Action::New || action == Action::GetTobiiSDKVersion || action == Action::GetLSLVersion)
         {
-            instIt = checkHandle(instanceTab, getHandle(nrhs, prhs));
-            instance = instIt->second;
+            // no handle needed
+        }
+        else if (action == Action::GetStreams)
+            type = ExportedType::Receiver;
+        else
+        {
+            // All the below code that deals with passing instances around assumes the handle_type is unsigned int
+            // check that assumption is valid (we didn't change the handle type)
+            static_assert(std::is_same_v<handle_type, uint32_t>);
+
+            if (nrhs_ < 2 || !mxIsScalar(prhs_[1]) || !mxIsUint32(prhs_[1]))
+                throw "Specify an instance with an integer (uint32) handle.";
+            auto handle = *static_cast<handle_type*>(mxGetData(prhs_[1]));
+            instIt = checkHandle(instanceTable, handle);
+            auto instance = instIt->second.instance;
+            type = instIt->second.type;
+
+            // now retrieve the original instance pointer
+            switch (type)
+            {
+            case ExportedType::Streamer:
+                streamerInstance = std::static_pointer_cast<ExportedTypesEnumToClassType_t<ExportedType::Streamer>>(instance);
+                break;
+            case ExportedType::Receiver:
+                receiverInstance = std::static_pointer_cast<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(instance);
+                break;
+            default:
+                throw "Programmer error getting the shared_ptr: logic not implemented for type '" + exportedTypeToString(type) + "'";
+            }
         }
 
         // execute action
@@ -270,532 +346,477 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             // no-op
             break;
         case Action::New:
-        {
-            std::optional<std::string> address;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
-                if (!mxIsChar(prhs[1]))
-                    throw "LSLMex: Second argument must be a string.";
-                char* c_address = mxArrayToString(prhs[1]);
-                address = c_address;
-                mxFree(c_address);
+                if (nrhs_ < 2 || !mxIsChar(prhs_[1]))
+                    throw "SWAG:new: argument indicating class type to construct (second argument) must be a string.";
+                // NB: further inputs depend on which class we'll construct, and are thus checked later
+                // NB: further inputs are numbered in the error message according to the position in the user-facing
+                // MATLAB API, so as to not confuse user. So subtract two everywhere. This MEX file is not supposed
+                // to be used directly without the wrapper MATLAB classes
+
+                // get type to construct
+                char* typeCstr = mxArrayToString(prhs_[1]);
+                std::string typeStr(typeCstr);
+                mxFree(typeCstr);
+
+                // get corresponding type
+                {
+                    auto it = exportedTypesMap.find(actionStr);
+                    if (it == exportedTypesMap.end())
+                        throw "Unrecognized action (not in exportedTypesMap): " + typeStr;
+                    type = it->second;
+                }
+
+                instPtr_t newInstance = nullptr;
+                switch (type)
+                {
+                case ExportedType::Streamer:
+                    {
+                        if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                            throw "TittaLSL::Streamer::constructor: First argument must be a string.";
+                        char* address = mxArrayToString(prhs_[1]);
+                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Streamer>>(address);
+                        mxFree(address);
+                        break;
+                    }
+                case ExportedType::Receiver:
+                    {
+                        if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                            throw "TittaLSL::Receiver::constructor: First argument must be an LSL stream source identifier string.";
+
+                        // get optional input arguments
+                        std::optional<size_t> bufSize;
+                        if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                        {
+                            if (!mxIsUint64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
+                                throw "createListener: Expected second argument to be a uint64 scalar.";
+                            auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
+                            bufSize = static_cast<size_t>(temp);
+                        }
+                        std::optional<bool> doStartListening;
+                        if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
+                        {
+                            if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
+                                throw "createListener: Expected third argument to be a logical scalar.";
+                            doStartListening = mxIsLogicalScalarTrue(prhs_[4]);
+                        }
+
+                        char* bufferCstr = mxArrayToString(prhs_[2]);
+                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(bufferCstr, bufSize, doStartListening);
+                        mxFree(bufferCstr);
+                        return;
+                    }
+                default:
+                    throw "Unhandled type";
+                    break;
+                }
+
+                // store the new instance in our instance map and return it to matlab
+                plhs_[0] = mxTypes::ToMatlab(registerHandle(newInstance, type));
+                break;
             }
-
-            auto handle = ++handleVal;
-            bool inserted = false;
-            if (address.has_value())
-            {
-                auto insResult = instanceTab.insert({ handle, std::make_shared<ClassType>(*address) });
-                inserted = insResult.second;
-            }
-            else
-            {
-                auto insResult = instanceTab.insert({ handle, std::make_shared<ClassType>() });
-                inserted = insResult.second;
-            }
-
-            if (!inserted) // sanity check
-                throw "Oh, bad news. Tried to add an existing handle."; // shouldn't ever happen
-            else
-                mexLock(); // add to the lock count
-
-            // return the handle
-            plhs[0] = mxTypes::ToMatlab(handle);
-
-            break;
-        }
         case Action::Delete:
-        {
-            instanceTab.erase(instIt);      // erase from map
-            instance.reset();               // decrement ref count of shared pointer, should cause it to delete instance itself
-            mexUnlock();
-            plhs[0] = mxCreateLogicalScalar(instanceTab.empty()); // info
-            break;
-        }
+            {
+                instanceTable.erase(instIt);    // erase from map
+                // instance still held by one of the shared_ptrs at this stage.
+                // this ref counter will be decremented at function end, and
+                // should cause the instance itself to finally be deleted as no
+                // more strong refs held (or soon after in case of camera,
+                // since some other instance might still hold a locked weak_ptr)
+
+                mexUnlock();
+                plhs_[0] = mxTypes::ToMatlab(instanceTable.empty()); // info
+                break;
+            }
 
         case Action::GetTobiiSDKVersion:
-        {
-            plhs[0] = mxTypes::ToMatlab(TittaLSL::getTobiiSDKVersion());
-            break;
-        }
+            {
+                plhs_[0] = mxTypes::ToMatlab(TittaLSL::getTobiiSDKVersion());
+                break;
+            }
         case Action::GetLSLVersion:
-        {
-            plhs[0] = mxTypes::ToMatlab(TittaLSL::getLSLVersion());
-            break;
-        }
-        case Action::GetRemoteStreams:
-        {
-            std::optional<std::string> stream;
-            if (nrhs > 1 && !mxIsEmpty(prhs[1]))
             {
-                if (!mxIsChar(prhs[1]))
-                    throw "LSLMex::GetRemoteStreams: Second argument must be a string.";
-                char* c_stream = mxArrayToString(prhs[1]);
-                stream = c_stream;
-                mxFree(c_stream);
-            }
-            plhs[0] = mxTypes::ToMatlab(TittaLSL::getRemoteStreams(stream ? *stream :""));
-            break;
-        }
-
-        // stream info
-        case Action::CheckStream:
-        {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
-            {
-                std::string err = "checkStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").";
-                throw err;
+                plhs_[0] = mxTypes::ToMatlab(TittaLSL::getLSLVersion());
+                break;
             }
 
-            // get data stream identifier string, check if valid
-            char* bufferCstr = mxArrayToString(prhs[1]);
-            Titta::stringToStream(bufferCstr);
-            mxFree(bufferCstr);
-            plhs[0] = mxCreateLogicalScalar(true);
-            return;
-        }
-        case Action::CheckBufferSide:
-        {
-            if (nrhs < 2 || !mxIsChar(prhs[1]))
-            {
-                std::string err = "checkBufferSide: First input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
-                throw err;
-            }
-
-            // get data stream identifier string, check if valid
-            char* bufferCstr = mxArrayToString(prhs[1]);
-            Titta::stringToBufferSide(bufferCstr);
-            mxFree(bufferCstr);
-            plhs[0] = mxCreateLogicalScalar(true);
-            return;
-        }
         case Action::GetAllStreamsString:
-        {
-            if (nrhs > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
-                    throw "getAllStreamsString: Expected first argument to be a char scalar or empty char array.";
-
-                char quoteChar[2] = { "\0" };
-                if (!mxIsEmpty(prhs[1]))
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-
-                if (nrhs > 2 && !mxIsEmpty(prhs[2]))
+                if (nrhs_ > 1)
                 {
-                    if (!(mxIsDouble(prhs[2]) && !mxIsComplex(prhs[2]) && mxIsScalar(prhs[2])) && !mxIsLogicalScalar(prhs[2]))
-                        throw "getAllStreamsString: Expected second argument to be a logical scalar.";
-                    bool snakeCase = mxIsLogicalScalarTrue(prhs[2]);
+                    if (!mxIsChar(prhs_[1]) || mxIsComplex(prhs_[1]) || (!mxIsScalar(prhs_[1]) && !mxIsEmpty(prhs_[1])))
+                        throw "getAllStreamsString: Expected first argument to be a char scalar or empty char array.";
 
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, snakeCase, true));
+                    char quoteChar[2] = { "\0" };
+                    if (!mxIsEmpty(prhs_[1]))
+                        quoteChar[0] = *static_cast<char*>(mxGetData(prhs_[1]));
+
+                    if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                    {
+                        if (!(mxIsDouble(prhs_[2]) && !mxIsComplex(prhs_[2]) && mxIsScalar(prhs_[2])) && !mxIsLogicalScalar(prhs_[2]))
+                            throw "getAllStreamsString: Expected second argument to be a logical scalar.";
+                        bool snakeCase = mxIsLogicalScalarTrue(prhs_[2]);
+
+                        plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, snakeCase, true));
+                    }
+                    else
+                        plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, false, true));
                 }
                 else
-                    plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString(quoteChar, false, true));
+                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString("\"", false, true));
+                return;
             }
-            else
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllStreamsString("\"", false, true));
-            return;
-        }
         case Action::GetAllBufferSidesString:
-        {
-            if (nrhs > 1)
             {
-                if (!mxIsChar(prhs[1]) || mxIsComplex(prhs[1]) || (!mxIsScalar(prhs[1]) && !mxIsEmpty(prhs[1])))
-                    throw "getAllBufferSidesString: Expected first argument to be a char scalar or empty char array.";
-                char quoteChar[2] = { "\0" };
-                if (!mxIsEmpty(prhs[1]))
-                    quoteChar[0] = *static_cast<char*>(mxGetData(prhs[1]));
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
-            }
-            else
-                plhs[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
-            return;
-        }
-
-        // outlets
-        case Action::Connect:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "LSLMex:Connect: First argument must be a string.";
-            char* address = mxArrayToString(prhs[1]);
-            instance->connect(address);
-            mxFree(address);
-            break;
-        }
-        case Action::StartOutlet:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw std::string("startOutlet: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
-
-            // get optional input arguments
-            std::optional<bool> asGif;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
-                    throw "startOutlet: Expected second argument to be a logical scalar.";
-                asGif = mxIsLogicalScalarTrue(prhs[3]);
-            }
-
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->startOutlet(bufferCstr, asGif));
-            mxFree(bufferCstr);
-            return;
-        }
-        case Action::SetIncludeEyeOpennessInGaze:
-        {
-            if (nrhs < 3 || mxIsEmpty(prhs[2]) || !mxIsScalar(prhs[2]) || !mxIsLogicalScalar(prhs[2]))
-                throw "setIncludeEyeOpennessInGaze: First argument must be a logical scalar.";
-
-            bool include = mxIsLogicalScalarTrue(prhs[2]);
-            instance->setIncludeEyeOpennessInGaze(include);
-            break;
-        }
-        case Action::IsStreaming:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw std::string("isStreaming: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
-
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxCreateLogicalScalar(instance->isStreaming(bufferCstr));
-            mxFree(bufferCstr);
-            return;
-        }
-        case Action::StopOutlet:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw std::string("stopOutlet: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
-
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            instance->stopOutlet(bufferCstr);
-            mxFree(bufferCstr);
-            return;
-        }
-
-
-        // inlets
-        case Action::CreateListener:
-        {
-            if (nrhs < 3 || !mxIsChar(prhs[2]))
-                throw "createListener: First input must be a LSL stream source identifier string.";
-
-            // get optional input arguments
-            std::optional<size_t> bufSize;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "createListener: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
-                bufSize = static_cast<size_t>(temp);
-            }
-            std::optional<bool> doStartListening;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!(mxIsDouble(prhs[4]) && !mxIsComplex(prhs[4]) && mxIsScalar(prhs[4])) && !mxIsLogicalScalar(prhs[4]))
-                    throw "createListener: Expected third argument to be a logical scalar.";
-                doStartListening = mxIsLogicalScalarTrue(prhs[4]);
-            }
-
-            char* bufferCstr = mxArrayToString(prhs[2]);
-            plhs[0] = mxTypes::ToMatlab(instance->createListener(bufferCstr, bufSize, doStartListening));
-            mxFree(bufferCstr);
-            return;
-        }
-        case Action::GetInletInfo:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "getInletInfo: First input must be a uint32.";
-            plhs[0] = mxTypes::ToMatlab(instance->getInletInfo(*static_cast<uint32_t*>(mxGetData(prhs[2]))));
-            return;
-        }
-        case Action::GetInletType:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "getInletType: First input must be a uint32.";
-            plhs[0] = mxTypes::ToMatlab(instance->getInletType(*static_cast<uint32_t*>(mxGetData(prhs[2]))));
-            return;
-        }
-        case Action::StartListening:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "startListening: First input must be a uint32.";
-            instance->startListening(*static_cast<uint32_t*>(mxGetData(prhs[2])));
-            return;
-        }
-        case Action::IsListening:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "isListening: First input must be a uint32.";
-            plhs[0] = mxCreateLogicalScalar(instance->isListening(*static_cast<uint32_t*>(mxGetData(prhs[2]))));
-            return;
-        }
-        case Action::ConsumeN:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "consumeN: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input arguments
-            std::optional<size_t> nSamp;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "consumeN: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
-                if (temp > SIZE_MAX)
-                    throw "consumeN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
-                nSamp = static_cast<size_t>(temp);
-            }
-            std::optional<Titta::BufferSide> side;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsChar(prhs[4]))
+                if (nrhs_ > 1)
                 {
-                    std::string err = "consumeN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
-                    throw err;
+                    if (!mxIsChar(prhs_[1]) || mxIsComplex(prhs_[1]) || (!mxIsScalar(prhs_[1]) && !mxIsEmpty(prhs_[1])))
+                        throw "getAllBufferSidesString: Expected first argument to be a char scalar or empty char array.";
+                    char quoteChar[2] = { "\0" };
+                    if (!mxIsEmpty(prhs_[1]))
+                        quoteChar[0] = *static_cast<char*>(mxGetData(prhs_[1]));
+                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
                 }
-                char* bufferCstr = mxArrayToString(prhs[4]);
-                side = Titta::stringToBufferSide(bufferCstr);
-                mxFree(bufferCstr);
-            }
-
-            switch (instance->getInletType(id))
-            {
-            case Titta::Stream::Gaze:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::gaze>(id, nSamp, side));
-                return;
-            case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::eyeImage>(id, nSamp, side));
-                return;
-            case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::extSignal>(id, nSamp, side));
-                return;
-            case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::timeSync>(id, nSamp, side));
-                return;
-            case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeN<TittaLSL::positioning>(id, nSamp, side));
+                else
+                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
                 return;
             }
-            return;
-        }
-        case Action::ConsumeTimeRange:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "consumeTimeRange: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input arguments
-            std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "consumeTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
-            }
-            std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
-                    throw "consumeTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
-            }
-            std::optional<bool> timeIsLocalTime;
-            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
-            {
-                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
-                    throw "stopListening: Expected fourth argument to be a logical scalar.";
-                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
-            }
-
-            switch (instance->getInletType(id))
-            {
-            case Titta::Stream::Gaze:
-            case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->consumeTimeRange<TittaLSL::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::Positioning:
-                throw "consumeTimeRange: not supported for positioning stream.";
-            }
-            return;
-        }
-        case Action::PeekN:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "peekN: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input arguments
-            std::optional<size_t> nSamp;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsUint64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "peekN: Expected second argument to be a uint64 scalar.";
-                auto temp = *static_cast<uint64_t*>(mxGetData(prhs[3]));
-                if (temp > SIZE_MAX)
-                    throw "peekN: Requesting preallocated buffer of a larger size than is possible on a 32bit platform.";
-                nSamp = static_cast<size_t>(temp);
-            }
-            std::optional<Titta::BufferSide> side;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsChar(prhs[4]))
-                {
-                    std::string err = "peekN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
-                    throw err;
-                }
-                char* bufferCstr = mxArrayToString(prhs[4]);
-                side = Titta::stringToBufferSide(bufferCstr);
-                mxFree(bufferCstr);
-            }
-
-            switch (instance->getInletType(id))
-            {
-            case Titta::Stream::Gaze:
-            case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::gaze>(id, nSamp, side));
-                return;
-            case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::eyeImage>(id, nSamp, side));
-                return;
-            case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::extSignal>(id, nSamp, side));
-                return;
-            case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::timeSync>(id, nSamp, side));
-                return;
-            case Titta::Stream::Positioning:
-                plhs[0] = mxTypes::ToMatlab(instance->peekN<TittaLSL::positioning>(id, nSamp, side));
-                return;
-            }
-            return;
-        }
-        case Action::PeekTimeRange:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "peekTimeRange: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input arguments
-            std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "peekTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
-            }
-            std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
-                    throw "peekTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
-            }
-            std::optional<bool> timeIsLocalTime;
-            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
-            {
-                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
-                    throw "stopListening: Expected fourth argument to be a logical scalar.";
-                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
-            }
-
-            switch (instance->getInletType(id))
-            {
-            case Titta::Stream::Gaze:
-            case Titta::Stream::EyeOpenness:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::gaze>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::EyeImage:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::eyeImage>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::ExtSignal:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::extSignal>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::TimeSync:
-                plhs[0] = mxTypes::ToMatlab(instance->peekTimeRange<TittaLSL::timeSync>(id, timeStart, timeEnd, timeIsLocalTime));
-                return;
-            case Titta::Stream::Positioning:
-                throw "peekTimeRange: not supported for positioning stream.";
-            }
-            return;
-        }
-        case Action::Clear:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "clear: First input must be a uint32.";
-            instance->clear(*static_cast<uint32_t*>(mxGetData(prhs[2])));
-            break;
-        }
-        case Action::ClearTimeRange:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "clearTimeRange: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input arguments
-            std::optional<int64_t> timeStart;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!mxIsInt64(prhs[3]) || mxIsComplex(prhs[3]) || !mxIsScalar(prhs[3]))
-                    throw "clearTimeRange: Expected second argument to be a int64 scalar.";
-                timeStart = *static_cast<int64_t*>(mxGetData(prhs[3]));
-            }
-            std::optional<int64_t> timeEnd;
-            if (nrhs > 4 && !mxIsEmpty(prhs[4]))
-            {
-                if (!mxIsInt64(prhs[4]) || mxIsComplex(prhs[4]) || !mxIsScalar(prhs[4]))
-                    throw "clearTimeRange: Expected third argument to be a int64 scalar.";
-                timeEnd = *static_cast<int64_t*>(mxGetData(prhs[4]));
-            }
-            std::optional<bool> timeIsLocalTime;
-            if (nrhs > 5 && !mxIsEmpty(prhs[5]))
-            {
-                if (!(mxIsDouble(prhs[5]) && !mxIsComplex(prhs[5]) && mxIsScalar(prhs[5])) && !mxIsLogicalScalar(prhs[5]))
-                    throw "stopListening: Expected fourth argument to be a logical scalar.";
-                timeIsLocalTime = mxIsLogicalScalarTrue(prhs[5]);
-            }
-
-            // get data stream identifier string, clear buffer
-            instance->clearTimeRange(id, timeStart, timeEnd, timeIsLocalTime);
-            break;
-        }
-        case Action::StopListening:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "stopListening: First input must be a uint32.";
-            auto id = *static_cast<uint32_t*>(mxGetData(prhs[2]));
-
-            // get optional input argument
-            std::optional<bool> clearBuffer;
-            if (nrhs > 3 && !mxIsEmpty(prhs[3]))
-            {
-                if (!(mxIsDouble(prhs[3]) && !mxIsComplex(prhs[3]) && mxIsScalar(prhs[3])) && !mxIsLogicalScalar(prhs[3]))
-                    throw "stopListening: Expected second argument to be a logical scalar.";
-                clearBuffer = mxIsLogicalScalarTrue(prhs[3]);
-            }
-
-            // get data stream identifier string, stop buffering
-            instance->stopListening(id, clearBuffer);
-            break;
-        }
-        case Action::DeleteListener:
-        {
-            if (nrhs < 3 || !mxIsUint32(prhs[2]))
-                throw "deleteListener: First input must be a uint32.";
-            instance->deleteListener(*static_cast<uint32_t*>(mxGetData(prhs[2])));
-            return;
-        }
-
         default:
-            throw "Unhandled action: " + actionStr;
-            break;
+            {
+                // all other Actions are executed per class (NB: some actions exist for multiple classes, such as start/stop)
+                switch (type)
+                {
+                    case ExportedType::Streamer:
+                        {
+                            switch (action)
+                            {
+                            case Action::GetEyeTracker:
+                            {
+                                plhs_[0] = mxTypes::ToMatlab(streamerInstance->getEyeTracker());
+                                return;
+                            }
+                            case Action::Start:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("start: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                // get optional input arguments
+                                std::optional<bool> asGif;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!(mxIsDouble(prhs_[3]) && !mxIsComplex(prhs_[3]) && mxIsScalar(prhs_[3])) && !mxIsLogicalScalar(prhs_[3]))
+                                        throw "start: Expected second argument to be a logical scalar.";
+                                    asGif = mxIsLogicalScalarTrue(prhs_[3]);
+                                }
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                plhs_[0] = mxCreateLogicalScalar(streamerInstance->start(bufferCstr, asGif));
+                                mxFree(bufferCstr);
+                                return;
+                            }
+                            case Action::SetIncludeEyeOpennessInGaze:
+                            {
+                                if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsScalar(prhs_[2]) || !mxIsLogicalScalar(prhs_[2]))
+                                    throw "setIncludeEyeOpennessInGaze: First argument must be a logical scalar.";
+
+                                bool include = mxIsLogicalScalarTrue(prhs_[2]);
+                                streamerInstance->setIncludeEyeOpennessInGaze(include);
+                                break;
+                            }
+                            case Action::IsStreaming:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("isStreaming: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                plhs_[0] = mxCreateLogicalScalar(streamerInstance->isStreaming(bufferCstr));
+                                mxFree(bufferCstr);
+                                return;
+                            }
+                            case Action::Stop:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("stop: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                streamerInstance->stop(bufferCstr);
+                                mxFree(bufferCstr);
+                                return;
+                            }
+                                default:
+                                    throw "Unhandled TittaLSL::Streamer action: " + actionStr;
+                                    break;
+                            }
+                        }
+                    case ExportedType::Receiver:
+                        {
+                            switch (action)
+                            {
+                            case Action::GetStreams:
+                            {
+                                std::optional<std::string> stream;
+                                if (nrhs_ > 1 && !mxIsEmpty(prhs_[1]))
+                                {
+                                    if (!mxIsChar(prhs_[1]))
+                                        throw "TittaLSL::Receiver::GetStreams: Second argument must be a string.";
+                                    char* c_stream = mxArrayToString(prhs_[1]);
+                                    stream = c_stream;
+                                    mxFree(c_stream);
+                                }
+                                plhs_[0] = mxTypes::ToMatlab(TittaLSL::Receiver::GetStreams(stream ? *stream : ""));
+                                break;
+                            }
+                            case Action::GetInfo:
+                            {
+                                plhs_[0] = mxTypes::ToMatlab(receiverInstance->getInfo());
+                                return;
+                            }
+                            case Action::GetType:
+                            {
+                                plhs_[0] = mxTypes::ToMatlab(receiverInstance->getType());
+                                return;
+                            }
+                            case Action::Start:
+                            {
+                                receiverInstance->start();
+                                return;
+                            }
+                            case Action::IsListening:
+                            {
+                                plhs_[0] = mxCreateLogicalScalar(receiverInstance->isListening());
+                                return;
+                            }
+                            case Action::ConsumeN:
+                            {
+                                std::optional<size_t> nSamp;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!mxIsUint64(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
+                                        throw "consumeN: Expected second argument to be a uint64 scalar.";
+                                    nSamp = *static_cast<size_t*>(mxGetData(prhs_[2]));
+                                }
+                                std::optional<Titta::BufferSide> side;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsChar(prhs_[3]))
+                                        throw "consumeN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
+                                    char* bufferCstr = mxArrayToString(prhs_[3]);
+                                    side = Titta::stringToBufferSide(bufferCstr);
+                                    mxFree(bufferCstr);
+                                }
+
+                                switch (receiverInstance->getType())
+                                {
+                                case Titta::Stream::Gaze:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::gaze>(nSamp, side));
+                                    return;
+                                case Titta::Stream::EyeImage:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::eyeImage>(nSamp, side));
+                                    return;
+                                case Titta::Stream::ExtSignal:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::extSignal>(nSamp, side));
+                                    return;
+                                case Titta::Stream::TimeSync:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::timeSync>(nSamp, side));
+                                    return;
+                                case Titta::Stream::Positioning:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::positioning>(nSamp, side));
+                                    return;
+                                }
+                                return;
+                            }
+                            case Action::ConsumeTimeRange:
+                            {
+                                // get optional input arguments
+                                std::optional<int64_t> timeStart;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!mxIsInt64(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
+                                        throw "clearTimeRange: Expected second argument to be a int64 scalar.";
+                                    timeStart = *static_cast<int64_t*>(mxGetData(prhs_[2]));
+                                }
+                                std::optional<int64_t> timeEnd;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
+                                        throw "clearTimeRange: Expected third argument to be a int64 scalar.";
+                                    timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[3]));
+                                }
+                                std::optional<bool> timeIsLocalTime;
+                                if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
+                                {
+                                    if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
+                                        throw "stop: Expected fourth argument to be a logical scalar.";
+                                    timeIsLocalTime = mxIsLogicalScalarTrue(prhs_[4]);
+                                }
+
+                                switch (receiverInstance->getType())
+                                {
+                                case Titta::Stream::Gaze:
+                                case Titta::Stream::EyeOpenness:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::gaze>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::EyeImage:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::eyeImage>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::ExtSignal:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::extSignal>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::TimeSync:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::timeSync>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::Positioning:
+                                    throw "consumeTimeRange: not supported for positioning stream.";
+                                }
+                                return;
+                            }
+                            case Action::PeekN:
+                            {
+                                // get optional input arguments
+                                std::optional<size_t> nSamp;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!mxIsUint64(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
+                                        throw "peekN: Expected second argument to be a uint64 scalar.";
+                                    nSamp = *static_cast<size_t*>(mxGetData(prhs_[2]));
+                                }
+                                std::optional<Titta::BufferSide> side;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsChar(prhs_[3]))
+                                        throw "peekN: Third input must be a buffer side identifier string (" + Titta::getAllBufferSidesString("'") + ").";
+                                    char* bufferCstr = mxArrayToString(prhs_[3]);
+                                    side = Titta::stringToBufferSide(bufferCstr);
+                                    mxFree(bufferCstr);
+                                }
+
+                                switch (receiverInstance->getType())
+                                {
+                                case Titta::Stream::Gaze:
+                                case Titta::Stream::EyeOpenness:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::gaze>(nSamp, side));
+                                    return;
+                                case Titta::Stream::EyeImage:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::eyeImage>(nSamp, side));
+                                    return;
+                                case Titta::Stream::ExtSignal:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::extSignal>(nSamp, side));
+                                    return;
+                                case Titta::Stream::TimeSync:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::timeSync>(nSamp, side));
+                                    return;
+                                case Titta::Stream::Positioning:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::positioning>(nSamp, side));
+                                    return;
+                                }
+                                return;
+                            }
+                            case Action::PeekTimeRange:
+                            {
+                                // get optional input arguments
+                                std::optional<int64_t> timeStart;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!mxIsInt64(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
+                                        throw "clearTimeRange: Expected second argument to be a int64 scalar.";
+                                    timeStart = *static_cast<int64_t*>(mxGetData(prhs_[2]));
+                                }
+                                std::optional<int64_t> timeEnd;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
+                                        throw "clearTimeRange: Expected third argument to be a int64 scalar.";
+                                    timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[3]));
+                                }
+                                std::optional<bool> timeIsLocalTime;
+                                if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
+                                {
+                                    if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
+                                        throw "stop: Expected fourth argument to be a logical scalar.";
+                                    timeIsLocalTime = mxIsLogicalScalarTrue(prhs_[4]);
+                                }
+
+                                switch (receiverInstance->getType())
+                                {
+                                case Titta::Stream::Gaze:
+                                case Titta::Stream::EyeOpenness:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::gaze>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::EyeImage:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::eyeImage>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::ExtSignal:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::extSignal>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::TimeSync:
+                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::timeSync>(timeStart, timeEnd, timeIsLocalTime));
+                                    return;
+                                case Titta::Stream::Positioning:
+                                    throw "peekTimeRange: not supported for positioning stream.";
+                                }
+                                return;
+                            }
+                            case Action::Clear:
+                            {
+                                receiverInstance->clear();
+                                break;
+                            }
+                            case Action::ClearTimeRange:
+                            {
+                                // get optional input arguments
+                                std::optional<int64_t> timeStart;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!mxIsInt64(prhs_[2]) || mxIsComplex(prhs_[2]) || !mxIsScalar(prhs_[2]))
+                                        throw "clearTimeRange: Expected second argument to be a int64 scalar.";
+                                    timeStart = *static_cast<int64_t*>(mxGetData(prhs_[2]));
+                                }
+                                std::optional<int64_t> timeEnd;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsInt64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
+                                        throw "clearTimeRange: Expected third argument to be a int64 scalar.";
+                                    timeEnd = *static_cast<int64_t*>(mxGetData(prhs_[3]));
+                                }
+                                std::optional<bool> timeIsLocalTime;
+                                if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
+                                {
+                                    if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
+                                        throw "stop: Expected fourth argument to be a logical scalar.";
+                                    timeIsLocalTime = mxIsLogicalScalarTrue(prhs_[4]);
+                                }
+
+                                // get data stream identifier string, clear buffer
+                                receiverInstance->clearTimeRange(timeStart, timeEnd, timeIsLocalTime);
+                                break;
+                            }
+                            case Action::Stop:
+                            {
+                                // get optional input argument
+                                std::optional<bool> clearBuffer;
+                                if (nrhs_ > 2 && !mxIsEmpty(prhs_[2]))
+                                {
+                                    if (!(mxIsDouble(prhs_[2]) && !mxIsComplex(prhs_[2]) && mxIsScalar(prhs_[2])) && !mxIsLogicalScalar(prhs_[2]))
+                                        throw "stop: Expected second argument to be a logical scalar.";
+                                    clearBuffer = mxIsLogicalScalarTrue(prhs_[2]);
+                                }
+
+                                // get data stream identifier string, stop buffering
+                                receiverInstance->stop(clearBuffer);
+                                break;
+                            }
+                                default:
+                                    throw "Unhandled TittaLSL::Receiver action: " + actionStr;
+                                    break;
+                            }
+                            break;
+                        }
+                    default:
+                        throw "Unhandled type";
+                        break;
+                }
+                break;
+            }
         }
     }
     catch (const std::exception& e)
@@ -829,14 +850,14 @@ namespace
         return true;
     }
 
-    mxArray* eyeImagesToMatlab(const std::vector<TittaLSL::eyeImage>& data_)
+    mxArray* eyeImagesToMatlab(const std::vector<TittaLSL::Receiver::eyeImage>& data_)
     {
         if (data_.empty())
             return mxCreateDoubleMatrix(0, 0, mxREAL);
 
         // 1. see if all same size, then we can put them in one big matrix
         auto sz = data_[0].eyeImageData.data_size;
-        bool same = allEquals(data_, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::data_size, sz);
+        bool same = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::data_size, sz);
         // 2. then copy over the images to matlab
         mxArray* out;
         if (data_[0].eyeImageData.bits_per_pixel + data_[0].eyeImageData.padding_per_pixel != 8)
@@ -922,6 +943,59 @@ namespace mxTypes
         return ToMatlab(string_format("%d.%d.%d.%d", data_.major, data_.minor, data_.revision, data_.build));
     }
 
+    mxArray* ToMatlab(TobiiResearchCapabilities data_)
+    {
+        std::vector<std::string> out;
+
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+            out.emplace_back("CanSetDisplayArea");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+            out.emplace_back("HasExternalSignal");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+            out.emplace_back("HasEyeImages");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+            out.emplace_back("HasGazeData");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+            out.emplace_back("HasHMDGazeData");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+            out.emplace_back("CanDoScreenBasedCalibration");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+            out.emplace_back("CanDoHMDBasedCalibration");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+            out.emplace_back("HasHMDLensConfig");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+            out.emplace_back("CanDoMonocularCalibration");
+        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
+            out.emplace_back("HasEyeOpennessData");
+
+        return ToMatlab(out);
+    }
+
+    mxArray* ToMatlab(TobiiTypes::eyeTracker data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
+    {
+        if (idx_ == 0)
+        {
+            const char* fieldNames[] = { "deviceName","serialNumber","model","firmwareVersion","runtimeVersion","address","frequency","trackingMode","capabilities","supportedFrequencies","supportedModes" };
+            storage_ = mxCreateStructMatrix(size_, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
+            if (size_ == 0)
+                return storage_;
+        }
+
+        mxSetFieldByNumber(storage_, idx_, 0, ToMatlab(data_.deviceName));
+        mxSetFieldByNumber(storage_, idx_, 1, ToMatlab(data_.serialNumber));
+        mxSetFieldByNumber(storage_, idx_, 2, ToMatlab(data_.model));
+        mxSetFieldByNumber(storage_, idx_, 3, ToMatlab(data_.firmwareVersion));
+        mxSetFieldByNumber(storage_, idx_, 4, ToMatlab(data_.runtimeVersion));
+        mxSetFieldByNumber(storage_, idx_, 5, ToMatlab(data_.address));
+        mxSetFieldByNumber(storage_, idx_, 6, ToMatlab(static_cast<double>(data_.frequency)));    // output as double, not single
+        mxSetFieldByNumber(storage_, idx_, 7, ToMatlab(data_.trackingMode));
+        mxSetFieldByNumber(storage_, idx_, 8, ToMatlab(data_.capabilities));
+        mxSetFieldByNumber(storage_, idx_, 9, ToMatlab(std::vector<double>(data_.supportedFrequencies.begin(), data_.supportedFrequencies.end()))); // return frequencies as double, not single, precision
+        mxSetFieldByNumber(storage_, idx_, 10, ToMatlab(data_.supportedModes));
+
+        return storage_;
+    }
+
     mxArray* ToMatlab(lsl::stream_info data_, mwIndex idx_/*=0*/, mwSize size_/*=1*/, mxArray* storage_/*=nullptr*/)
     {
         if (idx_ == 0)
@@ -978,19 +1052,19 @@ namespace mxTypes
         return ToMatlab(Titta::streamToString(data_));
     }
 
-    mxArray* ToMatlab(std::vector<TittaLSL::gaze> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::gaze> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. all remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::gaze::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::remote_system_time_stamp));
         // 2. all local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::gaze::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::local_system_time_stamp));
         // 3. all device timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::gaze::gazeData, &Titta::gaze::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::device_time_stamp));
         // 4. all system timestamps
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::gaze::gazeData, &Titta::gaze::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::system_time_stamp));
         // 5. left  eye data
         mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &Titta::gaze::left_eye));
         // 6. right eye data
@@ -998,7 +1072,7 @@ namespace mxTypes
 
         return out;
     }
-    mxArray* FieldToMatlab(const std::vector<TittaLSL::gaze>& data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_)
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::gaze>& data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_)
     {
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin","eyeOpenness"};
         const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid","available" };
@@ -1011,50 +1085,50 @@ namespace mxTypes
         // 1. gazePoint
         mxSetFieldByNumber(out, 0, 0, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGP)), fieldNamesGP));
         // 1.1 gazePoint.onDisplayArea
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area, 0.));              // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area, 0.));              // 0. causes values to be stored as double
         // 1.2 gazePoint.inUserCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates, 0.));          // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates, 0.));          // 0. causes values to be stored as double
         // 1.3 gazePoint.validity
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 1.4 gazePoint.available
-        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available));
+        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available));
 
         // 2. pupil
         mxSetFieldByNumber(out, 0, 1, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesPup)), fieldNamesPup));
         // 2.1 pupil.diameter
-        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter, 0.));                                   // 0. causes values to be stored as double
         // 2.2 pupil.validity
-        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 2.3 pupil.available
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available));
 
         // 3. gazeOrigin
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGO)), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
-        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
         // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates, 0.));   // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates, 0.));   // 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 3.4 gazeOrigin.available
-        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
+        mxSetFieldByNumber(temp, 0, 3,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
 
         // 4. eyeOpenness
         mxSetFieldByNumber(out, 0, 3, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEO)), fieldNamesEO));
         // 4.1 eye_openness.diameter
-        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter, 0.));                             // 0. causes values to be stored as double
+        mxSetFieldByNumber(temp, 0, 0,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter, 0.));                             // 0. causes values to be stored as double
         // 4.2 eye_openness.validity
-        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 4.3 eye_openness.available
-        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available));
+        mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TittaLSL::eyeImage> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::eyeImage> data_)
     {
         // check if all gif, then don't output unneeded fields
-        bool allGif = allEquals(data_, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
+        bool allGif = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
 
         // fieldnames for all structs
         mxArray* out;
@@ -1070,91 +1144,91 @@ namespace mxTypes
         }
 
         // all simple fields
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::eyeImage::remote_system_time_stamp));
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::eyeImage::local_system_time_stamp));
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_top, 0.));            // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_left, 0.));           // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_top, 0.));            // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_left, 0.));           // 0. causes values to be stored as double
         if (!allGif)
         {
-            mxSetFieldByNumber(out, 0,  7, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel, 0.));    // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  8, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel, 0.)); // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  9, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::width, 0.));             // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 10, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::height, 0.));            // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  7, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel, 0.));    // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  8, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel, 0.)); // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0,  9, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::width, 0.));             // 0. causes values to be stored as double
+            mxSetFieldByNumber(out, 0, 10, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::height, 0.));            // 0. causes values to be stored as double
         }
         int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0,  7 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
-        mxSetFieldByNumber(out, 0,  8 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0,  9 + off, FieldToMatlab(data_, true, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif));
+        mxSetFieldByNumber(out, 0,  7 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
+        mxSetFieldByNumber(out, 0,  8 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0,  9 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif));
         mxSetFieldByNumber(out, 0, 10 + off, eyeImagesToMatlab(data_));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TittaLSL::extSignal> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::extSignal> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::extSignal::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::extSignal::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::local_system_time_stamp));
         // 3. device timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::extSignalData, &TobiiResearchExternalSignalData::device_time_stamp));
         // 4. system timestamps
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::system_time_stamp));
+        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::extSignalData, &TobiiResearchExternalSignalData::system_time_stamp));
         // 5. external signal values
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::value));
+        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::extSignalData, &TobiiResearchExternalSignalData::value));
         // 6. value change type
-        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::extSignal::extSignalData, &TobiiResearchExternalSignalData::change_type, uint8_t{}));      // cast enum values to uint8
+        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::extSignalData, &TobiiResearchExternalSignalData::change_type, uint8_t{}));      // cast enum values to uint8
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TittaLSL::timeSync> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::timeSync> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::timeSync::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::timeSync::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::local_system_time_stamp));
         // 3. system request timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
         // 4. device timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::device_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::device_time_stamp));
         // 5. system response timestamps
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
+        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_response_time_stamp));
 
         return out;
     }
 
-    mxArray* FieldToMatlab(const std::vector<TittaLSL::positioning>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
+    mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::positioning>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
     {
         const char* fieldNames[] = {"user_position","valid"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 user_position
-        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
+        mxSetFieldByNumber(out, 0, 0, TobiiFieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::user_position, 0.));    // 0. causes values to be stored as double
         // 2 validity
-        mxSetFieldByNumber(out, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(out, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::positioning::positioningData, field_, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID));
 
         return out;
     }
 
-    mxArray* ToMatlab(std::vector<TittaLSL::positioning> data_)
+    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::positioning> data_)
     {
         const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::positioning::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::remote_system_time_stamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::positioning::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::local_system_time_stamp));
         // 3. left  eye data
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchUserPositionGuide::left_eye));
         // 4. right eye data
