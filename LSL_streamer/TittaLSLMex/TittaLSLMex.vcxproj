@@ -74,15 +74,15 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(ProjectDir)\64\Windows</OutDir>
+    <OutDir>$(ProjectDir)+TittaLSL\+detail\Windows</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_d</TargetName>
     <TargetExt>.mexw64</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(ProjectDir)\64\Windows</OutDir>
+    <OutDir>$(ProjectDir)+TittaLSL\+detail\Windows</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)_</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
     <TargetExt>.mexw64</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
