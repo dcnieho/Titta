@@ -303,7 +303,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
         // for static class members, set the type only
         instanceMap_type::const_iterator instIt;
         auto type = ExportedType::Unknown;
-        if (action == Action::Touch || action == Action::New || action == Action::GetTobiiSDKVersion || action == Action::GetLSLVersion || Action::GetAllStreamsString)
+        if (action == Action::Touch || action == Action::New || action == Action::GetTobiiSDKVersion || action == Action::GetLSLVersion || action == Action::GetAllStreamsString)
         {
             // no handle needed
         }
