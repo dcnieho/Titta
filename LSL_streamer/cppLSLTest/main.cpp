@@ -29,29 +29,28 @@ int main(int argc, char** argv)
 
             std::cout << "starting stream" << std::endl;
             lslStreamer.setIncludeEyeOpennessInGaze(true);
-            lslStreamer.startOutlet(Titta::Stream::Gaze);
-            lslStreamer.startOutlet(Titta::Stream::ExtSignal);
-            lslStreamer.startOutlet(Titta::Stream::TimeSync);
-            lslStreamer.startOutlet(Titta::Stream::Positioning);
+            lslStreamer.start(Titta::Stream::Gaze);
+            lslStreamer.start(Titta::Stream::ExtSignal);
+            lslStreamer.start(Titta::Stream::TimeSync);
+            lslStreamer.start(Titta::Stream::Positioning);
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            auto streams = TittaLSL::Receiver::getRemoteStreams("");
+            auto streams = TittaLSL::Receiver::getStreams("");
             for (auto& s: streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
             }
             std::cout << "----" << std::endl;
-            streams = TittaLSL::Receiver::getRemoteStreams("gaze");
+            streams = TittaLSL::Receiver::getStreams("gaze");
             for (auto& s : streams)
             {
                 std::cout << s.name() << " " << s.hostname() << " " << s.type() << " " << s.source_id() << std::endl;
             }
             std::cout << streams[0].as_xml() << std::endl;
 
-            auto lslReceiver = TittaLSL::Receiver();
-            auto id = lslReceiver.createListener(streams[0].source_id());
-            std::cout << lslReceiver.getInletInfo(id).as_xml() << std::endl;
-            lslReceiver.startListening(id);
+            auto lslReceiver = TittaLSL::Receiver(streams[0].source_id());
+            std::cout << lslReceiver.getInfo().as_xml() << std::endl;
+            lslReceiver.start();
 
             for (int i = 0; i < 3; i++)
             {
@@ -59,9 +58,9 @@ int main(int argc, char** argv)
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
             std::cout << "done" << std::endl;
-            auto data = lslReceiver.consumeN<TittaLSL::Receiver::gaze>(id, 1);
+            auto data = lslReceiver.consumeN<TittaLSL::Receiver::gaze>(1);
 
-            lslReceiver.deleteListener(id);
+            lslReceiver.stop();
         }
         else
             std::cout << "no eye tracker" << std::endl;
