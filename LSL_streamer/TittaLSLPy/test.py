@@ -29,6 +29,7 @@ print(TittaLSLPy.get_LSL_version())
 
 # exercise outlet
 streamer = Streamer(ets[0]['address'])
+print(streamer.get_eye_tracker())
 print(streamer.is_streaming('gaze'))
 print(streamer.is_streaming(EyeTracker.stream.gaze))
 streamer.start('gaze')
