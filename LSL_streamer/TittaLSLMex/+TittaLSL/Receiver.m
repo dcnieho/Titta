@@ -3,6 +3,17 @@ classdef Receiver < TittaLSL.detail.Base
         stream
         isRecording
     end
+
+    methods (Static)
+        function streamInfos = GetStreams(streamType)
+            fnc = TittaLSL.detail.Base.getMexFnc();
+            if nargin>1
+                streamInfos = fnc('GetStreams',ensureStringIsChar(streamType));
+            else
+                streamInfos = fnc('GetStreams');
+            end
+        end
+    end
     
     methods
         %% wrapper functions
@@ -10,13 +21,13 @@ classdef Receiver < TittaLSL.detail.Base
             % optional buffer size input, and optional input to request
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
-            if nargin<2
-                error('TittaLSLMex::createListener: must provide an LSL stream source identifier string.');
+            if nargin<1
+                error('TittaLSL::Receiver::constructor: must provide an LSL stream source identifier string.');
             end
             streamSourceID = ensureStringIsChar(streamSourceID);
-            if nargin>3 && ~isempty(doStartListening)
+            if nargin>2 && ~isempty(doStartListening)
                 this.newInstance('Receiver', streamSourceID,uint64(initialBufferSize),logical(doStartListening));
-            elseif nargin>2 && ~isempty(initialBufferSize)
+            elseif nargin>1 && ~isempty(initialBufferSize)
                 this.newInstance('Receiver', streamSourceID,uint64(initialBufferSize));
             else
                 this.newInstance('Receiver', streamSourceID);
@@ -39,7 +50,7 @@ classdef Receiver < TittaLSL.detail.Base
         end
 
         function start(this)
-            this.cppmethod('startListening');
+            this.cppmethod('start');
         end
         
         function data = consumeN(this,NSamp,side)
@@ -116,9 +127,9 @@ classdef Receiver < TittaLSL.detail.Base
             % optional boolean input indicating whether buffer should be
             % cleared out
             if nargin>1 && ~isempty(doClearBuffer)
-                this.cppmethod('stopListening',logical(doClearBuffer));
+                this.cppmethod('stop',logical(doClearBuffer));
             else
-                this.cppmethod('stopListening');
+                this.cppmethod('stop');
             end
         end
     end

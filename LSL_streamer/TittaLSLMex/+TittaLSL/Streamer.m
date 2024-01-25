@@ -58,7 +58,7 @@ classdef Streamer < TittaLSL.detail.Base
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
             if nargin<2
-                error('TittaLSL::Streamer::start: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSL::Streamer::start: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
             if nargin>2 && ~isempty(asGif)
@@ -72,13 +72,13 @@ classdef Streamer < TittaLSL.detail.Base
         end
         function status = isStreaming(this,stream)
             if nargin<2
-                error('TittaLSL::Streamer::isStreaming: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSL::Streamer::isStreaming: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             status = this.cppmethod('isStreaming',ensureStringIsChar(stream));
         end
         function stop(this,stream)
             if nargin<2
-                error('TittaLSL::Streamer::stop: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
+                error('TittaLSL::Streamer::stop: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             this.cppmethod('stop',ensureStringIsChar(stream));
         end

@@ -11,17 +11,41 @@ classdef (Abstract) Base < handle
     end
     
     methods (Static = true, Access = protected)
-        function mexFnc = checkMEXFnc(mexFnc)
-            % Input function_handle or name, return valid handle or error
-            if ischar(mexFnc)
-                mexFnc = str2func(mexFnc);
+        function mexClassWrapperFnc = getMexFnc(debugMode)
+            % debugmode is for developer of TittaLSLMex only, no use for end users
+            if nargin<1 || isempty(debugMode)
+                debugMode = false;
+            else
+                debugMode = ~~debugMode;
             end
-            % validate MEX-file function handle
-            % http://stackoverflow.com/a/19307825/2778484
-            funInfo = functions(mexFnc);
-            if exist(funInfo.file,'file') ~= 3  % status 3 is MEX-file
-                error('TittaLSLMex:invalidMEXFunction','Invalid MEX file "%s" for function %s.',funInfo.file,funInfo.function);
+            % determine what mex file to call
+            if debugMode
+                mexFncStr = 'TittaLSL.detail.TittaLSLMex_d';
+            else
+                mexFncStr = 'TittaLSL.detail.TittaLSLMex';
             end
+
+            % 1. check if mex file is found on path
+            if isempty(which(mexFncStr))
+                error('TittaLSL:MEXFunctionNotFound','The MEX file "%s" was not found on path.',mexFncStr);
+            end
+
+            % construct function handle to Mex file
+            mexClassWrapperFnc = str2func(mexFncStr);
+
+            % call no-op to load the mex file, so we fail early when load fails
+            mexClassWrapperFnc('touch');
+        end
+    end
+    methods (Static = true)
+        % global/static functions
+        function SDKVersion = GetTobiiSDKVersion()
+            fnc = TittaLSL.detail.Base.getMexFnc();
+            SDKVersion = fnc('GetTobiiSDKVersion');
+        end
+        function LSLVersion = GetLSLVersion()
+            fnc = TittaLSL.detail.Base.getMexFnc();
+            LSLVersion = fnc('GetLSLVersion');
         end
     end
     
@@ -53,60 +77,27 @@ classdef (Abstract) Base < handle
     end
     
     methods
-        function this = Base(debugMode)
-            % debugmode is for developer of TittaLSLMex only, no use for
-            % end users
-            if nargin<1 || isempty(debugMode)
-                debugMode = false;
-            else
-                debugMode = ~~debugMode;
-            end
-            % determine what mex file to call
-            if debugMode
-                mexFnc = 'TittaLSLMex_d';
-            else
-                mexFnc = 'TittaLSLMex';
-            end
-            
-            % construct C++ class instance
-            this.mexClassWrapperFnc = this.checkMEXFnc(mexFnc);
-            
-            % call no-op to load the mex file, so we fail early when load
-            % fails
-            this.cppmethodGlobal('touch');
+        function this = Base()
+            this.mexClassWrapperFnc = TittaLSL.detail.Base.getMexFnc();
         end
 
 
-        %% global/static SDK functions (not static here, still need an instance of the MEX file)
+        % getters
         function SDKVersion = get.TobiiSDKVersion(this)
-            SDKVersion = this.cppmethodGlobal('getTobiiSDKVersion');
+            SDKVersion = this.cppmethodGlobal('GetTobiiSDKVersion');
         end
         function LSLVersion = get.LSLVersion(this)
-            LSLVersion = this.cppmethodGlobal('getLSLVersion');
-        end
-        function streamInfos = getRemoteStreams(this, streamType)
-            if nargin>1
-                streamInfos = this.cppmethodGlobal('getRemoteStreams',ensureStringIsChar(streamType));
-            else
-                streamInfos = this.cppmethodGlobal('getRemoteStreams');
-            end
+            LSLVersion = this.cppmethodGlobal('GetLSLVersion');
         end
 
         % stream info
-        function streams = getAllStreamsString(this,quoteChar,snakeCase)
+        function streams = GetAllStreamsString(this,quoteChar,snakeCase)
             if nargin>2
-                streams = this.cppmethodGlobal('getAllStreamsString',ensureStringIsChar(quoteChar),logical(snakeCase));
+                streams = this.cppmethodGlobal('GetAllStreamsString',ensureStringIsChar(quoteChar),logical(snakeCase));
             elseif nargin>1
-                streams = this.cppmethodGlobal('getAllStreamsString',ensureStringIsChar(quoteChar));
+                streams = this.cppmethodGlobal('GetAllStreamsString',ensureStringIsChar(quoteChar));
             else
-                streams = this.cppmethodGlobal('getAllStreamsString');
-            end
-        end
-        function bufferSides = getAllBufferSidesString(this,quoteChar)
-            if nargin>1
-                bufferSides = this.cppmethodGlobal('getAllBufferSidesString',ensureStringIsChar(quoteChar));
-            else
-                bufferSides = this.cppmethodGlobal('getAllBufferSidesString');
+                streams = this.cppmethodGlobal('GetAllStreamsString');
             end
         end
     end
