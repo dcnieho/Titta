@@ -40,17 +40,17 @@ namespace TittaLSL
         Streamer(const TobiiTypes::eyeTracker& et_);
         ~Streamer();
 
-        void connect(std::string address_);
-        void connect(TobiiResearchEyeTracker* et_);
-        bool startOutlet(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
-        bool startOutlet(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
+        bool start(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
+        bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
         void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
         bool isStreaming(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
         bool isStreaming(Titta::Stream stream_) const;
-        void stopOutlet(std::string    stream_, bool snake_case_on_stream_not_found = false);
-        void stopOutlet(Titta::Stream  stream_);
+        void stop(std::string    stream_, bool snake_case_on_stream_not_found = false);
+        void stop(Titta::Stream  stream_);
 
     private:
+        void connect(std::string address_);
+        void connect(TobiiResearchEyeTracker* et_);
         static void CheckClocks();
         // Tobii callbacks need to be friends
         friend void GazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data);
@@ -69,8 +69,8 @@ namespace TittaLSL
         void pushSample(const Titta::timeSync& sample_);
         void pushSample(const Titta::positioning& sample_);
         // callback registration and deregistration
-        bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
-        bool stop(Titta::Stream stream_);
+        bool attachCallback(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
+        bool removeCallback(Titta::Stream stream_);
 
     private:
         std::unique_ptr<TobiiTypes::eyeTracker>
@@ -113,11 +113,11 @@ namespace TittaLSL
         };
 
         // short names for very long Tobii data types
-        using gaze = LSLTypes::gaze;       // getInletType() -> Titta::Stream::Gaze
-        using eyeImage = LSLTypes::eyeImage;   // getInletType() -> Titta::Stream::EyeImage
-        using extSignal = LSLTypes::extSignal;  // getInletType() -> Titta::Stream::ExtSignal
-        using timeSync = LSLTypes::timeSync;   // getInletType() -> Titta::Stream::TimeSync
-        using positioning = LSLTypes::positioning;// getInletType() -> Titta::Stream::Positioning
+        using gaze = LSLTypes::gaze;       // getType() -> Titta::Stream::Gaze
+        using eyeImage = LSLTypes::eyeImage;   // getType() -> Titta::Stream::EyeImage
+        using extSignal = LSLTypes::extSignal;  // getType() -> Titta::Stream::ExtSignal
+        using timeSync = LSLTypes::timeSync;   // getType() -> Titta::Stream::TimeSync
+        using positioning = LSLTypes::positioning;// getType() -> Titta::Stream::Positioning
         using AllInlets = std::variant<
             Inlet<gaze>,
             Inlet<eyeImage>,
@@ -126,65 +126,61 @@ namespace TittaLSL
             Inlet<positioning>
         >;
 
-        Receiver() = default;
+        // subscribe to stream, allocate buffer resources
+        Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+        Receiver(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
         ~Receiver();
 
         // query what streams are available (optionally filter by type, empty string means no filter)
-        static std::vector<lsl::stream_info> getRemoteStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
-        static std::vector<lsl::stream_info> getRemoteStreams(std::optional<Titta::Stream> stream_ = {});
-        // subscribe to stream, allocate buffer resources
-        [[nodiscard]] uint32_t createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
-        [[nodiscard]] uint32_t createListener(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+        static std::vector<lsl::stream_info> getStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
+        static std::vector<lsl::stream_info> getStreams(std::optional<Titta::Stream> stream_ = {});
 
         // info about inlet (desc is set now)
-        lsl::stream_info getInletInfo(uint32_t id_) const;
-        Titta::Stream    getInletType(uint32_t id_) const;
+        lsl::stream_info getInfo() const;
+        Titta::Stream    getType() const;
 
         // actually start pulling samples from it
-        void startListening(uint32_t id_);
-        bool isListening(uint32_t id_) const;
+        void start();
+
+        bool isListening() const;
 
         // consume samples (by default all)
-        template <typename DataType>    // e.g. TittaLSL::gaze
-        std::vector<DataType> consumeN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
+        template <typename DataType>    // e.g. TittaLSL::Receiver::gaze
+        std::vector<DataType> consumeN(std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
         // consume samples within given timestamps (inclusive, by default whole buffer)
         template <typename DataType>
-        std::vector<DataType> consumeTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
+        std::vector<DataType> consumeTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
         // peek samples (by default only last one, can specify how many to peek, and from which side of buffer)
         template <typename DataType>
-        std::vector<DataType> peekN(uint32_t id_, std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
+        std::vector<DataType> peekN(std::optional<size_t> NSamp_ = std::nullopt, std::optional<Titta::BufferSide> side_ = std::nullopt);
         // peek samples within given timestamps (inclusive, by default whole buffer)
         template <typename DataType>
-        std::vector<DataType> peekTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
+        std::vector<DataType> peekTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
         // clear all buffer contents
-        void clear(uint32_t id_);
+        void clear();
         // clear contents buffer within given timestamps (inclusive, by default whole buffer)
-        void clearTimeRange(uint32_t id_, std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
+        void clearTimeRange(std::optional<int64_t> timeStart_ = std::nullopt, std::optional<int64_t> timeEnd_ = std::nullopt, std::optional<bool> timeIsLocalTime_ = std::nullopt);
 
-        // stop, optionally deletes the buffer. Can be continued with startListening()
-        void stopListening(uint32_t id_, std::optional<bool> clearBuffer_ = std::nullopt);
-
-        // delete the listener and associated resources
-        void deleteListener(uint32_t);
+        // stop, optionally deletes the buffer. Can be continued with start()
+        void stop(std::optional<bool> clearBuffer_ = std::nullopt);
 
     private:
-        static uint32_t getID();
-        // helper
+        void createListener(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+
         template <typename DataType>
-        friend void checkInletType(AllInlets& inlet_, uint32_t id_);
-        AllInlets& getAllInletsVariant(uint32_t id_) const;
+        void checkInletType() const;
         static std::unique_ptr<std::thread>& getWorkerThread(AllInlets& inlet_);
         static bool getWorkerThreadStopFlag(AllInlets& inlet_);
         static void setWorkerThreadStopFlag(AllInlets& inlet_);
         template <typename DataType>
-        Inlet<DataType>& getInlet(uint32_t id_) const;
+        Inlet<DataType>& getInlet() const;
         // worker function
         template <typename DataType>
-        void recorderThreadFunc(uint32_t id_);
+        void recorderThreadFunc();
 
     private:
-        std::map<uint32_t, std::unique_ptr<AllInlets>>  _inStreams;
+        std::unique_ptr<AllInlets>  _inlet;
     };
 }
