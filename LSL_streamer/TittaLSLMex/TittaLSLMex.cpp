@@ -358,9 +358,9 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
                 // get corresponding type
                 {
-                    auto it = exportedTypesMap.find(actionStr);
+                    auto it = exportedTypesMap.find(typeStr);
                     if (it == exportedTypesMap.end())
-                        throw "Unrecognized action (not in exportedTypesMap): " + typeStr;
+                        throw "Unrecognized type (not in exportedTypesMap): " + typeStr;
                     type = it->second;
                 }
 
@@ -371,7 +371,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                     {
                         if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
                             throw "TittaLSL::Streamer::constructor: First argument must be a string.";
-                        char* address = mxArrayToString(prhs_[1]);
+                        char* address = mxArrayToString(prhs_[2]);
                         newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Streamer>>(address);
                         mxFree(address);
                         break;
@@ -386,7 +386,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                         if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
                         {
                             if (!mxIsUint64(prhs_[3]) || mxIsComplex(prhs_[3]) || !mxIsScalar(prhs_[3]))
-                                throw "createListener: Expected second argument to be a uint64 scalar.";
+                                throw "TittaLSL::Receiver::constructor: Expected second argument to be a uint64 scalar.";
                             auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
                             bufSize = static_cast<size_t>(temp);
                         }
@@ -394,14 +394,14 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                         if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
                         {
                             if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
-                                throw "createListener: Expected third argument to be a logical scalar.";
+                                throw "TittaLSL::Receiver::constructor: Expected third argument to be a logical scalar.";
                             doStartListening = mxIsLogicalScalarTrue(prhs_[4]);
                         }
 
                         char* bufferCstr = mxArrayToString(prhs_[2]);
                         newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(bufferCstr, bufSize, doStartListening);
                         mxFree(bufferCstr);
-                        return;
+                        break;
                     }
                 default:
                     throw "Unhandled type";
