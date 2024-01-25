@@ -77,47 +77,47 @@ void TobiiFieldToNpArray(py::dict& out_, const std::vector<V>& data_, const std:
         FieldToNpArray<true>(out_, data_, name_ + "_z", std::forward<Fs>(fields_)..., &retT::z);
 }
 
-void FieldToNpArray(py::dict& out_, const std::vector<TittaLSL::gaze>& data_, const std::string& name_, TobiiTypes::eyeData Titta::gaze::* field_)
+void FieldToNpArray(py::dict& out_, const std::vector<TittaLSL::Receiver::gaze>& data_, const std::string& name_, TobiiTypes::eyeData Titta::gaze::* field_)
 {
     // 1. gaze_point
     auto localName = name_ + "_gaze_point_";
     // 1.1 gaze_point_on_display_area
-    TobiiFieldToNpArray (out_, data_, localName+"on_display_area"    , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area);
+    TobiiFieldToNpArray (out_, data_, localName+"on_display_area"    , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_on_display_area);
     // 1.2 gaze_point_in_user_coordinates
-    TobiiFieldToNpArray (out_, data_, localName+"in_user_coordinates", &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates);
+    TobiiFieldToNpArray (out_, data_, localName+"in_user_coordinates", &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::position_in_user_coordinates);
     // 1.3 gaze_point_valid
-    FieldToNpArray<true>(out_, data_, localName+"valid"              , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    FieldToNpArray<true>(out_, data_, localName+"valid"              , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::validity, TOBII_RESEARCH_VALIDITY_VALID);
     // 1.4 gaze_point_available
-    FieldToNpArray<true>(out_, data_, localName+"available"          , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available);
+    FieldToNpArray<true>(out_, data_, localName+"available"          , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_point, &TobiiTypes::gazePoint::available);
 
     // 2. pupil
     localName = name_ + "_pupil_";
     // 2.1 pupil_diameter
-    FieldToNpArray<true>(out_, data_, localName + "diameter" , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter);
+    FieldToNpArray<true>(out_, data_, localName + "diameter" , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::diameter);
     // 2.2 pupil_valid
-    FieldToNpArray<true>(out_, data_, localName + "valid"    , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    FieldToNpArray<true>(out_, data_, localName + "valid"    , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::validity, TOBII_RESEARCH_VALIDITY_VALID);
     // 2.3 pupil_available
-    FieldToNpArray<true>(out_, data_, localName + "available", &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available);
+    FieldToNpArray<true>(out_, data_, localName + "available", &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::pupil, &TobiiTypes::pupilData::available);
 
     // 3. gazeOrigin
     localName = name_ + "_gaze_origin_";
     // 3.1 gaze_origin_in_user_coordinates
-    TobiiFieldToNpArray (out_, data_, localName + "in_user_coordinates"     , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates);
+    TobiiFieldToNpArray (out_, data_, localName + "in_user_coordinates"     , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates);
     // 3.2 gaze_origin_in_track_box_coordinates
-    TobiiFieldToNpArray (out_, data_, localName + "in_track_box_coordinates", &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates);
+    TobiiFieldToNpArray (out_, data_, localName + "in_track_box_coordinates", &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates);
     // 3.3 gaze_origin_valid
-    FieldToNpArray<true>(out_, data_, localName + "valid"                   , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    FieldToNpArray<true>(out_, data_, localName + "valid"                   , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID);
     // 3.4 gaze_origin_available
-    FieldToNpArray<true>(out_, data_, localName + "available"               , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available);
+    FieldToNpArray<true>(out_, data_, localName + "available"               , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available);
 
     // 4. eyeOpenness
     localName = name_ + "_eye_openness_";
     // 4.1 eye_openness_diameter
-    FieldToNpArray<true>(out_, data_, localName + "diameter"  , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter);
+    FieldToNpArray<true>(out_, data_, localName + "diameter"  , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::diameter);
     // 4.2 eye_openness_valid
-    FieldToNpArray<true>(out_, data_, localName + "valid"     , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    FieldToNpArray<true>(out_, data_, localName + "valid"     , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID);
     // 4.3 eye_openness_available
-    FieldToNpArray<true>(out_, data_, localName + "available" , &TittaLSL::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available);
+    FieldToNpArray<true>(out_, data_, localName + "available" , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available);
 }
 
 
@@ -138,7 +138,7 @@ py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage& e_)
     std::memcpy(a.mutable_data(), e_.data(), e_.data_size);
     return a;
 }
-void outputEyeImages(py::dict& out_, const std::vector<TittaLSL::eyeImage>& data_, const std::string& name_)
+void outputEyeImages(py::dict& out_, const std::vector<TittaLSL::Receiver::eyeImage>& data_, const std::string& name_)
 {
     if (data_.empty())
     {
@@ -159,18 +159,18 @@ void outputEyeImages(py::dict& out_, const std::vector<TittaLSL::eyeImage>& data
 
 
 
-py::dict StructVectorToDict(std::vector<TittaLSL::gaze>&& data_)
+py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::gaze>&& data_)
 {
     py::dict out;
 
     // 1. remote system timestamps
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::gaze::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::gaze::remote_system_time_stamp);
     // 2. local system timestamps
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::gaze::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::gaze::local_system_time_stamp);
     // 3. device timestamps
-    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::gaze::gazeData, &Titta::gaze::device_time_stamp);
+    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::device_time_stamp);
     // 4. system timestamps
-    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::gaze::gazeData, &Titta::gaze::system_time_stamp);
+    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::system_time_stamp);
     // 5. left  eye data
     FieldToNpArray(out, data_, "left" , &Titta::gaze::left_eye);
     // 6. right eye data
@@ -179,70 +179,70 @@ py::dict StructVectorToDict(std::vector<TittaLSL::gaze>&& data_)
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<TittaLSL::eyeImage>&& data_)
+py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::eyeImage>&& data_)
 {
     py::dict out;
 
     // check if all gif, then don't output unneeded fields
-    const bool allGif = allEquals(data_, &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
+    const bool allGif = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::eyeImage::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::eyeImage::local_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp);
-    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp);
-    FieldToNpArray<true>(out, data_, "region_id"        , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_id);
-    FieldToNpArray<true>(out, data_, "region_top"       , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_top);
-    FieldToNpArray<true>(out, data_, "region_left"      , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::region_left);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::eyeImage::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::eyeImage::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp);
+    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp);
+    FieldToNpArray<true>(out, data_, "region_id"        , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id);
+    FieldToNpArray<true>(out, data_, "region_top"       , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_top);
+    FieldToNpArray<true>(out, data_, "region_left"      , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_left);
     if (!allGif)
     {
-        FieldToNpArray<true>(out, data_, "bits_per_pixel"   , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel);
-        FieldToNpArray<true>(out, data_, "padding_per_pixel", &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel);
+        FieldToNpArray<true>(out, data_, "bits_per_pixel"   , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel);
+        FieldToNpArray<true>(out, data_, "padding_per_pixel", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel);
     }
-    FieldToNpArray<false>(out, data_, "type"     , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::type);
-    FieldToNpArray<true> (out, data_, "camera_id", &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::camera_id);
-    FieldToNpArray<true> (out, data_, "is_gif"   , &TittaLSL::eyeImage::eyeImageData, &Titta::eyeImage::is_gif);
+    FieldToNpArray<false>(out, data_, "type"     , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::type);
+    FieldToNpArray<true> (out, data_, "camera_id", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::camera_id);
+    FieldToNpArray<true> (out, data_, "is_gif"   , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif);
     outputEyeImages(out, data_, "image");
 
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<TittaLSL::extSignal>&& data_)
+py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::extSignal>&& data_)
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::extSignal::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::extSignal::local_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::extSignal::extSignalData, &Titta::extSignal::device_time_stamp);
-    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::extSignal::extSignalData, &Titta::extSignal::system_time_stamp);
-    FieldToNpArray<true>(out, data_, "value"            , &TittaLSL::extSignal::extSignalData, &Titta::extSignal::value);
-    FieldToNpArray<false>(out, data_, "change_type"     , &TittaLSL::extSignal::extSignalData, &Titta::extSignal::change_type);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::extSignal::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::extSignal::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::device_time_stamp);
+    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::system_time_stamp);
+    FieldToNpArray<true>(out, data_, "value"            , &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::value);
+    FieldToNpArray<false>(out, data_, "change_type"     , &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::change_type);
 
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<TittaLSL::timeSync>&& data_)
+py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::timeSync>&& data_)
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::timeSync::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::timeSync::local_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "system_request_time_stamp" , &TittaLSL::timeSync::timeSyncData, &Titta::timeSync::system_request_time_stamp);
-    FieldToNpArray<true>(out, data_, "device_time_stamp"         , &TittaLSL::timeSync::timeSyncData, &Titta::timeSync::device_time_stamp);
-    FieldToNpArray<true>(out, data_, "system_response_time_stamp", &TittaLSL::timeSync::timeSyncData, &Titta::timeSync::system_response_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::timeSync::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::timeSync::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "system_request_time_stamp" , &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::system_request_time_stamp);
+    FieldToNpArray<true>(out, data_, "device_time_stamp"         , &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::device_time_stamp);
+    FieldToNpArray<true>(out, data_, "system_response_time_stamp", &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::system_response_time_stamp);
 
     return out;
 }
 
-py::dict StructVectorToDict(std::vector<TittaLSL::positioning>&& data_)
+py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::positioning>&& data_)
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::positioning::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::positioning::local_system_time_stamp);
-    TobiiFieldToNpArray(out, data_, "left_user_position"        , &TittaLSL::positioning::positioningData, &Titta::positioning::left_eye, &TobiiResearchEyeUserPositionGuide::user_position);
-    FieldToNpArray<true>(out, data_, "left_user_position_valid" , &TittaLSL::positioning::positioningData, &Titta::positioning::left_eye , &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID);
-    TobiiFieldToNpArray(out, data_, "right_user_position"       , &TittaLSL::positioning::positioningData, &Titta::positioning::right_eye, &TobiiResearchEyeUserPositionGuide::user_position);
-    FieldToNpArray<true>(out, data_, "right_user_position_valid", &TittaLSL::positioning::positioningData, &Titta::positioning::right_eye, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::positioning::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::positioning::local_system_time_stamp);
+    TobiiFieldToNpArray(out, data_, "left_user_position"        , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::left_eye, &TobiiResearchEyeUserPositionGuide::user_position);
+    FieldToNpArray<true>(out, data_, "left_user_position_valid" , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::left_eye , &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID);
+    TobiiFieldToNpArray(out, data_, "right_user_position"       , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::right_eye, &TobiiResearchEyeUserPositionGuide::user_position);
+    FieldToNpArray<true>(out, data_, "right_user_position_valid", &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::right_eye, &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID);
 
     return out;
 }
@@ -302,53 +302,54 @@ PYBIND11_MODULE(MODULE_NAME, m)
     //// global SDK functions
     m.def("get_Tobii_SDK_version", []() { const auto v = TittaLSL::getTobiiSDKVersion(); return string_format("%d.%d.%d.%d", v.major, v.minor, v.revision, v.build); });
     m.def("get_LSL_version", &TittaLSL::getLSLVersion);
-    m.def("get_remote_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::getRemoteStreams(stream_ ? *stream_ : "")); },
-        py::arg_v("stream_type", std::nullopt, "None"));
 
     // outlets
-    auto cLSL = py::class_<TittaLSL>(m, "TittaLSL")
-        .def(py::init<>())
+    auto cStreamer = py::class_<TittaLSL::Streamer>(m, "Streamer")
         .def(py::init<std::string>(), "address"_a)
 
         // outlets
-        .def("connect", py::overload_cast<std::string>(&TittaLSL::connect),
-            "address"_a)
-
-        .def("start_outlet", [](TittaLSL& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.startOutlet(std::move(stream_), as_gif_, true); },
+        .def("start_outlet", [](TittaLSL::Streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.startOutlet(std::move(stream_), as_gif_, true); },
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
-        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::startOutlet),
+        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Streamer::startOutlet),
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
 
-        .def("is_streaming", [](const TittaLSL& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
+        .def("is_streaming", [](const TittaLSL::Streamer& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
             "stream"_a)
-        .def("is_streaming", py::overload_cast<Titta::Stream>(&TittaLSL::isStreaming, py::const_),
+        .def("is_streaming", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::isStreaming, py::const_),
             "stream"_a)
 
-        .def("set_include_eye_openness_in_gaze", &TittaLSL::setIncludeEyeOpennessInGaze,
+        .def("set_include_eye_openness_in_gaze", &TittaLSL::Streamer::setIncludeEyeOpennessInGaze,
             "include"_a)
 
-        .def("stop_outlet", [](TittaLSL& instance_, std::string stream_) { instance_.stopOutlet(std::move(stream_), true); },
+        .def("stop_outlet", [](TittaLSL::Streamer& instance_, std::string stream_) { instance_.stopOutlet(std::move(stream_), true); },
             "stream"_a)
-        .def("stop_outlet", py::overload_cast<Titta::Stream>(&TittaLSL::stopOutlet),
+        .def("stop_outlet", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::stopOutlet),
             "stream"_a)
+    ;
 
         // inlets
-        .def("create_listener", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TittaLSL::createListener),
+    auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver")
+        .def(py::init<>())
+
+        .def_static("get_remote_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::getRemoteStreams(stream_ ? *stream_ : "")); },
+            py::arg_v("stream_type", std::nullopt, "None"))
+
+        .def("create_listener", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TittaLSL::Receiver::createListener),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
 
-        .def("get_inlet_info", [](const TittaLSL& instance_, const uint32_t id_) { return StructToDict(instance_.getInletInfo(id_)); },
+        .def("get_inlet_info", [](const TittaLSL::Receiver& instance_, const uint32_t id_) { return StructToDict(instance_.getInletInfo(id_)); },
             "inlet_id"_a)
-        .def("get_inlet_type", py::overload_cast<uint32_t>(&TittaLSL::getInletType, py::const_),
-            "inlet_id"_a)
-
-        .def("start_listening", &TittaLSL::startListening,
+        .def("get_inlet_type", py::overload_cast<uint32_t>(&TittaLSL::Receiver::getInletType, py::const_),
             "inlet_id"_a)
 
-        .def("is_listening", py::overload_cast<uint32_t>(&TittaLSL::isListening, py::const_),
+        .def("start_listening", &TittaLSL::Receiver::startListening,
+            "inlet_id"_a)
+
+        .def("is_listening", py::overload_cast<uint32_t>(&TittaLSL::Receiver::isListening, py::const_),
             "inlet_id"_a)
 
         .def("consume_N",
-            [](TittaLSL& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -364,34 +365,34 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::gaze>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::gaze>(id_, NSamp_, bufSide));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::eyeImage>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::eyeImage>(id_, NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::extSignal>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::extSignal>(id_, NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::timeSync>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::timeSync>(id_, NSamp_, bufSide));
                 case Titta::Stream::Positioning:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::positioning>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::positioning>(id_, NSamp_, bufSide));
                 }
                 return {};
             },
             "inlet_id"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("consume_time_range",
-            [](TittaLSL& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
                 switch (instance_.getInletType(id_))
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::Positioning:
                     DoExitWithMsg("TittaLSL::cpp::consume_time_range: not supported for positioning stream.");
                 }
@@ -400,7 +401,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
         .def("peek_N",
-            [](TittaLSL& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -416,34 +417,34 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::gaze>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::gaze>(id_, NSamp_, bufSide));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::eyeImage>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::eyeImage>(id_, NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::extSignal>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::extSignal>(id_, NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::timeSync>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::timeSync>(id_, NSamp_, bufSide));
                 case Titta::Stream::Positioning:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::positioning>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::positioning>(id_, NSamp_, bufSide));
                 }
                 return {};
             },
             "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("peek_time_range",
-            [](TittaLSL& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
                 switch (instance_.getInletType(id_))
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::Positioning:
                     DoExitWithMsg("Titta::cpp::peek_time_range: not supported for positioning stream.");
                 }
@@ -451,14 +452,14 @@ PYBIND11_MODULE(MODULE_NAME, m)
             },
             "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
-        .def("clear", &TittaLSL::clear,
+        .def("clear", &TittaLSL::Receiver::clear,
             "inlet_id"_a)
-        .def("clear_time_range", &TittaLSL::clearTimeRange,
+        .def("clear_time_range", &TittaLSL::Receiver::clearTimeRange,
             "inlet_id"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
-        .def("stop_listening", &TittaLSL::stopListening,
+        .def("stop_listening", &TittaLSL::Receiver::stopListening,
             "inlet_id"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
-        .def("delete_listener", &TittaLSL::deleteListener,
+        .def("delete_listener", &TittaLSL::Receiver::deleteListener,
             "inlet_id"_a)
     ;
 
