@@ -27,7 +27,6 @@
 class Titta
 {
 public:
-    // short names for very long Tobii data types
     using gaze          = TobiiTypes::gazeData;
     using eyeImage      = TobiiTypes::eyeImage;
     using extSignal     = TobiiResearchExternalSignalData;
