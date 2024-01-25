@@ -97,9 +97,9 @@ std::string Titta::streamToString(Titta::Stream stream_, const bool snakeCase_ /
 {
     std::pair<std::string, Titta::Stream> v;
     if (snakeCase_)
-        v = *find_if(streamMapSnakeCase.begin(), streamMapSnakeCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
+        v = *std::find_if(streamMapSnakeCase.begin(), streamMapSnakeCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
     else
-        v = *find_if(streamMapCamelCase.begin(), streamMapCamelCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
+        v = *std::find_if(streamMapCamelCase.begin(), streamMapCamelCase.end(), [&stream_](auto p_) {return p_.second == stream_;});
     return v.first;
 }
 
