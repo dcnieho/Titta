@@ -308,9 +308,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def(py::init<std::string>(), "address"_a)
 
         // outlets
-        .def("start_outlet", [](TittaLSL::Streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.startOutlet(std::move(stream_), as_gif_, true); },
+        .def("start", [](TittaLSL::Streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), as_gif_, true); },
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
-        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Streamer::startOutlet),
+        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Streamer::start),
             "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
 
         .def("is_streaming", [](const TittaLSL::Streamer& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
@@ -321,35 +321,29 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("set_include_eye_openness_in_gaze", &TittaLSL::Streamer::setIncludeEyeOpennessInGaze,
             "include"_a)
 
-        .def("stop_outlet", [](TittaLSL::Streamer& instance_, std::string stream_) { instance_.stopOutlet(std::move(stream_), true); },
+        .def("stop", [](TittaLSL::Streamer& instance_, std::string stream_) { instance_.stop(std::move(stream_), true); },
             "stream"_a)
-        .def("stop_outlet", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::stopOutlet),
+        .def("stop", py::overload_cast<Titta::Stream>(&TittaLSL::Streamer::stop),
             "stream"_a)
     ;
 
         // inlets
     auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver")
-        .def(py::init<>())
-
-        .def_static("get_remote_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::getRemoteStreams(stream_ ? *stream_ : "")); },
-            py::arg_v("stream_type", std::nullopt, "None"))
-
-        .def("create_listener", py::overload_cast<std::string, std::optional<size_t>, std::optional<bool>>(&TittaLSL::Receiver::createListener),
+        .def(py::init<std::string, std::optional<size_t>, std::optional<bool>>(),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
 
-        .def("get_inlet_info", [](const TittaLSL::Receiver& instance_, const uint32_t id_) { return StructToDict(instance_.getInletInfo(id_)); },
-            "inlet_id"_a)
-        .def("get_inlet_type", py::overload_cast<uint32_t>(&TittaLSL::Receiver::getInletType, py::const_),
-            "inlet_id"_a)
+        .def_static("get_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::getStreams(stream_ ? *stream_ : "")); },
+            py::arg_v("stream_type", std::nullopt, "None"))
 
-        .def("start_listening", &TittaLSL::Receiver::startListening,
-            "inlet_id"_a)
+        .def("get_info", [](const TittaLSL::Receiver& instance_) { return StructToDict(instance_.getInfo()); })
+        .def("get_type", py::overload_cast<>(&TittaLSL::Receiver::getType, py::const_))
 
-        .def("is_listening", py::overload_cast<uint32_t>(&TittaLSL::Receiver::isListening, py::const_),
-            "inlet_id"_a)
+        .def("start", &TittaLSL::Receiver::start)
+
+        .def("is_listening", py::overload_cast<>(&TittaLSL::Receiver::isListening, py::const_))
 
         .def("consume_N",
-            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](TittaLSL::Receiver& instance_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -361,47 +355,47 @@ PYBIND11_MODULE(MODULE_NAME, m)
                         bufSide = std::get<Titta::BufferSide>(*side_);
                 }
 
-                switch (instance_.getInletType(id_))
+                switch (instance_.getType())
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::gaze>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::gaze>(NSamp_, bufSide));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::eyeImage>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::eyeImage>(NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::extSignal>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::extSignal>(NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::timeSync>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::timeSync>(NSamp_, bufSide));
                 case Titta::Stream::Positioning:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::positioning>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::positioning>(NSamp_, bufSide));
                 }
                 return {};
             },
-            "inlet_id"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
+            py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("consume_time_range",
-            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+            [](TittaLSL::Receiver& instance_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
-                switch (instance_.getInletType(id_))
+                switch (instance_.getType())
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::gaze>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::eyeImage>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::extSignal>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::timeSync>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::Positioning:
                     DoExitWithMsg("TittaLSL::cpp::consume_time_range: not supported for positioning stream.");
                 }
                 return {};
             },
-            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
+            py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
         .def("peek_N",
-            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
+            [](TittaLSL::Receiver& instance_, const std::optional<size_t> NSamp_, std::optional<std::variant<std::string, Titta::BufferSide>> side_)
             -> py::dict
             {
                 std::optional<Titta::BufferSide> bufSide;
@@ -413,54 +407,51 @@ PYBIND11_MODULE(MODULE_NAME, m)
                         bufSide = std::get<Titta::BufferSide>(*side_);
                 }
 
-                switch (instance_.getInletType(id_))
+                switch (instance_.getType())
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::gaze>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::gaze>(NSamp_, bufSide));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::eyeImage>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::eyeImage>(NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::extSignal>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::extSignal>(NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::timeSync>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::timeSync>(NSamp_, bufSide));
                 case Titta::Stream::Positioning:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::positioning>(id_, NSamp_, bufSide));
+                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::positioning>(NSamp_, bufSide));
                 }
                 return {};
             },
-            "stream"_a, py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
+            py::arg_v("N_samples", std::nullopt, "None"), py::arg_v("side", std::nullopt, "None"))
         .def("peek_time_range",
-            [](TittaLSL::Receiver& instance_, const uint32_t id_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
+            [](TittaLSL::Receiver& instance_, const std::optional<int64_t> timeStart_, const std::optional<int64_t> timeEnd_, const std::optional<bool> timeIsLocalTime_)
             -> py::dict
             {
-                switch (instance_.getInletType(id_))
+                switch (instance_.getType())
                 {
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::gaze>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::gaze>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::eyeImage>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::eyeImage>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::extSignal>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::extSignal>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::timeSync>(id_, timeStart_, timeEnd_, timeIsLocalTime_));
+                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::timeSync>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::Positioning:
                     DoExitWithMsg("Titta::cpp::peek_time_range: not supported for positioning stream.");
                 }
                 return {};
             },
-            "stream"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
+            py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
-        .def("clear", &TittaLSL::Receiver::clear,
-            "inlet_id"_a)
+        .def("clear", &TittaLSL::Receiver::clear)
         .def("clear_time_range", &TittaLSL::Receiver::clearTimeRange,
-            "inlet_id"_a, py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
+            py::arg_v("time_start", std::nullopt, "None"), py::arg_v("time_end", std::nullopt, "None"), py::arg_v("time_is_local_time", std::nullopt, "None"))
 
-        .def("stop_listening", &TittaLSL::Receiver::stopListening,
-            "inlet_id"_a, py::arg_v("clear_buffer", std::nullopt, "None"))
-        .def("delete_listener", &TittaLSL::Receiver::deleteListener,
-            "inlet_id"_a)
+        .def("stop", &TittaLSL::Receiver::stop,
+            py::arg_v("clear_buffer", std::nullopt, "None"))
     ;
 
 
