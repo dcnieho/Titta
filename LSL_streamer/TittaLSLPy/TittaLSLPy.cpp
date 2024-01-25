@@ -276,6 +276,49 @@ py::list StructVectorToList(std::vector<lsl::stream_info>&& data_)
 
     return out;
 }
+
+py::list CapabilitiesToList(TobiiResearchCapabilities data_)
+{
+    py::list l;
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
+        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
+    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
+        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA);
+    return l;
+}
+
+py::dict StructToDict(const TobiiTypes::eyeTracker& data_)
+{
+    py::dict d;
+    d["device_name"] = data_.deviceName;
+    d["serial_number"] = data_.serialNumber;
+    d["model"] = data_.model;
+    d["firmware_version"] = data_.firmwareVersion;
+    d["runtime_version"] = data_.runtimeVersion;
+    d["address"] = data_.address;
+    d["frequency"] = data_.frequency;
+    d["tracking_mode"] = data_.trackingMode;
+    d["capabilities"] = CapabilitiesToList(data_.capabilities);
+    d["supported_frequencies"] = data_.supportedFrequencies;
+    d["supported_modes"] = data_.supportedModes;
+    return d;
+}
 }
 
 
@@ -287,6 +330,10 @@ py::list StructVectorToList(std::vector<lsl::stream_info>&& data_)
 #endif
 PYBIND11_MODULE(MODULE_NAME, m)
 {
+    // We must import TittaPy, as this defines some of the enums and other data types we use here.
+    // Must be done this way, as defining them hear as well leads to a double definition error when both this module and TittaPy are imported (likely!).
+    py::module_::import("TittaPy");
+
     py::enum_<lsl::channel_format_t>(m, "channel_format")
         .value("float32", lsl::cf_float32)
         .value("double64", lsl::cf_double64)
@@ -306,6 +353,8 @@ PYBIND11_MODULE(MODULE_NAME, m)
     // outlets
     auto cStreamer = py::class_<TittaLSL::Streamer>(m, "Streamer")
         .def(py::init<std::string>(), "address"_a)
+
+        .def("get_eye_tracker", [](TittaLSL::Streamer& instance_) { return StructToDict(instance_.getEyeTracker()); })
 
         // outlets
         .def("start", [](TittaLSL::Streamer& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), as_gif_, true); },

@@ -40,6 +40,8 @@ namespace TittaLSL
         Streamer(const TobiiTypes::eyeTracker& et_);
         ~Streamer();
 
+        TobiiTypes::eyeTracker getEyeTracker();
+
         bool start(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
         bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
         void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
@@ -73,8 +75,7 @@ namespace TittaLSL
         bool removeCallback(Titta::Stream stream_);
 
     private:
-        std::unique_ptr<TobiiTypes::eyeTracker>
-            _localEyeTracker;
+        TobiiTypes::eyeTracker          _localEyeTracker;
 
         std::map<Titta::Stream,
                  lsl::stream_outlet>    _outStreams;
