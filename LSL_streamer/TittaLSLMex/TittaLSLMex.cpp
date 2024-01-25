@@ -137,7 +137,7 @@ namespace {
 
     std::string exportedTypeToString(const ExportedType type_)
     {
-        auto v = std::ranges::find(exportedTypesMap, type_, &decltype(exportedTypesMap)::value_type::second);
+        auto v = std::find_if(exportedTypesMap.begin(), exportedTypesMap.end(), [&type_](auto p_) {return p_.second == type_; });
         if (v == exportedTypesMap.end())
             return "unknown";
         return v->first;
