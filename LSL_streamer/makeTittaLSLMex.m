@@ -23,13 +23,13 @@ else
     inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
         '-v'
         '-outdir'
-        fullfile(myDir,'TittaLSLMex','+Titta','+detail')
+        fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail')
         '-DBUILD_FROM_SCRIPT'
         sprintf('-I"%s"',fullfile(myDir,'deps','include'))
         sprintf('-I"%s"',myDir)
         sprintf('-I"%s"',fullfile(myDir,'..','SDK_wrapper'))
         sprintf('-I"%s"',fullfile(myDir,'..','SDK_wrapper','deps','include'))
-        fullfile('TittaLSLMex','TittaLSLMex_.cpp')
+        fullfile('TittaLSLMex','TittaLSLMex.cpp')
         fullfile('src','*.cpp')
         fullfile('..','SDK_wrapper','src','*.cpp')
         }.';
@@ -44,14 +44,14 @@ else
         inpArgs = [inpArgs {
             'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
             'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
-            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+Titta','+detail'))
+            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail'))
             '-ltobii_research'
             '-llsl'}.'];
     elseif isOSX
         inpArgs = [inpArgs {
             'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
             'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
-            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+Titta','+detail'))
+            sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail'))
             '-ltobii_research'
             '-llsl'}.'];
     end
