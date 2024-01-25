@@ -92,7 +92,7 @@ setup(
     ext_modules=ext_modules,
     python_requires=">=3.8",
     setup_requires=['pybind11>=2.10.1'],  # this fixes problem if c++23 std::forward_like is available that i ran into
-    install_requires=['numpy'],
+    install_requires=['numpy',f'TittaPy=={__version__}'],
     cmdclass={'build_ext': BuildExt},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
