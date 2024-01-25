@@ -545,7 +545,11 @@ classdef Titta < handle
                     extra = '';
                     if iTry==obj.settings.nTryReConnect+1 || qHaveAddress
                         if ~isempty(trackers)
-                            extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.model));
+                            if qHaveAddress
+                                extra = sprintf('\nYou requested to connect to the eye tracker at %s, but this eye tracker is a %s, not a %s as expected from the settings you specified',address, trackers.model, obj.settings.tracker);
+                            else
+                                extra = sprintf('\nI did find the following:%s',sprintf('\n  %s',trackers.model));
+                            end
                         else
                             extra = sprintf('\nNo eye trackers connected.');
                         end
@@ -572,7 +576,9 @@ classdef Titta < handle
                     
                     if ~any(qTracker)
                         extra = '';
-                        if iTry==obj.settings.nTryReConnect+1 || qHaveAddress
+                        if qHaveAddress
+                            extra = sprintf('\nYou requested to connect to the %s eye tracker at %s, but this eye tracker has the serial number %s, not %s as expected from the settings you specified', trackers.model, address, trackers.serialNumber, serial);
+                        elseif iTry==obj.settings.nTryReConnect+1
                             extra = sprintf('\nI did find eye trackers of model ''%s'' with the following serial numbers:%s',obj.settings.tracker,sprintf('\n  %s',trackers.serialNumber));
                         end
                         func('Titta: No eye trackers of model ''%s'' with serial ''%s'' connected.%s',obj.settings.tracker,serial,extra);
