@@ -165,10 +165,8 @@ namespace {
         GetLSLVersion,
 
 
-        //// some functions that really just wrap Titta functions, for ease of use
-        // data stream info
+        //// convenience wrappers for Titta functions
         GetAllStreamsString,
-        GetAllBufferSidesString,
 
         //// outlets
         GetEyeTracker,
@@ -205,8 +203,7 @@ namespace {
         { "GetLSLVersion",                  Action::GetLSLVersion },
 
         //// convenience wrappers for Titta functions
-        { "getAllStreamsString",            Action::GetAllStreamsString },
-        { "getAllBufferSidesString",        Action::GetAllBufferSidesString },
+        { "GetAllStreamsString",            Action::GetAllStreamsString },
 
         //// outlets
         { "getEyeTracker",                  Action::GetEyeTracker },
@@ -306,7 +303,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
         // for static class members, set the type only
         instanceMap_type::const_iterator instIt;
         auto type = ExportedType::Unknown;
-        if (action == Action::Touch || action == Action::New || action == Action::GetTobiiSDKVersion || action == Action::GetLSLVersion)
+        if (action == Action::Touch || action == Action::New || action == Action::GetTobiiSDKVersion || action == Action::GetLSLVersion || Action::GetAllStreamsString)
         {
             // no handle needed
         }
@@ -464,21 +461,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                 }
                 else
                     plhs_[0] = mxTypes::ToMatlab(Titta::getAllStreamsString("\"", false, true));
-                return;
-            }
-        case Action::GetAllBufferSidesString:
-            {
-                if (nrhs_ > 1)
-                {
-                    if (!mxIsChar(prhs_[1]) || mxIsComplex(prhs_[1]) || (!mxIsScalar(prhs_[1]) && !mxIsEmpty(prhs_[1])))
-                        throw "getAllBufferSidesString: Expected first argument to be a char scalar or empty char array.";
-                    char quoteChar[2] = { "\0" };
-                    if (!mxIsEmpty(prhs_[1]))
-                        quoteChar[0] = *static_cast<char*>(mxGetData(prhs_[1]));
-                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString(quoteChar));
-                }
-                else
-                    plhs_[0] = mxTypes::ToMatlab(Titta::getAllBufferSidesString());
                 return;
             }
         default:
