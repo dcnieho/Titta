@@ -17,7 +17,7 @@
 //   6. No wrapper class or functions mimicking mexFunction, just an intuitive
 //      switch-case block in mexFunction.
 //
-// Note that these goals should be acheved without regard to any MATLAB class,
+// Note that these goals should be achieved without regard to any MATLAB class,
 // but which can also help address memory management issues.  As such, the
 // resulting MEX-file can safely be used directly (but not too elegantly).
 //
@@ -1036,13 +1036,13 @@ namespace mxTypes
 
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::gaze> data_)
     {
-        const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","left","right"};
+        const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. all remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::remoteSystemTimeStamp));
         // 2. all local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::localSystemTimeStamp));
         // 3. all device timestamps
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::device_time_stamp));
         // 4. all system timestamps
@@ -1116,18 +1116,18 @@ namespace mxTypes
         mxArray* out;
         if (allGif)
         {
-            const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","type","cameraID","isGif","image"};
+            const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
         else
         {
-            const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
+            const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
             out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
         }
 
         // all simple fields
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::remote_system_time_stamp));
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::remoteSystemTimeStamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::localSystemTimeStamp));
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
         mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
         mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
@@ -1151,13 +1151,13 @@ namespace mxTypes
 
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::extSignal> data_)
     {
-        const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","deviceTimeStamp","systemTimeStamp","value","changeType"};
+        const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","value","changeType"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::remoteSystemTimeStamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::localSystemTimeStamp));
         // 3. device timestamps
         mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::extSignal::extSignalData, &TobiiResearchExternalSignalData::device_time_stamp));
         // 4. system timestamps
@@ -1172,13 +1172,13 @@ namespace mxTypes
 
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::timeSync> data_)
     {
-        const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
+        const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","systemRequestTimeStamp","deviceTimeStamp","systemResponseTimeStamp"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::remoteSystemTimeStamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::localSystemTimeStamp));
         // 3. system request timestamps
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::timeSync::timeSyncData, &TobiiResearchTimeSynchronizationData::system_request_time_stamp));
         // 4. device timestamps
@@ -1191,7 +1191,7 @@ namespace mxTypes
 
     mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::positioning>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
     {
-        const char* fieldNames[] = {"user_position","valid"};
+        const char* fieldNames[] = {"userPosition","valid"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 user_position
@@ -1204,13 +1204,13 @@ namespace mxTypes
 
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::positioning> data_)
     {
-        const char* fieldNames[] = {"remote_system_time_stamp","local_system_time_stamp","left","right"};
+        const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","left","right"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1. remote system timestamps
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::remote_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::remoteSystemTimeStamp));
         // 2. local system timestamps
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::local_system_time_stamp));
+        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::positioning::localSystemTimeStamp));
         // 3. left  eye data
         mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TobiiResearchUserPositionGuide::left_eye));
         // 4. right eye data

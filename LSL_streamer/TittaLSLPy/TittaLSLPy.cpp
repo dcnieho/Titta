@@ -164,9 +164,9 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::gaze>&& data_)
     py::dict out;
 
     // 1. remote system timestamps
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::gaze::remote_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::gaze::remoteSystemTimeStamp);
     // 2. local system timestamps
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::gaze::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::gaze::localSystemTimeStamp);
     // 3. device timestamps
     FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::gaze::gazeData, &Titta::gaze::device_time_stamp);
     // 4. system timestamps
@@ -186,8 +186,8 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::eyeImage>&& data_)
     // check if all gif, then don't output unneeded fields
     const bool allGif = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::eyeImage::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::eyeImage::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::eyeImage::remoteSystemTimeStamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::eyeImage::localSystemTimeStamp);
     FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp);
     FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp);
     FieldToNpArray<true>(out, data_, "region_id"        , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id);
@@ -210,8 +210,8 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::extSignal>&& data_)
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::extSignal::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::extSignal::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::extSignal::remoteSystemTimeStamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::extSignal::localSystemTimeStamp);
     FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::device_time_stamp);
     FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::system_time_stamp);
     FieldToNpArray<true>(out, data_, "value"            , &TittaLSL::Receiver::extSignal::extSignalData, &Titta::extSignal::value);
@@ -224,8 +224,8 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::timeSync>&& data_)
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::timeSync::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::timeSync::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp", &TittaLSL::Receiver::timeSync::remoteSystemTimeStamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp" , &TittaLSL::Receiver::timeSync::localSystemTimeStamp);
     FieldToNpArray<true>(out, data_, "system_request_time_stamp" , &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::system_request_time_stamp);
     FieldToNpArray<true>(out, data_, "device_time_stamp"         , &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::device_time_stamp);
     FieldToNpArray<true>(out, data_, "system_response_time_stamp", &TittaLSL::Receiver::timeSync::timeSyncData, &Titta::timeSync::system_response_time_stamp);
@@ -237,8 +237,8 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::positioning>&& data_
 {
     py::dict out;
 
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::positioning::remote_system_time_stamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::positioning::local_system_time_stamp);
+    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::positioning::remoteSystemTimeStamp);
+    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::positioning::localSystemTimeStamp);
     TobiiFieldToNpArray(out, data_, "left_user_position"        , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::left_eye, &TobiiResearchEyeUserPositionGuide::user_position);
     FieldToNpArray<true>(out, data_, "left_user_position_valid" , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::left_eye , &TobiiResearchEyeUserPositionGuide::validity, TOBII_RESEARCH_VALIDITY_VALID);
     TobiiFieldToNpArray(out, data_, "right_user_position"       , &TittaLSL::Receiver::positioning::positioningData, &Titta::positioning::right_eye, &TobiiResearchEyeUserPositionGuide::user_position);

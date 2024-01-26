@@ -1171,9 +1171,9 @@ getIteratorsFromTimeRange(std::vector<DataType>& buf_, const int64_t timeStart_,
     // 2. see which member variable to access
     int64_t DataType::* field;
     if (timeIsLocalTime_)
-        field = &DataType::local_system_time_stamp;
+        field = &DataType::localSystemTimeStamp;
     else
-        field = &DataType::remote_system_time_stamp;
+        field = &DataType::remoteSystemTimeStamp;
 
     // 3. check if requested times are before or after vector start and end
     const bool inclFirst = timeStart_ <= buf_.front().*field;
