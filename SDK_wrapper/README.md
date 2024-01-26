@@ -1,4 +1,4 @@
-Usage instructions for using the Titta class are found in [the Titta documentation](../readme.md).
+Usage instructions for using the Titta class (through its TittaMex and TittaPy interfaces) are found in [the Titta documentation](https://github.com/dcnieho/Titta/blob/master/readme.md#titta-tittamex-tittapy-classes).
 
 ### Working on the source
 The enclosed `Titta.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
