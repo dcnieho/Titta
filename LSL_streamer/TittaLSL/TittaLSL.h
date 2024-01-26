@@ -128,8 +128,8 @@ namespace TittaLSL
         >;
 
         // subscribe to stream, allocate buffer resources
-        Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
-        Receiver(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartListening_ = std::nullopt);
+        Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartRecording_ = std::nullopt);
+        Receiver(std::string streamSourceID_, std::optional<size_t> initialBufferSize_ = std::nullopt, std::optional<bool> doStartRecording_ = std::nullopt);
         ~Receiver();
 
         // query what streams are available (optionally filter by type, empty string means no filter)

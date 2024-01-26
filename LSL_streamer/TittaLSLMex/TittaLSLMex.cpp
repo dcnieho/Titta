@@ -390,16 +390,16 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                             auto temp = *static_cast<uint64_t*>(mxGetData(prhs_[3]));
                             bufSize = static_cast<size_t>(temp);
                         }
-                        std::optional<bool> doStartListening;
+                        std::optional<bool> doStartRecording;
                         if (nrhs_ > 4 && !mxIsEmpty(prhs_[4]))
                         {
                             if (!(mxIsDouble(prhs_[4]) && !mxIsComplex(prhs_[4]) && mxIsScalar(prhs_[4])) && !mxIsLogicalScalar(prhs_[4]))
                                 throw "TittaLSL::Receiver::constructor: Expected third argument to be a logical scalar.";
-                            doStartListening = mxIsLogicalScalarTrue(prhs_[4]);
+                            doStartRecording = mxIsLogicalScalarTrue(prhs_[4]);
                         }
 
                         char* bufferCstr = mxArrayToString(prhs_[2]);
-                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(bufferCstr, bufSize, doStartListening);
+                        newInstance = std::make_shared<ExportedTypesEnumToClassType_t<ExportedType::Receiver>>(bufferCstr, bufSize, doStartRecording);
                         mxFree(bufferCstr);
                         break;
                     }

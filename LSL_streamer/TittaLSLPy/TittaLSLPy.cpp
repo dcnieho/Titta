@@ -390,7 +390,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         // inlets
     auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver")
         .def(py::init<std::string, std::optional<size_t>, std::optional<bool>>(),
-            "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_listening", std::nullopt, "None"))
+            "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_recording", std::nullopt, "None"))
 
         .def("__repr__",
             [](const TittaLSL::Receiver& instance_)

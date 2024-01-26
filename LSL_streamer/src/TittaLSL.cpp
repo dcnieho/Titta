@@ -13,7 +13,7 @@ namespace
     // default argument values
     namespace defaults
     {
-        constexpr bool                  createStartsListening   = false;
+        constexpr bool                  createStartsRecording   = false;
 
         constexpr size_t                gazeBufSize             = 2<<19;        // about half an hour at 600Hz
 
@@ -1253,14 +1253,14 @@ Receiver::Receiver(std::string streamSourceID_, const std::optional<size_t> init
 
     create(streams[0], initialBufferSize_, startListening_);
 }
-Receiver::Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
+Receiver::Receiver(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartRecording_)
 {
-    create(std::move(streamInfo_), initialBufferSize_, doStartListening_);
+    create(std::move(streamInfo_), initialBufferSize_, doStartRecording_);
 }
 void Receiver::create(lsl::stream_info streamInfo_, std::optional<size_t> initialBufferSize_, std::optional<bool> doStartListening_)
 {
     // deal with default arguments
-    const auto doStartListening = doStartListening_.value_or(defaults::createStartsListening);
+    const auto doStartRecording = doStartListening_.value_or(defaults::createStartsRecording);
 
     if (!streamInfo_.source_id().starts_with("TittaLSL:Tobii_"))
         DoExitWithMsg(string_format("TittaLSL::Receiver: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
@@ -1303,7 +1303,7 @@ void Receiver::create(lsl::stream_info streamInfo_, std::optional<size_t> initia
         createdInlet->time_correction(5.);
 
         // start the stream
-        if (doStartListening)
+        if (doStartRecording)
             start();
     }
 #undef MAKE_INLET
