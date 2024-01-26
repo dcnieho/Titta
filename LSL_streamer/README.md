@@ -1,3 +1,5 @@
+[![Downloads](https://static.pepy.tech/badge/tittalslpy)](https://pepy.tech/project/tittalslpy)
+
 # TittaLSL
 The TittaLSL tool is an extension to [Titta (and its TittaMex and TittaPy wrappers)](/readme.md#titta-tittamex-tittapy-classes). It allows to stream data from Tobii eye trackers in Titta's format using Lab Streaming Layer and to receive such data and access it through an API that is identical to that of Titta. That allows handling local and remote eye tracker data sources in a uniform manner, making it possible to design interesting experiments using multiple eye trackers.
 
