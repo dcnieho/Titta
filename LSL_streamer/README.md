@@ -1,12 +1,12 @@
 # TittaLSL
-The TittaLSL tool is an extension to [Titta (and its TittaMex and TittaPy wrappers)](https://github.com/dcnieho/Titta/blob/master/readme.md#titta-tittamex-tittapy-classes). It allows to stream data from Tobii eye trackers in Titta's format using Lab Streaming Layer and to receive such data and access it through an API that is identical to that of Titta. That allows handling local and remote eye tracker data sources in a uniform manner, making it possible to design interesting experiments using multiple eye trackers.
+The TittaLSL tool is an extension to [Titta (and its TittaMex and TittaPy wrappers)](/readme.md#titta-tittamex-tittapy-classes). It allows to stream data from Tobii eye trackers in Titta's format using Lab Streaming Layer and to receive such data and access it through an API that is identical to that of Titta. That allows handling local and remote eye tracker data sources in a uniform manner, making it possible to design interesting experiments using multiple eye trackers.
 
 TittaLSL is a C++ library that can be compiled and used as a static library without Matlab/Octave or Python. However, MATLAB and Python wrappers are also provided in the form of TittaLSLMex and TittaLSLPy, respectively.
 
 In comparison to the the [Lab Streaming Layer TobiiPro Connector](https://github.com/labstreaminglayer/App-TobiiPro), Titta LSL provides access to all gaze data fields instead of only gaze position on the screen, as well as the eye image, external signal, time synchronization and positioning streams. Samples are furthermore properly timestamped using the timestamps from the eye tracker, where possible (all streams except for the positioning stream, which doesn't have timestamps).
 
 ## The `TittaLSL`, `TittaLSLMex` and `TittaLSLPy` classes
-The functionality of TittaLSL is divided over two classes, `Sender` for making eye tracker data available on the network (AKA an outlet in Lab Streaming Layer terminology) and `Receiver` for recording from TittaLSL data streams available on the network (AKA an inlet). The below documents the available methods of these classes. The functionality below is exposed under the same names in MATLAB as `TittaLSL.Sender` and `TittaLSL.Receiver`, respectively. The same functionality is also available from `TittaLSLPy.Sender` and `TittaLSLPy.Receiver` instances, but in that case all function and property names as well as stream names use `snake_case` names instead of `camelCase`. In C++ all below functions and classes are in the `TittaLSL` namespace. See [here for example C++ code](./cppLSLTest/main.cpp) using the library, and [here for example Python code](./TittaLSLPy/test.py).
+The functionality of TittaLSL is divided over two classes, `Sender` for making eye tracker data available on the network (AKA an outlet in Lab Streaming Layer terminology) and `Receiver` for recording from TittaLSL data streams available on the network (AKA an inlet). The below documents the available methods of these classes. The functionality below is exposed under the same names in MATLAB as `TittaLSL.Sender` and `TittaLSL.Receiver`, respectively. The same functionality is also available from `TittaLSLPy.Sender` and `TittaLSLPy.Receiver` instances, but in that case all function and property names as well as stream names use `snake_case` names instead of `camelCase`. In C++ all below functions and classes are in the `TittaLSL` namespace. See [here for example C++ code](/LSL_streamer/cppLSLTest/main.cpp) using the library, and [here for example Python code](/LSL_streamer/TittaLSLPy/test.py).
 
 ### Free functions
 |Call|Inputs|Outputs|Description|
@@ -17,7 +17,7 @@ The functionality of TittaLSL is divided over two classes, `Sender` for making e
 ### Construction and initialization
 |Call|Inputs|Notes|
 | --- | --- | --- |
-|`TittaLSL::Sender()` (C++)<br>`TittaLSL.Sender()` (MATLAB)<br>`TittaLSLPy.Sender` (Python)|<ol><li>`address`: address of the eye tracker to be made available on the network. A list of connected eye trackers and their addresses can be using the static function [`Titta.findAllEyeTrackers()` in the Titta library](https://github.com/dcnieho/Titta/blob/master/readme.md#titta-tittamex-tittapy-classes).</li></ol>||
+|`TittaLSL::Sender()` (C++)<br>`TittaLSL.Sender()` (MATLAB)<br>`TittaLSLPy.Sender` (Python)|<ol><li>`address`: address of the eye tracker to be made available on the network. A list of connected eye trackers and their addresses can be using the static function [`Titta.findAllEyeTrackers()` in the Titta library](/readme.md#titta-tittamex-tittapy-classes).</li></ol>||
 |`TittaLSL::Receiver()` (C++)<br>`TittaLSL.Receiver()` (MATLAB)<br>`TittaLSLPy.Receiver` (Python)|<ol><li>`streamSourceID`: Source ID of LSL stream to record from. Must be a TittaLSL stream.</li><li>`initialBufferSize`: (optional) value indicating for how many samples memory should be allocated.</li><li>`doStartRecording`: (optional) value indicating whether recording from the stream should immediately be started.</li></ol>|The default initial buffer size should cover about 30 minutes of recording gaze data at 600Hz, and longer for the other streams. Growth of the buffer should cause no performance impact at all as it happens on a separate thread. To be certain, you can indicate a buffer size that is sufficient for the number of samples that you expect to record. Note that all buffers are fully in-memory. As such, ensure that the computer has enough memory to satify your needs, or you risk a recording-destroying crash.|
 
 ### Methods
@@ -56,7 +56,7 @@ The following method calls are available on a `TittaLSL.Receiver` instance. Note
 
 
 ## Working on the source
-The enclosed Visual Studio project files can be opened using the `Titta.sln` file in the [SDK_wrapper directory](../SDK_wrapper). It is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
+The enclosed Visual Studio project files can be opened using the `Titta.sln` file in the [SDK_wrapper directory](/SDK_wrapper). It is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
 
 ### Building the mex files
 Run `makeTittaLSLMex.m` to build the mex file.
@@ -76,5 +76,5 @@ To update the Lab Streaming Layer library used to build TittaLSL against, you ne
 2. The Windows `lsl.lib` link library is placed in `\LSL_streamer\deps\lib`.
 3. The \*.dll, \*.so and \*.dylib files are placed in the output directory, `\LSL_streamer\TittaLSLMex\+TittaLSL\+detail`.
 
-#### [Titta](../SDK_wrapper)
-TittaLSL also requires Titta and its dependencies to build. The build scripts are set up such that Titta is automatically built. However, ensure to check [Titta's dependencies](../SDK_wrapper/README.md#dependencies) and make sure they are available, or the build will fail.
+#### [Titta](/SDK_wrapper)
+TittaLSL also requires Titta and its dependencies to build. The build scripts are set up such that Titta is automatically built. However, ensure to check [Titta's dependencies](/SDK_wrapper/README.md#dependencies) and make sure they are available, or the build will fail.
