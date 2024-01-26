@@ -17,7 +17,7 @@
 //   6. No wrapper class or functions mimicking mexFunction, just an intuitive
 //      switch-case block in mexFunction.
 //
-// Note that these goals should be acheved without regard to any MATLAB class,
+// Note that these goals should be achieved without regard to any MATLAB class,
 // but which can also help address memory management issues.  As such, the
 // resulting MEX-file can safely be used directly (but not too elegantly).
 //
@@ -1489,7 +1489,7 @@ namespace mxTypes
 
     mxArray* FieldToMatlab(const std::vector<TobiiResearchUserPositionGuide>& data_, bool rowVector_, TobiiResearchEyeUserPositionGuide TobiiResearchUserPositionGuide::* field_)
     {
-        const char* fieldNames[] = {"user_position","valid"};
+        const char* fieldNames[] = {"userPosition","valid"};
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
 
         // 1 user_position

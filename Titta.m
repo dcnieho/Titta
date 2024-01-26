@@ -2502,12 +2502,12 @@ classdef Titta < handle
                 eyeData     = obj.buffer.peekN('gaze',1);
                 posGuide    = obj.buffer.peekN('positioning',1);
                 headP.update(...
-                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
-                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
+                    eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.userPosition, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
+                    eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.userPosition, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
                 if qHaveOperatorScreen
                     headO.update(...
-                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.user_position, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
-                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.user_position, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
+                        eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.userPosition, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
+                        eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.userPosition, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
                 end
                 
                 if ~isnan(headP.avgDist)
@@ -5704,13 +5704,13 @@ classdef Titta < handle
                         posGuide    = obj.buffer.peekN('positioning',1);
                         if ~isempty(eyeData.systemTimeStamp)
                             inp = {
-                                 eyeData.left.gazeOrigin.valid(end),  eyeData.left.gazeOrigin.inUserCoords(:,end),  posGuide.left.user_position,  eyeData.left.pupil.valid(end),  eyeData.left.pupil.diameter(end),  eyeData.left.eyeOpenness.valid(end),  eyeData.left.eyeOpenness.diameter(end),...
-                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(:,end), posGuide.right.user_position, eyeData.right.pupil.valid(end), eyeData.right.pupil.diameter(end), eyeData.right.eyeOpenness.valid(end), eyeData.right.eyeOpenness.diameter(end)
+                                 eyeData.left.gazeOrigin.valid(end),  eyeData.left.gazeOrigin.inUserCoords(:,end),  posGuide.left.userPosition,  eyeData.left.pupil.valid(end),  eyeData.left.pupil.diameter(end),  eyeData.left.eyeOpenness.valid(end),  eyeData.left.eyeOpenness.diameter(end),...
+                                eyeData.right.gazeOrigin.valid(end), eyeData.right.gazeOrigin.inUserCoords(:,end), posGuide.right.userPosition, eyeData.right.pupil.valid(end), eyeData.right.pupil.diameter(end), eyeData.right.eyeOpenness.valid(end), eyeData.right.eyeOpenness.diameter(end)
                                 };
                         else
                             inp = {
-                                [], [],  posGuide.left.user_position, [], [], [], [],...
-                                [], [], posGuide.right.user_position, [], [], [], []
+                                [], [],  posGuide.left.userPosition, [], [], [], [],...
+                                [], [], posGuide.right.userPosition, [], [], [], []
                                 };
                         end
                         headO.update(inp{:});
