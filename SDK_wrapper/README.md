@@ -1,3 +1,7 @@
+[![Downloads](https://static.pepy.tech/badge/tittapy)](https://pepy.tech/project/tittapy)
+[![Citation Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.juleskreuer.eu%2Fcitation-badge.php%3Fshield%26doi%3D10.3758%2Fs13428-020-01358-8&color=blue)](https://scholar.google.com/citations?view_op=view_citation&citation_for_view=uRUYoVgAAAAJ:J_g5lzvAfSwC)
+[![DOI](https://zenodo.org/badge/DOI/10.3758/s13428-020-01358-8.svg)](https://doi.org/10.3758/s13428-020-01358-8)
+
 Usage instructions for using the Titta class (through its TittaMex and TittaPy interfaces) are found in [the Titta documentation](https://github.com/dcnieho/Titta/blob/master/readme.md#titta-tittamex-tittapy-classes).
 
 ### Working on the source
