@@ -11,6 +11,9 @@ isOSX = sys.platform.startswith("darwin")
 
 __version__ = '1.2.0'
 
+with open('README.md') as f:
+    readme = f.read()
+
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -84,8 +87,8 @@ setup(
     url='https://github.com/dcnieho/Titta',
     description='Interface to Tobii eye trackers using Tobii Pro SDK',
     keywords="Tobii PsychoPy Eye-tracking",
-    long_description='Interface to Tobii eye trackers using Tobii Pro SDK',
-    long_description_content_type = 'text/plain',
+    long_description=readme,
+    long_description_content_type = 'text/markdown',
     ext_modules=ext_modules,
     python_requires=">=3.8",
     setup_requires=['pybind11>=2.10.1'],  # this fixes problem if c++23 std::forward_like is available that i ran into
