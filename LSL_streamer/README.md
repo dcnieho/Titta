@@ -82,3 +82,6 @@ To update the Lab Streaming Layer library used to build TittaLSL against, you ne
 
 #### [Titta](/SDK_wrapper)
 TittaLSL also requires Titta and its dependencies to build. The build scripts are set up such that Titta is automatically built. However, ensure to check [Titta's dependencies](/SDK_wrapper/README.md#dependencies) and make sure they are available, or the build will fail.
+
+## Acknowledgements
+This project was made possible by funding from the [LMK foundation, Sweden](https://lmkstiftelsen.se/).
