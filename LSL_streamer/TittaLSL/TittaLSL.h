@@ -41,6 +41,8 @@ namespace TittaLSL
         ~Sender();
 
         TobiiTypes::eyeTracker getEyeTracker();
+        std::string getLocalStreamSourceID(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
+        std::string getLocalStreamSourceID(Titta::Stream stream_) const;
 
         bool start(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
         bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);

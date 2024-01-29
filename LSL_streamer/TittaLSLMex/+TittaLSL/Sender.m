@@ -54,6 +54,12 @@ classdef Sender < TittaLSL.detail.Base
         function eyeTracker = getEyeTracker(this)
             eyeTracker = this.cppmethod('getEyeTracker');
         end
+        function name = getLocalStreamSourceID(this,stream)
+            if nargin<2
+                error('TittaLSL::Sender::getLocalStreamSourceID: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+            end
+            name = this.cppmethod('getLocalStreamSourceID',ensureStringIsChar(stream));
+        end
         function success = start(this,stream,asGif)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
