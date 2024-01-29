@@ -34,8 +34,9 @@
     <ClInclude Include="..\..\SDK_wrapper\deps\include\tobii_elem_count.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="TittaLSLMex.m" />
-    <None Include="TittaLSLMexDummyMode.m" />
+    <None Include="+TittaLSL\+detail\Base.m" />
+    <None Include="+TittaLSL\Receiver.m" />
+    <None Include="+TittaLSL\Sender.m" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TittaLSLMex.cpp" />

@@ -19,6 +19,9 @@
     <Filter Include="m-files">
       <UniqueIdentifier>{273c8c56-01ce-4960-af56-f03d38e60ed7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="m-files\+detail">
+      <UniqueIdentifier>{49e0803c-467f-44ca-a390-9f6c448bf7be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\SDK_wrapper\deps\include\cpp_mex_helpers\always_false.h">
@@ -62,11 +65,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TittaLSLMex.m">
+    <None Include="+TittaLSL\Receiver.m">
       <Filter>m-files</Filter>
     </None>
-    <None Include="TittaLSLMexDummyMode.m">
+    <None Include="+TittaLSL\Sender.m">
       <Filter>m-files</Filter>
+    </None>
+    <None Include="+TittaLSL\+detail\Base.m">
+      <Filter>m-files\+detail</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
