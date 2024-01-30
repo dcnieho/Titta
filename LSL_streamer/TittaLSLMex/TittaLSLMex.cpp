@@ -170,7 +170,7 @@ namespace {
 
         //// outlets
         GetEyeTracker,
-        GetLocalStreamSourceID,
+        GetStreamSourceID,
         Start,
         SetIncludeEyeOpennessInGaze,
         IsStreaming,
@@ -208,7 +208,7 @@ namespace {
 
         //// outlets
         { "getEyeTracker",                  Action::GetEyeTracker },
-        { "getLocalStreamSourceID",         Action::GetLocalStreamSourceID },
+        { "getStreamSourceID",              Action::GetStreamSourceID },
         { "start",                          Action::Start },
         { "setIncludeEyeOpennessInGaze",    Action::SetIncludeEyeOpennessInGaze },
         { "isStreaming",                    Action::IsStreaming },
@@ -479,13 +479,13 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 plhs_[0] = mxTypes::ToMatlab(senderInstance->getEyeTracker());
                                 return;
                             }
-                            case Action::GetLocalStreamSourceID:
+                            case Action::GetStreamSourceID:
                             {
                                 if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
-                                    throw std::string("getLocalStreamSourceID: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+                                    throw std::string("getStreamSourceID: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                plhs_[0] = mxTypes::ToMatlab(senderInstance->getLocalStreamSourceID(bufferCstr));
+                                plhs_[0] = mxTypes::ToMatlab(senderInstance->getStreamSourceID(bufferCstr));
                                 mxFree(bufferCstr);
                                 return;
                             }

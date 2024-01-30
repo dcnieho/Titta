@@ -30,6 +30,7 @@ print(TittaLSLPy.get_LSL_version())
 # exercise outlet
 sender = Sender(ets[0]['address'])
 print(sender.get_eye_tracker())
+print(sender.get_stream_source_id("gaze"))  # can be used to filter out local stream when retrieving streams with Reciever.get_streams()
 print(sender.is_streaming('gaze'))
 print(sender.is_streaming(EyeTracker.stream.gaze))
 sender.start('gaze')

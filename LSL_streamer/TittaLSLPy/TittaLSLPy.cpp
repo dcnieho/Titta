@@ -366,9 +366,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
             })
 
         .def("get_eye_tracker", [](TittaLSL::Sender& instance_) { return StructToDict(instance_.getEyeTracker()); })
-        .def("get_local_stream_source_id", [](const TittaLSL::Sender& instance_, std::string stream_) -> std::string { return instance_.getLocalStreamSourceID(std::move(stream_), true); },
+        .def("get_stream_source_id", [](const TittaLSL::Sender& instance_, std::string stream_) -> std::string { return instance_.getStreamSourceID(std::move(stream_), true); },
             "stream"_a)
-        .def("get_local_stream_source_id", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::getLocalStreamSourceID, py::const_),
+        .def("get_stream_source_id", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::getStreamSourceID, py::const_),
             "stream"_a)
 
         // outlets

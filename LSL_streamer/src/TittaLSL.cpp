@@ -269,11 +269,11 @@ TobiiTypes::eyeTracker Sender::getEyeTracker()
     return _localEyeTracker;
 }
 
-std::string Sender::getLocalStreamSourceID(std::string stream_, bool snake_case_on_stream_not_found /*= false*/) const
+std::string Sender::getStreamSourceID(std::string stream_, bool snake_case_on_stream_not_found /*= false*/) const
 {
-    return getLocalStreamSourceID(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
+    return getStreamSourceID(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
-std::string Sender::getLocalStreamSourceID(Titta::Stream stream_) const
+std::string Sender::getStreamSourceID(Titta::Stream stream_) const
 {
     const auto streamName = Titta::streamToString(stream_);
     const auto lslStreamName = string_format("Tobii_%s", streamName.c_str());
@@ -342,7 +342,7 @@ bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
         nChannel,
         hasFreq ? _localEyeTracker.frequency : lsl::IRREGULAR_RATE,
         format,
-        getLocalStreamSourceID(stream_));
+        getStreamSourceID(stream_));
 
     // create meta-data
     info.desc()
