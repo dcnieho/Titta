@@ -6508,7 +6508,19 @@ classdef Titta < handle
                             % if point already collected or currently being
                             % collected, enqueue a discard for it
                             if ismember(pointsP(cdp,end),[1 3])
-                                discardList = [discardList cdp]; %#ok<AGROW>
+                                if ~ismember(cdp,discardList)
+                                    discardList = [discardList cdp]; %#ok<AGROW>
+                                    if strcmp(stage,'val')
+                                        % set whichPoint to nan so its
+                                        % processed immediately. For cal
+                                        % this is only possible once the
+                                        % calibration_collect has returned,
+                                        % and not setting whichPoint is nan
+                                        % here means the discard is only
+                                        % launched when that is the case
+                                        whichPoint = nan;
+                                    end
+                                end
                                 qDoneSomething = true;
                             end
                         end
