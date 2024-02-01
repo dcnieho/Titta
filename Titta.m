@@ -5141,8 +5141,6 @@ classdef Titta < handle
                                 qUpdateCalStatusText    = true;
                             else
                                 % check we've loaded yet
-                                % computed succesfully, waiting for
-                                % calibration data retrieval
                                 callResult = obj.buffer.calibrationRetrieveResult();
                                 if ~isempty(callResult) && strcmp(callResult.workItem.action,'ApplyCalibrationData')
                                     qUpdatePointHover       = true;
