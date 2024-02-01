@@ -5200,29 +5200,24 @@ classdef Titta < handle
                             end
                         elseif isfield(out.attempt{kCal},'val')
                             % collect latest gaze data for each point
-                            strSetup        = fieldnames(out.attempt{kCal}.val{1}.gazeData).';
-                            [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));
-                            val.gazeData    = struct(strSetup{:});
                             val.pointPos    = nan(size(pointsP,1),5);
                             qFound          = false(1,size(pointsP,1));
                             whichCal        = getLastAdvancedCal(out.attempt{kCal});
                             for p=length(out.attempt{kCal}.val):-1:1
                                 idx = out.attempt{kCal}.val{p}.point(1);
-                                if ~isnan(idx) && isempty(val.gazeData(idx).(strSetup{1,1})) && out.attempt{kCal}.val{p}.whichCal==whichCal && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
+                                if ~isnan(idx) && ~qFound(idx) && isfield(out.attempt{kCal}.val{p},'gazeData') && out.attempt{kCal}.val{p}.whichCal==whichCal && ~out.attempt{kCal}.val{p}.wasCancelled && ~out.attempt{kCal}.val{p}.wasDiscarded
                                     % we don't yet have validation data for
                                     % this point, and it is for the current
                                     % calibration -> collect
                                     qFound(idx) = true;
-                                    % copy over all fields
-                                    for f=1:size(strSetup,2)
-                                        val.gazeData(idx).(strSetup{1,f}) = out.attempt{kCal}.val{p}.gazeData.(strSetup{1,f});
-                                    end
+                                    % copy over gaze data
+                                    val.gazeData(idx) = out.attempt{kCal}.val{p}.gazeData;
                                     % also needs point position
                                     val.pointPos(idx,:) = out.attempt{kCal}.val{p}.point;
                                 end
                             end
-                            val.gazeData(~qFound)   = [];
-                            val.pointPos(~qFound,:) = [];
+                            val.gazeData(~qFound(1:length(val.gazeData)))   = [];
+                            val.pointPos(~qFound,:)                         = [];
                             
                             % compute data quality for these
                             if ~isempty(val.pointPos)
