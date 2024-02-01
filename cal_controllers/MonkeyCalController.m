@@ -252,7 +252,7 @@ classdef MonkeyCalController < handle
                             obj.valPoss   = obj.valPoss(order,:);
                         end
                         % ensure we're in clean state
-                        for p=length(obj.valPoints):-1:1    % reverse so we can set cal state back to first point and await discard of that first point, will arrive last
+                        for p=length(obj.valPoints):-1:1    % reverse so we can set val state back to first point and await discard of that first point, will arrive last
                             commands = [commands {{'val','discard_point', obj.valPoints(p), obj.valPoss(p,:)}}]; %#ok<AGROW> 
                         end
                         obj.awaitingPointResult = 2;
