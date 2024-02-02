@@ -105,8 +105,8 @@ try
     calController.calAfterEachStep = true;  % tell controller to update calibration after each step is completed
     if DEBUGlevel>0
         calController.logTypes  = 1+2*(DEBUGlevel==2)+4;    % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
-        calController.logReceiver = 1;                      % 1: log to Titta messages
     end
+    calController.logReceiver = 1;                          % 1: log to Titta messages
 
     
     % init
