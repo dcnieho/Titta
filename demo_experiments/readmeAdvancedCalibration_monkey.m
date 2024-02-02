@@ -115,8 +115,8 @@ try
     calController.forceRewardButton = 'j';
     if DEBUGlevel>0
         calController.logTypes = 1+2*(DEBUGlevel==2)+4; % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
-        calController.logReceiver = 1;
     end
+    calController.logReceiver = 1;
 
     
     % init
