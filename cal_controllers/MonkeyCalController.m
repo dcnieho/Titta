@@ -285,6 +285,8 @@ classdef MonkeyCalController < handle
         end
 
         function receiveUpdate(obj,~,currentPoint,posNorm,~,~,type,callResult)
+            % inputs: titta_instance, currentPoint, posNorm, posPix, stage, type, callResult
+
             % event communicated to the controller:
             if bitget(obj.logTypes,2)
                 obj.log_to_cmd('received update of type: %s',type);
