@@ -37,6 +37,7 @@ classdef MonkeyCalController < handle
         rewardProvider;
 
         forceRewardButton           = '';           % if provided, when key press on this button is detected, reward is forced on
+        skipTrainingButton          = '';           % if training, when key press on this button is detected and we're in calibration stage, skip forward to 'cal_calibrating' state (i.e. skip positioning and gazing training)
 
         gazeFetchDur                = 100;          % duration of gaze samples to peek on each iteration (ms, e.g., last 100 ms of gaze)
         gazeAggregationMethod       = 1;            % 1: use mean of all samples during last gazeFetchDur ms, 2: use mean of last valid sample during last gazeFetchDur ms
@@ -143,11 +144,21 @@ classdef MonkeyCalController < handle
 
         function commands = tick(obj)
             commands = {};
-            if ~isempty(obj.forceRewardButton) && ~isempty(obj.rewardProvider)
+            if (~isempty(obj.forceRewardButton) && ~isempty(obj.rewardProvider)) || ~isempty(obj.skipTrainingButton)
                 [~,~,keyCode] = KbCheck();
-                if any(keyCode) && any(ismember(KbName(keyCode),{obj.forceRewardButton}))
-                    obj.dispensingForcedReward = true;
-                    obj.reward(true);
+                if any(keyCode)
+                    if ~isempty(obj.forceRewardButton) && any(ismember(KbName(keyCode),{obj.forceRewardButton}))
+                        obj.dispensingForcedReward = true;
+                        obj.reward(true);
+                    elseif ~isempty(obj.skipTrainingButton) && any(ismember(KbName(keyCode),{obj.skipTrainingButton}))
+                        obj.controlState = obj.stateEnum.cal_calibrating;
+                        obj.drawState = 1;
+                        obj.calDisplay.videoSize = obj.calVideoSize;
+                        obj.shouldUpdateStatusText = true;
+                        if bitget(obj.logTypes,1)
+                            obj.log_to_cmd('calibrating (skipped forward by key press)');
+                        end
+                    end
                 elseif obj.dispensingForcedReward
                     obj.dispensingForcedReward = false;
                     obj.reward(false);
