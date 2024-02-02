@@ -5197,7 +5197,11 @@ classdef Titta < handle
                                 end
                             end
                         elseif isfield(out.attempt{kCal},'val')
-                            % collect latest gaze data for each point
+                            % collect latest gaze data for each point, if
+                            % any
+                            strSetup        = fieldnames(obj.buffer.peekN('gaze',0)).';     % get what fields gazeData has
+                            [strSetup{2,:}] = deal(cell(1,size(pointsP,1)));                % allocate space for gazeData for all points
+                            val.gazeData    = struct(strSetup{:});
                             val.pointPos    = nan(size(pointsP,1),5);
                             qFound          = false(1,size(pointsP,1));
                             whichCal        = getLastAdvancedCal(out.attempt{kCal});
@@ -5214,8 +5218,8 @@ classdef Titta < handle
                                     val.pointPos(idx,:) = out.attempt{kCal}.val{p}.point;
                                 end
                             end
-                            val.gazeData(~qFound(1:length(val.gazeData)))   = [];
-                            val.pointPos(~qFound,:)                         = [];
+                            val.gazeData(~qFound)   = [];                                   % keep points for which we actually have gaze data
+                            val.pointPos(~qFound,:) = [];
                             
                             % compute data quality for these
                             if ~isempty(val.pointPos)
