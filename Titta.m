@@ -5567,6 +5567,7 @@ classdef Titta < handle
                                 % start collection
                                 obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
                                 pointsP(whichPoint,end-[1 0])   = [0 3];            % status: collecting, and set previous to not collected since it'll now be wiped
+                                obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                                 pointStateLastCal(whichPoint)   = 0; %#ok<AGROW>    % denote that no calibration data available for this point (either not yet collected so its true, or this recollection discards previous)
                                 nCollectionTries                = 1;
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
@@ -5582,12 +5583,15 @@ classdef Titta < handle
                                         pointsP(whichPoint,end-[1 0]) = 1;        % status: collected
                                         qPointDone              = true;
                                         out.attempt{kCal}.cal{calAction}.collectStatus = callResult;
+                                        obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                                     else
                                         % failed
+                                        obj.sendMessage(sprintf('POINT FAILED %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                                         if nCollectionTries==1
                                             % if failed first time, immediately try again
                                             obj.buffer.calibrationCollectData(pointsP(whichPoint,1:2),extraInp{:});
                                             nCollectionTries = 2;
+                                            obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                                         else
                                             % failed again, stop trying
                                             pointsP(whichPoint,end-[1 0]) = -1;       % status: failed
@@ -5604,6 +5608,7 @@ classdef Titta < handle
                                 out.attempt{kCal}.val{valAction}.wasDiscarded = false;
                                 pointsP(whichPoint,end) = 3;        % status: collecting
                                 qUpdatePointHover       = true;
+                                obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                                 break;
                             end
                             if out.flips(end)>tick0v+obj.settings.advcal.val.collectDuration
@@ -5613,6 +5618,7 @@ classdef Titta < handle
                                 qPointDone          = true;
                                 qUpdateLineDisplay  = true;
                                 pointsP(whichPoint,end) = 1;        % status: collected
+                                obj.sendMessage(sprintf('POINT COLLECTED %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
                             end
                         end
                         % if finished collecting, log, clean up, and if in
@@ -5956,6 +5962,7 @@ classdef Titta < handle
                     if qWaitForAllowAccept && qAllowAccept
                         tick0p              = out.flips(end);
                         qWaitForAllowAccept = false;
+                        obj.sendMessage(sprintf('POINT READY %d (%.0f %.0f)',whichPoint,pointsP(whichPoint,3:4)),out.flips(end));
                     end
 
                     % get user response
