@@ -2824,7 +2824,7 @@ classdef Titta < handle
             out.eye  = obj.settings.calibrateEye;
             eyeLbl = getEyeLbl(obj.settings.calibrateEye);
             if qDoCal
-                calStartT   = obj.sendMessage(sprintf('START CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
+                calStartT   = obj.sendMessage(sprintf('START CALIBRATION ROUTINE (%s), calibration no. %d',eyeLbl,kCal));
                 iVal        = 1;
             else
                 if isfield(out,'val')
@@ -2832,7 +2832,7 @@ classdef Titta < handle
                 else
                     iVal = 1;
                 end
-                valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
+                valStartT = obj.sendMessage(sprintf('START VALIDATION ROUTINE (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             end
             obj.buffer.start('gaze');
             if obj.settings.cal.doRecordEyeImages && obj.buffer.hasStream('eyeImage')
@@ -2847,7 +2847,7 @@ classdef Titta < handle
             if qDoCal
                 % show display
                 [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1,[],kCal==1);
-                obj.sendMessage(sprintf('STOP CALIBRATION (%s), calibration no. %d',eyeLbl,kCal));
+                obj.sendMessage(sprintf('STOP CALIBRATION ROUTINE (%s), calibration no. %d',eyeLbl,kCal));
                 out.cal.data        = obj.ConsumeAllData(calStartT);
                 out.cal.timestamp   = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                 if out.cal.status==1
@@ -2923,12 +2923,12 @@ classdef Titta < handle
             if qDoCal
                 % if we just did a cal, add message that now we're entering
                 % validation mode
-                valStartT = obj.sendMessage(sprintf('START VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
+                valStartT = obj.sendMessage(sprintf('START VALIDATION ROUTINE (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
                 obj.ClearAllBuffers(calStartT);    % clean up data from calibration
             end
             % show display
             out.val{iVal} = obj.DoCalPointDisplay(wpnt,false,calLastFlip{:});
-            obj.sendMessage(sprintf('STOP VALIDATION (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
+            obj.sendMessage(sprintf('STOP VALIDATION ROUTINE (%s), calibration no. %d, validation no. %d',eyeLbl,kCal,iVal));
             out.val{iVal}.allData   = obj.ConsumeAllData(valStartT);
             out.val{iVal}.timestamp = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
             obj.StopRecordAll();
