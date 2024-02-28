@@ -2872,6 +2872,8 @@ classdef Titta < handle
                             while ~any(keyCode)
                                 [~,~,~,keyCode] = obj.getNewMouseKeyPress();
                             end
+                        else
+                            obj.sendMessage(sprintf('CALIBRATION SUCCEEDED (%s), calibration no. %d',eyeLbl,kCal));
                         end
                     else
                         % can't actually calibrate if user requested no
