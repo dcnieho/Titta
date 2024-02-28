@@ -2881,6 +2881,7 @@ classdef Titta < handle
                         % empty in that case.
                         out.cal.result = [];
                         out.cal.computedCal = [];
+                        obj.sendMessage(sprintf('NO CALIBRATION POINTS, DEFAULT APPLIED (%s), calibration no. %d',eyeLbl,kCal));
                     end
                 end
                 if isfield(out.cal,'flips')
