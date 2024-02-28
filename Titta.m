@@ -4953,6 +4953,7 @@ classdef Titta < handle
                                         % calibration unsuccessful, we bail now
                                         calibrationStatus       = -1;
                                         awaitingCalChangeType   = '';
+                                        obj.sendMessage(sprintf('CALIBRATION FAILED (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
                                     else
                                         % calibration successful
                                         calibrationStatus       = 1;
@@ -4973,6 +4974,8 @@ classdef Titta < handle
                                             pointsP(qNoData,end-[1 0]) = 0; %#ok<AGROW>
                                             qUpdatePointHover = true;
                                         end
+                                        pointStr = sprintf('%d ',sort(usedCalibrationPoints));
+                                        obj.sendMessage(sprintf('CALIBRATION SUCCEEDED (%s), calibration no. %d, points [%s]',getEyeLbl(obj.settings.calibrateEye),kCal,pointStr(1:end-1)));
                                     end
                                     qUpdateLineDisplay  = true;
                                     qUpdateCalStatusText= true;
@@ -5157,6 +5160,7 @@ classdef Titta < handle
                                         qSaveSnapShot = true;
                                     end
                                     calLoadSource = '';
+                                    obj.sendMessage(sprintf('CALIBRATION LOADED (%s), attempt %d, cal %d',getEyeLbl(out.attempt{kCal}.eye),whichAttempt,whichCal));
 
                                     % if wanted, notify user callback of
                                     % calibration load result
