@@ -5357,12 +5357,14 @@ classdef Titta < handle
                         % start discard action
                         obj.buffer.calibrationDiscardData(pointsP(whichPointDiscard,1:2),extraInp{:});
                         pointsP(whichPointDiscard,end)              = 5;    %#ok<AGROW> % status: discarding
+                        obj.sendMessage(sprintf('POINT DISCARDING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPointDiscard,pointsP(whichPointDiscard,[3:4 1:2])));
                         out.attempt{kCal}.cal{calAction}.point      = pointsP(whichPointDiscard,[5 3 4 1 2]);
                         out.attempt{kCal}.cal{calAction}.timestamp  = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                         discardList(1)                              = [];
                         qUpdatePointHover                           = true;
                     elseif isfield(out.attempt{kCal},'val')
                         valAction                                   = valAction+1;
+                        obj.sendMessage(sprintf('POINT DISCARDING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPointDiscard,pointsP(whichPointDiscard,[3:4 1:2])));
                         % for validation, find the point in question and
                         % mark it as discarded, done super quick
                         for p=length(out.attempt{kCal}.val):-1:1
@@ -5372,6 +5374,7 @@ classdef Titta < handle
                             end
                         end
                         pointsP(whichPointDiscard,end-[1 0])        = 0;    %#ok<AGROW> % status: not collected
+                        obj.sendMessage(sprintf('POINT DISCARDED %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPointDiscard,pointsP(whichPointDiscard,[3:4 1:2])));
 
                         % if wanted, notify user callback that point
                         % was discarded
@@ -5506,6 +5509,7 @@ classdef Titta < handle
                             out.attempt{kCal}.cal{calAction}.discardStatus = callResult;
                             out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                             out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
+                            obj.sendMessage(sprintf('POINT DISCARDED %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPointDiscard,pointsP(whichPointDiscard,[3:4 1:2])));
                             
                             % find which point we just discarded, mark it
                             % as such
