@@ -22,6 +22,7 @@
 %      <a href="matlab: help Titta.getValidationQualityMessage">help Titta.getValidationQualityMessage</a>
 %      <a href="matlab: help Titta.saveData">help Titta.saveData</a>
 %      <a href="matlab: help Titta.saveDataToParquet">help Titta.saveDataToParquet</a>
+%      <a href="matlab: help Titta.saveGazeDataToTSV">help Titta.saveGazeDataToTSV</a>
 %
 %    For methods:
 %      <a href="matlab: help Titta.setDummyMode">help Titta.setDummyMode</a>
@@ -2197,12 +2198,12 @@ classdef Titta < handle
         function filenameBase = saveDataToParquet(data, filenameBase, doAppendVersion)
             % Save all session data to parquet and json files
             %
-            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE) saves the data
-            %    DATA to a set of Apache Parquet and json files starting
-            %    with FILENAME. DATA is expected to contain the fields from
-            %    Titta.CollectSessionData. Extra user-added metadata is
-            %    ignored, expect information about screen resolution if it
-            %    is provided in either data.resolution or
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE)
+            %    saves the data DATA to a set of Apache Parquet and json
+            %    files starting with FILENAME. DATA is expected to contain
+            %    the fields from Titta.CollectSessionData. Extra user-added
+            %    metadata is ignored, expect information about screen
+            %    resolution if it is provided in either data.resolution or
             %    data.expt.resolution.
             %    Data from the various streams is written as tables into
             %    Parquet files, metadata and calibration info as json
@@ -2253,6 +2254,78 @@ classdef Titta < handle
                 fid = fopen(fullfile(path, [fileBase '_info.json']),'wt');
                 fprintf(fid,'%s',jsonencode(toJson));
                 fclose(fid);
+            catch ME
+                error('Titta: saveDataToParquet: Error saving data:\n%s',ME.getReport('extended'))
+            end
+        end
+
+        function filenameBase = saveGazeDataToTSV(data, filenameBase, doAppendVersion, messageTruncateMode)
+            % Save gaze and message data to tsv files
+            %
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE)
+            %    saves the gaze and messages in DATA to a two tsv files
+            %    starting with FILENAME. DATA is expected to contain
+            %    the fields from Titta.CollectSessionData, and as such
+            %    messages are expected at data.messages, and gaze data at
+            %    data.data.gaze. Tab characters in the messages are
+            %    replaced with \t. Overwrites existing files. Returns the
+            %    FILENAMEBASE at which the files were saved.
+            %
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAMEBASE if the destination
+            %    files already exist. Default: false.
+            %
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE, DOAPPENDVERSION, MESSAGETRUNCATEMODE)
+            %    allows to specify what happens with messages that consist
+            %    of more than one line. Be default (mode: 'truncate') only
+            %    the first line of such messages is stored. Mode 'replace'
+            %    replaces newline characters with \n.
+            %
+            %    See also TITTA.SAVEDATA, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
+            
+            % get filename and path
+            if nargin<3
+                doAppendVersion = false;
+            end
+            filenameBase = Titta.getFileName(filenameBase, doAppendVersion, 'tsv', true, false);
+
+            % prepare messages
+            data.messages(:,2) = strrep(data.messages(:,2),sprintf('\t'),'\t');
+            if nargin<4
+                messageTruncateMode = 'truncate';
+            end
+            if strcmp(messageTruncateMode,'truncate')
+                ind = strfind(data.messages(:,2),sprintf('\r\n'));
+                ind2= strfind(data.messages(:,2),sprintf('\n')); %#ok<SPRINTFN> 
+                for m=1:size(data.messages,1)
+                    i = ind{m};
+                    if isempty(i)
+                        i = ind2{m};
+                    end
+                    if isempty(i)
+                        continue;
+                    end
+                    data.messages{m,2} = data.messages{m,2}(1:i(1)-1);
+                end
+            elseif strcmp(messageTruncateMode,'replace')
+                data.messages(:,2) = strrep(data.messages(:,2),sprintf('\r\n'),'\n');
+                data.messages(:,2) = strrep(data.messages(:,2),sprintf('\n'),'\n'); %#ok<SPRINTFN> 
+            else
+                error('message truncate mode ''%s'' is not understood, should be ''truncate'' or ''replace''',messageTruncateMode);
+            end
+
+            % save
+            try
+                [path,fileBase] = fileparts(filenameBase);
+                % gaze data
+                [fields, dat] = getFields(data.data.gaze, {},{});
+                dat = cellfun(@transpose,dat,'uni',false);
+                t = table(dat{:},'VariableNames',fields);
+                writetable(t, fullfile(path, [fileBase '_gaze.tsv']), 'FileType', 'text', 'Delimiter', '\t');
+                % messages
+                t = table(cat(1,data.messages{:,1}),data.messages(:,2),'VariableNames',{'timestamp','message'});
+                writetable(t, fullfile(path, [fileBase '_messages.tsv']), 'FileType', 'text', 'Delimiter', '\t');
             catch ME
                 error('Titta: saveDataToParquet: Error saving data:\n%s',ME.getReport('extended'))
             end
