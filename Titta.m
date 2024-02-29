@@ -2847,7 +2847,6 @@ classdef Titta < handle
             if qDoCal
                 % show display
                 [out.cal,tick] = obj.DoCalPointDisplay(wpnt,true,-1,[],kCal==1);
-                obj.sendMessage(sprintf('STOP CALIBRATION ROUTINE (%s), calibration no. %d',eyeLbl,kCal));
                 out.cal.data        = obj.ConsumeAllData(calStartT);
                 out.cal.timestamp   = datestr(now,'yyyy-mm-dd HH:MM:SS.FFF');
                 if out.cal.status==1
@@ -2884,6 +2883,7 @@ classdef Titta < handle
                         obj.sendMessage(sprintf('NO CALIBRATION POINTS, DEFAULT APPLIED (%s), calibration no. %d',eyeLbl,kCal));
                     end
                 end
+                obj.sendMessage(sprintf('STOP CALIBRATION ROUTINE (%s), calibration no. %d',eyeLbl,kCal));
                 if isfield(out.cal,'flips')
                     calLastFlip = {tick,out.cal.flips(end)};
                 else
