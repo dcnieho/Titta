@@ -2821,8 +2821,8 @@ classdef Titta < handle
             qDoCal = ~isfield(out,'cal');
             
             % get data streams started
-            out.eye  = obj.settings.calibrateEye;
-            eyeLbl = getEyeLbl(obj.settings.calibrateEye);
+            out.eye = obj.settings.calibrateEye;
+            eyeLbl  = getEyeLbl(obj.settings.calibrateEye);
             if qDoCal
                 calStartT   = obj.sendMessage(sprintf('START CALIBRATION ROUTINE (%s), calibration no. %d',eyeLbl,kCal));
                 iVal        = 1;
