@@ -389,11 +389,14 @@ try
     if ~sv.proLab.doDryRun
         data        = EThndl.collectSessionData();
         data.setup  = sv;
-        EThndl.saveData(fullfile(cd,'antiSac.mat'), true, data);
+        EThndl.saveData(data, fullfile(cd,'antiSac.mat'), true);
         % if you want to (also) save the data to Apache Parquet and json
         % files that can easily be read in Python (Apache Parquet files are
         % supported by Pandas), use:
-        % EThndl.saveDataToParquet(fullfile(cd,'antiSac'), true, data);
+        % EThndl.saveDataToParquet(data, fullfile(cd,'antiSac'), true);
+        % All gaze data columns and messages can be dumped to tsv files
+        % using:
+        % EThndl.saveGazeDataToTSV(data, fullfile(cd,'antiSac'), true);
     end
     % finalize recording in Pro Lab (NB: must go into lab and confirm)
     if ~sv.proLab.doDryRun

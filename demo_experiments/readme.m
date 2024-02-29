@@ -203,6 +203,7 @@ try
     % by Pandas), use:
     % EThndl.saveDataToParquet(dat, fullfile(cd,'t'), true);
     % All gaze data columns and messages can be dumped to tsv files using:
+    % EThndl.saveGazeDataToTSV(dat, fullfile(cd,'t'), true);
     
     % shut down
     EThndl.deInit();
