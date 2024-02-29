@@ -197,11 +197,11 @@ try
     dat = EThndl.collectSessionData();
     dat.expt.resolution = winRect(3:4);
     dat.expt.stim       = rabbits;
-    EThndl.saveData(fullfile(cd,'t'), true, dat);
+    EThndl.saveData(dat, fullfile(cd,'t'), true);
     % if you want to (also) save the data to Apache Parquet and json files
     % that can easily be read in Python (Apache Parquet files are supported
     % by Pandas), use:
-    % EThndl.saveDataToParquet(fullfile(cd,'t'), true, dat);
+    % EThndl.saveDataToParquet(dat, fullfile(cd,'t'), true);
     % All gaze data columns and messages can be dumped to tsv files using:
     
     % shut down

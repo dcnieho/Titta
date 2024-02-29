@@ -20,6 +20,8 @@
 %      <a href="matlab: help Titta.getFileName">help Titta.getFileName</a>
 %      <a href="matlab: help Titta.getTimeAsSystemTime">help Titta.getTimeAsSystemTime</a>
 %      <a href="matlab: help Titta.getValidationQualityMessage">help Titta.getValidationQualityMessage</a>
+%      <a href="matlab: help Titta.saveData">help Titta.saveData</a>
+%      <a href="matlab: help Titta.saveDataToParquet">help Titta.saveDataToParquet</a>
 %
 %    For methods:
 %      <a href="matlab: help Titta.setDummyMode">help Titta.setDummyMode</a>
@@ -31,8 +33,6 @@
 %      <a href="matlab: help Titta.sendMessage">help Titta.sendMessage</a>
 %      <a href="matlab: help Titta.getMessages">help Titta.getMessages</a>
 %      <a href="matlab: help Titta.collectSessionData">help Titta.collectSessionData</a>
-%      <a href="matlab: help Titta.saveData">help Titta.saveData</a>
-%      <a href="matlab: help Titta.saveDataToParquet">help Titta.saveDataToParquet</a>
 %      <a href="matlab: help Titta.deInit">help Titta.deInit</a>
 %    
 %    For properties:
@@ -1383,115 +1383,6 @@ classdef Titta < handle
             dat.data                = obj.ConsumeAllData();
         end
         
-        function filename = saveData(obj, filename, doAppendVersion, data)
-            % Save all session data to mat-file
-            %
-            %    FILENAME = Titta.saveData(FILENAME) saves the data
-            %    returned by Titta.collectSessionData() directly to a
-            %    mat-file with the specified FILENAME. Overwrites existing
-            %    FILENAME file. Returns the FILENAME at which the file was
-            %    saved.
-            %
-            %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION)
-            %    allows to automatically append a version number (_1, _2,
-            %    etc) to the specified FILENAME if the destination file
-            %    already exists. Default: false.
-            %
-            %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION, DATA)
-            %    allows specifying the data to save. Expected to contain
-            %    the fields from Titta.CollectSessionData. All including
-            %    extra metadata added by the user. Default: this function
-            %    retrieves the data to be saved with a call to
-            %    Titta.collectSessionData.
-            %
-            %    See also TITTA.SAVEDATATOPARQUET, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
-            
-            % 1. get filename and path
-            if nargin<3
-                doAppendVersion = false;
-            end
-            filename = Titta.getFileName(filename, doAppendVersion);
-            
-            % 2. collect all data to save
-            if nargin<4
-                data = obj.collectSessionData();
-            end
-            
-            % save
-            try
-                save(filename,'-struct','data');
-            catch ME
-                error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
-            end
-        end
-        
-        function filename = saveDataToParquet(obj, filename, doAppendVersion, data)
-            % Save all session data to parquet and json files
-            %
-            %    FILENAME = Titta.saveDataToParquet(FILENAME) saves the
-            %    data returned by Titta.collectSessionData() directly to
-            %    set of Apache Parquet and json files starting with
-            %    FILENAME. Data from the various streams is written as
-            %    tables into Parquet files, metadata and calibration info
-            %    as json files. Overwrites existing files. Returns the
-            %    FILENAME at which the file was saved.
-            %
-            %    FILENAME = Titta.saveDataToParquet(FILENAME, DOAPPENDVERSION)
-            %    allows to automatically append a version number (_1, _2,
-            %    etc) to the specified FILENAME if the destination files
-            %    already exist. Default: false.
-            %
-            %    FILENAME = Titta.saveDataToParquet(FILENAME, DOAPPENDVERSION, DATA)
-            %    allows specifying the data to save. Expected to contain
-            %    the fields from Titta.CollectSessionData. Extra user-added
-            %    metadata is ignored, expect information about screen
-            %    resolution if it is provided in data.resolution or
-            %    data.expt.resolution. Default: this function retrieves the
-            %    data to be saved with a call to Titta.collectSessionData.
-            %
-            %    See also TITTA.SAVEDATA, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
-            
-            % 1. get filename and path
-            if nargin<3
-                doAppendVersion = false;
-            end
-            filename = Titta.getFileName(filename, doAppendVersion, 'parq', true, false);
-            
-            % 2. collect all data to save
-            if nargin<4
-                data = obj.collectSessionData();
-            end
-            
-            % save
-            try
-                [path,fileBase] = fileparts(filename);
-                % gaze data etc
-                fs = fieldnames(data.data);
-                for f=1:length(fs)
-                    [fields, dat] = getFields(data.data.(fs{f}), {},{});
-                    writeToParquet(fullfile(path, sprintf('%s_%s.parq',fileBase,fs{f})), dat,fields)
-                end
-                % messages
-                writeToParquet(fullfile(path, [fileBase '_messages.parq']), {cat(1,data.messages{:,1}),data.messages(:,2)}, {'timestamp','message'});
-                % log
-                [fields, dat] = getFields(data.TobiiLog, {},{});
-                writeToParquet(fullfile(path, [fileBase '_log.parq']), dat,fields);
-                % calibration to json
-                fid = fopen(fullfile(path, [fileBase '_calibration.json']),'wt');
-                fprintf(fid,'%s',jsonencode(data.calibration));
-                fclose(fid);
-                % other info to json
-                toJson.systemInfo = data.systemInfo;
-                toJson.geometry = data.geometry;
-                toJson.settings = data.settings;
-                fid = fopen(fullfile(path, [fileBase '_info.json']),'wt');
-                fprintf(fid,'%s',jsonencode(toJson));
-                fclose(fid);
-            catch ME
-                error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
-            end
-        end
-        
         function out = deInit(obj)
             % Closes connection to the eye tracker and cleans up
             %
@@ -2270,6 +2161,101 @@ classdef Titta < handle
             end
             % construct full filename
             filename = fullfile(path,file);
+        end
+
+        function filename = saveData(data, filename, doAppendVersion)
+            % Save all session data to mat-file
+            %
+            %    FILENAME = Titta.saveData(DATA, FILENAME) saves the data
+            %    DATA (e.g. what is returned by Titta.collectSessionData(),
+            %    and optionally including extra metadata added by the
+            %    user), to a mat-file with the specified FILENAME.
+            %    Overwrites existing FILENAME file. Returns the FILENAME at
+            %    which the file was saved.
+            %
+            %    FILENAME = Titta.saveData(DATA, FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination file
+            %    already exists. Default: false.
+            %
+            %    See also TITTA.SAVEDATATOPARQUET, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
+            
+            % get filename and path
+            if nargin<3
+                doAppendVersion = false;
+            end
+            filename = Titta.getFileName(filename, doAppendVersion);
+            
+            % save
+            try
+                save(filename,'-struct','data');
+            catch ME
+                error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
+            end
+        end
+        
+        function filenameBase = saveDataToParquet(data, filenameBase, doAppendVersion)
+            % Save all session data to parquet and json files
+            %
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE) saves the data
+            %    DATA to a set of Apache Parquet and json files starting
+            %    with FILENAME. DATA is expected to contain the fields from
+            %    Titta.CollectSessionData. Extra user-added metadata is
+            %    ignored, expect information about screen resolution if it
+            %    is provided in either data.resolution or
+            %    data.expt.resolution.
+            %    Data from the various streams is written as tables into
+            %    Parquet files, metadata and calibration info as json
+            %    files. Overwrites existing files. Returns the
+            %    FILENAMEBASE at which the files were saved.
+            %
+            %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAMEBASE if the destination
+            %    files already exist. Default: false.
+            %
+            %    See also TITTA.SAVEDATA, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
+            
+            % get filename and path
+            if nargin<3
+                doAppendVersion = false;
+            end
+            filenameBase = Titta.getFileName(filenameBase, doAppendVersion, 'parq', true, false);
+            
+            % save
+            try
+                [path,fileBase] = fileparts(filenameBase);
+                % gaze data etc
+                fs = fieldnames(data.data);
+                for f=1:length(fs)
+                    [fields, dat] = getFields(data.data.(fs{f}), {},{});
+                    writeToParquet(fullfile(path, sprintf('%s_%s.parq',fileBase,fs{f})), dat,fields)
+                end
+                % messages
+                writeToParquet(fullfile(path, [fileBase '_messages.parq']), {cat(1,data.messages{:,1}),data.messages(:,2)}, {'timestamp','message'});
+                % log
+                [fields, dat] = getFields(data.TobiiLog, {},{});
+                writeToParquet(fullfile(path, [fileBase '_log.parq']), dat,fields);
+                % calibration to json
+                fid = fopen(fullfile(path, [fileBase '_calibration.json']),'wt');
+                fprintf(fid,'%s',jsonencode(data.calibration));
+                fclose(fid);
+                % other info to json
+                toJson.systemInfo = data.systemInfo;
+                toJson.geometry = data.geometry;
+                toJson.settings = data.settings;
+                % add resolution info, if available
+                if isfield(data,'resolution')
+                    toJson.resolution = data.resolution;
+                elseif isfield(data,'expt') && isfield(data.expt,'resolution')
+                    toJson.resolution = data.expt.resolution;
+                end
+                fid = fopen(fullfile(path, [fileBase '_info.json']),'wt');
+                fprintf(fid,'%s',jsonencode(toJson));
+                fclose(fid);
+            catch ME
+                error('Titta: saveDataToParquet: Error saving data:\n%s',ME.getReport('extended'))
+            end
         end
     end
     
