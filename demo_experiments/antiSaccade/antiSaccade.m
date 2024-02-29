@@ -201,9 +201,13 @@ try
     EThndl.buffer.stop('gaze');
     
     % save data to mat file
+    data        = EThndl.collectSessionData();
     data.setup  = sv;
-    data.ETdata = EThndl.collectSessionData();
-    save('antiSac.mat','-struct','data')
+    EThndl.saveData(fullfile(cd,'antiSac.mat'), true, data);
+    % if you want to (also) save the data to Apache Parquet and json files
+    % that can easily be read in Python (Apache Parquet files are supported
+    % by Pandas), use:
+    % EThndl.saveDataToParquet(fullfile(cd,'antiSac'), true, data);
     
     % shut down
     EThndl.deInit();

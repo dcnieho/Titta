@@ -250,11 +250,13 @@ try
     
     % save data to mat file, adding info about the experiment
     dat = EThndl.collectSessionData();
-    dat.expt.winRect = winRectP;
-    dat.expt.stim    = rabbits;
-    save(EThndl.getFileName(fullfile(cd,'t'), true),'-struct','dat');
-    % NB: if you don't want to add anything to the saved data, you can use
-    % EThndl.saveData directly
+    dat.expt.resolution = winRectP(3:4);
+    dat.expt.stim       = rabbits;
+    EThndl.saveData(fullfile(cd,'t'), true, dat);
+    % if you want to (also) save the data to Apache Parquet and json files
+    % that can easily be read in Python (Apache Parquet files are supported
+    % by Pandas), use:
+    % EThndl.saveDataToParquet(fullfile(cd,'t'), true, dat);
     
     % shut down
     EThndl.deInit();

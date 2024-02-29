@@ -32,6 +32,7 @@
 %      <a href="matlab: help Titta.getMessages">help Titta.getMessages</a>
 %      <a href="matlab: help Titta.collectSessionData">help Titta.collectSessionData</a>
 %      <a href="matlab: help Titta.saveData">help Titta.saveData</a>
+%      <a href="matlab: help Titta.saveDataToParquet">help Titta.saveDataToParquet</a>
 %      <a href="matlab: help Titta.deInit">help Titta.deInit</a>
 %    
 %    For properties:
@@ -1382,21 +1383,28 @@ classdef Titta < handle
             dat.data                = obj.ConsumeAllData();
         end
         
-        function filename = saveData(obj, filename, doAppendVersion)
+        function filename = saveData(obj, filename, doAppendVersion, data)
             % Save all session data to mat-file
             %
             %    FILENAME = Titta.saveData(FILENAME) saves the data
             %    returned by Titta.collectSessionData() directly to a
             %    mat-file with the specified FILENAME. Overwrites existing
-            %    FILENAME file.
+            %    FILENAME file. Returns the FILENAME at which the file was
+            %    saved.
             %
             %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION)
             %    allows to automatically append a version number (_1, _2,
             %    etc) to the specified FILENAME if the destination file
-            %    already exists. Default: false. Returns the FILENAME at
-            %    which the file was saved.
+            %    already exists. Default: false.
             %
-            %    See also TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
+            %    FILENAME = Titta.saveData(FILENAME, DOAPPENDVERSION, DATA)
+            %    allows specifying the data to save. Expected to contain
+            %    the fields from Titta.CollectSessionData. All including
+            %    extra metadata added by the user. Default: this function
+            %    retrieves the data to be saved with a call to
+            %    Titta.collectSessionData.
+            %
+            %    See also TITTA.SAVEDATATOPARQUET, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
             
             % 1. get filename and path
             if nargin<3
@@ -1405,11 +1413,80 @@ classdef Titta < handle
             filename = Titta.getFileName(filename, doAppendVersion);
             
             % 2. collect all data to save
-            dat = obj.collectSessionData();
+            if nargin<4
+                data = obj.collectSessionData();
+            end
             
             % save
             try
-                save(filename,'-struct','dat');
+                save(filename,'-struct','data');
+            catch ME
+                error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
+            end
+        end
+        
+        function filename = saveDataToParquet(obj, filename, doAppendVersion, data)
+            % Save all session data to parquet and json files
+            %
+            %    FILENAME = Titta.saveDataToParquet(FILENAME) saves the
+            %    data returned by Titta.collectSessionData() directly to
+            %    set of Apache Parquet and json files starting with
+            %    FILENAME. Data from the various streams is written as
+            %    tables into Parquet files, metadata and calibration info
+            %    as json files. Overwrites existing files. Returns the
+            %    FILENAME at which the file was saved.
+            %
+            %    FILENAME = Titta.saveDataToParquet(FILENAME, DOAPPENDVERSION)
+            %    allows to automatically append a version number (_1, _2,
+            %    etc) to the specified FILENAME if the destination files
+            %    already exist. Default: false.
+            %
+            %    FILENAME = Titta.saveDataToParquet(FILENAME, DOAPPENDVERSION, DATA)
+            %    allows specifying the data to save. Expected to contain
+            %    the fields from Titta.CollectSessionData. Extra user-added
+            %    metadata is ignored, expect information about screen
+            %    resolution if it is provided in data.resolution or
+            %    data.expt.resolution. Default: this function retrieves the
+            %    data to be saved with a call to Titta.collectSessionData.
+            %
+            %    See also TITTA.SAVEDATA, TITTA.COLLECTSESSIONDATA, TITTA.GETFILENAME
+            
+            % 1. get filename and path
+            if nargin<3
+                doAppendVersion = false;
+            end
+            filename = Titta.getFileName(filename, doAppendVersion, 'parq', true, false);
+            
+            % 2. collect all data to save
+            if nargin<4
+                data = obj.collectSessionData();
+            end
+            
+            % save
+            try
+                [path,fileBase] = fileparts(filename);
+                % gaze data etc
+                fs = fieldnames(data.data);
+                for f=1:length(fs)
+                    [fields, dat] = getFields(data.data.(fs{f}), {},{});
+                    writeToParquet(fullfile(path, sprintf('%s_%s.parq',fileBase,fs{f})), dat,fields)
+                end
+                % messages
+                writeToParquet(fullfile(path, [fileBase '_messages.parq']), {cat(1,data.messages{:,1}),data.messages(:,2)}, {'timestamp','message'});
+                % log
+                [fields, dat] = getFields(data.TobiiLog, {},{});
+                writeToParquet(fullfile(path, [fileBase '_log.parq']), dat,fields);
+                % calibration to json
+                fid = fopen(fullfile(path, [fileBase '_calibration.json']),'wt');
+                fprintf(fid,'%s',jsonencode(data.calibration));
+                fclose(fid);
+                % other info to json
+                toJson.systemInfo = data.systemInfo;
+                toJson.geometry = data.geometry;
+                toJson.settings = data.settings;
+                fid = fopen(fullfile(path, [fileBase '_info.json']),'wt');
+                fprintf(fid,'%s',jsonencode(toJson));
+                fclose(fid);
             catch ME
                 error('Titta: saveData: Error saving data:\n%s',ME.getReport('extended'))
             end
@@ -2113,7 +2190,7 @@ classdef Titta < handle
             end
         end
         
-        function filename = getFileName(filename, doAppendVersion)
+        function filename = getFileName(filename, doAppendVersion, ext, ignoreSuffix, addExt)
             % Get the filename for saving data
             %
             %    FILENAME = Titta.getFileName(FILENAME) checks the provided
@@ -2124,15 +2201,42 @@ classdef Titta < handle
             %    etc) to the specified FILENAME if the destination file
             %    already exists. Default: false.
             %
-            %    See also TITTA.SAVEDATA
+            %    FILENAME = Titta.getFileName(FILENAME, DOAPPENDVERSION, EXT)
+            %    extension to use when checking if file exists. Default:
+            %    'mat'.
+            %
+            %    FILENAME = Titta.getFileName(FILENAME, DOAPPENDVERSION, EXT, IGNORESUFFIX)
+            %    ignores suffixes of the provided filename when checking if
+            %    files exist. E.g. if 'test' is provided as filename, and
+            %    'test_gaze.parq' exists at the provided path, this will be
+            %    considered a hit when the '_gaze' suffix is ignored.
+            %    Default: false.
+            %
+            %    FILENAME = Titta.getFileName(FILENAME, DOAPPENDVERSION, EXT, IGNORESUFFIX, ADDEXT)
+            %    add the extension EXT to the end of the output filename.
+            %    May be unwanted when generating a base filename, such as
+            %    when storing data to a series of Parquet files. Default:
+            %    true.
+            %
+            %    See also TITTA.SAVEDATA, TITTA.SAVEDATATOPARQUET
+
+            if nargin<3
+                ext = 'mat';
+            end
+            if nargin<4
+                ignoreSuffix = false;
+            end
+            if nargin<5
+                addExt = true;
+            end
             
             % 1. get filename and path
-            [path,file,ext] = fileparts(filename);
+            [path,file,fext] = fileparts(filename);
             assert(~isempty(path),'Titta: getFileName: filename should contain a path')
-            % eat .mat off filename, preserve any other extension user may
+            % eat extention off filename, preserve any other extension user may
             % have provided
-            if ~isempty(ext) && ~strcmpi(ext,'.mat')
-                file = [file ext];
+            if ~isempty(fext) && ~strcmpi(fext,['.' ext])
+                file = [file fext];
             end
             % add versioning info to file name, if wanted and if already
             % exists
@@ -2140,8 +2244,13 @@ classdef Titta < handle
                 % see what files we have in data folder with the same name
                 f = dir(path);
                 f = f(~[f.isdir]);
-                f = regexp({f.name},['^' regexptranslate('escape',file) '(_\d+)?\.mat$'],'tokens');
-                % see if any. if so, see what number to append
+                regStr = ['^' regexptranslate('escape',file) '(_\d+)?'];
+                if ignoreSuffix
+                    regStr = [regStr '.*'];
+                end
+                regStr = [regStr '\.' ext '$'];
+                f = regexp({f.name},regStr,'tokens');
+                % see if any match. if so, see what number to append
                 f = [f{:}];
                 if ~isempty(f)
                     % files with this subject name exist
@@ -2154,8 +2263,11 @@ classdef Titta < handle
                     end
                 end
             end
-            % now make sure file ends with .mat
-            file = [file '.mat'];
+            % now make sure file ends with expected extension, or that it
+            % does not if not wanted
+            if addExt
+                file = [file '.' ext];
+            end
             % construct full filename
             filename = fullfile(path,file);
         end
@@ -7988,4 +8100,95 @@ end
 % place in axis rect
 xyo(1,:,:) = xyo(1,:,:)*(axRect(3)-axRect(1))+axRect(1);
 xyo(2,:,:) = xyo(2,:,:)*(axRect(2)-axRect(4))+axRect(4);    % note that y increases downward in pixels, so need to do reverse here: higher in plot is lower y
+end
+
+
+%%% for data saving to Apache Parquet
+function writeToParquet(fileName, data,fields)
+if size(data{1},1)<=1
+    data = cellfun(@transpose,data,'uni',false);
+end
+t=table(data{:},'VariableNames',fields);
+parquetwrite(fileName,t);
+end
+
+function [fields, data] = getFields(dat, fields, data, prefix)
+if nargin<4
+    prefix = '';
+end
+assert(isstruct(dat),'Input should be a struct or struct array')
+if isscalar(dat)
+    % struct (struct of arrays)
+    [fields, data] = getFieldsStruct(dat, fields, data, prefix);
+else
+    % array of structs
+    [fields, data] = getFieldsStructArray(dat, fields, data, prefix);
+end
+end
+
+function [fields, data] = getFieldsStruct(dat, fields, data, prefix)
+fs = fieldnames(dat);
+for f=1:length(fs)
+    lbl = to_snake_case(fs{f});
+    if ~isempty(prefix)
+        lbl = [prefix '_' lbl];
+    end
+
+    if isstruct(dat.(fs{f}))
+        [fields, data] = getFields(dat.(fs{f}), fields, data, lbl);
+    else
+        if ismember(size(dat.(fs{f}),1), [2,3])
+            clbl = 'xyz';
+            for i=1:size(dat.(fs{f}),1)
+                fields{1,end+1} = [lbl '_' clbl(i)];
+                data{1,end+1}   = dat.(fs{f})(i,:);
+            end
+        elseif size(dat.(fs{f}),1)>1
+            % pack in cell
+            fields{1,end+1} = lbl;
+            data{1,end+1}   = num2cell(dat.(fs{f}),1);
+        else
+            fields{1,end+1} = lbl;
+            data{1,end+1}   = dat.(fs{f});
+        end
+    end
+end
+end
+
+function [fields, data] = getFieldsStructArray(dat, fields, data, prefix)
+fs = fieldnames(dat);
+dat= struct2table(dat);
+for f=1:length(fs)
+    lbl = to_snake_case(fs{f});
+    if ~isempty(prefix)
+        lbl = [prefix '_' lbl];
+    end
+
+    my_dat = dat(:,f).Variables.';
+    if isstruct(my_dat)
+        [fields, data] = getFields(my_dat, fields, data, lbl);
+    else
+        if ismember(size(my_dat,1), [2,3])
+            clbl = 'xyz';
+            for i=1:size(dat.(fs{f}),1)
+                fields{1,end+1} = [lbl '_' clbl(i)];
+                data{1,end+1}   = my_dat(i,:);
+            end
+        elseif size(my_dat,1)>1
+            % pack in cell
+            fields{1,end+1} = lbl;
+            data{1,end+1}   = num2cell(my_dat,1);
+        else
+            fields{1,end+1} = lbl;
+            data{1,end+1}   = my_dat;
+        end
+    end
+end
+end
+
+function str = to_snake_case(str)
+iUpper = find(isstrprop(str,'upper'));
+for i=fliplr(iUpper)
+    str = [str(1:i-1) '_' lower(str(i)) str(i+1:end)];
+end
 end
