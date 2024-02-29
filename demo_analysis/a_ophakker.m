@@ -51,7 +51,7 @@ for p=1:nfiles
     disp(files(p).name)
     % read msgs and data
     dat     = load(fullfile(dirs.mat,files(p).name));
-    scrRes  = dat.expt.winRect(3:4);
+    scrRes  = dat.expt.resolution;
     ts      = dat.data.gaze.systemTimeStamp;
     % the Pro SDK does not guarantee invalid data is nan. Set to nan if
     % invalid
