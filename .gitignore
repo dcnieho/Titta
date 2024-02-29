@@ -5,6 +5,8 @@
 *.swp
 *.bak
 *.mat
+*.parq
+*.json
 octave-workspace
 *.egg-info
 .venv*
