@@ -2522,7 +2522,7 @@ classdef Titta < handle
             end
             
             % setup colors
-            menuBgClr           = obj.getColorForWindow(obj.settings.UI.setup.menu.bgColor,wpnt(end));
+            menuBgClr           = obj.getColorForWindow(obj.settings.UI.setup.menu.bgColor        ,wpnt(end));
             menuItemClr         = obj.getColorForWindow(obj.settings.UI.setup.menu.itemColor      ,wpnt(end));
             menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.setup.menu.itemColorActive,wpnt(end));
             
