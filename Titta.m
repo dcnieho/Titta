@@ -7728,7 +7728,11 @@ classdef Titta < handle
         
         function clr = getColorForWindow(obj,clr,wpnt)
             if obj.qFloatColorRange(obj.wpnts==wpnt)
-                clr = double(clr)/255;
+                if iscell(clr)
+                    clr = cellfun(@(c) double(c)/255, clr, 'uni',false);
+                else
+                    clr = double(clr)/255;
+                end
             end
         end
     end
