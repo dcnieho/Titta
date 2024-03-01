@@ -14,6 +14,9 @@ clear all
 sca
 
 DEBUGlevel              = 0;
+% NB: also when using 0--1 color range for your PTB window (as is the case
+% in this demo) should you specify colors in the 0--255 range. They are
+% automatically scaled to 0--1 by Titta if your window requires that.
 if 1
     % black background
     bgClr                   = 0;
@@ -89,6 +92,7 @@ try
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
     
+    PsychDefaultSetup(2);   % requests 0--1 color range, amongst other things. For testing that interface works in this mode too
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
         % higher, so we can debug.
