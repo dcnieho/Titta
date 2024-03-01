@@ -2450,12 +2450,14 @@ classdef Titta < handle
             fac         = 1;
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
             refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
             [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
             if qHaveOperatorScreen
+                bgClrP      = obj.getColorForWindow(obj.settings.  cal   .bgColor,wpnt(1));
                 refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
                 bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
                 [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
+            else
+                bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
             end
             
 
