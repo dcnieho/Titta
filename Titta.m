@@ -3910,7 +3910,6 @@ classdef Titta < handle
             fixPosO = bsxfun(@plus,fixPos*obj.scrInfo.sFac,obj.scrInfo.offset);
             
             % prep colors
-            bgClr               = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1));
             eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.val.eyeColors,'uni',false);
             menuBgClr           = obj.getColorForWindow(obj.settings.UI.val.menu.bgColor,wpnt(end));
             menuItemClr         = obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ,wpnt(end));
@@ -3920,7 +3919,10 @@ classdef Titta < handle
                 onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
             end
             if qHaveOperatorScreen
+                bgClr       = obj.getColorForWindow(obj.settings. cal  .bgColor,wpnt(1));   % keep constant color
                 bgClrO      = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(2));
+            else
+                bgClr       = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1));
             end
             
             qDoneCalibSelection = false;
@@ -7277,9 +7279,11 @@ classdef Titta < handle
             % time you click something. default behaviour is good here
             cursor = cursorUpdater(cursors);
             
-            bgClrP          = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(1));
             if qHaveOperatorScreen
+                bgClrP      = obj.getColorForWindow(obj.settings.  cal  .bgColor,wpnt(1));
                 bgClrO      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(2));
+            else
+                bgClrP      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(1));
             end
             axBgColor       = obj.getColorForWindow(obj.settings.UI.plot.ax.bgColor,wpnt(end));
             lineColor   	= obj.getColorForWindow(obj.settings.UI.plot.ax.lineColor,wpnt(end));
