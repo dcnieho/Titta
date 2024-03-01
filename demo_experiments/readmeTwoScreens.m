@@ -201,7 +201,7 @@ try
     endT = Screen('Flip',wpntP,nextFlipT);
     EThndl.sendMessage(sprintf('STIM OFF: %s',rabbits(1).fInfo.name),endT);
     Screen('Close',rabbits(1).tex);
-    nextFlipT = endT+1; % lees precise, about 1s give or take a frame, is fine
+    nextFlipT = endT+1; % less precise, about 1s give or take a frame, is fine
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
