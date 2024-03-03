@@ -4709,7 +4709,7 @@ classdef Titta < handle
             nDataPoint          = ceil(obj.settings.advcal.val.collectDuration*obj.settings.freq);
             
             % prep colors
-            bgClrP              = obj.getColorForWindow(obj.settings.UI.advcal.bgColor,wpnt(1));
+            bgClrP              = obj.getColorForWindow(obj.settings.advcal.bgColor,wpnt(1));
             bgClrO              = obj.getColorForWindow(obj.settings.UI.advcal.bgColor,wpnt(2));
             eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.advcal.eyeColors,'uni',false);
             menuBgClr           = obj.getColorForWindow(obj.settings.UI.advcal.menu.bgColor,wpnt(end));
