@@ -3286,7 +3286,7 @@ classdef Titta < handle
             if isa(obj.settings.cal.drawFunction,'function_handle')
                 drawFunction = obj.settings.cal.drawFunction;
             else
-                drawFunction = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true);
+                drawFunction = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true,false);
             end
             
             % if calibrating, make sure we start with a clean slate:
@@ -3676,7 +3676,7 @@ classdef Titta < handle
                 Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.UI.operator.cal.fixBackSize*1.5/2);
             end
             % draw all points
-            obj.drawFixationPointDefault(wpnt,[],[],pos,[],[],false);
+            obj.drawFixationPointDefault(wpnt,[],[],pos,[],[], false,false);
             % draw live data
             clrs = {[],[]};
             if obj.calibrateLeftEye
@@ -3688,9 +3688,12 @@ classdef Titta < handle
             drawLiveData(wpnt,gazeData,dataWindowDur,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
         end
         
-        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~,isParticipantScreen)
+        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~,isParticipantScreen,isAdvancedCal)
             if ~isnan(pos)
-                if isParticipantScreen
+                if isAdvancedCal
+                    % only ever called for participant screen
+                    obj.drawFixPoints(wpnt,pos,obj.settings.         advcal.fixBackSize,obj.settings.         advcal.fixFrontSize,obj.settings.         advcal.fixBackColor,obj.settings.         advcal.fixFrontColor);
+                elseif isParticipantScreen
                     obj.drawFixPoints(wpnt,pos,obj.settings.            cal.fixBackSize,obj.settings.            cal.fixFrontSize,obj.settings.            cal.fixBackColor,obj.settings.            cal.fixFrontColor);
                 else
                     obj.drawFixPoints(wpnt,pos,obj.settings.UI.operator.cal.fixBackSize,obj.settings.UI.operator.cal.fixFrontSize,obj.settings.UI.operator.cal.fixBackColor,obj.settings.UI.operator.cal.fixFrontColor);
@@ -4704,7 +4707,7 @@ classdef Titta < handle
             if isa(obj.settings.advcal.drawFunction,'function_handle')
                 drawFunction    = obj.settings.advcal.drawFunction;
             else
-                drawFunction    = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true);
+                drawFunction    = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true,true);
             end
             nDataPoint          = ceil(obj.settings.advcal.val.collectDuration*obj.settings.freq);
             
