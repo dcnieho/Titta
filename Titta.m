@@ -1379,8 +1379,8 @@ classdef Titta < handle
             if isa(dat.settings.UI.setup.instruct.strFun,'function_handle')
                 dat.settings.UI.setup.instruct.strFun = func2str(dat.settings.UI.setup.instruct.strFun);
             end
-            if isa(dat.settings.UI.setup.instruct.strFunO,'function_handle')
-                dat.settings.UI.setup.instruct.strFunO = func2str(dat.settings.UI.setup.instruct.strFunO);
+            if isa(dat.settings.UI.operator.setup.instruct.strFun,'function_handle')
+                dat.settings.UI.operator.setup.instruct.strFun = func2str(dat.settings.UI.operator.setup.instruct.strFun);
             end
             if isa(dat.settings.cal.drawFunction,'function_handle')
                 dat.settings.cal.drawFunction = func2str(dat.settings.cal.drawFunction);
