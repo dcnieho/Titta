@@ -2307,7 +2307,7 @@ classdef Titta < handle
             %
             %    FILENAMEBASE = Titta.saveDataToParquet(DATA, FILENAMEBASE, DOAPPENDVERSION, MESSAGETRUNCATEMODE)
             %    allows to specify what happens with messages that consist
-            %    of more than one line. Be default (mode: 'truncate') only
+            %    of more than one line. By default (mode: 'truncate') only
             %    the first line of such messages is stored. Mode 'replace'
             %    replaces newline characters with \n.
             %
