@@ -56,38 +56,30 @@ try
     settings.debugMode      = true;
     % customize colors of setup and calibration interface (yes, colors of
     % everything can be set, so there is a lot here).
-    % 1. setup screen
-    settings.UI.setup.bgColor       = bgClr;
-    settings.UI.setup.instruct.color= fixClrs(1);
-    settings.UI.setup.fixBackColor  = fixClrs(1);
-    settings.UI.setup.fixFrontColor = fixClrs(2);
-    % override the instruction shown on the setup screen, don't need that
-    % much detail when you have a separate operator screen
-    settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) 'Position yourself such that the two circles overlap.';
+    % 1. operator screen
+    settings.UI.advcal.bgColor              = bgClr;
+    settings.UI.advcal.fixBackColor         = fixClrs(1);
+    settings.UI.advcal.fixFrontColor        = fixClrs(2);
+    settings.UI.advcal.fixPoint.text.color  = fixClrs(1);
+    settings.UI.advcal.avg.text.color       = fixClrs(1);
+    settings.UI.advcal.instruct.color       = fixClrs(1);
     % 2. calibration display
     if useAnimatedCalibration
         % custom calibration drawer
-        calViz                      = AnimatedCalibrationDisplay();
-        settings.advcal.drawFunction= @calViz.doDraw;
-        calViz.bgColor              = bgClr;
-        calViz.fixBackColor         = fixClrs(1);
-        calViz.fixFrontColor        = fixClrs(2);
+        calViz                          = AnimatedCalibrationDisplay();
+        settings.advcal.drawFunction    = @calViz.doDraw;
+        calViz.bgColor                  = bgClr;
+        calViz.fixBackColor             = fixClrs(1);
+        calViz.fixFrontColor            = fixClrs(2);
     else
         % set color of built-in fixation points
-        settings.cal.bgColor        = bgClr;
-        settings.cal.fixBackColor   = fixClrs(1);
-        settings.cal.fixFrontColor  = fixClrs(2);
+        settings.advcal.bgColor         = bgClr;
+        settings.advcal.fixBackColor    = fixClrs(1);
+        settings.advcal.fixFrontColor   = fixClrs(2);
     end
     % callback function for completion of each calibration point
     settings.advcal.cal.pointNotifyFunction = @demoCalCompletionFun;
     settings.advcal.val.pointNotifyFunction = @demoCalCompletionFun;
-    % 3. validation result screen
-    settings.UI.val.bgColor                 = bgClr;
-    settings.UI.val.avg.text.color          = fixClrs(1);
-    settings.UI.val.fixBackColor            = fixClrs(1);
-    settings.UI.val.fixFrontColor           = fixClrs(2);
-    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
-    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     
     % init
     EThndl          = Titta(settings);

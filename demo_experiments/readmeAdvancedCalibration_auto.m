@@ -61,21 +61,13 @@ try
     settings.debugMode      = true;
     % customize colors of setup and calibration interface (yes, colors of
     % everything can be set, so there is a lot here).
-    % 1. setup screen
-    settings.UI.setup.bgColor       = bgClr;
-    settings.UI.setup.instruct.color= fixClrs(1);
-    settings.UI.setup.fixBackColor  = fixClrs(1);
-    settings.UI.setup.fixFrontColor = fixClrs(2);
-    % override the instruction shown on the setup screen, don't need that
-    % much detail when you have a separate operator screen
-    settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) 'Position yourself such that the two circles overlap.';
-    % 2. validation result screen
-    settings.UI.val.bgColor                 = bgClr;
-    settings.UI.val.avg.text.color          = fixClrs(1);
-    settings.UI.val.fixBackColor            = fixClrs(1);
-    settings.UI.val.fixFrontColor           = fixClrs(2);
-    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
-    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
+    % operator screen
+    settings.UI.advcal.bgColor              = bgClr;
+    settings.UI.advcal.fixBackColor         = fixClrs(1);
+    settings.UI.advcal.fixFrontColor        = fixClrs(2);
+    settings.UI.advcal.fixPoint.text.color  = fixClrs(1);
+    settings.UI.advcal.avg.text.color       = fixClrs(1);
+    settings.UI.advcal.instruct.color       = fixClrs(1);
     % calibration display: add two more points so we have a square grid
     % with center point
     settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .5, .1; .5, .9];
