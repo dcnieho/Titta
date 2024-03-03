@@ -338,6 +338,29 @@ classdef Titta < handle
             obj.settings.UI.button.val.toggPlot.fillColor   = color2RGBA(obj.settings.UI.button.val.toggPlot.fillColor);
             obj.settings.UI.button.val.toggPlot.edgeColor   = color2RGBA(obj.settings.UI.button.val.toggPlot.edgeColor);
             obj.settings.UI.button.val.toggPlot.textColor   = color2RGBA(obj.settings.UI.button.val.toggPlot.textColor);
+
+            obj.settings.UI.operator.setup.bgColor                  = color2RGBA(obj.settings.UI.operator.setup.bgColor);
+            obj.settings.UI.operator.setup.refCircleClr             = color2RGBA(obj.settings.UI.operator.setup.refCircleClr);
+            obj.settings.UI.operator.setup.headCircleEdgeClr        = color2RGBA(obj.settings.UI.operator.setup.headCircleEdgeClr);
+            obj.settings.UI.operator.setup.headCircleFillClr        = color2RGBA(obj.settings.UI.operator.setup.headCircleFillClr);
+            obj.settings.UI.operator.setup.eyeClr                   = color2RGBA(obj.settings.UI.operator.setup.eyeClr);
+            obj.settings.UI.operator.setup.eyeClrPosMissing         = color2RGBA(obj.settings.UI.operator.setup.eyeClrPosMissing);
+            obj.settings.UI.operator.setup.eyeBorderClr             = color2RGBA(obj.settings.UI.operator.setup.eyeBorderClr);
+            obj.settings.UI.operator.setup.eyeLidClr                = color2RGBA(obj.settings.UI.operator.setup.eyeLidClr);
+            obj.settings.UI.operator.setup.pupilClr                 = color2RGBA(obj.settings.UI.operator.setup.pupilClr);
+            obj.settings.UI.operator.setup.crossClr                 = color2RGBA(obj.settings.UI.operator.setup.crossClr);
+            obj.settings.UI.operator.setup.instruct.color           = color2RGBA(obj.settings.UI.operator.setup.instruct.color);
+            obj.settings.UI.operator.cal.eyeColors                  = color2RGBA(obj.settings.UI.operator.cal.eyeColors);
+            obj.settings.UI.operator.cal.bgColor                    = color2RGBA(obj.settings.UI.operator.cal.bgColor);
+            obj.settings.UI.operator.cal.fixBackColor               = color2RGBA(obj.settings.UI.operator.cal.fixBackColor);
+            obj.settings.UI.operator.cal.fixFrontColor              = color2RGBA(obj.settings.UI.operator.cal.fixFrontColor);
+            obj.settings.UI.operator.val.eyeColors                  = color2RGBA(obj.settings.UI.operator.val.eyeColors);
+            obj.settings.UI.operator.val.bgColor                    = color2RGBA(obj.settings.UI.operator.val.bgColor);
+            obj.settings.UI.operator.val.fixBackColor               = color2RGBA(obj.settings.UI.operator.val.fixBackColor);
+            obj.settings.UI.operator.val.fixFrontColor              = color2RGBA(obj.settings.UI.operator.val.fixFrontColor);
+            obj.settings.UI.operator.val.onlineGaze.eyeColors       = color2RGBA(obj.settings.UI.operator.val.onlineGaze.eyeColors);
+            obj.settings.UI.operator.val.onlineGaze.fixBackColor    = color2RGBA(obj.settings.UI.operator.val.onlineGaze.fixBackColor);
+            obj.settings.UI.operator.val.onlineGaze.fixFrontColor   = color2RGBA(obj.settings.UI.operator.val.onlineGaze.fixFrontColor);
             
             obj.settings.UI.plot.bgColor                    = color2RGBA(obj.settings.UI.plot.bgColor);
             obj.settings.UI.plot.eyeColors                  = color2RGBA(obj.settings.UI.plot.eyeColors);
@@ -1524,7 +1547,6 @@ classdef Titta < handle
             settings.UI.setup.showEyeLids       = true;
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.showYaw           = true;                         % show yaw of head?
-            settings.UI.setup.showYawToOperator = true;                         % show yaw of head on operator screen?
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: ideal head positioning determined through eye tracker's positioning stream. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
@@ -1542,14 +1564,13 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.showHeadToSubject = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
-            settings.UI.setup.showInstructionToSubject = true;                  % if false, the instruction text is not shown on the participant monitor when showing setup display
-            settings.UI.setup.showFixPointsToSubject   = true;                  % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
+            settings.UI.setup.showHead = true;                                  % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
+            settings.UI.setup.showInstruction = true;                           % if false, the instruction text is not shown on the participant monitor when showing setup display
+            settings.UI.setup.showFixPoints   = true;                           % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
             % functions for drawing instruction and positioning information
             % on user and operator screen. Note that rx, ry and rz are
             % NaN (unknown) if reference position is not set by user
             settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) sprintf('Position yourself such that the two circles overlap.\nDistance: %.0f cm',z);
-            settings.UI.setup.instruct.strFunO  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %.1f cm, should be: %.1f cm\nY: %.1f cm, should be: %.1f cm\nDistance: %.1f cm, should be: %.1f cm',x,rx,y,ry,z,rz);
             settings.UI.setup.instruct.font     = sansFont;
             settings.UI.setup.instruct.size     = 24*textFac;
             settings.UI.setup.instruct.color    = 0;                            % only for messages on the screen, doesn't affect buttons
@@ -1727,19 +1748,19 @@ classdef Titta < handle
             settings.UI.plot.but.valSel.fillColor   = toggleButClr.fill;
             settings.UI.plot.but.valSel.edgeColor   = toggleButClr.edge;
             settings.UI.plot.but.valSel.textColor   = toggleButClr.text;
-            settings.UI.cal.errMsg.string           = 'Calibration failed\nPress any key to continue';
+            settings.UI.cal.errMsg.string           = 'Calibration failed\nPress any key to continue';  % NB: shown on participant screen during one-screen operation, on operator screen during two-screen operation
             settings.UI.cal.errMsg.font             = sansFont;
             settings.UI.cal.errMsg.size             = 36*textFac;
             settings.UI.cal.errMsg.color            = [150 0 0];
-            settings.UI.cal.errMsg.style            = 1;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+            settings.UI.cal.errMsg.style            = 1;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.cal.errMsg.wrapAt           = 62;
-            settings.UI.val.eyeColors               = eyeColors;                    % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
-            settings.UI.val.bgColor                 = 127;                          % background color for validation output screen
+            settings.UI.val.eyeColors               = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.bgColor                 = 127;                      % background color for validation output screen
             settings.UI.val.fixBackSize             = 20;
             settings.UI.val.fixFrontSize            = 5;
             settings.UI.val.fixBackColor            = 0;
             settings.UI.val.fixFrontColor           = 255;
-            settings.UI.val.onlineGaze.eyeColors    = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
+            settings.UI.val.onlineGaze.eyeColors    = eyeColors;                % colors for online gaze display during validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.onlineGaze.fixBackSize  = 20;
             settings.UI.val.onlineGaze.fixFrontSize = 5;
             settings.UI.val.onlineGaze.fixBackColor = 0;
@@ -1750,7 +1771,7 @@ classdef Titta < handle
             settings.UI.val.avg.text.eyeColors  = eyeColors;                    % colors for "left" and "right" in data quality report on top of validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.val.avg.text.style      = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.val.avg.text.vSpacing   = 1;
-            settings.UI.val.waitMsg.string      = 'Please wait...';
+            settings.UI.val.waitMsg.string      = 'Please wait...';             % during two-screen operation, shown on participant screen when operator is on the validation result screen
             settings.UI.val.waitMsg.font        = sansFont;
             settings.UI.val.waitMsg.size        = 28*textFac;
             settings.UI.val.waitMsg.color       = 0;
@@ -1789,6 +1810,14 @@ classdef Titta < handle
             settings.val.collectDuration        = 0.5;
             settings.val.doRandomPointOrder     = true;
             settings.val.pointNotifyFunction    = [];                           % function that is called upon each validation point completing (note that validation doesn't check fixation, purely based on time)
+
+            % settings for when using a two-screen setup, so you can change
+            % look of participant screen and operator screen separately
+            settings.UI.operator.setup  = rmfield(settings.UI.setup,{'referencePos','fixBackSize','fixFrontSize','fixBackColor','fixFrontColor','showFixPoints','menu'});
+            settings.UI.operator.setup.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %.1f cm, should be: %.1f cm\nY: %.1f cm, should be: %.1f cm\nDistance: %.1f cm, should be: %.1f cm',x,rx,y,ry,z,rz);
+            settings.UI.operator.cal    = rmfield(settings.cal   ,{'pointPos','pointPosTrackerSpace','autoPace','paceDuration','doRandomPointOrder','drawFunction','doRecordEyeImages','doRecordExtSignal','pointNotifyFunction'});
+            settings.UI.operator.cal.eyeColors = settings.UI.val.eyeColors;
+            settings.UI.operator.val    = rmfield(settings.UI.val,{'avg','waitMsg','hover','menu'});
             
             settings.UI.advcal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %.1f cm, target: %.1f cm\nY: %.1f cm, target: %.1f cm\nDistance: %.1f cm, target: %.1f cm',x,rx,y,ry,z,rz);
             settings.UI.advcal.instruct.font    = sansFont;
@@ -2435,29 +2464,25 @@ classdef Titta < handle
             obj.buffer.start('positioning');
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
             % see if we already have valid calibrations
-            qHaveValidValidations   = isfield(out,'attempt') && ~isempty(getCalsWithValidValidations(out.attempt));
-            qHaveOperatorScreen     = ~isscalar(wpnt);
+            qHasValidValidations    = isfield(out,'attempt') && ~isempty(getCalsWithValidValidations(out.attempt));
+            qHasOperatorScreen      = ~isscalar(wpnt);
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             
             % setup text for buttons
-            for w=1:length(wpnt)
-                Screen('TextFont',  wpnt(w), obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
-                Screen('TextSize',  wpnt(w), obj.settings.UI.button.setup.text.size);
-            end
+            Screen('TextFont',  wpnt(end), obj.settings.UI.button.setup.text.font, obj.settings.UI.button.setup.text.style);
+            Screen('TextSize',  wpnt(end), obj.settings.UI.button.setup.text.size);
             
             % setup head displays
             ovalVSz     = .15;
             fac         = 1;
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
             refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,obj.settings.UI.setup.showYaw,true);
-            if qHaveOperatorScreen
-                bgClrP      = obj.getColorForWindow(obj.settings.  cal   .bgColor,wpnt(1));
-                refClrO     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
-                bgClrO      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(2));
-                [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,obj.settings.UI.setup.showYawToOperator,false);
-            else
-                bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
+            bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,true);
+            if qHasOperatorScreen
+                refClrO     = obj.getColorForWindow(obj.settings.UI.operator.setup.refCircleClr,wpnt(2));
+                bgClrO      = obj.getColorForWindow(obj.settings.UI.operator.setup.bgColor,wpnt(2));
+                [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,false);
             end
             
 
@@ -2466,7 +2491,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.setup.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHaveValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHasValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
             
             % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
@@ -2518,9 +2543,11 @@ classdef Titta < handle
             end
             
             % setup text for positioning message
-            for w=1:length(wpnt)
-                Screen('TextFont',  wpnt(w), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
-                Screen('TextSize',  wpnt(w), obj.settings.UI.setup.instruct.size);
+            Screen('TextFont',  wpnt(1), obj.settings.UI.setup.instruct.font, obj.settings.UI.setup.instruct.style);
+            Screen('TextSize',  wpnt(1), obj.settings.UI.setup.instruct.size);
+            if qHasOperatorScreen
+                Screen('TextFont',  wpnt(2), obj.settings.UI.operator.setup.instruct.font, obj.settings.UI.operator.setup.instruct.style);
+                Screen('TextSize',  wpnt(2), obj.settings.UI.operator.setup.instruct.size);
             end
             
             % setup colors
@@ -2533,7 +2560,7 @@ classdef Titta < handle
             qSelectMenuOpen     = true;     % gets set to false on first draw as toggle above is true (hack to make sure we're set up on first entrance of draw loop)
             qChangeMenuArrow    = false;
             qSelectedEyeChanged = false;
-            qToggleEyeImage     = qHaveOperatorScreen;  % eye images default off if single screen, default on if have operator screen
+            qToggleEyeImage     = qHasOperatorScreen;  % eye images default off if single screen, default on if have operator screen
             qShowEyeImage       = false;
             texs                = zeros(1,4);
             szs                 = zeros(2,4);
@@ -2564,7 +2591,7 @@ classdef Titta < handle
             [mx,my]             = deal(0,0);
             while true
                 Screen('FillRect', wpnt(1), bgClrP);
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     Screen('FillRect', wpnt(2), bgClrO);
                 end
                 if qHasEyeIm
@@ -2677,7 +2704,7 @@ classdef Titta < handle
                 headP.update(...
                     eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.userPosition, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
                     eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.userPosition, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     headO.update(...
                         eyeData. left.gazeOrigin.valid, eyeData. left.gazeOrigin.inUserCoords, posGuide. left.userPosition, eyeData. left.pupil.valid, eyeData. left.pupil.diameter, eyeData. left.eyeOpenness.valid, eyeData. left.eyeOpenness.diameter,...
                         eyeData.right.gazeOrigin.valid, eyeData.right.gazeOrigin.inUserCoords, posGuide.right.userPosition, eyeData.right.pupil.valid, eyeData.right.pupil.diameter, eyeData.right.eyeOpenness.valid, eyeData.right.eyeOpenness.diameter);
@@ -2713,14 +2740,14 @@ classdef Titta < handle
                 % time when unstable track
                 qHideSetup = qShowEyeImage && isempty(headP.headPos) && ~isempty(eyeData.systemTimeStamp) && double(eyeData.systemTimeStamp-headPosLastT)/1000>200;
                 % draw distance info
-                if obj.settings.UI.setup.showInstructionToSubject && ~qHideSetup
+                if obj.settings.UI.setup.showInstruction && ~qHideSetup
                     str = obj.settings.UI.setup.instruct.strFun(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(1),str,'center',.05*obj.scrInfo.resolution{1}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
                 end
-                if qHaveOperatorScreen
-                    str = obj.settings.UI.setup.instruct.strFunO(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                if qHasOperatorScreen && obj.settings.UI.operator.setup.showInstruction
+                    str = obj.settings.UI.operator.setup.instruct.strFun(headP.avgX,headP.avgY,headP.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
                     if ~isempty(str)
                         DrawFormattedText(wpnt(2),str,'center',.05*obj.scrInfo.resolution{2}(2),obj.settings.UI.setup.instruct.color,[],[],[],obj.settings.UI.setup.instruct.vSpacing);
                     end
@@ -2728,18 +2755,18 @@ classdef Titta < handle
                 % draw reference and head indicators
                 % reference circle--don't draw if showing eye images and no
                 % tracking data available (so head not drawn)
-                if obj.settings.UI.setup.showHeadToSubject && ~qHideSetup
+                if obj.settings.UI.setup.showHead && ~qHideSetup
                     drawOrientedPoly(wpnt(1),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosP,[],refClrP ,5);
                 end
-                if qHaveOperatorScreen
+                if qHasOperatorScreen && obj.settings.UI.operator.setup.showHead
                     % no vertical/horizontal offset on operator screen
                     drawOrientedPoly(wpnt(2),circVerts,1,[0 0],[0 1; 1 0],refSz,refPosO,[],refClrO,5);
                 end
                 % stylized head
-                if obj.settings.UI.setup.showHeadToSubject
+                if obj.settings.UI.setup.showHead
                     headP.draw();
                 end
-                if qHaveOperatorScreen
+                if qHasOperatorScreen && obj.settings.UI.operator.setup.showHead
                     headO.draw();
                 end
                 
@@ -2750,7 +2777,7 @@ classdef Titta < handle
                 but(4).draw([mx my]);
                 
                 % draw fixation points
-                if obj.settings.UI.setup.showFixPointsToSubject
+                if obj.settings.UI.setup.showFixPoints
                     obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.setup.fixBackSize,obj.settings.UI.setup.fixFrontSize,obj.settings.UI.setup.fixBackColor,obj.settings.UI.setup.fixFrontColor);
                 end
                 
@@ -2771,7 +2798,7 @@ classdef Titta < handle
                 
                 % drawing done, show
                 Screen('Flip',wpnt(1),[]);
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     Screen('Flip',wpnt(2),[],[],2);
                 end
                 
@@ -2802,7 +2829,7 @@ classdef Titta < handle
                         elseif qIn(3)
                             status = 1;
                             break;
-                        elseif qIn(4) && qHaveValidValidations
+                        elseif qIn(4) && qHasValidValidations
                             status = -4;
                             break;
                         end
@@ -2822,7 +2849,7 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'d')) && shiftIsDown
                         % take screenshot
                         takeScreenshot(wpnt(1));
-                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHasOperatorScreen
                         % take screenshot of operator screen
                         takeScreenshot(wpnt(2));
                     end
@@ -2865,7 +2892,7 @@ classdef Titta < handle
                         elseif any(strcmpi(keys,obj.settings.UI.button.setup.cal.accelerator))
                             status = 1;
                             break;
-                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHaveValidValidations
+                        elseif any(strcmpi(keys,obj.settings.UI.button.setup.prevcal.accelerator)) && qHasValidValidations
                             status = -4;
                             break;
                         end
@@ -3181,16 +3208,17 @@ classdef Titta < handle
             if nargin<6 || isempty(qIsFirstCalAttempt)
                 qIsFirstCalAttempt = false;
             end
-            qHaveOperatorScreen = ~isscalar(wpnt);
-            qShowEyeImage       = qHaveOperatorScreen && obj.buffer.hasStream('eyeImage');
+            qHasOperatorScreen  = ~isscalar(wpnt);
+            qShowEyeImage       = qHasOperatorScreen && obj.buffer.hasStream('eyeImage');
             
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
             obj.getNewMouseKeyPress();
             
             % prep colors
-            for w=length(wpnt):-1:1
-                bgClr{w} = obj.getColorForWindow(obj.settings.cal.bgColor,wpnt(w));
+            bgClr{1} = obj.getColorForWindow(obj.settings.cal.bgColor,wpnt(1));
+            if qHasOperatorScreen
+                bgClr{2} = obj.getColorForWindow(obj.settings.UI.operator.cal.bgColor,wpnt(2));
             end
             
             % timing is done in ticks (display refreshes) instead of time.
@@ -3246,7 +3274,7 @@ classdef Titta < handle
                 out.status = 1;
                 return;
             end
-            if qHaveOperatorScreen
+            if qHasOperatorScreen
                 oPoints = bsxfun(@plus,bsxfun(@times,points,obj.scrInfo.resolution{1})*obj.scrInfo.sFac,obj.scrInfo.offset);
                 drawOperatorScreenFun = @(idx,eS,t,s,ps,eI,eIL) obj.drawOperatorScreen(wpnt(2),oPoints,idx,eS,t,s,ps,eI,eIL);
             end
@@ -3258,7 +3286,7 @@ classdef Titta < handle
             if isa(obj.settings.cal.drawFunction,'function_handle')
                 drawFunction = obj.settings.cal.drawFunction;
             else
-                drawFunction = @obj.drawFixationPointDefault;
+                drawFunction = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true);
             end
             
             % if calibrating, make sure we start with a clean slate:
@@ -3362,7 +3390,7 @@ classdef Titta < handle
                 for w=1:length(wpnt)
                     Screen('FillRect', wpnt(w), bgClr{w});   % needed when multi-flipping participant and operator screen, doesn't hurt when not needed
                 end
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
                         drawOperatorScreenFun(points(currentPoint,7),eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                 end
@@ -3374,7 +3402,7 @@ classdef Titta < handle
                 end
                 
                 out.flips(end+1)    = Screen('Flip',wpnt(1),nextFlipT);
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     Screen('Flip',wpnt(2),[],[],2);
                 end
                 if qNewPoint
@@ -3431,7 +3459,7 @@ classdef Titta < handle
                     elseif any(strcmpi(keys,'d')) && shiftIsDown
                         % take screenshot of participant screen
                         takeScreenshot(wpnt(1));
-                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                    elseif any(strcmpi(keys,'o')) && shiftIsDown && qHasOperatorScreen
                         % take screenshot of operator screen
                         takeScreenshot(wpnt(2));
                     end
@@ -3516,13 +3544,13 @@ classdef Titta < handle
                     for w=1:length(wpnt)
                         Screen('FillRect', wpnt(w), bgClr{w});
                     end
-                    if qHaveOperatorScreen
+                    if qHasOperatorScreen
                         [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = ...
                             drawOperatorScreenFun([],eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal);
                     end
                     drawFunction(wpnt(1),'draw',lastPoint,points(lastPoint,5:6),tick,stage);
                     flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
-                    if qHaveOperatorScreen
+                    if qHasOperatorScreen
                         Screen('Flip',wpnt(2),[],[],2);
                     end
                     if qLogPointOff
@@ -3570,7 +3598,7 @@ classdef Titta < handle
                     Screen('FillRect', wpnt(w), bgClr{w});
                 end
                 flipT   = Screen('Flip',wpnt(1),flipT+1/1000);
-                if qHaveOperatorScreen
+                if qHasOperatorScreen
                     Screen('Flip',wpnt(2),[],[],2);
                 end
                 obj.sendMessage(sprintf('POINT OFF %d',lastPoint),flipT);
@@ -3645,24 +3673,28 @@ classdef Titta < handle
             end
             % draw indicator which point is being shown
             if ~isempty(highlight)
-                Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.cal.fixBackSize*1.5/2);
+                Screen('gluDisk', wpnt,obj.getColorForWindow([255 0 0],wpnt), pos(highlight,1), pos(highlight,2), obj.settings.UI.operator.cal.fixBackSize*1.5/2);
             end
             % draw all points
-            obj.drawFixationPointDefault(wpnt,[],[],pos);
+            obj.drawFixationPointDefault(wpnt,[],[],pos,[],[],false);
             % draw live data
             clrs = {[],[]};
             if obj.calibrateLeftEye
-                clrs{1} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{1},wpnt);
+                clrs{1} = obj.getColorForWindow(obj.settings.UI.operator.cal.eyeColors{1},wpnt);
             end
             if obj.calibrateRightEye
-                clrs{2} = obj.getColorForWindow(obj.settings.UI.val.eyeColors{2},wpnt);
+                clrs{2} = obj.getColorForWindow(obj.settings.UI.operator.cal.eyeColors{2},wpnt);
             end
             drawLiveData(wpnt,gazeData,dataWindowDur,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
         end
         
-        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~)
+        function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~,isParticipantScreen)
             if ~isnan(pos)
-                obj.drawFixPoints(wpnt,pos,obj.settings.cal.fixBackSize,obj.settings.cal.fixFrontSize,obj.settings.cal.fixBackColor,obj.settings.cal.fixFrontColor);
+                if isParticipantScreen
+                    obj.drawFixPoints(wpnt,pos,obj.settings.            cal.fixBackSize,obj.settings.            cal.fixFrontSize,obj.settings.            cal.fixBackColor,obj.settings.            cal.fixFrontColor);
+                else
+                    obj.drawFixPoints(wpnt,pos,obj.settings.UI.operator.cal.fixBackSize,obj.settings.UI.operator.cal.fixFrontSize,obj.settings.UI.operator.cal.fixBackColor,obj.settings.UI.operator.cal.fixFrontColor);
+                end
                 qAllowAcceptKey = true;
             end
         end
@@ -3776,7 +3808,7 @@ classdef Titta < handle
             %    result
             % shift-d: take screenshot of participant screen
             % shift-o: take screenshot of operator screen
-            qHaveOperatorScreen     = ~isscalar(wpnt);
+            qHasOperatorScreen      = ~isscalar(wpnt);
             
             % find how many valid calibrations we have:
             iValidCals = getCalsWithValidValidations(cal);
@@ -3788,10 +3820,10 @@ classdef Titta < handle
                 obj.loadOtherCal(cal{selection},selection,true,true);
             end
             qHasCal                 = ~isempty(cal{selection}.cal.result);
-            qHaveMultipleValidCals  = ~isempty(iValidCals) && ~isscalar(iValidCals);
+            qHasMultipleValidCals   = ~isempty(iValidCals) && ~isscalar(iValidCals);
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
             qHasValData             = isfield(cal{selection}.val{iVal},'pointPos');
-            qHaveTrackerSpacePos    = ~isempty(obj.settings.cal.pointPosTrackerSpace);
+            qHasTrackerSpacePos     = ~isempty(obj.settings.cal.pointPosTrackerSpace);
             
             % setup text for buttons
             Screen('TextFont',  wpnt(end), obj.settings.UI.button.val.text.font, obj.settings.UI.button.val.text.style);
@@ -3802,10 +3834,10 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.val.recal    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.val.reval    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.val.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.val.selcal   , qHaveMultipleValidCals, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.val.selcal   , qHasMultipleValidCals , wpnt(end), funs, obj.settings.UI.button.margins);
             but(5)  = PTBButton(obj.settings.UI.button.val.setup    ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(6)  = PTBButton(obj.settings.UI.button.val.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(7)  = PTBButton(obj.settings.UI.button.val.toggSpace, qHaveTrackerSpacePos  , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.val.toggSpace, qHasTrackerSpacePos   , wpnt(end), funs, obj.settings.UI.button.margins);
             but(8)  = PTBButton(obj.settings.UI.button.val.toggCal  ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
             but(9)  = PTBButton(obj.settings.UI.button.val.toggPlot ,      qHasValData      , wpnt(end), funs, obj.settings.UI.button.margins);
             % 1. below screen
@@ -3855,12 +3887,12 @@ classdef Titta < handle
             
             % check shiftable button accelerators do not conflict with
             % built in ones
-            assert(~qHaveOperatorScreen || ~ismember(obj.settings.UI.button.val.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.val.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
+            assert(~qHasOperatorScreen || ~ismember(obj.settings.UI.button.val.toggGaze.accelerator,{'escape','s','d','o'}),'settings.UI.button.val.toggGaze.accelerator cannot be one of ''escape'', ''s'', ''d'', or ''o'', that would conflict with built-in accelerators')
             
             
             % setup menu, if any
             degChar = char(176);
-            if qHaveMultipleValidCals
+            if qHasMultipleValidCals
                 margin          = 10;
                 pad             = 3;
                 height          = 45;
@@ -3901,7 +3933,7 @@ classdef Titta < handle
             end
             
             % setup message for participant if we have an operator screen
-            if qHaveOperatorScreen && ~isempty(obj.settings.UI.val.waitMsg.string)
+            if qHasOperatorScreen && ~isempty(obj.settings.UI.val.waitMsg.string)
                 Screen('TextFont',  wpnt(end), obj.settings.UI.val.waitMsg.font, obj.settings.UI.val.waitMsg.style);
                 Screen('TextSize',  wpnt(end), obj.settings.UI.val.waitMsg.size);
                 waitTextCache = obj.getTextCache(wpnt(1),obj.settings.UI.val.waitMsg.string,[0 0 obj.scrInfo.resolution{1}],'baseColor',obj.settings.UI.val.waitMsg.color);
@@ -3912,19 +3944,16 @@ classdef Titta < handle
             fixPosO = bsxfun(@plus,fixPos*obj.scrInfo.sFac,obj.scrInfo.offset);
             
             % prep colors
-            eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.val.eyeColors,'uni',false);
+            eyeClrs             = cellfun(@(x) obj.getColorForWindow(x,wpnt(end)),obj.settings.UI.operator.val.eyeColors,'uni',false);
             menuBgClr           = obj.getColorForWindow(obj.settings.UI.val.menu.bgColor,wpnt(end));
             menuItemClr         = obj.getColorForWindow(obj.settings.UI.val.menu.itemColor      ,wpnt(end));
             menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.val.menu.itemColorActive,wpnt(end));
             hoverBgClr          = obj.getColorForWindow(obj.settings.UI.val.hover.bgColor,wpnt(end));
-            for w=length(wpnt):-1:1
-                onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
-            end
-            if qHaveOperatorScreen
-                bgClr       = obj.getColorForWindow(obj.settings. cal  .bgColor,wpnt(1));   % keep constant color
-                bgClrO      = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(2));
-            else
-                bgClr       = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1));
+            onlineGazeClr(:,1)  = cellfun(@(x) obj.getColorForWindow(x,wpnt(1)),obj.settings.UI.val.onlineGaze.eyeColors,'uni',false);
+            bgClrP              = obj.getColorForWindow(obj.settings.UI.val.bgColor,wpnt(1));
+            if qHasOperatorScreen
+                onlineGazeClr(:,2)  = cellfun(@(x) obj.getColorForWindow(x,wpnt(2)),obj.settings.UI.operator.val.onlineGaze.eyeColors,'uni',false);
+                bgClrO              = obj.getColorForWindow(obj.settings.UI.operator.val.bgColor,wpnt(2));
             end
             
             qDoneCalibSelection = false;
@@ -4005,7 +4034,7 @@ classdef Titta < handle
                                     qToggleSelectMenu   = true;
                                     qSelectMenuOpen     = ~qSelectMenuOpen;
                                 end
-                                if ~qHaveTrackerSpacePos
+                                if ~qHasTrackerSpacePos
                                     but(7).visible    = false;
                                 elseif obj.settings.UI.button.val.toggSpace.visible
                                     but(7).visible    = true;
@@ -4073,7 +4102,7 @@ classdef Titta < handle
                             end
                             calValPos   = bsxfun(@plus,pointPosPix*obj.scrInfo.sFac,obj.scrInfo.offset);
                             
-                            if qHaveTrackerSpacePos || (~qShowCal && qHasValData)
+                            if qHasTrackerSpacePos || (~qShowCal && qHasValData)
                                 % get rects around validation points
                                 calValRects = zeros(nPoints,4);
                                 for p=1:nPoints
@@ -4150,7 +4179,7 @@ classdef Titta < handle
                             c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
                             str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,abs(rE.acc2D(1)),degChar,abs(rE.acc2D(2)),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
                         end
-                        if qHaveTrackerSpacePos
+                        if qHasTrackerSpacePos
                             str = [sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition in tracker space: %.3f,%.3f\n',pointPos(ip,2:3).*obj.scrInfo.resolution{1},pointPos(ip,2:3),pointPos(ip,4:5)) str]; %#ok<AGROW> 
                         end
                     end
@@ -4162,13 +4191,17 @@ classdef Titta < handle
                 end
                 
                 while true % draw loop
-                    Screen('FillRect', wpnt(1), bgClr);
-                    if qHaveOperatorScreen
+                    Screen('FillRect', wpnt(1), bgClrP);
+                    if qHasOperatorScreen
                         Screen('FillRect', wpnt(2), bgClrO);
                     end
                     % draw validation screen image
                     % draw calibration/validation points
-                    obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI.val.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.val.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.val.fixBackColor,obj.settings.UI.val.fixFrontColor);
+                    if qHasOperatorScreen
+                        obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI.operator.val.fixBackSize,obj.settings.UI.operator.val.fixFrontSize,obj.settings.UI.operator.val.fixBackColor,obj.settings.UI.operator.val.fixFrontColor);
+                    else
+                        obj.drawFixPoints(wpnt(end),calValPos,obj.settings.UI         .val.fixBackSize,obj.settings.UI         .val.fixFrontSize,obj.settings.UI.         val.fixBackColor,obj.settings.UI.         val.fixFrontColor);
+                    end
                     % draw captured data in characteristic tobii plot
                     for p=1:nPoints
                         if qShowCal
@@ -4199,7 +4232,7 @@ classdef Titta < handle
                             end
                         end
                         if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
-                            if qHaveTrackerSpacePos && ~qShowInTrackerSpace
+                            if qHasTrackerSpacePos && ~qShowInTrackerSpace
                                 % make data relative to point in screen space
                                 lEpos = bsxfun(@plus,bsxfun(@minus,lEpos,pointPos(p,4:5).'),pointPos(p,2:3).');
                             end
@@ -4207,7 +4240,7 @@ classdef Titta < handle
                             Screen('DrawLines',wpnt(end),reshape([repmat(bpos,1,size(lEpos,2)); lEpos],2,[]),1,eyeClrs{1},[],2);
                         end
                         if ismember(cal{selection}.eye,{'both','right'}) && ~isempty(rEpos)
-                            if qHaveTrackerSpacePos && ~qShowInTrackerSpace
+                            if qHasTrackerSpacePos && ~qShowInTrackerSpace
                                 % make data relative to point in screen space
                                 rEpos = bsxfun(@plus,bsxfun(@minus,rEpos,pointPos(p,4:5).'),pointPos(p,2:3).');
                             end
@@ -4262,15 +4295,15 @@ classdef Titta < handle
                     end
                     % if have operator screen, show message to wait to
                     % participant (if any)
-                    if qHaveOperatorScreen && ~qShowGaze && ~isempty(obj.settings.UI.val.waitMsg.string)
+                    if qHasOperatorScreen && ~qShowGaze && ~isempty(obj.settings.UI.val.waitMsg.string)
                         obj.drawCachedText(waitTextCache);
                     end
                     % if showing gaze, draw
                     if qShowGaze
                         % draw fixation points on operator screen and on
                         % participant screen
-                        if qHaveOperatorScreen
-                            obj.drawFixPoints(wpnt(end),fixPosO,obj.settings.UI.val.onlineGaze.fixBackSize*obj.scrInfo.sFac,obj.settings.UI.val.onlineGaze.fixFrontSize*obj.scrInfo.sFac,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
+                        if qHasOperatorScreen
+                            obj.drawFixPoints(wpnt(end),fixPosO,obj.settings.UI.operator.val.onlineGaze.fixBackSize,obj.settings.UI.operator.val.onlineGaze.fixFrontSize,obj.settings.UI.operator.val.onlineGaze.fixBackColor,obj.settings.UI.operator.val.onlineGaze.fixFrontColor);
                         end
                         obj.drawFixPoints(wpnt(1),fixPos,obj.settings.UI.val.onlineGaze.fixBackSize,obj.settings.UI.val.onlineGaze.fixFrontSize,obj.settings.UI.val.onlineGaze.fixBackColor,obj.settings.UI.val.onlineGaze.fixFrontColor);
                         % draw gaze data
@@ -4280,13 +4313,13 @@ classdef Titta < handle
                             rE = eyeData.right.gazePoint.onDisplayArea(:,end).*obj.scrInfo.resolution{1}.';
                             if ismember(cal{selection}.eye,{'both','left'})  && eyeData. left.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{1,end}, lE(1)*obj.scrInfo.sFac+obj.scrInfo.offset(1), lE(2)*obj.scrInfo.sFac+obj.scrInfo.offset(2), 10);
-                                if qHaveOperatorScreen && qShowGazeToAll
+                                if qHasOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, lE(1), lE(2), 10);
                                 end
                             end
                             if ismember(cal{selection}.eye,{'both','right'}) && eyeData.right.gazePoint.valid(end)
                                 Screen('gluDisk', wpnt(end),onlineGazeClr{2,end}, rE(1)*obj.scrInfo.sFac+obj.scrInfo.offset(1), rE(2)*obj.scrInfo.sFac+obj.scrInfo.offset(2), 10);
-                                if qHaveOperatorScreen && qShowGazeToAll
+                                if qHasOperatorScreen && qShowGazeToAll
                                     Screen('gluDisk', wpnt(1),onlineGazeClr{2,1}, rE(1), rE(2), 10);
                                 end
                             end
@@ -4294,7 +4327,7 @@ classdef Titta < handle
                     end
                     % drawing done, show
                     Screen('Flip',wpnt(1),[]);
-                    if qHaveOperatorScreen
+                    if qHasOperatorScreen
                         Screen('Flip',wpnt(2),[],[],2);
                     end
                     if qAwaitingCalChange
@@ -4372,7 +4405,7 @@ classdef Titta < handle
                             % take screenshot
                             takeScreenshot(wpnt(1));
                             qStickyShowPointInfo(:) = false;
-                        elseif any(strcmpi(keys,'o')) && shiftIsDown && qHaveOperatorScreen
+                        elseif any(strcmpi(keys,'o')) && shiftIsDown && qHasOperatorScreen
                             % take screenshot of operator screen
                             takeScreenshot(wpnt(2));
                             qStickyShowPointInfo(:) = false;
@@ -4438,7 +4471,7 @@ classdef Titta < handle
                                 qDoneCalibSelection = true;
                                 qStickyShowPointInfo(:) = false;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHaveMultipleValidCals
+                            elseif any(strcmpi(keys,obj.settings.UI.button.val.selcal.accelerator)) && ~shiftIsDown && qHasMultipleValidCals
                                 qToggleSelectMenu   = true;
                                 qStickyShowPointInfo(:) = false;
                                 break;
@@ -4537,8 +4570,8 @@ classdef Titta < handle
             facO        = obj.settings.UI.advcal.headScale;
             refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
             refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
-            [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,obj.settings.UI.setup.showYaw,true);
-            [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,obj.settings.UI.setup.showYawToOperator,false);
+            [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,true);
+            [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,false);
             % setup head position screen (centered, can be dragged to move)
             if isempty(obj.settings.UI.advcal.headPos)
                 headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
@@ -4671,7 +4704,7 @@ classdef Titta < handle
             if isa(obj.settings.advcal.drawFunction,'function_handle')
                 drawFunction    = obj.settings.advcal.drawFunction;
             else
-                drawFunction    = @obj.drawFixationPointDefault;
+                drawFunction    = @(wpnt,a,b,pos,c,d) obj.drawFixationPointDefault(wpnt,a,b,pos,c,d,true);
             end
             nDataPoint          = ceil(obj.settings.advcal.val.collectDuration*obj.settings.freq);
             
@@ -7282,7 +7315,7 @@ classdef Titta < handle
             cursor = cursorUpdater(cursors);
             
             if qHaveOperatorScreen
-                bgClrP      = obj.getColorForWindow(obj.settings.  cal  .bgColor,wpnt(1));
+                bgClrP      = obj.getColorForWindow(obj.settings.UI.val.bgColor, wpnt(1));
                 bgClrO      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(2));
             else
                 bgClrP      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(1));
@@ -7516,25 +7549,30 @@ classdef Titta < handle
             end
         end
         
-        function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,showYaw,isParticipantScreen)
+        function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,isParticipantScreen)
             % create head and setup looks
+            if isParticipantScreen
+                uiSettings = obj.settings.UI.setup;
+            else
+                uiSettings = obj.settings.UI.operator.setup;
+            end
             head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
             head.rectWH             = scrRes*fac;
-            head.headCircleFillClr  = obj.settings.UI.setup.headCircleFillClr;
-            head.headCircleEdgeClr  = obj.settings.UI.setup.headCircleEdgeClr;
-            head.headCircleEdgeWidth= obj.settings.UI.setup.headCircleEdgeWidth*fac;
-            head.showYaw            = showYaw;
-            head.showEyes           = obj.settings.UI.setup.showEyes;
-            head.eyeClr             = obj.settings.UI.setup.eyeClr;
-            head.eyeClrPosMissing   = obj.settings.UI.setup.eyeClrPosMissing;
-            head.eyeBorderClr       = obj.settings.UI.setup.eyeBorderClr;
-            head.eyeBorderWidth     = obj.settings.UI.setup.eyeBorderWidth;
-            head.showEyeLids        = obj.settings.UI.setup.showEyeLids;
-            head.eyeLidClr          = obj.settings.UI.setup.eyeLidClr;
-            head.showPupils         = obj.settings.UI.setup.showPupils;
-            head.pupilClr           = obj.settings.UI.setup.pupilClr;
-            head.crossClr           = obj.settings.UI.setup.crossClr;
+            head.headCircleFillClr  = uiSettings.headCircleFillClr;
+            head.headCircleEdgeClr  = uiSettings.headCircleEdgeClr;
+            head.headCircleEdgeWidth= uiSettings.headCircleEdgeWidth*fac;
+            head.showYaw            = uiSettings.showYaw;
+            head.showEyes           = uiSettings.showEyes;
+            head.eyeClr             = uiSettings.eyeClr;
+            head.eyeClrPosMissing   = uiSettings.eyeClrPosMissing;
+            head.eyeBorderClr       = uiSettings.eyeBorderClr;
+            head.eyeBorderWidth     = uiSettings.eyeBorderWidth;
+            head.showEyeLids        = uiSettings.showEyeLids;
+            head.eyeLidClr          = uiSettings.eyeLidClr;
+            head.showPupils         = uiSettings.showPupils;
+            head.pupilClr           = uiSettings.pupilClr;
+            head.crossClr           = uiSettings.crossClr;
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             
             % get reference position
