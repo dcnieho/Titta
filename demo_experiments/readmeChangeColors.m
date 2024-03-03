@@ -24,6 +24,7 @@ if 1
     refCircleClr            = [255 0 0];
     headCircleEdgeClr       = [255 255 0];
     headCircleFillClr       = [255 255 0 .3*255];
+    eyeLidClr               = [210 210 0];
     eyeClr                  = 255;
 else
     % white background
@@ -32,6 +33,7 @@ else
     refCircleClr            = [137 171 227];
     headCircleEdgeClr       = [221 88 0];
     headCircleFillClr       = [221 88 0 .5*255];
+    eyeLidClr               = [227 121 0];
     eyeClr                  = 245;
 end
 useAnimatedCalibration  = true;
@@ -64,15 +66,9 @@ try
     settings.UI.setup.refCircleClr  = refCircleClr;
     settings.UI.setup.headCircleEdgeClr = headCircleEdgeClr;
     settings.UI.setup.headCircleFillClr = headCircleFillClr;
+    settings.UI.setup.eyeLidClr     = eyeLidClr;
     settings.UI.setup.eyeClr        = eyeClr;
-    % 2. validation result screen
-    settings.UI.val.bgColor                 = bgClr;
-    settings.UI.val.avg.text.color          = fixClrs(1);
-    settings.UI.val.fixBackColor            = fixClrs(1);
-    settings.UI.val.fixFrontColor           = fixClrs(2);
-    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
-    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
-    % calibration display
+    % 2. calibration display
     settings.cal.bgColor            = bgClr;    % should always be set, is background color when cleaning up after calibration and for message that calibration failed
     if useAnimatedCalibration
         % custom calibration drawer
@@ -86,6 +82,13 @@ try
         settings.cal.fixBackColor   = fixClrs(1);
         settings.cal.fixFrontColor  = fixClrs(2);
     end
+    % 3. validation result screen
+    settings.UI.val.bgColor                 = bgClr;
+    settings.UI.val.avg.text.color          = fixClrs(1);
+    settings.UI.val.fixBackColor            = fixClrs(1);
+    settings.UI.val.fixFrontColor           = fixClrs(2);
+    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
+    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     
     % init
     EThndl          = Titta(settings);

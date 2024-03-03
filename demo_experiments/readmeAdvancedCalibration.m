@@ -64,14 +64,7 @@ try
     % override the instruction shown on the setup screen, don't need that
     % much detail when you have a separate operator screen
     settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) 'Position yourself such that the two circles overlap.';
-    % 2. validation result screen
-    settings.UI.val.bgColor                 = bgClr;
-    settings.UI.val.avg.text.color          = fixClrs(1);
-    settings.UI.val.fixBackColor            = fixClrs(1);
-    settings.UI.val.fixFrontColor           = fixClrs(2);
-    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
-    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
-    % calibration display
+    % 2. calibration display
     if useAnimatedCalibration
         % custom calibration drawer
         calViz                      = AnimatedCalibrationDisplay();
@@ -88,6 +81,13 @@ try
     % callback function for completion of each calibration point
     settings.advcal.cal.pointNotifyFunction = @demoCalCompletionFun;
     settings.advcal.val.pointNotifyFunction = @demoCalCompletionFun;
+    % 3. validation result screen
+    settings.UI.val.bgColor                 = bgClr;
+    settings.UI.val.avg.text.color          = fixClrs(1);
+    settings.UI.val.fixBackColor            = fixClrs(1);
+    settings.UI.val.fixFrontColor           = fixClrs(2);
+    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
+    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     
     % init
     EThndl          = Titta(settings);

@@ -56,14 +56,7 @@ try
     settings.UI.setup.instruct.color= fixClrs(1);
     settings.UI.setup.fixBackColor  = fixClrs(1);
     settings.UI.setup.fixFrontColor = fixClrs(2);
-    % 2. validation result screen
-    settings.UI.val.bgColor                 = bgClr;
-    settings.UI.val.avg.text.color          = fixClrs(1);
-    settings.UI.val.fixBackColor            = fixClrs(1);
-    settings.UI.val.fixFrontColor           = fixClrs(2);
-    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
-    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
-    % calibration display
+    % 2. calibration display
     % custom calibration drawer
     calViz                           = ImageCalibrationDisplay();
     calViz.setImages([],images,imageFrameDurations,imageScaleFac);
@@ -73,6 +66,13 @@ try
     % NB: initialized further below
     % callback function for completion of each calibration point
     settings.cal.pointNotifyFunction = @demoCalCompletionFun;
+    % 3. validation result screen
+    settings.UI.val.bgColor                 = bgClr;
+    settings.UI.val.avg.text.color          = fixClrs(1);
+    settings.UI.val.fixBackColor            = fixClrs(1);
+    settings.UI.val.fixFrontColor           = fixClrs(2);
+    settings.UI.val.onlineGaze.fixBackColor = fixClrs(1);
+    settings.UI.val.onlineGaze.fixFrontColor= fixClrs(2);
     
     % init
     EThndl          = Titta(settings);
