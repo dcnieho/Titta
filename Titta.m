@@ -379,9 +379,9 @@ classdef Titta < handle
             obj.settings.UI.plot.but.valSel.textColor       = color2RGBA(obj.settings.UI.plot.but.valSel.textColor);
             
             obj.settings.UI.advcal.instruct.color               = color2RGBA(obj.settings.UI.advcal.instruct.color);
-            obj.settings.UI.button.advcal.changeeye.fillColor   = color2RGBA(obj.settings.UI.button.advcal.changeeye.fillColor);
-            obj.settings.UI.button.advcal.changeeye.edgeColor   = color2RGBA(obj.settings.UI.button.advcal.changeeye.edgeColor);
-            obj.settings.UI.button.advcal.changeeye.textColor   = color2RGBA(obj.settings.UI.button.advcal.changeeye.textColor);
+            obj.settings.UI.button.advcal.changeEye.fillColor   = color2RGBA(obj.settings.UI.button.advcal.changeEye.fillColor);
+            obj.settings.UI.button.advcal.changeEye.edgeColor   = color2RGBA(obj.settings.UI.button.advcal.changeEye.edgeColor);
+            obj.settings.UI.button.advcal.changeEye.textColor   = color2RGBA(obj.settings.UI.button.advcal.changeEye.textColor);
             obj.settings.UI.button.advcal.toggEyeIm.fillColor   = color2RGBA(obj.settings.UI.button.advcal.toggEyeIm.fillColor);
             obj.settings.UI.button.advcal.toggEyeIm.edgeColor   = color2RGBA(obj.settings.UI.button.advcal.toggEyeIm.edgeColor);
             obj.settings.UI.button.advcal.toggEyeIm.textColor   = color2RGBA(obj.settings.UI.button.advcal.toggEyeIm.textColor);
@@ -1828,12 +1828,12 @@ classdef Titta < handle
             settings.UI.button.advcal.text.font             = sansFont;
             settings.UI.button.advcal.text.size             = 24*textFac;
             settings.UI.button.advcal.text.style            = 0;
-            settings.UI.button.advcal.changeeye.accelerator = 'c';
-            settings.UI.button.advcal.changeeye.visible     = false;
-            settings.UI.button.advcal.changeeye.string      = 'change eye (<i>c<i>)';
-            settings.UI.button.advcal.changeeye.fillColor   = optionButClr.fill;
-            settings.UI.button.advcal.changeeye.edgeColor   = optionButClr.edge;
-            settings.UI.button.advcal.changeeye.textColor   = optionButClr.text;
+            settings.UI.button.advcal.changeEye.accelerator = 'c';
+            settings.UI.button.advcal.changeEye.visible     = false;
+            settings.UI.button.advcal.changeEye.string      = 'change eye (<i>c<i>)';
+            settings.UI.button.advcal.changeEye.fillColor   = optionButClr.fill;
+            settings.UI.button.advcal.changeEye.edgeColor   = optionButClr.edge;
+            settings.UI.button.advcal.changeEye.textColor   = optionButClr.text;
             settings.UI.button.advcal.toggEyeIm.accelerator = 'e';
             settings.UI.button.advcal.toggEyeIm.visible     = true;
             settings.UI.button.advcal.toggEyeIm.string      = 'eye images (<i>e<i>)';
@@ -4590,7 +4590,7 @@ classdef Titta < handle
             
             % set up buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
-            but(1)  = PTBButton(obj.settings.UI.button.advcal.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.advcal.changeEye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.advcal.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.advcal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(4)  = PTBButton(obj.settings.UI.button.advcal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
@@ -6525,7 +6525,7 @@ classdef Titta < handle
                         
                         % user-defined accelerators and other logic
                         if qSelectEyeMenuOpen || qSelectSnapMenuOpen
-                            if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.advcal.changeeye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.advcal.snapshot.accelerator)))
+                            if any(strcmpi(keys,'escape')) || (qSelectEyeMenuOpen && any(strcmpi(keys,obj.settings.UI.button.advcal.changeEye.accelerator))) || (qSelectSnapMenuOpen && any(strcmpi(keys,obj.settings.UI.button.advcal.snapshot.accelerator)))
                                 if qSelectEyeMenuOpen
                                     qToggleSelectEyeMenu    = true;
                                 elseif qSelectSnapMenuOpen
@@ -6656,7 +6656,7 @@ classdef Titta < handle
                                 status = 1;
                                 qDoneWithAdvancedCalib= true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.changeeye.accelerator)) && qCanDoMonocularCalib && ~shiftIsDown
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.changeEye.accelerator)) && qCanDoMonocularCalib && ~shiftIsDown
                                 qToggleSelectEyeMenu= true;
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggEyeIm.accelerator)) && qHasEyeIm && ~shiftIsDown
