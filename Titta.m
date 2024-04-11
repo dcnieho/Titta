@@ -1564,9 +1564,10 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.showHead = true;                                  % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
-            settings.UI.setup.showInstruction = true;                           % if false, the instruction text is not shown on the participant monitor when showing setup display
-            settings.UI.setup.showFixPoints   = true;                           % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
+            settings.UI.setup.showHead          = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
+            settings.UI.setup.showInstruction   = true;                         % if false, the instruction text is not shown on the participant monitor when showing setup display
+            settings.UI.setup.showFixPoints     = true;                         % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
+            settings.UI.setup.eyeImageMargin    = 20;                           % distance between the eye images on the setup display
             % functions for drawing instruction and positioning information
             % on user and operator screen. Note that rx, ry and rz are
             % NaN (unknown) if reference position is not set by user
@@ -1813,11 +1814,12 @@ classdef Titta < handle
 
             % settings for when using a two-screen setup, so you can change
             % look of participant screen and operator screen separately
-            settings.UI.operator.setup  = rmfield(settings.UI.setup,{'referencePos','fixBackSize','fixFrontSize','fixBackColor','fixFrontColor','showFixPoints','menu'});
+            settings.UI.operator.setup                  = rmfield(settings.UI.setup,{'referencePos','fixBackSize','fixFrontSize','fixBackColor','fixFrontColor','showFixPoints','menu'});
             settings.UI.operator.setup.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('Position:\nX: %.1f cm, should be: %.1f cm\nY: %.1f cm, should be: %.1f cm\nDistance: %.1f cm, should be: %.1f cm',x,rx,y,ry,z,rz);
-            settings.UI.operator.cal    = rmfield(settings.cal   ,{'pointPos','pointPosTrackerSpace','autoPace','paceDuration','doRandomPointOrder','drawFunction','doRecordEyeImages','doRecordExtSignal','pointNotifyFunction'});
-            settings.UI.operator.cal.eyeColors = settings.UI.val.eyeColors;
-            settings.UI.operator.val    = rmfield(settings.UI.val,{'avg','waitMsg','hover','menu'});
+            settings.UI.operator.setup.eyeImageMargin   = 50;                   % distance between the eye images on the operator display during setup, cal and validation
+            settings.UI.operator.cal                    = rmfield(settings.cal   ,{'pointPos','pointPosTrackerSpace','autoPace','paceDuration','doRandomPointOrder','drawFunction','doRecordEyeImages','doRecordExtSignal','pointNotifyFunction'});
+            settings.UI.operator.cal.eyeColors          = settings.UI.val.eyeColors;
+            settings.UI.operator.val                    = rmfield(settings.UI.val,{'avg','waitMsg','hover','menu'});
             
             settings.UI.advcal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %.1f cm, target: %.1f cm\nY: %.1f cm, target: %.1f cm\nDistance: %.1f cm, target: %.1f cm',x,rx,y,ry,z,rz);
             settings.UI.advcal.instruct.font    = sansFont;
@@ -1919,6 +1921,8 @@ classdef Titta < handle
             settings.UI.advcal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showGaze             = true;                     % if true, gaze is shown when interface opens. If false, gaze display can still be started with button
+            settings.UI.advcal.showEyeImages        = true;                     % if true, eye images are shown when interface opens. If false, eye images can still be shown with button
+            settings.UI.advcal.eyeImageMargin       = 50;
             settings.UI.advcal.fixBackSize          = 20;
             settings.UI.advcal.fixFrontSize         = 5;
             settings.UI.advcal.fixBackColor         = 0;
@@ -2570,7 +2574,11 @@ classdef Titta < handle
             canvasPoss          = zeros(4,2);
             circVerts           = genCircle(200);
             % setup canvas positions if needed
-            eyeImageMargin      = 20;
+            if qHasOperatorScreen
+                eyeImageMargin      = obj.settings.UI.operator.setup.eyeImageMargin;
+            else
+                eyeImageMargin      = obj.settings.UI.setup.eyeImageMargin;
+            end
             qDrawEyeValidity    = false;
             if ~isempty(obj.eyeImageCanvasSize)
                 visible = [but.visible];
@@ -3631,7 +3639,7 @@ classdef Titta < handle
                             UploadImages(eyeIm,texs,szs,poss,eyeImageRectLocal,wpnt,obj.eyeImageCanvasSize);
                 
                 % position eye images
-                eyeImageMargin = 20;
+                eyeImageMargin = obj.settings.UI.operator.setup.eyeImageMargin;
                 if isempty(obj.eyeImageCanvasSize) && (any(szs(:,1).'~=diff(reshape(eyeImageRect(:,1),2,2))) || any(szs(:,3).'~=diff(reshape(eyeImageRect(:,3),2,2))))
                     % if we don't have a canvas to draw eye images on, update eye image locations if size of returned eye image changed
                     eyeImageRect(:,1) = OffsetRect([0 0 szs(:,1).'],obj.scrInfo.center{2}(1)-szs(1,1)-eyeImageMargin/2,obj.scrInfo.center{2}(2)-szs(2,1)/2);
@@ -4766,9 +4774,9 @@ classdef Titta < handle
                 extraInp            = {obj.settings.calibrateEye};
             end
             % 5. eye images
-            qToggleEyeImage         = true;     % eye images default on
+            qToggleEyeImage         = obj.settings.UI.advcal.showEyeImages;     % if wanted, toggles eye images on
             qShowEyeImage           = false;
-            eyeImageMargin          = 20;
+            eyeImageMargin          = obj.settings.UI.advcal.eyeImageMargin;
             eyeTexs                 = zeros(1,4);
             eyeSzs                  = zeros(2,4);
             eyePoss                 = zeros(2,4);
