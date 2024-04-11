@@ -6446,7 +6446,7 @@ classdef Titta < handle
                                     status              = 1;
                                     qDoneWithAdvancedCalib= true;
                                 elseif qInBut(5)
-                                    qToggleSelectEyeMenu= true;
+                                    qToggleSelectSnapMenu= true;
                                 elseif qInBut(6)
                                     if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
                                         qAutoActive         = ~qAutoActive;
