@@ -1547,6 +1547,7 @@ classdef Titta < handle
             settings.UI.setup.showEyeLids       = true;
             settings.UI.setup.showPupils        = true;
             settings.UI.setup.showYaw           = true;                         % show yaw of head?
+            settings.UI.setup.showHead          = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: ideal head positioning determined through eye tracker's positioning stream. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
@@ -1564,7 +1565,6 @@ classdef Titta < handle
             settings.UI.setup.fixFrontSize      = 5;
             settings.UI.setup.fixBackColor      = 0;
             settings.UI.setup.fixFrontColor     = 255;
-            settings.UI.setup.showHead          = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
             settings.UI.setup.showInstruction   = true;                         % if false, the instruction text is not shown on the participant monitor when showing setup display
             settings.UI.setup.showFixPoints     = true;                         % if false, the fixation points in the corners of the screen are not shown on the participant monitor when showing setup display
             settings.UI.setup.eyeImageMargin    = 20;                           % distance between the eye images on the setup display
