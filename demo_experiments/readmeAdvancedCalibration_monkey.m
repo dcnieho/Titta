@@ -12,7 +12,7 @@
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates Titta's
-% manual calibration mode that is designed for working with non-compliant
+% advanced calibration mode that is designed for working with non-compliant
 % participants. This version uses a controller for automatic positioning
 % and calibration training, and uses video stimuli as calibration targets.
 % 
@@ -33,7 +33,7 @@ bgClr                   = 127;
 eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
 videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
 videoExt                = 'mov';
-numCalPoints            = 2;    % 2, 3 or 5
+numCalPoints            = 2;        % 2, 3 or 5
 loadPreviousCal         = true;     % if true, operator will be prompted for a mat-file from a previous run from which to load the previous calibration
 provideRewards          = false;
 % task parameters
