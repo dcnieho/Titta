@@ -420,11 +420,29 @@ classdef Titta < handle
             obj.settings.UI.advcal.hover.text.color             = color2RGBA(obj.settings.UI.advcal.hover.text.color);
             obj.settings.UI.advcal.hover.text.eyeColors         = color2RGBA(obj.settings.UI.advcal.hover.text.eyeColors);
             obj.settings.UI.advcal.onlineGaze.eyeColors         = color2RGBA(obj.settings.UI.advcal.onlineGaze.eyeColors);
+            obj.settings.UI.advcal.refCircleClr                 = color2RGBA(obj.settings.UI.advcal.refCircleClr);
+            obj.settings.UI.advcal.headCircleEdgeClr            = color2RGBA(obj.settings.UI.advcal.headCircleEdgeClr);
+            obj.settings.UI.advcal.headCircleFillClr            = color2RGBA(obj.settings.UI.advcal.headCircleFillClr);
+            obj.settings.UI.advcal.eyeClr                       = color2RGBA(obj.settings.UI.advcal.eyeClr);
+            obj.settings.UI.advcal.eyeClrPosMissing             = color2RGBA(obj.settings.UI.advcal.eyeClrPosMissing);
+            obj.settings.UI.advcal.eyeBorderClr                 = color2RGBA(obj.settings.UI.advcal.eyeBorderClr);
+            obj.settings.UI.advcal.eyeLidClr                    = color2RGBA(obj.settings.UI.advcal.eyeLidClr);
+            obj.settings.UI.advcal.pupilClr                     = color2RGBA(obj.settings.UI.advcal.pupilClr);
+            obj.settings.UI.advcal.crossClr                     = color2RGBA(obj.settings.UI.advcal.crossClr);
             obj.settings.UI.advcal.eyeColors                    = color2RGBA(obj.settings.UI.advcal.eyeColors);
             obj.settings.UI.advcal.bgColor                      = color2RGBA(obj.settings.UI.advcal.bgColor);
             obj.settings.UI.advcal.fixBackColor                 = color2RGBA(obj.settings.UI.advcal.fixBackColor);
             obj.settings.UI.advcal.fixFrontColor                = color2RGBA(obj.settings.UI.advcal.fixFrontColor);
             obj.settings.UI.advcal.fixPoint.text.color          = color2RGBA(obj.settings.UI.advcal.fixPoint.text.color);
+            obj.settings.UI.advcal.participant.refCircleClr     = color2RGBA(obj.settings.UI.advcal.participant.refCircleClr);
+            obj.settings.UI.advcal.participant.headCircleEdgeClr= color2RGBA(obj.settings.UI.advcal.headCircleEdgeClr);
+            obj.settings.UI.advcal.participant.headCircleFillClr= color2RGBA(obj.settings.UI.advcal.participant.headCircleFillClr);
+            obj.settings.UI.advcal.participant.eyeClr           = color2RGBA(obj.settings.UI.advcal.participant.eyeClr);
+            obj.settings.UI.advcal.participant.eyeClrPosMissing = color2RGBA(obj.settings.UI.advcal.participant.eyeClrPosMissing);
+            obj.settings.UI.advcal.participant.eyeBorderClr     = color2RGBA(obj.settings.UI.advcal.participant.eyeBorderClr);
+            obj.settings.UI.advcal.participant.eyeLidClr        = color2RGBA(obj.settings.UI.advcal.participant.eyeLidClr);
+            obj.settings.UI.advcal.participant.pupilClr         = color2RGBA(obj.settings.UI.advcal.participant.pupilClr);
+            obj.settings.UI.advcal.participant.crossClr         = color2RGBA(obj.settings.UI.advcal.participant.crossClr);
             obj.settings.advcal.bgColor                         = color2RGBA(obj.settings.advcal.bgColor);
             obj.settings.advcal.fixBackColor                    = color2RGBA(obj.settings.advcal.fixBackColor);
             obj.settings.advcal.fixFrontColor                   = color2RGBA(obj.settings.advcal.fixFrontColor);
@@ -1543,22 +1561,22 @@ classdef Titta < handle
             settings.connectRetryWait           = [1 2];                        % seconds
             settings.UI.startScreen             = 1;                            % 1. start with head positioning interface; 0. skip head positioning, go straight to calibration (if not loading previous calibrations), or validation result screen (if loading previous calibrations when calling Titta.calibrate()
             settings.UI.hardExitClosesPTB       = true;                         % if true, when user presses shift-escape to exit calibration interface, PTB window is closed, and ListenChars state fixed up
-            settings.UI.setup.showEyes          = true;
-            settings.UI.setup.showEyeLids       = true;
-            settings.UI.setup.showPupils        = true;
-            settings.UI.setup.showYaw           = true;                         % show yaw of head?
-            settings.UI.setup.showHead          = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
             settings.UI.setup.referencePos      = [];                           % [x y z] in cm. if empty, default: ideal head positioning determined through eye tracker's positioning stream. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.setup.bgColor           = 127;
             settings.UI.setup.refCircleClr      = [0 0 255];
+            settings.UI.setup.showHead          = true;                         % if false, the reference circle and head display are not shown on the participant monitor when showing setup display
             settings.UI.setup.headCircleEdgeClr = [255 255 0];
             settings.UI.setup.headCircleFillClr = [255 255 0 .3*255];
             settings.UI.setup.headCircleEdgeWidth= 5;
+            settings.UI.setup.showYaw           = true;                         % show yaw of head?
+            settings.UI.setup.showEyes          = true;
             settings.UI.setup.eyeClr            = 255;
             settings.UI.setup.eyeClrPosMissing  = [255 166 166];
             settings.UI.setup.eyeBorderClr      = 0;
             settings.UI.setup.eyeBorderWidth    = 1;
+            settings.UI.setup.showEyeLids       = true;
             settings.UI.setup.eyeLidClr         = [210 210 0];
+            settings.UI.setup.showPupils        = true;
             settings.UI.setup.pupilClr          = 0;
             settings.UI.setup.crossClr          = [255 0 0];
             settings.UI.setup.fixBackSize       = 20;
@@ -1916,9 +1934,26 @@ classdef Titta < handle
             settings.UI.advcal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.advcal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             
+            settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showHead             = false;                    % show head display when interface opens? If false, can still be opened with button
             settings.UI.advcal.headScale            = .5;
             settings.UI.advcal.headPos              = [];                       % if empty, centered
+            settings.UI.advcal.refCircleClr         = [0 0 255];
+            settings.UI.advcal.headCircleEdgeClr    = [255 255 0];
+            settings.UI.advcal.headCircleFillClr    = [255 255 0 .3*255];
+            settings.UI.advcal.headCircleEdgeWidth  = 5;
+            settings.UI.advcal.showYaw              = true;                     % show yaw of head?
+            settings.UI.advcal.showEyes             = true;
+            settings.UI.advcal.eyeClr               = 255;
+            settings.UI.advcal.eyeClrPosMissing     = [255 166 166];
+            settings.UI.advcal.eyeBorderClr         = 0;
+            settings.UI.advcal.eyeBorderWidth       = 1;
+            settings.UI.advcal.showEyeLids          = true;
+            settings.UI.advcal.eyeLidClr            = [210 210 0];
+            settings.UI.advcal.showPupils           = true;
+            settings.UI.advcal.pupilClr             = 0;
+            settings.UI.advcal.crossClr             = [255 0 0];
+            settings.UI.advcal.referencePos         = [];                       % [x y z] in cm. if empty, default: ideal head positioning determined through eye tracker's positioning stream. If values given, refernce position circle is positioned referencePos(1) cm horizontally and referencePos(2) cm vertically from the center of the screen (assuming screen dimensions were correctly set in Tobii Eye Tracker Manager)
             settings.UI.advcal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showGaze             = true;                     % if true, gaze is shown when interface opens. If false, gaze display can still be started with button
@@ -1933,7 +1968,23 @@ classdef Titta < handle
             settings.UI.advcal.fixPoint.text.size   = 12*textFac;
             settings.UI.advcal.fixPoint.text.color  = 255;
             settings.UI.advcal.fixPoint.text.style  = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
-            settings.advcal.bgColor                 = 127;                      % background color for calibration screen (can be overridden by settings.advcal.drawFunction())
+            settings.UI.advcal.participant.showHead             = false;                    % show head display to participant when interface opens? If false, can still be opened with button by holding shift key
+            settings.UI.advcal.participant.refCircleClr         = [0 0 255];
+            settings.UI.advcal.participant.headCircleEdgeClr    = [255 255 0];
+            settings.UI.advcal.participant.headCircleFillClr    = [255 255 0 .3*255];
+            settings.UI.advcal.participant.headCircleEdgeWidth  = 5;
+            settings.UI.advcal.participant.showYaw              = true;                     % show yaw of head?
+            settings.UI.advcal.participant.showEyes             = true;
+            settings.UI.advcal.participant.eyeClr               = 255;
+            settings.UI.advcal.participant.eyeClrPosMissing     = [255 166 166];
+            settings.UI.advcal.participant.eyeBorderClr         = 0;
+            settings.UI.advcal.participant.eyeBorderWidth       = 1;
+            settings.UI.advcal.participant.showEyeLids          = true;
+            settings.UI.advcal.participant.eyeLidClr            = [210 210 0];
+            settings.UI.advcal.participant.showPupils           = true;
+            settings.UI.advcal.participant.pupilClr             = 0;
+            settings.UI.advcal.participant.crossClr             = [255 0 0];
+            settings.advcal.bgColor                 = 127;                      % background color for participant/calibration screen (can be overridden by settings.advcal.drawFunction())
             settings.advcal.fixBackSize             = 20;
             settings.advcal.fixFrontSize            = 5;
             settings.advcal.fixBackColor            = 0;
@@ -2484,11 +2535,11 @@ classdef Titta < handle
             refSz       = ovalVSz*obj.scrInfo.resolution{1}(2)*fac;
             refClrP     = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
             bgClrP      = obj.getColorForWindow(obj.settings.UI.setup.bgColor,wpnt(1));
-            [headP,refPosP] = setupHead(obj,wpnt(1),refSz,obj.scrInfo.resolution{1},fac,true);
+            [headP,refPosP] = setupHead(obj,wpnt(1),'setup',refSz,obj.scrInfo.resolution{1},fac,true);
             if qHasOperatorScreen
                 refClrO     = obj.getColorForWindow(obj.settings.UI.operator.setup.refCircleClr,wpnt(2));
                 bgClrO      = obj.getColorForWindow(obj.settings.UI.operator.setup.bgColor,wpnt(2));
-                [headO,refPosO] = setupHead(obj,wpnt(2),refSz,obj.scrInfo.resolution{2},fac,false);
+                [headO,refPosO] = setupHead(obj,wpnt(2),'setup',refSz,obj.scrInfo.resolution{2},fac,false);
             end
             
 
@@ -4585,8 +4636,8 @@ classdef Titta < handle
             facO        = obj.settings.UI.advcal.headScale;
             refSzP      = ovalVSz*obj.scrInfo.resolution{1}(2);
             refSzO      = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
-            [headP,refPosP] = setupHead(obj,wpnt(1),refSzP,obj.scrInfo.resolution{1}, 1  ,true);
-            [headO,refPosO] = setupHead(obj,wpnt(2),refSzO,obj.scrInfo.resolution{2},facO,false);
+            [headP,refPosP] = setupHead(obj,wpnt(1),'advcal',refSzP,obj.scrInfo.resolution{1}, 1  ,true);
+            [headO,refPosO] = setupHead(obj,wpnt(2),'advcal',refSzO,obj.scrInfo.resolution{2},facO,false);
             % setup head position screen (centered, can be dragged to move)
             if isempty(obj.settings.UI.advcal.headPos)
                 headORect       = CenterRectOnPoint([0 0 obj.scrInfo.resolution{2}*facO],obj.scrInfo.center{end}(1),obj.scrInfo.center{end}(2));
@@ -4731,8 +4782,8 @@ classdef Titta < handle
             menuItemClr         = obj.getColorForWindow(obj.settings.UI.advcal.menu.itemColor      ,wpnt(end));
             menuItemClrActive   = obj.getColorForWindow(obj.settings.UI.advcal.menu.itemColorActive,wpnt(end));
             hoverBgClr          = obj.getColorForWindow(obj.settings.UI.advcal.hover.bgColor,wpnt(end));
-            refClrP             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(1));
-            refClrO             = obj.getColorForWindow(obj.settings.UI.setup.refCircleClr,wpnt(2));
+            refClrP             = obj.getColorForWindow(obj.settings.UI.advcal.refCircleClr,wpnt(1));
+            refClrO             = obj.getColorForWindow(obj.settings.UI.advcal.participant.refCircleClr,wpnt(2));
             headBgClrO          = obj.getColorForWindow(obj.settings.UI.advcal.hover.bgColor,wpnt(2));
             for w=length(wpnt):-1:1
                 onlineGazeClr(:,w) = cellfun(@(x) obj.getColorForWindow(x,wpnt(w)),obj.settings.UI.advcal.onlineGaze.eyeColors,'uni',false);
@@ -4742,7 +4793,7 @@ classdef Titta < handle
             % outer loop, in which less frequent actions are done
             % 1. head display
             qShowHead               = obj.settings.UI.advcal.showHead;
-            qShowHeadToAll          = false;
+            qShowHeadToAll          = obj.settings.UI.advcal.participant.showHead;
             circVerts               = genCircle(200);
             qDraggingHead           = false;
             dragPos                 = [];
@@ -6104,7 +6155,7 @@ classdef Titta < handle
                         headO.draw();
                         Screen('TextFont', wpnt(end), obj.settings.UI.advcal.instruct.font, obj.settings.UI.advcal.instruct.style);
                         Screen('TextSize', wpnt(end), max(round(obj.settings.UI.advcal.instruct.size*facO),4));
-                        str = obj.settings.UI.advcal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.setup.referencePos(1),obj.settings.UI.setup.referencePos(2),obj.settings.UI.setup.referencePos(3));
+                        str = obj.settings.UI.advcal.instruct.strFun(headO.avgX,headO.avgY,headO.avgDist,obj.settings.UI.advcal.referencePos(1),obj.settings.UI.advcal.referencePos(2),obj.settings.UI.advcal.referencePos(3));
                         if ~isempty(str)
                             DrawFormattedText2(str,'win',wpnt(2),'sx','center','xalign','center','xlayout','center','sy',.03*RectHeight(headORect),'yalign','top','baseColor',obj.settings.UI.advcal.instruct.color,'vSpacing',obj.settings.UI.advcal.instruct.vSpacing,'winRect',headORect);
                         end
@@ -7564,12 +7615,20 @@ classdef Titta < handle
             end
         end
         
-        function [head,refPos] = setupHead(obj,wpnt,refSz,scrRes,fac,isParticipantScreen)
+        function [head,refPos] = setupHead(obj,wpnt,objField,refSz,scrRes,fac,isParticipantScreen)
             % create head and setup looks
-            if isParticipantScreen
-                uiSettings = obj.settings.UI.setup;
-            else
-                uiSettings = obj.settings.UI.operator.setup;
+            if strcmp(objField,'setup')
+                if isParticipantScreen
+                    uiSettings = obj.settings.UI.setup;
+                else
+                    uiSettings = obj.settings.UI.operator.setup;
+                end
+            elseif strcmp(objField,'advcal')
+                if isParticipantScreen
+                    uiSettings = obj.settings.UI.advcal.participant;
+                else
+                    uiSettings = obj.settings.UI.advcal;
+                end
             end
             head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
@@ -7591,19 +7650,19 @@ classdef Titta < handle
             head.crossEye           = (~obj.calibrateLeftEye)*1+(~obj.calibrateRightEye)*2; % will be 0, 1 or 2 (as we must calibrate at least one eye)
             
             % get reference position
-            if isempty(obj.settings.UI.setup.referencePos)
-                obj.settings.UI.setup.referencePos = [NaN NaN NaN];
+            if isempty(obj.settings.UI.(objField).referencePos)
+                obj.settings.UI.(objField).referencePos = [NaN NaN NaN];
             end
-            head.referencePos       = obj.settings.UI.setup.referencePos;
+            head.referencePos       = obj.settings.UI.(objField).referencePos;
             
             % position reference circle on screen
             refPos          = scrRes/2*fac;
             allPosOff       = [0 0];
-            if isParticipantScreen && ~isnan(obj.settings.UI.setup.referencePos(1)) && any(obj.settings.UI.setup.referencePos(1:2)~=0)
+            if isParticipantScreen && ~isnan(obj.settings.UI.(objField).referencePos(1)) && any(obj.settings.UI.(objField).referencePos(1:2)~=0)
                 scrWidth        = obj.geom.displayArea.width/10;
                 scrHeight       = obj.geom.displayArea.height/10;
                 pixPerCm        = mean(scrRes./[scrWidth scrHeight])*[1 -1];   % flip Y because positive UCS is upward, should be downward for drawing on screen
-                allPosOff       = obj.settings.UI.setup.referencePos(1:2).*pixPerCm*fac;
+                allPosOff       = obj.settings.UI.(objField).referencePos(1:2).*pixPerCm*fac;
             end
             refPos          = refPos+allPosOff;
             head.allPosOff  = allPosOff;
