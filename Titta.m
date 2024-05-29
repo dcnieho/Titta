@@ -3714,11 +3714,15 @@ classdef Titta < handle
             % remove unneeded data
             if ~obj.calibrateLeftEye
                 val.gazeData    = rmfield(val.gazeData    ,'left');
-                val.allData.gaze= rmfield(val.allData.gaze,'left');
+                if isfield(val,'allData')
+                    val.allData.gaze= rmfield(val.allData.gaze,'left');
+                end
             end
             if ~obj.calibrateRightEye
                 val.gazeData    = rmfield(val.gazeData    ,'right');
-                val.allData.gaze= rmfield(val.allData.gaze,'right');
+                if isfield(val,'allData')
+                    val.allData.gaze= rmfield(val.allData.gaze,'right');
+                end
             end
             if isempty(val.gazeData)
                 % no validation performed, nothing to do here, return
