@@ -38,6 +38,7 @@ classdef MultiStepCalController < handle
         calMarginDirection          = 22.5;         % for step 2+: check if gaze direction w.r.t. center is within this many degrees from a calibration point
         calOnTargetTime             = 800;          % ms
         calAfterEachStep            = false;
+        calAOIColor                 = [255 0 0];
 
         showRewardTargetWhenDone    = true;         % if true, shows a centered square on the screen after the calibration logic is finished and the controller disengages. Gaze on the square triggers rewards (for demo purposes)
         nonActiveRewardDelay        = 500;          % ms, time until reward is dispensed when looking at the (demo) reward square
@@ -378,18 +379,18 @@ classdef MultiStepCalController < handle
                 lWidth = ternary(obj.isActive && obj.calPoints{obj.step}(p)==obj.gazedCalPoint,8,4);
                 if ~obj.isActive || obj.step==1
                     rect = CenterRectOnPointd([0 0 [sz sz]*sFac],pos(p,1)*sFac+offset(1),pos(p,2)*sFac+offset(2));
-                    Screen('FrameOval',wpnts(end),obj.getColorForWindow(2,0),rect,lWidth);
+                    Screen('FrameOval',wpnts(end),obj.getColorForWindow(2,obj.calAOIColor),rect,lWidth);
                 else
                     rect = CenterRectOnPointd([0 0 [sz sz]*sFac],obj.scrRes(1)/2*sFac+offset(1),obj.scrRes(2)/2*sFac+offset(2));
                     relPos = pos(p,:)-obj.scrRes(:).'/2;
                     relDir = atan2(relPos(2),relPos(1))*180/pi;
                     relDirFrameArc = relDir+90;         % frame arc is clockwise from vertical
-                    Screen('FrameArc',wpnts(end),obj.getColorForWindow(2,0),rect,relDirFrameArc-obj.calMarginDirection,2*obj.calMarginDirection,lWidth,lWidth);
+                    Screen('FrameArc',wpnts(end),obj.getColorForWindow(2,obj.calAOIColor),rect,relDirFrameArc-obj.calMarginDirection-1,2*obj.calMarginDirection+1,lWidth,lWidth);
                     % draw arms to far past end of screen
                     center = obj.scrRes(:).'/2*sFac+offset(:).';
                     starts = [center+sz/2*sFac*[cosd(relDir-obj.calMarginDirection) sind(relDir-obj.calMarginDirection)]; center+sz/2*sFac*[cosd(relDir+obj.calMarginDirection) sind(relDir+obj.calMarginDirection)]];
                     ends   = [center+sz*5000*[cosd(relDir-obj.calMarginDirection) sind(relDir-obj.calMarginDirection)]; center+sz*5000*[cosd(relDir+obj.calMarginDirection) sind(relDir+obj.calMarginDirection)]];
-                    Screen('DrawLines',wpnts(end),[starts(1,:); ends(1,:); starts(2,:); ends(2,:)].',lWidth,obj.getColorForWindow(2,0));
+                    Screen('DrawLines',wpnts(end),[starts(1,:); ends(1,:); starts(2,:); ends(2,:)].',lWidth,obj.getColorForWindow(2,obj.calAOIColor));
                 end
             end
 

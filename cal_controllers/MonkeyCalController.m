@@ -83,6 +83,7 @@ classdef MonkeyCalController < handle
         reEntryStateCal             = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
         reEntryStateVal             = MonkeyCalController.stateEnum.val_validating;     % when reactivating controller, discard state up to beginning of this state
 
+        videoRectColor              = [255 0 0];    % color in which to draw the rect indicating where the video is shown on the screen
         showGazeToOperator          = true;         % if true, aggregated gaze as used by the controller is drawn as a crosshair on the operator screen
         logTypes                    = 0;            % bitmask: if 0, no logging. bit 1: print basic messages about what its up to. bit 2: print each command received in receiveUpdate(), bit 3: print messages about rewards (many!)
         logReceiver                 = 0;            % if 0: matlab command line. if 1: Titta
@@ -551,7 +552,7 @@ classdef MonkeyCalController < handle
                 pos = obj.calDisplay.pos;
                 sz = obj.calDisplay.videoSize;
                 rect = CenterRectOnPointd([0 0 sz*sFac],pos(1)*sFac+offset(1),pos(2)*sFac+offset(2));
-                Screen('FrameRect',wpnts(end),0,rect,4);
+                Screen('FrameRect',wpnts(end),obj.videoRectColor,rect,4);
             end
 
             % draw gaze if wanted
