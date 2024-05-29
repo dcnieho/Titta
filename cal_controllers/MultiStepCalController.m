@@ -100,6 +100,14 @@ classdef MultiStepCalController < handle
 
         function commands = tick(obj)
             commands = {};
+            % returns a commands that the interface should execute.
+            % Possible commands are:
+            % 'collect_point', 'discard_point', 'compute_and_apply', 'clear', 'disable_controller'
+            % a commannd should prepended with 'cal' or 'val' to indicate
+            % what mode we expect to be in and depending on the command
+            % should be followed by parameters (e.g. which calibration
+            % point to collect data for). Example command:
+            % {'cal','collect_point', parameters....}
             if ~isempty(obj.rewardProvider)
                 obj.rewardProvider.tick();
             end
