@@ -35,7 +35,7 @@ imageTime               = 4;
 scrParticipant          = 1;
 scrOperator             = 2;
 % live view parameters
-dataWindowDur           = 500;  % ms
+dataWindowDur           = .5;   % s
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
@@ -59,6 +59,7 @@ try
     settings.UI.setup.instruct.color= fixClrs(1);
     settings.UI.setup.fixBackColor  = fixClrs(1);
     settings.UI.setup.fixFrontColor = fixClrs(2);
+    settings.UI.operator.gazeHistoryDuration = dataWindowDur;
     % override the instruction shown on the setup screen, don't need that
     % much detail when you have a separate operator screen
     settings.UI.setup.instruct.strFun   = @(x,y,z,rx,ry,rz) 'Position yourself such that the two circles overlap.';
@@ -88,7 +89,7 @@ try
     EThndl          = Titta(settings);
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
-    nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
+    nLiveDataPoint  = ceil(dataWindowDur*EThndl.frequency);
     
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or

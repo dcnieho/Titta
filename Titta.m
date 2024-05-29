@@ -1820,6 +1820,7 @@ classdef Titta < handle
             settings.UI.operator.cal                    = rmfield(settings.cal   ,{'pointPos','pointPosTrackerSpace','autoPace','paceDuration','doRandomPointOrder','drawFunction','doRecordEyeImages','doRecordExtSignal','pointNotifyFunction'});
             settings.UI.operator.cal.eyeColors          = settings.UI.val.eyeColors;
             settings.UI.operator.val                    = rmfield(settings.UI.val,{'avg','waitMsg','hover','menu'});
+            settings.UI.operator.gazeHistoryDuration    = 0.5;                  % length of history (s) of gaze position data to show to operator
             
             settings.UI.advcal.instruct.strFun  = @(x,y,z,rx,ry,rz) sprintf('X: %.1f cm, target: %.1f cm\nY: %.1f cm, target: %.1f cm\nDistance: %.1f cm, target: %.1f cm',x,rx,y,ry,z,rz);
             settings.UI.advcal.instruct.font    = sansFont;
@@ -1921,6 +1922,7 @@ classdef Titta < handle
             settings.UI.advcal.eyeColors            = eyeColors;                % colors for validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showGaze             = true;                     % if true, gaze is shown when interface opens. If false, gaze display can still be started with button
+            settings.UI.advcal.gazeHistoryDuration  = 0.5;                      % length of history (s) of gaze position data to show to operator
             settings.UI.advcal.showEyeImages        = true;                     % if true, eye images are shown when interface opens. If false, eye images can still be shown with button
             settings.UI.advcal.eyeImageMargin       = 50;
             settings.UI.advcal.fixBackSize          = 20;
@@ -3624,8 +3626,7 @@ classdef Titta < handle
         
         function [texs,szs,poss,eyeImageRect,eyeImageRectLocal] = drawOperatorScreen(obj,wpnt,pos,highlight,eyeStartTime,texs,szs,poss,eyeImageRect,eyeImageRectLocal)
             % get live gaze data
-            dataWindowDur   = 500;  % ms
-            nDataPoint      = ceil(dataWindowDur/1000*obj.settings.freq);
+            nDataPoint      = ceil(obj.settings.UI.operator.gazeHistoryDuration*obj.settings.freq);
             gazeData        = obj.buffer.peekN('gaze',nDataPoint);
             % draw eye image
             if nargin>5
@@ -4577,8 +4578,7 @@ classdef Titta < handle
             obj.buffer.start('timeSync');
             
             % setup live data visualization
-            dataWindowLength    = 500; % ms
-            nDataPointLiveView  = ceil(dataWindowLength/1000*obj.settings.freq);
+            nDataPointLiveView  = ceil(obj.settings.UI.advcal.gazeHistoryDuration*obj.settings.freq);
             
             % setup head position visualization
             ovalVSz     = .15;
@@ -6123,7 +6123,7 @@ classdef Titta < handle
                         if obj.calibrateRightEye
                             clrs{2} = onlineGazeClr{2,end};
                         end
-                        drawLiveData(wpnt(end),eyeData,dataWindowLength,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+                        drawLiveData(wpnt(end),eyeData,obj.settings.UI.advcal.gazeHistoryDuration,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
                         if qShowGazeToAll
                             if ~isnan(gazePosP(1,1))
                                 Screen('gluDisk', wpnt(1),onlineGazeClr{1,1}, gazePosP(1,1), gazePosP(2,1), 10);

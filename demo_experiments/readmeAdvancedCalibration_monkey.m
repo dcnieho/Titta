@@ -42,7 +42,7 @@ imageTime               = 4;
 scrParticipant          = 1;
 scrOperator             = 2;
 % live view parameters
-dataWindowDur           = 500;  % ms
+dataWindowDur           = .5;   % s
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
@@ -68,6 +68,7 @@ try
     settings.UI.advcal.fixPoint.text.color  = fixClrs(1);
     settings.UI.advcal.avg.text.color       = fixClrs(1);
     settings.UI.advcal.instruct.color       = fixClrs(1);
+    settings.UI.advcal.gazeHistoryDuration  = dataWindowDur;
     % setup what is shown on operator display
     settings.UI.advcal.showHead             = true;     % show head display when interface opens
     settings.UI.advcal.headScale            = .35;
@@ -117,7 +118,7 @@ try
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
     calController.EThndl = EThndl;
-    nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
+    nLiveDataPoint  = ceil(dataWindowDur*EThndl.frequency);
     
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or

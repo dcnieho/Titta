@@ -1,5 +1,7 @@
 function drawLiveData(wpnt,eyeData,dataWindowLength,clrL,clrR,pointSz,scrRes,sFac,offset)
 
+dataWindowLength = dataWindowLength*1000;   % s -> ms
+
 % deal with optional parameters used when live display screen is smaller
 % than participant screen
 if nargin<8 || isempty(sFac)
@@ -19,7 +21,7 @@ if qShowRight
 end
 point       = pointSz.*[0 0 1 1];
 if ~isempty(eyeData.systemTimeStamp)
-    age= double(abs(eyeData.systemTimeStamp-eyeData.systemTimeStamp(end)))/1000;
+    age= double(abs(eyeData.systemTimeStamp-eyeData.systemTimeStamp(end)))/1000;    % ms
     if qShowLeft
         qValid = eyeData. left.gazePoint.valid;
         lE = bsxfun(@plus,bsxfun(@times,eyeData. left.gazePoint.onDisplayArea(:,qValid),scrRes(:))*sFac,offset(:));

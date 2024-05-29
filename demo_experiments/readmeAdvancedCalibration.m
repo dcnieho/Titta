@@ -37,7 +37,7 @@ imageTime               = 4;
 scrParticipant          = 1;
 scrOperator             = 2;
 % live view parameters
-dataWindowDur           = 500;  % ms
+dataWindowDur           = .5;   % s
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
@@ -63,6 +63,7 @@ try
     settings.UI.advcal.fixPoint.text.color  = fixClrs(1);
     settings.UI.advcal.avg.text.color       = fixClrs(1);
     settings.UI.advcal.instruct.color       = fixClrs(1);
+    settings.UI.advcal.gazeHistoryDuration  = dataWindowDur;
     % 2. calibration display
     if useAnimatedCalibration
         % custom calibration drawer
@@ -85,7 +86,7 @@ try
     EThndl          = Titta(settings);
     % EThndl          = EThndl.setDummyMode();    % just for internal testing, enabling dummy mode for this readme makes little sense as a demo
     EThndl.init();
-    nLiveDataPoint  = ceil(dataWindowDur/1000*EThndl.frequency);
+    nLiveDataPoint  = ceil(dataWindowDur*EThndl.frequency);
     
     if DEBUGlevel>1
         % make screen partially transparent on OSX and windows vista or
