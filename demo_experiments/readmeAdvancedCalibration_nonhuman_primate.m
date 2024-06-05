@@ -16,6 +16,9 @@
 % designed for working with nonhuman primates (subjects unable to follow
 % instructions). This version uses a controller for automatic positioning
 % and calibration training, and uses video stimuli as calibration targets.
+% Finally, different from the other example scripts, continuing to the
+% stimuli is gaze contingent, a stimulus is shown after the fixation point
+% is gaze at long enough.
 % 
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
@@ -39,8 +42,11 @@ forceRewardButton       = 'j';
 scrParticipant          = 1;
 scrOperator             = 2;
 % task parameters
-fixTime                 = .5;
 imageTime               = 4;
+% gaze contingent fixation point setup
+fixMargin               = 100;    % square area around fixation point with sides 2x margin (pixels)
+fixMinDur               = 0.35;   % s
+fixRectColor            = [255 0 0];    % to draw on operator display
 % live view parameters
 dataWindowDur           = .5;   % s
 
@@ -178,7 +184,9 @@ try
     % prep stimuli (get rabbits) - preload these before the trials to
     % ensure good timing
     rabbits = loadStimuliFromFolder(fullfile(PsychtoolboxRoot,'PsychDemos'),{'konijntjes1024x768.jpg','konijntjes1024x768blur.jpg'},wpntP,winRectP(3:4));
-    
+    % prep gaze areas for gaze-contingent stimulus showing and for reward
+    % when looking at the stimulus
+    fixRect = bsxfun(@plus,[-fixMargin fixMargin fixMargin -fixMargin -fixMargin; -fixMargin -fixMargin fixMargin fixMargin -fixMargin],[winRectP(3); winRectP(4)]/2);
     
     % later:
     EThndl.buffer.start('gaze');
@@ -194,15 +202,20 @@ try
     % system_timestamp of the Tobii data uses the same clock as
     % PsychToolbox, so startT as returned by Screen('Flip') can be used
     % directly to segment eye tracking data
-    EThndl.sendMessage('FIX ON',startT);
-    nextFlipT   = startT+fixTime-1/hz/2;
+    tobiiStartT = EThndl.sendMessage('FIX ON',startT);
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
-    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
+    while true
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
+        Screen('FrameRect',wpntO,fixRectColor,[fixRect(:,1) fixRect(:,3)],4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
+        
+        [dur,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),fixRect,true);
+        if dur>fixMinDur
+            break;
+        end
     end
         
     
@@ -212,7 +225,7 @@ try
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
     Screen('DrawTexture',wpntP,rabbits(1).tex,[],rabbits(1).scrRect);
-    imgT = Screen('Flip',wpntP,nextFlipT);
+    imgT = Screen('Flip',wpntP);
     EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(1).fInfo.name,rabbits(1).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     
@@ -246,16 +259,21 @@ try
     % 1. fixation point
     Screen('gluDisk',wpntP,fixClrs(1),winRectP(3)/2,winRectP(4)/2,round(winRectP(3)/100));
     startT      = Screen('Flip',wpntP,nextFlipT);
-    EThndl.sendMessage('FIX ON',startT);
-    nextFlipT   = startT+fixTime-1/hz/2;
-    while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
+    tobiiStartT = EThndl.sendMessage('FIX ON',startT);
+    while true
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
+        Screen('FrameRect',wpntO,fixRectColor,[fixRect(:,1) fixRect(:,3)],4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
         Screen('Flip',wpntO);
+        
+        [dur,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),fixRect,true);
+        if dur>fixMinDur
+            break;
+        end
     end
     % 2. image
     Screen('DrawTexture',wpntP,rabbits(2).tex,[],rabbits(2).scrRect);
-    imgT = Screen('Flip',wpntP,startT+fixTime-1/hz/2);                  % bit of slack to make sure requested presentation time can be achieved
+    imgT = Screen('Flip',wpntP);
     EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(2).fInfo.name,rabbits(2).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
