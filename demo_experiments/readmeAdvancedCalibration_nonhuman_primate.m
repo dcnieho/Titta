@@ -85,10 +85,15 @@ try
     rewardProvider = DemoRewardProvider();
     rewardProvider.dutyCycle = 170; % ms
     calController = NonHumanPrimateCalController([],calViz,[],rewardProvider);
+    % hook up our controller with the state notifications provided by
+    % Titta.calibrateAdvanced (request extended notification) so that the
+    % calibration controller can keep track of whats going on and issue
+    % appropriate commands.
     settings.advcal.cal.pointNotifyFunction = @calController.receiveUpdate;
     settings.advcal.val.pointNotifyFunction = @calController.receiveUpdate;
     settings.advcal.cal.useExtendedNotify = true;
     settings.advcal.val.useExtendedNotify = true;
+    % show the button to start the controller.
     settings.UI.button.advcal.toggAuto.visible = true;
     if numCalPoints==2
         calPoints = [6 7];
@@ -99,6 +104,9 @@ try
     end
     calController.setCalPoints(calPoints,settings.advcal.cal.pointPos(calPoints,:));
     if ismember(numCalPoints,[3 5])
+        % issue a calibration computation command after collecting the
+        % first point (in the screen center!) before continuing to collect
+        % calibration data for the other points?
         calController.calAfterFirstCollected = true;
     end
     calController.setValPoints([1:size(settings.advcal.val.pointPos,1)],settings.advcal.val.pointPos); %#ok<NBRAK2> 
