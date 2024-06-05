@@ -25,7 +25,7 @@ classdef DemoRewardProvider < handle
         end
 
         function start(obj)
-            if ~obj.dummyMode
+            if ~obj.dummyMode && ~obj.on
                 obj.startT = GetSecs();
                 obj.dispense(true);
                 if obj.verbose
@@ -54,7 +54,7 @@ classdef DemoRewardProvider < handle
         end
 
         function stop(obj)
-            if ~obj.dummyMode
+            if ~obj.dummyMode && obj.on
                 obj.dispense(false);
                 if obj.verbose
                     fprintf('DemoRewardProvider: stop\n');
