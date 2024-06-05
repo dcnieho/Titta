@@ -70,6 +70,7 @@ try
     settings.UI.advcal.avg.text.color       = fixClrs(1);
     settings.UI.advcal.instruct.color       = fixClrs(1);
     settings.UI.advcal.gazeHistoryDuration  = dataWindowDur;
+    settings.UI.advcal.fixPoint.text.size   = 24;
     % calibration display: add two more points so we have a square grid
     % with center point
     settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .5, .1; .5, .9];

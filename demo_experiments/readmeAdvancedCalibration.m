@@ -64,6 +64,7 @@ try
     settings.UI.advcal.avg.text.color       = fixClrs(1);
     settings.UI.advcal.instruct.color       = fixClrs(1);
     settings.UI.advcal.gazeHistoryDuration  = dataWindowDur;
+    settings.UI.advcal.fixPoint.text.size   = 24;
     % 2. calibration display
     if useAnimatedCalibration
         % custom calibration drawer

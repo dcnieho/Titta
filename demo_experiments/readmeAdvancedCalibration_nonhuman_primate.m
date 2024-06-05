@@ -70,10 +70,12 @@ try
     settings.UI.advcal.instruct.color       = fixClrs(1);
     settings.UI.advcal.gazeHistoryDuration  = dataWindowDur;
     % setup what is shown on operator display
+    settings.UI.advcal.fixPoint.text.size   = 24;
     settings.UI.advcal.showHead             = true;     % show head display when interface opens
     settings.UI.advcal.headScale            = .30;
     settings.UI.advcal.headPos              = [.5 .15];
     settings.UI.advcal.instruct.size        = 54;
+    settings.UI.advcal.instruct.strFun      = @(x,y,z,rx,ry,rz) sprintf('X: %.1f cm, Y: %.1f cm\nDistance: %.1f cm',x,y,z);
     % calibration display
     settings.advcal.cal.pointPos = [settings.advcal.cal.pointPos; .65, .35; .35, .65];
     settings.advcal.val.pointPos = [.2 1/3; .4 1/3; .6 1/3; .8 1/3; .2 2/3; .4 2/3; .6 2/3; .8 2/3];
