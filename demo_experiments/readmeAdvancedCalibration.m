@@ -12,8 +12,8 @@
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates Titta's
-% advanced calibration mode that is designed for working with non-compliant
-% participants.
+% advanced calibration mode that is designed for working with subjects who
+% are unable to follow instructions, such as nonhuman primates and infants.
 % 
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script

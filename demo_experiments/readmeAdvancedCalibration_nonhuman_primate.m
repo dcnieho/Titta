@@ -11,9 +11,10 @@
 % doi: https://doi.org/10.3758/s13428-020-01358-8
 
 % This version of readme.m demonstrates operation with separate
-% presentation and operator screens. It furthermore demonstrates Titta's
-% advanced calibration mode that is designed for working with non-compliant
-% participants. This version uses a controller for automatic positioning
+% presentation and operator screens. It furthermore demonstrates a
+% procedure that is implemented using Titta's advanced calibration mode and
+% designed for working with nonhuman primates (subjects unable to follow
+% instructions). This version uses a controller for automatic positioning
 % and calibration training, and uses video stimuli as calibration targets.
 % 
 % NB: some care is taken to not update operator screen during timing

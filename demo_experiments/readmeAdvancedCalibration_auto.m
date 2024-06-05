@@ -12,11 +12,12 @@
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates Titta's
-% advanced calibration mode that is designed for working with non-compliant
-% participants. This version uses a controller for automatically
-% calibrating, in multiple steps (first a center calibration points is
-% shown, data collected for it and calibration appied based on it, then in
-% two more steps, data is collected for two times three other points).
+% advanced calibration mode that is designed for working with subjects who
+% are unable to follow instructions, such as nonhuman primates and infants.
+% This version uses a controller for automatically calibrating, in multiple
+% steps (first a center calibration points is shown, data collected for it
+% and calibration appied based on it, then in two more steps, data is
+% collected for two times three other points).
 % A dummy class providing rewards when looking at the calibration points or
 % inside a red circle shown after calibration is also implemented for demo
 % purposes.
