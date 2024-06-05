@@ -35,8 +35,7 @@ eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on oper
 videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
 videoExt                = 'mov';
 numCalPoints            = 2;        % 2, 3 or 5
-loadPreviousCal         = true;     % if true, operator will be prompted for a mat-file from a previous run from which to load the previous calibration
-provideRewards          = false;
+forceRewardButton       = 'j';
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
@@ -83,12 +82,8 @@ try
     settings.advcal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
     % calibration logic: custom controller
-    rewardProvider = [];
-    if provideRewards
-        comPorts = JuicePumper.getPorts();
-        rewardProvider = JuicePumper(comPorts(3));
-        rewardProvider.dutyCycle = 170; % ms
-    end
+    rewardProvider = DemoRewardProvider();
+    rewardProvider.dutyCycle = 170; % ms
     calController = NonHumanPrimateCalController([],calViz,[],rewardProvider);
     settings.advcal.cal.pointNotifyFunction = @calController.receiveUpdate;
     settings.advcal.val.pointNotifyFunction = @calController.receiveUpdate;
@@ -107,7 +102,7 @@ try
         calController.calAfterFirstCollected = true;
     end
     calController.setValPoints([1:size(settings.advcal.val.pointPos,1)],settings.advcal.val.pointPos); %#ok<NBRAK2> 
-    calController.forceRewardButton  = 'j';
+    calController.forceRewardButton  = forceRewardButton;
     calController.skipTrainingButton = 'x';
     if DEBUGlevel>0
         calController.logTypes = 1+2*(DEBUGlevel==2)+4; % always log actions calController is taking and reward state changes. Additionally log info about received commands when DEBUGlevel==2
