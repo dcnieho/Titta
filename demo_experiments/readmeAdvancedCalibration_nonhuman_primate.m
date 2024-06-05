@@ -18,7 +18,8 @@
 % and calibration training, and uses video stimuli as calibration targets.
 % Finally, different from the other example scripts, continuing to the
 % stimuli is gaze contingent, a stimulus is shown after the fixation point
-% is gaze at long enough.
+% is gaze at long enough, and gaze-contingent rewards are provided during
+% data collection.
 % 
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
@@ -187,6 +188,9 @@ try
     % prep gaze areas for gaze-contingent stimulus showing and for reward
     % when looking at the stimulus
     fixRect = bsxfun(@plus,[-fixMargin fixMargin fixMargin -fixMargin -fixMargin; -fixMargin -fixMargin fixMargin fixMargin -fixMargin],[winRectP(3); winRectP(4)]/2);
+    for r=1:length(rabbits)
+        rabbits(r).scrPoly = [rabbits(r).scrRect([1 3 3 1 1]); rabbits(r).scrRect([2 2 4 4 2])];
+    end
     
     % later:
     EThndl.buffer.start('gaze');
@@ -206,16 +210,26 @@ try
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
+    rewarding = false;
     while true
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
         Screen('FrameRect',wpntO,fixRectColor,[fixRect(:,1) fixRect(:,3)],4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
+        rewardTxt = 'off';
+        if rewarding
+            rewardTxt = 'on';
+        end
+        Screen('DrawText',wpntO,sprintf('reward: %s',rewardTxt),10,10,0);
         Screen('Flip',wpntO);
         
+        % check if fixation point fixated
         [dur,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),fixRect,true);
         if dur>fixMinDur
             break;
         end
+
+        % provide reward
+        rewarding = provideRewardHelper(rewardProvider,currentlyInArea,forceRewardButton);
     end
         
     
@@ -226,15 +240,25 @@ try
     % timing your script.
     Screen('DrawTexture',wpntP,rabbits(1).tex,[],rabbits(1).scrRect);
     imgT = Screen('Flip',wpntP);
-    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(1).fInfo.name,rabbits(1).scrRect),imgT);
+    tobiiStartT = EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(1).fInfo.name,rabbits(1).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     
     % now update also operator screen, once timing critical bit is done
     % if we still have enough time till next flipT, update operator display
     while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,rabbits(1).tex);
+        Screen('FrameRect',wpntO,fixRectColor,rabbits(1).scrRect,4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
+        rewardTxt = 'off';
+        if rewarding
+            rewardTxt = 'on';
+        end
+        Screen('DrawText',wpntO,sprintf('reward: %s',rewardTxt),10,10,0);
         Screen('Flip',wpntO);
+
+        % provide reward
+        [~,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),rabbits(1).scrPoly,true);
+        rewarding = provideRewardHelper(rewardProvider,currentlyInArea,forceRewardButton);
     end
     
     % record x seconds of data, then clear screen. Indicate stimulus
@@ -264,22 +288,41 @@ try
         Screen('gluDisk',wpntO,fixClrs(1),winRectO(3)/2,winRectO(4)/2,round(winRectO(3)/100));
         Screen('FrameRect',wpntO,fixRectColor,[fixRect(:,1) fixRect(:,3)],4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
+        rewardTxt = 'off';
+        if rewarding
+            rewardTxt = 'on';
+        end
+        Screen('DrawText',wpntO,sprintf('reward: %s',rewardTxt),10,10,0);
         Screen('Flip',wpntO);
         
+        % check if fixation point fixated
         [dur,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),fixRect,true);
         if dur>fixMinDur
             break;
         end
+
+        % provide reward
+        rewarding = provideRewardHelper(rewardProvider,currentlyInArea,forceRewardButton);
     end
     % 2. image
     Screen('DrawTexture',wpntP,rabbits(2).tex,[],rabbits(2).scrRect);
     imgT = Screen('Flip',wpntP);
-    EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(2).fInfo.name,rabbits(2).scrRect),imgT);
+    tobiiStartT = EThndl.sendMessage(sprintf('STIM ON: %s [%.0f %.0f %.0f %.0f]',rabbits(2).fInfo.name,rabbits(2).scrRect),imgT);
     nextFlipT = imgT+imageTime-1/hz/2;
     while nextFlipT-GetSecs()>2/hz   % arbitrarily decide two frames is enough headway
         Screen('DrawTexture',wpntO,rabbits(2).tex);
+        Screen('FrameRect',wpntO,fixRectColor,rabbits(2).scrRect,4);
         drawLiveData(wpntO,EThndl.buffer.peekN('gaze',nLiveDataPoint),dataWindowDur,eyeColors{:},4,winRectO(3:4));
+        rewardTxt = 'off';
+        if rewarding
+            rewardTxt = 'on';
+        end
+        Screen('DrawText',wpntO,sprintf('reward: %s',rewardTxt),10,10,0);
         Screen('Flip',wpntO);
+
+        % provide reward
+        [~,currentlyInArea] = getGazeDurationInArea(EThndl,tobiiStartT,[],winRectP(3:4),rabbits(2).scrPoly,true);
+        rewarding = provideRewardHelper(rewardProvider,currentlyInArea,forceRewardButton);
     end
     
     % 3. end recording after x seconds of data again, clear screen.
