@@ -88,7 +88,7 @@ try
         rewardProvider = JuicePumper(comPorts(3));
         rewardProvider.dutyCycle = 170; % ms
     end
-    calController = MonkeyCalController([],calViz,[],rewardProvider);
+    calController = NonHumanPrimateCalController([],calViz,[],rewardProvider);
     settings.advcal.cal.pointNotifyFunction = @calController.receiveUpdate;
     settings.advcal.val.pointNotifyFunction = @calController.receiveUpdate;
     settings.advcal.cal.useExtendedNotify = true;

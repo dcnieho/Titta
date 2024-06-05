@@ -1,4 +1,4 @@
-classdef MonkeyCalController < handle
+classdef NonHumanPrimateCalController < handle
     properties (Constant)
         stateEnum = struct('cal_positioning', 0, 'cal_gazing',1, 'cal_calibrating',2, 'cal_done',3, ...
                            'val_validating' ,12, 'val_done'  ,13);
@@ -80,8 +80,8 @@ classdef MonkeyCalController < handle
         valOnTargetTime             = 500;          % ms
         valRandomizeTargets         = true;
 
-        reEntryStateCal             = MonkeyCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
-        reEntryStateVal             = MonkeyCalController.stateEnum.val_validating;     % when reactivating controller, discard state up to beginning of this state
+        reEntryStateCal             = NonHumanPrimateCalController.stateEnum.cal_calibrating;    % when reactivating controller, discard state up to beginning of this state
+        reEntryStateVal             = NonHumanPrimateCalController.stateEnum.val_validating;     % when reactivating controller, discard state up to beginning of this state
 
         videoRectColor              = [255 0 0];    % color in which to draw the rect indicating where the video is shown on the screen
         showGazeToOperator          = true;         % if true, aggregated gaze as used by the controller is drawn as a crosshair on the operator screen
@@ -94,7 +94,7 @@ classdef MonkeyCalController < handle
         isShowingPointManually      = false;
         dispensingReward            = false;
         dispensingForcedReward      = false;
-        controlState                = MonkeyCalController.stateEnum.cal_positioning;
+        controlState                = NonHumanPrimateCalController.stateEnum.cal_positioning;
         shouldRewindState           = false;
         shouldClearCal              = false;
         clearCalNow                 = false;
@@ -114,7 +114,7 @@ classdef MonkeyCalController < handle
     
     
     methods
-        function obj = MonkeyCalController(EThndl,calDisplay,scrRes,rewardProvider)
+        function obj = NonHumanPrimateCalController(EThndl,calDisplay,scrRes,rewardProvider)
             obj.setCleanState();
             obj.EThndl = EThndl;
             assert(isa(calDisplay,"VideoCalibrationDisplay"))
@@ -587,7 +587,7 @@ classdef MonkeyCalController < handle
                 case 'validation'
                     canDo = true;
                 otherwise
-                    error('MonkeyCalController: controller capability "%s" not understood',type)
+                    error('NonHumanPrimateCalController: controller capability "%s" not understood',type)
             end
         end
     end
