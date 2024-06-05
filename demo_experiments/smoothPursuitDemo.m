@@ -19,13 +19,13 @@ bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 runInDummyMode          = false;
+scr                     = max(Screen('Screens'));
 % task parameters
 fixTime                 = 1.2;          % s
 dur                     = 4;            % s
 cps                     = 0.375;        % Hz
 range                   = [0.1 0.9];    % fraction of screen width and height
 phase_off               = -pi/2;
-scr                     = max(Screen('Screens'));
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is

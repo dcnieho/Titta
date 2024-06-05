@@ -28,10 +28,10 @@ fixClrs                 = [0 255];
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
+scr                     = max(Screen('Screens'));
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scr                     = max(Screen('Screens'));
 
 TobiiProLabProject      = 'EPTest'; % to use external presenter functionality, provide the name of the external presenter project here
 TobiiProLabParticipant  = 'tester';

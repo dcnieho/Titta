@@ -39,11 +39,11 @@ end
 eyeColors               = {[255 127 0],[0 95 191]}; % for live data view on operator screen
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
+scrParticipant          = 1;
+scrOperator             = 2;
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scrParticipant          = 2;
-scrOperator             = 1;
 % live view parameters
 dataWindowDur           = .5;   % s
 

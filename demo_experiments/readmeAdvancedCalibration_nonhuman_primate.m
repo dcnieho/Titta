@@ -36,11 +36,11 @@ videoFolder             = fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/');
 videoExt                = 'mov';
 numCalPoints            = 2;        % 2, 3 or 5
 forceRewardButton       = 'j';
+scrParticipant          = 1;
+scrOperator             = 2;
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scrParticipant          = 1;
-scrOperator             = 2;
 % live view parameters
 dataWindowDur           = .5;   % s
 

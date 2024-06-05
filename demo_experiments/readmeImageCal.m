@@ -27,6 +27,7 @@ fixClrs                 = [0 255];
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
+scr                     = max(Screen('Screens'));
 imageFolder             = fullfile(fileparts(mfilename("fullpath")),'..','cal_displays');
 images                  = cellfun(@(x) fullfile(imageFolder,x),{'colorWheel.gif','flower.gif'},'uni',false);
 imageFrameDurations     = [repmat(.05,1,30) repmat(.15,1,22)]; % s  (30 frames in first file, 22 frames in second file, and they require different playback speeds, hence this)
@@ -34,7 +35,6 @@ imageScaleFac           = 1;
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
-scr                     = max(Screen('Screens'));
 
 % You can run addTittaToPath once to "install" it, or you can simply add a
 % call to it in your script so each time you want to use Titta, it is
