@@ -3745,7 +3745,7 @@ classdef Titta < handle
             if obj.calibrateRightEye
                 clrs{2} = obj.getColorForWindow(obj.settings.UI.operator.cal.eyeColors{2},wpnt);
             end
-            drawLiveData(wpnt,gazeData,dataWindowDur,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
+            drawLiveData(wpnt,gazeData,obj.settings.UI.operator.gazeHistoryDuration,clrs{:},4,obj.scrInfo.resolution{1},obj.scrInfo.sFac,obj.scrInfo.offset);    % yes, that is resolution of screen 1 on purpose, sFac and offset transform it to screen 2
         end
         
         function qAllowAcceptKey = drawFixationPointDefault(obj,wpnt,~,~,pos,~,~,isParticipantScreen,isAdvancedCal)
