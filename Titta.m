@@ -4663,8 +4663,9 @@ classdef Titta < handle
             but(8)  = PTBButton(obj.settings.UI.button.advcal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(9)  = PTBButton(obj.settings.UI.button.advcal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
             but(10) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            % 1. below screen
+            
             % position them
+            % 1. below screen
             butRectsBase= cat(1,but([but(1:6).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
@@ -4698,7 +4699,6 @@ classdef Titta < handle
             end
             
             % 3. atop screen
-            % position them
             but7LPos = max(but(9).rect(3)-but(9).rect(1),but(10).rect(3)-but(10).rect(1))+30;
             if but(7).visible
                 but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+but7LPos,-but(7).rect(2)+5);
