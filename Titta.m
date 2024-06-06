@@ -4668,7 +4668,7 @@ classdef Titta < handle
             butRectsBase= cat(1,but([but(1:6).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
+                yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
@@ -4684,13 +4684,12 @@ classdef Titta < handle
             
             % 2. atop screen
             % position them
-            yPosTop             = .02*obj.scrInfo.resolution{end}(2);
             buttonOff           = 900;
             if but(7).visible
-                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(7).rect(3),yPosTop);
+                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(7).rect(3),-but(7).rect(2)+5);
             end
             if but(8).visible
-                but(8).rect     = OffsetRect(but(8).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,yPosTop);
+                but(8).rect     = OffsetRect(but(8).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,-but(8).rect(2)+5);
             end
             
             % 3. left side
@@ -4699,7 +4698,7 @@ classdef Titta < handle
                 if but(b).visible
                     % position it
                     if isnan(prevPos)
-                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPosTop);
+                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,-but(b).rect(2)+5);
                     else
                         yPos    = prevPos(4)-but(b).rect(2)+15;
                         prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPos);
@@ -5598,7 +5597,7 @@ classdef Titta < handle
                     end
                     pointStr = sprintf('%d ',sort(usedCalibrationPoints));
                     text = sprintf('<u>%s<u>\n<color=%s>%s<color>\nactive cal based on:\npoints [%s]',modetxt,clr2hex(clr),text,pointStr(1:end-1));
-                    posRect = [10 10 10 10];
+                    posRect = [5 10 5 10];
                     if but(10).visible
                         posRect = OffsetRect(posRect,0,but(10).rect(4)+10);
                     elseif but(9).visible
@@ -5615,7 +5614,7 @@ classdef Titta < handle
                         Screen('TextFont', wpnt(end), obj.settings.UI.advcal.calState.text.font, obj.settings.UI.advcal.calState.text.style);
                         Screen('TextSize', wpnt(end), obj.settings.UI.advcal.calState.text.size);
                         text = sprintf('<u>Controller status<u>:\n%s',controllerStatusText);
-                        posRect = OffsetRect([10 10 10 10],0,calTextCache.bbox(4)+10);
+                        posRect = OffsetRect([0 10 0 10],calTextCache.bbox(1),calTextCache.bbox(4)+10);
                         autoStatusTextCache = obj.getTextCache(wpnt(end),text,posRect,'xalign','left','yalign','top');
                     end
                     qUpdateAutoStatusText = false;
