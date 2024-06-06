@@ -2554,7 +2554,7 @@ classdef Titta < handle
             butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution{end}(2)*.95);
+                yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 % place buttons for go to advanced interface, or calibrate
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
@@ -3907,12 +3907,13 @@ classdef Titta < handle
             but(7)  = PTBButton(obj.settings.UI.button.val.toggSpace, qHasTrackerSpacePos   , wpnt(end), funs, obj.settings.UI.button.margins);
             but(8)  = PTBButton(obj.settings.UI.button.val.toggCal  ,        qHasCal        , wpnt(end), funs, obj.settings.UI.button.margins);
             but(9)  = PTBButton(obj.settings.UI.button.val.toggPlot ,      qHasValData      , wpnt(end), funs, obj.settings.UI.button.margins);
-            % 1. below screen
+
             % position them
+            % 1. below screen
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
             if ~isempty(butRectsBase)
                 buttonOff   = 80;
-                yposBase    = round(obj.scrInfo.resolution{end}(2)*.97);
+                yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
                 xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
@@ -3926,30 +3927,30 @@ classdef Titta < handle
                 end
             end
             
-            % 2. atop screen
-            % position them
-            yPosTop             = .02*obj.scrInfo.resolution{end}(2);
-            buttonOff           = 900;
-            if but(5).visible
-                but(5).rect     = OffsetRect(but(5).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(5).rect(3),yPosTop);
-            end
-            if but(6).visible
-                but(6).rect     = OffsetRect(but(6).rect,obj.scrInfo.center{end}(1)+buttonOff/2,yPosTop);
-            end
-            
-            % 3. left side
+            % 2. left side
             prevPos = nan;
             for b=7:9
                 if but(b).visible
                     % position it
                     if isnan(prevPos)
-                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPosTop);
+                        prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,-but(b).rect(2)+5);
                     else
                         yPos    = prevPos(4)-but(b).rect(2)+15;
                         prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPos);
                     end
                     but(b).rect = prevPos;
                 end
+            end
+            
+            % 3. atop screen
+            but5LPos = max([but(7).rect(3)-but(7).rect(1),but(8).rect(3)-but(8).rect(1),but(9).rect(3)-but(9).rect(1)])+30;
+            if but(5).visible
+                but(5).rect     = OffsetRect(but(5).rect,-but(5).rect(1)+but5LPos,-but(5).rect(2)+5);
+            end
+            but5RPos = but(5).rect(3)-but(5).rect(1)+but5LPos;
+            but6LPos = obj.scrInfo.resolution{end}(1)-but5RPos;
+            if but(6).visible
+                but(6).rect     = OffsetRect(but(6).rect,-but(6).rect(1)+but6LPos,-but(6).rect(2)+5);
             end
             
             % check shiftable button accelerators do not conflict with
