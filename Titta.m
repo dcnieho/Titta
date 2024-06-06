@@ -4682,17 +4682,7 @@ classdef Titta < handle
                 end
             end
             
-            % 2. atop screen
-            % position them
-            buttonOff           = 900;
-            if but(7).visible
-                but(7).rect     = OffsetRect(but(7).rect,obj.scrInfo.center{end}(1)-buttonOff/2-but(7).rect(3),-but(7).rect(2)+5);
-            end
-            if but(8).visible
-                but(8).rect     = OffsetRect(but(8).rect,obj.scrInfo.center{end}(1)+buttonOff/2               ,-but(8).rect(2)+5);
-            end
-            
-            % 3. left side
+            % 2. left side
             prevPos = nan;
             for b=9:10
                 if but(b).visible
@@ -4705,6 +4695,18 @@ classdef Titta < handle
                     end
                     but(b).rect = prevPos;
                 end
+            end
+            
+            % 3. atop screen
+            % position them
+            but7LPos = max(but(9).rect(3)-but(9).rect(1),but(10).rect(3)-but(10).rect(1))+30;
+            if but(7).visible
+                but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+but7LPos,-but(7).rect(2)+5);
+            end
+            but7RPos = but(7).rect(3)-but(7).rect(1)+but7LPos;
+            but8LPos = obj.scrInfo.resolution{end}(1)-but7RPos;
+            if but(8).visible
+                but(8).rect     = OffsetRect(but(8).rect,-but(8).rect(1)+but8LPos,-but(8).rect(2)+5);
             end
 
             % get all butRects, needed below in script
