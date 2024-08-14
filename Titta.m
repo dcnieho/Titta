@@ -3799,14 +3799,11 @@ classdef Titta < handle
             end
             [l,r] = deal([]);
             for f={'acc2D','acc1D','RMS1D','STD1D','dataLoss'}
-                % NB: abs when averaging over eyes, we need average size of
-                % error for accuracy and for other fields its all positive
-                % anyway
                 if obj.calibrateLeftEye
-                    l = mynanmean(abs([lefts.(f{1})]),2);
+                    l = mynanmean([lefts.(f{1})],2);
                 end
                 if obj.calibrateRightEye
-                    r = mynanmean(abs([rights.(f{1})]),2);
+                    r = mynanmean([rights.(f{1})],2);
                 end
                 val.(f{1}) = [l r];
             end
@@ -3818,8 +3815,8 @@ classdef Titta < handle
             
             % 1. accuracy
             out.offs    = bsxfun(@times,angs1D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
-            out.acc2D   = mynanmean(abs(out.offs),2);
-            out.acc1D   = mynanmean(    angs1D   ,2);
+            out.acc2D   = mynanmean(out.offs,2);
+            out.acc1D   = mynanmean( angs1D ,2);
             
             % 2. RMS
             out.RMS2D   = sqrt(mynanmean(diff(out.offs,[],2).^2,2));
@@ -3836,9 +3833,8 @@ classdef Titta < handle
         function [angs1D,offOnScreenDir,qInvalid] = getOffsetFromPoint(obj,gazeData,pointOnScreenDA)
             % prep: ensure invalid data is nan. This is not fully
             % guaranteed by the Pro SDK
-            qInvalid = ~gazeData.gazeOrigin.valid;
-            gazeData.gazeOrigin.inUserCoords(:,qInvalid) = nan;
-            qInvalid = ~gazeData.gazePoint.valid;
+            qInvalid = ~gazeData.gazeOrigin.valid | ~gazeData.gazePoint.valid;
+            gazeData.gazeOrigin.inUserCoords(:,qInvalid) = nan; % NB: gaze data is not returned, so can set potentially valid gaze origins to nan here also
             gazeData.gazePoint.onDisplayArea(:,qInvalid) = nan;
             gazeData.gazePoint.inUserCoords (:,qInvalid) = nan;
             
@@ -4237,15 +4233,15 @@ classdef Titta < handle
                             rE = cal{selection}.val{iVal}.quality(ip).right;
                             c1 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
                             c2 = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
-                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>, <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,degChar,abs(lE.acc2D(1)),degChar,abs(lE.acc2D(2)),degChar, c2,rE.acc1D,degChar,abs(rE.acc2D(1)),degChar,abs(rE.acc2D(2)),degChar, c1,lE.STD1D,degChar, c2,rE.STD1D,degChar, c1,lE.RMS1D,degChar, c2,rE.RMS1D,degChar, c1,lE.dataLoss*100, c2,rE.dataLoss*100);
+                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>, <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,degChar,lE.acc2D(1),degChar,lE.acc2D(2),degChar, c2,rE.acc1D,degChar,rE.acc2D(1),degChar,rE.acc2D(2),degChar, c1,lE.STD1D,degChar, c2,rE.STD1D,degChar, c1,lE.RMS1D,degChar, c2,rE.RMS1D,degChar, c1,lE.dataLoss*100, c2,rE.dataLoss*100);
                         elseif strcmp(cal{selection}.eye,'left')
                             lE = cal{selection}.val{iVal}.quality(ip).left;
                             c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{1});
-                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,degChar,abs(lE.acc2D(1)),degChar,abs(lE.acc2D(2)),degChar, c,lE.STD1D,degChar, c,lE.RMS1D,degChar, c,lE.dataLoss*100);
+                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,degChar,lE.acc2D(1),degChar,lE.acc2D(2),degChar, c,lE.STD1D,degChar, c,lE.RMS1D,degChar, c,lE.dataLoss*100);
                         elseif strcmp(cal{selection}.eye,'right')
                             rE = cal{selection}.val{iVal}.quality(ip).right;
                             c = clr2hex(obj.settings.UI.val.hover.text.eyeColors{2});
-                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,abs(rE.acc2D(1)),degChar,abs(rE.acc2D(2)),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
+                            str = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,rE.acc2D(1),degChar,rE.acc2D(2),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
                         end
                         if qHasTrackerSpacePos
                             str = [sprintf('Position shown to participant: %.0f,%.0f px (norm: %.3f,%.3f)\nPosition in tracker space: %.3f,%.3f\n',pointPos(ip,2:3).*obj.scrInfo.resolution{1},pointPos(ip,2:3),pointPos(ip,4:5)) str]; %#ok<AGROW> 
@@ -5750,15 +5746,15 @@ classdef Titta < handle
                                 rE = myVal.quality(idx).right;
                                 c1 = clr2hex(obj.settings.UI.advcal.hover.text.eyeColors{1});
                                 c2 = clr2hex(obj.settings.UI.advcal.hover.text.eyeColors{2});
-                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>, <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,degChar,abs(lE.acc2D(1)),degChar,abs(lE.acc2D(2)),degChar, c2,rE.acc1D,degChar,abs(rE.acc2D(1)),degChar,abs(rE.acc2D(2)),degChar, c1,lE.STD1D,degChar, c2,rE.STD1D,degChar, c1,lE.RMS1D,degChar, c2,rE.RMS1D,degChar, c1,lE.dataLoss*100, c2,rE.dataLoss*100);
+                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>, <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>                 <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>                  <color=%s>%3.0f%%<color>',c1,lE.acc1D,degChar,lE.acc2D(1),degChar,lE.acc2D(2),degChar, c2,rE.acc1D,degChar,rE.acc2D(1),degChar,rE.acc2D(2),degChar, c1,lE.STD1D,degChar, c2,rE.STD1D,degChar, c1,lE.RMS1D,degChar, c2,rE.RMS1D,degChar, c1,lE.dataLoss*100, c2,rE.dataLoss*100);
                             elseif strcmp(out.attempt{kCal}.eye,'left')
                                 lE = myVal.quality(idx).left;
                                 c = clr2hex(obj.settings.UI.advcal.hover.text.eyeColors{1});
-                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,degChar,abs(lE.acc2D(1)),degChar,abs(lE.acc2D(2)),degChar, c,lE.STD1D,degChar, c,lE.RMS1D,degChar, c,lE.dataLoss*100);
+                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,lE.acc1D,degChar,lE.acc2D(1),degChar,lE.acc2D(2),degChar, c,lE.STD1D,degChar, c,lE.RMS1D,degChar, c,lE.dataLoss*100);
                             elseif strcmp(out.attempt{kCal}.eye,'right')
                                 rE = myVal.quality(idx).right;
                                 c = clr2hex(obj.settings.UI.advcal.hover.text.eyeColors{2});
-                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,abs(rE.acc2D(1)),degChar,abs(rE.acc2D(2)),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
+                                txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,rE.acc2D(1),degChar,rE.acc2D(2),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
                             end
                         end
                     end
