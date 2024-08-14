@@ -4115,7 +4115,6 @@ classdef Titta < handle
                                 end
                             end
                             % update info text
-                            % acc field is [lx rx; ly ry]
                             % text only changes when calibration selection changes,
                             % but putting these lines in the above if makes logic
                             % more complicated. Now we regenerate the same text
@@ -4124,19 +4123,8 @@ classdef Titta < handle
                             % for simpler logic
                             Screen('TextFont', wpnt(end), obj.settings.UI.val.avg.text.font, obj.settings.UI.val.avg.text.style);
                             Screen('TextSize', wpnt(end), obj.settings.UI.val.avg.text.size);
-                            [strl,strr,strsep] = deal('');
                             if isfield(cal{selection}.val{iVal},'acc1D')
-                                if ismember(cal{selection}.eye,{'both','left'})
-                                    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s, (%.2f%s,%.2f%s)   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{1}),cal{selection}.val{iVal}.acc1D( 1 ),degChar,cal{selection}.val{iVal}.acc2D(1, 1 ),degChar,cal{selection}.val{iVal}.acc2D(2, 1 ),degChar,cal{selection}.val{iVal}.STD1D( 1 ),degChar,cal{selection}.val{iVal}.RMS1D( 1 ),degChar,cal{selection}.val{iVal}.dataLoss( 1 )*100);
-                                end
-                                if ismember(cal{selection}.eye,{'both','right'})
-                                    idx = 1+strcmp(cal{selection}.eye,'both');
-                                    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s, (%.2f%s,%.2f%s)   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.val.avg.text.eyeColors{2}),cal{selection}.val{iVal}.acc1D(idx),degChar,cal{selection}.val{iVal}.acc2D(1,idx),degChar,cal{selection}.val{iVal}.acc2D(2,idx),degChar,cal{selection}.val{iVal}.STD1D(idx),degChar,cal{selection}.val{iVal}.RMS1D(idx),degChar,cal{selection}.val{iVal}.dataLoss(idx)*100);
-                                end
-                                if strcmp(cal{selection}.eye,'both')
-                                    strsep = '\n';
-                                end
-                                valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                                valText = getAverageDataQualityText(cal{selection}.eye, obj.settings.UI.val.avg.text.eyeColors, cal{selection}.val{iVal});
                             else
                                 valText = sprintf('no validation was performed');
                                 qShowCal = true;
@@ -5509,27 +5497,9 @@ classdef Titta < handle
                                 end
                                 
                                 % update info text
-                                % acc field is [lx rx; ly ry]
-                                % text only changes when calibration selection changes,
-                                % but putting these lines in the above if makes logic
-                                % more complicated. Now we regenerate the same text
-                                % when switching between viewing calibration and
-                                % validation output, thats an unimportant price to pay
-                                % for simpler logic
                                 Screen('TextFont', wpnt(end), obj.settings.UI.advcal.avg.text.font, obj.settings.UI.advcal.avg.text.style);
                                 Screen('TextSize', wpnt(end), obj.settings.UI.advcal.avg.text.size);
-                                [strl,strr,strsep] = deal('');
-                                if ismember(out.attempt{kCal}.eye,{'both','left'})
-                                    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.STD1D( 1 ),degChar,myVal.RMS1D( 1 ),degChar,myVal.dataLoss( 1 )*100);
-                                end
-                                if ismember(out.attempt{kCal}.eye,{'both','right'})
-                                    idx = 1+strcmp(out.attempt{kCal}.eye,'both');
-                                    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.STD1D(idx),degChar,myVal.RMS1D(idx),degChar,myVal.dataLoss(idx)*100);
-                                end
-                                if strcmp(out.attempt{kCal}.eye,'both')
-                                    strsep = '\n';
-                                end
-                                valText = sprintf('<u>Validation<u>  <i>offset   SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                                valText = getAverageDataQualityText(out.attempt{kCal}.eye, obj.settings.UI.advcal.avg.text.eyeColors, myVal);
                                 valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.advcal.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.advcal.avg.text.color);
                             end
                         end
@@ -8035,6 +8005,22 @@ elseif strcmp(eye,'right')
     c = clr2hex(eyeColors{2});
     txt = sprintf('Offset:       <color=%s>%.2f%s, (%.2f%s,%.2f%s)<color>\nPrecision SD:        <color=%s>%.2f%s<color>\nPrecision RMS:       <color=%s>%.2f%s<color>\nData loss:            <color=%s>%3.0f%%<color>',c,rE.acc1D,degChar,rE.acc2D(1),degChar,rE.acc2D(2),degChar, c,rE.STD1D,degChar, c,rE.RMS1D,degChar, c,rE.dataLoss*100);
 end
+end
+
+function txt = getAverageDataQualityText(eye,eyeColors,avgQuality)
+degChar = char(176);
+[strl,strr,strsep] = deal('');
+if ismember(eye,{'both','left'})
+    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{1}),avgQuality.acc1D( 1 ),degChar,avgQuality.STD1D( 1 ),degChar,avgQuality.RMS1D( 1 ),degChar,avgQuality.dataLoss( 1 )*100);
+end
+if ismember(eye,{'both','right'})
+    idx = 1+strcmp(eye,'both');
+    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{2}),avgQuality.acc1D(idx),degChar,avgQuality.STD1D(idx),degChar,avgQuality.RMS1D(idx),degChar,avgQuality.dataLoss(idx)*100);
+end
+if strcmp(eye,'both')
+    strsep = '\n';
+end
+txt = sprintf('<u>Validation<u>  <i>offset   SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
 end
 
 function [headRects,headCursors] = getSelectionRects(headORect,margin,cursors)
