@@ -5113,14 +5113,13 @@ classdef Titta < handle
                                 end
                                 if ~isnan(idx)
                                     myVal = out.attempt{whichAttempt}.val{idx}.allPoints;
-                                    % acc field is [lx rx; ly ry]
                                     [strl,strr,strsep] = deal('');
                                     if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
-                                        strl = sprintf( '<color=%s>Left<color>: %.2f%s, (%.2f%s,%.2f%s)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.acc2D(1, 1 ),degChar,myVal.acc2D(2, 1 ),degChar);
+                                        strl = sprintf( '<color=%s>Left<color>: %.2f%s, (loss %.0f%%)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.dataLoss( 1 )*100);
                                     end
                                     if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
                                         idx = 1+strcmp(out.attempt{whichAttempt}.eye,'both');
-                                        strr = sprintf('<color=%s>Right<color>: %.2f%s, (%.2f%s,%.2f%s)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.acc2D(1,idx),degChar,myVal.acc2D(2,idx),degChar);
+                                        strr = sprintf('<color=%s>Right<color>: %.2f%s, (loss %.0f%%)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.dataLoss(idx)*100);
                                     end
                                     if strcmp(out.attempt{whichAttempt}.eye,'both')
                                         strsep = ', ';
@@ -5539,16 +5538,16 @@ classdef Titta < handle
                                 Screen('TextSize', wpnt(end), obj.settings.UI.advcal.avg.text.size);
                                 [strl,strr,strsep] = deal('');
                                 if ismember(out.attempt{kCal}.eye,{'both','left'})
-                                    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s, (%.2f%s,%.2f%s)   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.acc2D(1, 1 ),degChar,myVal.acc2D(2, 1 ),degChar,myVal.STD1D( 1 ),degChar,myVal.RMS1D( 1 ),degChar,myVal.dataLoss( 1 )*100);
+                                    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.STD1D( 1 ),degChar,myVal.RMS1D( 1 ),degChar,myVal.dataLoss( 1 )*100);
                                 end
                                 if ismember(out.attempt{kCal}.eye,{'both','right'})
                                     idx = 1+strcmp(out.attempt{kCal}.eye,'both');
-                                    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s, (%.2f%s,%.2f%s)   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.acc2D(1,idx),degChar,myVal.acc2D(2,idx),degChar,myVal.STD1D(idx),degChar,myVal.RMS1D(idx),degChar,myVal.dataLoss(idx)*100);
+                                    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(obj.settings.UI.advcal.avg.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.STD1D(idx),degChar,myVal.RMS1D(idx),degChar,myVal.dataLoss(idx)*100);
                                 end
                                 if strcmp(out.attempt{kCal}.eye,'both')
                                     strsep = '\n';
                                 end
-                                valText = sprintf('<u>Validation<u>    <i>offset 2D, (X,Y)      SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+                                valText = sprintf('<u>Validation<u>  <i>offset   SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
                                 valInfoTopTextCache = obj.getTextCache(wpnt(end),valText,OffsetRect([-5 0 5 10],obj.scrInfo.resolution{end}(1)/2,.02*obj.scrInfo.resolution{end}(2)),'vSpacing',obj.settings.UI.advcal.avg.text.vSpacing,'yalign','top','xlayout','left','baseColor',obj.settings.UI.advcal.avg.text.color);
                             end
                         end
