@@ -3955,7 +3955,6 @@ classdef Titta < handle
             
             
             % setup menu, if any
-            degChar = char(176);
             if qHasMultipleValidCals
                 margin          = 10;
                 pad             = 3;
@@ -4863,7 +4862,6 @@ classdef Titta < handle
             qProcessDoCal           = false;
             qProcessClearCal        = false;
             qRegenSnapShotMenuListing = false;
-            degChar = char(176);
             while ~qDoneWithAdvancedCalib
                 % start new calibration, if wanted (e.g. eye changed, last
                 % calibration point discarded). New cal also started when a
