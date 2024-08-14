@@ -30,8 +30,8 @@ addpath(genpath(dirs.funclib));                 % add dirs to path
 [files,nfiles]  = FileFromFolder(dirs.mat,[],'mat');
 
 
-fid = fopen(fullfile(dirs.out,'validation_accuracy.xls'),'wt');
-fprintf(fid,'subject\tacc LX\tacc LY\tacc RX\tacc RY\n');
+fid = fopen(fullfile(dirs.out,'validation_metrics.xls'),'wt');
+fprintf(fid,'subject\tacc L (%1$s)\tacc R (%1$s)\trms L (%1$s)\trms R (%1$s)\tstd L (%1$s)\tstd R (%1$s)\tdata loss L (%%)\tdata loss R(%%)\n',char(176));
 
 for p=1:nfiles
     fprintf('%s\n',files(p).fname);
@@ -43,18 +43,18 @@ for p=1:nfiles
     elseif strcmp(C.calibration{end}.type,'standard')
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel};
-        if ~isfield(cal.val{end},'acc2D')
+        if ~isfield(cal.val{end},'acc1D')
             % no validation done
-            acc = nan(1,4);
+            acc = nan(1,8);
         else
-            acc = cal.val{end}.acc2D(:).'; % [LX LY RX RY]
+            acc = [cal.val{end}.acc1D cal.val{end}.RMS1D cal.val{end}.STD1D cal.val{end}.dataLoss*100]; % each [L R]
         end
     elseif strcmp(C.calibration{end}.type,'advanced')
         sel = C.calibration{end}.selectedCal;
         cal = C.calibration{end}.attempt{sel(1)};
         if ~isfield(cal,'val')
             % no validation done
-            acc = nan(1,4);
+            acc = nan(1,8);
         else
             % find the active/last valid validation for this
             % calibration, if any
@@ -63,15 +63,15 @@ for p=1:nfiles
             if isempty(idx) || ~isfield(cal.val{idx},'allPoints')
                 % no validation done for this calibration, or all
                 % validation data discarded again by operator
-                acc = nan(1,4);
+                acc = nan(1,8);
             else
-                acc = cal.val{idx}.allPoints.acc2D(:).';
+                acc = [cal.val{idx}.allPoints.acc1D cal.val{idx}.allPoints.RMS1D cal.val{idx}.allPoints.STD1D cal.val{idx}.allPoints.dataLoss*100]; % each [L R]
             end
         end
     end
 
     % print to file
-    fprintf(fid,'%s\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).fname,acc);
+    fprintf(fid,'%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n',files(p).fname,acc);
 end
 fclose(fid);
 
