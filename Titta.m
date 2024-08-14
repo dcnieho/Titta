@@ -3976,19 +3976,7 @@ classdef Titta < handle
                     % calibration
                     aVal = find(cellfun(@(x) x.status, cal{iValidCals(c)}.val)==1,1,'last');
                     if isfield(cal{iValidCals(c)}.val{aVal},'acc1D')
-                        % acc field is [lx rx; ly ry]
-                        [strl,strr,strsep] = deal('');
-                        if ismember(cal{iValidCals(c)}.eye,{'both','left'})
-                            strl = sprintf( '<color=%s>Left<color>: %.2f%s, (%.2f%s,%.2f%s)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{1}),cal{iValidCals(c)}.val{aVal}.acc1D( 1 ),degChar,cal{iValidCals(c)}.val{aVal}.acc2D(1, 1 ),degChar,cal{iValidCals(c)}.val{aVal}.acc2D(2, 1 ),degChar);
-                        end
-                        if ismember(cal{iValidCals(c)}.eye,{'both','right'})
-                            idx = 1+strcmp(cal{iValidCals(c)}.eye,'both');
-                            strr = sprintf('<color=%s>Right<color>: %.2f%s, (%.2f%s,%.2f%s)',clr2hex(obj.settings.UI.val.menu.text.eyeColors{2}),cal{iValidCals(c)}.val{aVal}.acc1D(idx),degChar,cal{iValidCals(c)}.val{aVal}.acc2D(1,idx),degChar,cal{iValidCals(c)}.val{aVal}.acc2D(2,idx),degChar);
-                        end
-                        if strcmp(cal{iValidCals(c)}.eye,'both')
-                            strsep = ', ';
-                        end
-                        str = sprintf('(%d): %s%s%s',c,strl,strsep,strr);
+                        str = sprintf('(%d): %s',c,getValidationMenuText(cal{iValidCals(c)}.eye, obj.settings.UI.val.menu.text.eyeColors, cal{iValidCals(c)}.val{aVal}));
                     else
                         str = sprintf('(%d): no validation was performed',c);
                     end
@@ -5083,18 +5071,7 @@ classdef Titta < handle
                                 end
                                 if ~isnan(idx)
                                     myVal = out.attempt{whichAttempt}.val{idx}.allPoints;
-                                    [strl,strr,strsep] = deal('');
-                                    if ismember(out.attempt{whichAttempt}.eye,{'both','left'})
-                                        strl = sprintf( '<color=%s>Left<color>: %.2f%s, (loss %.0f%%)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{1}),myVal.acc1D( 1 ),degChar,myVal.dataLoss( 1 )*100);
-                                    end
-                                    if ismember(out.attempt{whichAttempt}.eye,{'both','right'})
-                                        idx = 1+strcmp(out.attempt{whichAttempt}.eye,'both');
-                                        strr = sprintf('<color=%s>Right<color>: %.2f%s, (loss %.0f%%)',clr2hex(obj.settings.UI.advcal.menu.text.eyeColors{2}),myVal.acc1D(idx),degChar,myVal.dataLoss(idx)*100);
-                                    end
-                                    if strcmp(out.attempt{whichAttempt}.eye,'both')
-                                        strsep = ', ';
-                                    end
-                                    valStr = sprintf('val: %s%s%s',strl,strsep,strr);
+                                    valStr = getValidationMenuText(out.attempt{whichAttempt}.eye, obj.settings.UI.advcal.menu.text.eyeColors, myVal);
                                 end
                             end
                             str = sprintf('(%d): %s, cal points: [%s], %s',c,eyeStr,calStr(1:end-1),valStr);
@@ -8021,6 +7998,22 @@ if strcmp(eye,'both')
     strsep = '\n';
 end
 txt = sprintf('<u>Validation<u>  <i>offset   SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
+end
+
+function txt = getValidationMenuText(eye,eyeColors,avgQuality)
+degChar = char(176);
+[strl,strr,strsep] = deal('');
+if ismember(eye,{'both','left'})
+    strl = sprintf( '<color=%s>Left<color>: %.2f%s (loss %.0f%%)',clr2hex(eyeColors{1}),avgQuality.acc1D( 1 ),degChar,avgQuality.dataLoss( 1 )*100);
+end
+if ismember(eye,{'both','right'})
+    idx = 1+strcmp(eye,'both');
+    strr = sprintf('<color=%s>Right<color>: %.2f%s (loss %.0f%%)',clr2hex(eyeColors{2}),avgQuality.acc1D(idx),degChar,avgQuality.dataLoss(idx)*100);
+end
+if strcmp(eye,'both')
+    strsep = ', ';
+end
+txt = sprintf('val: %s%s%s',strl,strsep,strr);
 end
 
 function [headRects,headCursors] = getSelectionRects(headORect,margin,cursors)
