@@ -4657,14 +4657,25 @@ classdef Titta < handle
             end
             
             % 3. atop screen
-            but7LPos = max(but(9).rect(3)-but(9).rect(1),but(10).rect(3)-but(10).rect(1))+30;
+            % first get estimate of size of text in the middle for
+            % validation display
+            Screen('TextFont', wpnt(end), obj.settings.UI.advcal.avg.text.font, obj.settings.UI.advcal.avg.text.style);
+            Screen('TextSize', wpnt(end), obj.settings.UI.advcal.avg.text.size);
+            valHeader=getAverageDataQualityText('','','');
+            [~,txtbounds] = obj.getTextCache(wpnt(end),valHeader);
+            valWidth = RectWidth(txtbounds);
+            valLeftEdge = (obj.scrInfo.resolution{end}(1)-valWidth)/2;
+            lefButWidth = max(but(9).rect(3)-but(9).rect(1),but(10).rect(3)-but(10).rect(1));
+            but7Mid = (valLeftEdge+lefButWidth)/2;
+            but8Mid = obj.scrInfo.resolution{end}(1)-but7Mid;
+
             if but(7).visible
-                but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+but7LPos,-but(7).rect(2)+5);
+                but7Width = but(7).rect(3)-but(7).rect(1);
+                but(7).rect     = OffsetRect(but(7).rect,-but(7).rect(1)+but7Mid-but7Width/2,-but(7).rect(2)+5);
             end
-            but7RPos = but(7).rect(3)-but(7).rect(1)+but7LPos;
-            but8LPos = obj.scrInfo.resolution{end}(1)-but7RPos;
             if but(8).visible
-                but(8).rect     = OffsetRect(but(8).rect,-but(8).rect(1)+but8LPos,-but(8).rect(2)+5);
+                but8Width = but(8).rect(3)-but(8).rect(1);
+                but(8).rect     = OffsetRect(but(8).rect,-but(8).rect(1)+but8Mid-but8Width/2,-but(8).rect(2)+5);
             end
 
             % get all butRects, needed below in script
@@ -7985,15 +7996,17 @@ end
 function txt = getAverageDataQualityText(eye,eyeColors,avgQuality)
 degChar = char(176);
 [strl,strr,strsep] = deal('');
-if ismember(eye,{'both','left'})
-    strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{1}),avgQuality.acc1D( 1 ),degChar,avgQuality.STD1D( 1 ),degChar,avgQuality.RMS1D( 1 ),degChar,avgQuality.dataLoss( 1 )*100);
-end
-if ismember(eye,{'both','right'})
-    idx = 1+strcmp(eye,'both');
-    strr = sprintf('<color=%s>Right eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{2}),avgQuality.acc1D(idx),degChar,avgQuality.STD1D(idx),degChar,avgQuality.RMS1D(idx),degChar,avgQuality.dataLoss(idx)*100);
-end
-if strcmp(eye,'both')
-    strsep = '\n';
+if ~isempty(avgQuality)
+    if ismember(eye,{'both','left'})
+        strl = sprintf(' <color=%s>Left eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{1}),avgQuality.acc1D( 1 ),degChar,avgQuality.STD1D( 1 ),degChar,avgQuality.RMS1D( 1 ),degChar,avgQuality.dataLoss( 1 )*100);
+    end
+    if ismember(eye,{'both','right'})
+        idx = 1+strcmp(eye,'both');
+        strr = sprintf('<color=%s>Right eye<color>:  %.2f%s   %.2f%s   %.2f%s  %3.0f%%',clr2hex(eyeColors{2}),avgQuality.acc1D(idx),degChar,avgQuality.STD1D(idx),degChar,avgQuality.RMS1D(idx),degChar,avgQuality.dataLoss(idx)*100);
+    end
+    if strcmp(eye,'both')
+        strsep = '\n';
+    end
 end
 txt = sprintf('<u>Validation<u>  <i>offset   SD    RMS-S2S  loss<i>\n%s%s%s',strl,strsep,strr);
 end
