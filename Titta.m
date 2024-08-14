@@ -4905,81 +4905,83 @@ classdef Titta < handle
                 
                 % toggle stage
                 if qToggleStage
-                    switch stage
-                        case 'val'  % currently 'val', becomes 'cal'
-                            % copy over status of val points to storage
-                            if exist('pointsP','var')
-                                vPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
-                            end
-                            % change to cal
-                            stage           = 'cal';
-                            pointsP         = cPointsP;
-                            pointsO         = cPointsO;
-                            pointTextCache  = cPointTextCache;
-                            obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
-                            % if auto mode is on, check if it should stay
-                            % on
-                            if qAutoActive && ~qHasAutoCal
-                                qAutoActive = false;
-                                if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
-                                    obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'val_deactivate',[]);
+                    if isempty(awaitingCalChangeType) && isempty(discardList) && isempty(pointList) && isnan(whichPoint) && isnan(whichPointDiscard)
+                        switch stage
+                            case 'val'  % currently 'val', becomes 'cal'
+                                % copy over status of val points to storage
+                                if exist('pointsP','var')
+                                    vPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
                                 end
-                            end
-                            % if wanted, notify user callback of mode
-                            % change
-                            if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
-                                obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
-                            end
-                            qForceUpdateAutoStatusText = true;
-                            % hide/show auto mode button if necessary
-                            but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoCal;
-                            % make calibration and discard buttons visible, if wanted
-                            but(9).visible  = obj.settings.UI.button.advcal.calibrate.visible;
-                            but(10).visible = obj.settings.UI.button.advcal.discard.visible;
-                        case 'cal'  % currently 'cal', becomes 'val'
-                            % copy over status of cal points to storage
-                            if exist('pointsP','var')
-                                cPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
-                            end
-                            % change to val
-                            stage           = 'val';
-                            pointsP         = vPointsP;
-                            pointsO         = vPointsO;
-                            pointTextCache  = vPointTextCache;
-                            obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
-                            % if auto mode is on, check if it should stay
-                            % on
-                            if qAutoActive && ~qHasAutoVal
-                                qAutoActive = false;
-                                if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
-                                    obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_deactivate',[]);
+                                % change to cal
+                                stage           = 'cal';
+                                pointsP         = cPointsP;
+                                pointsO         = cPointsO;
+                                pointTextCache  = cPointTextCache;
+                                obj.sendMessage(sprintf('ENTER CALIBRATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                                % if auto mode is on, check if it should stay
+                                % on
+                                if qAutoActive && ~qHasAutoCal
+                                    qAutoActive = false;
+                                    if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                        obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'val_deactivate',[]);
+                                    end
                                 end
-                            end
-                            % if wanted, notify user callback of mode
-                            % change
-                            if isa(obj.settings.advcal.cal.pointNotifyFunction,'function_handle') && obj.settings.advcal.cal.useExtendedNotify
-                                obj.settings.advcal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
-                            end
-                            qForceUpdateAutoStatusText = true;
-                            % hide/show auto mode button if necessary
-                            but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoVal;
-                            % no calibration and discard buttons when
-                            % validating. Make sure they're hidden
-                            but(9).visible  = false;
-                            but(10).visible = false;
+                                % if wanted, notify user callback of mode
+                                % change
+                                if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                    obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_enter',[]);
+                                end
+                                qForceUpdateAutoStatusText = true;
+                                % hide/show auto mode button if necessary
+                                but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoCal;
+                                % make calibration and discard buttons visible, if wanted
+                                but(9).visible  = obj.settings.UI.button.advcal.calibrate.visible;
+                                but(10).visible = obj.settings.UI.button.advcal.discard.visible;
+                            case 'cal'  % currently 'cal', becomes 'val'
+                                % copy over status of cal points to storage
+                                if exist('pointsP','var')
+                                    cPointsP(:,end-[1 0]) = pointsP(:,end-[1 0]);
+                                end
+                                % change to val
+                                stage           = 'val';
+                                pointsP         = vPointsP;
+                                pointsO         = vPointsO;
+                                pointTextCache  = vPointTextCache;
+                                obj.sendMessage(sprintf('ENTER VALIDATION MODE (%s), calibration no. %d',getEyeLbl(obj.settings.calibrateEye),kCal));
+                                % if auto mode is on, check if it should stay
+                                % on
+                                if qAutoActive && ~qHasAutoVal
+                                    qAutoActive = false;
+                                    if isa(obj.settings.advcal.val.pointNotifyFunction,'function_handle') && obj.settings.advcal.val.useExtendedNotify
+                                        obj.settings.advcal.val.pointNotifyFunction(obj,[],[],[],stage,'cal_deactivate',[]);
+                                    end
+                                end
+                                % if wanted, notify user callback of mode
+                                % change
+                                if isa(obj.settings.advcal.cal.pointNotifyFunction,'function_handle') && obj.settings.advcal.cal.useExtendedNotify
+                                    obj.settings.advcal.cal.pointNotifyFunction(obj,[],[],[],stage,'val_enter',[]);
+                                end
+                                qForceUpdateAutoStatusText = true;
+                                % hide/show auto mode button if necessary
+                                but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoVal;
+                                % no calibration and discard buttons when
+                                % validating. Make sure they're hidden
+                                but(9).visible  = false;
+                                but(10).visible = false;
+                        end
+                        % get point rects on operator screen
+                        calValRectsSel  = zeros(4,size(pointsO,1));
+                        calValRectsHover= zeros(4,size(pointsO,1));
+                        for p=1:size(pointsO,1)
+                            calValRectsSel(:,p)     = CenterRectOnPointd([0 0 fixPointRectSzSel   fixPointRectSzSel  ],pointsO(p,1),pointsO(p,2));
+                            calValRectsHover(:,p)   = CenterRectOnPointd([0 0 fixPointRectSzHover fixPointRectSzHover],pointsO(p,1),pointsO(p,2));
+                        end
+                        qUpdateCursors      = true;
+                        qUpdateLineDisplay  = true;
+                        qUpdatePointHover   = true;
+                        qUpdateCalStatusText= true;
                     end
-                    % get point rects on operator screen
-                    calValRectsSel  = zeros(4,size(pointsO,1));
-                    calValRectsHover= zeros(4,size(pointsO,1));
-                    for p=1:size(pointsO,1)
-                        calValRectsSel(:,p)     = CenterRectOnPointd([0 0 fixPointRectSzSel   fixPointRectSzSel  ],pointsO(p,1),pointsO(p,2));
-                        calValRectsHover(:,p)   = CenterRectOnPointd([0 0 fixPointRectSzHover fixPointRectSzHover],pointsO(p,1),pointsO(p,2));
-                    end
-                    qUpdateCursors      = true;
                     qToggleStage        = false;
-                    qUpdateLineDisplay  = true;
-                    qUpdatePointHover   = true;
-                    qUpdateCalStatusText= true;
                 end
                 
                 % setup menu, if any
