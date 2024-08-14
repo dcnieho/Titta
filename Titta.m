@@ -6754,7 +6754,7 @@ classdef Titta < handle
                     % see if we should do a calibration action, if
                     % requested
                     if qProcessDoCal
-                        if strcmp(stage,'cal') && isempty(pointList) && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(discardList)
+                        if strcmp(stage,'cal') && isempty(awaitingCalChangeType) && ~any(pointsP(:,end)>1) && isempty(pointList) && ~isequal(pointsP(:,end),pointStateLastCal) && isempty(discardList)
                             % if in calibration mode and no
                             % further calibration points queued
                             % up for collection or discarding
