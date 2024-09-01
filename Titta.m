@@ -561,7 +561,7 @@ classdef Titta < handle
             
             % Connect to eyetracker
             trackers = [];
-            qHaveAddress = nargin>=2;
+            qHaveAddress = nargin>=2 && ~isempty(address);
             if qHaveAddress
                 % if user provided an eye tracker address to connect to,
                 % get info about this eye tracker
