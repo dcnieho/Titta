@@ -409,6 +409,9 @@ classdef Titta < handle
             obj.settings.UI.button.advcal.toggAuto.fillColor    = color2RGBA(obj.settings.UI.button.advcal.toggAuto.fillColor);
             obj.settings.UI.button.advcal.toggAuto.edgeColor    = color2RGBA(obj.settings.UI.button.advcal.toggAuto.edgeColor);
             obj.settings.UI.button.advcal.toggAuto.textColor    = color2RGBA(obj.settings.UI.button.advcal.toggAuto.textColor);
+            obj.settings.UI.button.advcal.toggPlot.fillColor    = color2RGBA(obj.settings.UI.button.advcal.toggPlot.fillColor);
+            obj.settings.UI.button.advcal.toggPlot.edgeColor    = color2RGBA(obj.settings.UI.button.advcal.toggPlot.edgeColor);
+            obj.settings.UI.button.advcal.toggPlot.textColor    = color2RGBA(obj.settings.UI.button.advcal.toggPlot.textColor);
             obj.settings.UI.advcal.menu.bgColor                 = color2RGBA(obj.settings.UI.advcal.menu.bgColor);
             obj.settings.UI.advcal.menu.itemColor               = color2RGBA(obj.settings.UI.advcal.menu.itemColor);
             obj.settings.UI.advcal.menu.itemColorActive         = color2RGBA(obj.settings.UI.advcal.menu.itemColorActive);
@@ -420,6 +423,20 @@ classdef Titta < handle
             obj.settings.UI.advcal.hover.text.color             = color2RGBA(obj.settings.UI.advcal.hover.text.color);
             obj.settings.UI.advcal.hover.text.eyeColors         = color2RGBA(obj.settings.UI.advcal.hover.text.eyeColors);
             obj.settings.UI.advcal.onlineGaze.eyeColors         = color2RGBA(obj.settings.UI.advcal.onlineGaze.eyeColors);
+            
+            obj.settings.UI.advcal.plot.bgColor                 = color2RGBA(obj.settings.UI.advcal.plot.bgColor);
+            obj.settings.UI.advcal.plot.eyeColors               = color2RGBA(obj.settings.UI.advcal.plot.eyeColors);
+            obj.settings.UI.advcal.plot.dotPosLine.color        = color2RGBA(obj.settings.UI.advcal.plot.dotPosLine.color);
+            obj.settings.UI.advcal.plot.ax.bgColor              = color2RGBA(obj.settings.UI.advcal.plot.ax.bgColor);
+            obj.settings.UI.advcal.plot.ax.lineColor            = color2RGBA(obj.settings.UI.advcal.plot.ax.lineColor);
+            obj.settings.UI.advcal.plot.ax.highlightColor       = color2RGBA(obj.settings.UI.advcal.plot.ax.highlightColor);
+            obj.settings.UI.advcal.plot.ax.axisLbl.color        = color2RGBA(obj.settings.UI.advcal.plot.ax.axisLbl.color);
+            obj.settings.UI.advcal.plot.ax.tickLbl.color        = color2RGBA(obj.settings.UI.advcal.plot.ax.tickLbl.color);
+            obj.settings.UI.advcal.plot.ax.valLbl.color         = color2RGBA(obj.settings.UI.advcal.plot.ax.valLbl.color);
+            obj.settings.UI.advcal.plot.but.exit.fillColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.fillColor);
+            obj.settings.UI.advcal.plot.but.exit.edgeColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.edgeColor);
+            obj.settings.UI.advcal.plot.but.exit.textColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.textColor);
+            
             obj.settings.UI.advcal.refCircleClr                 = color2RGBA(obj.settings.UI.advcal.refCircleClr);
             obj.settings.UI.advcal.headCircleEdgeClr            = color2RGBA(obj.settings.UI.advcal.headCircleEdgeClr);
             obj.settings.UI.advcal.headCircleFillClr            = color2RGBA(obj.settings.UI.advcal.headCircleFillClr);
@@ -1239,6 +1256,8 @@ classdef Titta < handle
             %      a         - if a controller is provided, toggle
             %                  automatic calibration/validation (as
             %                  available) on or off (toggAuto)
+            %      p         - bring up plot of gaze and pupil data
+            %                  collected during validation (toggPlot)
             %
             %    See also TITTA.CALIBRATE, TITTA.GETOPTIONS,
             %    TITTA.GETDEFAULTS
@@ -1910,6 +1929,12 @@ classdef Titta < handle
             settings.UI.button.advcal.toggAuto.fillColor    = backButClr.fill;
             settings.UI.button.advcal.toggAuto.edgeColor    = backButClr.edge;
             settings.UI.button.advcal.toggAuto.textColor    = backButClr.text;
+            settings.UI.button.advcal.toggPlot.accelerator = 'p';
+            settings.UI.button.advcal.toggPlot.visible     = true;
+            settings.UI.button.advcal.toggPlot.string      = 'show plot (<i>p<i>)';
+            settings.UI.button.advcal.toggPlot.fillColor   = toggleButClr.fill;
+            settings.UI.button.advcal.toggPlot.edgeColor   = toggleButClr.edge;
+            settings.UI.button.advcal.toggPlot.textColor   = toggleButClr.text;
             settings.UI.advcal.menu.bgColor         = 110;
             settings.UI.advcal.menu.itemColor       = 140;
             settings.UI.advcal.menu.itemColorActive = 180;
@@ -1935,6 +1960,9 @@ classdef Titta < handle
             settings.UI.advcal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.advcal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             
+            settings.UI.advcal.plot                 = settings.UI.plot;
+            settings.UI.advcal.plot.but             = rmfield(settings.UI.advcal.plot.but, 'valSel');
+
             settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showHead             = false;                    % show head display when interface opens? If false, can still be opened with button
             settings.UI.advcal.headScale            = .5;
@@ -4029,7 +4057,7 @@ classdef Titta < handle
             while ~qDoneCalibSelection
                 % draw plot overlay instead of interface if wanted
                 if qShowPlotOverlay
-                    st = obj.drawValidationDataPlots(wpnt,cal,selection,iVal);
+                    st = obj.drawValidationDataPlots(wpnt, cal{selection}.val{iVal});
                     qShowPlotOverlay = false;
                     if ~~st
                         status = st;
@@ -4620,18 +4648,19 @@ classdef Titta < handle
             but(6)  = PTBButton(obj.settings.UI.button.advcal.toggAuto ,       qHasAuto        , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
             but(7)  = PTBButton(obj.settings.UI.button.advcal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
             but(8)  = PTBButton(obj.settings.UI.button.advcal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
-            but(9)  = PTBButton(obj.settings.UI.button.advcal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
-            but(10) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(9)  = PTBButton(obj.settings.UI.button.advcal.toggPlot ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(10) = PTBButton(obj.settings.UI.button.advcal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(11) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
             
             % position them
+            buttonOff   = [80 15];
             % 1. below screen
             butRectsBase= cat(1,but([but(1:6).visible]).rect);
             if ~isempty(butRectsBase)
-                buttonOff   = 80;
                 yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
-                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
-                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff;
+                totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff(1);
+                xpos        = [zeros(size(buttonWidths)).'; buttonWidths.']+[0 ones(1,length(buttonWidths)-1); zeros(1,length(buttonWidths))]*buttonOff(1);
                 xpos        = cumsum(xpos(:))-totWidth/2+obj.scrInfo.resolution{end}(1)/2;
                 butRects(:,[1 3]) = [xpos(1:2:end) xpos(2:2:end)];
                 butRects(:,2)     = yposBase-butRectsBase(:,4)+butRectsBase(:,2);
@@ -4644,13 +4673,13 @@ classdef Titta < handle
             
             % 2. left side
             prevPos = nan;
-            for b=9:10
+            for b=10:11
                 if but(b).visible
                     % position it
                     if isnan(prevPos)
                         prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,-but(b).rect(2)+5);
                     else
-                        yPos    = prevPos(4)-but(b).rect(2)+15;
+                        yPos    = prevPos(4)-but(b).rect(2)+buttonOff(2);
                         prevPos = OffsetRect(but(b).rect,-but(b).rect(1)+5,yPos);
                     end
                     but(b).rect = prevPos;
@@ -4666,8 +4695,8 @@ classdef Titta < handle
             [~,txtbounds] = obj.getTextCache(wpnt(end),valHeader);
             valWidth = RectWidth(txtbounds);
             valLeftEdge = (obj.scrInfo.resolution{end}(1)-valWidth)/2;
-            lefButWidth = max(but(9).rect(3)-but(9).rect(1),but(10).rect(3)-but(10).rect(1));
-            but7Mid = (valLeftEdge+lefButWidth)/2;
+            maxButWidth = max(but(10).rect(3)-but(10).rect(1),but(11).rect(3)-but(11).rect(1));
+            but7Mid = (valLeftEdge+maxButWidth)/2;
             but8Mid = obj.scrInfo.resolution{end}(1)-but7Mid;
 
             if but(7).visible
@@ -4678,6 +4707,16 @@ classdef Titta < handle
                 but8Width = but(8).rect(3)-but(8).rect(1);
                 but(8).rect     = OffsetRect(but(8).rect,-but(8).rect(1)+but8Mid-but8Width/2,-but(8).rect(2)+5);
             end
+            % position button 9 right of 8, moving 8 inwards if needed to
+            % fit on screen
+            butWidth  = but(9).rect(3)-but(9).rect(1);
+            rightEdge = but(8).rect(3)+buttonOff(1)+butWidth;
+            if rightEdge>obj.scrInfo.resolution{end}(1)
+                moveLeft = rightEdge-obj.scrInfo.resolution{end}(1);
+                but(8).rect = OffsetRect(but(8).rect,-moveLeft,0);
+            end
+            but(9).rect = OffsetRect(but(9).rect,-but(9).rect(1)+but(8).rect(3)+buttonOff(1),-but(9).rect(2)+5);
+
 
             % get all butRects, needed below in script
             butRects        = cat(1,but.rect).';
@@ -4842,6 +4881,9 @@ classdef Titta < handle
             autoStatusTextCache     = [];
             % 12. auto calibration mode
             qAutoCalibrate          = obj.settings.advcal.cal.autoCalibrate;
+            % 13. plot toggle button
+            qCanPlotVal             = false;
+            qShowPlotOverlay        = false;
             
             % setup canvas positions if needed
             qDrawEyeValidity    = false;
@@ -4875,6 +4917,16 @@ classdef Titta < handle
             qProcessClearCal        = false;
             qRegenSnapShotMenuListing = false;
             while ~qDoneWithAdvancedCalib
+                % draw plot overlay instead of interface if wanted
+                if qShowPlotOverlay
+                    st = obj.drawValidationDataPlots(wpnt, out.attempt{kCal}.val{valAction});
+                    qShowPlotOverlay = false;
+                    if ~~st
+                        status = st;
+                        break;
+                    end
+                end
+
                 % start new calibration, if wanted (e.g. eye changed, last
                 % calibration point discarded). New cal also started when a
                 % snapshot is loaded, but this is done elsewhere
@@ -4936,8 +4988,8 @@ classdef Titta < handle
                                 % hide/show auto mode button if necessary
                                 but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoCal;
                                 % make calibration and discard buttons visible, if wanted
-                                but(9).visible  = obj.settings.UI.button.advcal.calibrate.visible;
-                                but(10).visible = obj.settings.UI.button.advcal.discard.visible;
+                                but(10).visible = obj.settings.UI.button.advcal.calibrate.visible;
+                                but(11).visible = obj.settings.UI.button.advcal.discard.visible;
                             case 'cal'  % currently 'cal', becomes 'val'
                                 % copy over status of cal points to storage
                                 if exist('pointsP','var')
@@ -4967,8 +5019,8 @@ classdef Titta < handle
                                 but(6).visible = obj.settings.UI.button.advcal.toggAuto.visible && qHasAutoVal;
                                 % no calibration and discard buttons when
                                 % validating. Make sure they're hidden
-                                but(9).visible  = false;
                                 but(10).visible = false;
+                                but(11).visible = false;
                         end
                         % get point rects on operator screen
                         calValRectsSel  = zeros(4,size(pointsO,1));
@@ -5413,6 +5465,7 @@ classdef Titta < handle
                     % things
                     linesForPoints = cell(1,size(pointsP,1));
                     valInfoTopTextCache = [];
+                    qCanPlotVal = false;
                     
                     % prep to draw captured data in characteristic Tobii
                     % plot
@@ -5464,6 +5517,7 @@ classdef Titta < handle
                             
                             % compute data quality for these
                             if ~isempty(val.pointPos)
+                                qCanPlotVal = true;
                                 out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
                                 qUpdatePointHover = true;   % may need to update point hover
                                 
@@ -5505,6 +5559,15 @@ classdef Titta < handle
                         end
                     end
                     qUpdateLineDisplay = false;
+
+                    % handle plot toggle button
+                    if qCanPlotVal
+                        % make plot button visible, if wanted
+                        but(9).visible = obj.settings.UI.button.advcal.toggPlot.visible;
+                    else
+                        % hide plot button
+                        but(9).visible = false;
+                    end
                 end
                 
                 if qUpdateCalStatusText
@@ -5541,10 +5604,10 @@ classdef Titta < handle
                     pointStr = sprintf('%d ',sort(usedCalibrationPoints));
                     text = sprintf('<u>%s<u>\n<color=%s>%s<color>\nactive cal based on:\npoints [%s]',modetxt,clr2hex(clr),text,pointStr(1:end-1));
                     posRect = [5 10 5 10];
-                    if but(10).visible
+                    if but(11).visible
+                        posRect = OffsetRect(posRect,0,but(11).rect(4)+10);
+                    elseif but(10).visible
                         posRect = OffsetRect(posRect,0,but(10).rect(4)+10);
-                    elseif but(9).visible
-                        posRect = OffsetRect(posRect,0,but(9).rect(4)+10);
                     end
                     calTextCache = obj.getTextCache(wpnt(end), text,posRect,'xalign','left','yalign','top');
                     qUpdateCalStatusText = false;
@@ -5997,8 +6060,9 @@ classdef Titta < handle
                     but(6).draw(mousePos,qAutoActive);
                     but(7).draw(mousePos,qShowHead);
                     but(8).draw(mousePos,qShowGaze);
-                    but(9).draw(mousePos,qAutoCalibrate);
-                    but(10).draw(mousePos);
+                    but(9).draw(mousePos);
+                    but(10).draw(mousePos,qAutoCalibrate);
+                    but(11).draw(mousePos);
                     
                     % draw eye images, if any
                     if qShowEyeImage
@@ -6456,14 +6520,16 @@ classdef Titta < handle
                                 elseif qInBut(8)
                                     qShowGaze           = ~qShowGaze;
                                     qShowGazeToAll      = shiftIsDown;
-                                elseif qInBut(9)
+                                elseif qIn(9)
+                                    qShowPlotOverlay    = true;
+                                elseif qInBut(10)
                                     if shiftIsDown
                                         % toggle auto calibration mode
                                         qAutoCalibrate = ~qAutoCalibrate;
                                     else
                                         qProcessDoCal = true;
                                     end
-                                elseif qInBut(10)
+                                elseif qInBut(11)
                                     qProcessClearCal = true;
                                 end
                                 break;
@@ -6680,6 +6746,9 @@ classdef Titta < handle
                                     end
                                 end
                                 break;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal
+                                qShowPlotOverlay    = true;
+                                break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calibrate.accelerator))
                                 if shiftIsDown
                                     % toggle auto calibration mode
@@ -6859,42 +6928,84 @@ classdef Titta < handle
             obj.ClearAllBuffers(startT);                    % clean up data buffers
         end
         
-        function status = drawValidationDataPlots(obj,wpnt,cal,selection,iVal)
+        function status = drawValidationDataPlots(obj,wpnt,valData)
             qHaveOperatorScreen = ~isscalar(wpnt);
             % get info about screen
             screenState = obj.getScreenInfo(wpnt);
             
             %%% prep data to plot:
-            valData             = cal{selection}.val{iVal};
-            qHasLeft            = isfield(valData.allData.gaze,'left');
-            qHasRight           = isfield(valData.allData.gaze,'right');
+            if isfield(valData,'allData')
+                allGaze     = valData.allData.gaze;
+                choppedGaze = valData.gazeData;
+                pointPos = valData.pointPos;
+                pointTs  = valData.pointTs;
+            else
+                choppedGaze = valData.allPoints.gazeData.';
+                pointPos = valData.allPoints.pointPos;
+
+                % these two we have to create
+                pointTsUs = [arrayfun(@(d) d.systemTimeStamp(1),choppedGaze) arrayfun(@(d) d.systemTimeStamp(end),choppedGaze)];
+                pointTs   = [pointPos(:,1) double(pointTsUs)/1000/1000];
+                ts = {choppedGaze.systemTimeStamp};
+                filler = num2cell([int64(mean([pointTsUs(1:end-1,2) pointTsUs(2:end,1)],2)); pointTsUs(end)+1]);
+                allts = [ts; filler.'];
+                allGaze.systemTimeStamp = [allts{:}];
+                allGaze.systemTimeStamp(end) = [];
+                for f={'left','right'}
+                    f = f{1}; %#ok<FXSET> 
+                    if ~isfield(choppedGaze,f)
+                        continue
+                    end
+                    g = [choppedGaze.(f)];
+                    gp= [g.gazePoint];
+                    allGp = [{gp.onDisplayArea}; repmat({nan(2,1)},1,length(gp))];
+                    allGaze.(f).gazePoint.onDisplayArea = [allGp{:}];
+                    allGaze.(f).gazePoint.onDisplayArea(:,end) = [];
+
+                    gp= [g.pupil];
+                    allGp = [{gp.diameter}; repmat({nan(1,1)},1,length(gp))];
+                    allGaze.(f).pupil.diameter = [allGp{:}];
+                    allGaze.(f).pupil.diameter(:,end) = [];
+                    if isfield(g,'eyeOpenness')
+                        ge= [g.eyeOpenness];
+                        allA = [{ge.available}; repmat({false(1,1)},1,length(ge))];
+                        allGe = [{ge.diameter}; repmat({  nan(1,1)},1,length(ge))];
+                        allGaze.(f).eyeOpenness.available = [allA{:}];
+                        allGaze.(f).eyeOpenness.diameter  = [allGe{:}];
+                        allGaze.(f).eyeOpenness.available(:,end) = [];
+                        allGaze.(f).eyeOpenness.diameter(:,end) = [];
+                    end
+                end
+            end
+            qHasLeft            = isfield(allGaze,'left');
+            qHasRight           = isfield(allGaze,'right');
             qHasEyeOpenness     = false;
-            nValPoint           = size(valData.pointPos,1);
+            nValPoint           = size(pointPos,1);
             % 1
             % 1) get all gaze data and turn into pixels on the screen,
             %    highlight data used for validation calculations
             % 2) get data for each validation point turn gaze data for each
             %    validation point into offsets from validation point
-            plotData.all.t = valData.allData.gaze.systemTimeStamp;
+            plotData.all.t = allGaze.systemTimeStamp;
             plotData.all.x = [];
             plotData.all.y = [];
             plotData.all.p = [];
             plotData.all.o = [];
             if qHasLeft
-                plotData.all.x = valData.allData.gaze.left.gazePoint.onDisplayArea(1,:);
-                plotData.all.y = valData.allData.gaze.left.gazePoint.onDisplayArea(2,:);
-                plotData.all.p = valData.allData.gaze.left.pupil.diameter;
-                if any(valData.allData.gaze.left.eyeOpenness.available)
-                    plotData.all.o = valData.allData.gaze.left.eyeOpenness.diameter;
+                plotData.all.x = allGaze.left.gazePoint.onDisplayArea(1,:);
+                plotData.all.y = allGaze.left.gazePoint.onDisplayArea(2,:);
+                plotData.all.p = allGaze.left.pupil.diameter;
+                if any(allGaze.left.eyeOpenness.available)
+                    plotData.all.o = allGaze.left.eyeOpenness.diameter;
                     qHasEyeOpenness = true;
                 end
             end
             if qHasRight
-                plotData.all.x = [plotData.all.x; valData.allData.gaze.right.gazePoint.onDisplayArea(1,:)];
-                plotData.all.y = [plotData.all.y; valData.allData.gaze.right.gazePoint.onDisplayArea(2,:)];
-                plotData.all.p = [plotData.all.p; valData.allData.gaze.right.pupil.diameter];
-                if any(valData.allData.gaze.right.eyeOpenness.available)
-                    plotData.all.o = [plotData.all.o; valData.allData.gaze.right.eyeOpenness.diameter];
+                plotData.all.x = [plotData.all.x; allGaze.right.gazePoint.onDisplayArea(1,:)];
+                plotData.all.y = [plotData.all.y; allGaze.right.gazePoint.onDisplayArea(2,:)];
+                plotData.all.p = [plotData.all.p; allGaze.right.pupil.diameter];
+                if any(allGaze.right.eyeOpenness.available)
+                    plotData.all.o = [plotData.all.o; allGaze.right.eyeOpenness.diameter];
                     qHasEyeOpenness = true;
                 end
             end
@@ -6902,12 +7013,12 @@ classdef Titta < handle
             plotData.all.y = plotData.all.y .* obj.scrInfo.resolution{1}(2);
             % get Ts of validation points, make all time relative to t0, in
             % seconds
-            plotData.pointIDs           = valData.pointPos(:,1);
-            plotData.points             = bsxfun(@rdivide,valData.pointPos(:,2:3),obj.scrInfo.resolution{1});
-            plotData.pointsTrackSpace   = valData.pointPos(:,4:5);
+            plotData.pointIDs           = pointPos(:,1);
+            plotData.points             = bsxfun(@rdivide,pointPos(:,2:3),obj.scrInfo.resolution{1});
+            plotData.pointsTrackSpace   = pointPos(:,4:5);
             qHaveTrackerSpacePos        = ~isempty(obj.settings.cal.pointPosTrackerSpace);
-            plotData.all.pointTs        = valData.pointTs(:,2:3) - double(plotData.all.t(1))/1000/1000;          % time point on screen
-            plotData.all.collectTs      = arrayfun(@(d) d.systemTimeStamp([1 end]),valData.gazeData,'uni',false);% time data collected for point
+            plotData.all.pointTs        = pointTs(:,2:3) - double(plotData.all.t(1))/1000/1000;          % time point on screen
+            plotData.all.collectTs      = arrayfun(@(d) d.systemTimeStamp([1 end]),choppedGaze,'uni',false);% time data collected for point
             plotData.all.collectTs      = double(cat(1,plotData.all.collectTs{:})-plotData.all.t(1))/1000/1000;
             plotData.all.t              = double(plotData.all.t-plotData.all.t(1))/1000/1000;
             % cut off last bit of all validation data that lies beyond last
@@ -6925,12 +7036,12 @@ classdef Titta < handle
             % 2
             % get timestamps, make new fake time signal to glue data
             % together with only small gaps in between
-            t0s     = arrayfun(@(d) d.systemTimeStamp( 1 )  ,valData.gazeData);
-            tes     = arrayfun(@(d) d.systemTimeStamp(end)  ,valData.gazeData);
+            t0s     = arrayfun(@(d) d.systemTimeStamp( 1 )  ,choppedGaze);
+            tes     = arrayfun(@(d) d.systemTimeStamp(end)  ,choppedGaze);
             dur     = tes-t0s;
-            nSamp   = arrayfun(@(d) numel(d.systemTimeStamp),valData.gazeData);
+            nSamp   = arrayfun(@(d) numel(d.systemTimeStamp),choppedGaze);
             sampIdx = cumsum([1; nSamp]);
-            plotData.off.t = cat(2,valData.gazeData.systemTimeStamp);
+            plotData.off.t = cat(2,choppedGaze.systemTimeStamp);
             plotData.off.collectTs = nan(nValPoint,2);
             gapDur = int64(mean(dur)*.15);  % 15% gap
             for v=1:nValPoint
@@ -6946,28 +7057,28 @@ classdef Titta < handle
             plotData.off.p = [];
             plotData.off.o = [];
             if qHasLeft
-                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.left,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
+                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.left,y{1}), choppedGaze, num2cell(pointPos(:,4:5),2), 'uni',false);
                 temp    = cellfun(@(m,a) bsxfun(@times,m,[cos(a); sin(a)]),angs1D,offOnScreenDir,'uni',false);
                 temp    = cat(2,temp{:});
                 plotData.off.x = temp(1,:);
                 plotData.off.y = temp(2,:);
-                temp    = arrayfun(@(x) x.left.pupil.diameter, valData.gazeData, 'uni',false);
+                temp    = arrayfun(@(x) x.left.pupil.diameter, choppedGaze, 'uni',false);
                 plotData.off.p = cat(2,temp{:});
                 if qHasEyeOpenness
-                    temp    = arrayfun(@(x) x.left.eyeOpenness.diameter, valData.gazeData, 'uni',false);
+                    temp    = arrayfun(@(x) x.left.eyeOpenness.diameter, choppedGaze, 'uni',false);
                     plotData.off.o = cat(2,temp{:});
                 end
             end
             if qHasRight
-                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.right,y{1}), valData.gazeData, num2cell(valData.pointPos(:,4:5),2), 'uni',false);
+                [angs1D,offOnScreenDir] = arrayfun(@(x,y) obj.getOffsetFromPoint(x.right,y{1}), choppedGaze, num2cell(pointPos(:,4:5),2), 'uni',false);
                 temp    = cellfun(@(m,a) bsxfun(@times,m,[cos(a); sin(a)]),angs1D,offOnScreenDir,'uni',false);
                 temp    = cat(2,temp{:});
                 plotData.off.x = [plotData.off.x; temp(1,:)];
                 plotData.off.y = [plotData.off.y; temp(2,:)];
-                temp    = arrayfun(@(x) x.right.pupil.diameter, valData.gazeData, 'uni',false);
+                temp    = arrayfun(@(x) x.right.pupil.diameter, choppedGaze, 'uni',false);
                 plotData.off.p = [plotData.off.p; cat(2,temp{:})];
                 if qHasEyeOpenness
-                    temp    = arrayfun(@(x) x.right.eyeOpenness.diameter, valData.gazeData, 'uni',false);
+                    temp    = arrayfun(@(x) x.right.eyeOpenness.diameter, choppedGaze, 'uni',false);
                     plotData.off.o = [plotData.off.o; cat(2,temp{:})];
                 end
             end
