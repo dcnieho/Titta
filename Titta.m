@@ -2549,7 +2549,7 @@ classdef Titta < handle
             but(1)  = PTBButton(obj.settings.UI.button.setup.changeeye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
             but(2)  = PTBButton(obj.settings.UI.button.setup.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
             but(3)  = PTBButton(obj.settings.UI.button.setup.cal      ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHasValidValidations , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.setup.prevcal  , qHasValidValidations  , wpnt(end), funs, obj.settings.UI.button.margins);
             
             % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
