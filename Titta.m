@@ -1846,6 +1846,7 @@ classdef Titta < handle
             settings.UI.advcal.instruct.color   = 0;                            % only for messages on the screen, doesn't affect buttons
             settings.UI.advcal.instruct.style   = 0;                            % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.advcal.instruct.vSpacing= 1;
+            settings.UI.button.advcal.margins   = settings.UI.button.margins;
             settings.UI.button.advcal.text.font             = sansFont;
             settings.UI.button.advcal.text.size             = 24*textFac;
             settings.UI.button.advcal.text.style            = 0;
@@ -4611,16 +4612,16 @@ classdef Titta < handle
             
             % set up buttons
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
-            but(1)  = PTBButton(obj.settings.UI.button.advcal.changeEye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.button.advcal.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(3)  = PTBButton(obj.settings.UI.button.advcal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(4)  = PTBButton(obj.settings.UI.button.advcal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(5)  = PTBButton(obj.settings.UI.button.advcal.snapshot ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(6)  = PTBButton(obj.settings.UI.button.advcal.toggAuto ,       qHasAuto        , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(7)  = PTBButton(obj.settings.UI.button.advcal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(8)  = PTBButton(obj.settings.UI.button.advcal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(9)  = PTBButton(obj.settings.UI.button.advcal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
-            but(10) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(obj.settings.UI.button.advcal.changeEye, qCanDoMonocularCalib  , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(2)  = PTBButton(obj.settings.UI.button.advcal.toggEyeIm,       qHasEyeIm       , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(3)  = PTBButton(obj.settings.UI.button.advcal.calval   ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(4)  = PTBButton(obj.settings.UI.button.advcal.continue ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(5)  = PTBButton(obj.settings.UI.button.advcal.snapshot ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(6)  = PTBButton(obj.settings.UI.button.advcal.toggAuto ,       qHasAuto        , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(7)  = PTBButton(obj.settings.UI.button.advcal.toggHead ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(8)  = PTBButton(obj.settings.UI.button.advcal.toggGaze ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(9)  = PTBButton(obj.settings.UI.button.advcal.calibrate,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
+            but(10) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
             
             % position them
             % 1. below screen
