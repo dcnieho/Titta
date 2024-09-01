@@ -232,10 +232,10 @@ if runInDummyMode
     [rx, ry]    = deal([]);
     t           = [];
 else
-    left.x  = ETdat. left.gazePoint.onDisplayArea(1,:) * dat.expt.winRect(3);
-    left.y  = ETdat. left.gazePoint.onDisplayArea(2,:) * dat.expt.winRect(4);
-    right.x = ETdat.right.gazePoint.onDisplayArea(1,:) * dat.expt.winRect(3);
-    right.y = ETdat.right.gazePoint.onDisplayArea(2,:) * dat.expt.winRect(4);
+    left.x  = ETdat. left.gazePoint.onDisplayArea(1,:) * dat.expt.resolution(1);
+    left.y  = ETdat. left.gazePoint.onDisplayArea(2,:) * dat.expt.resolution(2);
+    right.x = ETdat.right.gazePoint.onDisplayArea(1,:) * dat.expt.resolution(1);
+    right.y = ETdat.right.gazePoint.onDisplayArea(2,:) * dat.expt.resolution(2);
     
     qDat    = ETdat.systemTimeStamp>=startT & ETdat.systemTimeStamp<=endT;
     t       = ETdat.systemTimeStamp(qDat); t=double(t-startT)/1000;
@@ -255,7 +255,7 @@ hs      = plot(Ts,pos(1,:),'k');
 hl      = plot(t,lx,'Color',eyeColors{1}/255);
 hr      = plot(t,rx,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
-ylim([0 dat.expt.winRect(3)]);
+ylim([0 dat.expt.resolution(1)]);
 ylabel(['Horizontal gaze' newline 'position (pixels)'])
 legend([hs hl hr],'dot position','left gaze','right gaze','Location','NorthWest')
 
@@ -265,7 +265,7 @@ hs      = plot(Ts,pos(2,:),'k');
 hl      = plot(t,ly,'Color',eyeColors{1}/255);
 hr      = plot(t,ry,'Color',eyeColors{2}/255);
 xlim(Ts([1 end]))
-ylim([0 dat.expt.winRect(4)]);
+ylim([0 dat.expt.resolution(2)]);
 ylabel(['Vertical gaze' newline 'position (pixels)'])
 xlabel('Time (ms)');
 
