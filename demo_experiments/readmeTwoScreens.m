@@ -31,6 +31,7 @@ useAnimatedCalibration  = true;
 doBimonocularCalibration= false;
 scrParticipant          = 1;
 scrOperator             = 2;
+useWindowedOperatorScreen = false;  % if true, a windowed operator display smaller than the whole screen is made
 % task parameters
 fixTime                 = .5;
 imageTime               = 4;
@@ -105,7 +106,14 @@ try
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
     [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr, [], [], [], [], 4);
-    [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator   , bgClr, [], [], [], [], 4);
+    if useWindowedOperatorScreen
+        wrect  = Screen('GlobalRect', scrOperator);
+        [w, h] = Screen('WindowSize', scrOperator);
+        wrect  = CenterRect([w*.1 h*.1 w*.9 h*.9],wrect);
+        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr, wrect, [], [], [], 4, [], kPsychGUIWindow);
+    else
+        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr, [], [], [], [], 4);
+    end
     hz=Screen('NominalFrameRate', wpntP);
     Priority(1);
     Screen('BlendFunction', wpntP, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
