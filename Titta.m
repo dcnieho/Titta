@@ -2590,7 +2590,7 @@ classdef Titta < handle
             % arrange them
             butRectsBase= cat(1,but([but.visible]).rect);
             if ~isempty(butRectsBase)
-                buttonOff   = 80;
+                buttonOff   = obj.scrInfo.resolution{end}(1)*0.04;
                 yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 % place buttons for go to advanced interface, or calibrate
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
@@ -3945,7 +3945,7 @@ classdef Titta < handle
             % 1. below screen
             butRectsBase= cat(1,but([but(1:4).visible]).rect);
             if ~isempty(butRectsBase)
-                buttonOff   = 80;
+                buttonOff   = obj.scrInfo.resolution{end}(1)*0.04;
                 yposBase    = obj.scrInfo.resolution{end}(2)-8;
                 buttonWidths= butRectsBase(:,3)-butRectsBase(:,1);
                 totWidth    = sum(buttonWidths)+(length(buttonWidths)-1)*buttonOff;
@@ -4661,7 +4661,7 @@ classdef Titta < handle
             but(11) = PTBButton(obj.settings.UI.button.advcal.discard  ,         true          , wpnt(end), funs, obj.settings.UI.button.advcal.margins);
             
             % position them
-            buttonOff   = [80 15];
+            buttonOff   = [obj.scrInfo.resolution{end}(1)*0.04 obj.scrInfo.resolution{end}(2)*0.012];
             % 1. below screen
             butRectsBase= cat(1,but([but(1:6).visible]).rect);
             if ~isempty(butRectsBase)
