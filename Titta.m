@@ -6944,8 +6944,14 @@ classdef Titta < handle
                 pointPos = valData.allPoints.pointPos;
 
                 % these two we have to create
-                pointTsUs = [arrayfun(@(d) d.systemTimeStamp(1),choppedGaze) arrayfun(@(d) d.systemTimeStamp(end),choppedGaze)];
-                pointTs   = [pointPos(:,1) double(pointTsUs)/1000/1000];
+                pointTsUs   = [arrayfun(@(d) d.systemTimeStamp(1),choppedGaze) arrayfun(@(d) d.systemTimeStamp(end),choppedGaze)];
+                [~,idx]     = sort(pointTsUs(:,1));
+                pointTsUs   = pointTsUs(idx,:);
+                pointPos    = pointPos(idx,:);
+                choppedGaze = choppedGaze(idx,:);
+
+                pointTs     = [pointPos(:,1) double(pointTsUs)/1000/1000];
+
                 ts = {choppedGaze.systemTimeStamp};
                 filler = num2cell([int64(mean([pointTsUs(1:end-1,2) pointTsUs(2:end,1)],2)); pointTsUs(end)+1]);
                 allts = [ts; filler.'];
