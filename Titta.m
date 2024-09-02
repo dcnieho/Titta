@@ -7165,14 +7165,9 @@ classdef Titta < handle
                 if tt(end)=='o' && ~qHasEyeOpenness
                     continue;
                 end
-                if strcmp(tt(1:3),'off') || tt(end)=='p' || tt(end)=='o'
-                    fmt = '%.2f';
-                else
-                    fmt = '%.0f';
-                end
                 lim         = subsref(plotData,structPathToIdx([tt '.lim']));
                 % make the ticks and store them in lookup table
-                ticks       = getPlotTicks(lim);
+                [ticks,fmt] = getPlotTicks(lim);
                 plotData    = subsasgn(plotData,structPathToIdx([tt '.ticks']), ticks);
                 
                 % get text, with formatting
@@ -8270,7 +8265,7 @@ for f=1:length(fields)
 end
 end
 
-function ticks = getPlotTicks(lim)
+function [ticks,fmt] = getPlotTicks(lim)
 % This function and below helpers are ported and simplified from
 % matplotlib.ticker's MaxNLocator with AutoLocator's default parameters
 nbins       = 9;
@@ -8321,6 +8316,18 @@ ticks = ticks + offset;
 % added by DN: trim the ticks that are outside the plot range, not needed
 % for us
 ticks(ticks<lim(1) | ticks>lim(2)) = [];
+
+% get format appropriate for the tick step
+% based on matplotlib.ticker.ScalarFormatter._set_format
+sigfigs = 2;
+while sigfigs>=0
+    if abs(step - round(step,sigfigs)) < 1e-6 % 1e-6 is more than sufficient for our value range
+        sigfigs=sigfigs-1;
+    else
+        break
+    end
+end
+fmt = sprintf('%%.%df',sigfigs+1);
 end
 
 function v = edge_le(step, offset, x)
