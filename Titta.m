@@ -7402,15 +7402,17 @@ classdef Titta < handle
             
             % prep background highlight indicating when validation data was
             % collected when plotting all
-            plotData.all.ax.highLightRects = nan(4,nValPoint*numPanel);
-            for q=1:nValPoint
-                pos = plotData.all.ax.dat2pix{1}(plotData.all.collectTs(q,:),[0 0]);
-                plotData.all.ax.highLightRects(1,(1:numPanel)+(q-1)*numPanel) = pos(1,1);
-                plotData.all.ax.highLightRects(3,(1:numPanel)+(q-1)*numPanel) = pos(1,2);
-            end
-            for q=1:numPanel
-                plotData.all.ax.highLightRects(2,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(2,q);
-                plotData.all.ax.highLightRects(4,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(4,q);
+            if ~forAdvanced
+                plotData.all.ax.highLightRects = nan(4,nValPoint*numPanel);
+                for q=1:nValPoint
+                    pos = plotData.all.ax.dat2pix{1}(plotData.all.collectTs(q,:),[0 0]);
+                    plotData.all.ax.highLightRects(1,(1:numPanel)+(q-1)*numPanel) = pos(1,1);
+                    plotData.all.ax.highLightRects(3,(1:numPanel)+(q-1)*numPanel) = pos(1,2);
+                end
+                for q=1:numPanel
+                    plotData.all.ax.highLightRects(2,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(2,q);
+                    plotData.all.ax.highLightRects(4,q:numPanel:nValPoint*numPanel) = plotData.all.ax.rects(4,q);
+                end
             end
                     
             % prep line indicating dot position
@@ -7467,7 +7469,9 @@ classdef Titta < handle
                 if strcmp(plotWhich,'all')
                     % draw background highlight indicating when validation
                     % data was collected
-                    Screen('FillRect',wpnt(end),highlightColor,plotData.all.ax.highLightRects);
+                    if isfield(plotData.all.ax,'highLightRects')
+                        Screen('FillRect',wpnt(end),highlightColor,plotData.all.ax.highLightRects);
+                    end
                     
                     % draw line indicating dot position
                     Screen('DrawLines',wpnt(end),plotData.all.ax.dotPosLines,plotSettings.dotPosLine.width,dotPosLineColor,[],2);
