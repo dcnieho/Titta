@@ -7128,18 +7128,34 @@ classdef Titta < handle
             end
             % get axis ticks
             % first get ranges of data
-            for t={'all.t','all.x','all.y','all.p','all.o','off.t','off.x','off.y','off.p','off.o'; false,true,true,false,false,false,false,false,false,false}
+            for t={'all.t','all.x','all.y','all.p','all.o', 'off.t','off.x','off.y','off.p','off.o'; 1,0,0,1,1, 1,2,2,1,1}
                 idxBase = structPathToIdx(t{1});
                 if t{1}(end)=='o' && ~qHasEyeOpenness
                     continue;
                 end
                 idx     = structPathToIdx([t{1} '.data']);
                 plotData= subsasgn(plotData,idxBase,struct('data',subsref(plotData,idxBase)));
-                if t{2} % use screen dimensions instead of data range to set plot dimensions
+                if t{2}==0 % use screen dimensions instead of data range to set plot dimensions
                     lim = [0 obj.scrInfo.resolution{1}(idx(2).subs=='xy')];
                 else
                     dat = subsref(plotData,idx);
                     lim = [mynanmin(dat(:),[]) mynanmax(dat(:),[])];
+                    if t{2}==2
+                        % ensure 0 is included
+                        if all(lim>0)
+                            lim(1) = 0;
+                            % little extra space so range not at edge of
+                            % plot and stipple will fit
+                            rng = diff(lim);
+                            lim(1) = -0.03*rng;
+                        elseif all(lim<0)
+                            lim(2) = 0;
+                            % little extra space so range not at edge of
+                            % plot and stipple will fit
+                            rng = diff(lim);
+                            lim(2) = 0.03*rng;
+                        end
+                    end
                 end
                 plotData = subsasgn(plotData,structPathToIdx([t{1} '.lim']), lim);
                 if t{1}(end)~='t'
