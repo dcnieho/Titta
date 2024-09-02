@@ -6937,6 +6937,7 @@ classdef Titta < handle
             screenState = obj.getScreenInfo(wpnt);
             
             %%% prep data to plot:
+            gapSize = 0.15;  % 15% gap
             if ~forAdvanced
                 plotSettings = obj.settings.UI.plot;
                 allGaze     = valData.allData.gaze;
@@ -6958,7 +6959,7 @@ classdef Titta < handle
                 % relevant here and large whitespace just makes the plot
                 % hard to read
                 dur     = diff(pointTsUs,[],2);
-                gapDur  = int64(mean(dur)*.15);  % 15% gap
+                gapDur  = int64(mean(dur)*gapSize);
                 offs    = cumsum([0; pointTsUs(1:end-1,2)+gapDur-pointTsUs(2:end,1)]);
                 pointTsUs = bsxfun(@plus,pointTsUs,offs);
                 % also adjust gaze timestamps
@@ -7068,7 +7069,7 @@ classdef Titta < handle
             sampIdx = cumsum([1; nSamp]);
             plotData.off.t = cat(2,choppedGaze.systemTimeStamp);
             plotData.off.collectTs = nan(nValPoint,2);
-            gapDur = int64(mean(dur)*.15);  % 15% gap
+            gapDur = int64(mean(dur)*gapSize);
             for v=1:nValPoint
                 toff = -t0s(v) + sum([0; dur(1:v-1)]) + (v-1)*gapDur;
                 plotData.off.t(sampIdx(v):sampIdx(v+1)-1) = plotData.off.t(sampIdx(v):sampIdx(v+1)-1)+toff;
