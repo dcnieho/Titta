@@ -436,6 +436,9 @@ classdef Titta < handle
             obj.settings.UI.advcal.plot.but.exit.fillColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.fillColor);
             obj.settings.UI.advcal.plot.but.exit.edgeColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.edgeColor);
             obj.settings.UI.advcal.plot.but.exit.textColor      = color2RGBA(obj.settings.UI.advcal.plot.but.exit.textColor);
+            obj.settings.UI.advcal.plot.but.valSel.fillColor    = color2RGBA(obj.settings.UI.advcal.plot.but.valSel.fillColor);
+            obj.settings.UI.advcal.plot.but.valSel.edgeColor    = color2RGBA(obj.settings.UI.advcal.plot.but.valSel.edgeColor);
+            obj.settings.UI.advcal.plot.but.valSel.textColor    = color2RGBA(obj.settings.UI.advcal.plot.but.valSel.textColor);
             
             obj.settings.UI.advcal.refCircleClr                 = color2RGBA(obj.settings.UI.advcal.refCircleClr);
             obj.settings.UI.advcal.headCircleEdgeClr            = color2RGBA(obj.settings.UI.advcal.headCircleEdgeClr);
@@ -1960,8 +1963,8 @@ classdef Titta < handle
             settings.UI.advcal.hover.text.style     = 0;                        % can OR together, 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
             settings.UI.advcal.onlineGaze.eyeColors = eyeColors;                % colors for online gaze display on validation output screen. L, R eye. The functions utils/rgb2hsl.m and utils/hsl2rgb.m may be helpful to adjust luminance of your chosen colors if needed for visibility
             
-            settings.UI.advcal.plot                 = settings.UI.plot;
-            settings.UI.advcal.plot.but             = rmfield(settings.UI.advcal.plot.but, 'valSel');
+            settings.UI.advcal.plot                     = settings.UI.plot;
+            settings.UI.advcal.plot.but.valSel.string   = 'show pixels (<i>c<i>)';
 
             settings.UI.advcal.bgColor              = 127;                      % background color for operator screen
             settings.UI.advcal.showHead             = false;                    % show head display when interface opens? If false, can still be opened with button
@@ -4057,7 +4060,7 @@ classdef Titta < handle
             while ~qDoneCalibSelection
                 % draw plot overlay instead of interface if wanted
                 if qShowPlotOverlay
-                    st = obj.drawValidationDataPlots(wpnt, cal{selection}.val{iVal});
+                    st = obj.drawValidationDataPlots(wpnt, cal{selection}.val{iVal}, false);
                     qShowPlotOverlay = false;
                     if ~~st
                         status = st;
@@ -4919,7 +4922,7 @@ classdef Titta < handle
             while ~qDoneWithAdvancedCalib
                 % draw plot overlay instead of interface if wanted
                 if qShowPlotOverlay
-                    st = obj.drawValidationDataPlots(wpnt, out.attempt{kCal}.val{valAction});
+                    st = obj.drawValidationDataPlots(wpnt, out.attempt{kCal}.val{valAction}, true);
                     qShowPlotOverlay = false;
                     if ~~st
                         status = st;
@@ -6928,18 +6931,20 @@ classdef Titta < handle
             obj.ClearAllBuffers(startT);                    % clean up data buffers
         end
         
-        function status = drawValidationDataPlots(obj,wpnt,valData)
+        function status = drawValidationDataPlots(obj,wpnt,valData,forAdvanced)
             qHaveOperatorScreen = ~isscalar(wpnt);
             % get info about screen
             screenState = obj.getScreenInfo(wpnt);
             
             %%% prep data to plot:
-            if isfield(valData,'allData')
+            if ~forAdvanced
+                plotSettings = obj.settings.UI.plot;
                 allGaze     = valData.allData.gaze;
                 choppedGaze = valData.gazeData;
                 pointPos = valData.pointPos;
                 pointTs  = valData.pointTs;
             else
+                plotSettings = obj.settings.UI.advcal.plot;
                 choppedGaze = valData.allPoints.gazeData.';
                 pointPos = valData.allPoints.pointPos;
 
@@ -7123,7 +7128,7 @@ classdef Titta < handle
                 end
                 plotData = subsasgn(plotData,structPathToIdx([t{1} '.lim']), lim);
                 if t{1}(end)~='t'
-                    plotData = subsasgn(plotData,structPathToIdx([t{1} '.clr']), obj.getColorForWindow(obj.settings.UI.plot.eyeColors([qHasLeft qHasRight]),wpnt(end)));
+                    plotData = subsasgn(plotData,structPathToIdx([t{1} '.clr']), obj.getColorForWindow(plotSettings.eyeColors([qHasLeft qHasRight]),wpnt(end)));
                 end
             end
             % for offset x and y, use same axis ranges
@@ -7134,9 +7139,9 @@ classdef Titta < handle
             
             % set text settings to those of the axis tick labels, to reduce
             % unnecessary changing of font properties to a minimum
-            Screen('TextFont' ,wpnt(end),obj.settings.UI.plot.ax.tickLbl.font, obj.settings.UI.plot.ax.tickLbl.style);
-            Screen('TextColor',wpnt(end),obj.settings.UI.plot.ax.tickLbl.color);
-            Screen('TextSize' ,wpnt(end),obj.settings.UI.plot.ax.tickLbl.size);
+            Screen('TextFont' ,wpnt(end),plotSettings.ax.tickLbl.font, plotSettings.ax.tickLbl.style);
+            Screen('TextColor',wpnt(end),plotSettings.ax.tickLbl.color);
+            Screen('TextSize' ,wpnt(end),plotSettings.ax.tickLbl.size);
             
             % determine tick values, and setup axis labels (draw to cache,
             % determine size)
@@ -7157,9 +7162,9 @@ classdef Titta < handle
                 
                 % get text, with formatting
                 for q=length(ticks):-1:1
-                    theText = sprintf(['<font=%s><size=%d>' fmt],obj.settings.UI.plot.ax.tickLbl.font,obj.settings.UI.plot.ax.tickLbl.size,ticks(q));
+                    theText = sprintf(['<font=%s><size=%d>' fmt],plotSettings.ax.tickLbl.font,plotSettings.ax.tickLbl.size,ticks(q));
                     % get and store text cache
-                    textCache = obj.getTextCache(wpnt(end),theText,[],'baseColor',obj.settings.UI.plot.ax.tickLbl.color);
+                    textCache = obj.getTextCache(wpnt(end),theText,[],'baseColor',plotSettings.ax.tickLbl.color);
                     where   = cat(2,structPathToIdx([tt '.ticksTextCache']), substruct('()',{q}));
                     plotData= subsasgn(plotData, where, textCache);
                 end
@@ -7167,9 +7172,9 @@ classdef Titta < handle
             % get axis labels
             % set text settings to those of the axis labels, to reduce
             % unnecessary changing of font properties to a minimum
-            Screen('TextFont' ,wpnt(end),obj.settings.UI.plot.ax.axisLbl.font, obj.settings.UI.plot.ax.axisLbl.style);
-            Screen('TextColor',wpnt(end),obj.settings.UI.plot.ax.axisLbl.color);
-            Screen('TextSize' ,wpnt(end),obj.settings.UI.plot.ax.axisLbl.size);
+            Screen('TextFont' ,wpnt(end),plotSettings.ax.axisLbl.font, plotSettings.ax.axisLbl.style);
+            Screen('TextColor',wpnt(end),plotSettings.ax.axisLbl.color);
+            Screen('TextSize' ,wpnt(end),plotSettings.ax.axisLbl.size);
             % now get the labels and their size
             for t={'all','off'}
                 tt=t{1};
@@ -7179,20 +7184,20 @@ classdef Titta < handle
                     lbl = 'offset';
                 end
                 plotData.(tt).lbl.x = obj.getTextCache(wpnt(end),...
-                    sprintf('<font=%s><size=%d>%s',obj.settings.UI.plot.ax.axisLbl.font,obj.settings.UI.plot.ax.axisLbl.size,obj.settings.UI.plot.ax.axisLbls.x),...
-                    [],'baseColor',obj.settings.UI.plot.ax.axisLbl.color);
+                    sprintf('<font=%s><size=%d>%s',plotSettings.ax.axisLbl.font,plotSettings.ax.axisLbl.size,plotSettings.ax.axisLbls.x),...
+                    [],'baseColor',plotSettings.ax.axisLbl.color);
                 for l=1:numPanel
                     plotData.(tt).lbl.y(l) = obj.getTextCache(wpnt(end),...
-                        sprintf('<font=%s><size=%d>%s',obj.settings.UI.plot.ax.axisLbl.font,obj.settings.UI.plot.ax.axisLbl.size,obj.settings.UI.plot.ax.axisLbls.(lbl){l}),...
-                        [],'xlayout','center','baseColor',obj.settings.UI.plot.ax.axisLbl.color, 'transform',{'rotate',-90});
+                        sprintf('<font=%s><size=%d>%s',plotSettings.ax.axisLbl.font,plotSettings.ax.axisLbl.size,plotSettings.ax.axisLbls.(lbl){l}),...
+                        [],'xlayout','center','baseColor',plotSettings.ax.axisLbl.color, 'transform',{'rotate',-90});
                 end
             end
             % get val lbls
             % set text settings to those of the validation ID labels, to
             % reduce unnecessary changing of font properties to a minimum
-            Screen('TextFont' ,wpnt(end),obj.settings.UI.plot.ax.valLbl.font, obj.settings.UI.plot.ax.valLbl.style);
-            Screen('TextColor',wpnt(end),obj.settings.UI.plot.ax.valLbl.color);
-            Screen('TextSize' ,wpnt(end),obj.settings.UI.plot.ax.valLbl.size);
+            Screen('TextFont' ,wpnt(end),plotSettings.ax.valLbl.font, plotSettings.ax.valLbl.style);
+            Screen('TextColor',wpnt(end),plotSettings.ax.valLbl.color);
+            Screen('TextSize' ,wpnt(end),plotSettings.ax.valLbl.size);
             for t={'all','off'}
                 tt=t{1};
                 if strcmp(tt,'all') && ~qHaveTrackerSpacePos
@@ -7204,15 +7209,15 @@ classdef Titta < handle
                 end
                 for q=nValPoint:-1:1
                     plotData.(tt).lbl.val(q) = obj.getTextCache(wpnt(end),...
-                        sprintf(['<font=%s><size=%d>%d @ (' fmt ')'],obj.settings.UI.plot.ax.valLbl.font,obj.settings.UI.plot.ax.valLbl.size,plotData.pointIDs(q),plotData.pointsTrackSpace(q,:).*fac),...
-                        [],'baseColor',obj.settings.UI.plot.ax.valLbl.color);
+                        sprintf(['<font=%s><size=%d>%d @ (' fmt ')'],plotSettings.ax.valLbl.font,plotSettings.ax.valLbl.size,plotData.pointIDs(q),plotData.pointsTrackSpace(q,:).*fac),...
+                        [],'baseColor',plotSettings.ax.valLbl.color);
                 end
             end
             % get info text, if needed
             if qHaveTrackerSpacePos
                 plotData.infoText = obj.getTextCache(wpnt(end),...
-                    sprintf('<font=%s><size=%d>Shown gaze positions are in tracker space',obj.settings.UI.plot.ax.valLbl.font,obj.settings.UI.plot.ax.valLbl.size),...
-                    [],'baseColor',obj.settings.UI.plot.ax.axisLbl.color);
+                    sprintf('<font=%s><size=%d>Shown gaze positions are in tracker space',plotSettings.ax.valLbl.font,plotSettings.ax.valLbl.size),...
+                    [],'baseColor',plotSettings.ax.axisLbl.color);
             else
                 plotData.infoText = [];
             end
@@ -7220,8 +7225,8 @@ classdef Titta < handle
             %%% layout the screen
             % make toggle button
             funs    = struct('textCacheGetter',@obj.getTextCache, 'textCacheDrawer', @obj.drawCachedText, 'cacheOffSetter', @obj.positionButtonText, 'colorGetter', @(clr) obj.getColorForWindow(clr,wpnt(end)));
-            but(1)  = PTBButton(obj.settings.UI.plot.but.exit  , true, wpnt(end), funs, obj.settings.UI.button.margins);
-            but(2)  = PTBButton(obj.settings.UI.plot.but.valSel, true, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(1)  = PTBButton(plotSettings.but.exit  , true, wpnt(end), funs, obj.settings.UI.button.margins);
+            but(2)  = PTBButton(plotSettings.but.valSel, true, wpnt(end), funs, obj.settings.UI.button.margins);
             % position them
             yPosTop = .02*obj.scrInfo.resolution{end}(2);
             
@@ -7239,13 +7244,13 @@ classdef Titta < handle
             
             % figure out where to put plots
             % total size occupied by panels
-            scrUsed = obj.scrInfo.resolution{end} .* (1-sum(reshape(obj.settings.UI.plot.scrMargins,2,[])));
-            margins = obj.scrInfo.resolution{end}([1 1 2 2]) .* obj.settings.UI.plot.scrMargins;
+            scrUsed = obj.scrInfo.resolution{end} .* (1-sum(reshape(plotSettings.scrMargins,2,[])));
+            margins = obj.scrInfo.resolution{end}([1 1 2 2]) .* plotSettings.scrMargins;
             % size of each panel, including y-labels, excluding x-label as
             % only under last panel
-            panelPad        = obj.scrInfo.resolution{end}(2) * obj.settings.UI.plot.panelPad;
+            panelPad        = obj.scrInfo.resolution{end}(2) * plotSettings.panelPad;
             panelSz         = [scrUsed(1) (scrUsed(2)-(numPanel-1)*panelPad)/numPanel];
-            halfAxLineWidth = obj.settings.UI.plot.ax.lineWidth/2;
+            halfAxLineWidth = plotSettings.ax.lineWidth/2;
             
             % position axes
             for t={'all','off'}
@@ -7258,7 +7263,7 @@ classdef Titta < handle
                 yTickTextWidth                  = max(yTickTextRects(:,3)-yTickTextRects(:,1));
                 yLblTextRects                   = cat(1,plotData.(tt).lbl.y.bbox);
                 yLblTextWidths                  = yLblTextRects(:,3)-yLblTextRects(:,1);
-                plotData.(tt).lbl.labelSpace(1) = halfAxLineWidth + obj.settings.UI.plot.ax.tickLbl.pad + yTickTextWidth  + obj.settings.UI.plot.ax.axisLbl.pad + max(yLblTextWidths);
+                plotData.(tt).lbl.labelSpace(1) = halfAxLineWidth + plotSettings.ax.tickLbl.pad + yTickTextWidth  + plotSettings.ax.axisLbl.pad + max(yLblTextWidths);
 
                 % position axes
                 xspaceLeft = (obj.scrInfo.resolution{end}(1)-panelSz(1))/2+plotData.(tt).lbl.labelSpace(1);
@@ -7289,7 +7294,7 @@ classdef Titta < handle
                 
                 xTickTextRects                  = cat(1,plotData.(tt).t.ticksTextCache.bbox);
                 xTickTextHeight                 = max(xTickTextRects(:,4)-xTickTextRects(:,2));
-                plotData.(tt).lbl.labelSpace(2) = halfAxLineWidth + obj.settings.UI.plot.ax.tickLbl.pad + xTickTextHeight + obj.settings.UI.plot.ax.axisLbl.pad + plotData.(tt).lbl.x.bbox(4)-plotData.(tt).lbl.x.bbox(2);
+                plotData.(tt).lbl.labelSpace(2) = halfAxLineWidth + plotSettings.ax.tickLbl.pad + xTickTextHeight + plotSettings.ax.axisLbl.pad + plotData.(tt).lbl.x.bbox(4)-plotData.(tt).lbl.x.bbox(2);
                 
                 % prepare axis lines
                 idxs = [1 1 1 3; 2 4 4 4];
@@ -7310,7 +7315,7 @@ classdef Titta < handle
                 % prepare tick lines
                 plotData.(tt).ax.tickLinesX = cell(numPanel,1);
                 plotData.(tt).ax.tickLinesY = cell(numPanel,1);
-                tickLength = obj.settings.UI.plot.ax.tickLength*obj.scrInfo.resolution{end}(2);
+                tickLength = plotSettings.ax.tickLength*obj.scrInfo.resolution{end}(2);
                 for f=1:length(fields)
                     xt          = plotData.(tt).     t     .ticks;
                     yt          = plotData.(tt).(fields(f)).ticks;
@@ -7354,9 +7359,9 @@ classdef Titta < handle
                         [rx,ry] = RectCenterd(plotData.(tt).(f).ticksTextCache(r).bbox);
                         [rw,rh] = RectSize   (plotData.(tt).(f).ticksTextCache(r).bbox);
                         if ax=='x'
-                            labelCent = [tickLines(1,r) tickLines(2,r)+halfAxLineWidth+obj.settings.UI.plot.ax.tickLbl.pad+rh/2];
+                            labelCent = [tickLines(1,r) tickLines(2,r)+halfAxLineWidth+plotSettings.ax.tickLbl.pad+rh/2];
                         else
-                            labelCent = [tickLines(1,r)-halfAxLineWidth-obj.settings.UI.plot.ax.tickLbl.pad-rw/2 tickLines(2,r)];
+                            labelCent = [tickLines(1,r)-halfAxLineWidth-plotSettings.ax.tickLbl.pad-rw/2 tickLines(2,r)];
                         end
                         off = labelCent-[rx ry];
                         plotData.(tt).(f).ticksTextCache(r) = obj.repositionTextCache(plotData.(tt).(f).ticksTextCache(r),off);
@@ -7364,7 +7369,7 @@ classdef Titta < handle
                 end
                 
                 % position axis labels
-                yLabelCent = [plotData.(tt).ax.rects(1,1) - halfAxLineWidth - obj.settings.UI.plot.ax.tickLbl.pad - yTickTextWidth - obj.settings.UI.plot.ax.axisLbl.pad - yLblTextWidths.'./2; (plotData.(tt).ax.rects(2,:)+plotData.(tt).ax.rects(4,:))./2];
+                yLabelCent = [plotData.(tt).ax.rects(1,1) - halfAxLineWidth - plotSettings.ax.tickLbl.pad - yTickTextWidth - plotSettings.ax.axisLbl.pad - yLblTextWidths.'./2; (plotData.(tt).ax.rects(2,:)+plotData.(tt).ax.rects(4,:))./2];
                 for p=1:length(yLblTextWidths)
                     [rx,ry] = RectCenterd(plotData.(tt).lbl.y(p).bbox);
                     off     = [yLabelCent(1,p)-rx yLabelCent(2,p)-ry];
@@ -7379,7 +7384,7 @@ classdef Titta < handle
                 for q=1:nValPoint
                     x       = mean(plotData.(tt).collectTs(q,:));
                     pos     = plotData.(tt).ax.dat2pix{1}(x,0); pos(3)=[];
-                    pos(2)  = plotData.(tt).ax.rects(2,1)-obj.settings.UI.plot.ax.valLbl.pad-RectHeight(plotData.(tt).lbl.val(q).bbox)/2;
+                    pos(2)  = plotData.(tt).ax.rects(2,1)-plotSettings.ax.valLbl.pad-RectHeight(plotData.(tt).lbl.val(q).bbox)/2;
                     [rx,ry] = RectCenterd(plotData.(tt).lbl.val(q).bbox);
                     plotData.(tt).lbl.val(q) = obj.repositionTextCache(plotData.(tt).lbl.val(q),pos-[rx ry].');
                 end
@@ -7412,9 +7417,9 @@ classdef Titta < handle
             % set text settings to those of the axis tick labels, those
             % will get drawn the most, so having those as bases reduces
             % unnecessary changing of font properties to a minimum
-            Screen('TextFont' ,wpnt(end),obj.settings.UI.plot.ax.tickLbl.font, obj.settings.UI.plot.ax.tickLbl.style);
-            Screen('TextColor',wpnt(end),obj.settings.UI.plot.ax.tickLbl.color);
-            Screen('TextSize' ,wpnt(end),obj.settings.UI.plot.ax.tickLbl.size);
+            Screen('TextFont' ,wpnt(end),plotSettings.ax.tickLbl.font, plotSettings.ax.tickLbl.style);
+            Screen('TextColor',wpnt(end),plotSettings.ax.tickLbl.color);
+            Screen('TextSize' ,wpnt(end),plotSettings.ax.tickLbl.size);
             
             % setup cursors
             cursors.rect    = butRects;
@@ -7427,14 +7432,14 @@ classdef Titta < handle
             
             if qHaveOperatorScreen
                 bgClrP      = obj.getColorForWindow(obj.settings.UI.val.bgColor, wpnt(1));
-                bgClrO      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(2));
+                bgClrO      = obj.getColorForWindow(plotSettings.bgColor,wpnt(2));
             else
-                bgClrP      = obj.getColorForWindow(obj.settings.UI.plot.bgColor,wpnt(1));
+                bgClrP      = obj.getColorForWindow(plotSettings.bgColor,wpnt(1));
             end
-            axBgColor       = obj.getColorForWindow(obj.settings.UI.plot.ax.bgColor,wpnt(end));
-            lineColor   	= obj.getColorForWindow(obj.settings.UI.plot.ax.lineColor,wpnt(end));
-            dotPosLineColor = obj.getColorForWindow(obj.settings.UI.plot.dotPosLine.color,wpnt(end));
-            highlightColor  = obj.getColorForWindow(obj.settings.UI.plot.ax.highlightColor,wpnt(end));
+            axBgColor       = obj.getColorForWindow(plotSettings.ax.bgColor,wpnt(end));
+            lineColor   	= obj.getColorForWindow(plotSettings.ax.lineColor,wpnt(end));
+            dotPosLineColor = obj.getColorForWindow(plotSettings.dotPosLine.color,wpnt(end));
+            highlightColor  = obj.getColorForWindow(plotSettings.ax.highlightColor,wpnt(end));
             plotWhich = 'off';
             % Refresh internal key-/mouseState to make sure we don't
             % trigger on already pressed buttons
@@ -7455,16 +7460,16 @@ classdef Titta < handle
                     Screen('FillRect',wpnt(end),highlightColor,plotData.all.ax.highLightRects);
                     
                     % draw line indicating dot position
-                    Screen('DrawLines',wpnt(end),plotData.all.ax.dotPosLines,obj.settings.UI.plot.dotPosLine.width,dotPosLineColor,[],2);
+                    Screen('DrawLines',wpnt(end),plotData.all.ax.dotPosLines,plotSettings.dotPosLine.width,dotPosLineColor,[],2);
                 end
                 
                 % draw data
-                obj.drawPlotData(wpnt,plotData,plotWhich,qHasEyeOpenness);
+                drawPlotData(wpnt,plotSettings,plotData,plotWhich,qHasEyeOpenness);
                 
                 % draw axes and ticks
-                Screen('DrawLines',wpnt(end),plotData.(plotWhich).ax.lines               ,obj.settings.UI.plot.ax.lineWidth,lineColor,[],2);
-                Screen('DrawLines',wpnt(end),cat(2,plotData.(plotWhich).ax.tickLinesX{:}),obj.settings.UI.plot.ax.lineWidth,lineColor,[],2);
-                Screen('DrawLines',wpnt(end),cat(2,plotData.(plotWhich).ax.tickLinesY{:}),obj.settings.UI.plot.ax.lineWidth,lineColor,[],2);
+                Screen('DrawLines',wpnt(end),plotData.(plotWhich).ax.lines               ,plotSettings.ax.lineWidth,lineColor,[],2);
+                Screen('DrawLines',wpnt(end),cat(2,plotData.(plotWhich).ax.tickLinesX{:}),plotSettings.ax.lineWidth,lineColor,[],2);
+                Screen('DrawLines',wpnt(end),cat(2,plotData.(plotWhich).ax.tickLinesY{:}),plotSettings.ax.lineWidth,lineColor,[],2);
                 
                 % draw labels
                 obj.drawCachedText(plotData.(plotWhich).t.ticksTextCache);
@@ -7531,9 +7536,9 @@ classdef Titta < handle
                     end
 
                     % user-defined accelerators
-                    if any(strcmpi(keys,obj.settings.UI.plot.but.exit.accelerator))
+                    if any(strcmpi(keys,plotSettings.but.exit.accelerator))
                         break;
-                    elseif any(strcmpi(keys,obj.settings.UI.plot.but.valSel.accelerator))
+                    elseif any(strcmpi(keys,plotSettings.but.valSel.accelerator))
                         if strcmp(plotWhich,'off')
                             plotWhich = 'all';
                         else
@@ -7545,119 +7550,6 @@ classdef Titta < handle
             
             % clean up and reset PTB state
             obj.resetScreen(wpnt,screenState);
-        end
-        
-        function drawPlotData(obj,wpnt,plotData,plotWhich,qHasEyeOpenness)
-            fields = 'xyp';
-            if qHasEyeOpenness
-                fields = [fields 'o'];
-            end
-            for f=1:length(fields)
-                % get data on plot
-                [xyo,axRect] = plotData.(plotWhich).ax.dat2pix{f}(plotData.(plotWhich).t.data,plotData.(plotWhich).(fields(f)).data);
-                % double up internal points as they are both the end of one line
-                % segment and the start of the next line segment
-                idxs = repmat(2:size(xyo,2),2,1);
-                xyo  = xyo(:,[1 idxs(:).' end],:);
-                
-                % deal with data that would be outside the axis. Instead, move point to
-                % where line segment intersects the axis, so we show as much of the
-                % data as possible
-                for q=1:size(xyo,3)
-                    i   = 1;
-                    idx = find(xyo(3,i:end,q),1);
-                    while idx
-                        % get other part of line segment
-                        idx  = idx+i-1;
-                        idxs = idx+[0 -1+2*mod(idx,2)];
-                        points = xyo(1:2,idxs,q);
-                        % check if line segment crosses plot axis
-                        if bitand(xyo(3,idxs(1),q),xyo(3,idxs(2),q))==0 && ...  % if none of the same bits are set, the line segment crosses the axis
-                                all(~isnan(points(2,:)))                        % and if neither of the points is nan
-                            % get which axis is intersected.
-                            ax = nan(2,2,2);
-                            if bitand(xyo(3,idx,q),1)         % left axis
-                                ax(:,:,1) = axRect([1 1; 2 4]);
-                            elseif bitand(xyo(3,idx,q),2)     % right axis
-                                ax(:,:,1) = axRect([3 3; 2 4]);
-                            end
-                            if bitand(xyo(3,idx,q),4)         % bottom axis
-                                ax(:,:,2) = axRect([1 3; 4 4]);
-                            elseif bitand(xyo(3,idx,q),8)     % top axis
-                                ax(:,:,2) = axRect([1 3; 2 2]);
-                            end
-                            
-                            % calculate intersection point and place at idx
-                            % adapted from http://stackoverflow.com/a/1968345/3103767
-                            s1_x = diff(points(1,:));
-                            s1_y = diff(points(2,:));
-                            s2_x = squeeze(diff(ax(1,:,:),[],2));
-                            s2_y = squeeze(diff(ax(2,:,:),[],2));
-                            s = (-s1_y .* (points(1,1) - squeeze(ax(1,1,:))) + s1_x .* (points(2,1) - squeeze(ax(2,1,:)))) ./ (-s2_x .* s1_y + s1_x .* s2_y);
-                            t = ( s2_x .* (points(2,1) - squeeze(ax(2,1,:))) - s2_y .* (points(1,1) - squeeze(ax(1,1,:)))) ./ (-s2_x .* s1_y + s1_x .* s2_y);
-                            % if s and t in [0 1] we've got an intersection within the
-                            % line segments. Use this to know which intersection point
-                            % to use (in some edge cases there are two, of which only
-                            % one is valid)
-                            iIdx = find(s>=0&s<=1&t>=0&t<=1,1); % if intersecting exactly the axis corner, there will be two valid intersections, choose one (doesn't matter which one as they are the same)
-                            if isempty(iIdx)
-                                % data-line did not intersect axis (e.g. two points,
-                                % one that is left of left axis and other that is below
-                                % bottom axis) may not intersect the axis in all cases,
-                                % can be too far left and too far below.
-                                xyo(1:2,idx,q) = nan;
-                            else
-                                % next compute intersection coordinate
-                                xInt = points(1,1) + (t(iIdx) .* s1_x);
-                                yInt = points(2,1) + (t(iIdx) .* s1_y);
-                                
-                                % move point that is outside line further up the line segment
-                                % so that it is exactly at the axis
-                                xyo(1:2,idx,q) = [xInt yInt];
-                            end
-                        else
-                            % can't do anything with this data point as the other part of
-                            % the line segment is missing or also not on the plot, remove
-                            % it
-                            xyo(1:2,idx,q) = nan;
-                        end
-                        
-                        % move forward in data
-                        i   = idx+1;
-                        idx = find(xyo(3,i:end,q),1);
-                    end
-                    
-                    % deal with data points flanked by missing on both sides. we need
-                    % to make these into very short lines so that they are still
-                    % visible on the plot
-                    [don,doff] = bool2bounds(~isnan(xyo(2,:,q)));
-                    if any(doff-don+1<=2)
-                        % since we double up data for plotting, an isolated point
-                        % flanked by missing on both sides will show up as data length
-                        % of 2 (unless at start or end of data, where it will be 1
-                        % get where this happens, and change that line segment into a
-                        % short line so that it is visible on the plot. remove the
-                        % next line segment
-                        % make line segment that is just as long as its wide
-                        idxs = don(doff-don+1<=2);  % this always gets the end of a line segment
-                        for l=1:length(idxs)
-                            if idxs(l)==1
-                                % special case: start of data
-                                xyo(1:2,idxs(l)+[ 0 1],q) = [xyo(1,idxs(l))+[ 0 1]*obj.settings.UI.plot.lineWidth  ; xyo(2,idxs([l l]))];
-                            elseif idxs(l)==size(xyo,2)
-                                % special case: end of data
-                                xyo(1:2,idxs(l)+[-1 0],q) = [xyo(1,idxs(l))+[-1 0]*obj.settings.UI.plot.lineWidth  ; xyo(2,idxs([l l]))];
-                            else
-                                xyo(1:2,idxs(l)+[-1 0],q) = [xyo(1,idxs(l))+[-1 1]*obj.settings.UI.plot.lineWidth/2; xyo(2,idxs([l l]))];
-                                % remove next line segment
-                                xyo(1:2,idxs(l)+1) = nan;
-                            end
-                        end
-                    end
-                    
-                    Screen('DrawLines',wpnt(end),xyo(1:2,:,q),obj.settings.UI.plot.lineWidth,plotData.(plotWhich).(fields(f)).clr{q},[],2);
-                end
-            end
         end
         
         function [head,refPos] = setupHead(obj,wpnt,objField,refSz,scrRes,fac,isParticipantScreen)
@@ -8247,6 +8139,119 @@ end
 if count
     cals{end}.computeResult  = out.attempt{kCal}.cal{whichCal}.computeResult;
     cals{end}.computedCal    = out.attempt{kCal}.cal{whichCal}.computedCal;
+end
+end
+
+function drawPlotData(wpnt,plotSettings,plotData,plotWhich,qHasEyeOpenness)
+fields = 'xyp';
+if qHasEyeOpenness
+    fields = [fields 'o'];
+end
+for f=1:length(fields)
+    % get data on plot
+    [xyo,axRect] = plotData.(plotWhich).ax.dat2pix{f}(plotData.(plotWhich).t.data,plotData.(plotWhich).(fields(f)).data);
+    % double up internal points as they are both the end of one line
+    % segment and the start of the next line segment
+    idxs = repmat(2:size(xyo,2),2,1);
+    xyo  = xyo(:,[1 idxs(:).' end],:);
+    
+    % deal with data that would be outside the axis. Instead, move point to
+    % where line segment intersects the axis, so we show as much of the
+    % data as possible
+    for q=1:size(xyo,3)
+        i   = 1;
+        idx = find(xyo(3,i:end,q),1);
+        while idx
+            % get other part of line segment
+            idx  = idx+i-1;
+            idxs = idx+[0 -1+2*mod(idx,2)];
+            points = xyo(1:2,idxs,q);
+            % check if line segment crosses plot axis
+            if bitand(xyo(3,idxs(1),q),xyo(3,idxs(2),q))==0 && ...  % if none of the same bits are set, the line segment crosses the axis
+                    all(~isnan(points(2,:)))                        % and if neither of the points is nan
+                % get which axis is intersected.
+                ax = nan(2,2,2);
+                if bitand(xyo(3,idx,q),1)         % left axis
+                    ax(:,:,1) = axRect([1 1; 2 4]);
+                elseif bitand(xyo(3,idx,q),2)     % right axis
+                    ax(:,:,1) = axRect([3 3; 2 4]);
+                end
+                if bitand(xyo(3,idx,q),4)         % bottom axis
+                    ax(:,:,2) = axRect([1 3; 4 4]);
+                elseif bitand(xyo(3,idx,q),8)     % top axis
+                    ax(:,:,2) = axRect([1 3; 2 2]);
+                end
+                
+                % calculate intersection point and place at idx
+                % adapted from http://stackoverflow.com/a/1968345/3103767
+                s1_x = diff(points(1,:));
+                s1_y = diff(points(2,:));
+                s2_x = squeeze(diff(ax(1,:,:),[],2));
+                s2_y = squeeze(diff(ax(2,:,:),[],2));
+                s = (-s1_y .* (points(1,1) - squeeze(ax(1,1,:))) + s1_x .* (points(2,1) - squeeze(ax(2,1,:)))) ./ (-s2_x .* s1_y + s1_x .* s2_y);
+                t = ( s2_x .* (points(2,1) - squeeze(ax(2,1,:))) - s2_y .* (points(1,1) - squeeze(ax(1,1,:)))) ./ (-s2_x .* s1_y + s1_x .* s2_y);
+                % if s and t in [0 1] we've got an intersection within the
+                % line segments. Use this to know which intersection point
+                % to use (in some edge cases there are two, of which only
+                % one is valid)
+                iIdx = find(s>=0&s<=1&t>=0&t<=1,1); % if intersecting exactly the axis corner, there will be two valid intersections, choose one (doesn't matter which one as they are the same)
+                if isempty(iIdx)
+                    % data-line did not intersect axis (e.g. two points,
+                    % one that is left of left axis and other that is below
+                    % bottom axis) may not intersect the axis in all cases,
+                    % can be too far left and too far below.
+                    xyo(1:2,idx,q) = nan;
+                else
+                    % next compute intersection coordinate
+                    xInt = points(1,1) + (t(iIdx) .* s1_x);
+                    yInt = points(2,1) + (t(iIdx) .* s1_y);
+                    
+                    % move point that is outside line further up the line segment
+                    % so that it is exactly at the axis
+                    xyo(1:2,idx,q) = [xInt yInt];
+                end
+            else
+                % can't do anything with this data point as the other part of
+                % the line segment is missing or also not on the plot, remove
+                % it
+                xyo(1:2,idx,q) = nan;
+            end
+            
+            % move forward in data
+            i   = idx+1;
+            idx = find(xyo(3,i:end,q),1);
+        end
+        
+        % deal with data points flanked by missing on both sides. we need
+        % to make these into very short lines so that they are still
+        % visible on the plot
+        [don,doff] = bool2bounds(~isnan(xyo(2,:,q)));
+        if any(doff-don+1<=2)
+            % since we double up data for plotting, an isolated point
+            % flanked by missing on both sides will show up as data length
+            % of 2 (unless at start or end of data, where it will be 1
+            % get where this happens, and change that line segment into a
+            % short line so that it is visible on the plot. remove the
+            % next line segment
+            % make line segment that is just as long as its wide
+            idxs = don(doff-don+1<=2);  % this always gets the end of a line segment
+            for l=1:length(idxs)
+                if idxs(l)==1
+                    % special case: start of data
+                    xyo(1:2,idxs(l)+[ 0 1],q) = [xyo(1,idxs(l))+[ 0 1]*plotSettings.lineWidth  ; xyo(2,idxs([l l]))];
+                elseif idxs(l)==size(xyo,2)
+                    % special case: end of data
+                    xyo(1:2,idxs(l)+[-1 0],q) = [xyo(1,idxs(l))+[-1 0]*plotSettings.lineWidth  ; xyo(2,idxs([l l]))];
+                else
+                    xyo(1:2,idxs(l)+[-1 0],q) = [xyo(1,idxs(l))+[-1 1]*plotSettings.lineWidth/2; xyo(2,idxs([l l]))];
+                    % remove next line segment
+                    xyo(1:2,idxs(l)+1) = nan;
+                end
+            end
+        end
+        
+        Screen('DrawLines',wpnt(end),xyo(1:2,:,q),plotSettings.lineWidth,plotData.(plotWhich).(fields(f)).clr{q},[],2);
+    end
 end
 end
 
