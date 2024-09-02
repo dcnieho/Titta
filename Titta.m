@@ -6954,14 +6954,28 @@ classdef Titta < handle
                 pointTsUs   = pointTsUs(idx,:);
                 pointPos    = pointPos(idx,:);
                 choppedGaze = choppedGaze(idx,:);
-
+                % fake the time signal as absolute placement is not
+                % relevant here and large whitespace just makes the plot
+                % hard to read
+                dur     = diff(pointTsUs,[],2);
+                gapDur  = int64(mean(dur)*.15);  % 15% gap
+                offs    = cumsum([0; pointTsUs(1:end-1,2)+gapDur-pointTsUs(2:end,1)]);
+                pointTsUs = bsxfun(@plus,pointTsUs,offs);
+                % also adjust gaze timestamps
+                for e=1:length(choppedGaze)
+                    choppedGaze(e).systemTimeStamp = choppedGaze(e).systemTimeStamp+offs(e);
+                end
+                % make point presentation times
                 pointTs     = [pointPos(:,1) double(pointTsUs)/1000/1000];
 
+                % get one (fake) time signal for all gaze samples during
+                % val
                 ts = {choppedGaze.systemTimeStamp};
                 filler = num2cell([int64(mean([pointTsUs(1:end-1,2) pointTsUs(2:end,1)],2)); pointTsUs(end)+1]);
                 allts = [ts; filler.'];
                 allGaze.systemTimeStamp = [allts{:}];
                 allGaze.systemTimeStamp(end) = [];
+                % collect all gaze samples during val
                 for f={'left','right'}
                     f = f{1}; %#ok<FXSET> 
                     if ~isfield(choppedGaze,f)
