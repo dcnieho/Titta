@@ -365,6 +365,7 @@ classdef Titta < handle
             obj.settings.UI.plot.bgColor                    = color2RGBA(obj.settings.UI.plot.bgColor);
             obj.settings.UI.plot.eyeColors                  = color2RGBA(obj.settings.UI.plot.eyeColors);
             obj.settings.UI.plot.dotPosLine.color           = color2RGBA(obj.settings.UI.plot.dotPosLine.color);
+            obj.settings.UI.plot.referenceLine.color        = color2RGBA(obj.settings.UI.plot.referenceLine.color);
             obj.settings.UI.plot.ax.bgColor                 = color2RGBA(obj.settings.UI.plot.ax.bgColor);
             obj.settings.UI.plot.ax.lineColor               = color2RGBA(obj.settings.UI.plot.ax.lineColor);
             obj.settings.UI.plot.ax.highlightColor          = color2RGBA(obj.settings.UI.plot.ax.highlightColor);
@@ -427,6 +428,7 @@ classdef Titta < handle
             obj.settings.UI.advcal.plot.bgColor                 = color2RGBA(obj.settings.UI.advcal.plot.bgColor);
             obj.settings.UI.advcal.plot.eyeColors               = color2RGBA(obj.settings.UI.advcal.plot.eyeColors);
             obj.settings.UI.advcal.plot.dotPosLine.color        = color2RGBA(obj.settings.UI.advcal.plot.dotPosLine.color);
+            obj.settings.UI.advcal.plot.referenceLine.color     = color2RGBA(obj.settings.UI.advcal.plot.referenceLine.color);
             obj.settings.UI.advcal.plot.ax.bgColor              = color2RGBA(obj.settings.UI.advcal.plot.ax.bgColor);
             obj.settings.UI.advcal.plot.ax.lineColor            = color2RGBA(obj.settings.UI.advcal.plot.ax.lineColor);
             obj.settings.UI.advcal.plot.ax.highlightColor       = color2RGBA(obj.settings.UI.advcal.plot.ax.highlightColor);
@@ -1753,6 +1755,9 @@ classdef Titta < handle
             settings.UI.plot.panelPad               = .02;                          % fraction of screen
             settings.UI.plot.dotPosLine.color       = 0;
             settings.UI.plot.dotPosLine.width       = 3;
+            settings.UI.plot.referenceLine.color    = 150;
+            settings.UI.plot.referenceLine.width    = 1;
+            settings.UI.plot.referenceLine.stipple  = [6 4];    % pixels, [line length, gap length]
             settings.UI.plot.ax.bgColor             = 255;
             settings.UI.plot.ax.lineColor           = 0;
             settings.UI.plot.ax.lineWidth           = 1;
@@ -7439,6 +7444,32 @@ classdef Titta < handle
                     plotData.all.ax.dotPosLines(:,(q-1)*4+(r-1)*2+(1:2)) = pos(1:2,:);
                 end
             end
+
+            % prep stippled line indicating zero offset
+            plotData.off.ax.referenceLine = cell(2,1);  % NB: x and y panels only
+            for f=1:2   % NB: fields(1:2)=='xy'
+                axRect      = plotData.off.ax.rects(:,f);
+                axWidth     = axRect(3)-axRect(1);
+                xLim        = plotData.off.t.lim;
+                rng         = diff(xLim);
+                sPerPix     = rng/axWidth;
+                dat2pixfun  = plotData.off.ax.dat2pix{f};
+
+                numStipple = axWidth/sum(plotSettings.referenceLine.stipple);
+                stippleSec = plotSettings.referenceLine.stipple*sPerPix;
+                stippleT = cumsum([0 repmat(stippleSec,1,ceil(numStipple))]) + xLim(1);
+                stippleT(stippleT>xLim(2)) = [];
+                if mod(length(stippleT),2)==1
+                    if stippleT(end)==xLim(2)
+                        stippleT(end) = [];
+                    else
+                        stippleT = [stippleT xLim(2)];
+                    end
+                end
+
+                stipple = dat2pixfun(stippleT,zeros(size(stippleT)));
+                plotData.off.ax.referenceLine{f} = stipple(1:2,:);
+            end
             
             %%% plot loop
             % prep
@@ -7467,6 +7498,7 @@ classdef Titta < handle
             axBgColor       = obj.getColorForWindow(plotSettings.ax.bgColor,wpnt(end));
             lineColor   	= obj.getColorForWindow(plotSettings.ax.lineColor,wpnt(end));
             dotPosLineColor = obj.getColorForWindow(plotSettings.dotPosLine.color,wpnt(end));
+            refLineColor    = obj.getColorForWindow(plotSettings.referenceLine.color,wpnt(end));
             highlightColor  = obj.getColorForWindow(plotSettings.ax.highlightColor,wpnt(end));
             plotWhich = 'off';
             % Refresh internal key-/mouseState to make sure we don't
@@ -7491,6 +7523,11 @@ classdef Titta < handle
                     
                     % draw line indicating dot position
                     Screen('DrawLines',wpnt(end),plotData.all.ax.dotPosLines,plotSettings.dotPosLine.width,dotPosLineColor,[],2);
+                else
+                    % draw stipple line indicating zero offset
+                    for l=1:2   % x and y panels
+                        Screen('DrawLines',wpnt(end),plotData.off.ax.referenceLine{l},plotSettings.referenceLine.width,refLineColor,[],2);
+                    end
                 end
                 
                 % draw data
