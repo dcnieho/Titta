@@ -5547,7 +5547,7 @@ classdef Titta < handle
                     qUpdateLineDisplay = false;
 
                     % handle plot toggle button
-                    if qCanPlotVal
+                    if qCanPlotVal && ~qAutoActive
                         % make plot button visible, if wanted
                         but(9).visible = obj.settings.UI.button.advcal.toggPlot.visible;
                     else
@@ -6521,10 +6521,9 @@ classdef Titta < handle
                                 elseif qInBut(8)
                                     qShowGaze           = ~qShowGaze;
                                     qShowGazeToAll      = shiftIsDown;
-                                elseif qIn(9)
-                                    qShowPlotOverlay    = true;
-                                    if qAutoActive
-                                        qToggleAuto = true;
+                                elseif qInBut(9)
+                                    if qCanPlotVal && strcmp(stage,'val') && ~qAutoActive
+                                        qShowPlotOverlay    = true;
                                     end
                                 elseif qInBut(10)
                                     if shiftIsDown
@@ -6764,6 +6763,17 @@ classdef Titta < handle
                                 state = 'activate';
                             end
                             obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
+                        end
+                        % no plot button when auto is active
+                        oldState = but(9).visible;
+                        if qAutoActive
+                            but(9).visible = false;
+                        elseif qCanPlotVal
+                            but(9).visible = obj.settings.UI.button.advcal.toggPlot.visible;
+                        end
+                        if but(9).visible~=oldState
+                            qUpdateCursors = true;
+                            qBreakOutOfDisplayLoop = true;
                         end
                         qToggleAuto = false;
                     end
