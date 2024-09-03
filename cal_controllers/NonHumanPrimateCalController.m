@@ -326,7 +326,6 @@ classdef NonHumanPrimateCalController < handle
                     else
                         obj.clearValNow = true; % always issue a validation clear, in case there is any data
                         obj.controlState = obj.stateEnum.val_validating;
-                        obj.shouldUpdateStatusText = true;
                         obj.calDisplay.videoSize = obj.valVideoSize;
                     end
                     obj.lastUpdate = {};
