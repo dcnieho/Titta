@@ -5771,6 +5771,7 @@ classdef Titta < handle
                 
                 % draw loop
                 while true
+                    qBreakOutOfDisplayLoop = false;
                     tick        = tick+1;
                     nextFlipT   = out.flips(end)+1/1000;
 
@@ -5835,7 +5836,7 @@ classdef Titta < handle
                             
                             whichPointDiscard = nan;
                             qUpdatePointHover = true;
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         end
                     end
                     % accept point
@@ -5852,7 +5853,7 @@ classdef Titta < handle
                                 out.attempt{kCal}.cal{calAction}.wasCancelled = false;
                                 out.attempt{kCal}.cal{calAction}.wasDiscarded = false;
                                 qUpdatePointHover               = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             else
                                 % check status
                                 callResult  = obj.buffer.calibrationRetrieveResult();
@@ -5888,7 +5889,7 @@ classdef Titta < handle
                                 pointsP(whichPoint,end) = 3;        % status: collecting
                                 qUpdatePointHover       = true;
                                 obj.sendMessage(sprintf('POINT COLLECTING %d (%.0f %.0f, in tracker space: %.3f %.3f)',whichPoint,pointsP(whichPoint,[3:4 1:2])));
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             end
                             if out.flips(end)>tick0v+obj.settings.advcal.val.collectDuration
                                 dat = obj.buffer.peekN('gaze',nDataPoint);
@@ -5949,7 +5950,7 @@ classdef Titta < handle
                             end
                             qUpdatePointHover = true;
                             % done with draw loop
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         end
                     end
 
@@ -6250,7 +6251,6 @@ classdef Titta < handle
                     mousePos = [mx my];
                     % if any auto commands, process
                     if ~isempty(autoCommands)
-                        qBreak = false;
                         for c=1:length(autoCommands)
                             autoCommand = autoCommands{c};
                             if strcmp(autoCommand{1},stage)    % check command is for current stage, else ignore
@@ -6269,7 +6269,7 @@ classdef Titta < handle
                                             pointList(1,end+1)      = which; %#ok<AGROW>
                                             pointsP(which,end)      = 4; % status: enqueued
                                             qUpdatePointHover       = true;
-                                            qBreak = true;
+                                            qBreakOutOfDisplayLoop  = true;
                                         end
                                     case 'discard_point'
                                         which   = autoCommand{3};
@@ -6313,9 +6313,6 @@ classdef Titta < handle
                             end
                         end
                         autoCommands = {};
-                        if qBreak
-                            break;
-                        end
                     elseif qDraggingHead || ~isnan(headResizingGrip)
                         % if drag active, change head rect position/size
                         % update headORect
@@ -6458,7 +6455,7 @@ classdef Titta < handle
                                         currentMenuSel      = iIn;
                                         qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
                                         qToggleSelectEyeMenu= true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 elseif qSelectSnapMenuOpen
                                     if iIn==size(snapshots,1)+1
@@ -6475,7 +6472,7 @@ classdef Titta < handle
                                         end
                                         qToggleSelectSnapMenu   = true;
                                     end
-                                    break;
+                                    qBreakOutOfDisplayLoop = true;
                                 end
                             else
                                 if qSelectEyeMenuOpen
@@ -6483,7 +6480,7 @@ classdef Titta < handle
                                 elseif qSelectSnapMenuOpen
                                     qToggleSelectSnapMenu   = true;
                                 end
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             end
                         end
                         if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
@@ -6539,7 +6536,7 @@ classdef Titta < handle
                                 elseif qInBut(11)
                                     qProcessClearCal = true;
                                 end
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(qOnFixTarget)
                                 which                   = find(qOnFixTarget,1);
                                 if shiftIsDown
@@ -6551,7 +6548,7 @@ classdef Titta < handle
                                     pointList(1,end+1) = which; %#ok<AGROW>
                                     pointsP(which,end) = 4; % status: enqueued
                                     qUpdatePointHover  = true;
-                                    break;
+                                    qBreakOutOfDisplayLoop = true;
                                 end
                             end
                         end
@@ -6573,12 +6570,12 @@ classdef Titta < handle
                         if any(strcmpi(keys,'escape')) && shiftIsDown
                             status = -5;
                             qDoneWithAdvancedCalib = true;
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         elseif any(strcmpi(keys,'s')) && shiftIsDown
                             % skip calibration
                             status = 2;
                             qDoneWithAdvancedCalib = true;
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         elseif any(strcmpi(keys,'d')) && shiftIsDown
                             % take screenshot
                             takeScreenshot(wpnt(1));
@@ -6595,7 +6592,7 @@ classdef Titta < handle
                                 elseif qSelectSnapMenuOpen
                                     qToggleSelectSnapMenu   = true;
                                 end
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(ismember(keys,'123456789+'))    % key 1 is '1!', for instance, so check if first character is 1 instead of strcmp
                                 qWhich      = ismember(keys,'123456789+');
                                 requested   = str2double(keys(qWhich));
@@ -6604,7 +6601,7 @@ classdef Titta < handle
                                         currentMenuSel      = requested;
                                         qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
                                         qToggleSelectEyeMenu= true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 elseif qSelectSnapMenuOpen
                                     if isnan(requested) && strcmp(keys(qWhich),'+')
@@ -6621,9 +6618,8 @@ classdef Titta < handle
                                         end
                                         qToggleSelectSnapMenu   = true;
                                     end
-                                    break;
+                                    qBreakOutOfDisplayLoop = true;
                                 end
-                                break;
                             elseif any(ismember(lower(keys),{'kp_enter','return','enter'})) % lowercase versions of possible return key names (also include numpad's enter)
                                 if qSelectEyeMenuOpen
                                     qSelectedEyeChanged = currentEyeMenuItem~=currentMenuSel;
@@ -6643,7 +6639,7 @@ classdef Titta < handle
                                         qToggleSelectSnapMenu   = true;
                                     end
                                 end
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             else
                                 if ~iscell(keys), keys = {keys}; end
                                 if any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(2,end))),'up')),keys))
@@ -6654,14 +6650,14 @@ classdef Titta < handle
                                     if currentMenuSel>1
                                         currentMenuSel   = currentMenuSel-1;
                                         qChangeMenuArrow = true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 elseif any(cellfun(@(x) ~isempty(strfind(lower(x(1:min(4,end))),'down')),keys))
                                     % down key
                                     if (qSelectEyeMenuOpen && currentMenuSel<3) || (qSelectSnapMenuOpen && currentMenuSel<=size(snapshots,1))   % NB: snapshots menu goes to number of snapshots+1
                                         currentMenuSel   = currentMenuSel+1;
                                         qChangeMenuArrow = true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 end
                             end
@@ -6677,7 +6673,7 @@ classdef Titta < handle
                                     refSzO              = ovalVSz*obj.scrInfo.resolution{2}(2)*facO;
                                     refPosO             = updateHeadDragResize(headORect,obj.scrInfo.resolution{2},facO,headO,refSzO,obj.settings.UI.setup.headCircleEdgeWidth);
                                     qUpdateCursors      = true;
-                                    break;
+                                    qBreakOutOfDisplayLoop = true;
                                 elseif ~isempty(pointList) || ~isnan(whichPoint)
                                     qDoneSomething = false;
                                     % cancel all queued points
@@ -6696,7 +6692,7 @@ classdef Titta < handle
                                     end
                                     if qDoneSomething
                                         qUpdatePointHover = true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 end
                             elseif any(ismember(keys,'123456789'))    % key 1 is '1!', for instance, so check if first character is 1 instead of strcmp
@@ -6713,40 +6709,40 @@ classdef Titta < handle
                                         pointList(1,end+1)      = requested; %#ok<AGROW>
                                         pointsP(requested,end)  = 4; % status: enqueued
                                         qUpdatePointHover       = true;
-                                        break;
+                                        qBreakOutOfDisplayLoop = true;
                                     end
                                 end
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.continue.accelerator)) && ~shiftIsDown
                                 status = 1;
                                 qDoneWithAdvancedCalib= true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.changeEye.accelerator)) && qCanDoMonocularCalib && ~shiftIsDown
                                 qToggleSelectEyeMenu= true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggEyeIm.accelerator)) && qHasEyeIm && ~shiftIsDown
                                 qToggleEyeImage     = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calval.accelerator)) && ~shiftIsDown
                                 qToggleStage        = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.snapshot.accelerator)) && ~shiftIsDown
                                 qToggleSelectSnapMenu = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggHead.accelerator))
                                 qShowHead           = ~qShowHead;
                                 qShowHeadToAll      = shiftIsDown;
                                 qUpdateCursors      = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggGaze.accelerator))
                                 qShowGaze           = ~qShowGaze;
                                 qShowGazeToAll      = shiftIsDown;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggAuto.accelerator)) && ((strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal)
                                 qToggleAuto = true;
-                                break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal && strcmp(stage,'val')
+                                qBreakOutOfDisplayLoop = true;
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal && strcmp(stage,'val') && ~qAutoActive
                                 qShowPlotOverlay    = true;
-                                break;
+                                qBreakOutOfDisplayLoop = true;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calibrate.accelerator)) && strcmp(stage,'cal')
                                 if shiftIsDown
                                     % toggle auto calibration mode
@@ -6830,7 +6826,7 @@ classdef Titta < handle
                         if qDoneSomething
                             % done, break from draw loop
                             qUpdatePointHover = true;
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         end
                     end
                     % see if we should do a calibration action, if
@@ -6883,20 +6879,23 @@ classdef Titta < handle
                         % see if new point
                         if pointToShowInfoFor~=iIn
                             openInfoForPoint = iIn;
-                            break;
+                            qBreakOutOfDisplayLoop = true;
                         end
                     elseif ~isnan(pointToShowInfoFor)
                         % stop showing info
                         pointToShowInfoFor = nan;
-                        break;
+                        qBreakOutOfDisplayLoop = true;
                     end
                     % break out of draw loop if there are texts to update
                     if qUpdateCalStatusText || qUpdateAutoStatusText
-                        break;
+                        qBreakOutOfDisplayLoop = true;
                     end
                     % if awaiting calibration status change, break out of
                     % draw loop to check for state change
                     if ~isempty(awaitingCalChangeType)
+                        qBreakOutOfDisplayLoop = true;
+                    end
+                    if qBreakOutOfDisplayLoop
                         break;
                     end
                 end
