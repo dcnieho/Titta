@@ -4921,6 +4921,7 @@ classdef Titta < handle
             qWaitForAllowAccept     = false;
             whichPointDiscard       = nan;
             cancelOrDiscardPoint    = nan;
+            qToggleAuto             = false;
             qProcessDoCal           = false;
             qProcessClearCal        = false;
             qRegenSnapShotMenuListing = false;
@@ -6302,9 +6303,8 @@ classdef Titta < handle
                                             qProcessClearCal = true;
                                         end
                                     case 'disable_controller'
-                                        qAutoActive = false;
-                                        if isa(obj.settings.advcal.(stage).pointNotifyFunction,'function_handle') && obj.settings.advcal.(stage).useExtendedNotify
-                                            obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_deactivate',stage),[]);
+                                        if qAutoActive
+                                            qToggleAuto = true;
                                         end
                                     otherwise
                                         error('Titta: advanced calibration: received command ''%s'' from calibration controller that I do not understand',autoCommand{2});
@@ -6512,14 +6512,7 @@ classdef Titta < handle
                                     qToggleSelectSnapMenu= true;
                                 elseif qInBut(6)
                                     if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
-                                        qAutoActive         = ~qAutoActive;
-                                        if isa(obj.settings.advcal.(stage).pointNotifyFunction,'function_handle') && obj.settings.advcal.(stage).useExtendedNotify
-                                            state = 'deactivate';
-                                            if qAutoActive
-                                                state = 'activate';
-                                            end
-                                            obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
-                                        end
+                                        qToggleAuto = true;
                                     end
                                 elseif qInBut(7)
                                     qShowHead           = ~qShowHead;
@@ -6530,6 +6523,9 @@ classdef Titta < handle
                                     qShowGazeToAll      = shiftIsDown;
                                 elseif qIn(9)
                                     qShowPlotOverlay    = true;
+                                    if qAutoActive
+                                        qToggleAuto = true;
+                                    end
                                 elseif qInBut(10)
                                     if shiftIsDown
                                         % toggle auto calibration mode
@@ -6744,18 +6740,14 @@ classdef Titta < handle
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggAuto.accelerator))
                                 if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
-                                    qAutoActive         = ~qAutoActive;
-                                    if isa(obj.settings.advcal.(stage).pointNotifyFunction,'function_handle') && obj.settings.advcal.(stage).useExtendedNotify
-                                        state = 'deactivate';
-                                        if qAutoActive
-                                            state = 'activate';
-                                        end
-                                        obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
-                                    end
+                                    qToggleAuto = true;
                                 end
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal
                                 qShowPlotOverlay    = true;
+                                if qAutoActive
+                                    qToggleAuto = true;
+                                end
                                 break;
                             elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calibrate.accelerator))
                                 if shiftIsDown
@@ -6768,6 +6760,18 @@ classdef Titta < handle
                                 qProcessClearCal = true;
                             end
                         end
+                    end
+                    % toggle auto if wanted
+                    if qToggleAuto
+                        qAutoActive         = ~qAutoActive;
+                        if isa(obj.settings.advcal.(stage).pointNotifyFunction,'function_handle') && obj.settings.advcal.(stage).useExtendedNotify
+                            state = 'deactivate';
+                            if qAutoActive
+                                state = 'activate';
+                            end
+                            obj.settings.advcal.(stage).pointNotifyFunction(obj,[],[],[],stage,sprintf('%s_%s',stage,state),[]);
+                        end
+                        qToggleAuto = false;
                     end
                     % process point discard or collection cancel
                     if ~isscalar(cancelOrDiscardPoint) || ~isnan(cancelOrDiscardPoint)
