@@ -4727,7 +4727,7 @@ classdef Titta < handle
 
 
             % get all butRects, needed below in script
-            butRects        = cat(1,but.rect).';
+            allButRects = cat(1,but.rect).';
             
             % check shiftable button accelerators do not conflict with
             % built in ones
@@ -4900,7 +4900,7 @@ classdef Titta < handle
                 if ~any(visible)
                     basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                 else
-                    basePos = min(butRects(2,[but(1:6).visible]));
+                    basePos = min(allButRects(2,[but(1:6).visible]));
                 end
                 eyeCanvasPoss(:,1) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)-obj.eyeImageCanvasSize(1)-eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
                 eyeCanvasPoss(:,2) = OffsetRect([0 0 obj.eyeImageCanvasSize],obj.scrInfo.center{end}(1)                          +eyeImageMargin/2,basePos-eyeImageMargin-obj.eyeImageCanvasSize(2)).';
@@ -5178,29 +5178,6 @@ classdef Titta < handle
                     end
                     qShowEyeImage   = ~qShowEyeImage;
                     qToggleEyeImage = false;
-                end
-                
-                % update cursors
-                if qUpdateCursors
-                    headRects   = [];
-                    headCursors = [];
-                    if qShowHead
-                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor);
-                    end
-                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
-                        otherRects  = currentMenuRects.';
-                    else
-                        otherRects  = [butRects calValRectsSel];
-                    end
-                    otherCursors    = repmat(obj.settings.UI.cursor.clickable,1,size(otherRects,2));    % clickable items
-                    cursors.rect    = [headRects otherRects];
-                    cursors.cursor  = [headCursors otherCursors];      
-                    cursors.other   = obj.settings.UI.cursor.normal;                                    % default
-                    cursors.qReset  = false;
-                    % NB: don't reset cursor to invisible here as it will then flicker every
-                    % time you click something. default behaviour is good here
-                    cursor = cursorUpdater(cursors);
-                    qUpdateCursors = false;
                 end
                 
                 % update calibration mode
@@ -5577,6 +5554,30 @@ classdef Titta < handle
                         % hide plot button
                         but(9).visible = false;
                     end
+                    qUpdateCursors = true;
+                end
+                
+                % update cursors
+                if qUpdateCursors
+                    headRects   = [];
+                    headCursors = [];
+                    if qShowHead
+                        [headRects,headCursors] = getSelectionRects(headORect,3,obj.settings.UI.cursor);
+                    end
+                    if qSelectEyeMenuOpen || qSelectSnapMenuOpen
+                        otherRects  = currentMenuRects.';
+                    else
+                        otherRects  = [allButRects(:,[but.visible]) calValRectsSel];
+                    end
+                    otherCursors    = repmat(obj.settings.UI.cursor.clickable,1,size(otherRects,2));    % clickable items
+                    cursors.rect    = [headRects otherRects];
+                    cursors.cursor  = [headCursors otherCursors];      
+                    cursors.other   = obj.settings.UI.cursor.normal;                                    % default
+                    cursors.qReset  = false;
+                    % NB: don't reset cursor to invisible here as it will then flicker every
+                    % time you click something. default behaviour is good here
+                    cursor = cursorUpdater(cursors);
+                    qUpdateCursors = false;
                 end
                 
                 if qUpdateCalStatusText
@@ -6024,7 +6025,7 @@ classdef Titta < handle
                             if ~any(visible)
                                 basePos = round(obj.scrInfo.resolution{end}(2)*.95);
                             else
-                                basePos = min(butRects(2,[but(1:6).visible]));
+                                basePos = min(allButRects(2,[but(1:6).visible]));
                             end
                             eyeImageRect(:,1) = OffsetRect([0 0 eyeSzs(:,1).'],obj.scrInfo.center{end}(1)-eyeSzs(1,1)-eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,1)).';
                             eyeImageRect(:,3) = OffsetRect([0 0 eyeSzs(:,3).'],obj.scrInfo.center{end}(1)            +eyeImageMargin/2,basePos-eyeImageMargin-eyeSzs(2,3)).';
@@ -6486,9 +6487,11 @@ classdef Titta < handle
                             end
                         end
                         if ~(qSelectEyeMenuOpen || qSelectSnapMenuOpen) || qToggleSelectEyeMenu || qToggleSelectSnapMenu    % if menu not open or menu closing because pressed outside the menu, check if pressed any of these menu buttons
-                            qInBut      = inRect(mousePos,butRects);
-                            qOnHead     = inRect(mousePos,headRects);
-                            qOnFixTarget= inRect(mousePos,calValRectsSel);
+                            qInVisibleBut   = inRect(mousePos,allButRects(:,[but.visible]));
+                            qInBut          = false(1,size(allButRects,2));     % unpack to all buttons so we have stable IDs below
+                            qInBut([but.visible]) = qInVisibleBut;
+                            qOnHead         = inRect(mousePos,headRects);
+                            qOnFixTarget    = inRect(mousePos,calValRectsSel);
                             if any(qOnHead)
                                 % starting drag/resize of head
                                 if qOnHead(end)
