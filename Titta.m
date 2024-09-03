@@ -7463,7 +7463,7 @@ classdef Titta < handle
                     if stippleT(end)==xLim(2)
                         stippleT(end) = [];
                     else
-                        stippleT = [stippleT xLim(2)];
+                        stippleT = [stippleT xLim(2)]; %#ok<AGROW> 
                     end
                 end
 
