@@ -347,8 +347,7 @@ classdef NonHumanPrimateCalController < handle
                 case {'cal_deactivate','val_deactivate'}
                     obj.isActive = false;
                     obj.shouldUpdateStatusText = true;
-                    % backup Titta pacing duration and set to 0, since the
-                    % controller controls when data should be collected
+                    % reset Titta pacing duration
                     obj.setTittaPacing('',type(1:3));
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('controller deactivated for %s',ternary(startsWith(type,'cal'),'calibration','validation'));
