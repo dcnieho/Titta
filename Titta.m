@@ -6741,25 +6741,20 @@ classdef Titta < handle
                                 qShowGaze           = ~qShowGaze;
                                 qShowGazeToAll      = shiftIsDown;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggAuto.accelerator))
-                                if (strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal
-                                    qToggleAuto = true;
-                                end
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggAuto.accelerator)) && ((strcmp(stage,'cal') && qHasAutoCal) || qHasAutoVal)
+                                qToggleAuto = true;
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.toggPlot.accelerator)) && ~shiftIsDown && qCanPlotVal && strcmp(stage,'val')
                                 qShowPlotOverlay    = true;
-                                if qAutoActive
-                                    qToggleAuto = true;
-                                end
                                 break;
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calibrate.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.calibrate.accelerator)) && strcmp(stage,'cal')
                                 if shiftIsDown
                                     % toggle auto calibration mode
                                     qAutoCalibrate = ~qAutoCalibrate;
                                 else
                                     qProcessDoCal = true;
                                 end
-                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.discard.accelerator))
+                            elseif any(strcmpi(keys,obj.settings.UI.button.advcal.discard.accelerator)) && strcmp(stage,'cal')
                                 qProcessClearCal = true;
                             end
                         end
