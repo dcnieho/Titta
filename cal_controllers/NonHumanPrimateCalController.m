@@ -273,7 +273,7 @@ classdef NonHumanPrimateCalController < handle
                         end
                     elseif obj.awaitingPointResult==2 && ~isempty(obj.lastUpdate) && strcmp(obj.lastUpdate{1},'val_discard')
                         % check this is for the expected point
-                        if obj.lastUpdate{2}==obj.valPoints(obj.valPoint) && all(obj.lastUpdate{3}==obj.valPoss(obj.valPoint,:))
+                        if all(obj.valPointsState==obj.pointStateEnum.nothing)
                             obj.awaitingPointResult = 0;
                             obj.clearValNow = false;
                             obj.shouldUpdateStatusText = true;
