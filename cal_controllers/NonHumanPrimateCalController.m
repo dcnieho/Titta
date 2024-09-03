@@ -503,7 +503,7 @@ classdef NonHumanPrimateCalController < handle
             obj.shouldUpdateStatusText = false;
         end
 
-        function draw(obj,wpnts,tick,sFac,offset)
+        function draw(obj,wpnts,tick,sFac,offset,onlyDrawParticipant)
             % wpnts: two window pointers. first is for participant screen,
             % second for operator
             % sFac and offset are used to scale from participant screen to
@@ -544,6 +544,10 @@ classdef NonHumanPrimateCalController < handle
                 if obj.awaitingPointResult~=1 && obj.drawExtraFrame
                     obj.drawExtraFrame = false;
                 end
+            end
+
+            if onlyDrawParticipant
+                return
             end
 
             % draw video rect for operator

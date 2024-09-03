@@ -4065,7 +4065,7 @@ classdef Titta < handle
             while ~qDoneCalibSelection
                 % draw plot overlay instead of interface if wanted
                 if qShowPlotOverlay
-                    st = obj.drawValidationDataPlots(wpnt, cal{selection}.val{iVal}, false);
+                    st = obj.drawValidationDataPlots(wpnt, cal{selection}.val{iVal}, false, [], 0);
                     qShowPlotOverlay = false;
                     if ~~st
                         status = st;
@@ -4928,11 +4928,14 @@ classdef Titta < handle
             while ~qDoneWithAdvancedCalib
                 % draw plot overlay instead of interface if wanted
                 if qShowPlotOverlay
-                    st = obj.drawValidationDataPlots(wpnt, out.attempt{kCal}.val{valAction}, true);
+                    [st,tick] = obj.drawValidationDataPlots(wpnt, out.attempt{kCal}.val{valAction}, true, controller, tick);
                     qShowPlotOverlay = false;
                     if ~~st
                         status = st;
                         break;
+                    end
+                    if qHasAuto
+                        qForceUpdateAutoStatusText = true;  % may have missed an update
                     end
                 end
 
@@ -6098,7 +6101,7 @@ classdef Titta < handle
 
                     % invoke controller draw action
                     if qHasAuto
-                        controller.draw(wpnt, tick, obj.scrInfo.sFac, obj.scrInfo.offset.');
+                        controller.draw(wpnt, tick, obj.scrInfo.sFac, obj.scrInfo.offset.', false);
                     end
                     
                     % draw calibration/validation points
@@ -6947,8 +6950,9 @@ classdef Titta < handle
             obj.ClearAllBuffers(startT);                    % clean up data buffers
         end
         
-        function status = drawValidationDataPlots(obj,wpnt,valData,forAdvanced)
+        function [status,tick] = drawValidationDataPlots(obj,wpnt,valData,forAdvanced,controller,tick)
             qHaveOperatorScreen = ~isscalar(wpnt);
+            qHasAutoController = ~isempty(controller);
             % get info about screen
             screenState = obj.getScreenInfo(wpnt);
             
@@ -7517,9 +7521,17 @@ classdef Titta < handle
             [mx,my] = obj.getNewMouseKeyPress(wpnt(end));
             status = 0;
             while true
+                tick = tick+1;
                 Screen('FillRect',wpnt(1),bgClrP);
                 if qHaveOperatorScreen
                     Screen('FillRect',wpnt(end),bgClrO);
+                end
+
+                if qHasAutoController
+                    % update/check controller
+                    controller.tick();  % NB: ignore commands. Shouldn't be issuing any, as controller should be switched off before entering this plotter routine
+                    % invoke controller draw action
+                    controller.draw(wpnt, tick, [], [], true);
                 end
                 
                 % draw axis backgrounds
