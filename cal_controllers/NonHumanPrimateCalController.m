@@ -62,15 +62,17 @@ classdef NonHumanPrimateCalController < handle
                                     ];
         calVideoSize                = [300 300];
         calShowVideoWhenDone        = true;
-        calVideoSizeWhenDone        = [600 600];
-        calWhenDoneRewardDistFac    = .5;           % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
-        calWhenDoneRewardTime       = 500;          % ms
+        calShowVideoWhenDeactivated = true;
+        calVideoSizeWhenNotActive   = [600 600];
+        calNotActiveRewardDistFac   = .5;           % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
+        calNotActiveRewardTime      = 500;          % ms
 
         valVideoSize                = [300 300];
         valShowVideoWhenDone        = true;
-        valVideoSizeWhenDone        = [600 600];
-        valWhenDoneRewardDistFac    = .5;           % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
-        valWhenDoneRewardTime       = 500;          % ms
+        valShowVideoWhenDeactivated = true;
+        valVideoSizeNotActive        = [600 600];
+        valNotActiveRewardDistFac    = .5;          % fraction of video width (so 0.5 means gaze anywhere on video, since distance is from center)
+        valNotActiveRewardTime       = 500;         % ms
 
         calOnTargetTime             = 500;          % ms
         calOnTargetDistFac          = 1/3;          % max gaze distance to be considered close enough to a point to attempt calibration (factor of vertical size of screen)
@@ -349,6 +351,10 @@ classdef NonHumanPrimateCalController < handle
                     obj.shouldUpdateStatusText = true;
                     % reset Titta pacing duration
                     obj.setTittaPacing('',type(1:3));
+                    % setup non active display, if wanted
+                    if (strcmp(type(1:3),'cal') && obj.calShowVideoWhenDeactivated) || (strcmp(type(1:3),'val') && obj.valShowVideoWhenDeactivated)
+                        obj.setupNonActiveVideo();
+                    end
                     if bitget(obj.logTypes,1)
                         obj.log_to_cmd('controller deactivated for %s',ternary(startsWith(type,'cal'),'calibration','validation'));
                     end
@@ -1051,9 +1057,9 @@ classdef NonHumanPrimateCalController < handle
 
         function setupNonActiveVideo(obj)
             if strcmp(obj.stage,'cal')
-                obj.calDisplay.videoSize = obj.calVideoSizeWhenDone;
+                obj.calDisplay.videoSize = obj.calVideoSizeWhenNotActive;
             else
-                obj.calDisplay.videoSize = obj.valVideoSizeWhenDone;
+                obj.calDisplay.videoSize = obj.valVideoSizeNotActive;
             end
             obj.drawState = 1;
             obj.isNonActiveShowingVideo = true;
@@ -1070,11 +1076,11 @@ classdef NonHumanPrimateCalController < handle
             minDist = min([distM, distL, distR]);
 
             if strcmp(obj.stage,'cal')
-                distFac = obj.calWhenDoneRewardDistFac;
-                dur     = obj.calWhenDoneRewardTime;
+                distFac = obj.calNotActiveRewardDistFac;
+                dur     = obj.calNotActiveRewardTime;
             else
-                distFac = obj.valWhenDoneRewardDistFac;
-                dur     = obj.valWhenDoneRewardTime;
+                distFac = obj.valNotActiveRewardDistFac;
+                dur     = obj.valNotActiveRewardTime;
             end
             sz = obj.calDisplay.videoSize;
             dist = sz(1)*distFac;
