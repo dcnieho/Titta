@@ -20,7 +20,7 @@ jobs:
       with:
         submodules: true
 
-    - uses: pypa/cibuildwheel@v2.20.0
+    - uses: pypa/cibuildwheel@v2.21.0
       with:
         package-dir: SDK_wrapper
       env:
@@ -35,7 +35,7 @@ jobs:
         CIBW_BEFORE_BUILD_MACOS: uname -a
         MACOSX_DEPLOYMENT_TARGET: 10.14
 
-    - uses: pypa/cibuildwheel@v2.20.0
+    - uses: pypa/cibuildwheel@v2.21.0
       with:
         package-dir: LSL_streamer
       env:
