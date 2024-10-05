@@ -59,7 +59,6 @@ namespace TittaLSL
         // Tobii callbacks need to be friends
         friend void GazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data);
         friend void EyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data);
-        friend void EyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data);
         friend void ExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data);
         friend void TimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
         friend void PositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data);
@@ -67,7 +66,6 @@ namespace TittaLSL
         void receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_);
         // data pushers
         void pushSample(const Titta::gaze& sample_);
-        void pushSample(Titta::eyeImage&& sample_);
         void pushSample(const Titta::extSignal& sample_);
         void pushSample(const Titta::timeSync& sample_);
         void pushSample(const Titta::positioning& sample_);
@@ -89,7 +87,6 @@ namespace TittaLSL
 
         bool                            _streamingGaze = false;
         bool                            _streamingEyeOpenness = false;
-        bool                            _streamingEyeImages = false;
         bool                            _streamingExtSignal = false;
         bool                            _streamingTimeSync = false;
         bool                            _streamingPositioning = false;
@@ -115,13 +112,11 @@ namespace TittaLSL
 
         // short names for very long Tobii data types
         using gaze          = LSLTypes::gaze;       // getType() -> Titta::Stream::Gaze
-        using eyeImage      = LSLTypes::eyeImage;   // getType() -> Titta::Stream::EyeImage
         using extSignal     = LSLTypes::extSignal;  // getType() -> Titta::Stream::ExtSignal
         using timeSync      = LSLTypes::timeSync;   // getType() -> Titta::Stream::TimeSync
         using positioning   = LSLTypes::positioning;// getType() -> Titta::Stream::Positioning
         using AllInlets = std::variant<
             Inlet<gaze>,
-            Inlet<eyeImage>,
             Inlet<extSignal>,
             Inlet<timeSync>,
             Inlet<positioning>

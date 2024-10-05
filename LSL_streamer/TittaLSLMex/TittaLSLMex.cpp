@@ -53,7 +53,6 @@
 #include <memory>
 #include <string>
 #include <atomic>
-#include <cstring>
 #include <cinttypes>
 
 #include "cpp_mex_helpers/include_matlab.h"
@@ -100,7 +99,6 @@ namespace mxTypes
 
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::gaze           >          data_);
     mxArray* FieldToMatlab(const std::vector<TittaLSL::Receiver::gaze>&         data_, bool rowVector_, TobiiTypes::eyeData Titta::gaze::* field_);
-    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::eyeImage       >          data_);
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::extSignal      >          data_);
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::timeSync       >          data_);
     mxArray* ToMatlab(std::vector<TittaLSL::Receiver::positioning    >          data_);
@@ -595,9 +593,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 case Titta::Stream::Gaze:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::gaze>(nSamp, side));
                                     return;
-                                case Titta::Stream::EyeImage:
-                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::eyeImage>(nSamp, side));
-                                    return;
                                 case Titta::Stream::ExtSignal:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeN<TittaLSL::Receiver::extSignal>(nSamp, side));
                                     return;
@@ -641,9 +636,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 case Titta::Stream::EyeOpenness:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::gaze>(timeStart, timeEnd, timeIsLocalTime));
                                     return;
-                                case Titta::Stream::EyeImage:
-                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::eyeImage>(timeStart, timeEnd, timeIsLocalTime));
-                                    return;
                                 case Titta::Stream::ExtSignal:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->consumeTimeRange<TittaLSL::Receiver::extSignal>(timeStart, timeEnd, timeIsLocalTime));
                                     return;
@@ -680,9 +672,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 case Titta::Stream::Gaze:
                                 case Titta::Stream::EyeOpenness:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::gaze>(nSamp, side));
-                                    return;
-                                case Titta::Stream::EyeImage:
-                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::eyeImage>(nSamp, side));
                                     return;
                                 case Titta::Stream::ExtSignal:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekN<TittaLSL::Receiver::extSignal>(nSamp, side));
@@ -726,9 +715,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 case Titta::Stream::Gaze:
                                 case Titta::Stream::EyeOpenness:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::gaze>(timeStart, timeEnd, timeIsLocalTime));
-                                    return;
-                                case Titta::Stream::EyeImage:
-                                    plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::eyeImage>(timeStart, timeEnd, timeIsLocalTime));
                                     return;
                                 case Titta::Stream::ExtSignal:
                                     plhs_[0] = mxTypes::ToMatlab(receiverInstance->peekTimeRange<TittaLSL::Receiver::extSignal>(timeStart, timeEnd, timeIsLocalTime));
@@ -824,69 +810,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
 
 // helpers
-namespace
-{
-    template <typename S, typename T, typename SS, typename TT, typename R>
-    bool allEquals(const std::vector<S>& data_, T S::* field_, TT SS::* field2_, const R& ref_)
-    {
-        for (auto &frame : data_)
-            if (frame.*field_.*field2_ != ref_)
-                return false;
-        return true;
-    }
-
-    mxArray* eyeImagesToMatlab(const std::vector<TittaLSL::Receiver::eyeImage>& data_)
-    {
-        if (data_.empty())
-            return mxCreateDoubleMatrix(0, 0, mxREAL);
-
-        // 1. see if all same size, then we can put them in one big matrix
-        auto sz = data_[0].eyeImageData.data_size;
-        bool same = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::data_size, sz);
-        // 2. then copy over the images to matlab
-        mxArray* out;
-        if (data_[0].eyeImageData.bits_per_pixel + data_[0].eyeImageData.padding_per_pixel != 8)
-            throw "TittaLSL: eyeImagesToMatlab: non-8bit images not implemented";
-        if (same)
-        {
-            auto storage = static_cast<uint8_t*>(mxGetData(out = mxCreateUninitNumericMatrix(static_cast<size_t>(data_[0].eyeImageData.width)*data_[0].eyeImageData.height, data_.size(), mxUINT8_CLASS, mxREAL)));
-            size_t i = 0;
-            for (auto &frame : data_)
-                std::memcpy(storage + (i++)*sz, frame.eyeImageData.data(), frame.eyeImageData.data_size);
-        }
-        else
-        {
-            out = mxCreateCellMatrix(1, static_cast<mwSize>(data_.size()));
-            mwIndex i = 0;
-            for (auto &frame : data_)
-            {
-                mxArray* temp;
-                auto storage = static_cast<uint8_t*>(mxGetData(temp = mxCreateUninitNumericMatrix(1, static_cast<size_t>(frame.eyeImageData.width)*frame.eyeImageData.height, mxUINT8_CLASS, mxREAL)));
-                std::memcpy(storage, frame.eyeImageData.data(), frame.eyeImageData.data_size);
-                mxSetCell(out, i++, temp);
-            }
-        }
-
-        return out;
-    }
-
-    std::string TobiiResearchCalibrationEyeValidityToString(TobiiResearchCalibrationEyeValidity data_)
-    {
-        switch (data_)
-        {
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED:
-            return "invalidAndNotUsed";
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED:
-            return "validButNotUsed";
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED:
-            return "validAndUsed";
-        case TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN:
-            return "unknown";
-        }
-
-        return "unknown";
-    }
-}
 namespace mxTypes
 {
     // default output is storage type corresponding to the type of the member variable accessed through this function, but it can be overridden through type tag dispatch (see nested_field::getWrapper implementation)
@@ -1106,48 +1029,6 @@ namespace mxTypes
         mxSetFieldByNumber(temp, 0, 1,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 4.3 eye_openness.available
         mxSetFieldByNumber(temp, 0, 2,      FieldToMatlab(data_, rowVector_, &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::eye_openness, &TobiiTypes::eyeOpenness::available));
-
-        return out;
-    }
-
-    mxArray* ToMatlab(std::vector<TittaLSL::Receiver::eyeImage> data_)
-    {
-        // check if all gif, then don't output unneeded fields
-        bool allGif = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
-
-        // fieldnames for all structs
-        mxArray* out;
-        if (allGif)
-        {
-            const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","type","cameraID","isGif","image"};
-            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
-        }
-        else
-        {
-            const char* fieldNames[] = {"remoteSystemTimeStamp","localSystemTimeStamp","deviceTimeStamp","systemTimeStamp","regionID","regionTop","regionLeft","bitsPerPixel","paddingPerPixel","width","height","type","cameraID","isGif","image"};
-            out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
-        }
-
-        // all simple fields
-        mxSetFieldByNumber(out, 0, 0, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::remoteSystemTimeStamp));
-        mxSetFieldByNumber(out, 0, 1, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::localSystemTimeStamp));
-        mxSetFieldByNumber(out, 0, 2, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp));
-        mxSetFieldByNumber(out, 0, 3, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp));
-        mxSetFieldByNumber(out, 0, 4, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id, 0.));             // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 5, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_top, 0.));            // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0, 6, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_left, 0.));           // 0. causes values to be stored as double
-        if (!allGif)
-        {
-            mxSetFieldByNumber(out, 0,  7, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel, 0.));    // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  8, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel, 0.)); // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0,  9, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::width, 0.));             // 0. causes values to be stored as double
-            mxSetFieldByNumber(out, 0, 10, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::height, 0.));            // 0. causes values to be stored as double
-        }
-        int off = 4 * (!allGif);
-        mxSetFieldByNumber(out, 0,  7 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::type, [](auto in_) {return TobiiResearchEyeImageToString(in_);}));
-        mxSetFieldByNumber(out, 0,  8 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::camera_id, 0.));       // 0. causes values to be stored as double
-        mxSetFieldByNumber(out, 0,  9 + off, FieldToMatlab(data_, true, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif));
-        mxSetFieldByNumber(out, 0, 10 + off, eyeImagesToMatlab(data_));
 
         return out;
     }

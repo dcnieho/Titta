@@ -109,7 +109,7 @@ std::vector<std::string> Titta::getAllStreams(const bool snakeCase_ /*= false*/,
     std::vector<std::string> out;
 
     for (auto val = static_cast<val_t>(Titta::Stream::Gaze); val < static_cast<val_t>(Titta::Stream::Last); val++)
-        if (!forLSL_ || !(val==static_cast<val_t>(Titta::Stream::EyeOpenness) || val==static_cast<val_t>(Titta::Stream::Notification)))
+        if (!forLSL_ || !(val == static_cast<val_t>(Titta::Stream::EyeImage) || val == static_cast<val_t>(Titta::Stream::EyeOpenness) || val==static_cast<val_t>(Titta::Stream::Notification)))
             out.push_back(Titta::streamToString(static_cast<Titta::Stream>(val), snakeCase_));
 
     return out;

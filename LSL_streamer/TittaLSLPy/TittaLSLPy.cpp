@@ -138,24 +138,6 @@ py::array_t<uint8_t> imageToNumpy(const TobiiTypes::eyeImage& e_)
     std::memcpy(a.mutable_data(), e_.data(), e_.data_size);
     return a;
 }
-void outputEyeImages(py::dict& out_, const std::vector<TittaLSL::Receiver::eyeImage>& data_, const std::string& name_)
-{
-    if (data_.empty())
-    {
-        out_[name_.c_str()] = py::list();
-        return;
-    }
-
-    py::list l;
-    for (const auto& frame : data_)
-    {
-        if (!frame.eyeImageData.is_gif)
-            l.append(imageToNumpy(frame.eyeImageData));
-        else
-            l.append(py::array_t<uint8_t>(static_cast<py::ssize_t>(frame.eyeImageData.data_size), static_cast<uint8_t*>(frame.eyeImageData.data())));
-    }
-    out_[name_.c_str()] = l;
-}
 
 
 
@@ -175,33 +157,6 @@ py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::gaze>&& data_)
     FieldToNpArray(out, data_, "left" , &Titta::gaze::left_eye);
     // 6. right eye data
     FieldToNpArray(out, data_, "right", &Titta::gaze::right_eye);
-
-    return out;
-}
-
-py::dict StructVectorToDict(std::vector<TittaLSL::Receiver::eyeImage>&& data_)
-{
-    py::dict out;
-
-    // check if all gif, then don't output unneeded fields
-    const bool allGif = allEquals(data_, &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif, true);
-
-    FieldToNpArray<true>(out, data_, "remote_system_time_stamp" , &TittaLSL::Receiver::eyeImage::remoteSystemTimeStamp);
-    FieldToNpArray<true>(out, data_, "local_system_time_stamp"  , &TittaLSL::Receiver::eyeImage::localSystemTimeStamp);
-    FieldToNpArray<true>(out, data_, "device_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::device_time_stamp);
-    FieldToNpArray<true>(out, data_, "system_time_stamp", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::system_time_stamp);
-    FieldToNpArray<true>(out, data_, "region_id"        , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_id);
-    FieldToNpArray<true>(out, data_, "region_top"       , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_top);
-    FieldToNpArray<true>(out, data_, "region_left"      , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::region_left);
-    if (!allGif)
-    {
-        FieldToNpArray<true>(out, data_, "bits_per_pixel"   , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::bits_per_pixel);
-        FieldToNpArray<true>(out, data_, "padding_per_pixel", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::padding_per_pixel);
-    }
-    FieldToNpArray<false>(out, data_, "type"     , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::type);
-    FieldToNpArray<true> (out, data_, "camera_id", &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::camera_id);
-    FieldToNpArray<true> (out, data_, "is_gif"   , &TittaLSL::Receiver::eyeImage::eyeImageData, &Titta::eyeImage::is_gif);
-    outputEyeImages(out, data_, "image");
 
     return out;
 }
@@ -430,8 +385,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::gaze>(NSamp_, bufSide));
-                case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::eyeImage>(NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.consumeN<TittaLSL::Receiver::extSignal>(NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
@@ -451,8 +404,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::gaze>(timeStart_, timeEnd_, timeIsLocalTime_));
-                case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::eyeImage>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.consumeTimeRange<TittaLSL::Receiver::extSignal>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
@@ -482,8 +433,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::gaze>(NSamp_, bufSide));
-                case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::eyeImage>(NSamp_, bufSide));
                 case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.peekN<TittaLSL::Receiver::extSignal>(NSamp_, bufSide));
                 case Titta::Stream::TimeSync:
@@ -503,8 +452,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 case Titta::Stream::Gaze:
                 case Titta::Stream::EyeOpenness:
                     return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::gaze>(timeStart_, timeEnd_, timeIsLocalTime_));
-                case Titta::Stream::EyeImage:
-                    return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::eyeImage>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::ExtSignal:
                     return StructVectorToDict(instance_.peekTimeRange<TittaLSL::Receiver::extSignal>(timeStart_, timeEnd_, timeIsLocalTime_));
                 case Titta::Stream::TimeSync:
