@@ -494,17 +494,8 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
                                     throw std::string("start: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
 
-                                // get optional input arguments
-                                std::optional<bool> asGif;
-                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
-                                {
-                                    if (!(mxIsDouble(prhs_[3]) && !mxIsComplex(prhs_[3]) && mxIsScalar(prhs_[3])) && !mxIsLogicalScalar(prhs_[3]))
-                                        throw "start: Expected second argument to be a logical scalar.";
-                                    asGif = mxIsLogicalScalarTrue(prhs_[3]);
-                                }
-
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                plhs_[0] = mxCreateLogicalScalar(senderInstance->start(bufferCstr, asGif));
+                                plhs_[0] = mxCreateLogicalScalar(senderInstance->start(bufferCstr));
                                 mxFree(bufferCstr);
                                 return;
                             }

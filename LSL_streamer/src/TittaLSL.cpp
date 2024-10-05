@@ -131,15 +131,6 @@ void EyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data)
             instance->pushSample(eye_image_);
     }
 }
-void EyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data)
-{
-    if (user_data)
-    {
-        const auto instance = static_cast<TittaLSL::Sender*>(user_data);
-        if (instance->isStreaming(Titta::Stream::EyeImage))
-            instance->pushSample(eye_image_);
-    }
-}
 void ExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data)
 {
     if (user_data)
@@ -166,24 +157,6 @@ void PositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* u
         if (instance->isStreaming(Titta::Stream::Positioning))
             instance->pushSample(*position_data_);
     }
-}
-}
-namespace
-{
-// eye image helpers
-TobiiResearchStatus doSubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, TittaLSL::Sender* instance_, const bool asGif_)
-{
-    if (asGif_)
-        return tobii_research_subscribe_to_eye_image_as_gif(eyeTracker_, TittaLSL::EyeImageGifCallback, instance_);
-    else
-        return tobii_research_subscribe_to_eye_image(eyeTracker_, TittaLSL::EyeImageCallback, instance_);
-}
-TobiiResearchStatus doUnsubscribeEyeImage(TobiiResearchEyeTracker* eyeTracker_, const bool isGif_)
-{
-    if (isGif_)
-        return tobii_research_unsubscribe_from_eye_image_as_gif(eyeTracker_, TittaLSL::EyeImageGifCallback);
-    else
-        return tobii_research_unsubscribe_from_eye_image(eyeTracker_, TittaLSL::EyeImageCallback);
 }
 }
 
@@ -280,11 +253,11 @@ std::string Sender::getStreamSourceID(Titta::Stream stream_) const
     return string_format("TittaLSL:%s@%s", lslStreamName.c_str(), _localEyeTracker.serialNumber.c_str());
 }
 
-bool Sender::start(std::string stream_, std::optional<bool> asGif_, const bool snake_case_on_stream_not_found /*= false*/)
+bool Sender::start(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
 {
-    return start(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true), asGif_);
+    return start(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
 }
-bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool Sender::start(const Titta::Stream stream_)
 {
     // if already streaming, don't start again
     if (isStreaming(stream_))
@@ -307,10 +280,7 @@ bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
         format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Gaze>>;
         break;
     case Titta::Stream::EyeImage:
-        if (asGif_)
-            type = "VideoCompressed";
-        else
-            type = "VideoRaw";
+        type = "VideoRaw";
         nChannel = LSLInletTypeNumSamples_v<TittaStreamToLSLInletType_t<Titta::Stream::EyeImage>>;
         format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::EyeImage>>;
         break;
@@ -580,10 +550,7 @@ bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
             .append_child_value("unit", "bool");
         break;
     case Titta::Stream::EyeImage:
-        if (asGif_)
-            type = "VideoCompressed";
-        else
-            type = "VideoRaw";
+        type = "VideoRaw";
         break;
     case Titta::Stream::ExtSignal:
         channels.append_child("channel")
@@ -664,7 +631,7 @@ bool Sender::start(const Titta::Stream stream_, std::optional<bool> asGif_)
     _outStreams.insert(std::make_pair(stream_,lsl::stream_outlet(info, 1)));
 
     // start the eye tracker stream
-    return attachCallback(stream_, asGif_);
+    return attachCallback(stream_);
 }
 
 
@@ -684,7 +651,7 @@ void Sender::setIncludeEyeOpennessInGaze(const bool include_)
         attachCallback(Titta::Stream::EyeOpenness);
 }
 
-bool Sender::attachCallback(const Titta::Stream stream_, std::optional<bool> asGif_)
+bool Sender::attachCallback(const Titta::Stream stream_)
 {
     TobiiResearchStatus result=TOBII_RESEARCH_STATUS_OK;
     bool* stateVar = nullptr;
@@ -720,23 +687,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, std::optional<bool> asG
                 result = TOBII_RESEARCH_STATUS_OK;
             else
             {
-                // deal with default arguments
-                const auto asGif = asGif_.value_or(defaults::eyeImageAsGIF);
-
-                // if already recording and switching from gif to normal or other way, first stop old stream
-                if (_streamingEyeImages)
-                    if (asGif != _eyeImIsGif)
-                        doUnsubscribeEyeImage(_localEyeTracker.et, _eyeImIsGif);
-                    else
-                        // nothing to do
-                        return true;
-
-                // subscribe to new stream
-                result = doSubscribeEyeImage(_localEyeTracker.et, this, asGif);
+                result = tobii_research_subscribe_to_eye_image(_localEyeTracker.et, EyeImageCallback, this);
                 stateVar = &_streamingEyeImages;
-                if (result==TOBII_RESEARCH_STATUS_OK)
-                    // update type being recorded if subscription to stream was successful
-                    _eyeImIsGif = asGif;
             }
             break;
         }
@@ -792,10 +744,10 @@ bool Sender::attachCallback(const Titta::Stream stream_, std::optional<bool> asG
     {
         // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
         if (     stream_== Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && !_streamingGaze)
-            return attachCallback(Titta::Stream::Gaze       , asGif_);
+            return attachCallback(Titta::Stream::Gaze);
         // if requested to merge gaze and eye openness, a call to start gaze also starts eye openness
         else if (stream_== Titta::Stream::Gaze        && _includeEyeOpennessInGaze && !_streamingEyeOpenness)
-            return attachCallback(Titta::Stream::EyeOpenness, asGif_);
+            return attachCallback(Titta::Stream::EyeOpenness);
         return true;
     }
 
@@ -1030,7 +982,7 @@ bool Sender::removeCallback(const Titta::Stream stream_)
         stateVar = &_streamingEyeOpenness;
         break;
     case Titta::Stream::EyeImage:
-        result = !_streamingEyeImages ? TOBII_RESEARCH_STATUS_OK : doUnsubscribeEyeImage(_localEyeTracker.et, _eyeImIsGif);
+        result = !_streamingEyeImages ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_image(_localEyeTracker.et, EyeImageCallback);
         stateVar = &_streamingEyeImages;
         break;
     case Titta::Stream::ExtSignal:

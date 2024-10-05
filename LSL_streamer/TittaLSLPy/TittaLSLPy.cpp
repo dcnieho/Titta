@@ -372,10 +372,10 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a)
 
         // outlets
-        .def("start", [](TittaLSL::Sender& instance_, std::string stream_, std::optional<bool> as_gif_) { return instance_.start(std::move(stream_), as_gif_, true); },
-            "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
-        .def("start", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Sender::start),
-            "stream"_a, py::arg_v("as_gif", std::nullopt, "None"))
+        .def("start", [](TittaLSL::Sender& instance_, std::string stream_) { return instance_.start(std::move(stream_), true); },
+            "stream"_a)
+        .def("start", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::start),
+            "stream"_a)
 
         .def("is_streaming", [](const TittaLSL::Sender& instance_, std::string stream_) -> bool { return instance_.isStreaming(std::move(stream_), true); },
             "stream"_a)

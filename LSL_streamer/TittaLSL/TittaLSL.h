@@ -44,8 +44,8 @@ namespace TittaLSL
         std::string getStreamSourceID(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
         std::string getStreamSourceID(Titta::Stream stream_) const;
 
-        bool start(std::string   stream_, std::optional<bool> asGif_ = std::nullopt, bool snake_case_on_stream_not_found = false);
-        bool start(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
+        bool start(std::string   stream_, bool snake_case_on_stream_not_found = false);
+        bool start(Titta::Stream stream_);
         void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
         bool isStreaming(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
         bool isStreaming(Titta::Stream stream_) const;
@@ -60,7 +60,6 @@ namespace TittaLSL
         friend void GazeCallback(TobiiResearchGazeData* gaze_data_, void* user_data);
         friend void EyeOpennessCallback(TobiiResearchEyeOpennessData* openness_data_, void* user_data);
         friend void EyeImageCallback(TobiiResearchEyeImage* eye_image_, void* user_data);
-        friend void EyeImageGifCallback(TobiiResearchEyeImageGif* eye_image_, void* user_data);
         friend void ExtSignalCallback(TobiiResearchExternalSignalData* ext_signal_, void* user_data);
         friend void TimeSyncCallback(TobiiResearchTimeSynchronizationData* time_sync_data_, void* user_data);
         friend void PositioningCallback(TobiiResearchUserPositionGuide* position_data_, void* user_data);
@@ -73,7 +72,7 @@ namespace TittaLSL
         void pushSample(const Titta::timeSync& sample_);
         void pushSample(const Titta::positioning& sample_);
         // callback registration and deregistration
-        bool attachCallback(Titta::Stream stream_, std::optional<bool> asGif_ = std::nullopt);
+        bool attachCallback(Titta::Stream stream_);
         bool removeCallback(Titta::Stream stream_);
 
     private:
@@ -91,7 +90,6 @@ namespace TittaLSL
         bool                            _streamingGaze = false;
         bool                            _streamingEyeOpenness = false;
         bool                            _streamingEyeImages = false;
-        bool                            _eyeImIsGif = false;
         bool                            _streamingExtSignal = false;
         bool                            _streamingTimeSync = false;
         bool                            _streamingPositioning = false;

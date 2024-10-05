@@ -60,18 +60,11 @@ classdef Sender < TittaLSL.detail.Base
             end
             name = this.cppmethod('getStreamSourceID',ensureStringIsChar(stream));
         end
-        function success = start(this,stream,asGif)
-            % optional buffer size input, and optional input to request
-            % gif-encoded instead of raw images
+        function success = start(this,stream)
             if nargin<2
                 error('TittaLSL::Sender::start: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
-            stream = ensureStringIsChar(stream);
-            if nargin>2 && ~isempty(asGif)
-                success = this.cppmethod('start',stream,logical(asGif));
-            else
-                success = this.cppmethod('start',stream);
-            end
+            success = this.cppmethod('start',ensureStringIsChar(stream));
         end
         function setIncludeEyeOpennessInGaze(this,include)
             this.cppmethod('setIncludeEyeOpennessInGaze',include);
