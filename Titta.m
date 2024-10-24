@@ -3922,7 +3922,7 @@ classdef Titta < handle
             qHasCal                 = ~isempty(cal{selection}.cal.result);
             qHasMultipleValidCals   = ~isempty(iValidCals) && ~isscalar(iValidCals);
             iVal                    = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
-            qHasValData             = isfield(cal{selection}.val{iVal},'pointPos');
+            qHasValData             = isfield(cal{selection}.val{iVal},'pointPos') && isfield(cal{selection}.val{iVal},'dataLoss') && any(cal{selection}.val{iVal}.dataLoss<1);
             qHasTrackerSpacePos     = ~isempty(obj.settings.cal.pointPosTrackerSpace);
             
             % setup text for buttons
@@ -4113,7 +4113,7 @@ classdef Titta < handle
                                 qAwaitingCalChange  = false;
                                 qHasCal             = ~isempty(cal{selection}.cal.result);
                                 iVal                = find(cellfun(@(x) x.status, cal{selection}.val)==1,1,'last');
-                                qHasValData         = isfield(cal{selection}.val{iVal},'pointPos');
+                                qHasValData         = isfield(cal{selection}.val{iVal},'pointPos') && isfield(cal{selection}.val{iVal},'dataLoss') && any(cal{selection}.val{iVal}.dataLoss<1);
                                 if ~qHasCal && qShowCal
                                     qShowCal            = false;
                                     % toggle selection menu to trigger updating of
@@ -4124,18 +4124,18 @@ classdef Titta < handle
                                 end
                                 if ~qHasTrackerSpacePos
                                     but(7).visible    = false;
-                                elseif obj.settings.UI.button.val.toggSpace.visible
-                                    but(7).visible    = true;
+                                else
+                                    but(7).visible    = obj.settings.UI.button.val.toggSpace.visible;
                                 end
                                 if ~qHasCal
                                     but(8).visible    = false;
-                                elseif obj.settings.UI.button.val.toggCal.visible
-                                    but(8).visible    = true;
+                                else
+                                    but(8).visible    = obj.settings.UI.button.val.toggCal.visible;
                                 end
                                 if ~qHasValData
                                     but(9).visible    = false;
-                                elseif obj.settings.UI.button.val.toggPlot.visible
-                                    but(9).visible    = true;
+                                else
+                                    but(9).visible    = obj.settings.UI.button.val.toggPlot.visible;
                                 end
                             end
                             % update info text
@@ -4293,7 +4293,7 @@ classdef Titta < handle
                                 rEpos= myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
                             end
                         end
-                        if ismember(cal{selection}.eye,{'both','left'})  && ~isempty(lEpos)
+                        if ismember(cal{selection}.eye,{'both','left'}) && ~isempty(lEpos)
                             if qHasTrackerSpacePos && ~qShowInTrackerSpace
                                 % make data relative to point in screen space
                                 lEpos = bsxfun(@plus,bsxfun(@minus,lEpos,pointPos(p,4:5).'),pointPos(p,2:3).');
@@ -5506,7 +5506,6 @@ classdef Titta < handle
                             
                             % compute data quality for these
                             if ~isempty(val.pointPos)
-                                qCanPlotVal = true;
                                 out.attempt{kCal}.val{valAction}.allPoints = obj.ProcessValData(val);
                                 qUpdatePointHover = true;   % may need to update point hover
                                 
@@ -5518,11 +5517,13 @@ classdef Titta < handle
                                     % left eye
                                     if ismember(out.attempt{kCal}.eye,{'both','left'})
                                         qVal        = myVal.gazeData(p). left.gazePoint.valid;
+                                        qCanPlotVal = qCanPlotVal||any(qVal);
                                         point.left  = myVal.gazeData(p). left.gazePoint.onDisplayArea(:,qVal);
                                     end
                                     % right eye
                                     if ismember(out.attempt{kCal}.eye,{'both','right'})
                                         qVal        = myVal.gazeData(p).right.gazePoint.valid;
+                                        qCanPlotVal = qCanPlotVal||any(qVal);
                                         point.right = myVal.gazeData(p).right.gazePoint.onDisplayArea(:,qVal);
                                     end
                                     linesForPoints{myVal.pointPos(p,1)} = point;
