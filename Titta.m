@@ -3981,7 +3981,7 @@ classdef Titta < handle
                 but(5).rect     = OffsetRect(but(5).rect,-but(5).rect(1)+but5LPos,-but(5).rect(2)+5);
             end
             but5RPos = but(5).rect(3)-but(5).rect(1)+but5LPos;
-            but6LPos = obj.scrInfo.resolution{end}(1)-but5RPos;
+            but6LPos = min(obj.scrInfo.resolution{end}(1)-[but5RPos, but(6).rect(3)-but(6).rect(1)+30]);
             if but(6).visible
                 but(6).rect     = OffsetRect(but(6).rect,-but(6).rect(1)+but6LPos,-but(6).rect(2)+5);
             end
