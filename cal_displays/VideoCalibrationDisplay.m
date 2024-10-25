@@ -130,7 +130,8 @@ classdef VideoCalibrationDisplay < handle
                     rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
                     Screen('DrawTexture',wpnt,obj.tex,[],rect);
                     if obj.doMask && obj.masktex>0
-                        Screen('DrawTexture',wpnt,obj.masktex,[],rect,[], [], 1, [0.5 0.5 0.5 1]');
+                        maskClr = obj.getColorForWindow(color2RGBA(obj.bgColor),true);
+                        Screen('DrawTexture',wpnt,obj.masktex,[],rect,[],[],1,maskClr');
                     end
                 end
             end
@@ -138,8 +139,8 @@ classdef VideoCalibrationDisplay < handle
     end
     
     methods (Access = private, Hidden)
-        function clr = getColorForWindow(obj,clr)
-            if obj.qFloatColorRange
+        function clr = getColorForWindow(obj,clr,forceFloatRange)
+            if obj.qFloatColorRange || (nargin>2&&forceFloatRange)
                 clr = double(clr)/255;
             end
         end
