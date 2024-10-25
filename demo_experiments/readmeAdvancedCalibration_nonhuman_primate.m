@@ -91,6 +91,7 @@ try
     calViz                      = VideoCalibrationDisplay();
     settings.advcal.drawFunction= @calViz.doDraw;
     calViz.bgColor              = bgClr;
+    calViz.doMask               = false;    % set to true to draw calibration/validation video stimuli with a circular mask
     % calibration logic: custom controller
     rewardProvider = DemoRewardProvider();
     rewardProvider.dutyCycle = 170; % ms
