@@ -147,15 +147,16 @@ try
         % Only output critical errors and warnings.
         Screen('Preference', 'Verbosity', 2);
     end
+    PsychDefaultSetup(2);
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr, [], [], [], [], 4);
+    [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr/255, [], [], [], [], 4);
     if useWindowedOperatorScreen
         wrect  = Screen('GlobalRect', scrOperator);
         [w, h] = Screen('WindowSize', scrOperator);
         wrect  = CenterRect([w*.1 h*.1 w*.9 h*.9],wrect);
-        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr, wrect, [], [], [], 4, [], kPsychGUIWindow);
+        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr/255, wrect, [], [], [], 4, [], kPsychGUIWindow);
     else
-        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr, [], [], [], [], 4);
+        [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr/255, [], [], [], [], 4);
     end
     hz=Screen('NominalFrameRate', wpntP);
     Priority(1);
@@ -168,7 +169,7 @@ try
     % renderer is the default on all operating systems, so this is more of
     % a "better safe than sorry" setting.
     Screen('Preference', 'TextRenderer', 1);
-    KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
+    KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required (NB: also done by PsychDefaultSetup(2) above)
 
     calController.scrRes = winRectP(3:4);
 
