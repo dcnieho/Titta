@@ -42,6 +42,10 @@ classdef VideoCalibrationDisplay < handle
             if ~isempty(obj.videoPlayer)
                 obj.videoPlayer.cleanup();
             end
+            if obj.tex>0
+                Screen('Close', obj.tex);
+            end
+            obj.tex = 0;
             if obj.masktex>0 && Screen(obj.masktex,'WindowKind')==-1
                 try Screen('Close',obj.masktex); end %#ok<*TRYNC>
             end
