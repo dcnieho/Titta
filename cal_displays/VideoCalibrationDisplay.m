@@ -15,13 +15,15 @@ classdef VideoCalibrationDisplay < handle
         blinkCount          = 2;
         bgColor             = 127;
         videoSize           = [];
+        doMask              = true;
     end
     properties (Access=private, Hidden = true)
         currentPoint;
         qFloatColorRange;
         cumDurations;
         videoPlayer;
-        tex = 0;
+        tex                 = 0;
+        masktex             = [];
     end
     
     
@@ -40,6 +42,10 @@ classdef VideoCalibrationDisplay < handle
             if ~isempty(obj.videoPlayer)
                 obj.videoPlayer.cleanup();
             end
+            if ~isempty(obj.masktex) && obj.masktex > 0 && Screen(obj.masktex,'WindowKind') == -1
+                try Screen('Close',obj.masktex); end %#ok<*TRYNC>
+            end
+            obj.masktex = [];
         end
 
         function pos = get.pos(obj)
@@ -49,6 +55,10 @@ classdef VideoCalibrationDisplay < handle
         function qAllowAcceptKey = doDraw(obj,wpnt,drawCmd,currentPoint,pos,~,~)
             % last two inputs, tick (monotonously increasing integer) and
             % stage ("cal" or "val") are not used in this code
+
+            if obj.doMask && isempty(obj.masktex)
+                obj.masktex = CreateProceduralSmoothedDisc(wpnt,500, 500, [], 250, 60, true, 2);
+            end
             
             % if called with drawCmd == 'fullCleanUp', this is a signal
             % that calibration/validation is done, and cleanup can occur if
@@ -115,6 +125,9 @@ classdef VideoCalibrationDisplay < handle
                     end
                     rect = CenterRectOnPointd(ts,curPos(1),curPos(2));
                     Screen('DrawTexture',wpnt,obj.tex,[],rect);
+                    if obj.doMask
+                        Screen('DrawTexture',wpnt,obj.masktex,[],rect,[], [], 1, [0.5 0.5 0.5 1]');
+                    end
                 end
             end
         end
