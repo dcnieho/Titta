@@ -7,9 +7,10 @@
 % 1) Open an External Presenter project in Tobii Pro Lab, make sure its
 %    name matches the TobiiProLabProject variable below.
 % 2) Navigate to the 'record'-tab in Pro Lab
-% 3) Make sure that the External presenter button is red and says 'not
+% 3) Make sure that the correct eye tracker is selected on the record tab.
+% 4) Make sure that the External presenter button is red and says 'not
 %    connected'
-% 4) Run this script
+% 5) Run this script
 %
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
