@@ -44,10 +44,10 @@ classdef TalkToProLab < handle
             % TalkToProLab.clientClock to directly talk to the clock
             % service and figure out (and monitor every now and then!) the
             % clock offset between the two systems.
-            if nargin<2
+            if nargin<2 || isempty(doCheckSync)
                 doCheckSync = true;
             end
-            if nargin<3
+            if nargin<3 || isempty(IPorFQDN)
                 IPorFQDN = 'localhost';
             end
             
