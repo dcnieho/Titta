@@ -349,19 +349,31 @@ classdef TittaMex < handle
         function prevEyeOpennessState = setIncludeEyeOpennessInGaze(this,include)
             prevEyeOpennessState = this.cppmethod('setIncludeEyeOpennessInGaze',include);
         end
-        function success = start(this,stream,initialBufferSize,asGif)
+        function success = start(this,stream,initialBufferSize,asGif,blockUntilStarted)
             % optional buffer size input, and optional input to request
             % gif-encoded instead of raw images
             if nargin<2
                 error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
             stream = ensureStringIsChar(stream);
+            t0 = this.systemTimestamp;
             if nargin>3 && ~isempty(asGif)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize),logical(asGif));
             elseif nargin>2 && ~isempty(initialBufferSize)
                 success = this.cppmethod('start',stream,uint64(initialBufferSize));
             else
                 success = this.cppmethod('start',stream);
+            end
+            if success && nargin>4 && ~isempty(blockUntilStarted) && blockUntilStarted
+                if ismember('gaze',{'gaze','eyeOpenness','eye_openness'})   % Only supported for gaze data streams
+                    while true
+                        samples = this.peekTimeRange(stream,t0);
+                        if ~isempty(samples.systemTimeStamp)
+                            break;
+                        end
+                        pause(0.01)
+                    end
+                end
             end
         end
         function status = isRecording(this,stream)
