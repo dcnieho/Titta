@@ -293,40 +293,10 @@ classdef TalkToProLab < handle
             
             request = struct('operation','AddAois',...
                 'media_id',mediaID);
-            % build up AOI object
-            AOI = struct('name',aoiName);
-            % color
-            if isnumeric(aoiColor)    % else we assume its a hexadecimal string already
-                % turn into RGBA so that user can provide also single gray
-                % value, etc
-                aoiColor = round(color2RGBA(aoiColor));
-                aoiColor = reshape(dec2hex(aoiColor(1:3)).',1,[]);
+            if nargin<6
+                tags = [];
             end
-            AOI.color = aoiColor;
-            % vertices
-            assert(size(vertices,1)==2,'TalkToProLab: attachAOIToImage: AOI vertices should be a 2xN array')
-            nVert = size(vertices,2);
-            AOI.key_frames{1}.is_active = true;
-            AOI.key_frames{1}.time      = int64(0);     % microseconds, appears to be ignored for image media, set to 0 anyway to be safe
-            AOI.key_frames{1}.vertices  = repmat(struct('x',0,'y',0),1,nVert);
-            vertices = num2cell(vertices);
-            [AOI.key_frames{1}.vertices.x] = vertices{1,:};
-            [AOI.key_frames{1}.vertices.y] = vertices{2,:};
-            % tags
-            if nargin>5 && ~isempty(tags)
-                if ~iscell(tags)
-                    tags = num2cell(tags);
-                end
-                for t=1:length(tags)
-                    if isempty(tags{t}.group_name)
-                        tags{t} = rmfield(tags{t},'group_name');
-                    end
-                end
-                AOI.tags = tags;
-            else
-                AOI.tags = {};
-            end
-            request.aois = {AOI};       % enclose in cell so it becomes a json array
+            request.aois = {formatAOIForRequest(aoiName, aoiColor, vertices, 'image', tags)};   % enclose in cell so it becomes a json array
             request.merge_mode = 'replace_aois';
             
             % send and wait till successfully processed
@@ -334,18 +304,34 @@ classdef TalkToProLab < handle
             waitForResponse(this.clientProject,'AddAois');
         end
         
-        function attachAOIToVideo(this,mediaName,request)
-            % This function gives the user little help, and assumes that
-            % they read the Tobii Pro Lab API and deliver a properly
-            % formatted request. Request is the full struct to be converted
-            % to json, except for the 'media_id', and 'operation', which
-            % are added below
-            [mediaID,mediaInfo] = this.findMedia(name);
+        function attachAOIToVideo(this,mediaName,aoiName,aoiColor,key_frame_vertices,tags)
+            % users are responsible for correctly setting up
+            % key_frame_vertices. key_frame_vertices should be a
+            % struct-array, with each element containing the following
+            % three fields:
+            % - is_active: boolean (true/false) indicating whether the AOI
+            %   is active from this frame onward.
+            % - time: integer (microseconds) locating the keyframe in time.
+            % - vertices: vertices describing the AOI (should be 2xN).
+            % key_frame_vertices entries should be sorted in time.
+            % example:
+            % key_frame_vertices.is_active = true;
+            % key_frame_vertices.time = 0;
+            % key_frame_vertices.vertices = [500 600 600 500; 500 500 600 600];
+            % key_frame_vertices(2).is_active = false;
+            % key_frame_vertices(2).time = 1000000;
+            % key_frame_vertices(2).vertices = [500 600 600 500; 500 500 600 600];
+            [mediaID,mediaInfo] = this.findMedia(mediaName);
             assert(~isempty(mediaID),'TalkToProLab: attachAOIToVideo: no media with provided name, ''%s'' is known',mediaName)
-            assert(~isempty(strfind(mediaInfo.mime_type,'video')),'TalkToProLab: attachAOIToVideo: media with name ''%s'' is not an image, but a %s',mediaName,mediaInfo.mime_type)
+            assert(~isempty(strfind(mediaInfo.mime_type,'video')),'TalkToProLab: attachAOIToVideo: media with name ''%s'' is not a video, but a %s',mediaName,mediaInfo.mime_type)
             
-            request.operation = 'AddAois';
-            request.media_id  = mediaID;
+            request = struct('operation','AddAois',...
+                'media_id',mediaID);
+            if nargin<6
+                tags = [];
+            end
+            request.aois = {formatAOIForRequest(aoiName, aoiColor, key_frame_vertices, 'video', tags)};   % enclose in cell so it becomes a json array
+            request.merge_mode = 'replace_aois';
             
             % send and wait till successfully processed
             this.clientProject.send(request);
@@ -559,4 +545,64 @@ switch status
     otherwise
         str = '!!unknown status code';
 end
+end
+
+function AOI = formatAOIForRequest(aoiName, aoiColor, vertices, verticesMode, tags)
+    % build up AOI object
+    AOI = struct('name',aoiName);
+    % color
+    if isnumeric(aoiColor)    % else we assume its a hexadecimal string already
+        % turn into RGBA so that user can provide also single gray
+        % value, etc
+        aoiColor = round(color2RGBA(aoiColor));
+        aoiColor = reshape(dec2hex(aoiColor(1:3)).',1,[]);
+    end
+    AOI.color = aoiColor;
+    % vertices
+    switch verticesMode
+        case 'image'
+            AOI.key_frames{1} = formatAOIVertices(true,0,vertices,'attachAOIToImage'); % NB: time appears to be ignored for image media, but set to 0 anyway to be safe
+        case 'video'
+            nKeyFrames = length(vertices);
+            addFrame = vertices(1).time>0;
+            AOI.key_frames = cell(1,nKeyFrames+addFrame);
+            if addFrame
+                % first key frame must be at t=0, add one
+                AOI.key_frames{1} = formatAOIVertices(false,0,vertices(1).vertices,'attachAOIToVideo');
+            end
+            for f=1+addFrame:nKeyFrames+addFrame
+                AOI.key_frames{f} = formatAOIVertices( ...
+                    vertices(f-addFrame).is_active, ...
+                    vertices(f-addFrame).time, ...
+                    vertices(f-addFrame).vertices, ...
+                    'attachAOIToVideo');
+            end
+        otherwise
+            error('Vertex mode %s unknown', verticesMode);
+    end
+    % tags
+    if nargin>5 && ~isempty(tags)
+        if ~iscell(tags)
+            tags = num2cell(tags);
+        end
+        for t=1:length(tags)
+            if isempty(tags{t}.group_name)
+                tags{t} = rmfield(tags{t},'group_name');
+            end
+        end
+        AOI.tags = tags;
+    else
+        AOI.tags = {};
+    end
+end
+
+function key_frames = formatAOIVertices(is_active,time,vertices,functionName)
+assert(size(vertices,1)==2,'TalkToProLab: %s: AOI vertices should be a 2xN array',functionName)
+nVert = size(vertices,2);
+key_frames.is_active = ~~is_active;
+key_frames.time      = int64(time);      % microseconds
+key_frames.vertices  = repmat(struct('x',0,'y',0),1,nVert);
+vertices = num2cell(vertices);
+[key_frames.vertices.x] = vertices{1,:};
+[key_frames.vertices.y] = vertices{2,:};
 end
