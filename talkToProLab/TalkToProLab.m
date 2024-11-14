@@ -29,10 +29,8 @@ classdef TalkToProLab < handle
     methods
         function this = TalkToProLab(expectedProject,doCheckSync,IPorFQDN)
             % doCheckSync: set to false to skip checking sync between Pro
-            % Lab clock and system clock. The sync routine is the only part
-            % of this toolbox that uses PsychToolbox functionality
-            % (GetSecs), so you may wish to skip it if using without
-            % PsychToolbox. The sync routine also checks that Pro Lab and
+            % Lab clock and system clock. The sync routine also checks that
+            % Pro Lab and
             % TalkToProLab are running on the same machine. That is not a
             % strict requirement for running this code, but if you use it
             % with Pro Lab running on another machine, you are responsible
@@ -100,21 +98,20 @@ classdef TalkToProLab < handle
             % we do not support it when they aren't (e.g. running lab on a
             % different machine than the stimulus presentation machine)
             if doCheckSync
+                titMex = TittaMex;
                 nTimeStamp = 40;
-                [timesPTB,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
+                [timesLocal,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
                 request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
                 % ensure response is cleared
                 [~] = this.clientClock.lastRespText;
                 for p=1:nTimeStamp
                     if mod(p-1,10)<5
-                        PTBtime = GetSecs;
+                        timesLocal(p) = titMex.systemTimestamp;
                         this.clientClock.send(request);
                     else
                         this.clientClock.send(request);
-                        PTBtime = GetSecs;
+                        timesLocal(p) = titMex.systemTimestamp;
                     end
-                    % prep PTB timestamp
-                    timesPTB(p) = int64(PTBtime*1000*1000);
                     % wait for response
                     resp = waitForResponse(this.clientClock,'GetTimestamp');
                     timesLab(p) = sscanf(resp.timestamp,'%ld');
