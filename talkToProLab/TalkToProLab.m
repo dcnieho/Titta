@@ -13,9 +13,11 @@
 classdef TalkToProLab < handle
     properties (Access = protected, Hidden = true)
         stimTimeStamps;
+        synchronizer;
     end
     
     properties (SetAccess=protected)
+        isTwoComputerSetup;
         % websocket connections we need
         clientClock;
         clientProject;
@@ -27,27 +29,25 @@ classdef TalkToProLab < handle
     end
     
     methods
-        function this = TalkToProLab(expectedProject,doCheckSync,IPorFQDN)
-            % doCheckSync: set to false to skip checking sync between Pro
-            % Lab clock and system clock. The sync routine also checks that
-            % Pro Lab and
-            % TalkToProLab are running on the same machine. That is not a
-            % strict requirement for running this code, but if you use it
-            % with Pro Lab running on another machine, you are responsible
-            % yourself for presenting TalkToProLab with timestamps in Pro
-            % Lab's time, not that of the local machine. If you want to use
-            % this class with Pro Lab running elsewhere, use the third
-            % input argument to provide the IP or FQDN where Pro Lab can be
-            % contacted. After running this constructor, you can use
-            % TalkToProLab.clientClock to directly talk to the clock
-            % service and figure out (and monitor every now and then!) the
-            % clock offset between the two systems.
-            if nargin<2 || isempty(doCheckSync)
-                doCheckSync = true;
-            end
-            if nargin<3 || isempty(IPorFQDN)
+        function this = TalkToProLab(expectedProject,IPorFQDN)
+            % IPorFQDN: By default, TalkToProLab will connect to a Pro Lab
+            % instance on the local computer. If you want to connect to Pro
+            % Lab on another computer, specify that computer's IP as this
+            % parameter.
+            %
+            % When connected to Pro Lab on a remote computer, timestamps
+            % provided to sendStimulusEvent and sendCustomEvent will be
+            % automatically converted from the local computer's clock to
+            % the Pro Lab computer's clock. This conversation requires the 
+            % clocks of the two computers to be synced, which will be done
+            % automatically whenever needed (automatically determined by
+            % the sync code). Depending on network performance, such a sync
+            % will take about 60 ms or more. Be aware of these possible
+            % slowdowns when calling sendStimulusEvent and sendCustomEvent.
+            if nargin<2 || isempty(IPorFQDN)
                 IPorFQDN = 'localhost';
             end
+            this.isTwoComputerSetup = ~strcmp(IPorFQDN,'localhost');
             
             % check WebSocketClient java class required for SimpleWSClient
             % is available
@@ -94,29 +94,44 @@ classdef TalkToProLab < handle
                 warning('TalkToProLab is compatible with Tobii Pro Lab''s external presenter API version 1.0, your Lab software provides version %s. If the code does not crash, check carefully that it works correctly',resp.version);
             end
             
-            % check our local clock is the same as the ProLabClock. for now
-            % we do not support it when they aren't (e.g. running lab on a
-            % different machine than the stimulus presentation machine)
-            if doCheckSync
-                titMex = TittaMex;
-                nTimeStamp = 40;
+            % check sync between local clock and the Pro Lab clock
+            titMex = TittaMex;
+            nTimeStamp = 40;
+            request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
+            % ensure response is cleared
+            [~] = this.clientClock.lastRespText;
+            if this.isTwoComputerSetup
+                % we need a synchronizer
+                this.synchronizer = Synchronizer(@titMex.systemTimestamp, @()getRemoteTime(this.clientClock, request));
+                % warm it up
+                this.synchronizer.doSync();
+                pause(0.01)
+                this.synchronizer.doSync();
+
+                % check it works ok
+                [timesLab, timesLocal] = deal(zeros(nTimeStamp,1,'int64'));
+                for p=1:nTimeStamp
+                    t  = titMex.systemTimestamp();
+                    timesLab(p) = getRemoteTime(this.clientClock, request);
+                    t2 = titMex.systemTimestamp();
+                    timesLocal(p) = this.synchronizer.localTimeToRemote((t+t2)/2);
+                end
+                syncOff = median(abs(timesLab-timesLocal));
+                assert(abs(syncOff)<2500,'TalkToProLab: Clock offset between TittaMex and remote Tobii Pro Lab is more than 2.5 ms: synchronization to remote Tobii Pro Lab is not working correctly')
+            else
+                % for connection to local computer, just check clocks are
+                % ok, for safety
                 [timesLocalReq,timesLocalResp,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
-                request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
-                % ensure response is cleared
-                [~] = this.clientClock.lastRespText;
                 for p=1:nTimeStamp
                     timesLocalReq(p) = titMex.systemTimestamp;
-                    this.clientClock.send(request);
+                    timesLab(p) = getRemoteTime(this.clientClock, request);
                     timesLocalResp(p) = titMex.systemTimestamp;
-                    % wait for response
-                    resp = waitForResponse(this.clientClock,'GetTimestamp');
-                    timesLab(p) = sscanf(resp.timestamp,'%ld');
                 end
                 % get best estimate of clock offset (i.e., use sync with lowest
                 % RTT)
                 [~,i] = min(timesLocalResp-timesLocalReq);
                 syncOff = (timesLocalResp(i) + timesLocalReq(i))/2 - timesLab(i);
-                assert(abs(syncOff)<2500,'TalkToProLab: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running this code and Tobii Pro Lab on different computers (also unsupported)')
+                assert(abs(syncOff)<2500,'TalkToProLab: Sanity check failed: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported)')
             end
             
             % get info about opened project
@@ -599,4 +614,13 @@ key_frames.vertices  = repmat(struct('x',0,'y',0),1,nVert);
 vertices = num2cell(vertices);
 [key_frames.vertices.x] = vertices{1,:};
 [key_frames.vertices.y] = vertices{2,:};
+end
+
+function remoteT = getRemoteTime(clientClock, request)
+if nargin<2
+    request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));
+end
+clientClock.send(request);
+resp = waitForResponse(clientClock,'GetTimestamp');
+remoteT = sscanf(resp.timestamp,'%ld');
 end
