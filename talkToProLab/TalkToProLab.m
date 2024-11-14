@@ -100,26 +100,23 @@ classdef TalkToProLab < handle
             if doCheckSync
                 titMex = TittaMex;
                 nTimeStamp = 40;
-                [timesLocal,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
+                [timesLocalReq,timesLocalResp,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
                 request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
                 % ensure response is cleared
                 [~] = this.clientClock.lastRespText;
                 for p=1:nTimeStamp
-                    if mod(p-1,10)<5
-                        timesLocal(p) = titMex.systemTimestamp;
-                        this.clientClock.send(request);
-                    else
-                        this.clientClock.send(request);
-                        timesLocal(p) = titMex.systemTimestamp;
-                    end
+                    timesLocalReq(p) = titMex.systemTimestamp;
+                    this.clientClock.send(request);
+                    timesLocalResp(p) = titMex.systemTimestamp;
                     % wait for response
                     resp = waitForResponse(this.clientClock,'GetTimestamp');
                     timesLab(p) = sscanf(resp.timestamp,'%ld');
                 end
-                % get rough estimate of clock offset (note this is includes
-                % half RTT which is not taken into account, thats ok for our
-                % purposes)
-                assert(abs(mean(timesLab-timesPTB))<2500,'TalkToProLab: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running this code and Tobii Pro Lab on different computers (also unsupported)')
+                % get best estimate of clock offset (i.e., use sync with lowest
+                % RTT)
+                [~,i] = min(timesLocalResp-timesLocalReq);
+                syncOff = (timesLocalResp(i) + timesLocalReq(i))/2 - timesLab(i);
+                assert(abs(syncOff)<2500,'TalkToProLab: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running this code and Tobii Pro Lab on different computers (also unsupported)')
             end
             
             % get info about opened project
