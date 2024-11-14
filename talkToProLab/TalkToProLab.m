@@ -122,7 +122,7 @@ classdef TalkToProLab < handle
                 % get rough estimate of clock offset (note this is includes
                 % half RTT which is not taken into account, thats ok for our
                 % purposes)
-                assert(mean(timesLab-timesPTB)<2500,'TalkToProLab: Clock offset between PsychToolbox and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running PsychToolbox and Tobii Pro Lab on different computers (also unsupported)')
+                assert(abs(mean(timesLab-timesPTB))<2500,'TalkToProLab: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported) or you are running this code and Tobii Pro Lab on different computers (also unsupported)')
             end
             
             % get info about opened project
