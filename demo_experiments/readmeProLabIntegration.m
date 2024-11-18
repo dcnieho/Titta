@@ -12,6 +12,10 @@
 %    connected'
 % 5) Run this script
 %
+% N.B. If you run Pro Lab on a different computer than the computer running
+% this script, provide the IP address of the computer running Pro Lab as a
+% second input argument to the TalkToProLab() constructor call below.
+%
 % Titta can be found at https://github.com/dcnieho/Titta. Check there for
 % the latest version.
 % When using Titta, please cite the following paper:
@@ -268,6 +272,9 @@ try
     dat = EThndl.collectSessionData();
     dat.expt.resolution = winRect(3:4);
     dat.expt.stim       = rabbits;
+    if TalkToProLabInstance.isTwoComputerSetup
+        dat.ttpl.syncHistory = TalkToProLabInstance.getSyncHistory();
+    end
     EThndl.saveData(dat, fullfile(cd,'t'), true);
     % if you want to (also) save the data to Apache Parquet and json files
     % that can easily be read in Python (Apache Parquet files are supported
