@@ -142,7 +142,7 @@ classdef TalkToProLab < handle
             fprintf('TalkToProLab: Connected to Tobii Pro Lab, currently opened project is ''%s'' (%s)\n',resp.project_name,resp.project_id);
             
             % prep list of timestamps sent through stimulus messages
-            this.stimTimeStamps = simpleVec(int64([0 0]),1024);     % (re)initialize with space for 1024 stimulus intervals
+            this.stimTimeStamps = simpleVec(int64([0 0 0 0]),1024); % (re)initialize with space for 1024 stimulus intervals
         end
         
         function delete(this)
@@ -151,7 +151,7 @@ classdef TalkToProLab < handle
             this.projectID      = '';
             this.participantID  = '';
             this.recordingID    = '';
-            this.stimTimeStamps = simpleVec(int64([0 0]),1024);     % (re)initialize with space for 1024 stimulus intervals
+            this.stimTimeStamps = simpleVec(int64([0 0 0 0]),1024); % (re)initialize with space for 1024 stimulus intervals
         end
         
         function disconnect(this)
@@ -386,7 +386,7 @@ classdef TalkToProLab < handle
             % Tobii Pro Lab
             fillerName  = '!!emptyIntervalFiller!!';
             ts          = sortrows(this.stimTimeStamps.data,1);                     % events can be sent in any order, will be assembled by Tobii Pro Lab into correct order. Fix that up here
-            iGap        = find(ts(2:end,1)-ts(1:end-1,2) > 0 & ts(1:end-1,2)~=-1);  % end time can also be -1, in which case its automatically set to start time of next event. Ignore those
+            iGap        = find(ts(2:end,3)-ts(1:end-1,4) > 0 & ts(1:end-1,4)~=-1);  % end time can also be -1, in which case its automatically set to start time of next event. Ignore those
             if ~isempty(iGap)
                 mediaID = this.findMedia(fillerName);
                 % see if we already have our fake filler media in this
@@ -397,8 +397,8 @@ classdef TalkToProLab < handle
                 end
                 % now plug the gaps
                 for g=1:length(iGap)
-                    st = ts(iGap(g)  ,2);   % start time of gap filler is end time of previous
-                    et = ts(iGap(g)+1,1);   % end time of gap filler is start time of next
+                    st = ts(iGap(g)  ,4);   % start time of gap filler is end time of previous
+                    et = ts(iGap(g)+1,3);   % end time of gap filler is start time of next
                     this.sendStimulusEvent(mediaID,[],st,et,[],false);
                 end
             end
@@ -406,13 +406,13 @@ classdef TalkToProLab < handle
             % now send finalize
             this.clientEP.send(struct('operation','FinalizeRecording','recording_id',this.recordingID));
             waitForResponse(this.clientEP,'FinalizeRecording');
-            this.recordingID= '';
+            this.recordingID = '';
         end
         
         function discardRecording(this)
             this.clientEP.send(struct('operation','DiscardRecording','recording_id',this.recordingID));
             waitForResponse(this.clientEP,'DiscardRecording');
-            this.recordingID= '';
+            this.recordingID = '';
         end
         
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background,qDoTimeConversion)
@@ -444,18 +444,32 @@ classdef TalkToProLab < handle
             % 2. start time
             st = startTimeStamp;
             if qDoTimeConversion
-                st = int64(st*1000*1000);
+                st  = int64(st*1000*1000);  % convert timeStamps from PTB time to Tobii Pro Lab time
+                rst = st;
+                if this.isTwoComputerSetup
+                    rst = this.synchronizer.localTimeToRemote(rst);
+                end
+            else
+                rst = st;
             end
-            request.start_timestamp = st;           % convert timeStamps from PTB time to Tobii Pro Lab time
+            request.start_timestamp = rst;
             % 3. end time
             if nargin>4 && ~isempty(endTimeStamp)
                 et = endTimeStamp;
                 if qDoTimeConversion
-                    et = int64(et*1000*1000);
+                    et = int64(et*1000*1000);   % convert timeStamps from PTB time to Tobii Pro Lab time
+                    ret = et;
+                    if this.isTwoComputerSetup
+                        this.synchronizer.doSyncIfNeeded();
+                        ret = this.synchronizer.localTimeToRemote(ret);
+                    end
+                else
+                    ret = et;
                 end
-                request.end_timestamp = et;         % convert timeStamps from PTB time to Tobii Pro Lab time
+                request.end_timestamp = ret;
             else
                 et = int64(-1);
+                ret = et;
             end
             if nargin>5 && ~isempty(background)
                 if isnumeric(background)    % else we assume its a hexadecimal string already
@@ -472,7 +486,7 @@ classdef TalkToProLab < handle
             waitForResponse(this.clientEP,'SendStimulusEvent');
             
             % store sent timestamps
-            this.stimTimeStamps.append([st et]);
+            this.stimTimeStamps.append([st et rst ret]);
         end
         
         function sendCustomEvent(this,timestamp,eventType,value)
@@ -486,7 +500,12 @@ classdef TalkToProLab < handle
             if isempty(timestamp)
                 timestamp = GetSecs();
             end
-            request.timestamp = int64(timestamp*1000*1000);
+            timestamp = int64(timestamp*1000*1000); % convert timeStamps from PTB time to Tobii Pro Lab time
+            if this.isTwoComputerSetup
+                this.synchronizer.doSyncIfNeeded();
+                timestamp = this.synchronizer.localTimeToRemote(timestamp);
+            end
+            request.timestamp = timestamp;
             request.event_type= eventType;
             if nargin>3 && ~isempty(value)
                 value = regexprep(value,'[\n\r]','||'); % can't contain newlines/linefeeds
@@ -497,6 +516,14 @@ classdef TalkToProLab < handle
             % send
             this.clientEP.send(request);
             waitForResponse(this.clientEP,'SendCustomEvent');
+        end
+
+        function hist = getSyncHistory(this)
+            if ~this.isTwoComputerSetup
+                hist = [];
+            else
+                hist = this.synchronizer.getSyncHistory();
+            end
         end
     end
     
