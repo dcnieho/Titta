@@ -109,28 +109,28 @@ classdef TalkToProLab < handle
                 this.synchronizer.doSync();
 
                 % check it works ok
-                [timesLab, timesLocal] = deal(zeros(nTimeStamp,1,'int64'));
+                [timesRemote, timesLocalAsRemote] = deal(zeros(nTimeStamp,1,'int64'));
                 for p=1:nTimeStamp
-                    t  = titMex.systemTimestamp();
-                    timesLab(p) = getRemoteTime(this.clientClock, request);
+                    t1 = titMex.systemTimestamp();
+                    timesRemote(p) = getRemoteTime(this.clientClock, request);
                     t2 = titMex.systemTimestamp();
-                    timesLocal(p) = this.synchronizer.localTimeToRemote((t+t2)/2);
+                    timesLocalAsRemote(p) = this.synchronizer.localTimeToRemote((t1+t2)/2);
                 end
-                syncOff = median(abs(timesLab-timesLocal));
-                assert(abs(syncOff)<2500,'TalkToProLab: Clock offset between TittaMex and remote Tobii Pro Lab is more than 2.5 ms: synchronization to remote Tobii Pro Lab is not working correctly')
+                syncOff = median(abs(timesRemote-timesLocalAsRemote));
+                assert(abs(syncOff)<2500,'TalkToProLab: Clock offset between remote Tobii Pro Lab and local time synced to remote time is more than 2.5 ms: synchronization to remote Tobii Pro Lab is not working correctly')
             else
                 % for connection to local computer, just check clocks are
                 % ok, for safety
-                [timesLocalReq,timesLocalResp,timesLab] = deal(zeros(nTimeStamp,1,'int64'));
+                [timesLocalReq,timesLocalResp,timesRemote] = deal(zeros(nTimeStamp,1,'int64'));
                 for p=1:nTimeStamp
                     timesLocalReq(p) = titMex.systemTimestamp;
-                    timesLab(p) = getRemoteTime(this.clientClock, request);
+                    timesRemote(p) = getRemoteTime(this.clientClock, request);
                     timesLocalResp(p) = titMex.systemTimestamp;
                 end
                 % get best estimate of clock offset (i.e., use sync with lowest
                 % RTT)
                 [~,i] = min(timesLocalResp-timesLocalReq);
-                syncOff = (timesLocalResp(i) + timesLocalReq(i))/2 - timesLab(i);
+                syncOff = (timesLocalResp(i) + timesLocalReq(i))/2 - timesRemote(i);
                 assert(abs(syncOff)<2500,'TalkToProLab: Sanity check failed: Clock offset between TittaMex and Tobii Pro Lab is more than 2.5 ms: either the two are not using the same clock (unsupported)')
             end
             
