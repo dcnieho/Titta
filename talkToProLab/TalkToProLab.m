@@ -418,9 +418,11 @@ classdef TalkToProLab < handle
         function sendStimulusEvent(this,mediaID,mediaPosition,startTimeStamp,endTimeStamp,background,qDoTimeConversion)
             % mediaPosition, endTimeStamp, background are optional, can be
             % left empty or not provided in call
-            % NB: startTimeStamp and endTimeStamp are in Pro Lab time,
-            % which is different from local/caller time when running a
-            % two-computer setup. See notes in TalkToProLab constructor
+            % NB: startTimeStamp and endTimeStamp should be provided in
+            % local time (in seconds, as provided by PsychToolbox). These
+            % will be converted to Pro Lab time, and if needed synchronized
+            % to function correctly when running a two-computer setup. See
+            % notes in TalkToProLab constructor.
             % qDoTimeConversion (from s to ms) is for internal use, do not
             % set it unless you know what you are doing.
             if nargin<7 || qDoTimeConversion
@@ -490,9 +492,11 @@ classdef TalkToProLab < handle
         end
         
         function sendCustomEvent(this,timestamp,eventType,value)
-            % NB: timeStamp are in Pro Lab time, which is different from
-            % local/caller time when running a two-computer setup. See
-            % notes in TalkToProLab constructor
+            % NB: timestamp should be provided in local time (in seconds,
+            % as provided by PsychToolbox). It will be converted to Pro Lab
+            % time, and if needed synchronized to function correctly when
+            % running a two-computer setup. See notes in TalkToProLab
+            % constructor.
             request = struct('operation','SendCustomEvent',...
                 'recording_id',this.recordingID);
             
