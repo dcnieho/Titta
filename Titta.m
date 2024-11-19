@@ -934,7 +934,7 @@ classdef Titta < handle
             [~,~,obj.mouseState] = GetMouse();
             
             % make sure we get eye openness data if available
-            qHasEyeOpenness = obj.buffer.hasStream('eyeOpenness');
+            qHasEyeOpenness = obj.buffer.hasStream('eyeOpenness') && ~(strcmp(obj.model,'Tobii Pro Fusion') && obj.frequency==250);
             if qHasEyeOpenness
                 prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
             end
@@ -4603,7 +4603,7 @@ classdef Titta < handle
             
             % get eye tracker capabilities
             qHasEyeIm               = obj.buffer.hasStream('eyeImage');
-            qHasEyeOpenness         = obj.buffer.hasStream('eyeOpenness');
+            qHasEyeOpenness         = obj.buffer.hasStream('eyeOpenness') && ~(strcmp(obj.model,'Tobii Pro Fusion') && obj.frequency==250);
             qCanDoMonocularCalib    = obj.hasCap('CanDoMonocularCalibration');
             qHasAutoCal             = ~isempty(controller) && controller.canControl('calibration');
             qHasAutoVal             = ~isempty(controller) && controller.canControl('validation');
