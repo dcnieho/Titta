@@ -319,9 +319,11 @@ classdef TalkToProLab < handle
             % struct-array, with each element containing the following
             % three fields:
             % - is_active: boolean (true/false) indicating whether the AOI
-            %   is active from this frame onward.
+            %   is active from this frame onward (until the next key
+            %   frame).
             % - time: integer (microseconds) locating the keyframe in time.
-            % - vertices: vertices describing the AOI (should be 2xN).
+            % - vertices: vertices describing the AOI (should be 2xN
+            %   matrix).
             % key_frame_vertices entries should be sorted in time.
             % example:
             % key_frame_vertices.is_active = true;
