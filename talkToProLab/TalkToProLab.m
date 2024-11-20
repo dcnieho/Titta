@@ -448,7 +448,7 @@ classdef TalkToProLab < handle
             % 2. start time
             st = startTimeStamp;
             if qDoTimeConversion
-                st  = int64(st*1000*1000);  % convert timeStamps from PTB time to Tobii Pro Lab time
+                st = Titta.getTimeAsSystemTime(st);     % convert timestamp for PTB time to Tobii system time
                 rst = st;
                 if this.isTwoComputerSetup
                     rst = this.synchronizer.localTimeToRemote(rst);
@@ -461,7 +461,7 @@ classdef TalkToProLab < handle
             if nargin>4 && ~isempty(endTimeStamp)
                 et = endTimeStamp;
                 if qDoTimeConversion
-                    et = int64(et*1000*1000);   % convert timeStamps from PTB time to Tobii Pro Lab time
+                    et = Titta.getTimeAsSystemTime(et);     % convert timestamp for PTB time to Tobii system time
                     ret = et;
                     if this.isTwoComputerSetup
                         this.synchronizer.doSyncIfNeeded();
@@ -506,7 +506,7 @@ classdef TalkToProLab < handle
             if isempty(timestamp)
                 timestamp = GetSecs();
             end
-            timestamp = int64(timestamp*1000*1000); % convert timeStamps from PTB time to Tobii Pro Lab time
+            timestamp = Titta.getTimeAsSystemTime(timestamp);   % convert timestamp for PTB time to Tobii system time
             if this.isTwoComputerSetup
                 this.synchronizer.doSyncIfNeeded();
                 timestamp = this.synchronizer.localTimeToRemote(timestamp);
