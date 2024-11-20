@@ -105,7 +105,7 @@ classdef TalkToProLab < handle
                 this.synchronizer = Synchronizer(@titMex.systemTimestamp, @()getRemoteTime(this.clientClock, request));
                 % warm it up
                 this.synchronizer.doSync();
-                pause(0.01)
+                pause(0.2)  % not too little time between the two syncs, so we don't get singular matrix warning troubles
                 this.synchronizer.doSync();
 
                 % check it works ok
