@@ -9,7 +9,7 @@ import sys
 # detect platform
 isOSX = sys.platform.startswith("darwin")
 
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 with open('README.md') as f:
     readme = f.read()
