@@ -1161,7 +1161,7 @@ Receiver::Receiver(std::string streamSourceID_, const std::optional<size_t> init
         DoExitWithMsg("TittaLSL::Receiver: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
-    const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 0, 2.);
+    const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 1, 2.);
     if (streams.empty())
         DoExitWithMsg(string_format("TittaLSL::Receiver: stream with source ID %s could not be found", streamSourceID_.c_str()));
     else if (streams.size()>1)
