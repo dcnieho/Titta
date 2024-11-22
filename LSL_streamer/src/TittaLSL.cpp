@@ -1266,25 +1266,28 @@ void Receiver::setWorkerThreadStopFlag(TittaLSL::Receiver::AllInlets& inlet_)
         }, inlet_);
 }
 
-std::vector<lsl::stream_info> Receiver::GetStreams(std::string stream_, const bool snake_case_on_stream_not_found)
+std::vector<lsl::stream_info> Receiver::GetStreams(std::string stream_, const std::optional<double> timeout_, const bool snake_case_on_stream_not_found)
 {
     if (!stream_.empty())
-        return GetStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true));
+        return GetStreams(Titta::stringToStream(std::move(stream_), snake_case_on_stream_not_found, true), timeout_);
     else
-        return GetStreams(std::nullopt);
+        return GetStreams(std::nullopt, timeout_);
 }
-std::vector<lsl::stream_info> Receiver::GetStreams(const std::optional<Titta::Stream> stream_)
+std::vector<lsl::stream_info> Receiver::GetStreams(const std::optional<Titta::Stream> stream_, const std::optional<double> timeout_)
 {
+    // deal with default arguments
+    const auto timeout = timeout_.value_or(1.);
+
     // filter if wanted
     if (stream_.has_value())
     {
         if (*stream_!=Titta::Stream::Gaze && *stream_!=Titta::Stream::ExtSignal && *stream_!=Titta::Stream::TimeSync && *stream_!=Titta::Stream::Positioning)
             DoExitWithMsg(string_format("TittaLSL::cpp::GetStreams: %s streams are not supported.", Titta::streamToString(*stream_).c_str()));
         const auto streamName = string_format("Tobii_%s", Titta::streamToString(*stream_).c_str());
-        return lsl::resolve_stream("name", streamName, 0, 2.);
+        return lsl::resolve_stream("name", streamName, 0, timeout);
     }
     else
-        return lsl::resolve_streams(2.);
+        return lsl::resolve_streams(timeout);
 }
 
 Titta::Stream Receiver::getType() const

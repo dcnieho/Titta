@@ -357,8 +357,8 @@ PYBIND11_MODULE(MODULE_NAME, m)
                 return string_format("<TittaLSL.Receiver (%s)>",Titta::streamToString(instance_.getType()).c_str());
             })
 
-        .def_static("get_streams", [](std::optional<std::string> stream_) { return StructVectorToList(TittaLSL::Receiver::GetStreams(stream_ ? *stream_ : "")); },
-            py::arg_v("stream_type", std::nullopt, "None"))
+        .def_static("get_streams", [](std::optional<std::string> stream_, std::optional<double> timeout_) { return StructVectorToList(TittaLSL::Receiver::GetStreams(stream_ ? *stream_ : "", timeout_)); },
+            py::arg_v("stream_type", std::nullopt, "None"), py::arg_v("timeout", std::nullopt, "None"))
 
         .def("get_info", [](const TittaLSL::Receiver& instance_) { return StructToDict(instance_.getInfo()); })
         .def("get_type", py::overload_cast<>(&TittaLSL::Receiver::getType, py::const_))

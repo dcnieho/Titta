@@ -128,8 +128,8 @@ namespace TittaLSL
         ~Receiver();
 
         // query what streams are available (optionally filter by type, empty string means no filter)
-        static std::vector<lsl::stream_info> GetStreams(std::string stream_ = "", bool snake_case_on_stream_not_found = false);
-        static std::vector<lsl::stream_info> GetStreams(std::optional<Titta::Stream> stream_ = {});
+        static std::vector<lsl::stream_info> GetStreams(std::string stream_ = "", const std::optional<double> timeout_ = {}, bool snake_case_on_stream_not_found = false);
+        static std::vector<lsl::stream_info> GetStreams(std::optional<Titta::Stream> stream_ = {}, const std::optional<double> timeout_ = {});
 
         // info about inlet (desc is set now)
         lsl::stream_info getInfo() const;
