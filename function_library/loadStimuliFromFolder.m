@@ -42,6 +42,7 @@ if qHaveFileFilter
 end
 
 % now load one by one and (if wpnt provided) create textures
+texs = [];
 for p=1:length(stims)
     stimName = fullfile(fold,stims(p).name);
     
