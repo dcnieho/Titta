@@ -15,7 +15,7 @@ end
 opaths          = genpath(opath);
 opaths          = strsplit(opaths,pathsep);
 sep             = regexptranslate('escape',filesep);
-pathExceptions  = [sep '\.git|' sep '\.github|' sep '\.venv|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build|' sep 'TittaPy|' sep 'demo_analysis|' sep 'demo_experiments'];
+pathExceptions  = [sep '\.git|' sep '\.github|' sep '\.venv|' sep 'deps|' sep 'demos|' sep '\.vs|' sep 'build|' sep 'TittaPy|' sep 'TittaLSLPy|' sep 'cppLSLTest|' sep 'demo_analysis|' sep 'demo_experiments'];
 qAdd            = cellfun(@isempty,regexpi(opaths,pathExceptions)); % true where regexp _didn't_ match
 % also exclude Windows, Linux or OSX mex folders, as needed
 % need to know what platform we're on
