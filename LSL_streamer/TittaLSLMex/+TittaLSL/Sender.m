@@ -2,7 +2,6 @@ classdef Sender < TittaLSL.detail.Base
     properties (Dependent, SetAccess=private)
         eyeTracker
         streamingGaze
-        streamingEyeImage
         streamingExternalSignal
         streamingTimeSync
         streamingPositioning
@@ -35,9 +34,6 @@ classdef Sender < TittaLSL.detail.Base
         end
         function state = get.streamingGaze(this)
             state = this.isStreaming('gaze');
-        end
-        function state = get.streamingEyeImage(this)
-            state = this.isStreaming('eyeImage');
         end
         function state = get.streamingExternalSignal(this)
             state = this.isStreaming('externalSignal');
