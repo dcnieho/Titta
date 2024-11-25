@@ -25,6 +25,13 @@ classdef Sender < TittaLSL.detail.Base
 
             this.newInstance('Sender', addressOrInstance);
         end
+
+        function delete(this)
+            this.stop('gaze');
+            this.stop('externalSignal');
+            this.stop('timeSync');
+            this.stop('positioning');
+        end
         
         
         %% property getters

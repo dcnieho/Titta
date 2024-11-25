@@ -36,6 +36,10 @@ classdef Receiver < TittaLSL.detail.Base
                 this.newInstance('Receiver', streamSourceID);
             end
         end
+
+        function delete(this)
+            this.stop(true);
+        end
         
         
         %% property getters
