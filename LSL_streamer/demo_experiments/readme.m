@@ -14,17 +14,17 @@ clear all
 sca
 
 
-DEBUGlevel              = 0;
+DEBUGlevel              = 2;
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 scr                     = max(Screen('Screens'));
 % task parameters
-wallyPos = [965, 74];           % Pixel position of Wally in image
-wallyImgFile = 'wally_search.png';
-wallyFaceImgFile = 'wally_face.jpg';
-maxSearchTime = 20;             % seconds
-drawOwnGaze = true;             % Draw gaze marker for own gaze (true) or only for others?
-filterGaze = true;
+wallyPos            = [965, 74];        % Pixel position of Wally in image
+wallyImgFile        = 'wally_search.png';
+wallyFaceImgFile    = 'wally_face.jpg';
+maxSearchTime       = 20;               % seconds
+drawOwnGaze         = true;             % Draw gaze marker for own gaze (true) or only for others?
+filterGaze          = true;
 
 % ensure Titta, TittaLSL and the LSL libraries are on path
 home = cd;
@@ -100,7 +100,7 @@ try
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % prep stimuli (get Wally)
-    wallies = loadStimuliFromFolder(cd,{'wally_face.jpg','wally_search.png'},wpnt,winRect(3:4));
+    wallies = loadStimuliFromFolder(cd,{wallyFaceImgFile,wallyImgFile},wpnt,winRect(3:4));
     
     % do calibration
     try
@@ -143,21 +143,24 @@ try
     
     % Start receiving et data with LSL (find started remote streams)
     receivers   = cell(0,2);
+    if drawOwnGaze
+        receivers(end+1,:) = {'local',EThndl.buffer};
+    end
     t0          = GetSecs();
     while true
         remote_streams = TittaLSL.Receiver.GetStreams("gaze");
         for r=1:length(remote_streams)
-            h = remote_streams(r).hostname;
-            if any(strcmp(h,receivers(:,1))) || ~any(strcmp(h,hosts_to_connect_to))
+            scr_h = remote_streams(r).hostname;
+            if any(strcmp(scr_h,receivers(:,1))) || ~any(strcmp(scr_h,hosts_to_connect_to))
                 continue
             end
     
             receiver = TittaLSL.Receiver(remote_streams(r).source_id);
             receiver.start();
-            receivers(end+1,:) = {h, receiver};
+            receivers(end+1,:) = {scr_h, receiver};
         end
         
-        if size(receivers,1)==length(hosts_to_connect_to)
+        if size(receivers,1)==length(hosts_to_connect_to)+drawOwnGaze
             break
         end
     
@@ -165,36 +168,144 @@ try
     end
     
     % prep filters
+    filters = cell(0,2);
     if filterGaze
-        filters = {'local', OlssonFilter()};
         for r=1:size(receivers,1)
             filters(end+1,:) = {receivers{r,1}, OlssonFilter()};
         end
     end
 
     % prep gaze timestamps
-    last_ts = {'local', 0.};
+    last_ts = cell(0,2);
     for r=1:size(receivers,1)
-        last_ts(end+1,:) = {receivers{r,1}, 0.};
+        last_ts(end+1,:) = {receivers{r,1}, int64(0)};
     end
 
     % Show wally and wait for command to start exp
-    [w,h] = RectSize(winRect);
-    wallyRect = CenterRectOnPoint(wallies(1).scrRect,w/2,h/4);
+    [scr_w,scr_h] = RectSize(winRect);
+    wallyRect = CenterRectOnPoint(wallies(1).scrRect,scr_w/2,scr_h/4);
     Screen('DrawTexture',wpnt,wallies(1).tex,[],wallyRect);
-    DrawFormattedText(wpnt,sprintf('Press the spacebar as soon as you have found Wally\n\nPlease wait for the experiment to start.'),'center','center',255);
+
+    os = Screen('TextSize', wpnt, 25);
+    DrawFormattedText(wpnt,sprintf('Press the spacebar as soon as you have found Wally\n\nPlease wait for the experiment to start.'),'center','center',255,30);
+    Screen('TextSize', wpnt, os);
     Screen('Flip',wpnt);
 
     % Wait for start command
     wait_for_message('start_exp', from_master);
 
+    % Run the search
+    % Present fixation dot and wait for one second
+    drawFixPoint(wpnt,[scr_w scr_h]/2,[50 10],0,255);
+    t_flip = Screen('Flip',wpnt);
+    t_next = t_flip+1;
+    EThndl.sendMessage('fix on', t_flip);
+    t_flip = Screen('Flip',wpnt, t_next);
+    EThndl.sendMessage('fix off', t_flip);
+
+    % Search until keypress or timeout
+    search_time = inf;
+    to_skip = false(size(receivers,1),1);
+    for i=1:maxSearchTime*hz
+        % Draw wally
+        Screen('DrawTexture',wpnt,wallies(2).tex);
+
+        % see if should disconnect from any remote streams
+        while true
+            msg = from_master.pull_sample(0.0);
+            if isempty(msg)
+                break
+            end
+            if startsWith(msg{1},'disconnect_stream')
+                host_to_disconnect = msg{1}(length('disconnect_stream')+2:end);
+                qRecv = strcmp(receivers(:,1),host_to_disconnect);
+                receivers{qRecv,2}.stop(false);
+                to_skip(qRecv) = true;
+            end
+        end
+
+        % Get and draw most recent sample from other clients
+        msgs = {};
+        for r=1:size(receivers,1)
+            if to_skip(r)
+                continue
+            end
+            isLocal = strcmp(receivers{r,1},'local');
+
+            if isLocal
+                ts_field = 'systemTimeStamp';
+                args = {'gaze', last_ts{r,2}};
+            else
+                ts_field = 'localSystemTimeStamp';
+                args = {last_ts{r,2}};
+            end
+            samples = receivers{r,2}.peekTimeRange(args{:});
+            if ~isempty(samples.(ts_field))
+                last_ts{r,2} = samples.(ts_field)(end);
+            end
+            x,y = tobii_get_gaze(samples, ts_field, filters, receivers{r,1});
+            if isnan(x) || isnan(y)
+                continue
+            end
+            draw_sample(local_gaze, x, y);
+            
+            % Set color of gaze circle based on station number
+            if isLocal
+                gazeClr     = [255 0 0];
+                gazeRadius  = 25;
+            else
+                gazeClr     = [255 0 0];
+                gazeRadius  = 50;
+            end
+            
+            draw_sample(remote_gaze, x, y)
+    
+            % Save sample as message
+            if isLocal
+                msg = 'localsample';
+            else
+                msg = sprintf('remotesample_%.6f_%.6f',remote_samples.remoteSystemTimeStamp(end),remote_samples.localSystemTimeStamp(end));
+                % remoteSystemTimeStamp: System time stamp of the sample on remote machine
+                % localSystemTimeStamp: corresponding local system timestamp (synchronized with LSL's capabilities)
+            end
+            msgs{end+1} = sprintf('%s_%.2f_%.2f',msg,x,y);
+        end
+        t_flip = Screen('Flip',wpnt);
+    
+        if i==1
+            t0 = t_flip;
+            EThndl.sendMessage(sprintf('onset_%s',wallies(2).fInfo.name), t_flip);
+        end
+        for m=1:length(msgs)
+            EThndl.sendMessage(msgs{m}, t_flip);
+        end
+
+        % Check for keypress
+        [~, ~, keyCode] = KbCheck();
+        keys = KbName(keyCode);
+        if ~isempty(keys)
+            if ~iscell(keys)
+                keys = {keys};
+            end
+            if any(strcmpi(keys,'space')) && t_flip-t0>1
+                search_time = t_flip - t0;
+                break
+            end
+        end
+    end
+    
+    t_flip = Screen('Flip',wpnt);
+    EThndl.sendMessage(sprintf('offset_%s_%.3f',wallies(2).fInfo.name,search_time), t_flip);
 
     % done, clean up
     for r=1:size(receivers,1)
         receivers{r,2}.stop();
     end
-    sender.stop('gaze')
+    sender.stop('gaze');
     EThndl.buffer.stop('gaze');
+
+    % show the correct location of Wally
+    t_next = Screen('Flip',wpnt) + 5;
     
     % save data to mat file, adding info about the experiment
     dat = EThndl.collectSessionData();
@@ -207,6 +318,9 @@ try
     end
     % save
     EThndl.saveData(dat, fullfile(cd,'t'), true);
+
+    % wait till the time to show Wally is finished
+    Screen('Flip', wpnt, t_next);
     
     % shut down
     EThndl.deInit();
