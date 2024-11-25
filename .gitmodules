@@ -7,3 +7,7 @@
 [submodule "TittaMex/deps/include/cpp_mex_helpers"]
 	path = SDK_wrapper/deps/include/cpp_mex_helpers
 	url = ../cpp_mex_helpers.git
+[submodule "LSL_streamer/demo_experiments/liblsl_Matlab"]
+	path = LSL_streamer/demo_experiments/liblsl_Matlab
+	url = ../../labstreaminglayer/liblsl-Matlab.git
+	branch = master
