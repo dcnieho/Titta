@@ -8,9 +8,9 @@ classdef Receiver < TittaLSL.detail.Base
         function streamInfos = GetStreams(streamType, timeout)
             fnc = TittaLSL.detail.Base.getMexFnc();
             streamType = ensureStringIsChar(streamType);
-            if nargin>2 && ~isempty(timeout)
+            if nargin>1 && ~isempty(timeout)
                 streamInfos = fnc('GetStreams',streamType,double(timeout));
-            elseif nargin>1 && ~isempty(initialBufferSize)
+            elseif nargin>0 && ~isempty(streamType)
                 streamInfos = fnc('GetStreams',streamType);
             else
                 streamInfos = fnc('GetStreams');
