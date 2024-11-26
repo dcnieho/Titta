@@ -308,7 +308,10 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
             // no handle needed
         }
         else if (action == Action::GetStreams)
+        {
+            // no handle needed, need type
             type = ExportedType::Receiver;
+        }
         else
         {
             // All the below code that deals with passing instances around assumes the handle_type is unsigned int
