@@ -37,7 +37,7 @@ lslLib = lsl_loadlib();
 fprintf('Using LSL v%d\n',lsl_library_version(lslLib));
 
 
-dotColors = [240,163,255;0,117,220;153,63,0;76,0,92;25,25,25;0,92,49;43,206,72;255,204,153;128,128,128;148,255,181;143,124,0;157,204,0;194,0,136;0,51,128;255,164,5;255,168,187;66,102,0;255,0,16;94,241,242;0,153,143;224,255,102;116,10,255;153,0,0;255,255,128;255,255,0;255,80,5];
+gazeColors = [240,163,255;0,117,220;153,63,0;76,0,92;25,25,25;0,92,49;43,206,72;255,204,153;128,128,128;148,255,181;143,124,0;157,204,0;194,0,136;0,51,128;255,164,5;255,168,187;66,102,0;255,0,16;94,241,242;0,153,143;224,255,102;116,10,255;153,0,0;255,255,128;255,255,0;255,80,5];
 try
     % get setup struct (can edit that of course):
     settings = Titta.getDefaults('Tobii Pro Spectrum');
@@ -237,34 +237,35 @@ try
                 args = {'gaze', last_ts{r,2}};
             else
                 ts_field = 'localSystemTimeStamp';
-                args = {last_ts{r,2}};
+                args = last_ts(r,2);
             end
             samples = receivers{r,2}.peekTimeRange(args{:});
             if ~isempty(samples.(ts_field))
                 last_ts{r,2} = samples.(ts_field)(end);
             end
-            x,y = tobii_get_gaze(samples, ts_field, filters, receivers{r,1});
+            [x,y] = tobii_get_gaze(samples, ts_field, filters, receivers{r,1}, winRect(3:4));
             if isnan(x) || isnan(y)
                 continue
             end
-            draw_sample(local_gaze, x, y);
             
-            % Set color of gaze circle based on station number
+            % Set color of dot based on receiver number
             if isLocal
                 gazeClr     = [255 0 0];
                 gazeRadius  = 25;
             else
-                gazeClr     = [255 0 0];
+                idx = mod(r-1,size(gazeColors,1))+1;
+                gazeClr     = gazeColors(idx,:);
                 gazeRadius  = 50;
             end
             
-            draw_sample(remote_gaze, x, y)
+            % draw sample
+            draw_sample(wpnt, x, y, gazeClr, gazeRadius);
     
             % Save sample as message
             if isLocal
-                msg = 'localsample';
+                msg = sprtinf('localsample_%d',samples.systemTimeStamp(end));
             else
-                msg = sprintf('remotesample_%.6f_%.6f',remote_samples.remoteSystemTimeStamp(end),remote_samples.localSystemTimeStamp(end));
+                msg = sprintf('remotesample_%s_%d_%d',receivers{r,1},samples.remoteSystemTimeStamp(end),samples.localSystemTimeStamp(end));
                 % remoteSystemTimeStamp: System time stamp of the sample on remote machine
                 % localSystemTimeStamp: corresponding local system timestamp (synchronized with LSL's capabilities)
             end
@@ -297,9 +298,17 @@ try
     t_flip = Screen('Flip',wpnt);
     EThndl.sendMessage(sprintf('offset_%s_%.3f',wallies(2).fInfo.name,search_time), t_flip);
 
+    % Send info about search time to master
+    msg = sprintf('search_time,%s', jsonencode(search_time));
+    to_master.push_sample({msg});
+
     % done, clean up
     for r=1:size(receivers,1)
-        receivers{r,2}.stop();
+        if isa(receivers{r,2},TittaMex)
+            receivers{r,2}.stop('gaze');
+        else
+            receivers{r,2}.stop();
+        end
     end
     sender.stop('gaze');
     EThndl.buffer.stop('gaze');
