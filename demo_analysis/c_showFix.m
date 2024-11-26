@@ -72,7 +72,7 @@ for p=1:nfiles
     if ~~exist(fullfile(dirs.AOImasks,what{1}),'file')
         img.data = imread(fullfile(dirs.AOImasks,what{1}));
     elseif ~~exist(fullfile(sess.expt.stim(qWhich).fInfo.folder,what{1}),'file')
-        img.data = imread(fullfile(sess.expt.stimDir,what{1}));
+        img.data = imread(fullfile(sess.expt.stim(qWhich).fInfo.folder,what{1}));
     else
         img      = [];
     end

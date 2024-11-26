@@ -78,8 +78,8 @@ for p=1:nfiles
     % event detection
     % make params struct (only have to specify those you want to be
     % different from their defaults)
-    opt.xres          = sess.expt.winRect(3);
-    opt.yres          = sess.expt.winRect(4);
+    opt.xres          = sess.expt.resolution(1);
+    opt.yres          = sess.expt.resolution(2);
     opt.missingx      = nan;
     opt.missingy      = nan;
     opt.scrSz         = [sess.geometry.displayArea.width sess.geometry.displayArea.height]/10;  % mm -> cm

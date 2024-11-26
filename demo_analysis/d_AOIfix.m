@@ -105,7 +105,7 @@ for p=1:nfiles
     assert(isequal(tex.size,szs{:}),'Some AOIs have wrong size (doesn''t match stimulus)');
     
     % see which AOIs fixations are in
-    temp    = detAOIfix(AOI(qAOI).AOIs,dat.fix.xpos,dat.fix.ypos,sess.expt.winRect(3:4),tex.scrRect,1./tex.scaleFac);
+    temp    = detAOIfix(AOI(qAOI).AOIs,dat.fix.xpos,dat.fix.ypos,sess.expt.resolution,tex.scrRect,1./tex.scaleFac);
     
     % use fixation ID to find corresponding info about the fixations.
     % This as one fixation can be in multiple AOIs
