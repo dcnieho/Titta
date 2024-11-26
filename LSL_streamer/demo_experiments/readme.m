@@ -317,6 +317,13 @@ try
     EThndl.buffer.stop('gaze');
 
     % show the correct location of Wally
+    Screen('DrawTexture',wpnt,wallies(2).tex);
+    Screen('FillRect',wpnt,255*[.5 .5 .5 .7],CenterRectOnPoint([0 0 320 300],wallyPos(1),wallyPos(2)));
+    rect = CenterRectOnPointd([0 0 2 2]*60,wallyPos(1),wallyPos(2));
+    Screen('FrameOval', wpnt, [255 0 0], rect, 10);
+    os = Screen('TextSize', wpnt, 50);
+    DrawFormattedText(wpnt,'Here is Wally','center','center',[255 0 0],30,[],[],[],[],[-10 100 10 120]+wallyPos([1 2 1 2]));
+    Screen('TextSize', wpnt, os);
     t_next = Screen('Flip',wpnt) + 5;
     
     % save data to mat file, adding info about the experiment
