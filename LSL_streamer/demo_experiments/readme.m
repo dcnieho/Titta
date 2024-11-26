@@ -181,15 +181,18 @@ try
         last_ts(end+1,:) = {receivers{r,1}, int64(0)};
     end
 
-    % Show wally and wait for command to start exp
+    % Show Wally
     [scr_w,scr_h] = RectSize(winRect);
     wallyRect = CenterRectOnPoint(wallies(1).scrRect,scr_w/2,scr_h/4);
     Screen('DrawTexture',wpnt,wallies(1).tex,[],wallyRect);
 
-    os = Screen('TextSize', wpnt, 25);
+    os = Screen('TextSize', wpnt, 40);
     DrawFormattedText(wpnt,sprintf('Press the spacebar as soon as you have found Wally\n\nPlease wait for the experiment to start.'),'center','center',255,30);
     Screen('TextSize', wpnt, os);
     Screen('Flip',wpnt);
+
+    % indicate we're ready to start
+    to_master.push_sample({'ready_to_go'});
 
     % Wait for start command
     wait_for_message('start_exp', from_master);
@@ -263,7 +266,7 @@ try
     
             % Save sample as message
             if isLocal
-                msg = sprtinf('localsample_%d',samples.systemTimeStamp(end));
+                msg = sprintf('localsample_%d',samples.systemTimeStamp(end));
             else
                 msg = sprintf('remotesample_%s_%d_%d',receivers{r,1},samples.remoteSystemTimeStamp(end),samples.localSystemTimeStamp(end));
                 % remoteSystemTimeStamp: System time stamp of the sample on remote machine
@@ -304,7 +307,7 @@ try
 
     % done, clean up
     for r=1:size(receivers,1)
-        if isa(receivers{r,2},TittaMex)
+        if isa(receivers{r,2},'TittaMex')
             receivers{r,2}.stop('gaze');
         else
             receivers{r,2}.stop();
@@ -323,6 +326,9 @@ try
     % also add all the remote data
     dat.remoteGaze = cell(0,2);
     for r=1:size(receivers,1)
+        if strcmp(receivers{r,1},'local')
+            continue
+        end
         dat.remoteGaze(end+1,:) = {receivers{r,1}, receivers{r,2}.consumeN()};
     end
     % save
