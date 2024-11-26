@@ -13,29 +13,34 @@ classdef (Abstract) Base < handle
     
     methods (Static = true, Access = protected)
         function mexClassWrapperFnc = getMexFnc(debugMode)
-            % debugmode is for developer of TittaLSLMex only, no use for end users
-            if nargin<1 || isempty(debugMode)
-                debugMode = false;
-            else
-                debugMode = ~~debugMode;
-            end
-            % determine what mex file to call
-            if debugMode
-                mexFncStr = 'TittaLSL.detail.TittaLSLMex_d';
-            else
-                mexFncStr = 'TittaLSL.detail.TittaLSLMex';
-            end
+            persistent mexClassWrapperFncCache;
+            if isempty(mexClassWrapperFncCache)
+                % debugmode is for developer of TittaLSLMex only, no use for end users
+                if nargin<1 || isempty(debugMode)
+                    debugMode = false;
+                else
+                    debugMode = ~~debugMode;
+                end
+                % determine what mex file to call
+                if debugMode
+                    mexFncStr = 'TittaLSL.detail.TittaLSLMex_d';
+                else
+                    mexFncStr = 'TittaLSL.detail.TittaLSLMex';
+                end
+    
+                % 1. check if mex file is found on path
+                if isempty(which(mexFncStr))
+                    error('TittaLSL:MEXFunctionNotFound','The MEX file "%s" was not found on path.',mexFncStr);
+                end
+    
+                % construct function handle to Mex file
+                mexClassWrapperFncCache = str2func(mexFncStr);
 
-            % 1. check if mex file is found on path
-            if isempty(which(mexFncStr))
-                error('TittaLSL:MEXFunctionNotFound','The MEX file "%s" was not found on path.',mexFncStr);
+                % call no-op to load the mex file, so we fail early when load fails
+                mexClassWrapperFncCache('touch');
             end
-
-            % construct function handle to Mex file
-            mexClassWrapperFnc = str2func(mexFncStr);
-
-            % call no-op to load the mex file, so we fail early when load fails
-            mexClassWrapperFnc('touch');
+            
+            mexClassWrapperFnc = mexClassWrapperFncCache;
         end
     end
 
@@ -67,7 +72,7 @@ classdef (Abstract) Base < handle
     methods (Access = protected, Sealed = true)
         function varargout = cppmethod(this, methodName, varargin)
             if isempty(this.instanceHandle)
-                error('TittaLSLMex:invalidHandle','No class handle. Did you call init yet?');
+                error('TittaLSLMex:invalidHandle','No class handle. Did you call newInstance() yet?');
             end
             [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, this.instanceHandle, varargin{:});
         end
