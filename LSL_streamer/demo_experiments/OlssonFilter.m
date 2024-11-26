@@ -47,7 +47,7 @@ classdef OlssonFilter < handle
             obj.buffer     = [];
         end
         
-        function [fx,fy] = feed(obj,ts,x,y)
+        function [fx,fy] = addSample(obj,ts,x,y)
             % ts: timestamp in ms
             %  x: horizontal x position
             %  y: horizontal y position
@@ -120,8 +120,8 @@ classdef OlssonFilter < handle
             else
                 % return average of data we have seen so far, best we can
                 % do until we have seen enough data to really go at it
-                obj.x = nanmean(obj.buffer(:,2));
-                obj.y = nanmean(obj.buffer(:,3));
+                obj.x = mean(obj.buffer(:,2),'omitnan');
+                obj.y = mean(obj.buffer(:,3),'omitnan');
             end
             
             % return
