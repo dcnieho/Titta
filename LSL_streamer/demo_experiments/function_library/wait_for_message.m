@@ -32,15 +32,8 @@ while true
         break
     end
     if ~isempty(exit_key)
-        [~, ~, keyCode] = KbCheck();
-        keys = KbName(keyCode);
-        if ~isempty(keys)
-            if ~iscell(keys)
-                keys = {keys};
-            end
-            if any(strcmpi(keys,exit_key))
-                break
-            end
+        if checkKeyDown(exit_key)
+            break
         end
     end
     

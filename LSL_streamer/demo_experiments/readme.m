@@ -286,16 +286,9 @@ try
         end
 
         % Check for keypress
-        [~, ~, keyCode] = KbCheck();
-        keys = KbName(keyCode);
-        if ~isempty(keys)
-            if ~iscell(keys)
-                keys = {keys};
-            end
-            if any(strcmpi(keys,'space')) && t_flip-t0>1
-                search_time = t_flip - t0;
-                break
-            end
+        if checkKeyDown('space') && t_flip-t0>1
+            search_time = t_flip - t0;
+            break
         end
     end
     
