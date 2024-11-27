@@ -31,6 +31,7 @@ home = cd;
 cd ..; cd ..;
 addTittaToPath;
 cd(home);
+addpath(genpath('function_library'));
 addpath(genpath('liblsl_Matlab'));
 % load LSL
 lslLib = lsl_loadlib();
