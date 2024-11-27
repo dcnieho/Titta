@@ -9,6 +9,14 @@
 % for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
+%
+% To run this experiment, refer to the README here:
+% https://github.com/dcnieho/Titta/blob/master/LSL_streamer/demo_experiments/README.md
+%
+% Note that a Python version of this demo is available here:
+% https://github.com/marcus-nystrom/Titta/tree/master/playground These
+% Python versions are interoperable with the MATLAB version. You can freely
+% mix Python and MATLAB clients and masters.
 
 clear all
 sca
