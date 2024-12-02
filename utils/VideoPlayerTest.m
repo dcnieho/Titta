@@ -41,7 +41,7 @@ try
     tex = 0;
     while true
         newTex = vp.getFrame();
-        if newTex>0
+        if newTex~=tex
             if tex>0
                 Screen('Close', tex);
             end

@@ -115,7 +115,7 @@ classdef VideoCalibrationDisplay < handle
             
             % draw
             newTex = obj.videoPlayer.getFrame();
-            if newTex>0
+            if newTex~=obj.tex
                 if obj.tex>0
                     Screen('Close', obj.tex);
                 end

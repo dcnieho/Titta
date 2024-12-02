@@ -9,6 +9,8 @@ classdef VideoPlayer < handle
         playingVidDur;
         loopSingleVid;
 
+        lastTex = 0;
+
         nextVidIndex = nan;
         nextVid;
         nextVidDur;
@@ -94,6 +96,7 @@ classdef VideoPlayer < handle
                 Screen('CloseMovie', obj.playingVid);
                 [obj.playingVid, obj.playingVidDur, obj.vidIndex] = deal(obj.nextVid, obj.nextVidDur, obj.nextVidIndex);
                 tex = Screen('GetMovieImage', obj.wpnt, obj.playingVid, 0);
+                obj.lastTex = tex;
                 obj.nextVidPrefetch = 0;
             elseif ~obj.loopSingleVid
                 % We start background loading of the next movie 0.5 seconds
@@ -121,6 +124,11 @@ classdef VideoPlayer < handle
                     % Start it:
                     Screen('PlayMovie', obj.nextVid, 1, 0, 0);
                 end
+            end
+            if tex==0
+                tex = obj.lastTex;
+            elseif tex>0
+                obj.lastTex = tex;
             end
         end
 
@@ -164,6 +172,7 @@ classdef VideoPlayer < handle
             obj.nextVidPrefetch = 0;
             obj.nextVids = [];
             obj.playingVid = [];
+            obj.lastTex = 0;
             obj.nextVidIndex = nan;
             obj.nextVid = [];
             obj.isPlaying = false;
