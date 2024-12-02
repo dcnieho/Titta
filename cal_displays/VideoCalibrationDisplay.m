@@ -76,6 +76,9 @@ classdef VideoCalibrationDisplay < handle
                 end
                 return;
             end
+
+            % ensure video playback has started
+            obj.videoPlayer.start();
             
             % now that we have a wpnt, interrogate window
             if isempty(obj.qFloatColorRange) && ~isempty(wpnt)

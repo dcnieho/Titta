@@ -177,7 +177,6 @@ try
     vids = FileFromFolder(videoFolder, [], videoExt);
     vids = arrayfun(@(x) fullfile(x.folder,x.name), vids, 'uni', false);
     vp = VideoPlayer(wpntP,vids);
-    vp.start();
     calViz.setVideoPlayer(vp);
 
     

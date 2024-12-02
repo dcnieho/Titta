@@ -70,13 +70,16 @@ classdef VideoPlayer < handle
         end
 
         function start(obj)
-            if isempty(obj.nextVids)
-                % first call to start
-                [obj.playingVid, obj.playingVidDur, obj.vidIndex] = obj.openNextVid(false);
-            end
-            Screen('PlayMovie', obj.playingVid, 1, double(obj.loopSingleVid), 0);
-            if obj.nextVidPrefetch == 2
-                Screen('PlayMovie', obj.nextVid, 1, 0, 0);
+            if ~obj.isPlaying
+                if isempty(obj.nextVids)
+                    % first call to start, or after a clean up
+                    [obj.playingVid, obj.playingVidDur, obj.vidIndex] = obj.openNextVid(false);
+                end
+                Screen('PlayMovie', obj.playingVid, 1, double(obj.loopSingleVid), 0);
+                if obj.nextVidPrefetch == 2
+                    Screen('PlayMovie', obj.nextVid, 1, 0, 0);
+                end
+                obj.isPlaying = true;
             end
         end
 
@@ -126,6 +129,7 @@ classdef VideoPlayer < handle
              if obj.nextVidPrefetch == 2
                  Screen('PlayMovie', obj.nextVid, 0);
             end
+            obj.isPlaying = false;
         end
 
         function cleanup(obj)
@@ -162,6 +166,7 @@ classdef VideoPlayer < handle
             obj.playingVid = [];
             obj.nextVidIndex = nan;
             obj.nextVid = [];
+            obj.isPlaying = false;
         end
     end
 
