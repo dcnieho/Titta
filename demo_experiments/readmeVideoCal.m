@@ -96,7 +96,7 @@ try
 
     vids = FileFromFolder(videoFolder, [], videoExt);
     vids = arrayfun(@(x) fullfile(x.folder,x.name), vids, 'uni', false);
-    vp = VideoPlayer(wpnt,vids);
+    vp = VideoPlayer(wpnt,vids,1);
     calViz.setVideoPlayer(vp);
     
     % do calibration
