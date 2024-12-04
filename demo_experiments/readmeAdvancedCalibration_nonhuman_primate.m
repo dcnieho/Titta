@@ -9,6 +9,19 @@
 % for creating Psychtoolbox and Psychopy experiments with Tobii eye
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
+%
+% This example uses the advanced calibration interface
+% (Titta.calibrateAdvanced). When using this interface, please also cite
+% the following paper:
+%
+% Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J., Andolina, I.M.
+% & Yorzinski, J.L. (2024). Enhancing eye tracking for nonhuman primates
+% and other subjects unable to follow instructions: Adaptive calibration
+% and validation of Tobii eye trackers with the Titta toolbox. Behavior
+% Research Methods. doi: https://doi.org/10.3758/s13428-024-02540-y
+%
+% A video demoing the logic implemented in this class is available here:
+% https://www.youtube.com/watch?v=THui9tIrM2s
 
 % This version of readme.m demonstrates operation with separate
 % presentation and operator screens. It furthermore demonstrates a
@@ -20,7 +33,7 @@
 % stimuli is gaze contingent, a stimulus is shown after the fixation point
 % is gaze at long enough, and gaze-contingent rewards are provided during
 % data collection.
-% 
+%
 % NB: some care is taken to not update operator screen during timing
 % critical bits of main script
 % NB: this code assumes main and secondary screen have the same resolution.

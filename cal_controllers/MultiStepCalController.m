@@ -1,3 +1,25 @@
+% This class is part of Titta, a toolbox providing convenient access to
+% eye tracking functionality using Tobii eye trackers.
+%
+% Titta can be found at https://github.com/dcnieho/Titta. Check there for
+% the latest version.
+% When using Titta or this class, please cite the following paper:
+%
+% Niehorster, D.C., Andersson, R. & Nystrom, M., (2020). Titta: A toolbox
+% for creating Psychtoolbox and Psychopy experiments with Tobii eye
+% trackers. Behavior Research Methods.
+% doi: https://doi.org/10.3758/s13428-020-01358-8
+%
+% This class is used with Titta's advanced calibration interface
+% (Titta.calibrateAdvanced). When using this interface, please also cite
+% the following paper:
+%
+% Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J., Andolina, I.M.
+% & Yorzinski, J.L. (2024). Enhancing eye tracking for nonhuman primates
+% and other subjects unable to follow instructions: Adaptive calibration
+% and validation of Tobii eye trackers with the Titta toolbox. Behavior
+% Research Methods. doi: https://doi.org/10.3758/s13428-024-02540-y
+
 classdef MultiStepCalController < handle
     properties (Constant)
         pointStateEnum = struct('nothing',0, 'collecting',1, 'discarding',2, 'collected', 3);

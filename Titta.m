@@ -1,5 +1,5 @@
 % Titta is a toolbox providing convenient access to eye tracking
-% functionality using Tobii eye trackers 
+% functionality using Tobii eye trackers
 %
 %    Titta can be found at https://github.com/dcnieho/Titta. Check there
 %    for the latest version.
@@ -10,7 +10,21 @@
 %    eye trackers. Behavior Research Methods.
 %    doi: https://doi.org/10.3758/s13428-020-01358-8
 %
+%    When using the advanced calibration interface
+%    (Titta.calibrateAdvanced), please also cite the following paper:
+%
+%    Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J., Andolina,
+%    I.M. & Yorzinski, J.L. (2024). Enhancing eye tracking for nonhuman
+%    primates and other subjects unable to follow instructions: Adaptive
+%    calibration and validation of Tobii eye trackers with the Titta
+%    toolbox. Behavior Research Methods.
+%    doi: https://doi.org/10.3758/s13428-024-02540-y
+%
 %    For detailed documentation, refer to <a href="https://github.com/dcnieho/Titta/blob/master/readme.md">the readme on GitHub</a>.
+%
+%    A video demoing the advanced calibration interface and its automatic
+%    operation mode where user code controls the calibration logic is
+%    available here: https://www.youtube.com/watch?v=THui9tIrM2s
 %
 %    For help on the constructor method, type:
 %      <a href="matlab: help Titta.Titta">help Titta.Titta</a>
@@ -1263,6 +1277,18 @@ classdef Titta < handle
             %                  available) on or off (toggAuto)
             %      p         - bring up plot of gaze and pupil data
             %                  collected during validation (toggPlot)
+            %
+            %    When using this function, along with the main Titta paper
+            %    (Niehorster et al., 2020), please also cite the following
+            %    paper:
+            %
+            %    Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J.,
+            %    Andolina, I.M. & Yorzinski, J.L. (2024). Enhancing eye
+            %    tracking for nonhuman primates and other subjects unable
+            %    to follow instructions: Adaptive calibration and
+            %    validation of Tobii eye trackers with the Titta toolbox.
+            %    Behavior Research Methods.
+            %    doi: https://doi.org/10.3758/s13428-024-02540-y
             %
             %    See also TITTA.CALIBRATE, TITTA.GETOPTIONS,
             %    TITTA.GETDEFAULTS

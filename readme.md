@@ -12,16 +12,19 @@ The current repository furthermore offers a C++ wrapper around the Tobii SDK, wh
 Please cite:
 [Niehorster, D.C., Andersson, R. & Nyström, M. (2020). Titta: A toolbox for creating PsychToolbox and Psychopy experiments with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-020-01358-8](https://doi.org/10.3758/s13428-020-01358-8)
 
+When using the advanced calibration interface (`Titta.calibrateAdvanced`), please also cite the following paper:
+[Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J., Andolina, I.M. & Yorzinski, J.L. (2024). Enhancing eye tracking for nonhuman primates and other subjects unable to follow instructions: Adaptive calibration and validation of Tobii eye trackers with the Titta toolbox. Behavior Research Methods. doi: 10.3758/s13428-024-02540-y](https://doi.org/10.3758/s13428-024-02540-y)
+
 For questions, bug reports or to check for updates, please visit
-www.github.com/dcnieho/Titta. 
+www.github.com/dcnieho/Titta.
 
 Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `SDK_wrapper/deps/include/` carry a different license, please refer to [the Tobii License Agreement](SDK_wrapper/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
 
-`demos/readmeMinimal.m` shows a minimal example of using the toolbox's functionality, and the [demo_experiments](/demo_experiments) folder contains various other examples. For documentation of the various data fields in the `.mat` file produced by the demos, see [the Tobii SDK documentation](https://developer.tobiipro.com/commonconcepts.html). Example fixation detection and AOI analysis code [is also included](/demo_analysis).
+[`demo_experiments/readmeMinimal.m`](/demo_experiments/readmeMinimal.m) shows a minimal example of using the toolbox's functionality, and the [demo_experiments](/demo_experiments) folder contains various other examples. For documentation of the various data fields in the `.mat` file produced by the demos, see [the Tobii SDK documentation](https://developer.tobiipro.com/commonconcepts.html). Example fixation detection and AOI analysis code [is also included](/demo_analysis). A video demoing the advanced calibration interface and its automatic operation mode where user code controls the calibration logic is available here: [https://www.youtube.com/watch?v=THui9tIrM2s](https://www.youtube.com/watch?v=THui9tIrM2s).
 
 Ideally, make sure that the eye tracker is detected and works in the [Tobii Eye Tracker Manager](https://www.tobii.com/products/software/applications-and-developer-kits/tobii-pro-eye-tracker-manager) before trying to use it with Titta. Note also that some of the supported eye trackers require several setup steps before they are ready for use (e.g. do a display setup in Eye Tracker Manager). If these steps have not been performed, Titta will throw strange error messages.
 
-To run the toolbox, the [Tobii Pro SDK](https://www.tobii.com/products/software/applications-and-developer-kits/tobii-pro-sdk) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended. 
+To run the toolbox, the [Tobii Pro SDK](https://www.tobii.com/products/software/applications-and-developer-kits/tobii-pro-sdk) must be available. Titta for MATLAB and PsychToolbox includes the Tobii Pro SDK dynamic link libraries, so you do not have to install it separately. An up-to-date version of [PsychToolbox](http://psychtoolbox.org/) is recommended.
 
 Only the `Titta.calibrate()` and `Titta.calibrateAdvanced()` functions and optionally the `TalkToProLab` constructor use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB/Octave without having PsychToolbox installed.
 
@@ -107,11 +110,11 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
     |Tobii Pro T60|`Tobii T60`|
     |Tobii Pro T120|`Tobii T120`|
     |Tobii 4C<sup>*</sup>|`IS4_Large_Peripheral`|
-  
+
     Note that the VR eye trackers are not supported by Titta.
-    
+
     <sup>*</sup>Note that a Pro upgrade license key is required to be able to use the Tobii 4C for research purposes, and for it to function with Titta. Unfortunately, the Pro upgrade license key is no longer sold by Tobii Pro. If you try to use a 4C without upgrade key with Titta, you will not receive data streams, and some calls, such as `calibrate()`, will yield `error 201: TOBII_RESEARCH_STATUS_SE_INSUFFICIENT_LICENSE`.
-  
+
 2. Change settings from their defaults if wanted (see [supported options](#supported-options) section below)
 3. Create a Titta instance using this settings struct: `EThndl = Titta(settings);`
 4. Interact with the eye tracker using the below API.
@@ -129,6 +132,15 @@ For validation, by default, 0.5 s of gaze data is collected per validation point
 |SD (precision)|`STD1D`|"Precision is defined as the closeness of a set of repeated gaze position measurements obtained under identical conditions (i.e., obtained from an eye that has not rotated)" ([Niehorster, Zemblys et al., 2020](https://doi.org/10.3758/s13428-020-01400-9)). STD indicates the spatial spread of a sequence of gaze points (more precisely it is a measure of dispersion around the centroid of a sequence of gaze positions). As per equation 2 in [Niehorster, Zemblys et al. (2020)](https://doi.org/10.3758/s13428-020-01400-9), it is computed as the square-root of the sum of the horizontal and vertical variance of the recorded gaze positions.|
 |RMS (precision)|`RMS1D`|RMS in Titta refers to RMS-S2S precision, or "the root mean square of the displacement between successive gaze positions", which loosely speaking gives an indication of how spiky the gaze signal is ([Niehorster, Zemblys et al., 2020](https://doi.org/10.3758/s13428-020-01400-9)).|
 |Data loss|`dataLoss`|Data loss (for an extensive discussion, see [Hooge et al., 2022](https://doi.org/10.3758/s13428-022-02010-3)) is calculated as the percentage of recorded gaze samples that is marked as invalid by the eye tracker.|
+
+### Advanced calibration
+Titta's default calibration/validation routine `Titta.calibrate()` performs a calibration and validation flow in a fully automated fashion based on the number and positions of calibration and validation targets configured by the user. While this routine generally works well with healthy human adult participants, the lack of adaptability in the calibration procedure makes achieving calibration much more difficult in participants that are unable or unwilling to follow verbal instructions, such as infants, children with autism spectrum disorder, and nonhuman animals. We have therefore additionally provided `Titta.calibrateAdvanced()`, a flexible and adaptive interface for calibrating and validating eye trackers. `Titta.calibrateAdvanced()` presents a control panel that provides the experimenter with full control over when to show and collect gaze data for specific calibration points, whether and when to re-collect gaze data for calibration points, and which of the collected calibration points to use to compute the calibration. This functionality is shown in the [`demo_experiments/readmeAdvancedCalibration.m`](/demo_experiments/readmeAdvancedCalibration.m) script.
+
+Instead of the user manually performing the calibration or validation, such as indicating when and for which calibration or validation points to (re-)collect data, the operation of the `Titta.calibrateAdvanced()` interface can also be controlled by an automated calibration controller class. Such a class interoperates with a programming interface in `Titta.calibrateAdvanced()` that has been developed to enable automated operation of the interface. A calibration controller class receives information from `Titta.calibrateAdvanced()` about the current state of the interface and can perform functions such as, for instance, monitoring the gaze data provided by the eye tracker in real time and launching the collection of calibration data once the gaze is close enough to a given location on the screen, and then performing calibration once enough data has been collected. This functionality is shown in the [`demo_experiments/readmeAdvancedCalibration_auto.m`](/demo_experiments/readmeAdvancedCalibration_auto.m) script.
+
+Finally, an automated calibration controller class has been developed that uses `Titta.calibrateAdvanced()`'s automated operation programming interface to provide an automated calibration and validation procedure for participants who are unable to follow instructions, which was specifically designed for nonhuman primates. This functionality is shown in the [`demo_experiments/readmeAdvancedCalibration_nonhuman_primate.m`](/demo_experiments/readmeAdvancedCalibration_nonhuman_primate.m) script.
+
+A detailed description of the functionality of `Titta.calibrateAdvanced()` and the automated calibration procedure is provided in [Niehorster et al. (2024)](https://doi.org/10.3758/s13428-024-02540-y). When using this functionality, please cite this paper. A video demoing the advanced calibration interface and the automated calibration flow for nonhuman primates is available here: [https://www.youtube.com/watch?v=THui9tIrM2s](https://www.youtube.com/watch?v=THui9tIrM2s).
 
 ## API
 ### `Titta` class
@@ -450,7 +462,7 @@ The below method can be called on a TalkToProLab instance or on the TalkToProLab
 #### Construction
 An instance of TalkToProLab is constructed by calling `TalkToProLab()` and providing the constructor with the name of the External Presenter project that should be opened in Pro Lab. One optional additional constructor arguments can be provided:
 - `IPorFQDN`: this is to indicate the IP or FQDN where the Pro Lab instance can be contacted. Defaults to `'localhost'` for a one-computer setup. If you want to connect to Pro Lab on another computer, specify that computer's IP as this parameter.
-  
+
 When connected to Pro Lab on a remote computer, timestamps provided to sendStimulusEvent and sendCustomEvent will be automatically converted from the local computer's clock to the Pro Lab computer's clock. This conversation requires the clocks of the two computers to be synced, which will be done automatically whenever needed (automatically determined by the sync code). Depending on network performance, such a sync will take about 60 ms or more. Be aware of these possible slowdowns when calling sendStimulusEvent and sendCustomEvent.
 
 #### Methods
