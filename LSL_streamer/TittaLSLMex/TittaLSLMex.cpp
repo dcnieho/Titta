@@ -169,10 +169,13 @@ namespace {
         //// outlets
         GetEyeTracker,
         GetStreamSourceID,
+        Create,
+        HasStream,
         Start,
         SetIncludeEyeOpennessInGaze,
         IsStreaming,
         Stop,
+        Destroy,
 
         //// inlets
         GetStreams,
@@ -207,10 +210,13 @@ namespace {
         //// outlets
         { "getEyeTracker",                  Action::GetEyeTracker },
         { "getStreamSourceID",              Action::GetStreamSourceID },
+        { "create",                         Action::Create },
+        { "hasStream",                      Action::HasStream },
         { "start",                          Action::Start },
         { "setIncludeEyeOpennessInGaze",    Action::SetIncludeEyeOpennessInGaze },
         { "isStreaming",                    Action::IsStreaming },
         { "stop",                           Action::Stop },
+        { "destroy",                        Action::Destroy },
 
         //// inlets
         { "GetStreams",                     Action::GetStreams },
@@ -490,13 +496,41 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                 mxFree(bufferCstr);
                                 return;
                             }
+                            case Action::Create:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("create: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                std::optional<bool> doStartSending;
+                                if (nrhs_ > 3 && !mxIsEmpty(prhs_[3]))
+                                {
+                                    if (!mxIsScalar(prhs_[3]) || !mxIsLogicalScalar(prhs_[3]))
+                                        throw "create: Second argument must be a logical scalar.";
+                                    doStartSending = mxIsLogicalScalarTrue(prhs_[3]);
+                                }
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                plhs_[0] = mxCreateLogicalScalar(senderInstance->create(bufferCstr, doStartSending));
+                                mxFree(bufferCstr);
+                                return;
+                            }
+                            case Action::HasStream:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("hasStream: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                plhs_[0] = mxCreateLogicalScalar(senderInstance->hasStream(bufferCstr));
+                                mxFree(bufferCstr);
+                                return;
+                            }
                             case Action::Start:
                             {
                                 if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
                                     throw std::string("start: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
-                                plhs_[0] = mxCreateLogicalScalar(senderInstance->start(bufferCstr));
+                                senderInstance->start(bufferCstr);
                                 mxFree(bufferCstr);
                                 return;
                             }
@@ -526,6 +560,16 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
                                 char* bufferCstr = mxArrayToString(prhs_[2]);
                                 senderInstance->stop(bufferCstr);
+                                mxFree(bufferCstr);
+                                return;
+                            }
+                            case Action::Destroy:
+                            {
+                                if (nrhs_ < 3 || !mxIsChar(prhs_[2]))
+                                    throw std::string("destroy: First input must be a data stream identifier string (" + Titta::getAllStreamsString("'", false, true) + ").");
+
+                                char* bufferCstr = mxArrayToString(prhs_[2]);
+                                senderInstance->destroy(bufferCstr);
                                 mxFree(bufferCstr);
                                 return;
                             }

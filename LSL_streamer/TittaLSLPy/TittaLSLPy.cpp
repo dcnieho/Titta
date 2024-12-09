@@ -327,7 +327,17 @@ PYBIND11_MODULE(MODULE_NAME, m)
             "stream"_a)
 
         // outlets
-        .def("start", [](TittaLSL::Sender& instance_, std::string stream_) { return instance_.start(std::move(stream_), true); },
+        .def("create", [](TittaLSL::Sender& instance_, std::string stream_, std::optional<bool> doStartSending_) { return instance_.create(std::move(stream_), doStartSending_, true); },
+            "stream"_a, "do_start_sending"_a)
+        .def("create", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Sender::create),
+            "stream"_a, "do_start_sending"_a)
+
+        .def("has_stream", [](const TittaLSL::Sender& instance_, std::string stream_) -> bool { return instance_.hasStream(std::move(stream_), true); },
+            "stream"_a)
+        .def("has_stream", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::hasStream, py::const_),
+            "stream"_a)
+
+        .def("start", [](TittaLSL::Sender& instance_, std::string stream_) { instance_.start(std::move(stream_), true); },
             "stream"_a)
         .def("start", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::start),
             "stream"_a)
@@ -343,6 +353,11 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def("stop", [](TittaLSL::Sender& instance_, std::string stream_) { instance_.stop(std::move(stream_), true); },
             "stream"_a)
         .def("stop", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::stop),
+            "stream"_a)
+
+        .def("destroy", [](TittaLSL::Sender& instance_, std::string stream_) { instance_.destroy(std::move(stream_), true); },
+            "stream"_a)
+        .def("destroy", py::overload_cast<Titta::Stream>(&TittaLSL::Sender::destroy),
             "stream"_a)
     ;
 

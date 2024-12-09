@@ -25,14 +25,14 @@ int main(int argc, char** argv)
         if (!eyeTrackers.empty())
         {
             std::cout << "connecting to: " << eyeTrackers[0].deviceName << std::endl;
-            auto lslStreamer = TittaLSL::Sender(eyeTrackers[0]);
+            auto lslSender = TittaLSL::Sender(eyeTrackers[0]);
 
             std::cout << "starting stream" << std::endl;
-            lslStreamer.setIncludeEyeOpennessInGaze(true);
-            lslStreamer.start(Titta::Stream::Gaze);
-            lslStreamer.start(Titta::Stream::ExtSignal);
-            lslStreamer.start(Titta::Stream::TimeSync);
-            lslStreamer.start(Titta::Stream::Positioning);
+            lslSender.setIncludeEyeOpennessInGaze(true);
+            lslSender.create(Titta::Stream::Gaze);
+            lslSender.create(Titta::Stream::ExtSignal);
+            lslSender.create(Titta::Stream::TimeSync);
+            lslSender.create(Titta::Stream::Positioning);
 
             std::this_thread::sleep_for(std::chrono::seconds(1));
             auto streams = TittaLSL::Receiver::GetStreams("");

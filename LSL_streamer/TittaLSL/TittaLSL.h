@@ -44,13 +44,19 @@ namespace TittaLSL
         std::string getStreamSourceID(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
         std::string getStreamSourceID(Titta::Stream stream_) const;
 
-        bool start(std::string   stream_, bool snake_case_on_stream_not_found = false);
-        bool start(Titta::Stream stream_);
-        void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after opening stream
+        bool create(std::string   stream_, std::optional<bool> doStartSending_ = std::nullopt, bool snake_case_on_stream_not_found = false);
+        bool create(Titta::Stream stream_, std::optional<bool> doStartSending_ = std::nullopt);
+        bool hasStream(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
+        bool hasStream(Titta::Stream stream_) const;
+        void start(std::string   stream_, bool snake_case_on_stream_not_found = false);
+        void start(Titta::Stream stream_);
+        void setIncludeEyeOpennessInGaze(bool include_);    // can be set before or after creating stream
         bool isStreaming(std::string   stream_, bool snake_case_on_stream_not_found = false) const;
         bool isStreaming(Titta::Stream stream_) const;
         void stop(std::string    stream_, bool snake_case_on_stream_not_found = false);
         void stop(Titta::Stream  stream_);
+        void destroy(std::string    stream_, bool snake_case_on_stream_not_found = false);
+        void destroy(Titta::Stream  stream_);
 
     private:
         void connect(std::string address_);
@@ -70,7 +76,7 @@ namespace TittaLSL
         void pushSample(const Titta::timeSync& sample_);
         void pushSample(const Titta::positioning& sample_);
         // callback registration and deregistration
-        bool attachCallback(Titta::Stream stream_);
+        bool attachCallback(Titta::Stream stream_, bool doStartSending_);
         bool removeCallback(Titta::Stream stream_);
 
     private:

@@ -1,6 +1,12 @@
 classdef Sender < TittaLSL.detail.Base
     properties (Dependent, SetAccess=private)
         eyeTracker
+
+        hasGazestream
+        hasExternalSignalstream
+        hasTimeSyncstream
+        hasPositioningstream
+
         streamingGaze
         streamingExternalSignal
         streamingTimeSync
@@ -27,10 +33,10 @@ classdef Sender < TittaLSL.detail.Base
         end
 
         function delete(this)
-            this.stop('gaze');
-            this.stop('externalSignal');
-            this.stop('timeSync');
-            this.stop('positioning');
+            this.destroy('gaze');
+            this.destroy('externalSignal');
+            this.destroy('timeSync');
+            this.destroy('positioning');
         end
         
         
@@ -38,6 +44,18 @@ classdef Sender < TittaLSL.detail.Base
         function str = get.eyeTracker(this)
             et = this.getEyeTracker();
             str = sprintf('%s (%s) @ %.0f', et.model, et.serialNumber, et.frequency);
+        end
+        function state = get.hasGazestream(this)
+            state = this.hasStream('gaze');
+        end
+        function state = get.hasExternalSignalstream(this)
+            state = this.hasStream('externalSignal');
+        end
+        function state = get.hasTimeSyncstream(this)
+            state = this.hasStream('timeSync');
+        end
+        function state = get.hasPositioningstream(this)
+            state = this.hasStream('positioning');
         end
         function state = get.streamingGaze(this)
             state = this.isStreaming('gaze');
@@ -63,11 +81,27 @@ classdef Sender < TittaLSL.detail.Base
             end
             name = this.cppmethod('getStreamSourceID',ensureStringIsChar(stream));
         end
-        function success = start(this,stream)
+        function success = create(this,stream,doStartSending)
+            if nargin<2
+                error('TittaLSL::Sender::create: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+            end
+            if nargin>2 && ~isempty(doStartSending)
+                success = this.cppmethod('create',ensureStringIsChar(stream),logical(doStartSending));
+            else
+                success = this.cppmethod('create',ensureStringIsChar(stream));
+            end
+        end
+        function status = hasStream(this,stream)
+            if nargin<2
+                error('TittaLSL::Sender::hasStream: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+            end
+            status = this.cppmethod('hasStream',ensureStringIsChar(stream));
+        end
+        function start(this,stream)
             if nargin<2
                 error('TittaLSL::Sender::start: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
-            success = this.cppmethod('start',ensureStringIsChar(stream));
+            this.cppmethod('start',ensureStringIsChar(stream));
         end
         function setIncludeEyeOpennessInGaze(this,include)
             this.cppmethod('setIncludeEyeOpennessInGaze',include);
@@ -83,6 +117,12 @@ classdef Sender < TittaLSL.detail.Base
                 error('TittaLSL::Sender::stop: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
             end
             this.cppmethod('stop',ensureStringIsChar(stream));
+        end
+        function destroy(this,stream)
+            if nargin<2
+                error('TittaLSL::Sender::destroy: provide stream argument. \nSupported streams are: %s.',this.GetAllStreamsString());
+            end
+            this.cppmethod('destroy',ensureStringIsChar(stream));
         end
     end
 end
