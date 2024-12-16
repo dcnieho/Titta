@@ -34,6 +34,7 @@ classdef Sender < TittaLSL.detail.Base
 
         function delete(this)
             this.destroy('gaze');
+            this.destroy('eyeOpenness');
             this.destroy('externalSignal');
             this.destroy('timeSync');
             this.destroy('positioning');
