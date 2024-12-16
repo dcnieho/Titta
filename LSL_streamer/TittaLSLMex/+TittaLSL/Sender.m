@@ -1,6 +1,7 @@
 classdef Sender < TittaLSL.detail.Base
     properties (Dependent, SetAccess=private)
         eyeTracker
+        eyeTrackerDescription
 
         hasGazestream
         hasExternalSignalstream
@@ -42,7 +43,10 @@ classdef Sender < TittaLSL.detail.Base
         
         
         %% property getters
-        function str = get.eyeTracker(this)
+        function et = get.eyeTracker(this)
+            et = this.getEyeTracker();
+        end
+        function str = get.eyeTrackerDescription(this)
             et = this.getEyeTracker();
             str = sprintf('%s (%s) @ %.0f', et.model, et.serialNumber, et.frequency);
         end
