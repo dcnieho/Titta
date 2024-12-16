@@ -209,7 +209,7 @@ void Sender::connect(std::string address_)
     TobiiResearchEyeTracker* et;
     const TobiiResearchStatus status = tobii_research_get_eyetracker(address_.c_str(), &et);
     if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Titta::cpp: Cannot get eye tracker \"" + address_ + "\"", status);
+        ErrorExit("Titta::cpp::Sender: Cannot get eye tracker \"" + address_ + "\"", status);
     connect(et);
 }
 
@@ -285,7 +285,7 @@ bool Sender::create(const Titta::Stream stream_, std::optional<bool> doStartSend
         format = LSLInletTypeToChannelFormat_v<TittaStreamToLSLInletType_t<Titta::Stream::Positioning>>;
         break;
     default:
-        DoExitWithMsg(string_format("TittaLSL::cpp::start: opening an outlet for %s stream is not supported.", Titta::streamToString(stream_).c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Sender::create: opening an outlet for %s stream is not supported.", Titta::streamToString(stream_).c_str()));
         break;
     }
 
@@ -631,7 +631,7 @@ void Sender::setIncludeEyeOpennessInGaze(const bool include_)
 {
     if (include_ && !(_localEyeTracker.capabilities & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA))
         DoExitWithMsg(
-            "TittaLSL::cpp::setIncludeEyeOpennessInGaze: Cannot request to stream " + Titta::streamToString(Titta::Stream::EyeOpenness) + ", this eye tracker does not provide it"
+            "TittaLSL::cpp::Sender::setIncludeEyeOpennessInGaze: Cannot request to stream " + Titta::streamToString(Titta::Stream::EyeOpenness) + ", this eye tracker does not provide it"
         );
 
     _includeEyeOpennessInGaze = include_;
@@ -749,7 +749,7 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
         }
         default:
         {
-            DoExitWithMsg("TittaLSL::cpp::create: Cannot create " + Titta::streamToString(stream_) + " stream, not supported to send via outlet");
+            DoExitWithMsg("TittaLSL::cpp::Sender::create: Cannot create " + Titta::streamToString(stream_) + " stream, not supported to send via outlet");
             break;
         }
     }
@@ -760,7 +760,7 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
     if (result != TOBII_RESEARCH_STATUS_OK)
     {
         _outStreams.erase(stream_);
-        ErrorExit("TittaLSL::cpp::creat: Cannot create " + Titta::streamToString(stream_) + " stream", result);
+        ErrorExit("TittaLSL::cpp::Sender::create: Cannot create " + Titta::streamToString(stream_) + " stream", result);
     }
     else
     {
@@ -1158,7 +1158,7 @@ getIteratorsFromSampleAndSide(std::vector<DataType>& buf_, const size_t NSamp_, 
         startIt = std::prev(endIt  , nSamp);
         break;
     default:
-        DoExitWithMsg("TittaLSL::::cpp::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
+        DoExitWithMsg("TittaLSL::cpp::Receiver::getIteratorsFromSampleAndSide: unknown Titta::BufferSide provided.");
         break;
     }
     return { startIt, endIt };
@@ -1251,14 +1251,14 @@ namespace TittaLSL
 Receiver::Receiver(std::string streamSourceID_, const std::optional<size_t> initialBufferSize_, const std::optional<bool> startListening_)
 {
     if (streamSourceID_.empty())
-        DoExitWithMsg("TittaLSL::Receiver: must specify stream source ID, cannot be empty");
+        DoExitWithMsg("TittaLSL::cpp::Receiver: must specify stream source ID, cannot be empty");
 
     // find stream with specified source ID
     const auto streams = lsl::resolve_stream("source_id", streamSourceID_, 1, 2.);
     if (streams.empty())
-        DoExitWithMsg(string_format("TittaLSL::Receiver: stream with source ID %s could not be found", streamSourceID_.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Receiver: stream with source ID %s could not be found", streamSourceID_.c_str()));
     else if (streams.size()>1)
-        DoExitWithMsg(string_format("TittaLSL::Receiver: more than one stream with source ID %s found", streamSourceID_.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Receiver: more than one stream with source ID %s found", streamSourceID_.c_str()));
 
     create(streams[0], initialBufferSize_, startListening_);
 }
@@ -1272,7 +1272,7 @@ void Receiver::create(lsl::stream_info streamInfo_, std::optional<size_t> initia
     const auto doStartRecording = doStartListening_.value_or(defaults::createStartsRecording);
 
     if (!streamInfo_.source_id().starts_with("TittaLSL:Tobii_"))
-        DoExitWithMsg(string_format("TittaLSL::Receiver: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Receiver: stream %s (source_id: %s) is not an TittaLSL stream, cannot be used.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str()));
 
 # define MAKE_INLET(type, defaultName) \
     _inlet = std::make_unique<AllInlets>(std::in_place_type<Inlet<gaze>>, streamInfo_); \
@@ -1300,7 +1300,7 @@ void Receiver::create(lsl::stream_info streamInfo_, std::optional<size_t> initia
         MAKE_INLET(TittaLSL::Receiver::positioning, positioningBufSize)
     }
     else
-        DoExitWithMsg(string_format("TittaLSL::Receiver: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Receiver: stream %s (source_id: %s}) has type %s, which is not understood.", streamInfo_.name().c_str(), streamInfo_.source_id().c_str(), sType.c_str()));
 
     if (createdInlet)
     {
@@ -1326,7 +1326,7 @@ void TittaLSL::Receiver::checkInletType() const
     {
         const auto wanted = LSLInletTypeToTittaStream_v<DataType>;
         const auto actual = getInletTypeImpl(*_inlet);
-        DoExitWithMsg(string_format("Inlet should be of type %s, but instead was of type %s. Fatal error", Titta::streamToString(wanted).c_str(), Titta::streamToString(actual).c_str()));
+        DoExitWithMsg(string_format("TittaLSL::cpp::Receiver: Inlet should be of type %s, but instead was of type %s. Fatal error", Titta::streamToString(wanted).c_str(), Titta::streamToString(actual).c_str()));
     }
 }
 
@@ -1375,7 +1375,7 @@ std::vector<lsl::stream_info> Receiver::GetStreams(const std::optional<Titta::St
     if (stream_.has_value())
     {
         if (*stream_!=Titta::Stream::Gaze && *stream_!=Titta::Stream::ExtSignal && *stream_!=Titta::Stream::TimeSync && *stream_!=Titta::Stream::Positioning)
-            DoExitWithMsg(string_format("TittaLSL::cpp::GetStreams: %s streams are not supported.", Titta::streamToString(*stream_).c_str()));
+            DoExitWithMsg(string_format("TittaLSL::cpp::Receiver::GetStreams: %s streams are not supported.", Titta::streamToString(*stream_).c_str()));
         const auto streamName = string_format("Tobii_%s", Titta::streamToString(*stream_).c_str());
         return lsl::resolve_stream("name", streamName, 0, timeout);
     }
@@ -1702,7 +1702,7 @@ void Receiver::clearTimeRange(const std::optional<int64_t> timeStart_, const std
             clearVec(getInlet<TittaLSL::Receiver::timeSync>(), timeStart, timeEnd, timeIsLocalTime);
             break;
         case Titta::Stream::Positioning:
-            DoExitWithMsg("Titta::cpp::clearTimeRange: not supported for the positioning stream.");
+            DoExitWithMsg("Titta::cpp::Receiver::clearTimeRange: not supported for the positioning stream.");
             break;
     }
 }
