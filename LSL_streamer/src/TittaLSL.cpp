@@ -652,6 +652,12 @@ void Sender::start(std::string stream_, const bool snake_case_on_stream_not_foun
 
 void Sender::start(const Titta::Stream stream_)
 {
+    // first check if we have a stream to start
+    if (!hasStream(stream_))
+        DoExitWithMsg(
+            "TittaLSL::cpp::Sender::start: Cannot start a " + Titta::streamToString(stream_) + " stream, you need to create it first"
+        );
+
     bool* stateVar = nullptr;
     switch (stream_)
     {
@@ -1063,6 +1069,9 @@ void Sender::stop(std::string stream_, const bool snake_case_on_stream_not_found
 
 void Sender::stop(const Titta::Stream stream_)
 {
+    // NB: may be no op if stream for this data type is stopped or was never even created,
+    // but that's harmless, so no need to check
+
     bool* stateVar = nullptr;
     switch (stream_)
     {
@@ -1099,7 +1108,7 @@ void Sender::destroy(std::string stream_, const bool snake_case_on_stream_not_fo
 
 void Sender::destroy(const Titta::Stream stream_)
 {
-    // stop the callback
+    // stop the callback (NB: also updates _streamingXXX state variable)
     removeCallback(stream_);
 
     // stop the outlet, if any
