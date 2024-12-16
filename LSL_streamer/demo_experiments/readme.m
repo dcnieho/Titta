@@ -314,7 +314,7 @@ try
             receivers{r,2}.stop();
         end
     end
-    sender.stop('gaze');
+    sender.destroy('gaze');
     EThndl.buffer.stop('gaze');
 
     % show the correct location of Wally
