@@ -622,8 +622,8 @@ bool Sender::hasStream(std::string stream_, const bool snake_case_on_stream_not_
 }
 bool Sender::hasStream(const Titta::Stream stream_) const
 {
-    // EyeOpenness is always packed in a gaze stream, so check for that instead
-    return (stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_);
+    // EyeOpenness is always packed in a gaze stream, if enabled, so check for that instead
+    return (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_);
 }
 
 
