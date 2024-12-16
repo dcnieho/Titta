@@ -622,8 +622,19 @@ bool Sender::hasStream(std::string stream_, const bool snake_case_on_stream_not_
 }
 bool Sender::hasStream(const Titta::Stream stream_) const
 {
-    // EyeOpenness is always packed in a gaze stream, if enabled, so check for that instead
-    return (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_);
+    switch (stream_)
+    {
+    case Titta::Stream::Gaze:
+        return _gazeRegistered && _outStreams.contains(Titta::Stream::Gaze);
+    case Titta::Stream::EyeOpenness:
+        return _eyeOpennessRegistered && _outStreams.contains(Titta::Stream::Gaze); // NB: EyeOpenness is always packed into a gaze stream
+    case Titta::Stream::ExtSignal:
+        return _extSignalRegistered && _outStreams.contains(Titta::Stream::ExtSignal);
+    case Titta::Stream::TimeSync:
+        return _timeSyncRegistered && _outStreams.contains(Titta::Stream::TimeSync);
+    case Titta::Stream::Positioning:
+        return _positioningRegistered && _outStreams.contains(Titta::Stream::Positioning);
+    }
 }
 
 
@@ -637,7 +648,7 @@ void Sender::setIncludeEyeOpennessInGaze(const bool include_)
     _includeEyeOpennessInGaze = include_;
 
     // start/stop eye openness stream if needed
-    if (hasStream(Titta::Stream::Gaze) && !_includeEyeOpennessInGaze)
+    if (hasStream(Titta::Stream::EyeOpenness) && !_includeEyeOpennessInGaze)
         removeCallback(Titta::Stream::EyeOpenness);
     else if (hasStream(Titta::Stream::Gaze) && _includeEyeOpennessInGaze)
         attachCallback(Titta::Stream::EyeOpenness, isStreaming(Titta::Stream::Gaze));
@@ -681,16 +692,17 @@ void Sender::start(const Titta::Stream stream_)
     *stateVar = true;
     // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
     if (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
-        _streamingGaze = true;
+        start(Titta::Stream::Gaze);
     // if requested to merge gaze and eye openness, a call to start gaze also starts eye openness
     else if (stream_ == Titta::Stream::Gaze && _includeEyeOpennessInGaze)
-        _streamingEyeOpenness = true;
+        start(Titta::Stream::EyeOpenness);
 }
 
 bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
 {
     TobiiResearchStatus result = TOBII_RESEARCH_STATUS_UNINITIALIZED;
-    bool* stateVar = nullptr;
+    bool* registeredVar = nullptr;
+    bool* sendingVar = nullptr;
     switch (stream_)
     {
         case Titta::Stream::Gaze:
@@ -701,7 +713,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             {
                 // start sending
                 result = tobii_research_subscribe_to_gaze_data(_localEyeTracker.et, GazeCallback, this);
-                stateVar = &_streamingGaze;
+                registeredVar = &_gazeRegistered;
+                sendingVar = &_streamingGaze;
             }
             break;
         }
@@ -713,7 +726,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             {
                 // start sending
                 result = tobii_research_subscribe_to_eye_openness(_localEyeTracker.et, EyeOpennessCallback, this);
-                stateVar = &_streamingEyeOpenness;
+                registeredVar = &_eyeOpennessRegistered;
+                sendingVar = &_streamingEyeOpenness;
             }
             break;
         }
@@ -725,7 +739,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             {
                 // start sending
                 result = tobii_research_subscribe_to_external_signal_data(_localEyeTracker.et, ExtSignalCallback, this);
-                stateVar = &_streamingExtSignal;
+                registeredVar = &_extSignalRegistered;
+                sendingVar = &_streamingExtSignal;
             }
             break;
         }
@@ -737,7 +752,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             {
                 // start sending
                 result = tobii_research_subscribe_to_time_synchronization_data(_localEyeTracker.et, TimeSyncCallback, this);
-                stateVar = &_streamingTimeSync;
+                registeredVar = &_timeSyncRegistered;
+                sendingVar = &_streamingTimeSync;
             }
             break;
         }
@@ -749,7 +765,8 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             {
                 // start sending
                 result = tobii_research_subscribe_to_user_position_guide(_localEyeTracker.et, PositioningCallback, this);
-                stateVar = &_streamingPositioning;
+                registeredVar = &_positioningRegistered;
+                sendingVar = &_streamingPositioning;
             }
             break;
         }
@@ -759,10 +776,11 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             break;
         }
     }
-    RelayMsg("TittaLSL::cpp::Sender::create: starting " + Titta::streamToString(stream_) + " stream");
 
-    if (stateVar && doStartSending_)
-        *stateVar = result==TOBII_RESEARCH_STATUS_OK;
+    if (registeredVar)
+        *registeredVar = result == TOBII_RESEARCH_STATUS_OK;
+    if (sendingVar && doStartSending_)
+        *sendingVar = result == TOBII_RESEARCH_STATUS_OK;
 
     if (result != TOBII_RESEARCH_STATUS_OK)
     {
@@ -772,10 +790,10 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
     else
     {
         // if requested to merge gaze and eye openness, a call to create eye openness also registers for gaze
-        if (     stream_== Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && !_streamingGaze)
+        if (     stream_== Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && !_gazeRegistered)
             return attachCallback(Titta::Stream::Gaze, doStartSending_);
         // if requested to merge gaze and eye openness, a call to create gaze also registers for eye openness
-        else if (stream_== Titta::Stream::Gaze        && _includeEyeOpennessInGaze && !_streamingEyeOpenness)
+        else if (stream_== Titta::Stream::Gaze        && _includeEyeOpennessInGaze && !_eyeOpennessRegistered)
             return attachCallback(Titta::Stream::EyeOpenness, doStartSending_);
         return true;
     }
@@ -830,7 +848,7 @@ namespace {
 
 void Sender::receiveSample(const TobiiResearchGazeData* gaze_data_, const TobiiResearchEyeOpennessData* openness_data_)
 {
-    const auto needStage = _streamingGaze && _streamingEyeOpenness;
+    const auto needStage = _gazeRegistered && _eyeOpennessRegistered;
     if (!needStage && !_gazeStagingEmpty)
     {
         // if any data in staging area but no longer expecting to merge, flush to output
@@ -999,36 +1017,40 @@ bool Sender::removeCallback(const Titta::Stream stream_)
     switch (stream_)
     {
     case Titta::Stream::Gaze:
-        result = !_streamingGaze ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker.et, GazeCallback);
-        stateVar = &_streamingGaze;
+        result = !_gazeRegistered ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_gaze_data(_localEyeTracker.et, GazeCallback);
+        stateVar = &_gazeRegistered;
         break;
     case Titta::Stream::EyeOpenness:
-        result = !_streamingEyeOpenness ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker.et, EyeOpennessCallback);
-        stateVar = &_streamingEyeOpenness;
+        result = !_eyeOpennessRegistered ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_eye_openness(_localEyeTracker.et, EyeOpennessCallback);
+        stateVar = &_eyeOpennessRegistered;
         break;
     case Titta::Stream::ExtSignal:
-        result = !_streamingExtSignal ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker.et, ExtSignalCallback);
-        stateVar = &_streamingExtSignal;
+        result = !_extSignalRegistered ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_external_signal_data(_localEyeTracker.et, ExtSignalCallback);
+        stateVar = &_extSignalRegistered;
         break;
     case Titta::Stream::TimeSync:
-        result = !_streamingTimeSync ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker.et, TimeSyncCallback);
-        stateVar = &_streamingTimeSync;
+        result = !_timeSyncRegistered ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_time_synchronization_data(_localEyeTracker.et, TimeSyncCallback);
+        stateVar = &_timeSyncRegistered;
         break;
     case Titta::Stream::Positioning:
-        result = !_streamingPositioning ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker.et, PositioningCallback);
-        stateVar = &_streamingPositioning;
+        result = !_positioningRegistered ? TOBII_RESEARCH_STATUS_OK : tobii_research_unsubscribe_from_user_position_guide(_localEyeTracker.et, PositioningCallback);
+        stateVar = &_positioningRegistered;
         break;
     }
 
     const bool success = result==TOBII_RESEARCH_STATUS_OK;
     if (stateVar && success)
+    {
         *stateVar = false;
+        // ensure also not marked as streaming
+        stop(stream_);
+    }
 
     // if requested to merge gaze and eye openness, a call to stop eye openness also stops gaze
-    if (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && _streamingGaze)
+    if (stream_==Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
         return removeCallback(Titta::Stream::Gaze) && success;
     // if requested to merge gaze and eye openness, a call to stop gaze also stops eye openness
-    else if (stream_ == Titta::Stream::Gaze && _includeEyeOpennessInGaze && _streamingEyeOpenness)
+    else if (stream_==Titta::Stream::Gaze && _includeEyeOpennessInGaze)
         return removeCallback(Titta::Stream::EyeOpenness) && success;
     return success;
 }
@@ -1039,28 +1061,25 @@ bool Sender::isStreaming(std::string stream_, const bool snake_case_on_stream_no
 }
 bool Sender::isStreaming(const Titta::Stream stream_) const
 {
+    if (!hasStream(stream_))
+        return false;
+
     bool isStreaming = false;
     switch (stream_)
     {
         case Titta::Stream::Gaze:
-            isStreaming = _streamingGaze;
-            break;
+            return _streamingGaze;
         case Titta::Stream::EyeOpenness:
-            isStreaming = _streamingEyeOpenness;
-            break;
+            return _streamingEyeOpenness;
         case Titta::Stream::ExtSignal:
-            isStreaming = _streamingExtSignal;
-            break;
+            return _streamingExtSignal;
         case Titta::Stream::TimeSync:
-            isStreaming = _streamingTimeSync;
-            break;
+            return _streamingTimeSync;
         case Titta::Stream::Positioning:
-            isStreaming = _streamingPositioning;
-            break;
+            return _streamingPositioning;
     }
 
-    // EyeOpenness is always packed in a gaze stream, so check for that instead
-    return isStreaming && ((stream_ == Titta::Stream::EyeOpenness && _outStreams.contains(Titta::Stream::Gaze)) || _outStreams.contains(stream_));
+    return false;
 }
 
 void Sender::stop(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
@@ -1093,12 +1112,14 @@ void Sender::stop(const Titta::Stream stream_)
         break;
     }
 
-    *stateVar = false;
+    if (stateVar)
+        *stateVar = false;
+
     // if requested to merge gaze and eye openness, a call to stop eye openness also stops gaze
-    if (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
+    if (stream_==Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
         _streamingGaze = false;
     // if requested to merge gaze and eye openness, a call to stop gaze also stops eye openness
-    else if (stream_ == Titta::Stream::Gaze && _includeEyeOpennessInGaze)
+    else if (stream_==Titta::Stream::Gaze && _includeEyeOpennessInGaze)
         _streamingEyeOpenness = false;
 }
 
@@ -1109,7 +1130,8 @@ void Sender::destroy(std::string stream_, const bool snake_case_on_stream_not_fo
 
 void Sender::destroy(const Titta::Stream stream_)
 {
-    // stop the callback (NB: also updates _streamingXXX state variable)
+    // stop the stream, remove the callback
+    stop(stream_);
     removeCallback(stream_);
 
     // stop the outlet, if any

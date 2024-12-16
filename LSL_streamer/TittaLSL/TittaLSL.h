@@ -91,6 +91,12 @@ namespace TittaLSL
         bool                            _includeEyeOpennessInGaze = false;
         mutex_type                      _gazeStageMutex;
 
+        bool                            _gazeRegistered = false;
+        bool                            _eyeOpennessRegistered = false;
+        bool                            _extSignalRegistered = false;
+        bool                            _timeSyncRegistered = false;
+        bool                            _positioningRegistered = false;
+
         bool                            _streamingGaze = false;
         bool                            _streamingEyeOpenness = false;
         bool                            _streamingExtSignal = false;
