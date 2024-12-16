@@ -3,12 +3,14 @@ classdef Sender < TittaLSL.detail.Base
         eyeTracker
         eyeTrackerDescription
 
-        hasGazestream
-        hasExternalSignalstream
-        hasTimeSyncstream
-        hasPositioningstream
+        hasGazeStream
+        hasEyeOpennessStream
+        hasExternalSignalStream
+        hasTimeSyncStream
+        hasPositioningStream
 
         streamingGaze
+        streamingEyeOpenness
         streamingExternalSignal
         streamingTimeSync
         streamingPositioning
@@ -50,20 +52,26 @@ classdef Sender < TittaLSL.detail.Base
             et = this.getEyeTracker();
             str = sprintf('%s (%s) @ %.0f', et.model, et.serialNumber, et.frequency);
         end
-        function state = get.hasGazestream(this)
+        function state = get.hasGazeStream(this)
             state = this.hasStream('gaze');
         end
-        function state = get.hasExternalSignalstream(this)
+        function state = get.hasEyeOpennessStream(this)
+            state = this.hasStream('eyeOpenness');
+        end
+        function state = get.hasExternalSignalStream(this)
             state = this.hasStream('externalSignal');
         end
-        function state = get.hasTimeSyncstream(this)
+        function state = get.hasTimeSyncStream(this)
             state = this.hasStream('timeSync');
         end
-        function state = get.hasPositioningstream(this)
+        function state = get.hasPositioningStream(this)
             state = this.hasStream('positioning');
         end
         function state = get.streamingGaze(this)
             state = this.isStreaming('gaze');
+        end
+        function state = get.streamingEyeOpenness(this)
+            state = this.isStreaming('eyeOpenness');
         end
         function state = get.streamingExternalSignal(this)
             state = this.isStreaming('externalSignal');
