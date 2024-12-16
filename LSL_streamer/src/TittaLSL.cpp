@@ -1047,10 +1047,10 @@ bool Sender::removeCallback(const Titta::Stream stream_)
     }
 
     // if requested to merge gaze and eye openness, a call to stop eye openness also stops gaze
-    if (stream_==Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
+    if (stream_==Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze && _gazeRegistered)
         return removeCallback(Titta::Stream::Gaze) && success;
     // if requested to merge gaze and eye openness, a call to stop gaze also stops eye openness
-    else if (stream_==Titta::Stream::Gaze && _includeEyeOpennessInGaze)
+    else if (stream_==Titta::Stream::Gaze && _includeEyeOpennessInGaze && _eyeOpennessRegistered)
         return removeCallback(Titta::Stream::EyeOpenness) && success;
     return success;
 }
@@ -1117,10 +1117,10 @@ void Sender::stop(const Titta::Stream stream_)
 
     // if requested to merge gaze and eye openness, a call to stop eye openness also stops gaze
     if (stream_==Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
-        _streamingGaze = false;
+        stop(Titta::Stream::Gaze);
     // if requested to merge gaze and eye openness, a call to stop gaze also stops eye openness
     else if (stream_==Titta::Stream::Gaze && _includeEyeOpennessInGaze)
-        _streamingEyeOpenness = false;
+        stop(Titta::Stream::EyeOpenness);
 }
 
 void Sender::destroy(std::string stream_, const bool snake_case_on_stream_not_found /*= false*/)
