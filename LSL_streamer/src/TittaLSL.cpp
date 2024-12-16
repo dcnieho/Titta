@@ -161,11 +161,11 @@ Sender::Sender(const TobiiTypes::eyeTracker& et_)
 }
 Sender::~Sender()
 {
-    stop(Titta::Stream::Gaze);
-    stop(Titta::Stream::EyeOpenness);
-    stop(Titta::Stream::ExtSignal);
-    stop(Titta::Stream::TimeSync);
-    stop(Titta::Stream::Positioning);
+    destroy(Titta::Stream::Gaze);
+    destroy(Titta::Stream::EyeOpenness);
+    destroy(Titta::Stream::ExtSignal);
+    destroy(Titta::Stream::TimeSync);
+    destroy(Titta::Stream::Positioning);
 }
 
 void Sender::CheckClocks()
