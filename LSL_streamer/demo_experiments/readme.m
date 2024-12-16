@@ -83,8 +83,7 @@ try
     to_master.push_sample({msg});
     
     if DEBUGlevel>1
-        % make screen partially transparent on OSX and windows vista or
-        % higher, so we can debug.
+        % make screen partially transparent, so we can debug.
         PsychDebugWindowConfiguration;
     end
     if DEBUGlevel
@@ -146,7 +145,7 @@ try
     % start the eye tracker
     EThndl.buffer.start('gaze','','',true); % start eye tracker and wait for gaze to be picked up
     
-    % create a TittaLSLPy sender that makes this eye tracker's gaze data stream available on the network
+    % create a TittaLSL sender that makes this eye tracker's gaze data stream available on the network
     sender = TittaLSL.Sender(EThndl.address);
     sender.create('gaze');  % NB: by default starts sending immediately
     
