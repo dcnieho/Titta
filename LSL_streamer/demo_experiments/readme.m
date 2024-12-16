@@ -148,7 +148,7 @@ try
     
     % create a TittaLSLPy sender that makes this eye tracker's gaze data stream available on the network
     sender = TittaLSL.Sender(EThndl.address);
-    sender.start('gaze');
+    sender.create('gaze');  % NB: by default starts sending immediately
     
     % Start receiving et data with LSL (find started remote streams)
     receivers   = cell(0,2);
