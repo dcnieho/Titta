@@ -85,3 +85,8 @@ void DoExitWithMsg(std::string errMsg_)
 {
     std::cout << "Error: " << errMsg_ << std::endl;
 }
+
+void RelayMsg(std::string msg_)
+{
+    std::cout << "Message: " << msg_ << std::endl;
+}
