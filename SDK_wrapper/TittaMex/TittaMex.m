@@ -365,7 +365,7 @@ classdef TittaMex < handle
                 success = this.cppmethod('start',stream);
             end
             if success && nargin>4 && ~isempty(blockUntilStarted) && blockUntilStarted
-                if ismember('gaze',{'gaze','eyeOpenness','eye_openness'})   % Only supported for gaze data streams
+                if ismember(stream,{'gaze','eyeOpenness','eye_openness'})   % Only supported for gaze data streams
                     while true
                         samples = this.peekTimeRange(stream,t0);
                         if ~isempty(samples.systemTimeStamp)
