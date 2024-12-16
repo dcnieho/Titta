@@ -682,7 +682,7 @@ void Sender::start(const Titta::Stream stream_)
     // if requested to merge gaze and eye openness, a call to start eye openness also starts gaze
     if (stream_ == Titta::Stream::EyeOpenness && _includeEyeOpennessInGaze)
         _streamingGaze = true;
-    // if requested to merge gaze and eye openness, a call to stop gaze also starts eye openness
+    // if requested to merge gaze and eye openness, a call to start gaze also starts eye openness
     else if (stream_ == Titta::Stream::Gaze && _includeEyeOpennessInGaze)
         _streamingEyeOpenness = true;
 }
@@ -759,6 +759,7 @@ bool Sender::attachCallback(const Titta::Stream stream_, bool doStartSending_)
             break;
         }
     }
+    RelayMsg("TittaLSL::cpp::Sender::create: starting " + Titta::streamToString(stream_) + " stream");
 
     if (stateVar && doStartSending_)
         *stateVar = result==TOBII_RESEARCH_STATUS_OK;
