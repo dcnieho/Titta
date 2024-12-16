@@ -328,9 +328,9 @@ PYBIND11_MODULE(MODULE_NAME, m)
 
         // outlets
         .def("create", [](TittaLSL::Sender& instance_, std::string stream_, std::optional<bool> doStartSending_) { return instance_.create(std::move(stream_), doStartSending_, true); },
-            "stream"_a, "do_start_sending"_a)
+            "stream"_a, py::arg_v("do_start_sending", std::nullopt, "None"))
         .def("create", py::overload_cast<Titta::Stream, std::optional<bool>>(&TittaLSL::Sender::create),
-            "stream"_a, "do_start_sending"_a)
+            "stream"_a, py::arg_v("do_start_sending", std::nullopt, "None"))
 
         .def("has_stream", [](const TittaLSL::Sender& instance_, std::string stream_) -> bool { return instance_.hasStream(std::move(stream_), true); },
             "stream"_a)
