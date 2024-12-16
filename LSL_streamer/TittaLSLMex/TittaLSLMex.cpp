@@ -541,7 +541,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
                                 bool include = mxIsLogicalScalarTrue(prhs_[2]);
                                 senderInstance->setIncludeEyeOpennessInGaze(include);
-                                break;
+                                return;
                             }
                             case Action::IsStreaming:
                             {
@@ -575,8 +575,9 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                             }
                                 default:
                                     throw "Unhandled TittaLSL::Sender action: " + actionStr;
-                                    break;
+                                    return;
                             }
+                            break;
                         }
                     case ExportedType::Receiver:
                         {
@@ -601,7 +602,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                                     timeout = *static_cast<double*>(mxGetData(prhs_[2]));
                                 }
                                 plhs_[0] = mxTypes::ToMatlab(TittaLSL::Receiver::GetStreams(stream ? *stream : "", timeout));
-                                break;
+                                return;
                             }
                             case Action::GetInfo:
                             {
@@ -784,7 +785,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
                             case Action::Clear:
                             {
                                 receiverInstance->clear();
-                                break;
+                                return;
                             }
                             case Action::ClearTimeRange:
                             {
@@ -813,7 +814,7 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
                                 // get data stream identifier string, clear buffer
                                 receiverInstance->clearTimeRange(timeStart, timeEnd, timeIsLocalTime);
-                                break;
+                                return;
                             }
                             case Action::Stop:
                             {
@@ -828,11 +829,11 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
 
                                 // get data stream identifier string, stop buffering
                                 receiverInstance->stop(clearBuffer);
-                                break;
+                                return;
                             }
                                 default:
                                     throw "Unhandled TittaLSL::Receiver action: " + actionStr;
-                                    break;
+                                    return;
                             }
                             break;
                         }
