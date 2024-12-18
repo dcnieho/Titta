@@ -147,7 +147,7 @@ try
     ListenChar(0);
     
     % find out which eye(s) to use, start acquiring samples
-    if ~qUseDummyMode
+    if ~qUseDummyMode && ~calInfo.wasSkipped
         eye     = calInfo.attempt{calInfo.selectedCal}.eye;
         useLeft = ismember(eye,{ 'left','both'});
         useRight= ismember(eye,{'right','both'});
