@@ -1508,6 +1508,7 @@ void Receiver::recorderThreadFunc()
         lastTCorr = tCorr;
 
         // now parse into type
+        auto l = lockForWriting(inlet);
         if constexpr (std::is_same_v<DataType, TittaLSL::Receiver::gaze>)
         {
             data_t* ptr = sample;
