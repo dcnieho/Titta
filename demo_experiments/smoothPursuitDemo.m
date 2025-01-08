@@ -148,19 +148,19 @@ try
     % First draw a fixation point
     Screen('gluDisk',wpnt,fixClrs(1),stim.x(1),stim.y(1),round(winRect(3)/100));
     Screen('gluDisk',wpnt,fixClrs(2),stim.x(1),stim.y(1),round(winRect(3)/250));
-    startT = Screen('Flip',wpnt);
+    presStartT = Screen('Flip',wpnt);
     % log when fixation dot appeared in eye-tracker time. NB:
     % system_timestamp of the Tobii data uses the same clock as
     % PsychToolbox, so startT as returned by Screen('Flip') can be used
     % directly to segment eye tracking data
-    EThndl.sendMessage(sprintf('FIX ON (%.1f,%.1f)',stim.x(1),stim.y(1)),startT);
+    EThndl.sendMessage(sprintf('FIX ON (%.1f,%.1f)',stim.x(1),stim.y(1)),presStartT);
     
     % show animation and log when each frame was shown in eye-tracker time.
     % NB: by setting a deadline for the flip, we ensure that the previous
     % screen (fixation point) stays visible for the indicated amount of
     % time. See PsychToolbox demos for further elaboration on this way of
     % timing your script.
-    nextFlipT   = startT+fixTime-1/hz/2;    % bit of slack to make sure requested presentation time can be achieved
+    nextFlipT   = presStartT+fixTime-1/hz/2;    % bit of slack to make sure requested presentation time can be achieved
     frameT      = nan(1,nFrame);
     for f=1:nFrame
         Screen('gluDisk',wpnt,fixClrs(1),stim.x(f),stim.y(f),round(winRect(3)/160));
@@ -171,16 +171,18 @@ try
     end
     
     % Clear screen and indicate that the stimulus was removed
-    endT = Screen('Flip',wpnt,nextFlipT);
-    EThndl.sendMessage('STIM OFF',endT);
+    presEndT = Screen('Flip',wpnt,nextFlipT);
+    EThndl.sendMessage('STIM OFF',presEndT);
     
     % stop recording
     EThndl.buffer.stop('gaze');
     
     % get our gaze data conveniently from buffer before we drain it with
     % EThndl.collectSessionData() below. Note that we peek, not consume, so
-    % that all data remains in the buffer to store to file.
-    gazeData = EThndl.buffer.peekTimeRange('gaze',startT,endT);
+    % that all data remains in the buffer to store to file. Time stamps
+    % provided to this function should be in Tobii system time, so we use a
+    % helper function in Titta to convert PTB time to Tobii system time.
+    gazeData = EThndl.buffer.peekTimeRange('gaze',Titta.getTimeAsSystemTime(presStartT),Titta.getTimeAsSystemTime(presEndT));
     % I'm not going to use that however, just showing whats possible.
     
     % save data to mat file, adding info about the experiment
