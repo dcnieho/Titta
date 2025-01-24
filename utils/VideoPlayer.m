@@ -138,6 +138,18 @@ classdef VideoPlayer < handle
             end
         end
 
+        function mute(obj)
+            if obj.soundVolume>0
+                Screen('PlayMovie', obj.playingVid, 1, double(obj.loopSingleVid), 0);
+            end
+        end
+
+        function unmute(obj)
+            if obj.soundVolume>0
+                Screen('PlayMovie', obj.playingVid, 1, double(obj.loopSingleVid), obj.soundVolume);
+            end
+        end
+
         function stop(obj)
             Screen('PlayMovie', obj.playingVid, 0);
             if obj.nextVidPrefetch == 2
