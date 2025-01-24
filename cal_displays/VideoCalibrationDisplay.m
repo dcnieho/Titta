@@ -73,12 +73,16 @@ classdef VideoCalibrationDisplay < handle
             if ismember(drawCmd,{'fullCleanUp','sequenceCleanUp'})
                 if strcmp(drawCmd,'fullCleanUp')
                     obj.setCleanState();
+                else
+                    % sequenceCleanUp
+                    obj.videoPlayer.mute();
                 end
                 return;
             end
 
-            % ensure video playback has started
+            % ensure video playback has started and sound is on
             obj.videoPlayer.start();
+            obj.videoPlayer.unmute();
             
             % now that we have a wpnt, interrogate window
             if isempty(obj.qFloatColorRange) && ~isempty(wpnt)
