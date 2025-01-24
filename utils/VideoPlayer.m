@@ -63,6 +63,8 @@ classdef VideoPlayer < handle
             if nargin>2 && ~isempty(soundVolume)
                 obj.soundVolume = soundVolume;
             end
+
+            obj.warmUp();
         end
         
         function delete(obj)
@@ -212,6 +214,22 @@ classdef VideoPlayer < handle
                 obj.nextVids = [1:length(obj.videos)]; %#ok<NBRAK2>
             end
             obj.loopSingleVid = isscalar(obj.videos);
+        end
+
+        function warmUp(obj)
+            % There is an issue where the video player will crash
+            % PTB/matlab upon trying to open its first video. This problem
+            % seems to be caused by calling Priority() after opening the
+            % window (it doesn't occur if calling Priority before). Since
+            % the problematic pattern is what i showed in all my demos
+            % until hunting this down, i can only assume that the problem
+            % persists in user code. Luckily, the workaround is to once
+            % load a movie under Priority(0), no need to play it or
+            % anything. So, for caution, do that here.
+            op = Priority(0);
+            movie = Screen('OpenMovie', obj.wpnt, fullfile(PsychtoolboxRoot,'PsychDemos/MovieDemos/DualDiscs.mov'));
+            Screen('CloseMovie', movie);
+            Priority(op);
         end
 
         function [vpnt,vdur,id] = openNextVid(obj, async, id)
