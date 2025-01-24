@@ -41,9 +41,9 @@ try
     EThndl.init();
     
     % open PTB screen
+    Priority(1);
     [wpnt,winRect] = Screen('OpenWindow', scr, 127, [], [], [], [], 4);
     hz=Screen('NominalFrameRate', wpnt);
-    Priority(1);
     KbName('UnifyKeyNames');    % for correct operation of the setup/calibration interface, calling this is required
     
     % do calibration (info about validation accuracy will be stored in eye

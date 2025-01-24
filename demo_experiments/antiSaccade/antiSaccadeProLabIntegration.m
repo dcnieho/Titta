@@ -176,8 +176,8 @@ try
         PsychDebugWindowConfiguration;
     end
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
-    wpnt = PsychImaging('OpenWindow', sv.scr.num, sv.bgclr, [], [], [], [], sv.scr.multiSample);
     Priority(1);
+    wpnt = PsychImaging('OpenWindow', sv.scr.num, sv.bgclr, [], [], [], [], sv.scr.multiSample);
     Screen('BlendFunction', wpnt, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Screen('Preference', 'TextAlphaBlending', 1);
     Screen('Preference', 'TextAntiAliasing', 2);

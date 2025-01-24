@@ -163,6 +163,7 @@ try
     end
     PsychDefaultSetup(2);
     Screen('Preference', 'SyncTestSettings', 0.002);    % the systems are a little noisy, give the test a little more leeway
+    Priority(1);
     [wpntP,winRectP] = PsychImaging('OpenWindow', scrParticipant, bgClr/255, [], [], [], [], 4);
     if useWindowedOperatorScreen
         wrect  = Screen('GlobalRect', scrOperator);
@@ -173,7 +174,6 @@ try
         [wpntO,winRectO] = PsychImaging('OpenWindow', scrOperator, bgClr/255, [], [], [], [], 4);
     end
     hz=Screen('NominalFrameRate', wpntP);
-    Priority(1);
     Screen('BlendFunction', wpntP, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Screen('BlendFunction', wpntO, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Screen('Preference', 'TextAlphaBlending', 1);
