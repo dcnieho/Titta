@@ -20,7 +20,7 @@ classdef VideoPlayer < handle
     end
     
     properties (SetAccess=protected)
-        % List of videos enqueud for playing
+        % List of videos enqueued for playing
         videos;
 
         % Index of currently playing video
@@ -48,15 +48,12 @@ classdef VideoPlayer < handle
             
             obj.wpnt = wpnt;
             
-            % deal with videos input: normalize to string array
-            if ischar(videos) || iscellstr(videos) %#ok<ISCLSTR> 
-                videos = string(videos);
-            end
+            % deal with videos input: ensure input is cell string
+            videos = cellstr(videos);
 
             % check all video files exist
-            assert(isstring(videos),'VideoPlayer: videos input should be a string array (paths to videos)')
             for v=1:length(videos)
-                assert(exist(videos(v),'file')==2,'Video file "%s" not found',videos(v))
+                assert(exist(videos{v},'file')==2,'Video file "%s" not found',videos{v})
             end
             obj.videos = videos(:).';
 
@@ -245,10 +242,10 @@ classdef VideoPlayer < handle
                 specialFlags = 2;
             end
             if async
-                Screen('OpenMovie', obj.wpnt, char(obj.videos(id)), 1, 1, specialFlags);
+                Screen('OpenMovie', obj.wpnt, obj.videos{id}, 1, 1, specialFlags);
                 [vpnt,vdur] = deal(nan);
             else
-                [vpnt,vdur] = Screen('OpenMovie', obj.wpnt, char(obj.videos(id)), 0, 1, specialFlags);
+                [vpnt,vdur] = Screen('OpenMovie', obj.wpnt, obj.videos{id}, 0, 1, specialFlags);
             end
         end
     end
