@@ -33,6 +33,7 @@ wallyFaceImgFile    = 'wally_face.jpg';
 maxSearchTime       = 20;               % seconds
 drawOwnGaze         = true;             % Draw gaze marker for own gaze (true) or only for others?
 filterGaze          = true;
+takeScreenshots     = true;             % Take screenshots every second
 
 % ensure Titta, TittaLSL and the LSL libraries are on path
 home = cd;
@@ -290,6 +291,12 @@ try
         end
         for m=1:length(msgs)
             EThndl.sendMessage(msgs{m}, t_flip);
+        end
+
+        % take screenshot every second
+        if takeScreenshots && mod(i,hz)==0
+            screenShot = Screen('GetImage', wpnt);
+            imwrite(screenShot,fullfile(cd,sprintf('ss_%d.png',i)),'png');
         end
 
         % Check for keypress
