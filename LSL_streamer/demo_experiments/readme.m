@@ -218,6 +218,10 @@ try
     % Search until keypress or timeout
     search_time = inf;
     to_skip = false(size(receivers,1),1);
+    if takeScreenshots
+        screenShots = cell(1,ceil(maxSearchTime));
+        iScreenShot = 1;
+    end
     for i=1:maxSearchTime*hz
         % Draw wally
         Screen('DrawTexture',wpnt,wallies(2).tex);
@@ -295,8 +299,8 @@ try
 
         % take screenshot every second
         if takeScreenshots && mod(i,hz)==0
-            screenShot = Screen('GetImage', wpnt);
-            imwrite(screenShot,fullfile(cd,sprintf('ss_%d.png',i)),'png');
+            screenShots{iScreenShot} = Screen('GetImage', wpnt);
+            iScreenShot = iScreenShot+1;
         end
 
         % Check for keypress
@@ -348,6 +352,14 @@ try
     end
     % save
     EThndl.saveData(dat, fullfile(cd,'t'), true);
+    if takeScreenshots
+        for iScreenShot=1:length(screenShots)
+            if isempty(screenShots{iScreenShot})
+                continue
+            end
+            imwrite(screenShots{iScreenShot},fullfile(cd,sprintf('ss_%d.png',iScreenShot)),'png');
+        end
+    end
 
     % wait till the time to show Wally is finished
     Screen('Flip', wpnt, t_next);
