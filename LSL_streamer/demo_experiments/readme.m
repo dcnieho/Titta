@@ -22,7 +22,7 @@ clear all
 sca
 
 
-DEBUGlevel              = 2;
+DEBUGlevel              = 0;
 bgClr                   = 127;
 useAnimatedCalibration  = true;
 scr                     = max(Screen('Screens'));
