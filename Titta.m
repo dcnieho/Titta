@@ -953,7 +953,9 @@ classdef Titta < handle
                 prevEyeOpennessState = obj.buffer.setIncludeEyeOpennessInGaze(true);
             end
             
-            %%% 1. some preliminary setup, to make sure we are in known state
+            %%% 1. some preliminary setup, to make sure we are in known
+            % state, and can restore state that may change
+            freq = obj.frequency;   % Spark tracking frequency may change during calibration routine due to order in which gaze stream is subscribed to and calibration mode entered. Store here so we can reset it, ensuring user is not surprised
             if bitand(flag,1)
                 obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
             end
@@ -1137,12 +1139,6 @@ classdef Titta < handle
                 end
             end
             
-            % clean up and reset PTB state
-            obj.resetScreen(wpnt,screenState);
-            if qHasEyeOpenness
-                obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
-            end
-            
             % if we want to exit calibration mode because:
             % 1. user requests it (flag bit 2 is set)
             % 2. user didn't request it, but we entered calibration mode
@@ -1150,6 +1146,15 @@ classdef Titta < handle
             % then issue a leave here now and wait for it to complete
             if obj.buffer.isInCalibrationMode() && (bitand(flag,2) || (out.wasSkipped && qHasEnteredCalMode))
                 obj.doLeaveCalibrationMode();
+            end
+            
+            % clean up and reset PTB state and eye tracker state
+            obj.resetScreen(wpnt,screenState);
+            if qHasEyeOpenness
+                obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
+            end
+            if obj.frequency~=freq
+                obj.frequency = freq;
             end
             
             % log whole process in calibrateHistory and log to messages
@@ -1304,6 +1309,9 @@ classdef Titta < handle
             
             % get info about screen
             screenState = obj.getScreenInfo(wpnt);
+
+            % get state we may need to restore
+            freq = obj.frequency;   % Spark tracking frequency may change during calibration routine due to order in which gaze stream is subscribed to and calibration mode entered. Store here so we can reset it, ensuring user is not surprised
             
             % some preliminary setup, to make sure we are in known state
             % NB: in contrast to calibrate() above, this function always
@@ -1366,6 +1374,11 @@ classdef Titta < handle
             % log information about data quality from validation, if any
             message = obj.getValidationQualityMessage(out);
             obj.sendMessage(message);
+
+            % restore state
+            if obj.frequency~=freq
+                obj.frequency = freq;
+            end
             
             % log whole process in calibrateHistory and log to messages
             % which calibration was selected
