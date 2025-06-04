@@ -9,6 +9,9 @@ TittaLSL is a C++ library that can be compiled and used as a static library with
 
 In comparison to the the [Lab Streaming Layer TobiiPro Connector](https://github.com/labstreaminglayer/App-TobiiPro), Titta LSL provides access to all gaze data fields instead of only gaze position on the screen, as well as the external signal, time synchronization and positioning streams. Samples are furthermore properly timestamped using the timestamps from the eye tracker, where possible (all streams except for the positioning stream, which doesn't have timestamps).
 
+When using TittaLSL, please cite the following paper:
+[Niehorster, D.C., Nyström, M. (2025). TittaLSL: A toolbox for creating networked eye-tracking experiments in Python and MATLAB with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2](https://doi.org/10.3758/s13428-025-02714-2)
+
 ## The `TittaLSL`, `TittaLSLMex` and `TittaLSLPy` classes
 The functionality of TittaLSL is divided over two classes, `Sender` for making eye tracker data available on the network (AKA an outlet in Lab Streaming Layer terminology) and `Receiver` for recording from TittaLSL data streams available on the network (AKA an inlet). The below documents the available methods of these classes. The functionality below is exposed under the same names in MATLAB as `TittaLSL.Sender` and `TittaLSL.Receiver`, respectively. The same functionality is also available from `TittaLSLPy.Sender` and `TittaLSLPy.Receiver` instances, but in that case all function and property names as well as stream names use `snake_case` names instead of `camelCase`. In C++ all below functions and classes are in the `TittaLSL` namespace. See [here for example C++ code](/LSL_streamer/cppLSLTest/main.cpp) using the library, and [here for example Python code](/LSL_streamer/TittaLSLPy/test.py).
 
