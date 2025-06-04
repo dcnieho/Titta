@@ -10,6 +10,17 @@
 % trackers. Behavior Research Methods.
 % doi: https://doi.org/10.3758/s13428-020-01358-8
 %
+% This demo makes use of TittaLSL for building networked eye tracker
+% experiments.
+% TittaLSL can be found at https://github.com/dcnieho/Titta. Check there
+% for the latest version.
+% When using TittaLSL, please cite the following paper:
+% 
+% Niehorster, D.C., Nyström, M. (2025). TittaLSL: A toolbox for creating
+% networked eye-tracking experiments in Python and MATLAB with Tobii eye
+% trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
+%
+%
 % To run this experiment, refer to the README here:
 % https://github.com/dcnieho/Titta/blob/master/LSL_streamer/demo_experiments/README.md
 %

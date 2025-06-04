@@ -1,3 +1,10 @@
+% TittaLSL can be found at https://github.com/dcnieho/Titta. Check there
+% for the latest version.
+% When using TittaLSL, please cite the following paper:
+% 
+% Niehorster, D.C., Nyström, M. (2025). TittaLSL: A toolbox for creating
+% networked eye-tracking experiments in Python and MATLAB with Tobii eye
+% trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
 classdef Sender < TittaLSL.detail.Base
     properties (Dependent, SetAccess=private)
         eyeTracker
