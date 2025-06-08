@@ -1,6 +1,8 @@
 [![Downloads](https://static.pepy.tech/badge/tittalslpy)](https://pepy.tech/project/tittalslpy)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/TittaLSLPy.svg)](https://pypi.org/project/TittaLSLPy/)
 [![image](https://img.shields.io/pypi/pyversions/TittaLSLPy.svg)](https://pypi.org/project/TittaLSLPy/)
+[![Citation Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.juleskreuer.eu%2Fcitation-badge.php%3Fshield%26doi%3D10.3758%2Fs13428-025-02714-2&color=blue)](https://scholar.google.com/citations?view_op=view_citation&citation_for_view=uRUYoVgAAAAJ:J-pR_7NvFogC)
+[![DOI](https://zenodo.org/badge/DOI/10.3758/s13428-025-02714-2.svg)](https://doi.org/10.3758/s13428-025-02714-2)
 
 # TittaLSL
 The TittaLSL tool is an extension to [Titta (and its TittaMex and TittaPy wrappers)](/readme.md#titta-tittamex-tittapy-classes). It allows to stream data from Tobii eye trackers in Titta's format using Lab Streaming Layer and to receive such data and access it through an API that is identical to that of Titta. That allows handling local and remote eye tracker data sources in a uniform manner, making it possible to design interesting experiments using multiple eye trackers.
