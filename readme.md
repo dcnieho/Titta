@@ -15,7 +15,7 @@ Please cite:
 When using the advanced calibration interface ([`Titta.calibrateAdvanced()`](#advanced-calibration)), please also cite the following paper:
 [Niehorster, D.C., Whitham, W., Lake, B.R., Schapiro, S.J., Andolina, I.M. & Yorzinski, J.L. (2024). Enhancing eye tracking for nonhuman primates and other subjects unable to follow instructions: Adaptive calibration and validation of Tobii eye trackers with the Titta toolbox. Behavior Research Methods. doi: 10.3758/s13428-024-02540-y](https://doi.org/10.3758/s13428-024-02540-y)
 
-When using TittaLSL for building networked eye-tracking experiments, please also cite the following paper:
+When using [TittaLSL](/LSL_streamer) for building networked eye-tracking experiments, please also cite the following paper:
 [Niehorster, D.C., Nyström, M. (2025). TittaLSL: A toolbox for creating networked eye-tracking experiments in Python and MATLAB with Tobii eye trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2](https://doi.org/10.3758/s13428-025-02714-2)
 
 For questions, bug reports or to check for updates, please visit
