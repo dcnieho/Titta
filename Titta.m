@@ -592,7 +592,7 @@ classdef Titta < handle
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
 
             % Load in our callback buffer mex
-            obj.buffer = TittaMex();
+            obj.buffer = TittaMex(obj.settings.tittaMexVersion);
             obj.buffer.startLogging();
             
             % Connect to eyetracker
@@ -744,18 +744,8 @@ classdef Titta < handle
             assert(obj.systemInfo.frequency==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.frequency);
             out.systemInfo = obj.systemInfo;
             
-            % get information about display geometry and trackbox
+            % get information about display geometry
             obj.geom.displayArea = obj.buffer.getDisplayArea();
-            try
-                obj.geom.trackBox = obj.buffer.getTrackBox();
-                % get width and height of trackbox at middle depth
-                obj.geom.trackBox.halfWidth     = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
-                obj.geom.trackBox.halfHeight    = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
-            catch
-                % tracker does not support trackbox
-                obj.geom.trackBox.halfWidth     = [];
-                obj.geom.trackBox.halfHeight    = [];
-            end
             out.geom = obj.geom;
             
             % mark as inited
@@ -1545,20 +1535,25 @@ classdef Titta < handle
             
             % default tracking settings per eye-tracker
             settings.trackingMode           = 'Default';    % for all trackers except Spectrum, default tracking mode is "Default". So use that as a default
+            settings.tittaMexVersion        = 1;            % set version of Tobii SDK that should be used for eye tracker. For all except the newest eye trackers v1 should be used, so use that as the default
             switch tracker
                 case 'Tobii Pro Spectrum'
                     settings.freq                   = 600;
                     settings.trackingMode           = 'human';
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Fusion'
+                    settings.freq                   = 120;
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Nano'
+                    settings.freq                   = 60;
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Spark'
+                    settings.freq                   = 60;
+                    settings.tittaMexVersion        = 2;
+                    
                 case 'Tobii TX300'
                     settings.freq                   = 300;
                 case 'Tobii T60 XL'
-                    settings.freq                   = 60;
-                    
-                case 'Tobii Pro Fusion'
-                    settings.freq                   = 120;
-                case 'Tobii Pro Nano'
-                    settings.freq                   = 60;
-                case 'Tobii Pro Spark'
                     settings.freq                   = 60;
                 case {'Tobii Pro X3-120','Tobii Pro X3-120 EPU'}
                     settings.freq                   = 120;
@@ -7697,7 +7692,7 @@ classdef Titta < handle
                     uiSettings = obj.settings.UI.advcal;
                 end
             end
-            head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
+            head                    = ETHead(wpnt);
             head.refSz              = refSz;
             head.rectWH             = scrRes*fac;
             head.headCircleFillClr  = uiSettings.headCircleFillClr;
