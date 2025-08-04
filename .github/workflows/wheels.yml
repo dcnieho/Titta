@@ -20,7 +20,8 @@ jobs:
       with:
         submodules: true
 
-    - uses: pypa/cibuildwheel@v3.1.3
+    - name: Build TittaPy (cibuildwheel)
+      uses: pypa/cibuildwheel@v3.1.3
       with:
         package-dir: SDK_wrapper
       env:
@@ -35,7 +36,8 @@ jobs:
         CIBW_BEFORE_BUILD_MACOS: uname -a
         MACOSX_DEPLOYMENT_TARGET: 12.6
 
-    - uses: pypa/cibuildwheel@v3.1.3
+    - name: Build TittaLSLPy (cibuildwheel)
+      uses: pypa/cibuildwheel@v3.1.3
       with:
         package-dir: LSL_streamer
       env:
