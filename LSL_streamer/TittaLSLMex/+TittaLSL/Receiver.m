@@ -31,13 +31,19 @@ classdef Receiver < TittaLSL.detail.Base
     
     methods
         %% wrapper functions
-        function this = Receiver(streamSourceID,initialBufferSize,doStartRecording)
+        function this = Receiver(streamSourceID,initialBufferSize,doStartRecording,SDKVersion)
             % optional buffer size input, and optional input to request
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
             if nargin<1
                 error('TittaLSL::Receiver::constructor: must provide an LSL stream source identifier string.');
             end
+            % Call superclass constructor
+            if nargin<4
+                SDKVersion = [];
+            end
+            this@TittaLSL.detail.Base(SDKVersion);
+
             streamSourceID = ensureStringIsChar(streamSourceID);
             if nargin>2 && ~isempty(doStartRecording)
                 this.newInstance('Receiver', streamSourceID,uint64(initialBufferSize),logical(doStartRecording));
