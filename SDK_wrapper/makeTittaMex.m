@@ -18,10 +18,6 @@ elseif isOSX
 end
 
 for SDK_version=1:2
-    % prep input file
-    cpp_file = fullfile('TittaMex',sprintf('TittaMex_v%d.cpp',SDK_version));
-    copyfile(fullfile('TittaMex','TittaMex.cpp'), cpp_file);
-
     % prep output location
     if isWin
         outDir = fullfile(myDir,'TittaMex','64',platform,sprintf('SDKv%d',SDK_version));
@@ -31,9 +27,9 @@ for SDK_version=1:2
 
     if isOctave
         if isWin
-            tobiiResearLib = sprintf('-ltobii_research.so.%d',SDK_version);
+            linkTobiiResearchLib = sprintf('-ltobii_research_v%d',SDK_version);
         else
-            tobiiResearLib = sprintf('-ltobii_research_v%d',SDK_version);
+            linkTobiiResearchLib = sprintf('-ltobii_research.so.%d',SDK_version);
         end
         inpArgs = {'-v'
             '-O3'
@@ -49,11 +45,11 @@ for SDK_version=1:2
             sprintf('-I%s',fullfile(myDir,'deps','include',sprintf('SDKv%d',SDK_version)))
             sprintf('-I%s',myDir)
             sprintf('-I%s',fullfile(myDir,'TittaMex'))
-            cpp_file
+            fullfile(myDir,'TittaMex','TittaMex.cpp')
             fullfile(myDir,'src','Titta.cpp')
             fullfile(myDir,'src','types.cpp')
             fullfile(myDir,'src','utils.cpp')
-            sprintf('-ltobii_research.so.%d',SDK_version)}.';
+            linkTobiiResearchLib}.';
 
         if isLinux
             inpArgs = [inpArgs {
@@ -99,6 +95,10 @@ for SDK_version=1:2
             striplibsfrommexfile(fullfile(myDir,'TittaMex','64',platform,sprintf('SDKv%d',SDK_version),sprintf('TittaMex_.%s',mexext)));
         end
     else
+        % prep input file
+        cpp_file = fullfile(myDir,'TittaMex',sprintf('TittaMex_v%d.cpp',SDK_version));
+        copyfile(fullfile(myDir,'TittaMex','TittaMex.cpp'), cpp_file);
+
         inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
             '-v'
             '-outdir'
@@ -131,8 +131,8 @@ for SDK_version=1:2
                 sprintf('-ltobii_research.so.%d',SDK_version)}.'];
         end
         mex(inpArgs{:});
-    end
 
-    % clean up input file
-    delete(cpp_file);
+        % clean up input file
+        delete(cpp_file);
+    end
 end
