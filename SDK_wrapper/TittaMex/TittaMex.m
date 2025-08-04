@@ -103,7 +103,12 @@ classdef TittaMex < handle
             
             % call no-op to load the mex file, so we fail early when load
             % fails
-            this.cppmethodGlobal('touch');
+            try
+                this.cppmethodGlobal('touch');
+            catch me
+                this.mexClassWrapperFnc = [];
+                rethrow(me)
+            end
         end
         
         %% Matlab interface
