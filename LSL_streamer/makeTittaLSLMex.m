@@ -27,7 +27,7 @@ else
 
         % prep output location
         if isWin
-            outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail',sprintf('SDKv%d',SDK_version));
+            outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail',sprintf('+SDKv%d',SDK_version));
         else
             outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail');
         end

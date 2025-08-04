@@ -75,13 +75,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(ProjectDir)+TittaLSL\+detail\SDKv2</OutDir>
+    <OutDir>$(ProjectDir)+TittaLSL\+detail\+SDKv2</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_v2_d</TargetName>
     <TargetExt>.mexw64</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(ProjectDir)+TittaLSL\+detail\SDKv2</OutDir>
+    <OutDir>$(ProjectDir)+TittaLSL\+detail\+SDKv2</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_v2</TargetName>
     <TargetExt>.mexw64</TargetExt>
