@@ -60,7 +60,7 @@ namespace
     constexpr Titta::Stream LSLInletTypeToTittaStream_v = LSLInletTypeToTittaStream<T>::value;
 
     template <typename T> struct LSLInletTypeNumSamples { static_assert(always_false_t<T>, "LSLInletTypeNumSamples not implemented for this type"); static constexpr size_t value = 0; };
-    template <>           struct LSLInletTypeNumSamples<TittaLSL::Receiver::gaze> { static constexpr size_t value = 43; };
+    template <>           struct LSLInletTypeNumSamples<TittaLSL::Receiver::gaze> { static constexpr size_t value = 37; };
     template <>           struct LSLInletTypeNumSamples<TittaLSL::Receiver::extSignal> { static constexpr size_t value = 4; };
     template <>           struct LSLInletTypeNumSamples<TittaLSL::Receiver::timeSync> { static constexpr size_t value = 3; };
     template <>           struct LSLInletTypeNumSamples<TittaLSL::Receiver::positioning> { static constexpr size_t value = 8; };
@@ -383,21 +383,6 @@ bool Sender::create(const Titta::Stream stream_, std::optional<bool> doStartSend
             .append_child_value("type", "PupilZ")
             .append_child_value("unit", "mm");
         channels.append_child("channel")
-            .append_child_value("label", "x.position_in_track_box_coordinates.gaze_origin.left_eye")
-            .append_child_value("eye", "left")
-            .append_child_value("type", "PupilX")
-            .append_child_value("unit", "normalized");
-        channels.append_child("channel")
-            .append_child_value("label", "y.position_in_track_box_coordinates.gaze_origin.left_eye")
-            .append_child_value("eye", "left")
-            .append_child_value("type", "PupilY")
-            .append_child_value("unit", "normalized");
-        channels.append_child("channel")
-            .append_child_value("label", "z.position_in_track_box_coordinates.gaze_origin.left_eye")
-            .append_child_value("eye", "left")
-            .append_child_value("type", "PupilZ")
-            .append_child_value("unit", "normalized");
-        channels.append_child("channel")
             .append_child_value("label", "valid.gaze_origin.left_eye")
             .append_child_value("eye", "left")
             .append_child_value("type", "ValidFlag")
@@ -492,21 +477,6 @@ bool Sender::create(const Titta::Stream stream_, std::optional<bool> doStartSend
             .append_child_value("eye", "right")
             .append_child_value("type", "PupilZ")
             .append_child_value("unit", "mm");
-        channels.append_child("channel")
-            .append_child_value("label", "x.position_in_track_box_coordinates.gaze_origin.right_eye")
-            .append_child_value("eye", "right")
-            .append_child_value("type", "PupilX")
-            .append_child_value("unit", "normalized");
-        channels.append_child("channel")
-            .append_child_value("label", "y.position_in_track_box_coordinates.gaze_origin.right_eye")
-            .append_child_value("eye", "right")
-            .append_child_value("type", "PupilY")
-            .append_child_value("unit", "normalized");
-        channels.append_child("channel")
-            .append_child_value("label", "z.position_in_track_box_coordinates.gaze_origin.right_eye")
-            .append_child_value("eye", "right")
-            .append_child_value("type", "PupilZ")
-            .append_child_value("unit", "normalized");
         channels.append_child("channel")
             .append_child_value("label", "valid.gaze_origin.right_eye")
             .append_child_value("eye", "right")
@@ -819,7 +789,6 @@ namespace {
     }
     void convert(TobiiTypes::gazeOrigin& out_, const TobiiResearchGazeOrigin& in_)
     {
-        out_.position_in_track_box_coordinates = in_.position_in_track_box_coordinates;
         out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
         out_.validity                       = in_.validity;
         out_.available                      = true;
@@ -956,7 +925,6 @@ void Sender::pushSample(const Titta::gaze& sample_)
         sample_.left_eye.pupil.diameter,
         static_cast<data_t>(sample_.left_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.pupil.available),
         sample_.left_eye.gaze_origin.position_in_user_coordinates.x, sample_.left_eye.gaze_origin.position_in_user_coordinates.y, sample_.left_eye.gaze_origin.position_in_user_coordinates.z,
-        sample_.left_eye.gaze_origin.position_in_track_box_coordinates.x, sample_.left_eye.gaze_origin.position_in_track_box_coordinates.y, sample_.left_eye.gaze_origin.position_in_track_box_coordinates.z,
         static_cast<data_t>(sample_.left_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.gaze_origin.available),
         sample_.left_eye.eye_openness.diameter,
         static_cast<data_t>(sample_.left_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.left_eye.eye_openness.available),
@@ -967,7 +935,6 @@ void Sender::pushSample(const Titta::gaze& sample_)
         sample_.right_eye.pupil.diameter,
         static_cast<data_t>(sample_.right_eye.pupil.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.pupil.available),
         sample_.right_eye.gaze_origin.position_in_user_coordinates.x, sample_.right_eye.gaze_origin.position_in_user_coordinates.y, sample_.right_eye.gaze_origin.position_in_user_coordinates.z,
-        sample_.right_eye.gaze_origin.position_in_track_box_coordinates.x, sample_.right_eye.gaze_origin.position_in_track_box_coordinates.y, sample_.right_eye.gaze_origin.position_in_track_box_coordinates.z,
         static_cast<data_t>(sample_.right_eye.gaze_origin.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.gaze_origin.available),
         sample_.right_eye.eye_openness.diameter,
         static_cast<data_t>(sample_.right_eye.eye_openness.validity == TOBII_RESEARCH_VALIDITY_VALID),static_cast<data_t>(sample_.right_eye.eye_openness.available),
@@ -1534,9 +1501,6 @@ void Receiver::recorderThreadFunc()
                             {   // position_in_user_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
-                            {   // position_in_track_box_coordinates
-                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
-                            },
                             *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
                             *ptr++ == 1.
                         },
@@ -1565,9 +1529,6 @@ void Receiver::recorderThreadFunc()
                         },
                         {   // gazeOrigin
                             {   // position_in_user_coordinates
-                                static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
-                            },
-                            {   // position_in_track_box_coordinates
                                 static_cast<float>(*ptr++), static_cast<float>(*ptr++), static_cast<float>(*ptr++)
                             },
                             *ptr++ == 1. ? TOBII_RESEARCH_VALIDITY_VALID : TOBII_RESEARCH_VALIDITY_INVALID,
