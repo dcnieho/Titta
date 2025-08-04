@@ -1116,8 +1116,8 @@ namespace {
     }
     void convert(TobiiTypes::eyeData& out_, const TobiiResearchEyeData in_)
     {
-        convert(out_.gaze_point, in_.gaze_point);
-        convert(out_.pupil, in_.pupil_data);
+        convert(out_.gaze_point , in_.gaze_point);
+        convert(out_.pupil      , in_.pupil_data);
         convert(out_.gaze_origin, in_.gaze_origin);
     }
 }

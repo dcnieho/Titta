@@ -38,7 +38,7 @@ namespace TobiiTypes
         std::vector<std::string>    supportedModes;
     };
 
-    // extended gaze data (for merging gaze and eye openness
+    // extended gaze data (for merging gaze and eye openness)
     struct gazeOrigin
     {
         // The gaze origin position in 3D in the user coordinate system.
