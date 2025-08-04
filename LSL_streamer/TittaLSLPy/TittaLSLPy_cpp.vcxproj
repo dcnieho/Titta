@@ -44,14 +44,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.pyd</TargetExt>
-    <TargetName>TittaLSLPy_d</TargetName>
+    <TargetName>TittaLSLPy_v2_d</TargetName>
     <OutDir>.</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.</OutDir>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
-    <TargetName>TittaLSLPy</TargetName>
+    <TargetName>TittaLSLPy_v2</TargetName>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -59,9 +59,9 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;../../SDK_wrapper/deps/include/SDKv2;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <PreprocessorDefinitions>_WINDLL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDLL;_DEBUG;TOBII_SDK_MAJOR_VERSION=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
@@ -71,9 +71,9 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaLSLMex\64\Windows\tobii_research.dll . /Y
-xcopy ..\TittaLSLMex\64\Windows\lsl.dll . /Y
-xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_d.pyd . /Y</Command>
+      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\SDKv2\tobii_research.dll . /Y
+xcopy ..\TittaLSLMex\+TittaLSL\+detail\lsl.dll . /Y
+xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_v2_d.pyd . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
@@ -85,9 +85,9 @@ xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_d.pyd . /Y</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;../../SDK_wrapper/deps/include/SDKv2;$(PYTHON_ROOT)\include;$(PYTHON_ROOT)\Lib\site-packages\pybind11\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <PreprocessorDefinitions>_WINDLL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDLL;NDEBUG;TOBII_SDK_MAJOR_VERSION=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
@@ -97,9 +97,9 @@ xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_d.pyd . /Y</Command>
       <AdditionalLibraryDirectories>../output/$(Platform);../deps/lib;../../SDK_wrapper/output/$(Platform);../../SDK_wrapper/deps/lib;$(PYTHON_ROOT)\libs</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\tobii_research.dll . /Y
+      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\SDKv2\tobii_research.dll . /Y
 xcopy ..\TittaLSLMex\+TittaLSL\+detail\lsl.dll . /Y
-xcopy ..\..\SDK_wrapper\TittaPy\TittaPy.pyd . /Y</Command>
+xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_v2.pyd . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
