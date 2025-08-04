@@ -11,7 +11,11 @@
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 #include <tobii_research_streams.h>
-#pragma comment(lib, "tobii_research.lib")
+#if TOBII_SDK_MAJOR_VERSION==1
+#   pragma comment(lib, "tobii_research_v1.lib")
+#elif TOBII_SDK_MAJOR_VERSION==2
+#   pragma comment(lib, "tobii_research_v2.lib")
+#endif
 #ifndef BUILD_FROM_SCRIPT
 #   ifdef _DEBUG
 #       pragma comment(lib, "Titta_d.lib")
@@ -88,7 +92,6 @@ public:
     //// eye-tracker specific getters and setters
     // getters
     TobiiTypes::eyeTracker getEyeTrackerInfo(std::optional<std::string> paramToRefresh_ = std::nullopt);
-    TobiiResearchTrackBox getTrackBox() const;
     TobiiResearchDisplayArea getDisplayArea() const;
     // setters. NB: these trigger a refresh of eye tracker info
     void setDeviceName(std::string deviceName_);

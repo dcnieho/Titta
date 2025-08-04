@@ -97,7 +97,6 @@ namespace mxTypes
     mxArray* ToMatlab(TobiiTypes::eyeTracker data_, mwIndex idx_ = 0, mwSize size_ = 1, mxArray* storage_ = nullptr);
     mxArray* ToMatlab(TobiiResearchCapabilities                         data_);
 
-    mxArray* ToMatlab(TobiiResearchTrackBox                             data_);
     mxArray* ToMatlab(TobiiResearchDisplayArea                          data_);
     mxArray* ToMatlab(TobiiResearchPoint3D                              data_);
     mxArray* ToMatlab(TobiiResearchLicenseValidationResult              data_);
@@ -169,7 +168,6 @@ namespace {
         GetSupportedModes,
         GetFrequency,
         GetTrackingMode,
-        GetTrackBox,
         GetDisplayArea,
         // setters
         SetDeviceName,
@@ -243,7 +241,6 @@ namespace {
         { "getSupportedModes",              Action::GetSupportedModes },
         { "getFrequency",                   Action::GetFrequency },
         { "getTrackingMode",                Action::GetTrackingMode },
-        { "getTrackBox",                    Action::GetTrackBox },
         { "getDisplayArea",                 Action::GetDisplayArea },
         // setters
         { "setDeviceName",                  Action::SetDeviceName },
@@ -580,11 +577,6 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
         case Action::GetTrackingMode:
         {
             plhs_[0] = mxTypes::ToMatlab(instance->getEyeTrackerInfo("trackingMode").trackingMode);
-            break;
-        }
-        case Action::GetTrackBox:
-        {
-            plhs_[0] = mxTypes::ToMatlab(instance->getTrackBox());
             break;
         }
         case Action::GetDisplayArea:
@@ -1286,14 +1278,8 @@ namespace mxTypes
             out.emplace_back("HasEyeImages");
         if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
             out.emplace_back("HasGazeData");
-        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
-            out.emplace_back("HasHMDGazeData");
         if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
             out.emplace_back("CanDoScreenBasedCalibration");
-        if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
-            out.emplace_back("CanDoHMDBasedCalibration");
-        if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
-            out.emplace_back("HasHMDLensConfig");
         if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
             out.emplace_back("CanDoMonocularCalibration");
         if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
@@ -1302,22 +1288,6 @@ namespace mxTypes
         return ToMatlab(out);
     }
 
-    mxArray* ToMatlab(TobiiResearchTrackBox data_)
-    {
-        const char* fieldNames[] = {"backLowerLeft","backLowerRight","backUpperLeft","backUpperRight","frontLowerLeft","frontLowerRight","frontUpperLeft","frontUpperRight"};
-        mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNames)), fieldNames);
-
-        mxSetFieldByNumber(out, 0, 0, ToMatlab(data_.back_lower_left));
-        mxSetFieldByNumber(out, 0, 1, ToMatlab(data_.back_lower_right));
-        mxSetFieldByNumber(out, 0, 2, ToMatlab(data_.back_upper_left));
-        mxSetFieldByNumber(out, 0, 3, ToMatlab(data_.back_upper_right));
-        mxSetFieldByNumber(out, 0, 4, ToMatlab(data_.front_lower_left));
-        mxSetFieldByNumber(out, 0, 5, ToMatlab(data_.front_lower_right));
-        mxSetFieldByNumber(out, 0, 6, ToMatlab(data_.front_upper_left));
-        mxSetFieldByNumber(out, 0, 7, ToMatlab(data_.front_upper_right));
-
-        return out;
-    }
     mxArray* ToMatlab(TobiiResearchDisplayArea data_)
     {
         const char* fieldNames[] = {"height","width","bottomLeft","bottomRight","topLeft","topRight"};
@@ -1367,7 +1337,7 @@ namespace mxTypes
         const char* fieldNamesEye[] = {"gazePoint","pupil","gazeOrigin","eyeOpenness"};
         const char* fieldNamesGP[] = {"onDisplayArea","inUserCoords","valid","available" };
         const char* fieldNamesPup[] = {"diameter","valid","available" };
-        const char* fieldNamesGO[] = { "inUserCoords","inTrackBoxCoords","valid","available" };
+        const char* fieldNamesGO[] = { "inUserCoords","valid","available" };
         const char* fieldNamesEO[] = { "diameter","valid","available" };
         mxArray* out = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEye)), fieldNamesEye);
         mxArray* temp;
@@ -1396,12 +1366,10 @@ namespace mxTypes
         mxSetFieldByNumber(out, 0, 2, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesGO)), fieldNamesGO));
         // 3.1 gazeOrigin.inUserCoords
         mxSetFieldByNumber(temp, 0, 0, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates, 0.));        // 0. causes values to be stored as double
-        // 3.2 gazeOrigin.inTrackBoxCoords
-        mxSetFieldByNumber(temp, 0, 1, TobiiFieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates, 0.));   // 0. causes values to be stored as double
         // 3.3 gazeOrigin.validity
-        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
+        mxSetFieldByNumber(temp, 0, 1, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID));
         // 3.4 gazeOrigin.available
-        mxSetFieldByNumber(temp, 0, 3, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
+        mxSetFieldByNumber(temp, 0, 2, FieldToMatlab(data_, rowVector_, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available));
 
         // 4. eyeOpenness
         mxSetFieldByNumber(out, 0, 3, temp = mxCreateStructMatrix(1, 1, static_cast<int>(std::size(fieldNamesEO)), fieldNamesEO));
