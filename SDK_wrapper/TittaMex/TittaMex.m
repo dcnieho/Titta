@@ -83,19 +83,25 @@ classdef TittaMex < handle
     
     methods
         % Use the name of your MEX file here
-        function this = TittaMex(debugMode)
+        function this = TittaMex(version,debugMode)
+            % version indicates the version of the Tobii SDK that the MEX
+            % file should be built against, i.e., version==1 loads
+            % TittaMex_v1, for compatibility with older eye trackers,
+            % version==2 loads TittaMex_v2 which only works with Tobii eye
+            % trackers from the last few years, but has the latest
+            % features.
             % debugmode is for developer of TittaMex only, no use for
             % end users
-            if nargin<1 || isempty(debugMode)
+            if nargin<2 || isempty(debugMode)
                 debugMode = false;
             else
                 debugMode = ~~debugMode;
             end
             % determine what mex file to call
             if debugMode
-                mexFnc = 'TittaMex_d';
+                mexFnc = sprintf('TittaMex_v%d_d',version);
             else
-                mexFnc = 'TittaMex_';
+                mexFnc = sprintf('TittaMex_v%d',version);
             end
             
             % construct C++ class instance
@@ -251,9 +257,6 @@ classdef TittaMex < handle
             if ~isempty(this.instanceHandle)
                 trackingMode = this.cppmethod('getTrackingMode');
             end
-        end
-        function trackBox = getTrackBox(this)
-            trackBox = this.cppmethod('getTrackBox');
         end
         function displayArea = getDisplayArea(this)
             displayArea = this.cppmethod('getDisplayArea');
