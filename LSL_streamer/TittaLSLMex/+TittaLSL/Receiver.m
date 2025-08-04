@@ -6,6 +6,9 @@
 % networked eye-tracking experiments in Python and MATLAB with Tobii eye
 % trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
 classdef Receiver < TittaLSL.detail.Base
+    properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
+        initialized = false;
+    end
     properties (Dependent, SetAccess=private)
         stream
         isRecording
@@ -43,10 +46,13 @@ classdef Receiver < TittaLSL.detail.Base
             else
                 this.newInstance('Receiver', streamSourceID);
             end
+            this.initialized = true;
         end
 
         function delete(this)
-            this.stop(true);
+            if this.initialized
+                this.stop(true);
+            end
         end
         
         

@@ -6,6 +6,9 @@
 % networked eye-tracking experiments in Python and MATLAB with Tobii eye
 % trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
 classdef Sender < TittaLSL.detail.Base
+    properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
+        initialized = false;
+    end
     properties (Dependent, SetAccess=private)
         eyeTracker
         eyeTrackerDescription
@@ -40,14 +43,17 @@ classdef Sender < TittaLSL.detail.Base
             addressOrInstance = ensureStringIsChar(addressOrInstance);
 
             this.newInstance('Sender', addressOrInstance);
+            this.initialized = true;
         end
 
         function delete(this)
-            this.destroy('gaze');
-            this.destroy('eyeOpenness');
-            this.destroy('externalSignal');
-            this.destroy('timeSync');
-            this.destroy('positioning');
+            if this.initialized
+                this.destroy('gaze');
+                this.destroy('eyeOpenness');
+                this.destroy('externalSignal');
+                this.destroy('timeSync');
+                this.destroy('positioning');
+            end
         end
         
         

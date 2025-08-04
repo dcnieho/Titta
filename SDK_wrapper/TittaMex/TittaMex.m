@@ -13,6 +13,7 @@
 classdef TittaMex < handle
     properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
         instanceHandle;         % integer handle to a class instance in MEX function
+        mexLoaded = false;
     end
     properties (GetAccess = protected, SetAccess = private, Hidden = false)
         mexClassWrapperFnc;     % the MEX function owning the class instances
@@ -109,12 +110,8 @@ classdef TittaMex < handle
             
             % call no-op to load the mex file, so we fail early when load
             % fails
-            try
-                this.cppmethodGlobal('touch');
-            catch me
-                this.mexClassWrapperFnc = [];
-                rethrow(me)
-            end
+            this.cppmethodGlobal('touch');
+            this.mexLoaded = true;
 
             % check right version of tobii_research dll is loaded. If not,
             % abort
@@ -130,7 +127,7 @@ classdef TittaMex < handle
             this.instanceHandle = this.cppmethodGlobal('new',address);
         end
         function delete(this)
-            if ~isempty(this.mexClassWrapperFnc)
+            if this.mexLoaded
                 this.stopLogging();
             end
             if ~isempty(this.instanceHandle)
