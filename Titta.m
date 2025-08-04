@@ -8436,7 +8436,7 @@ ticks(ticks<lim(1) | ticks>lim(2)) = [];
 % based on matplotlib.ticker.ScalarFormatter._set_format
 sigfigs = 2;
 while sigfigs>=0
-    if abs(step - round(step,sigfigs)) < 1e-6 % 1e-6 is more than sufficient for our value range
+    if abs(step - round(step*sigfigs)/sigfigs) < 1e-6 % 1e-6 is more than sufficient for our value range
         sigfigs=sigfigs-1;
     else
         break
