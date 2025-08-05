@@ -87,6 +87,7 @@ To update the Lab Streaming Layer library used to build TittaLSL against, you ne
 1. The \*.h include files are placed in `\LSL_streamer\deps\include`
 2. The Windows `lsl.lib` link library is placed in `\LSL_streamer\deps\lib`.
 3. The \*.dll, \*.so and \*.dylib files are placed in the output directory, `\LSL_streamer\TittaLSLMex\+TittaLSL\+detail`.
+Note that if you want to update the Tobii SDK, you should perform that update first for the SDK_Wrapper. Only for step 3 do you need to place the updated `tobii_research_v2.dll` in the `\LSL_streamer\TittaLSLMex\+TittaLSL\+detail` folder.
 
 #### [Titta](/SDK_wrapper)
 TittaLSL also requires Titta and its dependencies to build. The build scripts are set up such that Titta is automatically built. However, ensure to check [Titta's dependencies](/SDK_wrapper/README.md#dependencies) and make sure they are available, or the build will fail.
