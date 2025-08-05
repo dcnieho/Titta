@@ -5,6 +5,7 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
+import os
 import platform
 
 # detect platform
@@ -99,7 +100,7 @@ class BuildExt(build_ext):
             ext.extra_compile_args.extend(this_opts)
             ext.extra_link_args.extend(this_link_opts)
         build_ext.build_extensions(self)
-        
+
         # if OSX, fix up tobii_research load path for v1 so v2 is not picked up
         if isOSX:
             ext_path = None

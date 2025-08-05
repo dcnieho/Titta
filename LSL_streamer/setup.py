@@ -5,9 +5,12 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
+import os
+import platform
 
 # detect platform
 isOSX = sys.platform.startswith("darwin")
+isAppleSilicon = isOSX and platform.processor()=='arm'
 
 __version__ = '1.4.2'
 
@@ -50,10 +53,14 @@ def get_extension_def(sdk_version):
         language='c++'
     )
 
-ext_modules = [
-    get_extension_def(1),
-    get_extension_def(2)
-]
+if isAppleSilicon:
+    # only SDK v2 is supports Apple Silicon
+    ext_modules = [get_extension_def(2)]
+else:
+    ext_modules = [
+        get_extension_def(1),
+        get_extension_def(2)
+    ]
 
 
 class BuildExt(build_ext):
@@ -96,7 +103,7 @@ class BuildExt(build_ext):
             ext.extra_compile_args.extend(this_opts)
             ext.extra_link_args.extend(this_link_opts)
         build_ext.build_extensions(self)
-        
+
         # if OSX, fix up tobii_research load path for v1 so v2 is not picked up
         if isOSX:
             ext_path = None
@@ -107,7 +114,6 @@ class BuildExt(build_ext):
                     break
             if ext_path is not None:
                 os.system('install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' + ext_path)
-        
 
 setup(
     name='TittaLSLPy',
