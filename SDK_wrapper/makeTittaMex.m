@@ -27,7 +27,7 @@ for SDK_version=1:2
         elseif isLinux
             linkTobiiResearchLib = sprintf('-l:libtobii_research.so.%d',SDK_version);
         else
-            linkTobiiResearchLib = sprintf('-l:libtobii_research.%d',SDK_version);
+            linkTobiiResearchLib = sprintf('-ltobii_research.%d',SDK_version);
         end
         outFile = fullfile(outDir,sprintf('TittaMex_v%d.%s',SDK_version,mexext));
         inpArgs = {'-v'
@@ -127,7 +127,7 @@ for SDK_version=1:2
                 'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
                 'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
                 sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
-                sprintf('-l:libtobii_research.%d',SDK_version)}.'];
+                sprintf('-ltobii_research.%d',SDK_version)}.'];
         end
         mex(inpArgs{:});
 
