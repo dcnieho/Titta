@@ -52,6 +52,16 @@ classdef Sender < TittaLSL.detail.Base
             % Call superclass constructor
             if nargin<2
                 SDKVersion = [];
+            else
+                % check we have the appropriate protocol for this SDK
+                % version. Should be tet-tcp:// for v1 and tobii-prp:// for
+                % v2
+                if SDKVersion==1
+                    proto = 'tet-tcp://';
+                elseif SDKVersion==2
+                    proto = 'tobii-prp://';
+                end
+                assert(startsWith(addressOrInstance,proto),'Inappropriate (or no) protocol found in address. For SDK version %d, the address should start with "%s", but the address you provided was "%s"',SDKVersion,proto,addressOrInstance)
             end
             this@TittaLSL.detail.Base(SDKVersion);
 
