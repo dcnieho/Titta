@@ -71,7 +71,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaMex\64\Windows\SDKv2\tobii_research.dll . /Y</Command>
+      <Command>xcopy ..\TittaMex\64\Windows\tobii_research_v2.dll . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
@@ -95,7 +95,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)output\$(Platform);../deps/lib;$(PYTHON_ROOT)\libs</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaMex\64\Windows\SDKv2\tobii_research.dll . /Y</Command>
+      <Command>xcopy ..\TittaMex\64\Windows\tobii_research_v2.dll . /Y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>copy dll file needed to run</Message>
