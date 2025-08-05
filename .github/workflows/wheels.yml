@@ -43,7 +43,7 @@ jobs:
       with:
         package-dir: LSL_streamer
       env:
-        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
+        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-macosx_arm64 cp*-win_amd64
 
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows;.\\LSL_streamer\\TittaLSLMex\\+TittaLSL\\+detail {wheel}"
