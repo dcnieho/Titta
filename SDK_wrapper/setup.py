@@ -10,13 +10,7 @@ import platform
 
 # detect platform
 isOSX = sys.platform.startswith("darwin")
-print('platform:')
-print(sys.platform)
-print(platform.processor())
-print(platform.architecture())
-print(platform.mac_ver())
-print(platform.uname())
-isAppleSilicon = isOSX and platform.processor()=='arm'
+isAppleSilicon = isOSX and 'arm64' in platform.uname().version.lower()
 
 __version__ = '1.4.2'
 
