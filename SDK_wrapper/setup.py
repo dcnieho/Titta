@@ -29,23 +29,27 @@ class get_pybind_include(object):
         import pybind11
         return pybind11.get_include(self.user)
 
-
-ext_modules = [
-    Extension(
-        'TittaPy',
+def get_extension_def(sdk_version):
+    return Extension(
+        'TittaPy_v%d' % sdk_version,
         ['src/Titta.cpp','src/types.cpp','src/utils.cpp','TittaPy/TittaPy.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True),
             '.',
-            'deps/include'
+            'deps/include',
+            'deps/include/SDKv%d' % sdk_version
         ],
         library_dirs=[
             'deps/lib'
             ],
         language='c++'
-    ),
+    )
+
+ext_modules = [
+    get_extension_def(1),
+    get_extension_def(2)
 ]
 
 
@@ -57,7 +61,7 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto', '-ltobii_research'],
+        'unix': ['-flto'],
     }
     if isOSX:
         c_opts['unix'].append('-mmacosx-version-min=11')
@@ -75,8 +79,14 @@ class BuildExt(build_ext):
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO="%s"' % self.distribution.get_version())
         for ext in self.extensions:
-            ext.extra_compile_args = opts
-            ext.extra_link_args = link_opts
+            sdk_version = int(ext.name[-1])
+            if ct == 'unix':
+                opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+            elif ct == 'msvc':
+                opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+                link_opts.append('-ltobii_research.so.%d' % sdk_version)
+            ext.extra_compile_args.extend(opts)
+            ext.extra_link_args.extend(link_opts)
         build_ext.build_extensions(self)
 
 setup(
