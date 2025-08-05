@@ -30,7 +30,7 @@ jobs:
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
 
-        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so.1 && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so.2 /usr/lib && ldconfig -n -v /usr/lib
+        CIBW_BEFORE_ALL_LINUX: dnf install -y avahi-libs && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so.1 /usr/lib && cp ./SDK_wrapper/TittaMex/64/Linux/libtobii_research.so.2 /usr/lib && ldconfig -n -v /usr/lib
         CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
         CIBW_BEFORE_BUILD_LINUX: "pip install auditwheel-symbols"
         CIBW_REPAIR_WHEEL_COMMAND_LINUX: "auditwheel-symbols --manylinux 2_28 {wheel} && auditwheel --verbose repair -w {dest_dir} {wheel}"
