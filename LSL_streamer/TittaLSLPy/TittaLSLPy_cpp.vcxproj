@@ -71,7 +71,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\SDKv2\tobii_research.dll . /Y
+      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\tobii_research_v2.dll . /Y
 xcopy ..\TittaLSLMex\+TittaLSL\+detail\lsl.dll . /Y
 xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_v2_d.pyd . /Y</Command>
     </PostBuildEvent>
@@ -97,7 +97,7 @@ xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_v2_d.pyd . /Y</Command>
       <AdditionalLibraryDirectories>../output/$(Platform);../deps/lib;../../SDK_wrapper/output/$(Platform);../../SDK_wrapper/deps/lib;$(PYTHON_ROOT)\libs</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\SDKv2\tobii_research.dll . /Y
+      <Command>xcopy ..\TittaLSLMex\+TittaLSL\+detail\tobii_research_v2.dll . /Y
 xcopy ..\TittaLSLMex\+TittaLSL\+detail\lsl.dll . /Y
 xcopy ..\..\SDK_wrapper\TittaPy\TittaPy_v2.pyd . /Y</Command>
     </PostBuildEvent>
