@@ -15,6 +15,7 @@ print(sys.platform)
 print(platform.processor())
 print(platform.architecture())
 print(platform.mac_ver())
+print(platform.uname())
 isAppleSilicon = isOSX and platform.processor()=='arm'
 
 __version__ = '1.4.2'
