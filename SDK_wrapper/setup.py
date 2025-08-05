@@ -93,6 +93,17 @@ class BuildExt(build_ext):
             ext.extra_compile_args.extend(this_opts)
             ext.extra_link_args.extend(this_link_opts)
         build_ext.build_extensions(self)
+        
+        # if OSX, fix up tobii_research load path for v1 so v2 is not picked up
+        if isOSX:
+            ext_path = None
+            for ext in self.extensions:
+                if int(ext.name[-1])==1:
+                    ext_path = os.path.abspath(self.get_ext_fullpath(ext.name))
+                    print('patching: %s' % ext_path)
+                    break
+            if ext_path is not None:
+                os.system('install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' + ext_path)
 
 setup(
     name='TittaPy',

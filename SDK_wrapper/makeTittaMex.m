@@ -95,7 +95,8 @@ for SDK_version=1:2
         end
     else
         % prep input file
-        cpp_file = fullfile(myDir,'TittaMex',sprintf('TittaMex_v%d.cpp',SDK_version));
+        cpp_files= sprintf('TittaMex_v%d',SDK_version);
+        cpp_file = fullfile(myDir,'TittaMex',[cpp_files '.cpp']);
         copyfile(fullfile(myDir,'TittaMex','TittaMex.cpp'), cpp_file);
 
         inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
@@ -130,6 +131,11 @@ for SDK_version=1:2
                 sprintf('-ltobii_research.%d',SDK_version)}.'];
         end
         mex(inpArgs{:});
+        if isOSX && SDK_version==1
+            % need to fix up version of dylib that will be loaded, else v2
+            % gets loaded and trouble ensues
+            system(['install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' fullfile(outDir,[cpp_files '.' mexext])])
+        end
 
         % clean up input file
         delete(cpp_file);
