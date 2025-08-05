@@ -84,7 +84,10 @@ class BuildExt(build_ext):
                 opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
             elif ct == 'unix':
                 opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
-                link_opts.append('-ltobii_research.so.%d' % sdk_version)
+                if isOSX:
+                    link_opts.append('-l:libtobii_research.%d' % sdk_version)
+                else:
+                    link_opts.append('-l:libtobii_research.so.%d' % sdk_version)
             ext.extra_compile_args.extend(opts)
             ext.extra_link_args.extend(link_opts)
         build_ext.build_extensions(self)

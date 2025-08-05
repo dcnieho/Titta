@@ -24,16 +24,19 @@ for SDK_version=1:2
     if isOctave
         if isWin
             linkTobiiResearchLib = sprintf('-ltobii_research_v%d',SDK_version);
+        elseif isLinux
+            linkTobiiResearchLib = sprintf('-l:libtobii_research.so.%d',SDK_version);
         else
-            linkTobiiResearchLib = sprintf('-ltobii_research.so.%d',SDK_version);
+            linkTobiiResearchLib = sprintf('-l:libtobii_research.%d',SDK_version);
         end
+        outFile = fullfile(outDir,sprintf('TittaMex_v%d.%s',SDK_version,mexext));
         inpArgs = {'-v'
             '-O3'
             '-ffunction-sections'
             '-fdata-sections'
             '-flto'
             '--output'
-            fullfile(outDir,sprintf('TittaMex_v%d.%s',SDK_version,mexext))
+            outFile
             sprintf('-DTOBII_SDK_MAJOR_VERSION=%d',SDK_version)
             '-DBUILD_FROM_SCRIPT'
             '-DIS_OCTAVE'
@@ -88,7 +91,7 @@ for SDK_version=1:2
         cd(myDir);
         if isLinux
             % PTB does it, so we use their code to do this too
-            striplibsfrommexfile(fullfile(myDir,'TittaMex','64',platform,sprintf('SDKv%d',SDK_version),sprintf('TittaMex_.%s',mexext)));
+            striplibsfrommexfile(outFile);
         end
     else
         % prep input file
@@ -118,13 +121,13 @@ for SDK_version=1:2
                 'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
                 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
                 sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
-                sprintf('-ltobii_research.so.%d',SDK_version)}.'];
+                sprintf('-l:libtobii_research.so.%d',SDK_version)}.'];
         elseif isOSX
             inpArgs = [inpArgs {
                 'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
                 'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
                 sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
-                sprintf('-ltobii_research.so.%d',SDK_version)}.'];
+                sprintf('-l:libtobii_research.%d',SDK_version)}.'];
         end
         mex(inpArgs{:});
 
