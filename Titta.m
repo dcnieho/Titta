@@ -744,8 +744,19 @@ classdef Titta < handle
             assert(obj.systemInfo.frequency==obj.settings.freq,'Titta: Tracker not running at requested sampling rate (%d Hz), but at %d Hz',obj.settings.freq,obj.systemInfo.frequency);
             out.systemInfo = obj.systemInfo;
             
-            % get information about display geometry
+            % get information about display geometry and trackbox
             obj.geom.displayArea = obj.buffer.getDisplayArea();
+            try
+                obj.geom.trackBox = obj.buffer.getTrackBox();
+                % get width and height of trackbox at middle depth
+                obj.geom.trackBox.halfWidth     = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
+                obj.geom.trackBox.halfHeight    = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
+            catch
+                % tracker does not support trackbox or using v2 SDK that
+                % completely got rid of trackbox
+                obj.geom.trackBox.halfWidth     = [];
+                obj.geom.trackBox.halfHeight    = [];
+            end
             out.geom = obj.geom;
             
             % mark as inited
@@ -7692,7 +7703,7 @@ classdef Titta < handle
                     uiSettings = obj.settings.UI.advcal;
                 end
             end
-            head                    = ETHead(wpnt);
+            head                    = ETHead(wpnt,obj.geom.trackBox.halfWidth,obj.geom.trackBox.halfHeight);
             head.refSz              = refSz;
             head.rectWH             = scrRes*fac;
             head.headCircleFillClr  = uiSettings.headCircleFillClr;
