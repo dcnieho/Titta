@@ -77,17 +77,17 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-        elif ct == 'msvc':
+        if ct == 'msvc':
             opts.append('/DVERSION_INFO="%s"' % self.distribution.get_version())
+        elif ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
         for ext in self.extensions:
             sdk_version = int(ext.name[-1])
-            if ct == 'unix':
+            if ct == 'msvc':
+                opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+            elif ct == 'unix':
                 opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
                 link_opts.append('-ltobii_research.so.%d' % sdk_version)
-            elif ct == 'msvc':
-                opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
             ext.extra_compile_args.extend(opts)
             ext.extra_link_args.extend(link_opts)
         build_ext.build_extensions(self)
