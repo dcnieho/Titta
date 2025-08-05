@@ -52,14 +52,14 @@ else
                 'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
                 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
                 sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail'))
-                sprintf('-ltobii_research.so.%d',SDK_version)
+                sprintf('-l:libtobii_research.so.%d',SDK_version)
                 '-llsl'}.'];
         elseif isOSX
             inpArgs = [inpArgs {
                 'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
                 'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
                 sprintf('-L%s',fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail'))
-                sprintf('-ltobii_research.so.%d',SDK_version)
+                sprintf('-l:libtobii_research.%d',SDK_version)
                 '-llsl'}.'];
         end
         mex(inpArgs{:});
