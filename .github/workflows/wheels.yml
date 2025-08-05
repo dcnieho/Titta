@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13, windows-latest] # macos-12 because we need an intel runner, see https://github.com/actions/runner-images/issues/9741
+        os: [ubuntu-latest, macos-13, windows-latest] # macos-13 because we need an intel runner, see https://github.com/actions/runner-images/issues/9741
 
     steps:
     - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
       with:
         package-dir: SDK_wrapper
       env:
-        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-win_amd64
+        CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-macosx_arm64 cp*-win_amd64
 
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
