@@ -26,6 +26,7 @@ jobs:
         package-dir: SDK_wrapper
       env:
         CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-macosx_arm64 cp*-win_amd64
+        CIBW_SKIP: cp39-* # skip all 3.9 wheels. We keep 3.8 for as still used for some PsychoPy installations
 
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows {wheel}"
@@ -44,6 +45,7 @@ jobs:
         package-dir: LSL_streamer
       env:
         CIBW_BUILD: cp*-manylinux_x86_64 cp*-macosx_x86_64 cp*-macosx_arm64 cp*-win_amd64
+        CIBW_SKIP: cp39-* # skip all 3.9 wheels. We keep 3.8 for as still used for some PsychoPy installations
 
         CIBW_BEFORE_BUILD_WINDOWS: "pip install delvewheel"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} --add-path .\\SDK_wrapper\\TittaMex\\64\\Windows;.\\LSL_streamer\\TittaLSLMex\\+TittaLSL\\+detail {wheel}"
