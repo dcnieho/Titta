@@ -72,24 +72,26 @@ class BuildExt(build_ext):
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
-        opts = self.c_opts.get(ct, []).copy()
-        link_opts = self.l_opts.get(ct, []).copy()
+        opts = self.c_opts.get(ct, [])
+        link_opts = self.l_opts.get(ct, [])
         if ct == 'msvc':
             opts.append('/DVERSION_INFO="%s"' % self.distribution.get_version())
         elif ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
         for ext in self.extensions:
+            this_opts      =      opts.copy()
+            this_link_opts = link_opts.copy()
             sdk_version = int(ext.name[-1])
             if ct == 'msvc':
-                opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+                this_opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
             elif ct == 'unix':
-                opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+                this_opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
                 if isOSX:
-                    link_opts.append('-llibtobii_research.%d' % sdk_version)
+                    this_link_opts.append('-llibtobii_research.%d' % sdk_version)
                 else:
-                    link_opts.append('-l:libtobii_research.so.%d' % sdk_version)
-            ext.extra_compile_args.extend(opts)
-            ext.extra_link_args.extend(link_opts)
+                    this_link_opts.append('-l:libtobii_research.so.%d' % sdk_version)
+            ext.extra_compile_args.extend(this_opts)
+            ext.extra_link_args.extend(this_link_opts)
         build_ext.build_extensions(self)
 
 setup(
