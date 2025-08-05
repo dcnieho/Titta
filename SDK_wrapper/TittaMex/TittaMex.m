@@ -112,13 +112,6 @@ classdef TittaMex < handle
             % fails
             this.cppmethodGlobal('touch');
             this.mexLoaded = true;
-
-            % check right version of tobii_research dll is loaded. If not,
-            % abort
-            loadedVersion = this.SDKVersion;
-            if str2double(loadedVersion(1)) ~= version
-                error('The version of the loaded tobii_research.dll is %s, which does not match the requested major version %d. This can happen if you have previously loaded this different version, either with a call to TittaMex, or to TittaLSLMex. If you want to change the underlying tobii_research.dll version, you have to close and restart MATLAB, a "clear all" is not sufficient. Also, do not mix the dll versions used for multiple eye trackers, TittaMex and TittaLSLMex instances',loadedVersion,version)
-            end
         end
         
         %% Matlab interface

@@ -28,10 +28,11 @@ Some environment variables must be set when working on the code or building it f
 readerwriterqueue located at `deps/include/readerwriterqueue` is required for compiling Titta. Make sure you clone the Titta repository including all submodules so that this dependency is available.
 
 #### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
-To update the Tobii Pro C SDK used to build Titta against, you need to manually put the some files in the right place:
-1. The \*.h include files are placed in `\SDK_wrapper\deps\include`
-2. The Windows `Tobii_C_SDK\64\lib\tobii_research.lib` link library is placed in `\SDK_wrapper\deps\lib`.
-3. The \*.dll and \*.so files are placed in the respective output directories, `\SDK_wrapper\TittaMex\64\Windows` and `\SDK_wrapper\TittaMex\64\Linux`, respectively.
+To update the Tobii Pro C SDK used to build Titta against, you need to manually put the some files in the right place.
+1. Before you do so, for Windows, the `tobii_research.dll` needs to be renamed to `tobii_research_v2.dll` (N.B. version 1 is static, you'll never have to update this) not clash with the dll for SDK version 1.x. To do so, open an x64 Native tools command prompt for Visual Studio and run the `tools\change_dll_name.py` script on the downloaded dll. 
+2. The \*.h include files are placed in `\SDK_wrapper\deps\include\SDKv2` (you don't need to touch `\SDKv1`, it won't be updated).
+3. The Windows `tobii_research_v2.lib` link library generated in step 1 is placed in `\SDK_wrapper\deps\lib`.
+4. The \*.dll and \*.so files are placed in the respective output directories, `\SDK_wrapper\TittaMex\64\Windows` and `\SDK_wrapper\TittaMex\64\Linux`, respectively. For Linux, create symbolic links of `tobii_research.so.2.x` to `tobii_research.so.2` and `tobii_research.so`.
 
 #### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
 Please note that the code for the Python wrapper is currently not actively maintained and will not build as is now. However, assuming its updated, the following steps will build the code:

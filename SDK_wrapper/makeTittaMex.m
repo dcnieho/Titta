@@ -19,11 +19,7 @@ end
 
 for SDK_version=1:2
     % prep output location
-    if isWin
-        outDir = fullfile(myDir,'TittaMex','64',platform,sprintf('SDKv%d',SDK_version));
-    else
-        outDir = fullfile(myDir,'TittaMex','64',platform);
-    end
+    outDir = fullfile(myDir,'TittaMex','64',platform);
 
     if isOctave
         if isWin
