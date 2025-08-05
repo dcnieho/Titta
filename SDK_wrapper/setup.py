@@ -82,9 +82,9 @@ class BuildExt(build_ext):
             sdk_version = int(ext.name[-1])
             if ct == 'unix':
                 opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+                link_opts.append('-ltobii_research.so.%d' % sdk_version)
             elif ct == 'msvc':
                 opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
-                link_opts.append('-ltobii_research.so.%d' % sdk_version)
             ext.extra_compile_args.extend(opts)
             ext.extra_link_args.extend(link_opts)
         build_ext.build_extensions(self)
