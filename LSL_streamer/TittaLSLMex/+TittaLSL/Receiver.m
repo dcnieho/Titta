@@ -35,6 +35,12 @@ classdef Receiver < TittaLSL.detail.Base
             % optional buffer size input, and optional input to request
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
+            %
+            % SDKVersion should be the version of the SDK used to connect
+            % to this eye tracker. Should be 2, unless connecting to an
+            % older eye tracker, or you specifically want SDK version 1 for
+            % some reason.
+            % Available from Titta.buffer.SDKVersion / TittaMex.SDKVersion
             if nargin<1
                 error('TittaLSL::Receiver::constructor: must provide an LSL stream source identifier string.');
             end

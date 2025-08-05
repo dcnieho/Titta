@@ -10,97 +10,66 @@ classdef (Abstract) Base < handle
         TobiiSDKVersion
         LSLVersion
     end
-
-    methods (Static = true, Access = private)
-        function mexClassWrapperFnc = getMexFncImpl(SDKVersion, debugMode)
-            % determine what mex file to call
-            if debugMode
-                mexFile = sprintf('TittaLSLMex_v%d_d',SDKVersion);
-            else
-                mexFile = sprintf('TittaLSLMex_v%d',SDKVersion);
-            end
-            if strcmp(computer,'PCWIN') || strcmp(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')) %#ok<STREMP>
-                mexFncStr = sprintf('TittaLSL.detail.SDKv%d.%s',SDKVersion,mexFile);
-            else
-                mexFncStr = sprintf('TittaLSL.detail.%s',mexFile);
-            end
-
-            % 1. check if mex file is found on path
-            if isempty(which(mexFncStr))
-                error('TittaLSL:MEXFunctionNotFound','The MEX file "%s" was not found on path.',mexFncStr);
-            end
-
-            % construct function handle to Mex file
-            mexClassWrapperFnc = str2func(mexFncStr);
-
-            % call no-op to load the mex file, so we fail early when load fails
-            mexClassWrapperFnc('touch');
-        end
-    end
-
+    
     methods (Static = true, Access = protected)
         function mexClassWrapperFnc = getMexFnc(SDKVersion, debugMode)
             persistent mexClassWrapperFncCache;
-            % version indicates the version of the Tobii SDK that the MEX
-            % file should be built against, i.e., version==1 loads
-            % TittaLSLMex_v1, for compatibility with older eye trackers,
-            % version==2 loads TittaLSLMex_v2 which only works with Tobii
-            % eye trackers from the last few years, but has the latest
-            % features.
-            guessVersion = nargin<1 || isempty(SDKVersion);
-            if guessVersion
-                SDKVersion = 1;
+            % version indicates the version of the Tobii SDK that the
+            % loaded MEX file should be built against, i.e., version==1
+            % loads TittaLSLMex_v1, for compatibility with older eye
+            % trackers, version==2 loads TittaLSLMex_v2 which only works
+            % with Tobii eye trackers from the last few years, but has the
+            % latest features.
+            if nargin<1 || isempty(SDKVersion)
+                SDKVersion = 2;
             end
+
             if isempty(mexClassWrapperFncCache)
+                mexClassWrapperFncCache = cell(0,2);
+            end
+
+            qLoaded = [mexClassWrapperFncCache{:,1}]==SDKVersion;
+            if ~any(qLoaded)
                 % debugmode is for developer of TittaLSLMex only, no use for end users
                 if nargin<2 || isempty(debugMode)
                     debugMode = false;
                 else
                     debugMode = ~~debugMode;
                 end
-                while true
-                    mexClassWrapperFncCache = TittaLSL.detail.Base.getMexFncImpl(SDKVersion, debugMode);
-                    if ~guessVersion
-                        break
-                    else
-                        % check we got what we expected
-                        loadedVersion = mexClassWrapperFncCache('GetTobiiSDKVersion');
-                        loadedVersion = str2double(loadedVersion(1));
-                        if loadedVersion ~= SDKVersion
-                            % set right version and try again. Why this
-                            % crazy logic? If a single tobii_research.dll
-                            % is already loaded somewhere in the MATLAB
-                            % process, that's the one we'll get, even if
-                            % we're trying to load the mex file for a
-                            % different version of the dll. So we have to
-                            % load, check what we got, and adjust.
-                            SDKVersion = loadedVersion;
-                        else
-                            break;
-                        end
-                    end
+                % determine what mex file to call
+                if debugMode
+                    mexFncStr = sprintf('TittaLSL.detail.TittaLSLMex_v%d_d',SDKVersion);
+                else
+                    mexFncStr = sprintf('TittaLSL.detail.TittaLSLMex_v%d',SDKVersion);
                 end
+    
+                % 1. check if mex file is found on path
+                if isempty(which(mexFncStr))
+                    error('TittaLSL:MEXFunctionNotFound','The MEX file "%s" was not found on path.',mexFncStr);
+                end
+    
+                % construct function handle to Mex file
+                mexClassWrapperFncCache{end+1,2} = str2func(mexFncStr);
+                mexClassWrapperFncCache{end  ,1} = SDKVersion;
+
+                mexClassWrapperFnc = mexClassWrapperFncCache{end,2};
+            else
+                mexClassWrapperFnc = mexClassWrapperFncCache{qLoaded,2};
             end
 
-            % User requested a specific version of tobii_research.dll.
-            % Check if the right version of tobii_research dll is loaded.
-            % If not, abort
-            if ~guessVersion
-                loadedVersion = mexClassWrapperFncCache('GetTobiiSDKVersion');
-                if str2double(loadedVersion(1)) ~= SDKVersion
-                    error('The version of the loaded tobii_research.dll is %s, which does not match the requested major version %d. This can happen if you have previously loaded this different version, either with a call to TittaLSLMex, or to TittaMex. If you want to change the underlying tobii_research.dll version, you have to close and restart MATLAB, a "clear all" is not sufficient. Also, do not mix the dll versions used for multiple eye trackers, TittaMex and TittaLSLMex instances',loadedVersion,SDKVersion)
-                end
-            end
-
-            % set output
-            mexClassWrapperFnc = mexClassWrapperFncCache;
+            % call no-op to load the mex file/check its loaded, so we fail
+            % early when load has failed
+            mexClassWrapperFnc('touch');
         end
     end
 
     methods (Static)
         % dll info
-        function SDKVersion = GetTobiiSDKVersion()
-            fnc = TittaLSL.detail.Base.getMexFnc();
+        function SDKVersion = GetTobiiSDKVersion(SDKVersion)
+            if nargin<1
+                SDKVersion = [];
+            end
+            fnc = TittaLSL.detail.Base.getMexFnc(SDKVersion);
             SDKVersion = fnc('GetTobiiSDKVersion');
         end
         function LSLVersion = GetLSLVersion()
@@ -156,7 +125,7 @@ classdef (Abstract) Base < handle
 
         % getters
         function SDKVersion = get.TobiiSDKVersion(this)
-            SDKVersion = this.GetTobiiSDKVersion();
+            SDKVersion = this.cppmethodGlobal('GetTobiiSDKVersion');
         end
         function LSLVersion = get.LSLVersion(this)
             LSLVersion = this.GetLSLVersion();

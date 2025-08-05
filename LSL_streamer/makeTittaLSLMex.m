@@ -25,17 +25,10 @@ else
         cpp_file = fullfile(myDir,'TittaLSLMex',sprintf('TittaLSLMex_v%d.cpp',SDK_version));
         copyfile(fullfile(myDir,'TittaLSLMex','TittaLSLMex.cpp'), cpp_file);
 
-        % prep output location
-        if isWin
-            outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail',sprintf('+SDKv%d',SDK_version));
-        else
-            outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail');
-        end
-
         inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
             '-v'
             '-outdir'
-            outDir
+            fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail')
             sprintf('-DTOBII_SDK_MAJOR_VERSION=%d',SDK_version)
             '-DBUILD_FROM_SCRIPT'
             sprintf('-I"%s"',fullfile(myDir,'deps','include'))
