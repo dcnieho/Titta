@@ -75,8 +75,8 @@ class BuildExt(build_ext):
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
-        opts = self.c_opts.get(ct, [])
-        link_opts = self.l_opts.get(ct, [])
+        opts = self.c_opts.get(ct, []).copy()
+        link_opts = self.l_opts.get(ct, []).copy()
         if ct == 'msvc':
             opts.append('/DVERSION_INFO="%s"' % self.distribution.get_version())
         elif ct == 'unix':
