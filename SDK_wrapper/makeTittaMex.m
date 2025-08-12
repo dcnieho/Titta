@@ -19,7 +19,7 @@ elseif isOSX
 end
 
 for SDK_version=1:2
-    % only sdk v2 has support for apple silicon 
+    % only sdk v2 has support for apple silicon
     if isAppleSilicon && SDK_version==1
         continue
     end
@@ -27,7 +27,7 @@ for SDK_version=1:2
     out_stem = sprintf('TittaMex_v%d',SDK_version);
 
     % prep output location
-    outDir = fullfile(myDir,'TittaMex','64',platform);
+    outDir = fullfile(myDir,'TittaMex','mex');
 
     if isOctave
         if isWin
@@ -60,13 +60,13 @@ for SDK_version=1:2
 
         if isLinux
             inpArgs = [inpArgs {
-                sprintf('-L%s',fullfile(myDir,'TittaMex','64','Linux'))
+                sprintf('-L%s',outDir)
                 '-lc'
                 '-lrt'
                 '-ldl'}.'];
         elseif isOSX
             inpArgs = [inpArgs {
-                sprintf('-L%s',fullfile(myDir,'TittaMex','64','OSX'))
+                sprintf('-L%s',outDir)
                 '-mmacosx-version-min=''11'''}.'];
         elseif isWin
             inpArgs = [inpArgs {
@@ -128,13 +128,13 @@ for SDK_version=1:2
             inpArgs = [inpArgs {
                 'CXXFLAGS="$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -O3"'
                 'LDFLAGS="$LDFLAGS -Wl,-rpath,''$ORIGIN'' -Wl,--gc-sections -flto"'
-                sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
+                sprintf('-L%s',outDir)
                 sprintf('-l:libtobii_research.so.%d',SDK_version)}.'];
         elseif isOSX
             inpArgs = [inpArgs {
                 'CXXFLAGS="\$CXXFLAGS -std=c++2a -ffunction-sections -fdata-sections -flto -fvisibility=hidden -mmacosx-version-min=''11'' -O3"'
                 'LDFLAGS="\$LDFLAGS -Wl,-rpath,''@loader_path'' -dead_strip -flto -mmacosx-version-min=''11''"'
-                sprintf('-L%s',fullfile(myDir,'TittaMex','64',platform))
+                sprintf('-L%s',outDir)
                 sprintf('-ltobii_research.%d',SDK_version)}.'];
         end
         mex(inpArgs{:});
