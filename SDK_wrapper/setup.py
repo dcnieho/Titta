@@ -104,11 +104,13 @@ class BuildExt(build_ext):
         # if OSX, fix up tobii_research load path for v1 so v2 is not picked up
         if isOSX:
             ext_path = None
+            # find path to build extension for SDKv1
             for ext in self.extensions:
                 if int(ext.name[-1])==1:
                     ext_path = os.path.abspath(self.get_ext_fullpath(ext.name))
                     print('patching: %s' % ext_path)
                     break
+            # fix it up
             if ext_path is not None:
                 os.system('install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' + ext_path)
 
