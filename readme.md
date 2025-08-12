@@ -32,9 +32,12 @@ To run the toolbox, the [Tobii Pro SDK](https://www.tobii.com/products/software/
 Only the `Titta.calibrate()` and [`Titta.calibrateAdvanced()`](#advanced-calibration) functions use Psychtoolbox functionality, the rest of the toolbox can be used from MATLAB/Octave without having PsychToolbox installed.
 
 ## Supported platforms
-Currently the toolbox is only supported on Windows 10 (Windows 7 may continue to work but is not tested) and Linux. OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
+Currently the toolbox is only supported on Windows 10/11 (Windows 7 may continue to work but is not tested) and Linux. OSX support may appear if time and hardware availability permit. Given that OSX is not recommended for visual stimulus presentation, this however is low priority.
 
 Only 64-bit MATLAB and GNU Octave are supported. 32-bit MATLAB support was previously available for Windows, but has been discontinued when the Tobii SDK dropped support for 32-bit platforms. The last version of Titta supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
+
+### Octave
+Use with Octave requires building the mex files once before fix use, they are not distributed in this repository. Please see the instructions at [MEX wrapper](/SDK_wrapper) subdirectory.
 
 ### Windows
 Using the newest Psychtoolbox version is recommended for use with both Matlab and GNU Octave. For use with Matlab, at minimum [PsychToolbox version 3.0.16 "Crowning achievement", released on 2020-05-10](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/PTB_Beta-2020-05-10_V3.0.16) is required. Titta has been tested on MATLAB version R2022b. To use Titta with GNU Octave at minimum Octave version 7.3 is required, which also entails at minimum [PsychToolbox version 3.0.19, "Virtuality", released on 2023-02-17](https://github.com/Psychtoolbox-3/Psychtoolbox-3/releases/tag/3.0.19.0). The main Titta class, TittaMex and the readme demos have been tested to work on Octave. The breakOut demo does not work due to incomplete classdef support in Octave.

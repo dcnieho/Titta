@@ -6,11 +6,8 @@
 
 Usage instructions for using the Titta class (through its TittaMex and TittaPy interfaces) are found in [the Titta documentation](https://github.com/dcnieho/Titta/blob/master/readme.md#titta-tittamex-tittapy-classes).
 
-### Working on the source
-The enclosed `Titta.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
-
-### Building the mex files
-Run `makeTittaMex.m` to build the mex file.
+## Building the mex files
+Run `makeTittaMex.m` to build the mex file. You have to do this first if you want to use Titta from Octave, mex files for Octave are no longer bundled with Titta. However, it should be as simple as running that function once, since everything needed is contained in this repository. Mex files for MATLAB (Windows and Linux) are provided in this repository.
 
 32-bit builds are no longer supported on Windows (they have never been on Linux). The last version of Titta/TittaMex supporting 32-bit Matlab is [available here](https://github.com/dcnieho/Titta/releases/tag/last_32bit_version).
 
@@ -18,16 +15,19 @@ For building the Linux mex file the default gcc version 11.2.0 included with Ubu
 (The mex file currently does not build with gcc 9.3.0 provided in the mingw64 distribution that comes with Octave 6.4.0 on Windows.)
 For compatibility with an earlier version of Ubuntu, either install the right GLIBCXX version or recompile following the instructions here. See [this issue](https://github.com/dcnieho/Titta/issues/40) for more information.
 
+## Working on the source
+The enclosed `Titta.sln` file is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
+
 ### Required environment variables
 Some environment variables must be set when working on the code or building it from Visual Studio. Here are the values i used (at the time of writing):
 - `MATLAB_ROOT`: `C:\Program Files\MATLAB\R2023b`
 - `PYTHON_ROOT`: `C:\Program Files\PsychoPy`
 
-### Dependencies
-#### [readerwriterqueue](https://github.com/cameron314/readerwriterqueue)
+## Dependencies
+### [readerwriterqueue](https://github.com/cameron314/readerwriterqueue)
 readerwriterqueue located at `deps/include/readerwriterqueue` is required for compiling Titta. Make sure you clone the Titta repository including all submodules so that this dependency is available.
 
-#### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
+### [Tobii Pro SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/)
 To update the Tobii Pro C SDK used to build Titta against, you need to manually put the some files in the right place.
 1. Before you do so, for Windows, the `tobii_research.dll` needs to be renamed to `tobii_research_v2.dll` (N.B. version 1 is static, you'll never have to update this) not clash with the dll for SDK version 1.x. To do so, open an x64 Native tools command prompt for Visual Studio and run the `tools\change_dll_name.py` script on the downloaded dll.
 2. And before you do so, for Linux, the soname for `tobii_research.so.2.x.x` needs to be changed to `tobii_research.so.2` as it is not interchangable with `tobii_research.so.1` and we need to ensure the right version is loaded (N.B. version 1 is static, you'll never have to update `tobii_research.so.1.11.0`). To do so, issue: `patchelf --set-soname libtobii_research.so.2 libtobii_research.so.2.x.x`, where `libtobii_research.so.2.x.x` is the file to modify.
@@ -35,17 +35,17 @@ To update the Tobii Pro C SDK used to build Titta against, you need to manually 
 4. The Windows `tobii_research_v2.lib` link library generated in step 1 is placed in `\SDK_wrapper\deps\lib`.
 5. The \*.dll and \*.so files are placed in the respective output directories, `\SDK_wrapper\TittaMex\64\Windows` and `\SDK_wrapper\TittaMex\64\Linux`, respectively. For Linux, create symbolic links of `tobii_research.so.2.x.x` to `tobii_research.so.2` and `tobii_research.so`.
 
-#### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
+### [PsychoPy](https://www.psychopy.org/) and [PyBind11](https://github.com/pybind/pybind11)
 Please note that the code for the Python wrapper is currently not actively maintained and will not build as is now. However, assuming its updated, the following steps will build the code:
 1. Make sure the PsychoPy version you want to work with is installed.
 2. Make sure the `PYTHON_ROOT` environment variable is set to the location of your PsychoPy installation.
 3. Install PyBind11: in the root folder of your PsychoPy installation, execute `python -m pip install pybind11`. Alternatively, install pybind11 through a package manager like vcpkg.
 4. As per [here](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites), make sure you have the Python Development workload for visual studio installed. Note however that you can unselect the Python 3 installation, the web tools and the miniconda installation that it by default installs, as we will be using the PsychoPy installation's Python environment. Check the "Python native development tools" option.
 
-### Set up the Python environment for Visual Studio Python integration
+## Set up the Python environment for Visual Studio Python integration
 Last, visual studio needs to be able to find your PsychoPy's Python environment. To do so, add a new Python environment, choose existing environment, and point it to the root of your PsychoPy install. In my case, that is `C:\Program Files\PsychoPy`.
 
-#### Enabling native debugging
+### Enabling native debugging
 To be able to debug both the Python and C++ side of things with PsychoPy, you must install the debug symbols for the Python installation. This is done through the installer normally, but we don't have an option to do that with PyschoPy. So we have to add them manually. Here's how:
 1. For 64bit Python 3.8.10 (what I am using in the current example), navigate to this [download location](https://www.python.org/ftp/python/3.8.10/amd64/).
 2. Download all `*_d.msi` and `*_pdb.msi` files there (might be overkill, but better have them all).

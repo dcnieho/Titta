@@ -71,7 +71,7 @@ The following method calls are available on a `TittaLSL.Receiver` instance. Note
 The enclosed Visual Studio project files can be opened using the `Titta.sln` file in the [SDK_wrapper directory](/SDK_wrapper). It is to be opened and built with Visual Studio 2022 (last tested with version 17.8.4).
 
 ### Building the mex files
-Run `makeTittaLSLMex.m` to build the mex file.
+Run `makeTittaLSLMex.m` to build the mex file. You have to do this first if you want to use Titta from Octave, mex files for Octave are no longer bundled with Titta. However, it should be as simple as running that function once, since everything needed is contained in this repository. Mex files for MATLAB (Windows and Linux) are provided in this repository.
 
 For building the Linux mex file the default gcc version 11.2.0 included with Ubuntu 22.04 was used.
 For compatibility with an earlier version of Ubuntu, either install the right GLIBCXX version or recompile following the instructions here. See [this issue](https://github.com/dcnieho/Titta/issues/40) for more information.
