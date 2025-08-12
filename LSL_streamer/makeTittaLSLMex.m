@@ -7,6 +7,7 @@ cd(myDir);
 isWin    = strcmp(computer,'PCWIN')                             || strcmp(computer,'PCWIN64') || ~isempty(strfind(computer, 'mingw32')); %#ok<STREMP>
 isLinux  = strcmp(computer,'GLNX86')                            || strcmp(computer,'GLNXA64') || ~isempty(strfind(computer, 'linux-gnu')); %#ok<STREMP>
 isOSX    = strcmp(computer,'MAC')    || strcmp(computer,'MACI') || strcmp(computer, 'MACI64') || ~isempty(strfind(computer, 'apple-darwin')); %#ok<STREMP>
+isAppleSilicon = strcmp(computer, 'MACA64');
 isOctave = ismember(exist('OCTAVE_VERSION', 'builtin'), [102, 5]);  % If the built-in variable OCTAVE_VERSION exists, then we are running under GNU/Octave, otherwise not.
 is64Bit = ~isempty(strfind(computer, '64')); %#ok<STREMP>
 assert(is64Bit,'only 64-bit builds are supported');
@@ -17,12 +18,23 @@ elseif isOSX
     platform = 'OSX';
 end
 
-if isOctave
-    error("building on Octave is not supported");
-else
-    for SDK_version=1:2
+for SDK_version=1:2
+    % only sdk v2 has support for apple silicon
+    if isAppleSilicon && SDK_version==1
+        continue
+    end
+
+    out_stem = sprintf('TittaLSLMex_v%d',SDK_version);
+
+    % prep output location
+    outDir = fullfile(myDir,'TittaLSLMex','+TittaLSL','+detail');
+
+
+    if isOctave
+        error("building on Octave is not supported");
+    else
         % prep input file
-        cpp_file = fullfile(myDir,'TittaLSLMex',sprintf('TittaLSLMex_v%d.cpp',SDK_version));
+        cpp_file = fullfile(myDir,'TittaLSLMex',sprintf('%s.cpp',out_stem));
         copyfile(fullfile(myDir,'TittaLSLMex','TittaLSLMex.cpp'), cpp_file);
 
         inpArgs = {'-R2017b'    % needed on R2019a and later to make sure we build a lib that runs on MATLABs as old as at least R2015b
@@ -66,5 +78,10 @@ else
 
         % clean up input file
         delete(cpp_file);
+    end
+    if isOSX && SDK_version==1
+        % need to fix up version of dylib that will be loaded, else v2
+        % gets loaded and trouble ensues
+        system(['install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' fullfile(outDir,sprintf('%s.%s',out_stem,mexext))])
     end
 end
