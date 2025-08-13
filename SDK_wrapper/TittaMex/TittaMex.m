@@ -52,7 +52,7 @@ classdef TittaMex < handle
                     if isa(mexFnc,'function_handle')
                         mexFnc = func2str(mexFnc);
                     end
-                    error('TittaMex:invalidMEXFunction','Failed to load or call MEX file: "%s".',mexFnc)
+                    error('TittaMex:invalidMEXFunction','Failed to load or call MEX file: "%s". Ensure that the MEX file has already been compiled using the makeTittaMex.m script.',mexFnc)
                 end
             else
                 % accept string or function_handle
