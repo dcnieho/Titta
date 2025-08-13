@@ -3898,7 +3898,7 @@ classdef Titta < handle
             % 1. accuracy
             out.offs    = bsxfun(@times,angs1D,[cos(offOnScreenDir); sin(offOnScreenDir)]);
             out.acc2D   = mynanmean(out.offs,2);
-            out.acc1D   = mynanmean( angs1D ,2);
+            out.acc1D   = hypot(out.acc2D(1), out.acc2D(2));
             
             % 2. RMS
             out.RMS2D   = sqrt(mynanmean(diff(out.offs,[],2).^2,2));
