@@ -3863,8 +3863,8 @@ classdef Titta < handle
                 return
             end
             
-            % compute validation accuracy per point, noise levels, %
-            % missing
+            % compute validation accuracy per point, noise levels,
+            % percentage missing
             for p=length(val.gazeData):-1:1
                 if obj.calibrateLeftEye
                     val.quality(p).left  = obj.getDataQuality(val.gazeData(p).left ,val.pointPos(p,4:5));
