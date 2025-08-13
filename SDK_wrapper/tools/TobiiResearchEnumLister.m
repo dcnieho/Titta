@@ -2,7 +2,7 @@ function TobiiResearchEnumLister
 cd(fileparts(mfilename('fullpath')))
 
 file = fullfile(cd,'..','deps','include','tobii_research.h');
-impl(file,'Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo');
+impl(file,'Status codes returned by the SDK.','TOBII_RESEARCH_STATUS_','TobiiResearchStatusInfo',{'TOBII_RESEARCH_DEPRECATED'});
 fprintf('#####\n');
 impl(file,sprintf('\nSource of log message.'),'TOBII_RESEARCH_LOG_SOURCE_','TobiiResearchLogSourceInfo');
 fprintf('#####\n');
@@ -25,7 +25,7 @@ end
 
 
 
-function impl(file,header,nameRoot,cppClassName)
+function impl(file,header,nameRoot,cppClassName,appendExtra)
 fid = fopen(file,'rt');
 txt = fread(fid,'*char').';
 fclose(fid);
@@ -36,6 +36,9 @@ idxend = find(txt=='}'); idxend = idxend(find(idxend>idx,1));
 
 constants = regexp(txt(idx:idxend),[nameRoot '(\w+)'],'tokens');
 constants = cat(1,constants{:});
+if nargin>4 && ~isempty(appendExtra)
+    constants = [constants; appendExtra(:)];
+end
 
 comments = regexp(txt(idx:idxend),'/\*\*\n\s*([\w\s]+)','tokens');
 comments = cat(1,comments{:});

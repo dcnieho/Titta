@@ -6,6 +6,9 @@
 % networked eye-tracking experiments in Python and MATLAB with Tobii eye
 % trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
 classdef Sender < TittaLSL.detail.Base
+    properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
+        initialized = false;
+    end
     properties (Dependent, SetAccess=private)
         eyeTracker
         eyeTrackerDescription
@@ -25,12 +28,19 @@ classdef Sender < TittaLSL.detail.Base
     
     methods
         %% wrapper functions
-        function this = Sender(addressOrInstance)
+        function this = Sender(addressOrInstance, SDKVersion)
             % only needed when you want to stream _from_ an eye tracker,
             % not when you want to receive remote streams.
+            %
             % addressOrInstance can be an address of a Tobii eye tracker to
             % connect to or a Titta or TittaMex instance that is connected
             % to the eye tracker you want to stream from
+            %
+            % SDKVersion should be the version of the SDK used to connect
+            % to this eye tracker. Should be 2, unless connecting to an
+            % older eye tracker, or you specifically want SDK version 1 for
+            % some reason.
+            % Available from Titta.buffer.SDKVersion / TittaMex.SDKVersion
             if isa(addressOrInstance,'Titta')
                 assert(~isempty(addressOrInstance.buffer),'Can''t get the connected eye tracker: you passed a Titta instance, but this instance was not yet initialized and is thus not connected to an eye tracker.')
                 addressOrInstance = addressOrInstance.buffer.address;
@@ -39,15 +49,35 @@ classdef Sender < TittaLSL.detail.Base
             end
             addressOrInstance = ensureStringIsChar(addressOrInstance);
 
+            % Call superclass constructor
+            if nargin<2
+                SDKVersion = [];
+            else
+                % check we have the appropriate protocol for this SDK
+                % version. Should be tet-tcp:// for v1 and tobii-prp:// for
+                % v2
+                if SDKVersion==1
+                    proto = 'tet-tcp://';
+                elseif SDKVersion==2
+                    proto = 'tobii-prp://';
+                end
+                assert(startsWith(addressOrInstance,proto),'Inappropriate (or no) protocol found in address. For SDK version %d, the address should start with "%s", but the address you provided was "%s"',SDKVersion,proto,addressOrInstance)
+            end
+            this@TittaLSL.detail.Base(SDKVersion);
+
+            % create instance
             this.newInstance('Sender', addressOrInstance);
+            this.initialized = true;
         end
 
         function delete(this)
-            this.destroy('gaze');
-            this.destroy('eyeOpenness');
-            this.destroy('externalSignal');
-            this.destroy('timeSync');
-            this.destroy('positioning');
+            if this.initialized
+                this.destroy('gaze');
+                this.destroy('eyeOpenness');
+                this.destroy('externalSignal');
+                this.destroy('timeSync');
+                this.destroy('positioning');
+            end
         end
         
         

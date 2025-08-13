@@ -103,11 +103,9 @@ void FieldToNpArray(py::dict& out_, const std::vector<TittaLSL::Receiver::gaze>&
     localName = name_ + "_gaze_origin_";
     // 3.1 gaze_origin_in_user_coordinates
     TobiiFieldToNpArray (out_, data_, localName + "in_user_coordinates"     , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates);
-    // 3.2 gaze_origin_in_track_box_coordinates
-    TobiiFieldToNpArray (out_, data_, localName + "in_track_box_coordinates", &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates);
-    // 3.3 gaze_origin_valid
+    // 3.2 gaze_origin_valid
     FieldToNpArray<true>(out_, data_, localName + "valid"                   , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID);
-    // 3.4 gaze_origin_available
+    // 3.3 gaze_origin_available
     FieldToNpArray<true>(out_, data_, localName + "available"               , &TittaLSL::Receiver::gaze::gazeData, field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available);
 
     // 4. eyeOpenness
@@ -243,14 +241,8 @@ py::list CapabilitiesToList(TobiiResearchCapabilities data_)
         l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
         l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
         l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
         l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
@@ -278,18 +270,24 @@ py::dict StructToDict(const TobiiTypes::eyeTracker& data_)
 
 
 // start module scope
+#define TEXTIFY(A) #A
+#define STR(A) TEXTIFY(A)
+#define PASTER(x,y) x ## _v ## y
+#define EVALUATOR(x,y) PASTER(x,y)
+#define MAKE_MODULE_NAME(base) EVALUATOR(base, TOBII_SDK_MAJOR_VERSION)
 #ifdef NDEBUG
-#   define MODULE_NAME TittaLSLPy
+#   define MODULE_NAME        MAKE_MODULE_NAME(TittaLSLPy)
+#   define IMPORT_MODULE_NAME MAKE_MODULE_NAME(TittaPy)
 #else
-#   define MODULE_NAME TittaLSLPy_d
+#   define MODULE_NAME        MAKE_MODULE_NAME(TittaLSLPy)##_d
+#   define IMPORT_MODULE_NAME MAKE_MODULE_NAME(TittaPy)   ##_d
 #endif
 PYBIND11_MODULE(MODULE_NAME, m)
 {
-    // We must import TittaPy, as this defines some of the enums and other data types we use here.
-    // Must be done this way, as defining them hear as well leads to a double definition error when both this module and TittaPy are imported (likely!).
-    py::module_::import("TittaPy");
+    // Import TittaPy, as it defines some of the enums and other data types we use here.
+    py::module_::import(STR(IMPORT_MODULE_NAME));
 
-    py::enum_<lsl::channel_format_t>(m, "channel_format")
+    py::enum_<lsl::channel_format_t>(m, "channel_format", py::module_local())
         .value("float32", lsl::cf_float32)
         .value("double64", lsl::cf_double64)
         .value("string", lsl::cf_string)
@@ -306,7 +304,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     m.def("get_LSL_version", &TittaLSL::getLSLVersion);
 
     // outlets
-    auto cStreamer = py::class_<TittaLSL::Sender>(m, "Sender")
+    auto cStreamer = py::class_<TittaLSL::Sender>(m, "Sender", py::module_local())
         .def(py::init<std::string>(), "address"_a)
 
         .def("__repr__",
@@ -362,7 +360,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     ;
 
         // inlets
-    auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver")
+    auto cReceiver = py::class_<TittaLSL::Receiver>(m, "Receiver", py::module_local())
         .def(py::init<std::string, std::optional<size_t>, std::optional<bool>>(),
             "stream_source_ID"_a, py::arg_v("initial_buffer_size", std::nullopt, "None"), py::arg_v("start_recording", std::nullopt, "None"))
 

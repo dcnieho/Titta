@@ -5,9 +5,12 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
+import os
+import platform
 
 # detect platform
 isOSX = sys.platform.startswith("darwin")
+isAppleSilicon = isOSX and 'arm64' in platform.uname().version.lower()
 
 __version__ = '1.4.2'
 
@@ -29,24 +32,32 @@ class get_pybind_include(object):
         import pybind11
         return pybind11.get_include(self.user)
 
-
-ext_modules = [
-    Extension(
-        'TittaPy',
+def get_extension_def(sdk_version):
+    return Extension(
+        'TittaPy_v%d' % sdk_version,
         ['src/Titta.cpp','src/types.cpp','src/utils.cpp','TittaPy/TittaPy.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True),
             '.',
-            'deps/include'
+            'deps/include',
+            'deps/include/SDKv%d' % sdk_version
         ],
         library_dirs=[
             'deps/lib'
             ],
         language='c++'
-    ),
-]
+    )
+
+if isAppleSilicon:
+    # only SDK v2 is supports Apple Silicon
+    ext_modules = [get_extension_def(2)]
+else:
+    ext_modules = [
+        get_extension_def(1),
+        get_extension_def(2)
+    ]
 
 
 class BuildExt(build_ext):
@@ -57,27 +68,51 @@ class BuildExt(build_ext):
     }
     l_opts = {
         'msvc': ['/LTCG','/OPT:REF','/OPT:ICF'],
-        'unix': ['-flto', '-ltobii_research'],
+        'unix': ['-flto'],
     }
     if isOSX:
         c_opts['unix'].append('-mmacosx-version-min=11')
         # set rpath so that delocate can find .dylib
-        l_opts['unix'].extend(['-L./TittaMex/64/OSX/', '-Wl,-rpath,''./SDK_wrapper/TittaMex/64/OSX/''','-dead_strip'])
+        l_opts['unix'].extend(['-L./TittaMex/mex/', '-Wl,-rpath,''./SDK_wrapper/TittaMex/mex/''','-dead_strip'])
     else:
-        l_opts['unix'].extend(['-L./TittaMex/64/Linux/', '-Wl,--gc-sections'])
+        l_opts['unix'].extend(['-L./TittaMex/mex/', '-Wl,--gc-sections'])
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-        elif ct == 'msvc':
+        if ct == 'msvc':
             opts.append('/DVERSION_INFO="%s"' % self.distribution.get_version())
+        elif ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
         for ext in self.extensions:
-            ext.extra_compile_args = opts
-            ext.extra_link_args = link_opts
+            this_opts      =      opts.copy()
+            this_link_opts = link_opts.copy()
+            sdk_version = int(ext.name[-1])
+            if ct == 'msvc':
+                this_opts.append('/DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+            elif ct == 'unix':
+                this_opts.append('-DTOBII_SDK_MAJOR_VERSION=%d' % sdk_version)
+                if isOSX:
+                    this_link_opts.append('-ltobii_research.%d' % sdk_version)
+                else:
+                    this_link_opts.append('-l:libtobii_research.so.%d' % sdk_version)
+            ext.extra_compile_args.extend(this_opts)
+            ext.extra_link_args.extend(this_link_opts)
         build_ext.build_extensions(self)
+
+        # if OSX, fix up tobii_research load path for v1 so v2 is not picked up
+        if isOSX:
+            ext_path = None
+            # find path to build extension for SDKv1
+            for ext in self.extensions:
+                if int(ext.name[-1])==1:
+                    ext_path = os.path.abspath(self.get_ext_fullpath(ext.name))
+                    print('patching: %s' % ext_path)
+                    break
+            # fix it up
+            if ext_path is not None:
+                os.system('install_name_tool -change @rpath/libtobii_research.dylib @rpath/libtobii_research.1.dylib ' + ext_path)
 
 setup(
     name='TittaPy',

@@ -106,9 +106,6 @@ classdef TittaMexDummyMode < TittaMex
         function eyeTracker = getEyeTrackerInfo(~)
             eyeTracker = [];
         end
-        function trackBox = getTrackBox(~)
-            trackBox = [];
-        end
         function displayArea = getDisplayArea(~)
             displayArea = [];
         end
@@ -294,7 +291,7 @@ if isRecording
     ts = int64(GetSecs*1000*1000);
     gP = struct('onDisplayArea',[mx/rect(3); my/rect(4)],'inUserCoords',zeros(3,1),'valid',true,'available',true);
     pu = struct('diameter',0,'valid',false,'available',true);   % also good for eye openness, has the same fields
-    gO = struct('inUserCoords',zeros(3,1),'inTrackBoxCoords',zeros(3,1),'valid',false,'available',true);
+    gO = struct('inUserCoords',zeros(3,1),'valid',false,'available',true);
     edat = struct('gazePoint',gP,'pupil',pu,'eyeOpenness',pu,'gazeOrigin',gO);
     sample = struct('deviceTimeStamp',ts,'systemTimeStamp',ts,'left',edat,'right',edat);
 else

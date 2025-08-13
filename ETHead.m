@@ -106,6 +106,9 @@ classdef ETHead < handle
             else
                 this.wpnt                   = wpnt;
                 this.qFloatColorRange       = Screen('ColorRange',this.wpnt)==1;
+                if nargin<2
+                    [trackBoxHalfWidth,trackBoxHalfHeight] = deal([]);
+                end
                 this.trackBoxHalfWidth      = trackBoxHalfWidth;
                 this.trackBoxHalfHeight     = trackBoxHalfHeight;
                 this.circVerts              = genEllipse(200);

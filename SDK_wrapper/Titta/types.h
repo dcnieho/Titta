@@ -38,14 +38,11 @@ namespace TobiiTypes
         std::vector<std::string>    supportedModes;
     };
 
-    // extended gaze data (for merging gaze and eye openness
+    // extended gaze data (for merging gaze and eye openness)
     struct gazeOrigin
     {
         // The gaze origin position in 3D in the user coordinate system.
         TobiiResearchPoint3D position_in_user_coordinates = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
-
-        // The normalized gaze origin position in 3D in the track box coordinate system.
-        TobiiResearchNormalizedPoint3D position_in_track_box_coordinates = { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
 
         // The validity of the gaze origin data.
         TobiiResearchValidity validity = TOBII_RESEARCH_VALIDITY_INVALID;

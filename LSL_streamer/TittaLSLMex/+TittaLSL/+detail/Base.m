@@ -12,20 +12,35 @@ classdef (Abstract) Base < handle
     end
     
     methods (Static = true, Access = protected)
-        function mexClassWrapperFnc = getMexFnc(debugMode)
+        function mexClassWrapperFnc = getMexFnc(SDKVersion, debugMode)
             persistent mexClassWrapperFncCache;
+            % version indicates the version of the Tobii SDK that the
+            % loaded MEX file should be built against, i.e., version==1
+            % loads TittaLSLMex_v1, for compatibility with older eye
+            % trackers, version==2 loads TittaLSLMex_v2 which only works
+            % with Tobii eye trackers from the last few years, but has the
+            % latest features.
+            if nargin<1 || isempty(SDKVersion)
+                SDKVersion = 2;
+            end
+
             if isempty(mexClassWrapperFncCache)
+                mexClassWrapperFncCache = cell(0,2);
+            end
+
+            qLoaded = [mexClassWrapperFncCache{:,1}]==SDKVersion;
+            if ~any(qLoaded)
                 % debugmode is for developer of TittaLSLMex only, no use for end users
-                if nargin<1 || isempty(debugMode)
+                if nargin<2 || isempty(debugMode)
                     debugMode = false;
                 else
                     debugMode = ~~debugMode;
                 end
                 % determine what mex file to call
                 if debugMode
-                    mexFncStr = 'TittaLSL.detail.TittaLSLMex_d';
+                    mexFncStr = sprintf('TittaLSL.detail.TittaLSLMex_v%d_d',SDKVersion);
                 else
-                    mexFncStr = 'TittaLSL.detail.TittaLSLMex';
+                    mexFncStr = sprintf('TittaLSL.detail.TittaLSLMex_v%d',SDKVersion);
                 end
     
                 % 1. check if mex file is found on path
@@ -34,20 +49,27 @@ classdef (Abstract) Base < handle
                 end
     
                 % construct function handle to Mex file
-                mexClassWrapperFncCache = str2func(mexFncStr);
+                mexClassWrapperFncCache{end+1,2} = str2func(mexFncStr);
+                mexClassWrapperFncCache{end  ,1} = SDKVersion;
 
-                % call no-op to load the mex file, so we fail early when load fails
-                mexClassWrapperFncCache('touch');
+                mexClassWrapperFnc = mexClassWrapperFncCache{end,2};
+            else
+                mexClassWrapperFnc = mexClassWrapperFncCache{qLoaded,2};
             end
-            
-            mexClassWrapperFnc = mexClassWrapperFncCache;
+
+            % call no-op to load the mex file/check its loaded, so we fail
+            % early when load has failed
+            mexClassWrapperFnc('touch');
         end
     end
 
     methods (Static)
         % dll info
-        function SDKVersion = GetTobiiSDKVersion()
-            fnc = TittaLSL.detail.Base.getMexFnc();
+        function SDKVersion = GetTobiiSDKVersion(SDKVersion)
+            if nargin<1
+                SDKVersion = [];
+            end
+            fnc = TittaLSL.detail.Base.getMexFnc(SDKVersion);
             SDKVersion = fnc('GetTobiiSDKVersion');
         end
         function LSLVersion = GetLSLVersion()
@@ -67,7 +89,7 @@ classdef (Abstract) Base < handle
             end
         end
     end
-    
+
     % methods dealing with the instance
     methods (Access = protected, Sealed = true)
         function varargout = cppmethod(this, methodName, varargin)
@@ -76,17 +98,17 @@ classdef (Abstract) Base < handle
             end
             [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, this.instanceHandle, varargin{:});
         end
-        
+
         function varargout = cppmethodGlobal(this, methodName, varargin)
             [varargout{1:nargout}] = this.mexClassWrapperFnc(methodName, varargin{:});
         end
-        
+
         function newInstance(this, varargin)
             this.type           = varargin{1};
             this.instanceHandle = this.cppmethodGlobal('new',varargin{:});
         end
     end
-    
+
     methods (Hidden)
         function delete(this)
             if ~isempty(this.instanceHandle)
@@ -95,15 +117,15 @@ classdef (Abstract) Base < handle
             end
         end
     end
-    
+
     methods
-        function this = Base()
-            this.mexClassWrapperFnc = TittaLSL.detail.Base.getMexFnc();
+        function this = Base(SDKVersion)
+            this.mexClassWrapperFnc = TittaLSL.detail.Base.getMexFnc(SDKVersion);
         end
 
         % getters
         function SDKVersion = get.TobiiSDKVersion(this)
-            SDKVersion = this.GetTobiiSDKVersion();
+            SDKVersion = this.cppmethodGlobal('GetTobiiSDKVersion');
         end
         function LSLVersion = get.LSLVersion(this)
             LSLVersion = this.GetLSLVersion();

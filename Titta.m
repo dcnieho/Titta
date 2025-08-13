@@ -592,7 +592,7 @@ classdef Titta < handle
             %    See also TITTA.TITTA, TITTA.GETOPTIONS, TITTA.SETOPTIONS
 
             % Load in our callback buffer mex
-            obj.buffer = TittaMex();
+            obj.buffer = TittaMex(obj.settings.tittaMexVersion);
             obj.buffer.startLogging();
             
             % Connect to eyetracker
@@ -752,7 +752,8 @@ classdef Titta < handle
                 obj.geom.trackBox.halfWidth     = mean([obj.geom.trackBox.frontUpperRight(1) obj.geom.trackBox.backUpperRight(1)])/10;
                 obj.geom.trackBox.halfHeight    = mean([obj.geom.trackBox.frontUpperRight(2) obj.geom.trackBox.backUpperRight(2)])/10;
             catch
-                % tracker does not support trackbox
+                % tracker does not support trackbox or using v2 SDK that
+                % completely got rid of trackbox
                 obj.geom.trackBox.halfWidth     = [];
                 obj.geom.trackBox.halfHeight    = [];
             end
@@ -1545,20 +1546,25 @@ classdef Titta < handle
             
             % default tracking settings per eye-tracker
             settings.trackingMode           = 'Default';    % for all trackers except Spectrum, default tracking mode is "Default". So use that as a default
+            settings.tittaMexVersion        = 1;            % set version of Tobii SDK that should be used for eye tracker. For all except the newest eye trackers v1 should be used, so use that as the default
             switch tracker
                 case 'Tobii Pro Spectrum'
                     settings.freq                   = 600;
                     settings.trackingMode           = 'human';
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Fusion'
+                    settings.freq                   = 120;
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Nano'
+                    settings.freq                   = 60;
+                    settings.tittaMexVersion        = 2;
+                case 'Tobii Pro Spark'
+                    settings.freq                   = 60;
+                    settings.tittaMexVersion        = 2;
+                    
                 case 'Tobii TX300'
                     settings.freq                   = 300;
                 case 'Tobii T60 XL'
-                    settings.freq                   = 60;
-                    
-                case 'Tobii Pro Fusion'
-                    settings.freq                   = 120;
-                case 'Tobii Pro Nano'
-                    settings.freq                   = 60;
-                case 'Tobii Pro Spark'
                     settings.freq                   = 60;
                 case {'Tobii Pro X3-120','Tobii Pro X3-120 EPU'}
                     settings.freq                   = 120;
@@ -8441,7 +8447,7 @@ ticks(ticks<lim(1) | ticks>lim(2)) = [];
 % based on matplotlib.ticker.ScalarFormatter._set_format
 sigfigs = 2;
 while sigfigs>=0
-    if abs(step - round(step,sigfigs)) < 1e-6 % 1e-6 is more than sufficient for our value range
+    if abs(step - round(step*sigfigs)/sigfigs) < 1e-6 % 1e-6 is more than sufficient for our value range
         sigfigs=sigfigs-1;
     else
         break

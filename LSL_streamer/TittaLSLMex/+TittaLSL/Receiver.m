@@ -6,6 +6,9 @@
 % networked eye-tracking experiments in Python and MATLAB with Tobii eye
 % trackers. Behavior Research Methods. doi: 10.3758/s13428-025-02714-2
 classdef Receiver < TittaLSL.detail.Base
+    properties (GetAccess = private, SetAccess = private, Hidden = true, Transient = true)
+        initialized = false;
+    end
     properties (Dependent, SetAccess=private)
         stream
         isRecording
@@ -28,13 +31,25 @@ classdef Receiver < TittaLSL.detail.Base
     
     methods
         %% wrapper functions
-        function this = Receiver(streamSourceID,initialBufferSize,doStartRecording)
+        function this = Receiver(streamSourceID,initialBufferSize,doStartRecording,SDKVersion)
             % optional buffer size input, and optional input to request
             % immediately starting listening on the inlet (so you do not
             % have to call startListening(id) yourself)
+            %
+            % SDKVersion should be the version of the SDK used to connect
+            % to this eye tracker. Should be 2, unless connecting to an
+            % older eye tracker, or you specifically want SDK version 1 for
+            % some reason.
+            % Available from Titta.buffer.SDKVersion / TittaMex.SDKVersion
             if nargin<1
                 error('TittaLSL::Receiver::constructor: must provide an LSL stream source identifier string.');
             end
+            % Call superclass constructor
+            if nargin<4
+                SDKVersion = [];
+            end
+            this@TittaLSL.detail.Base(SDKVersion);
+
             streamSourceID = ensureStringIsChar(streamSourceID);
             if nargin>2 && ~isempty(doStartRecording)
                 this.newInstance('Receiver', streamSourceID,uint64(initialBufferSize),logical(doStartRecording));
@@ -43,10 +58,13 @@ classdef Receiver < TittaLSL.detail.Base
             else
                 this.newInstance('Receiver', streamSourceID);
             end
+            this.initialized = true;
         end
 
         function delete(this)
-            this.stop(true);
+            if this.initialized
+                this.stop(true);
+            end
         end
         
         

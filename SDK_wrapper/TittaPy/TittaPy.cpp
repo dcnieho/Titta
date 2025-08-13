@@ -102,11 +102,9 @@ void FieldToNpArray(py::dict& out_, const std::vector<Titta::gaze>& data_, const
     localName = name_ + "_gaze_origin_";
     // 3.1 gaze_origin_in_user_coordinates
     TobiiFieldToNpArray (out_, data_, localName + "in_user_coordinates"     , field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_user_coordinates);
-    // 3.2 gaze_origin_in_track_box_coordinates
-    TobiiFieldToNpArray (out_, data_, localName + "in_track_box_coordinates", field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::position_in_track_box_coordinates);
-    // 3.3 gaze_origin_valid
+    // 3.2 gaze_origin_valid
     FieldToNpArray<true>(out_, data_, localName + "valid"                   , field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::validity, TOBII_RESEARCH_VALIDITY_VALID);
-    // 3.4 gaze_origin_available
+    // 3.3 gaze_origin_available
     FieldToNpArray<true>(out_, data_, localName + "available"               , field_, &TobiiTypes::eyeData::gaze_origin, &TobiiTypes::gazeOrigin::available);
 
     // 4. eyeOpenness
@@ -364,14 +362,8 @@ py::list CapabilitiesToList(TobiiResearchCapabilities data_)
         l.append(TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
         l.append(TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
         l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
-        l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION);
-    if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
-        l.append(TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
         l.append(TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION);
     if (data_ & TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
@@ -405,22 +397,6 @@ py::list StructVectorToList(const std::vector<TobiiTypes::eyeTracker>& data_)
     return out;
 }
 
-py::dict StructToDict(const TobiiResearchTrackBox& data_)
-{
-    py::dict d;
-
-    d["back_lower_left"] = StructToList(data_.back_lower_left);
-    d["back_lower_right"] = StructToList(data_.back_lower_right);
-    d["back_upper_left"] = StructToList(data_.back_upper_left);
-    d["back_upper_right"] = StructToList(data_.back_upper_right);
-    d["front_lower_left"] = StructToList(data_.front_lower_left);
-    d["front_lower_right"] = StructToList(data_.front_lower_right);
-    d["front_upper_left"] = StructToList(data_.front_upper_left);
-    d["front_upper_right"] = StructToList(data_.front_upper_right);
-
-    return d;
-}
-
 py::dict StructToDict(const TobiiResearchDisplayArea& data_)
 {
     py::dict d;
@@ -437,40 +413,40 @@ py::dict StructToDict(const TobiiResearchDisplayArea& data_)
 
 
 // start module scope
+#define PASTER(x,y) x ## _v ## y
+#define EVALUATOR(x,y) PASTER(x,y)
+#define MAKE_MODULE_NAME(base) EVALUATOR(base, TOBII_SDK_MAJOR_VERSION)
 #ifdef NDEBUG
-#   define MODULE_NAME TittaPy
+#   define MODULE_NAME MAKE_MODULE_NAME(TittaPy)
 #else
-#   define MODULE_NAME TittaPy_d
+#   define MODULE_NAME MAKE_MODULE_NAME(TittaPy)##_d
 #endif
 PYBIND11_MODULE(MODULE_NAME, m)
 {
     // capabilities
-    py::enum_<TobiiResearchCapabilities>(m, "capability")
+    py::enum_<TobiiResearchCapabilities>(m, "capability", py::module_local())
         .value("can_set_display_area", TOBII_RESEARCH_CAPABILITIES_CAN_SET_DISPLAY_AREA)
         .value("has_external_signal", TOBII_RESEARCH_CAPABILITIES_HAS_EXTERNAL_SIGNAL)
         .value("has_eye_images", TOBII_RESEARCH_CAPABILITIES_HAS_EYE_IMAGES)
         .value("has_gaze_data", TOBII_RESEARCH_CAPABILITIES_HAS_GAZE_DATA)
-        .value("has_HMD_gaze_data", TOBII_RESEARCH_CAPABILITIES_HAS_HMD_GAZE_DATA)
         .value("can_do_screen_based_calibration", TOBII_RESEARCH_CAPABILITIES_CAN_DO_SCREEN_BASED_CALIBRATION)
-        .value("can_do_HMD_based_calibration", TOBII_RESEARCH_CAPABILITIES_CAN_DO_HMD_BASED_CALIBRATION)
-        .value("has_HMD_lens_config", TOBII_RESEARCH_CAPABILITIES_HAS_HMD_LENS_CONFIG)
         .value("can_do_monocular_calibration", TOBII_RESEARCH_CAPABILITIES_CAN_DO_MONOCULAR_CALIBRATION)
         .value("has_eye_openness_data", TOBII_RESEARCH_CAPABILITIES_HAS_EYE_OPENNESS_DATA)
         ;
     // logging
-    py::enum_<TobiiResearchLogSource>(m, "log_source")
+    py::enum_<TobiiResearchLogSource>(m, "log_source", py::module_local())
         .value("stream_engine", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_STREAM_ENGINE)
         .value("SDK", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_SDK)
         .value("firmware_upgrade", TobiiResearchLogSource::TOBII_RESEARCH_LOG_SOURCE_FIRMWARE_UPGRADE)
         ;
-    py::enum_<TobiiResearchLogLevel>(m, "log_level")
+    py::enum_<TobiiResearchLogLevel>(m, "log_level", py::module_local())
         .value("error", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_ERROR)
         .value("warning", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_WARNING)
         .value("information", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_INFORMATION)
         .value("debug", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_DEBUG)
         .value("trace", TobiiResearchLogLevel::TOBII_RESEARCH_LOG_LEVEL_TRACE)
         ;
-    py::enum_<TobiiResearchStreamError>(m, "stream_error")
+    py::enum_<TobiiResearchStreamError>(m, "stream_error", py::module_local())
         .value("connection_lost", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_CONNECTION_LOST)
         .value("insufficient_license", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_INSUFFICIENT_LICENSE)
         .value("not_supported", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_NOT_SUPPORTED)
@@ -478,7 +454,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("internal_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_INTERNAL_ERROR)
         .value("user_error", TobiiResearchStreamError::TOBII_RESEARCH_STREAM_ERROR_USER_ERROR)
         ;
-    py::enum_<TobiiResearchStreamErrorSource>(m, "stream_error_source")
+    py::enum_<TobiiResearchStreamErrorSource>(m, "stream_error_source", py::module_local())
         .value("user", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_USER)
         .value("stream_pump", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_STREAM_PUMP)
         .value("subscription_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_GAZE_DATA)
@@ -486,11 +462,10 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("subscription_time_synchronization_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_TIME_SYNCHRONIZATION_DATA)
         .value("subscription_eye_image", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_EYE_IMAGE)
         .value("subscription_notification", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_NOTIFICATION)
-        .value("subscription_HMD_gaze_data", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_HMD_GAZE_DATA)
         .value("subscription_user_position_guide", TobiiResearchStreamErrorSource::TOBII_RESEARCH_STREAM_ERROR_SOURCE_SUBSCRIPTION_USER_POSITION_GUIDE)
         ;
     // license
-    py::enum_<TobiiResearchLicenseValidationResult>(m, "license_validation_result")
+    py::enum_<TobiiResearchLicenseValidationResult>(m, "license_validation_result", py::module_local())
         .value("ok", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_OK)
         .value("tampered", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_TAMPERED)
         .value("invalid_application_signature", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_INVALID_APPLICATION_SIGNATURE)
@@ -503,7 +478,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("unknown", TobiiResearchLicenseValidationResult::TOBII_RESEARCH_LICENSE_VALIDATION_RESULT_UNKNOWN)
         ;
     // calibration
-    py::enum_<TobiiTypes::CalibrationState>(m, "calibration_state")
+    py::enum_<TobiiTypes::CalibrationState>(m, "calibration_state", py::module_local())
         .value("not_yet_entered", TobiiTypes::CalibrationState::NotYetEntered)
         .value("awaiting_cal_point", TobiiTypes::CalibrationState::AwaitingCalPoint)
         .value("collecting_data", TobiiTypes::CalibrationState::CollectingData)
@@ -513,7 +488,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("applying_calibration_data", TobiiTypes::CalibrationState::ApplyingCalibrationData)
         .value("left", TobiiTypes::CalibrationState::Left)
         ;
-    py::enum_<TobiiTypes::CalibrationAction>(m, "calibration_action")
+    py::enum_<TobiiTypes::CalibrationAction>(m, "calibration_action", py::module_local())
         .value("nothing", TobiiTypes::CalibrationAction::Nothing)
         .value("enter", TobiiTypes::CalibrationAction::Enter)
         .value("collect_data", TobiiTypes::CalibrationAction::CollectData)
@@ -523,47 +498,49 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value("apply_calibration_data", TobiiTypes::CalibrationAction::ApplyCalibrationData)
         .value("exit", TobiiTypes::CalibrationAction::Exit)
         ;
-    py::enum_<TobiiResearchCalibrationStatus>(m, "calibration_status")
+    py::enum_<TobiiResearchCalibrationStatus>(m, "calibration_status", py::module_local())
         .value("failure", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_FAILURE)
         .value("success", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS)
         .value("success_left_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_LEFT_EYE)
         .value("success_right_eye", TobiiResearchCalibrationStatus::TOBII_RESEARCH_CALIBRATION_SUCCESS_RIGHT_EYE)
         ;
-    py::enum_<TobiiResearchSelectedEye>(m, "selected_eye")
+    py::enum_<TobiiResearchSelectedEye>(m, "selected_eye", py::module_local())
         .value("left", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_LEFT)
         .value("right", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_RIGHT)
         .value("both", TobiiResearchSelectedEye::TOBII_RESEARCH_SELECTED_EYE_BOTH)
         ;
-    py::enum_<TobiiResearchCalibrationEyeValidity>(m, "calibration_eye_validity")
+    py::enum_<TobiiResearchCalibrationEyeValidity>(m, "calibration_eye_validity", py::module_local())
         .value("invalid_and_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_INVALID_AND_NOT_USED)
         .value("valid_but_not_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_BUT_NOT_USED)
         .value("valid_and_used", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_VALID_AND_USED)
         .value("unknown", TobiiResearchCalibrationEyeValidity::TOBII_RESEARCH_CALIBRATION_EYE_VALIDITY_UNKNOWN)
         ;
     // streams
-    py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type")
+    py::enum_<TobiiResearchEyeImageType>(m, "eye_image_type", py::module_local())
         .value("full_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_FULL)
         .value("cropped_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_CROPPED)
         .value("multi_roi_image", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_MULTI_ROI)
         .value("unknown", TobiiResearchEyeImageType::TOBII_RESEARCH_EYE_IMAGE_TYPE_UNKNOWN)
         ;
-    py::enum_<TobiiResearchExternalSignalChangeType>(m, "external_signal_change_type")
+    py::enum_<TobiiResearchExternalSignalChangeType>(m, "external_signal_change_type", py::module_local())
         .value("value_changed", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_VALUE_CHANGED)
         .value("initial_value", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_INITIAL_VALUE)
         .value("connection_restored", TobiiResearchExternalSignalChangeType::TOBII_RESEARCH_EXTERNAL_SIGNAL_CONNECTION_RESTORED)
         ;
-    py::enum_<TobiiResearchNotificationType>(m, "notification_type")
+    py::enum_<TobiiResearchNotificationType>(m, "notification_type", py::module_local())
         .value("connection_lost", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_LOST)
         .value("connection_restored", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CONNECTION_RESTORED)
         .value("calibration_mode_entered", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CALIBRATION_MODE_ENTERED)
         .value("calibration_mode_left", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CALIBRATION_MODE_LEFT)
         .value("calibration_changed", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_CALIBRATION_CHANGED)
-        .value("track_box_changed", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_TRACK_BOX_CHANGED)
         .value("display_area_changed", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_DISPLAY_AREA_CHANGED)
         .value("gaze_output_frequency_changed", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_GAZE_OUTPUT_FREQUENCY_CHANGED)
         .value("eye_tracking_mode_changed", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_EYE_TRACKING_MODE_CHANGED)
         .value("device_faults", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_DEVICE_FAULTS)
         .value("device_warnings", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_DEVICE_WARNINGS)
+#if TOBII_SDK_MAJOR_VERSION==2
+        .value("stream_buffer_overflow", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_STREAM_BUFFER_OVERFLOW)
+#endif
         .value("notification_unknown", TobiiResearchNotificationType::TOBII_RESEARCH_NOTIFICATION_UNKNOWN)
         ;
 
@@ -580,7 +557,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     m.def("stop_logging", &Titta::stopLogging);
 
     // main class
-    auto cET = py::class_<Titta>(m, "EyeTracker")
+    auto cET = py::class_<Titta>(m, "EyeTracker", py::module_local())
         .def(py::init<std::string>(),"address"_a)
 
         .def("__repr__",
@@ -613,7 +590,6 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def_property_readonly("supported_modes",       [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
         .def_property         ("frequency",             [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
         .def_property         ("tracking_mode",         [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &Titta::setTrackingMode)
-        .def_property_readonly("track_box",             [](const Titta& instance_) { return StructToDict(instance_.getTrackBox()); })
         .def_property_readonly("display_area",          [](const Titta& instance_) { return StructToDict(instance_.getDisplayArea()); })
         // modifiers
         .def("apply_licenses", &Titta::applyLicenses,
@@ -828,7 +804,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         ;
 
     // nested enums
-    py::enum_<Titta::Stream>(cET, "stream")
+    py::enum_<Titta::Stream>(cET, "stream", py::module_local())
         .value(Titta::streamToString(Titta::Stream::Gaze, true).c_str(), Titta::Stream::Gaze)
         .value(Titta::streamToString(Titta::Stream::EyeOpenness, true).c_str(), Titta::Stream::EyeOpenness)
         .value(Titta::streamToString(Titta::Stream::EyeImage, true).c_str(), Titta::Stream::EyeImage)
@@ -838,7 +814,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .value(Titta::streamToString(Titta::Stream::Notification, true).c_str(), Titta::Stream::Notification)
         ;
 
-    py::enum_<Titta::BufferSide>(cET, "buffer_side")
+    py::enum_<Titta::BufferSide>(cET, "buffer_side", py::module_local())
         .value(Titta::bufferSideToString(Titta::BufferSide::Start).c_str(), Titta::BufferSide::Start)
         .value(Titta::bufferSideToString(Titta::BufferSide::End).c_str(), Titta::BufferSide::End)
         ;

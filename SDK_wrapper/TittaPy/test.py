@@ -1,5 +1,5 @@
-import TittaPy
-from TittaPy import EyeTracker
+import TittaPy_v2
+from TittaPy_v2 import EyeTracker
 
 #print(EyeTracker)
 #help(EyeTracker)
@@ -15,11 +15,11 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # test static functions, then connect to first eye tracker found
-print(TittaPy.__version__)
-TittaPy.start_logging()
-print(TittaPy.get_SDK_version())
-print(TittaPy.get_system_timestamp())
-ets = TittaPy.find_all_eye_trackers()
+print(TittaPy_v2.__version__)
+TittaPy_v2.start_logging()
+print(TittaPy_v2.get_SDK_version())
+print(TittaPy_v2.get_system_timestamp())
+ets = TittaPy_v2.find_all_eye_trackers()
 print(ets)
 
 help(EyeTracker.calibration_collect_data)
@@ -48,7 +48,6 @@ print(EThndl.address)
 print(EThndl.capabilities)
 print(EThndl.supported_frequencies)
 print(EThndl.supported_modes)
-print(EThndl.track_box)
 print(EThndl.display_area)
 
 # with a 4C, test:
@@ -266,8 +265,8 @@ EThndl.clear_time_range('time_sync',0,sys.maxsize)
 EThndl.clear('positioning')
 EThndl.clear_time_range('notification',0,sys.maxsize)
 
-TittaPy.stop_logging()
-l=TittaPy.get_log(True)  # True means the log is consumed. False (default) its only peeked.
+TittaPy_v2.stop_logging()
+l=TittaPy_v2.get_log(True)  # True means the log is consumed. False (default) its only peeked.
 print(l)
 pickle.dump(l,open( "save.pkl", "wb" ))
 l2 = pickle.load( open( "save.pkl", "rb" ) )

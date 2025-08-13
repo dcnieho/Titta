@@ -452,14 +452,6 @@ TobiiTypes::eyeTracker Titta::getEyeTrackerInfo(std::optional<std::string> param
 
     return _eyeTracker;
 }
-TobiiResearchTrackBox Titta::getTrackBox() const
-{
-    TobiiResearchTrackBox track_box;
-    const TobiiResearchStatus status = tobii_research_get_track_box(_eyeTracker.et, &track_box);
-    if (status != TOBII_RESEARCH_STATUS_OK)
-        ErrorExit("Titta::cpp: Cannot get eye tracker track box", status);
-    return track_box;
-}
 TobiiResearchDisplayArea Titta::getDisplayArea() const
 {
     TobiiResearchDisplayArea display_area;
@@ -1104,7 +1096,6 @@ namespace {
     }
     void convert(TobiiTypes::gazeOrigin& out_, const TobiiResearchGazeOrigin in_)
     {
-        out_.position_in_track_box_coordinates = in_.position_in_track_box_coordinates;
         out_.position_in_user_coordinates   = in_.position_in_user_coordinates;
         out_.validity                       = in_.validity;
         out_.available                      = true;
@@ -1125,8 +1116,8 @@ namespace {
     }
     void convert(TobiiTypes::eyeData& out_, const TobiiResearchEyeData in_)
     {
-        convert(out_.gaze_point, in_.gaze_point);
-        convert(out_.pupil, in_.pupil_data);
+        convert(out_.gaze_point , in_.gaze_point);
+        convert(out_.pupil      , in_.pupil_data);
         convert(out_.gaze_origin, in_.gaze_origin);
     }
 }
