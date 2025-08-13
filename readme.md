@@ -117,7 +117,7 @@ Titta.getDefaults('tracker model name');` Supported eye trackers and their corre
     |Tobii Pro T120|`Tobii T120`|
     |Tobii 4C<sup>*</sup>|`IS4_Large_Peripheral`|
 
-    Note that the VR eye trackers are not supported by Titta.
+    Note that the VR eye trackers are not supported by Titta. Note also that although Tobii dropped support for all legacy eye trackers in the latest release of the Tobii Pro SDK, Titta will keep supporting them.
 
     <sup>*</sup>Note that a Pro upgrade license key is required to be able to use the Tobii 4C for research purposes, and for it to function with Titta. Unfortunately, the Pro upgrade license key is no longer sold by Tobii Pro. If you try to use a 4C without upgrade key with Titta, you will not receive data streams, and some calls, such as `calibrate()`, will yield `error 201: TOBII_RESEARCH_STATUS_SE_INSUFFICIENT_LICENSE`.
 
