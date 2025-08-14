@@ -113,10 +113,10 @@ classdef TittaDummyMode < Titta
             % current instance
         end
         
-        function out = init(obj)
+        function out = init(obj,~)
             out = [];
             % make dummyMode buffer
-            obj.buffer = TittaMexDummyMode();
+            obj.buffer = TittaMexDummyMode(2);
             % mark as inited
             obj.isInitialized = true;
         end
@@ -125,7 +125,7 @@ classdef TittaDummyMode < Titta
             out = [];
         end
         
-        function out = calibrateAdvanced(~,~,~)
+        function out = calibrateAdvanced(~,~,~,~)
             out = [];
         end
     end
