@@ -956,7 +956,13 @@ classdef Titta < handle
             
             %%% 1. some preliminary setup, to make sure we are in known
             % state, and can restore state that may change
-            freq = obj.frequency;   % Spark tracking frequency may change during calibration routine due to order in which gaze stream is subscribed to and calibration mode entered. Store here so we can reset it, ensuring user is not surprised
+            % 1.1 For some eye trackers (Spark), tracking frequency may
+            % change during calibration routine due to order in which gaze
+            % stream is subscribed to and calibration mode entered. Store
+            % here so we can reset it, ensuring user is not surprised. For
+            % good measure, also store the tracking mode
+            eyeTrackerState.frequency   = obj.frequency;
+            eyeTrackerState.trackingMode= obj.trackingMode;
             if bitand(flag,1)
                 obj.buffer.leaveCalibrationMode(true);  % make sure we're not already in calibration mode (start afresh)
             end
@@ -1154,8 +1160,11 @@ classdef Titta < handle
             if qHasEyeOpenness
                 obj.buffer.setIncludeEyeOpennessInGaze(prevEyeOpennessState);
             end
-            if obj.frequency~=freq
-                obj.frequency = freq;
+            if obj.frequency~=eyeTrackerState.frequency
+                obj.frequency = eyeTrackerState.frequency;
+            end
+            if obj.trackingMode~=eyeTrackerState.trackingMode
+                obj.trackingMode = eyeTrackerState.trackingMode;
             end
             
             % log whole process in calibrateHistory and log to messages
@@ -1311,8 +1320,9 @@ classdef Titta < handle
             % get info about screen
             screenState = obj.getScreenInfo(wpnt);
 
-            % get state we may need to restore
-            freq = obj.frequency;   % Spark tracking frequency may change during calibration routine due to order in which gaze stream is subscribed to and calibration mode entered. Store here so we can reset it, ensuring user is not surprised
+            % get state we may need to restore (see note in calibrate())
+            eyeTrackerState.frequency   = obj.frequency;
+            eyeTrackerState.trackingMode= obj.trackingMode;
             
             % some preliminary setup, to make sure we are in known state
             % NB: in contrast to calibrate() above, this function always
@@ -1377,8 +1387,11 @@ classdef Titta < handle
             obj.sendMessage(message);
 
             % restore state
-            if obj.frequency~=freq
-                obj.frequency = freq;
+            if obj.frequency~=eyeTrackerState.frequency
+                obj.frequency = eyeTrackerState.frequency;
+            end
+            if obj.trackingMode~=eyeTrackerState.trackingMode
+                obj.trackingMode = eyeTrackerState.trackingMode;
             end
             
             % log whole process in calibrateHistory and log to messages
