@@ -93,7 +93,7 @@ try
     if isempty(TobiiProLabProject)
         TalkToProLabInstance = TalkToProLabDummyMode();
     else
-        TalkToProLabInstance = TalkToProLab(TobiiProLabProject);
+        TalkToProLabInstance = TalkToProLab(TobiiProLabProject,[],EThndl.buffer);
     end
     % create participant (setting second parameter to true means that no
     % error is thrown if a participant by that name already exists, instead

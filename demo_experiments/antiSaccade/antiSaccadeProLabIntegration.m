@@ -148,7 +148,7 @@ try
     if sv.proLab.useProLabDummyMode
         TalkToProLabInstance = TalkToProLabDummyMode();
     else
-        TalkToProLabInstance = TalkToProLab(sv.proLab.projectName);
+        TalkToProLabInstance = TalkToProLab(sv.proLab.projectName,[],EThndl.buffer);
     end
     % create participant (setting second parameter to true means that if a
     % participant by that name already exists
