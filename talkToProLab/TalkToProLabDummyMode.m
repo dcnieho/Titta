@@ -111,7 +111,7 @@ classdef TalkToProLabDummyMode < handle
         function attachAOIToImage(~,~,~,~,~,~)
         end
         
-        function attachAOIToVideo(~,~,~)
+        function attachAOIToVideo(~,~,~,~,~,~)
         end
         
         function EPState = getExternalPresenterState(~)
@@ -135,6 +135,10 @@ classdef TalkToProLabDummyMode < handle
         end
         
         function sendCustomEvent(~,~,~,~)
+        end
+
+        function hist = getSyncHistory(~)
+            hist = [];
         end
     end
     
