@@ -18,10 +18,10 @@ classdef TittaMexDummyMode < TittaMex
 
     methods
         % Use the name of your MEX file here
-        function this = TittaMexDummyMode(~)
+        function this = TittaMexDummyMode(version,~)
             % construct default base class, none of its properties are
             % relevant when in dummy mode
-            this = this@TittaMex();
+            this = this@TittaMex(version);
 
             % check we overwrite all public methods (for developer, to make
             % sure we override all accessible baseclass calls with no-ops)
@@ -54,7 +54,7 @@ classdef TittaMexDummyMode < TittaMex
                 % filter out those methods that we on purpose do not define
                 % in this subclass, as the superclass methods work fine
                 % (call static functions in the mex)
-                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','startLogging','getLog','stopLogging','getAllBufferSidesString','getAllStreamsString'});
+                qNotOverridden = ~ismember({superMethods.Name},{thisMethods.Name}) & ~ismember({superMethods.Name},{'findAllEyeTrackers','getEyeTrackerFromAddress','startLogging','getLog','stopLogging','getAllBufferSidesString','getAllStreamsString'});
                 if any(qNotOverridden)
                     fprintf('methods from %s not overridden in %s:\n',superInfo.Name,thisInfo.Name);
                     fprintf('  %s\n',superMethods(qNotOverridden).Name);
@@ -157,7 +157,7 @@ classdef TittaMexDummyMode < TittaMex
         function prevEyeOpennessState = setIncludeEyeOpennessInGaze(~,~)
             prevEyeOpennessState = false;
         end
-        function success = start(this,stream,~,~)
+        function success = start(this,stream,~,~,~)
             if nargin<2
                 error('TittaMex::start: provide stream argument. \nSupported streams are: %s.',this.getAllStreamsString());
             end
