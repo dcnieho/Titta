@@ -29,7 +29,7 @@ classdef TalkToProLab < handle
     end
     
     methods
-        function this = TalkToProLab(expectedProject,IPorFQDN)
+        function this = TalkToProLab(expectedProject,IPorFQDN,tittaMexInstance)
             % IPorFQDN: By default, TalkToProLab will connect to a Pro Lab
             % instance on the local computer. If you want to connect to Pro
             % Lab on another computer, specify that computer's IP as this
@@ -46,6 +46,9 @@ classdef TalkToProLab < handle
             % slowdowns when calling sendStimulusEvent and sendCustomEvent.
             if nargin<2 || isempty(IPorFQDN)
                 IPorFQDN = 'localhost';
+            end
+            if nargin<3 || isempty(tittaMexInstance)
+                tittaMexInstance = TittaMex(2);
             end
             this.isTwoComputerSetup = ~strcmp(IPorFQDN,'localhost');
             
@@ -95,14 +98,13 @@ classdef TalkToProLab < handle
             end
             
             % check sync between local clock and the Pro Lab clock
-            titMex = TittaMex;
             nTimeStamp = 40;
             request = matlab.internal.webservices.toJSON(struct('operation','GetTimestamp'));   % save conversion-to-JSON overhead so below requests are fired asap
             % ensure response is cleared
             [~] = this.clientClock.lastRespText;
             if this.isTwoComputerSetup
                 % we need a synchronizer
-                this.synchronizer = Synchronizer(@titMex.systemTimestamp, @()getRemoteTime(this.clientClock, request));
+                this.synchronizer = Synchronizer(@tittaMexInstance.systemTimestamp, @()getRemoteTime(this.clientClock, request));
                 % warm it up
                 this.synchronizer.doSync();
                 pause(0.2)  % not too little time between the two syncs, so we don't get singular matrix warning troubles
@@ -111,9 +113,9 @@ classdef TalkToProLab < handle
                 % check it works ok
                 [timesRemote, timesLocalAsRemote] = deal(zeros(nTimeStamp,1,'int64'));
                 for p=1:nTimeStamp
-                    t1 = titMex.systemTimestamp();
+                    t1 = tittaMexInstance.systemTimestamp();
                     timesRemote(p) = getRemoteTime(this.clientClock, request);
-                    t2 = titMex.systemTimestamp();
+                    t2 = tittaMexInstance.systemTimestamp();
                     timesLocalAsRemote(p) = this.synchronizer.localTimeToRemote((t1+t2)/2);
                 end
                 syncOff = median(abs(timesRemote-timesLocalAsRemote));
@@ -123,9 +125,9 @@ classdef TalkToProLab < handle
                 % ok, for safety
                 [timesLocalReq,timesLocalResp,timesRemote] = deal(zeros(nTimeStamp,1,'int64'));
                 for p=1:nTimeStamp
-                    timesLocalReq(p) = titMex.systemTimestamp;
+                    timesLocalReq(p) = tittaMexInstance.systemTimestamp;
                     timesRemote(p) = getRemoteTime(this.clientClock, request);
-                    timesLocalResp(p) = titMex.systemTimestamp;
+                    timesLocalResp(p) = tittaMexInstance.systemTimestamp;
                 end
                 % get best estimate of clock offset (i.e., use sync with lowest
                 % RTT)
