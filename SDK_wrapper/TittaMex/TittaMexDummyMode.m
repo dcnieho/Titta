@@ -127,7 +127,7 @@ classdef TittaMexDummyMode < TittaMex
             isInCalibrationMode = this.isInCalMode;
         end
         function hasEnqueuedLeave = leaveCalibrationMode(this,~)
-            this.isInCalMode    = true;
+            this.isInCalMode    = false;
             hasEnqueuedLeave    = true;
         end
         function calibrationCollectData(~,~,~)
