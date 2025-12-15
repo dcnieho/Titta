@@ -21,7 +21,7 @@ When using [TittaLSL](/LSL_streamer) for building networked eye-tracking experim
 For questions, bug reports or to check for updates, please visit
 www.github.com/dcnieho/Titta.
 
-Titta is licensed under the Creative Commons Attribution 4.0 (CC BY 4.0) license. Note that the `tobii_research*.h` header files located in this repository at `SDK_wrapper/deps/include/` carry a different license, please refer to [the Tobii License Agreement](SDK_wrapper/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
+Titta is licensed under the MIT license. Note that the `tobii_research*.h` header files located in this repository at `SDK_wrapper/deps/include/` carry a different license, please refer to [the Tobii License Agreement](SDK_wrapper/deps/Tobii_Pro_SDLA_for_Research_Use.pdf) for more information.
 
 [`demo_experiments/readmeMinimal.m`](/demo_experiments/readmeMinimal.m) shows a minimal example of using the toolbox's functionality, and the [demo_experiments](/demo_experiments) folder contains various other examples. For documentation of the various data fields in the `.mat` file produced by the demos, see [the Tobii SDK documentation](https://developer.tobiipro.com/commonconcepts.html). Example fixation detection and AOI analysis code [is also included](/demo_analysis). A video demoing the [advanced calibration interface](#advanced-calibration) and its automatic operation mode where user code controls the calibration logic is available here: [https://www.youtube.com/watch?v=THui9tIrM2s](https://www.youtube.com/watch?v=THui9tIrM2s).
 
