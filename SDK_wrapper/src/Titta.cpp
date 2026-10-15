@@ -488,6 +488,12 @@ void Titta::setTrackingMode(std::string trackingMode_)
     // refresh eye tracker info to get updated tracking mode
     _eyeTracker.refreshInfo("trackingMode");
 }
+void Titta::setDisplayArea(const TobiiResearchDisplayArea& displayArea_)
+{
+    const TobiiResearchStatus status = tobii_research_set_display_area(_eyeTracker.et, &displayArea_);
+    if (status != TOBII_RESEARCH_STATUS_OK)
+        ErrorExit("Titta::cpp: Cannot set eye tracker display area", status);
+}
 // modifiers
 std::vector<TobiiResearchLicenseValidationResult> Titta::applyLicenses(std::vector<std::vector<uint8_t>> licenses_)
 {

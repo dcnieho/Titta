@@ -590,7 +590,34 @@ PYBIND11_MODULE(MODULE_NAME, m)
         .def_property_readonly("supported_modes",       [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("supportedModes").supportedModes; })
         .def_property         ("frequency",             [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("frequency").frequency; }, &Titta::setFrequency)
         .def_property         ("tracking_mode",         [](Titta& instance_) { return                    instance_.getEyeTrackerInfo("trackingMode").trackingMode; }, &Titta::setTrackingMode)
-        .def_property_readonly("display_area",          [](const Titta& instance_) { return StructToDict(instance_.getDisplayArea()); })
+        .def_property("display_area",
+            [](const Titta& instance_) { return StructToDict(instance_.getDisplayArea()); },
+            [](Titta& instance_, const py::dict& displayArea_)
+            {
+                const auto getValue = [&displayArea_](const char* key)
+                {
+                    const py::str pyKey(key);
+                    if (!displayArea_.contains(pyKey))
+                        throw py::value_error(std::string("display_area is missing required key '") + key + "'");
+                    return displayArea_[pyKey];
+                };
+                const auto getPoint = [&getValue](const char* key, TobiiResearchPoint3D& point)
+                {
+                    const auto coordinates = py::cast<std::array<float, 3>>(getValue(key));
+                    point.x = coordinates[0];
+                    point.y = coordinates[1];
+                    point.z = coordinates[2];
+                };
+
+                TobiiResearchDisplayArea area{};
+                area.height = py::cast<float>(getValue("height"));
+                area.width = py::cast<float>(getValue("width"));
+                getPoint("bottom_left", area.bottom_left);
+                getPoint("bottom_right", area.bottom_right);
+                getPoint("top_left", area.top_left);
+                getPoint("top_right", area.top_right);
+                instance_.setDisplayArea(area);
+            })
         // modifiers
         .def("apply_licenses", &Titta::applyLicenses,
             "licenses"_a)

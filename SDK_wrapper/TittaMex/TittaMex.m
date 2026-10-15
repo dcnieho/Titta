@@ -258,6 +258,10 @@ classdef TittaMex < handle
         function displayArea = getDisplayArea(this)
             displayArea = this.cppmethod('getDisplayArea');
         end
+        function setDisplayArea(this,displayArea)
+            assert(nargin>1,'TittaMex::setDisplayArea: provide display area struct argument.');
+            this.cppmethod('setDisplayArea',displayArea);
+        end
         % setters
         function set.deviceName(this,deviceName)
             if ~isempty(this.instanceHandle)

@@ -97,6 +97,7 @@ public:
     void setDeviceName(std::string deviceName_);
     void setFrequency(float frequency_);
     void setTrackingMode(std::string trackingMode_);
+    void setDisplayArea(const TobiiResearchDisplayArea& displayArea_);
     // modifiers. NB: these trigger a refresh of eye tracker info
     std::vector<TobiiResearchLicenseValidationResult> applyLicenses(std::vector<std::vector<uint8_t>> licenses_);
     void clearLicenses();

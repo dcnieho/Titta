@@ -173,6 +173,7 @@ namespace {
         SetDeviceName,
         SetFrequency,
         SetTrackingMode,
+        SetDisplayArea,
         // modifiers
         ApplyLicenses,
         ClearLicenses,
@@ -246,6 +247,7 @@ namespace {
         { "setDeviceName",                  Action::SetDeviceName },
         { "setFrequency",                   Action::SetFrequency },
         { "setTrackingMode",                Action::SetTrackingMode },
+        { "setDisplayArea",                 Action::SetDisplayArea },
         // modifiers
         { "applyLicenses",                  Action::ApplyLicenses },
         { "clearLicenses",                  Action::ClearLicenses },
@@ -612,6 +614,39 @@ void mexFunction(int nlhs_, mxArray *plhs_[], int nrhs_, const mxArray *prhs_[])
             char* bufferCstr = mxArrayToString(prhs_[2]);
             instance->setTrackingMode(bufferCstr);
             mxFree(bufferCstr);
+            break;
+        }
+        case Action::SetDisplayArea:
+        {
+            if (nrhs_ < 3 || mxIsEmpty(prhs_[2]) || !mxIsStruct(prhs_[2]) || mxGetNumberOfElements(prhs_[2]) != 1)
+                throw "setDisplayArea: Expected second argument to be a scalar struct returned by getDisplayArea.";
+
+            const auto getScalar = [displayArea = prhs_[2]](const char* fieldName) -> float
+            {
+                const mxArray* field = mxGetField(displayArea, 0, fieldName);
+                if (!field || mxIsEmpty(field) || !mxIsDouble(field) || mxIsComplex(field) || mxIsSparse(field) || mxGetNumberOfElements(field) != 1)
+                    throw "setDisplayArea: Expected height and width to be real double scalars.";
+                return static_cast<float>(*static_cast<const double*>(mxGetData(field)));
+            };
+            const auto getPoint = [displayArea = prhs_[2]](const char* fieldName, TobiiResearchPoint3D& point)
+            {
+                const mxArray* field = mxGetField(displayArea, 0, fieldName);
+                if (!field || mxIsEmpty(field) || !mxIsDouble(field) || mxIsComplex(field) || mxIsSparse(field) || mxGetNumberOfElements(field) != 3)
+                    throw "setDisplayArea: Expected corner fields to contain three real double values.";
+                const auto values = static_cast<const double*>(mxGetData(field));
+                point.x = static_cast<float>(values[0]);
+                point.y = static_cast<float>(values[1]);
+                point.z = static_cast<float>(values[2]);
+            };
+
+            TobiiResearchDisplayArea displayArea{};
+            displayArea.height = getScalar("height");
+            displayArea.width = getScalar("width");
+            getPoint("bottomLeft", displayArea.bottom_left);
+            getPoint("bottomRight", displayArea.bottom_right);
+            getPoint("topLeft", displayArea.top_left);
+            getPoint("topRight", displayArea.top_right);
+            instance->setDisplayArea(displayArea);
             break;
         }
         case Action::ApplyLicenses:
