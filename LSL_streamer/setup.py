@@ -12,7 +12,7 @@ import platform
 isOSX = sys.platform.startswith("darwin")
 isAppleSilicon = isOSX and 'arm64' in platform.uname().version.lower()
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 
 with open('README.md') as f:
     readme = f.read()
