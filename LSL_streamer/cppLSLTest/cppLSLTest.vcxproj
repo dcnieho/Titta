@@ -69,7 +69,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;../../SDK_wrapper/deps/include/SDKv2</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
@@ -94,7 +94,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../;../deps/include;../../SDK_wrapper;../../SDK_wrapper/deps/include;../../SDK_wrapper/deps/include/SDKv2</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
