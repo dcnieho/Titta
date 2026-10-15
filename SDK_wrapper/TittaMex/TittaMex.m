@@ -261,7 +261,7 @@ classdef TittaMex < handle
         % setters
         function set.deviceName(this,deviceName)
             if ~isempty(this.instanceHandle)
-                assert(nargin>1,'TittaMex::setDisplayName: provide device name argument.');
+                assert(nargin>1,'TittaMex::setDeviceName: provide device name argument.');
                 deviceName = ensureStringIsChar(deviceName);
                 this.cppmethod('setDeviceName',deviceName);
             end
